@@ -448,6 +448,44 @@ class Groups{
  isPublic : boolean
 }
 
+class ImportDataFiles{
+ * id : integer : <generated>
+ * importFileId : integer : REFERENCES "ImportFiles".id
+ * createdAt : timestamp with time zone
+ * processed : boolean : false
+ * updatedAt : timestamp with time zone
+ fileInfo : jsonb
+ hash : text
+ recordCounts : jsonb
+ schema : jsonb
+}
+
+class ImportFiles{
+ * id : integer : <generated>
+ fileId : integer : REFERENCES "Files".id
+ * importId : integer : REFERENCES "Imports".id
+ * createdAt : timestamp with time zone
+ * downloadAttempts : integer : 0
+ * processAttempts : integer : 0
+!issue='column default does not match model' * status : enum : 'IDENTIFIED'::"enum_ImportFiles_status"
+ * updatedAt : timestamp with time zone
+ ftpFileInfo : jsonb
+ hash : text
+}
+
+class Imports{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * definitions : jsonb
+ * enabled : boolean : false
+ * ftpSettings : jsonb
+ * name : text
+ * schedule : text
+ * updatedAt : timestamp with time zone
+ fileMask : text
+ path : text
+}
+
 class MailerLogs{
  * id : bigint : <generated>
  * action : enum
@@ -470,6 +508,83 @@ class MaintenanceLogs{
  * type : enum
  * updatedAt : timestamp with time zone
  isSuccessful : boolean
+}
+
+class MonitoringClassSummaries{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ classroomOrganization : decimal(5,4)
+ deletedAt : timestamp with time zone
+ emotionalSupport : decimal(5,4)
+ grantNumber : text
+ hash : text
+ instructionalSupport : decimal(5,4)
+ reportDeliveryDate : timestamp with time zone
+ reviewId : text
+}
+
+class MonitoringFindingHistories{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ findingHistoryId : text
+ hash : text
+ reviewId : text
+}
+
+class MonitoringReviewGrantees{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * createTime : timestamp with time zone
+ * grantNumber : text
+ * sourceCreatedAt : timestamp with time zone
+!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updateBy : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * updateTime : timestamp with time zone
+ deletedAt : timestamp with time zone
+ granteeId : text
+ reviewId : text
+}
+
+class MonitoringReviewStatuses{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviews{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ contentId : text
+ deletedAt : timestamp with time zone
+ endDate : date
+ hash : text
+ outcome : text
+ reportDeliveryDate : timestamp with time zone
+ reviewId : text
+ reviewType : text
+ startDate : date
+ statusId : integer
 }
 
 class NationalCenterUsers{
@@ -1399,6 +1514,48 @@ class ZALGroups{
  session_sig : text
 }
 
+class ZALImportDataFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALImportFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALImports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALMailerLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1414,6 +1571,76 @@ class ZALMailerLogs{
 }
 
 class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringClassSummaries{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewGrantees{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviews{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1977,6 +2204,8 @@ class ZALZAFilter{
 ' Associations
 
 
+Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
+
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -2027,10 +2256,18 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, act
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
+Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFiles
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+MonitoringReviewStatuses "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, status
+MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReview, monitoringClassSummaries
+MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReview, monitoringFindingHistories
+MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReview, monitoringReviewGrantees
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
