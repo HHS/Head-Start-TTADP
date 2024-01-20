@@ -10,7 +10,7 @@ module.exports = {
 
       await queryInterface.createTable('Imports', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -56,7 +56,7 @@ module.exports = {
 
       await queryInterface.createTable('ImportFiles', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -95,12 +95,12 @@ module.exports = {
           defaultValue: IMPORT_STATUSES.IDENTIFIED,
         },
         downloadAttempts: {
-          type: Sequelize.INT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           defaultValue: 0,
         },
         processAttempts: {
-          type: Sequelize.INT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           defaultValue: 0,
         },
@@ -118,9 +118,21 @@ module.exports = {
         },
       }, { transaction });
 
+      await queryInterface.sequelize.query(`
+          CREATE UNIQUE INDEX "ImportFiles_importId_fileId"
+          ON "ImportFiles"
+          ("importId", "fileId");
+      `, { transaction });
+      // https://github.com/sequelize/sequelize/issues/9934
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "ImportFiles"
+          ADD CONSTRAINT "ImportFiles_importId_fileId_unique"
+          UNIQUE USING INDEX "ImportFiles_importId_fileId";
+      `, { transaction });
+
       await queryInterface.createTable('ImportDataFiles', {
         id: {
-          type: Sequelize.BIGINT,
+          type: Sequelize.INTEGER,
           allowNull: false,
           primaryKey: true,
           autoIncrement: true,
@@ -137,7 +149,7 @@ module.exports = {
           onUpdate: 'CASCADE',
           onDelete: 'CASCADE',
         },
-        zipFileInfo: {
+        fileInfo: {
           type: Sequelize.JSONB,
           allowNull: true,
         },
