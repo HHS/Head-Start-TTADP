@@ -26,7 +26,7 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       type: DataTypes.TEXT,
     },
-    file: {
+    fileMask: {
       allowNull: true,
       type: DataTypes.TEXT,
     },
