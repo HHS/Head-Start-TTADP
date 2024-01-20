@@ -372,7 +372,6 @@ const updateAvailableDataFileMetadata = async (
         importFileId,
         fileInfo: {
           name: fileInfo.name,
-          path: fileInfo.path,
         },
         independentHooks: true,
       },
