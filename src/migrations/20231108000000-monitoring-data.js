@@ -52,10 +52,16 @@ module.exports = {
       });
 
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId"
+          CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId_deletedAt"
           ON "MonitoringReviewStatuses"
-          ("statusId")
+          ("statusId", "deletedAt")
           WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "MonitoringReviewStatuses" 
+          ADD CONSTRAINT "MonitoringReviewStatuses_statusId_deletedAt_unique" 
+          UNIQUE USING INDEX "MonitoringReviewStatuses_statusId_deletedAt";
       `, { transaction });
 
       await queryInterface.createTable('MonitoringReviews', {
@@ -130,10 +136,16 @@ module.exports = {
       });
 
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "MonitoringReviews_reviewId"
+          CREATE UNIQUE INDEX "MonitoringReviews_reviewId_deletedAt"
           ON "MonitoringReviews"
-          ("reviewId")
+          ("reviewId", "deletedAt")
           WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "MonitoringReviews" 
+          ADD CONSTRAINT "MonitoringReviews_reviewId_deletedAt_unique" 
+          UNIQUE USING INDEX "MonitoringReviews_reviewId_deletedAt";
       `, { transaction });
 
       await queryInterface.sequelize.query(`
@@ -231,10 +243,16 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber"
+          CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt"
           ON "MonitoringReviewGrantees"
-          ("reviewId", "grantNumber")
+          ("reviewId", "grantNumber", "deletedAt")
           WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "MonitoringReviewGrantees" 
+          ADD CONSTRAINT "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt_unique" 
+          UNIQUE USING INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt";
       `, { transaction });
 
       await queryInterface.createTable('MonitoringFindingHistories', {
@@ -299,10 +317,16 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId"
+          CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt"
           ON "MonitoringFindingHistories"
-          ("reviewId", "findingHistoryId")
+          ("reviewId", "findingHistoryId", "deletedAt")
           WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "MonitoringFindingHistories" 
+          ADD CONSTRAINT "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt_unique" 
+          UNIQUE USING INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt";
       `, { transaction });
 
       await queryInterface.createTable('MonitoringClassSummaries', {
@@ -383,10 +407,16 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber"
+          CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt"
           ON "MonitoringClassSummaries"
-          ("reviewId", "grantNumber")
+          ("reviewId", "grantNumber", "deletedAt")
           WHERE "deletedAt" IS NULL;
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
+          ALTER TABLE "MonitoringClassSummaries" 
+          ADD CONSTRAINT "MonitoringClassSummaries_reviewId_grantNumber_deletedAt_unique" 
+          UNIQUE USING INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt";
       `, { transaction });
 
       //-----------------------------------------------------------------------------------------
