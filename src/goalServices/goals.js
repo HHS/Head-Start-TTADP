@@ -11,7 +11,6 @@ import {
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
-  ObjectiveCourse,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -19,7 +18,6 @@ import {
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
-  ActivityReportObjectiveCourse,
   sequelize,
   Recipient,
   Resource,
@@ -28,7 +26,6 @@ import {
   ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
-  Course,
   Program,
   File,
 } from '../models';
@@ -264,7 +261,6 @@ export async function saveObjectiveAssociations(
   resources = [],
   topics = [],
   files = [],
-  courses = [],
   deleteUnusedAssociations = false,
 ) {
   // We need to know if the objectiveTemplateId is populated to know if we
@@ -361,48 +357,10 @@ export async function saveObjectiveAssociations(
     });
   }
 
-  const objectiveCourses = await Promise.all(
-    courses.map(
-      async (course) => {
-        let ocourse = await ObjectiveCourse.findOne({
-          where: {
-            courseId: course.id,
-            objectiveId: objective.id,
-          },
-        });
-        if (!ocourse) {
-          ocourse = await ObjectiveCourse.create({
-            courseId: course.id,
-            objectiveId: objective.id,
-          }, {
-            // including this despite not really knowing why it's here
-            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
-          });
-        }
-        return ocourse;
-      },
-    ),
-  );
-
-  if (deleteUnusedAssociations) {
-    // cleanup objective courses
-    await ObjectiveCourse.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveCourses && objectiveCourses.length
-            ? objectiveCourses.map((oc) => oc.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-  }
-
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
     files: objectiveFiles,
-    courses: objectiveCourses,
   };
 }
 
@@ -462,33 +420,6 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
-/**
- * Reduces the relation through activity report objectives.
- *
- * @param {Object} objective - The objective object.
- * @param {string} join tablename that joins aro <> relation. e.g. activityReportObjectiveResources
- * @param {string} relation - The relation that will be returned. e.g. resource.
- * @param {Object} [exists={}] - The existing relation object.
- * @returns {Array} - The reduced relation array.
- */
-const reduceRelationThroughActivityReportObjectives = (
-  objective,
-  join,
-  relation,
-  exists = {},
-) => {
-  const existingRelation = exists[relation] || [];
-  return uniqBy([
-    ...existingRelation,
-    ...(objective.activityReportObjectives
-      && objective.activityReportObjectives.length > 0
-      ? objective.activityReportObjectives[0][join]
-        .map((t) => t[relation].dataValues)
-        .filter((t) => t)
-      : []),
-  ], (e) => e.id);
-};
-
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
@@ -513,33 +444,32 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
-      exists.resources = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveResources',
-        'resource',
-        exists,
-      );
+      exists.resources = uniqBy([
+        ...exists.resources,
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveResources
+            .map((r) => r.resource.dataValues)
+          : []),
+      ], (e) => e.value);
 
-      exists.topics = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveTopics',
-        'topic',
-        exists,
-      );
+      exists.topics = uniqBy([
+        ...exists.topics,
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+            .map((t) => t.topic.dataValues)
+          : []),
+      ], (e) => e.id);
 
-      exists.courses = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveCourses',
-        'course',
-        exists,
-      );
-
-      exists.files = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveFiles',
-        'file',
-        exists,
-      );
+      exists.files = uniqBy([
+        ...exists.files,
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+          : []),
+      ], (e) => e.key);
 
       return objectives;
     }
@@ -584,26 +514,22 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveTopics',
-        'topic',
-      ),
-      resources: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveResources',
-        'resource',
-      ),
-      files: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveFiles',
-        'file',
-      ),
-      courses: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveCourses',
-        'course',
-      ),
+      topics: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
+          .map((t) => (t.topic ? t.topic.dataValues : null))
+          .filter((t) => t)
+        : [],
+      resources: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveResources
+          .map((r) => r.resource.dataValues)
+        : [],
+      files: objective.activityReportObjectives
+        && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+        : [],
     }];
   }, currentObjectives);
 
@@ -879,11 +805,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Topic,
             as: 'topics',
-            required: false,
-          },
-          {
-            model: Course,
-            as: 'courses',
             required: false,
           },
           {
@@ -1431,7 +1352,6 @@ export async function createOrUpdateGoals(goals) {
           resources,
           topics,
           files,
-          [],
           deleteUnusedAssociations,
         );
 
@@ -1931,7 +1851,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
-    || o.courses.length
     || o.files.length).map(async (objective, index) => {
     const {
       id,
@@ -2010,7 +1929,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
-      courses,
       deleteUnusedAssociations,
     );
 
@@ -2335,18 +2253,6 @@ export async function getGoalsForReport(reportId) {
                   {
                     model: File,
                     as: 'file',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveCourse,
-                as: 'activityReportObjectiveCourses',
-                required: false,
-                include: [
-                  {
-                    model: Course,
-                    as: 'course',
                   },
                 ],
               },

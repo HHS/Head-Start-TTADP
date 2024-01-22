@@ -9,14 +9,12 @@ const {
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
-  ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
   Objective,
   ObjectiveFile,
   ObjectiveResource,
-  ObjectiveCourse,
   ObjectiveTopic,
 } = require('../models');
 
@@ -166,37 +164,6 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
   ]);
 };
 
-export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
-  const courseIds = courses.map((course) => course.courseId);
-  const courseSet = new Set(courseIds);
-  const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
-    where: { activityReportObjectiveId },
-    raw: true,
-  });
-  const originalCourseIds = originalAroCourses.map((course) => course.courseId)
-    || [];
-  const removedCourseIds = originalCourseIds.filter((id) => !courseSet.has(id));
-  const currentCourseIds = new Set(originalCourseIds.filter((id) => courseSet.has(id)));
-  const newCourseIds = courseIds.filter((id) => !currentCourseIds.has(id));
-
-  return Promise.all([
-    ...newCourseIds.map(async (courseId) => ActivityReportObjectiveCourse.create({
-      activityReportObjectiveId,
-      courseId,
-    })),
-    removedCourseIds.length > 0
-      ? ActivityReportObjectiveCourse.destroy({
-        where: {
-          activityReportObjectiveId,
-          courseId: { [Op.in]: removedCourseIds },
-        },
-        individualHooks: true,
-        hookMetadata: { objectiveId },
-      })
-      : Promise.resolve(),
-  ]);
-};
-
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
   const topicIds = topics.map((topic) => topic.topicId);
   const topicsSet = new Set(topicIds);
@@ -259,7 +226,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     topics,
     ttaProvided,
     status,
-    courses,
     order,
     supportType,
     closeSuspendContext,
@@ -306,7 +272,6 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
-    cacheCourses(objectiveId, activityReportObjectiveId, courses),
   ]);
 };
 

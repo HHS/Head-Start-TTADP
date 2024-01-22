@@ -8,7 +8,6 @@ import {
   Grant,
   Topic,
   File,
-  Course,
   Resource,
 } from '../models';
 import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
@@ -17,9 +16,7 @@ import { cacheObjectiveMetadata } from './reportCache';
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
-      const {
-        topics, files, resources, courses,
-      } = objective;
+      const { topics, files, resources } = objective;
 
       // Determine if this objective already exists.
       let existingObjective;
@@ -81,7 +78,6 @@ export async function saveObjectivesForReport(objectives, report) {
         resources,
         topics,
         files,
-        courses,
         deleteUnusedAssociations,
       );
 
@@ -157,11 +153,6 @@ function reduceOtherEntityObjectives(newObjectives) {
         ...objective.topics,
       ], 'id');
 
-      exists.courses = uniqBy([
-        ...exists.courses,
-        ...objective.courses,
-      ], 'id');
-
       exists.files = uniqBy([
         ...exists.files,
         ...objective.files,
@@ -232,10 +223,6 @@ export async function getObjectivesByReportId(reportId) {
       {
         model: Topic,
         as: 'topics',
-      },
-      {
-        model: Course,
-        as: 'courses',
       },
       {
         model: Resource,

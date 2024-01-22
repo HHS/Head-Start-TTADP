@@ -128,6 +128,7 @@ async function activitySummary(
   await page.keyboard.type('Change in scope');
   await page.keyboard.press('Enter');
   await blur(page);
+
   await page.getByLabel('Start date *mm/dd/yyyy').fill('12/01/2020');
   await page.getByLabel('End date *mm/dd/yyyy').fill('12/01/2050');
   await page.getByLabel('Duration in hours (round to the nearest half hour) *').fill('5');
@@ -137,8 +138,13 @@ async function activitySummary(
   await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
-
   await blur(page);
+
+  await page.getByText('Language used *- Select -').click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await blur(page);
+
   await page.getByLabel('Number of participants involved *').fill('5');
 }
 
@@ -868,7 +874,7 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('An unlikely statement');
-    
+
     // save draft
     await blur(page);
     const p2 = page.waitForResponse('/api/activity-reports/goals');
@@ -877,10 +883,11 @@ test.describe('Activity Report', () => {
     await p2;
 
     await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
-    await page.locator('#react-select-13-option-1').getByText('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the ').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Keep objective' }).click();
     await blur(page);
-  
+
     expect(page.getByRole('textbox', { name: /TTA provided for objective/i }).getByText('An unlikely statement')).toBeVisible();
   });
 });

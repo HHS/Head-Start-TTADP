@@ -24,7 +24,6 @@ const defaultGoalsAndObjectives = [{
     topics: [],
     ttaProvided: '<p>TTA Provided</p>',
     status: 'In Progress',
-    courses: [],
     resources: [
       {
         value: 'https://www.govtest1.com',
@@ -70,7 +69,7 @@ const RenderRecipientReviewSection = ({ goalsAndObjectives }) => {
 
 const RenderReviewSection = (goalsAndObjectives) => {
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed: true, toggleGoalForm: jest.fn() }}>
+    <GoalFormContext.Provider>
       <RenderRecipientReviewSection goalsAndObjectives={goalsAndObjectives} />
     </GoalFormContext.Provider>,
   );
