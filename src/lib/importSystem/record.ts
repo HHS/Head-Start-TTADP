@@ -522,6 +522,31 @@ const setImportFileStatus = async (
   },
 );
 
+/**
+ * Asynchronously retrieves all enabled imports from the database with specific attributes.
+ *
+ * The function queries the database for all records in the Import model where the 'enabled'
+ * field is true. It only fetches the 'id', 'name', and 'schedule' attributes of the Import records.
+ * The results are returned in a raw format (plain JavaScript objects).
+ *
+ * @returns {Promise<any[]>} A promise that resolves to an array of raw import schedule objects.
+ */
+const importSchedules = async (): Promise<{
+  id: number,
+  name: string,
+  schedule: string
+}[]> => Import.findAll({
+  attributes: [
+    'id',
+    'name',
+    'schedule',
+  ],
+  where: {
+    enabled: true,
+  },
+  raw: true,
+});
+
 export {
   getPriorFile,
   importHasMoreToDownload,
@@ -533,4 +558,5 @@ export {
   setImportFileHash,
   setImportFileStatus,
   updateAvailableDataFileMetadata,
+  importSchedules,
 };
