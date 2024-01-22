@@ -63,6 +63,7 @@ describe('Approved Activity Report V2 component', () => {
       completeDate: '2021-01-01',
     }],
     participants: ['Commander of Pants', 'Princess of Castles'],
+    language: [],
     numberOfParticipants: 3,
     reason: ['Needed it'],
     startDate: '1968-08-01',
@@ -205,6 +206,15 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
+  });
+
+  it('language', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, language: ['Gobbledegook'],
+    }}
+    />);
+
+    expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {

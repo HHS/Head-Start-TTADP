@@ -16,6 +16,12 @@ const RECIPIENT_PARTICIPANTS = [
   ];
   exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
+  const LANGUAGES = [
+    'English',
+    'Spanish',
+];
+exports.LANGUAGES = LANGUAGES;
+
   const OTHER_ENTITY_PARTICIPANTS = [
     'HSCO',
     'Local or State Agency',
