@@ -514,7 +514,6 @@ class MonitoringClassSummaries{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * sourceCreatedAt : timestamp with time zone
-!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  classroomOrganization : decimal(5,4)
@@ -525,19 +524,20 @@ class MonitoringClassSummaries{
  instructionalSupport : decimal(5,4)
  reportDeliveryDate : timestamp with time zone
  reviewId : text
+ sourceDeletedAt : timestamp with time zone
 }
 
 class MonitoringFindingHistories{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * sourceCreatedAt : timestamp with time zone
-!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  findingHistoryId : text
  hash : text
  reviewId : text
+ sourceDeletedAt : timestamp with time zone
 }
 
 class MonitoringReviewGrantees{
@@ -546,7 +546,6 @@ class MonitoringReviewGrantees{
  * createTime : timestamp with time zone
  * grantNumber : text
  * sourceCreatedAt : timestamp with time zone
-!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updateBy : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -554,6 +553,7 @@ class MonitoringReviewGrantees{
  deletedAt : timestamp with time zone
  granteeId : text
  reviewId : text
+ sourceDeletedAt : timestamp with time zone
 }
 
 class MonitoringReviewStatuses{
@@ -561,18 +561,17 @@ class MonitoringReviewStatuses{
  * createdAt : timestamp with time zone
  * name : text
  * sourceCreatedAt : timestamp with time zone
-!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * statusId : integer
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
 }
 
 class MonitoringReviews{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * sourceCreatedAt : timestamp with time zone
-!issue='column should not allow null' * sourceDeletedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  contentId : text
@@ -583,6 +582,7 @@ class MonitoringReviews{
  reportDeliveryDate : timestamp with time zone
  reviewId : text
  reviewType : text
+ sourceDeletedAt : timestamp with time zone
  startDate : date
  statusId : integer
 }
