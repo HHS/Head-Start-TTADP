@@ -54,8 +54,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId_deletedAt"
           ON "MonitoringReviewStatuses"
-          ("statusId", "deletedAt")
-          WHERE "deletedAt" IS NULL;
+          ("statusId", "deletedAt");
       `, { transaction });
 
       await queryInterface.sequelize.query(`
@@ -138,8 +137,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           CREATE UNIQUE INDEX "MonitoringReviews_reviewId_deletedAt"
           ON "MonitoringReviews"
-          ("reviewId", "deletedAt")
-          WHERE "deletedAt" IS NULL;
+          ("reviewId", "deletedAt");
       `, { transaction });
 
       await queryInterface.sequelize.query(`
@@ -245,8 +243,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt"
           ON "MonitoringReviewGrantees"
-          ("reviewId", "grantNumber", "deletedAt")
-          WHERE "deletedAt" IS NULL;
+          ("reviewId", "grantNumber", "deletedAt");
       `, { transaction });
 
       await queryInterface.sequelize.query(`
@@ -319,8 +316,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt"
           ON "MonitoringFindingHistories"
-          ("reviewId", "findingHistoryId", "deletedAt")
-          WHERE "deletedAt" IS NULL;
+          ("reviewId", "findingHistoryId", "deletedAt");
       `, { transaction });
 
       await queryInterface.sequelize.query(`
@@ -409,8 +405,7 @@ module.exports = {
       await queryInterface.sequelize.query(`
           CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt"
           ON "MonitoringClassSummaries"
-          ("reviewId", "grantNumber", "deletedAt")
-          WHERE "deletedAt" IS NULL;
+          ("reviewId", "grantNumber", "deletedAt");
       `, { transaction });
 
       await queryInterface.sequelize.query(`
