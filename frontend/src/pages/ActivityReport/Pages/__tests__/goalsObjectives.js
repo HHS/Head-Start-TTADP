@@ -14,6 +14,7 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
@@ -66,27 +67,29 @@ const RenderGoalsObjectives = ({
   hookForm.setValue = spy;
 
   return (
-    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-      <Router history={history}>
-        <FormProvider {...hookForm}>
-          {goalsObjectives.render(
-            null,
-            {
-              activityRecipientType,
-            },
-            1,
-            null,
-            jest.fn(),
-            jest.fn(),
-            jest.fn(),
-            false,
-            '',
-            jest.fn(),
-            () => <></>,
-          )}
-        </FormProvider>
-      </Router>
-    </NetworkContext.Provider>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            {goalsObjectives.render(
+              null,
+              {
+                activityRecipientType,
+              },
+              1,
+              null,
+              jest.fn(),
+              jest.fn(),
+              jest.fn(),
+              false,
+              '',
+              jest.fn(),
+              () => <></>,
+            )}
+          </FormProvider>
+        </Router>
+      </NetworkContext.Provider>
+    </UserContext.Provider>
   );
 };
 
@@ -103,13 +106,15 @@ const renderGoals = (
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
-      <RenderGoalsObjectives
-        grantIds={grantIds}
-        activityRecipientType={activityRecipientType}
-        connectionActive={!throwFetchError}
-      />
-    </GoalFormContext.Provider>,
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+        <RenderGoalsObjectives
+          grantIds={grantIds}
+          activityRecipientType={activityRecipientType}
+          connectionActive={!throwFetchError}
+        />
+      </GoalFormContext.Provider>
+    </UserContext.Provider>,
   );
 };
 
