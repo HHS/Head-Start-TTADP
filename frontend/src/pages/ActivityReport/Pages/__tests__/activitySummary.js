@@ -137,6 +137,7 @@ describe('isPageComplete', () => {
     numberOfParticipants: 3,
     startDate: '09/01/2020',
     endDate: '09/01/2020',
+    language: ['English'],
   };
 
   it('returns true if validated by hook form', async () => {
@@ -167,5 +168,10 @@ describe('isPageComplete', () => {
   it('validates delivery method', async () => {
     const result = isPageComplete({ ...FORM_DATA, deliveryMethod: 'virtual' }, { isValid: false });
     expect(result).toBe(true);
+  });
+
+  it('validates language', async () => {
+    const result = isPageComplete({ ...FORM_DATA, language: [] }, { isValid: false });
+    expect(result).toBe(false);
   });
 });
