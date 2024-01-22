@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import selectEvent from 'react-select-event';
 import ObjectiveForm from '../ObjectiveForm';
+import UserContext from '../../../UserContext';
 
 import {
   OBJECTIVE_ERROR_MESSAGES,
@@ -45,31 +46,33 @@ describe('ObjectiveForm', () => {
     goalStatus = 'Draft',
   ) => {
     render((
-      <ObjectiveForm
-        index={index}
-        isOnReport={false}
-        removeObjective={removeObjective}
-        setObjectiveError={setObjectiveError}
-        objective={objective}
-        setObjective={setObjective}
-        errors={[<></>, <></>, <></>, <></>, <></>, <></>]}
-        goalStatus={goalStatus}
-        onUploadFiles={jest.fn()}
-        topicOptions={[
-          'Behavioral / Mental Health / Trauma',
-          'Child Screening and Assessment',
-          'CLASS: Classroom Organization',
-          'CLASS: Emotional Support',
-          'CLASS: Instructional Support',
-          'Coaching',
-          'Communication',
-          'Community and Self-Assessment',
-          'Culture & Language',
-          'Curriculum (Instructional or Parenting)',
-          'Data and Evaluation',
-        ].map((name, id) => ({ id, name }))}
-        userCanEdit
-      />
+      <UserContext.Provider value={{ user: { flags: [] } }}>
+        <ObjectiveForm
+          index={index}
+          isOnReport={false}
+          removeObjective={removeObjective}
+          setObjectiveError={setObjectiveError}
+          objective={objective}
+          setObjective={setObjective}
+          errors={[<></>, <></>, <></>, <></>, <></>, <></>]}
+          goalStatus={goalStatus}
+          onUploadFiles={jest.fn()}
+          topicOptions={[
+            'Behavioral / Mental Health / Trauma',
+            'Child Screening and Assessment',
+            'CLASS: Classroom Organization',
+            'CLASS: Emotional Support',
+            'CLASS: Instructional Support',
+            'Coaching',
+            'Communication',
+            'Community and Self-Assessment',
+            'Culture & Language',
+            'Curriculum (Instructional or Parenting)',
+            'Data and Evaluation',
+          ].map((name, id) => ({ id, name }))}
+          userCanEdit
+        />
+      </UserContext.Provider>
     ));
   };
 

@@ -11,6 +11,7 @@ import {
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
   validatePrompts,
+  validateOnlyWithFlag,
 } from '../goalValidator';
 import {
   GOAL_NAME_ERROR,
@@ -277,6 +278,25 @@ describe('validateGoals', () => {
         const result = validateGoals(goals);
         expect(result).toEqual(true);
       });
+    });
+  });
+
+  describe('validateOnlyWithFlag', () => {
+    it('returns true if no flags on user', () => {
+      const result = validateOnlyWithFlag({}, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if user does not have flag', () => {
+      const result = validateOnlyWithFlag({ flags: [] }, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if flag is valid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', 1);
+      expect(result).toEqual(true);
+    });
+    it('returns false if flag is invalid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', false);
+      expect(result).toEqual(false);
     });
   });
 });
