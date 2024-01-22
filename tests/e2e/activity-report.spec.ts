@@ -206,7 +206,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
-    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -566,8 +566,8 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
 
-    // const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    // await supportType.selectOption('Implementing');
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
 
     await page.getByRole('combobox', { name: 'Status for objective' }).selectOption('In Progress');
 
@@ -687,8 +687,8 @@ test.describe('Activity Report', () => {
 
     await blur(page);
 
-    // const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    // await supportType.selectOption('Implementing');
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
 
     await blur(page);
 
@@ -752,8 +752,8 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('Enter');
     await blur(page);
 
-    // const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    // await supportType.selectOption('Implementing');
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
     await page.waitForTimeout(10000);
 
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).click();
