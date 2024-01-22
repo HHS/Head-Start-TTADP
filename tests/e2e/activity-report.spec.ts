@@ -249,10 +249,8 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('hello');
     await blur(page);
 
-    await page.waitForTimeout(10000);
-
-    // await page.getByRole('combobox', { name: 'Support type*' }).selectOption('Implementing');
-    // await blur(page);
+    await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
+    await blur(page);
 
     await page.waitForTimeout(10000);
 
@@ -261,7 +259,6 @@ test.describe('Activity Report', () => {
 
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.waitForTimeout(10000);
-
 
     // assert the goals and objectives section is complete
     let sideNavTextContent = await page.locator('#activityReportSideNav-goals-and-objectives .page-state').textContent();
@@ -449,7 +446,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
-    const objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
+    let objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
 
     // verify the correct value is selected in the Objective status dropdown
     expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
@@ -478,10 +475,11 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
+    expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
 
-    await page.getByTestId('dropdown').click();
-    await page.getByTestId('dropdown').selectOption({ label: 'Complete' });
+    await objectiveStatus.click();
+    await objectiveStatus.selectOption({ label: 'Complete' });
     // Instead of saving, cancel out of the 'Edit' form
     await page.getByRole('link', { name: 'Cancel' }).click();
 
@@ -529,6 +527,9 @@ test.describe('Activity Report', () => {
     await page.getByLabel(/topics/i).focus();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
+
+    // support type
+    await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
 
     // save goal
     await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -779,8 +780,8 @@ test.describe('Activity Report', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await blur(page);
-    // await page.waitForTimeout(10000);
-    // await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
+    await page.waitForTimeout(10000);
+    await page.locator('[id="goalForEditing\\.objectives\\[1\\]\\.supportType"]').selectOption('Implementing');
     await page.waitForTimeout(10000);
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(4).click();
     await page.keyboard.type('g1 o2 tta');
