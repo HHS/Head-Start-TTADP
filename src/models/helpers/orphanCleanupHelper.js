@@ -55,11 +55,14 @@ const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
                     ON f.id = "of"."fileId"
                     LEFT JOIN "ObjectiveTemplateFiles" otf
                     ON f.id = otf."fileId"
+                    LEFT JOIN "ImportFiles" imf
+                    ON f.id = imf."fileId"
                     WHERE f.id = ${fileId}
                     AND arf.id IS NULL
                     AND arof.id IS NULL
                     AND "of".id IS NULL
                     AND otf.id IS NULL
+                    AND imf.id IS NULL
                     GROUP BY 1
                )`),
       },
