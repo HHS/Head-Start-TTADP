@@ -206,8 +206,8 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).locator('div').nth(2).click();
     await page.keyboard.type('hello');
 
-    // const supportType = page.getByRole('combobox', { name: 'Support type*' });
-    // await supportType.selectOption('Implementing');
+    const supportType = page.getByRole('combobox', { name: 'Support type*' });
+    await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
 
@@ -450,7 +450,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
     // verify the correct value is selected in the Objective status dropdown
-    expect(await extractSelectedDisplayedValue(page.getByTestId('dropdown'))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(page.getByRole('combobox', { name: 'Objective status' }))).toBe('Not Started');
     // Change g1o1's status
     await page.getByTestId('dropdown').click();
     await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
