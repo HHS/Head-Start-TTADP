@@ -21,6 +21,7 @@ export const participantsFields = {
   participants: [],
   deliveryMethod: '',
   numberOfParticipants: '',
+  language: [],
 };
 
 export const nextStepsFields = {
