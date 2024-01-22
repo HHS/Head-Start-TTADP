@@ -73,15 +73,6 @@ const Participants = ({ formData }) => {
         <ReadOnlyField label="Recipients">
           {formData.recipients.map((r) => r.label).join('\n')}
         </ReadOnlyField>
-        <ReadOnlyField label="Recipient participants">
-          {formData.participants.join('\n')}
-        </ReadOnlyField>
-        <ReadOnlyField label="Language used">
-          {formData.language.join('\n')}
-        </ReadOnlyField>
-        <ReadOnlyField label="Delivery method">
-          {capitalize(formData.deliveryMethod)}
-        </ReadOnlyField>
         {isHybrid ? (
           <>
             <ReadOnlyField label="Number of participants attending in person">
@@ -96,6 +87,15 @@ const Participants = ({ formData }) => {
             {formData.numberOfParticipants}
           </ReadOnlyField>
         )}
+        <ReadOnlyField label="Recipient participants">
+          {formData.participants.join('\n')}
+        </ReadOnlyField>
+        <ReadOnlyField label="Delivery method">
+          {capitalize(formData.deliveryMethod)}
+        </ReadOnlyField>
+        <ReadOnlyField label="Language used">
+          {formData.language.join('\n')}
+        </ReadOnlyField>
       </PocCompleteView>
     );
   }
@@ -139,25 +139,93 @@ const Participants = ({ formData }) => {
           />
         </FormItem>
       </div>
-
-      <div className="margin-top-2">
-        <FormItem
-          label="Language used"
-          name="language"
-        >
-          <MultiSelect
-            name="language"
-            control={control}
-            placeholderText={placeholderText}
-            options={
-              LANGUAGES
-                .map((language) => ({ value: language, label: language }))
-            }
-            required="Select at least one language"
-          />
-        </FormItem>
+      <div aria-live="polite">
+        {isHybrid ? (
+          <>
+            <div>
+              <FormItem
+                label="Number of participants attending in person "
+                name="numberOfParticipantsInPerson"
+                required
+              >
+                <div className="maxw-card-lg">
+                  <TextInput
+                    id="numberOfParticipantsInPerson"
+                    name="numberOfParticipantsInPerson"
+                    type="number"
+                    min={1}
+                    required
+                    inputRef={
+                        register({
+                          required: 'Enter number of participants attending in person',
+                          valueAsNumber: true,
+                          min: {
+                            value: 1,
+                            message: 'Number of participants can not be zero or negative',
+                          },
+                        })
+                      }
+                  />
+                </div>
+              </FormItem>
+            </div>
+            <div>
+              <FormItem
+                label="Number of participants attending virtually "
+                name="numberOfParticipantsVirtually"
+                required
+              >
+                <div className="maxw-card-lg">
+                  <TextInput
+                    required
+                    id="numberOfParticipantsVirtually"
+                    name="numberOfParticipantsVirtually"
+                    type="number"
+                    min={1}
+                    inputRef={
+                        register({
+                          required: 'Enter number of participants attending virtually',
+                          valueAsNumber: true,
+                          min: {
+                            value: 1,
+                            message: 'Number of participants can not be zero or negative',
+                          },
+                        })
+                      }
+                  />
+                </div>
+              </FormItem>
+            </div>
+          </>
+        ) : (
+          <div>
+            <FormItem
+              label="Number of participants "
+              name="numberOfParticipants"
+            >
+              <div className="maxw-card-lg">
+                <TextInput
+                  required
+                  id="numberOfParticipants"
+                  name="numberOfParticipants"
+                  type="number"
+                  min={1}
+                  inputRef={
+                      register({
+                        required: 'Enter number of participants',
+                        valueAsNumber: true,
+                        min: {
+                          value: 1,
+                          message: 'Number of participants can not be zero or negative',
+                        },
+                      })
+                    }
+                />
+              </div>
+            </FormItem>
+          </div>
+        )}
       </div>
-
       <div className="margin-top-2">
         <FormItem
           label="How was the activity conducted?"
@@ -191,92 +259,22 @@ const Participants = ({ formData }) => {
             inputRef={register({ required: 'Select one' })}
           />
         </FormItem>
-        <div aria-live="polite">
-          {isHybrid ? (
-            <>
-              <div>
-                <FormItem
-                  label="Number of participants attending in person "
-                  name="numberOfParticipantsInPerson"
-                  required
-                >
-                  <div className="maxw-card-lg">
-                    <TextInput
-                      id="numberOfParticipantsInPerson"
-                      name="numberOfParticipantsInPerson"
-                      type="number"
-                      min={1}
-                      required
-                      inputRef={
-                        register({
-                          required: 'Enter number of participants attending in person',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </FormItem>
-              </div>
-              <div>
-                <FormItem
-                  label="Number of participants attending virtually "
-                  name="numberOfParticipantsVirtually"
-                  required
-                >
-                  <div className="maxw-card-lg">
-                    <TextInput
-                      required
-                      id="numberOfParticipantsVirtually"
-                      name="numberOfParticipantsVirtually"
-                      type="number"
-                      min={1}
-                      inputRef={
-                        register({
-                          required: 'Enter number of participants attending virtually',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </FormItem>
-              </div>
-            </>
-          ) : (
-            <div>
-              <FormItem
-                label="Number of participants "
-                name="numberOfParticipants"
-              >
-                <div className="maxw-card-lg">
-                  <TextInput
-                    required
-                    id="numberOfParticipants"
-                    name="numberOfParticipants"
-                    type="number"
-                    min={1}
-                    inputRef={
-                      register({
-                        required: 'Enter number of participants',
-                        valueAsNumber: true,
-                        min: {
-                          value: 1,
-                          message: 'Number of participants can not be zero or negative',
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </FormItem>
-            </div>
-          )}
+        <div className="margin-top-2">
+          <FormItem
+            label="Language used"
+            name="language"
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              placeholderText={placeholderText}
+              options={
+              LANGUAGES
+                .map((language) => ({ value: language, label: language }))
+            }
+              required="Select at least one language"
+            />
+          </FormItem>
         </div>
       </div>
     </>
