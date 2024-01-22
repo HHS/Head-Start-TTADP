@@ -69,9 +69,7 @@ class EncodingConverter extends Transform {
           throw new Error(`Unsupported encoding detected: ${detectedEncoding}`);
         }
 
-        const x = chardet.analyse(this.buffer);
-        console.log(x);
-        this.sourceEncoding = 'utf-8';
+        this.sourceEncoding = chardet.analyse(this.buffer)?.[0]?.name || 'utf-8';
 
         // If the source encoding matches the target encoding, pass through the entire buffer
         if (this.sourceEncoding === this.targetEncoding) {
