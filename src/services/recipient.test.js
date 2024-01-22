@@ -928,18 +928,21 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];
@@ -1060,8 +1063,7 @@ describe('Recipient DB service', () => {
       const objective = goal.objectives[0];
       expect(objective.topics.length).toBe(4);
       expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
-      expect(objective.supportTypes.length).toBe(1);
-      expect(objective.supportTypes[0]).toBe('Planning');
+      expect(objective.supportType).toBe('Planning');
       expect(objective.activityReports.length).toBe(1);
     });
   });
