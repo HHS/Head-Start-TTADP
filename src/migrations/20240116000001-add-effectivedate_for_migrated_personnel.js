@@ -42,18 +42,6 @@ module.exports = {
           data_id
         FROM "ZALProgramPersonnel"
         ),
-        all_personnel_assigned_roles AS (
-        SELECT DISTINCT
-          apr.data_id,
-          apr.zpid,
-          apr.zgrid,
-          apr.zrole,
-          apr.zemail
-        FROM all_personnel_roles apr
-        JOIN "ZALProgramPersonnel" zpp
-          ON apr.data_id = zpp.data_id
-          AND (new_row_data->>'active')::bool = TRUE
-        ),
         total_assignments_per_role AS (
         SELECT
           COUNT(*) pers_ass_over_time_cnt,
@@ -61,7 +49,7 @@ module.exports = {
           grid,
           role
         FROM all_assigned_roles aar
-        JOIN all_personnel_assigned_roles apar
+        JOIN all_personnel_roles apr
           ON pid = zpid
           AND grid = zgrid
           AND role = zrole
