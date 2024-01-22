@@ -449,11 +449,13 @@ test.describe('Activity Report', () => {
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
     await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
 
+    const objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
+
     // verify the correct value is selected in the Objective status dropdown
-    expect(await extractSelectedDisplayedValue(page.getByRole('combobox', { name: 'Objective status' }))).toBe('Not Started');
+    expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
     // Change g1o1's status
-    await page.getByTestId('dropdown').click();
-    await page.getByTestId('dropdown').selectOption({ label: 'In Progress' });
+    await objectiveStatus.click();
+    await objectiveStatus.selectOption({ label: 'In Progress' });
     await page.getByRole('button', { name: 'Save' }).click();
 
     // expand the objective for g1
