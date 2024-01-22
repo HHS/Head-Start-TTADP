@@ -54,6 +54,7 @@ class Hasher extends PassThrough {
 }
 
 const getHash = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: string | Record<string, any>,
   algorithm: Algorithm = Algorithms.SHA256,
 ) => {
