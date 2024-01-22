@@ -15,11 +15,6 @@ a:visited {
   color: $text-visited
 }
 
-/*|||||| Accessibility fix |||||||*/
-[hidden] {
-  display: none !important;
-}
-
 /*|||||| Table resets |||||||*/
 
 .usa-table thead th a {
