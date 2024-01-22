@@ -7,8 +7,8 @@ import S3Client from '../s3';
 jest.mock('aws-sdk');
 
 describe('S3Client', () => {
-  let s3Client: S3Client;
-  let mockS3: any;
+  let s3Client;
+  let mockS3;
 
   beforeEach(() => {
     mockS3 = {
