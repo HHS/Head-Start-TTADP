@@ -85,6 +85,7 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'TTA objective': objective.title,
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,

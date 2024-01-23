@@ -52,6 +52,13 @@ const OtherEntityReviewSection = () => {
                 ))}
               </ul>
             </div>
+            <div className="margin-top-1">
+              <span className="text-bold">iPD courses:</span>
+              {' '}
+              {
+                objective.courses.map((c) => c.name).join(', ')
+              }
+            </div>
             <AttachmentReviewSection attachments={objective.files} />
             <div className="margin-top-1">
               <span className="text-bold">TTA provided:</span>

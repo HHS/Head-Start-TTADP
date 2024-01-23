@@ -54,6 +54,7 @@ const RenderGoalsObjectives = ({
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }],
       objectivesWithoutGoals: [],
@@ -261,6 +262,7 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }];
 
@@ -484,6 +486,7 @@ describe('goals objectives', () => {
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
           files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          courses: [],
         }],
       }]}
       />);
