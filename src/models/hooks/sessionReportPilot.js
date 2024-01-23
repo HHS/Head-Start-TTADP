@@ -150,7 +150,6 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
 
       const existing = await sequelize.models.EventReportPilotGoal.findOne({
         where: {
-          sessionId,
           eventId,
           grantId,
         },
