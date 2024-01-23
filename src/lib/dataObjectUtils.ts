@@ -273,8 +273,6 @@ const mergeDeep = (...sources) => {
   const target = sources.shift();
   const source = sources.shift();
 
-  console.log('mergeDeep', target, source);
-
   // Check if both target and source are objects
   if (isObject(target) && isObject(source)) {
     // Iterate over each key in the source object
@@ -288,8 +286,6 @@ const mergeDeep = (...sources) => {
         // Recursively merge the nested objects
         mergeDeep(target[key], source[key]);
       } else {
-        console.log('mergeDeep', target, key, source[key]);
-
         // Assign the value at the current key in the source object to the target object
         Object.assign(target, { [key]: source[key] });
       }
