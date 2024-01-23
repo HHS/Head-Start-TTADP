@@ -162,7 +162,7 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
           grantId,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: 'Not Started',
+          status: 'Draft',
           createdVia: 'tr',
         }, { transaction: options.transaction });
 
