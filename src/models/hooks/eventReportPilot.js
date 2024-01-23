@@ -105,13 +105,39 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
  */
 const updateGoalText = async (sequelize, instance, options) => {
   const { transaction } = options;
-  const changed = instance?.changed?.();
 
-  if (!changed || !changed.includes('name')) {
+  // Compare the previous and current goal text field.
+  const previous = instance.previous().data || null;
+  const current = JSON.parse(instance.data.val) || null;
+
+  if (!current || !previous) {
     return;
   }
 
-  const { name } = instance;
+  if (current.goal === previous.goal) {
+    return;
+  }
+
+  // Disallow goal name propagation if any session on this event has been completed,
+  // effectively locking down this goal text.
+  // We should probably disable this in the UI too.
+  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
+    where: {
+      eventId: instance.id,
+      'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+    },
+    transaction,
+  });
+
+  if (hasCompleteSession) {
+    current.goal = previous.goal;
+    instance.set('data', previous);
+    return;
+  }
+
+  // Propagate the goal name to all goals associated with this event
+  const name = current.goal;
+  if (!name) return;
 
   await sequelize.models.Goal.update(
     { name },
@@ -125,11 +151,6 @@ const updateGoalText = async (sequelize, instance, options) => {
                 SELECT "goalId"
                 FROM "EventReportPilotGoals"
                 WHERE "eventId" = ${instance.id}
-                AND "sessionId" NOT IN (
-                  SELECT "id"
-                  FROM "SessionReportPilots"
-                  WHERE "data"->>'status' = '${TRAINING_REPORT_STATUSES.COMPLETE}'
-                )
               )`),
             },
           },
@@ -140,14 +161,18 @@ const updateGoalText = async (sequelize, instance, options) => {
   );
 };
 
+const beforeUpdate = async (sequelize, instance, options) => {
+  await updateGoalText(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
   await notifyPocEventComplete(sequelize, instance, options);
   await notifyVisionAndGoalComplete(sequelize, instance, options);
   await notifyNewPoc(sequelize, instance, options);
-  await updateGoalText(sequelize, instance, options);
 };
 
 export {
   afterUpdate,
+  beforeUpdate,
 };

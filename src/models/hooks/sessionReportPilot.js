@@ -156,13 +156,24 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
         transaction: options.transaction,
       });
 
+      const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
+        where: {
+          eventId,
+          'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+        transaction: options.transaction,
+      });
+
+      const status = hasCompleteSession ? 'In Progress' : 'Draft';
+
       if (!existing) {
         const newGoal = await sequelize.models.Goal.create({
           name: event.data.goal,
           grantId,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: 'Draft',
+          status,
+          source: 'Training event',
           createdVia: 'tr',
         }, { transaction: options.transaction });
 
@@ -206,6 +217,64 @@ const destroyAssociatedGoals = async (sequelize, instance, options) => {
   }
 };
 
+const makeGoalsInProgressIfThisIsTheFirstCompletedSession = async (sequelize, instance, options) => {
+  const { transaction } = options;
+
+  const previous = instance.previous('data') || null;
+  const current = JSON.parse(instance.data.val);
+
+  // If old status is complete, return.
+  if (previous?.status === TRAINING_REPORT_STATUSES.COMPLETE) { return; }
+  if (current?.status !== TRAINING_REPORT_STATUSES.COMPLETE) { return; }
+
+  const otherSessions = await sequelize.models.SessionReportPilot.findAll({
+    where: {
+      eventId: instance.eventId,
+      id: {
+        [Op.ne]: instance.id,
+      },
+    },
+    transaction,
+  });
+
+  // Are any of them complete?
+  const anyComplete = otherSessions.some((s) => {
+    // console.log('other session', s);
+    const { status } = s.dataValues.data;
+    if (!status) return false;
+    return status === TRAINING_REPORT_STATUSES.COMPLETE;
+  });
+
+  if (anyComplete) { return; }
+
+  const data = JSON.parse(instance.data.val) || null;
+  if (!data) return;
+
+  // No other sessions are complete, but this one is about
+  // to become complete.
+  // Find all the goals that were created from this EventReportPilot, and
+  // update their status to In Progress. They are no longer considered Draft
+  // when a session is marked as complete.
+  const junctionGoals = await sequelize.models.EventReportPilotGoal.findAll({
+    where: { eventId: instance.eventId },
+    transaction,
+  });
+
+  // Now find actual Goals that are Draft.
+  const goals = await sequelize.models.Goal.findAll({
+    where: {
+      id: {
+        [Op.in]: junctionGoals.map((jg) => jg.goalId),
+      },
+      status: 'Draft',
+    },
+    transaction,
+  });
+
+  // Update them all to In Progress.
+  await Promise.all(goals.map((goal) => goal.update({ status: 'In Progress', previousStatus: 'Draft' }, { transaction })));
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
@@ -225,6 +294,7 @@ const beforeCreate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  await makeGoalsInProgressIfThisIsTheFirstCompletedSession(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
