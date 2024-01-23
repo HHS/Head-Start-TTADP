@@ -185,6 +185,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText('course 1')).toBeInTheDocument();
+    expect(screen.getByText('course 2')).toBeInTheDocument();
 
     // expect 2 of these (1 for each session)
     expect(screen.getAllByText('PFCE')).toHaveLength(2);

@@ -27,6 +27,7 @@ import { validateListOfResources } from '../../../../components/GoalForm/constan
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 
 export default function Objective({
   objective,
@@ -129,6 +130,33 @@ export default function Objective({
 
   const {
     field: {
+      onChange: onChangeUseIpdCourses,
+      onBlur: onBlurUseIpdCourses,
+      value: objectiveUseIpdCourses,
+      name: objectiveUseIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].useIpdCourses`,
+    defaultValue: !!(objective.courses && objective.courses.length) || false,
+  });
+
+  const {
+    field: {
+      onChange: onChangeIpdCourses,
+      onBlur: onBlurIpdCourses,
+      value: objectiveIpdCourses,
+      name: objectiveIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].courses`,
+    defaultValue: objective.courses || [],
+    rules: {
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+    },
+  });
+
+  const {
+    field: {
       onChange: onChangeTta,
       onBlur: onBlurTta,
       value: objectiveTta,
@@ -227,6 +255,10 @@ export default function Objective({
     // set a new initial status, which we went to preserve separately from the dropdown
     // this determines if the title is read only or not
     setStatusForCalculations(newObjective.status);
+
+    // ipd course
+    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeIpdCourses(newObjective.courses);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -344,6 +376,19 @@ export default function Objective({
         userCanEdit
         editingFromActivityReport
       />
+      <IpdCourseSelect
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+      />
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
@@ -425,6 +470,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    courses: PropTypes.shape({
       message: PropTypes.string,
     }),
     roles: PropTypes.shape({
