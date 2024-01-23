@@ -17,38 +17,38 @@ module.exports = {
         ALTER TABLE "ActivityReportApprovers" DROP CONSTRAINT "unique_activityReportId_userId";
         CREATE UNIQUE INDEX "unique_activityReportId_userId"
         ON "ActivityReportApprovers" ("activityReportId", "userId", "deletedAt");
-        ALTER TABLE "ActivityReportApprovers" ADD CONSTRAINT "unique_activityReportId_userId"
-        USING INDEX "unique_activityReportId_userId"
+        ALTER TABLE "ActivityReportApprovers" ADD CONSTRAINT "unique_activityReportId_userId" UNIQUE
+        USING INDEX "unique_activityReportId_userId"l
 
         ALTER TABLE "CollaboratorTypes" DROP CONSTRAINT "CollaboratorTypes_name_validForId_unique";
         CREATE UNIQUE INDEX "CollaboratorTypes_name_validForId_unique"
         ON "CollaboratorTypes" (name, "validForId", "deletedAt");
-        ALTER TABLE "CollaboratorTypes" ADD CONSTRAINT "CollaboratorTypes_name_validForId_unique"
-        USING INDEX "CollaboratorTypes_name_validForId_unique"
+        ALTER TABLE "CollaboratorTypes" ADD CONSTRAINT "CollaboratorTypes_name_validForId_unique" UNIQUE
+        USING INDEX "CollaboratorTypes_name_validForId_unique";
 
         ALTER TABLE "Courses" DROP CONSTRAINT "Courses_name_unique";
         CREATE UNIQUE INDEX "Courses_name_unique"
         ON "Courses" (name, "deletedAt");
-        ALTER TABLE "Courses" ADD CONSTRAINT "Courses_name_unique"
-        USING INDEX "Courses_name_unique"
+        ALTER TABLE "Courses" ADD CONSTRAINT "Courses_name_unique" UNIQUE
+        USING INDEX "Courses_name_unique";
 
         ALTER TABLE "GoalCollaborators" DROP CONSTRAINT "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
         CREATE UNIQUE INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_unique"
         ON "GoalCollaborators" ("goalId", "userId", "collaboratorTypeId", "deletedAt");
-        ALTER TABLE "GoalCollaborators" ADD CONSTRAINT "GoalCollaborators_goalId_userId_collaboratorTypeId_unique"
-        USING INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_unique"
+        ALTER TABLE "GoalCollaborators" ADD CONSTRAINT "GoalCollaborators_goalId_userId_collaboratorTypeId_unique" UNIQUE
+        USING INDEX "GoalCollaborators_goalId_userId_collaboratorTypeId_unique";
 
         ALTER TABLE "ObjectiveCollaborators" DROP CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
         CREATE UNIQUE INDEX "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un"
         ON "ObjectiveCollaborators" ("objectiveId", "userId", "collaboratorTypeId", "deletedAt");
-        ALTER TABLE "ObjectiveCollaborators" ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un"
-        USING INDEX "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un"
+        ALTER TABLE "ObjectiveCollaborators" ADD CONSTRAINT "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un" UNIQUE
+        USING INDEX "ObjectiveCollaborators_objectiveId_userId_collaboratorTypeId_un";
 
         ALTER TABLE "ValidFor" DROP CONSTRAINT "ValidFor_option_unique";
         CREATE UNIQUE INDEX "ValidFor_option_unique"
         ON "ValidFor" (name, "deletedAt");
-        ALTER TABLE "ValidFor" ADD CONSTRAINT "ValidFor_option_unique"
-        USING INDEX "ValidFor_option_unique"
+        ALTER TABLE "ValidFor" ADD CONSTRAINT "ValidFor_option_unique" UNIQUE
+        USING INDEX "ValidFor_option_unique";
         `,
         { transaction },
       );
