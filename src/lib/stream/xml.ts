@@ -4,6 +4,7 @@ import { SAXParser } from 'sax';
 class XMLStream {
   private readonly xmlStream: Readable;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private parsedObjects: any[] = [];
 
   private currentIndex = 0;
@@ -69,6 +70,7 @@ class XMLStream {
    * @returns A promise that resolves with the next parsed object, or null if all objects
    * have been retrieved.
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getNextObject(): Promise<any | null> {
     return new Promise((resolve) => {
       if (this.currentIndex >= this.parsedObjects.length && this.isFullyRead) {
