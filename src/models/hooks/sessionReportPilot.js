@@ -173,7 +173,6 @@ const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, o
           createdAt: new Date(),
           updatedAt: new Date(),
           status,
-          source: 'Training event',
           createdVia: 'tr',
         }, { transaction: options.transaction });
 
