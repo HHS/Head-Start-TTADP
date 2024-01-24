@@ -45,7 +45,7 @@ describe('getHash', () => {
   it('should return the correct hash for a string', () => {
     const testData = 'Hello, World!';
     const hash = getHash(testData, Algorithms.SHA256);
-    expect(hash).toBe('a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e');
+    expect(hash).toBe('dffd6021bb2bd5b0af676290809ec3a53191dd81c7f70a4b28688a362182986f');
   });
 
   it('should return the correct hash for an object', () => {
