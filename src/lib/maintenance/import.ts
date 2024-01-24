@@ -45,10 +45,11 @@ const enqueueImportMaintenanceJob = (
  * @throws Will throw an error if retrieving import schedules or setting up cron jobs fails.
  */
 const scheduleImportCrons = async () => {
-  // Retrieve a list of import schedules from a data source
-  const imports = await getImportSchedules();
+  let imports;
 
   try {
+    // Retrieve a list of import schedules from a data source
+    imports = await getImportSchedules();
     // Iterate over each import schedule to setup cron jobs
     imports.forEach(({
       id,
@@ -73,7 +74,7 @@ const scheduleImportCrons = async () => {
       importSchedule,
     ));
   } catch (err) {
-    return { imports, isSuccessful: false, err };
+    return { imports, isSuccessful: false, error: err.message };
   }
 
   // Return the list of import schedules
