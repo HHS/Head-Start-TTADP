@@ -48,32 +48,36 @@ const scheduleImportCrons = async () => {
   // Retrieve a list of import schedules from a data source
   const imports = await getImportSchedules();
 
-  // Iterate over each import schedule to setup cron jobs
-  imports.forEach(({
-    id,
-    name,
-    schedule: importSchedule,
-  }) => addCronJob(
-    // Add a new cron job for each import schedule
-    MAINTENANCE_CATEGORY.IMPORT,
-    MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-    // Define the function that creates a new CronJob instance
-    (category, type, timezone, schedule) => CronJob(
-      schedule,
-      // Define the task to be executed by the cron job, which enqueues a maintenance job
-      () => enqueueImportMaintenanceJob(
-        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        id,
+  try {
+    // Iterate over each import schedule to setup cron jobs
+    imports.forEach(({
+      id,
+      name,
+      schedule: importSchedule,
+    }) => addCronJob(
+      // Add a new cron job for each import schedule
+      MAINTENANCE_CATEGORY.IMPORT,
+      MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+      // Define the function that creates a new CronJob instance
+      (category, type, timezone, schedule) => CronJob(
+        schedule,
+        // Define the task to be executed by the cron job, which enqueues a maintenance job
+        () => enqueueImportMaintenanceJob(
+          MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+          id,
+        ),
+        null,
+        true,
+        timezone,
       ),
-      null,
-      true,
-      timezone,
-    ),
-    importSchedule,
-  ));
+      importSchedule,
+    ));
+  } catch (err) {
+    return { imports, isSuccessful: false, err };
+  }
 
   // Return the list of import schedules
-  return { imports };
+  return { imports, isSuccessful: true };
 };
 
 /**
@@ -110,7 +114,7 @@ const importSchedule = async () => maintenanceCommand(
   },
   // Specify the maintenance category and type for this operation.
   MAINTENANCE_CATEGORY.IMPORT,
-  MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+  MAINTENANCE_TYPE.IMPORT_SCHEDULE,
 );
 
 /**
