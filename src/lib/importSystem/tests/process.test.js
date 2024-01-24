@@ -1,6 +1,6 @@
 // processRecords.test.ts
 import { processRecords } from '../process';
-import { XMLStream } from '../../stream/xml';
+import XMLStream from '../../stream/xml';
 import db from '../../../models';
 
 // Mock the external modules
