@@ -5,6 +5,7 @@ import {
   beforeCreate,
   beforeUpdate,
   beforeDestroy,
+  createGoalsForSessionRecipientsIfNecessary,
 } from './sessionReportPilot';
 import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../../lib/mailer';
 
@@ -400,5 +401,61 @@ describe('sessionReportPilot hooks', () => {
 
       await expect(beforeDestroy(mockSequelize, mockInstance, mockOptions)).rejects.toThrow();
     });
+  });
+});
+
+describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
+  const mockOptions = {
+    transaction: {},
+  };
+
+  const mockInstance = {
+    id: 1,
+    data: {
+      val: JSON.stringify({
+        event: {
+          id: '2',
+          data: {
+            goal: 'Increase knowledge about X',
+          },
+        },
+        recipients: [{ value: '3' }],
+      }),
+    },
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('creates a new goal and event report pilot goal if necessary', async () => {
+    const mockSequelize = {
+      models: {
+        EventReportPilot: { findByPk: jest.fn(() => true) },
+        Grant: { findByPk: jest.fn(() => true) },
+        EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
+        Goal: { create: jest.fn(() => ({ id: 4 })) },
+        SessionReportPilot: { findOne: jest.fn(() => null) },
+      },
+    };
+
+    await createGoalsForSessionRecipientsIfNecessary(mockSequelize, mockInstance, mockOptions);
+    expect(mockSequelize.models.Goal.create).toHaveBeenCalled();
+    expect(mockSequelize.models.EventReportPilotGoal.create).toHaveBeenCalled();
+  });
+
+  it('does not create a new goal if one already exists', async () => {
+    const mockSequelize = {
+      models: {
+        EventReportPilot: { findByPk: jest.fn(() => true) },
+        Grant: { findByPk: jest.fn(() => true) },
+        EventReportPilotGoal: { findOne: jest.fn(() => true) },
+        Goal: { create: jest.fn() },
+        SessionReportPilot: { findOne: jest.fn(() => null) },
+      },
+    };
+
+    await createGoalsForSessionRecipientsIfNecessary(mockSequelize, mockInstance, mockOptions);
+    expect(mockSequelize.models.Goal.create).not.toHaveBeenCalled();
   });
 });

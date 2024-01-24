@@ -131,7 +131,7 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
   }
 };
 
-const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, options) => {
+export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, instance, options) => {
   try {
     const { event, recipients } = JSON.parse(instance.data.val);
     if (!event?.data?.goal || !event.id) return;
