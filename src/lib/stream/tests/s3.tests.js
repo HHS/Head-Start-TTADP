@@ -1,6 +1,5 @@
-import AWS, { Credentials } from 'aws-sdk';
+import AWS from 'aws-sdk';
 import { Readable } from 'stream';
-import { generateS3Config } from '../../s3';
 import { auditLogger } from '../../../logger';
 import S3Client from '../s3';
 
