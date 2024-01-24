@@ -21,6 +21,7 @@ import {
   moreToProcess,
   getImportSchedules,
 } from '../importSystem';
+import { expect } from '@playwright/test';
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation(() => ({
@@ -57,7 +58,7 @@ describe('import', () => {
       ];
       getImportSchedules.mockResolvedValue(mockSchedules);
 
-      await scheduleImportCrons();
+      const result = await scheduleImportCrons();
 
       expect(getImportSchedules).toHaveBeenCalled();
 
@@ -93,42 +94,43 @@ describe('import', () => {
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
           );
       });
+
+      expect(result?.isSuccessful).toBe(true);
     });
   });
 
   describe('importSchedule', () => {
     it('should return an object with isSuccessful true when no errors occur', async () => {
       const id = 123;
-      getImportSchedules.mockResolvedValue([{
+      const scheduledImport = {
         id,
         name: 'Import 123',
         schedule: '0 0 * * *',
-      }]);
+      };
+      getImportSchedules.mockResolvedValue([scheduledImport]);
 
-      await importSchedule();
+      const result = await importSchedule();
 
       expect(maintenanceCommand).toHaveBeenCalledTimes(1);
-      expect(maintenanceCommand.calls).toBe([]);
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
-        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        { id },
+        MAINTENANCE_TYPE.IMPORT_SCHEDULE,
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
       const results = await anonymousFunction();
 
       expect(getImportSchedules).toHaveBeenCalled();
-      expect(enqueueMaintenanceJob).toHaveBeenCalledTimes(2);
+      expect(addCronJob).toHaveBeenCalledTimes(1);
       expect(addCronJob)
         .toHaveBeenNthCalledWith(
           1,
           MAINTENANCE_CATEGORY.IMPORT,
-          { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+          MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+          expect.any(Function),
+          scheduledImport.schedule,
         );
 
-      getImportSchedules.mockResolvedValue([]);
-      const result = await importSchedule();
       expect(result.isSuccessful).toBe(true);
     });
 
@@ -146,7 +148,7 @@ describe('import', () => {
       downloadImport.mockResolvedValue([{}, {}]);
       moreToDownload.mockResolvedValue(true);
 
-      await importDownload(id);
+      const result = await importDownload(id);
 
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
@@ -159,7 +161,7 @@ describe('import', () => {
 
       expect(downloadImport).toHaveBeenCalledWith(id);
       expect(moreToDownload).toHaveBeenCalledWith(id);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledTimes(3);
+      expect(enqueueMaintenanceJob).toHaveBeenCalledTimes(2);
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           1,
@@ -168,11 +170,12 @@ describe('import', () => {
         );
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
-          1,
+          2,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
         );
-      expect(results).toBe({ isSuccessful: false });
+      expect(results).toBe({ isSuccessful: true });
+      expect(result).toBe({ isSuccessful: true });
     });
 
     it('should enqueue a processing job if there are items to process', async () => {
