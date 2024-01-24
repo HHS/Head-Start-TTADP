@@ -6,29 +6,44 @@ import { ActivityReportApprover, User } from '../models';
  * @param {*} values - object containing Approver properties to create or update
  */
 export async function upsertApprover(values) {
-  // Create approver, on unique constraint violation do update
-  let [approver] = await ActivityReportApprover.upsert(values, {
-    returning: true,
+  const { activityReportId, userId, status } = values;
+
+  let approver = await ActivityReportApprover.findOne({
+    where: {
+      activityReportId,
+      userId,
+    },
+    paranoid: false,
   });
 
-  // Upsert returns null when trying to upsert soft deleted record.
-  // If soft deleted record, restore instead.
-  if (approver.deletedAt) {
-    return ActivityReportApprover.restore({
-      where: values,
+  if (approver && status) {
+    await approver.update({
+      status,
+      note: values.note,
+    }, {
       individualHooks: true,
     });
   }
 
-  if (approver) {
-    approver = approver.get({ plain: true });
-    const user = await User.findOne({
-      attributes: ['email', 'name', 'fullName'],
-      where: { id: approver.userId },
+  if (!approver) {
+    approver = await ActivityReportApprover.create(values, { individualHooks: true });
+  }
+
+  // If soft deleted record, restore instead.
+  if (approver.deletedAt) {
+    return ActivityReportApprover.restore({
+      where: { id: approver.id },
+      individualHooks: true,
     });
-    if (user) {
-      approver.user = user.get({ plain: true });
-    }
+  }
+
+  approver = approver.get({ plain: true });
+  const user = await User.findOne({
+    attributes: ['email', 'name', 'fullName'],
+    where: { id: approver.userId },
+  });
+  if (user) {
+    approver.user = user.get({ plain: true });
   }
 
   return approver;
@@ -41,7 +56,7 @@ export async function upsertApprover(values) {
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
  */
-export async function syncApprovers(activityReportId, userIds = []) {
+export async function syncApprovers(activityReportId, userIds = [], log = false) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
   });
