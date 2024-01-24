@@ -327,6 +327,7 @@
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
     "newrelic": "^11.6.0",
+    "node-cleanup": "^2.1.2",
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
     "plantuml-encoder": "^1.4.0",
