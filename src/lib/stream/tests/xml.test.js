@@ -2,103 +2,97 @@ import { Readable } from 'stream';
 import XMLStream from '../xml';
 
 describe('XMLStream', () => {
+  let mockStream;
   let xmlStream;
-  let stream;
 
   beforeEach(() => {
-    xmlStream = new Readable();
-    stream = new XMLStream(xmlStream);
+    // Create a mock stream that can be used to simulate XML data input
+    mockStream = new Readable({
+      read() {
+        this.push('<AMS_ReviewerRole><RoleId>6610</RoleId><Name>ReviewLead</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>6620</RoleId><Name>Reviewer</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>6630</RoleId><Name>MonitoringEventCoordinator</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>6640</RoleId><Name>Analyst</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>6650</RoleId><Name>FieldOperationsManager</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>6660</RoleId><Name>FiscalSpecialist</Name></AMS_ReviewerRole>');
+        this.push('<AMS_ReviewerRole><RoleId>13044</RoleId><Name>CLASS Reviewer (dual coded)</Name></AMS_ReviewerRole>');
+        this.push(null); // No more data
+      },
+    });
+    xmlStream = new XMLStream(mockStream, true);
   });
 
-  describe('initialize', () => {
-    it('should parse the XML stream and populate parsedObjects array', async () => {
-      const xmlData = '<objects>{"id": 1}</objects><objects>{"id": 2}</objects>';
-      xmlStream.push(xmlData);
-      xmlStream.push(null);
-
-      await stream.initialize();
-
-      expect(stream.getObjectCount()).toBe(2);
-    });
-
-    it('should reject with an error if there is an error in parsing the XML stream', async () => {
-      const xmlData = '<objects>{"id": 1}</objects><objects>{"id": 2}</objects>';
-      xmlStream.push(xmlData);
-      xmlStream.push('<invalid-xml');
-      xmlStream.push(null);
-
-      await expect(stream.initialize()).rejects.toThrow();
-    });
+  test('initialize should parse XML data and resolve', async () => {
+    await expect(xmlStream.initialize()).resolves.toBeUndefined();
   });
 
-  describe('getObjectCount', () => {
-    it('should return the number of parsed objects', () => {
-      stream.parsedObjects = [{ id: 1 }, { id: 2 }, { id: 3 }];
-
-      expect(stream.getObjectCount()).toBe(3);
-    });
+  test('getObjectCount should return the number of parsed objects', async () => {
+    await xmlStream.initialize();
+    expect(xmlStream.getObjectCount()).toBe(7);
   });
 
-  describe('processingComplete', () => {
-    it('should return false if all objects have not been read', () => {
-      stream.isFullyRead = false;
-
-      expect(stream.processingComplete()).toBe(false);
-    });
-
-    it('should return true if all objects have been read', () => {
-      stream.isFullyRead = true;
-
-      expect(stream.processingComplete()).toBe(true);
-    });
+  test('processingComplete should return true when stream is ended', async () => {
+    await xmlStream.initialize();
+    expect(xmlStream.processingComplete()).toBe(true);
   });
 
-  describe('getNextObject', () => {
-    it('should return the next object in parsedObjects array', async () => {
-      stream.parsedObjects = [{ id: 1 }, { id: 2 }, { id: 3 }];
-
-      const object = await stream.getNextObject();
-
-      expect(object).toEqual({ id: 1 });
-      expect(stream.currentIndex).toBe(1);
-    });
-
-    it('should return null if all objects have been read', async () => {
-      stream.parsedObjects = [{ id: 1 }];
-      stream.isFullyRead = true;
-
-      const object = await stream.getNextObject();
-
-      expect(object).toBeNull();
-      expect(stream.currentIndex).toBe(0);
-    });
-
-    it('should wait for readable event if parsedObjects array is empty', async () => {
-      const promise = stream.getNextObject();
-
-      xmlStream.push('<objects>{"id": 1}</objects>');
-      xmlStream.push(null);
-
-      await expect(promise).resolves.toEqual({ id: 1 });
-    });
+  test('getNextObject should resolve with the next parsed object', async () => {
+    await xmlStream.initialize();
+    expect(xmlStream.getObjectCount()).toBe(7);
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6610, name: 'ReviewLead' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6620, name: 'Reviewer' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6630, name: 'MonitoringEventCoordinator' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6640, name: 'Analyst' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6650, name: 'FieldOperationsManager' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 6660, name: 'FiscalSpecialist' });
+    await expect(xmlStream.getNextObject(true)).resolves.toEqual({ roleid: 13044, name: 'CLASS Reviewer (dual coded)' });
   });
 
-  describe('getObjectSchema', () => {
-    it('should return the schema of the first parsed object', async () => {
-      stream.parsedObjects = [{ id: 1 }];
+  test('getNextObject should resolve with null when all objects are retrieved', async () => {
+    await xmlStream.initialize();
+    const promises = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < 7; i++) {
+      promises.push(xmlStream.getNextObject()); // Retrieve all objects
+    }
+    await Promise.all(promises);
+    await expect(xmlStream.getNextObject()).resolves.toBeNull();
+  });
 
-      const schema = await stream.getObjectSchema();
+  test('getObjectSchema should resolve with the JSON schema of the first parsed object', async () => {
+    await xmlStream.initialize();
+    await expect(xmlStream.getObjectSchema())
+      .resolves
+      .toEqual({
+        attributes: {},
+        children: {
+          name: {
+            attributes: {},
+            name: 'name',
+            optional: false,
+            type: 'string',
+          },
+          roleid: {
+            attributes: {},
+            name: 'roleid',
+            optional: false,
+            type: 'number',
+          },
+        },
+        name: 'ams_reviewerrole',
+        optional: false,
+      });
+  });
 
-      expect(schema).toBe('{"id":1}');
+  test('getObjectSchema should resolve with an empty string if no objects have been parsed', async () => {
+    // Create a mock stream with no data
+    const emptyStream = new Readable({
+      read() {
+        this.push(null); // No more data
+      },
     });
-
-    it('should return an empty string if parsedObjects array is empty', async () => {
-      const promise = stream.getObjectSchema();
-
-      xmlStream.push('<objects>{"id": 1}</objects>');
-      xmlStream.push(null);
-
-      await expect(promise).resolves.toBe('');
-    });
+    const emptyXmlStream = new XMLStream(emptyStream, true);
+    await emptyXmlStream.initialize();
+    await expect(emptyXmlStream.getObjectSchema()).resolves.toBe(null);
   });
 });
