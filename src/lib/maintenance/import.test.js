@@ -127,7 +127,6 @@ describe('import', () => {
           { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
         );
 
-
       getImportSchedules.mockResolvedValue([]);
       const result = await importSchedule();
       expect(result.isSuccessful).toBe(true);
