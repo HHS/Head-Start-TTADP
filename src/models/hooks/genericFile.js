@@ -34,7 +34,7 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
       },
       {
         model: sequelize.models.ImportFile,
-        as: 'importFiles',
+        as: 'importFile',
         required: false,
       },
     ],
