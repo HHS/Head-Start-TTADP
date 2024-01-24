@@ -331,6 +331,83 @@ const collectChangedValues = (
   return changedValues;
 };
 
+type SimplifiedObject = { [key: string]: string };
+
+const simplifyObject = (obj: any, childrenName: string, valueName: string): SimplifiedObject => {
+  let simplified: SimplifiedObject = {};
+
+  // Check if the object has children
+  if (obj[childrenName] && Array.isArray(obj[childrenName])) {
+    obj[childrenName].forEach((child: any) => {
+      // If a child has text, add it to the simplified object
+      if (child[valueName]) {
+        simplified[child.name] = child[valueName];
+      }
+
+      // Recursively simplify child objects
+      const childSimplified = simplifyObject(child, childrenName, valueName);
+      simplified = { ...simplified, ...childSimplified };
+    });
+  }
+
+  return simplified;
+};
+
+/**
+ * Detects the type of a given value and casts it to its appropriate JavaScript type.
+ *
+ * @param value - The value to be detected and cast. It can be of any type.
+ * @returns An object containing two properties: `value` and `type`. The `value` property
+ *          is the cast value, which can be of type boolean, number, Date, any, null, undefined,
+ *          array, or object. The `type` property is a string representing the detected type of
+ *          the value. Possible types are 'null', 'undefined', 'boolean', 'number', 'Date',
+ *          'array', 'object', or the typeof the original value if none of the other types match.
+ * @throws If the `value` is a string that looks like a JSON but is not valid JSON, it will catch
+ *         and ignore the error internally, returning the original string as the value.
+ */
+const detectAndCast = (value: string): {
+  value: boolean | number | Date | any | null | undefined | any[] | object,
+  type: string
+} => {
+  // Check for null
+  if (value.toLowerCase() === 'null') return { value: null, type: 'null' };
+
+  // Check for undefined
+  if (value.toLowerCase() === 'undefined') return { value: undefined, type: 'undefined' };
+
+  // Check for boolean
+  if (value.toLowerCase() === 'true') return { value: true, type: 'boolean' };
+  if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
+
+  // Check for number
+  if (!Number.isNaN(value) && !Number.isNaN(parseFloat(value))) {
+    return { value: Number(value), type: 'number' };
+  }
+
+  // Check for date
+  const date = new Date(value);
+  if (!Number.isNaN(date.getTime())) {
+    // You might want to add additional checks to ensure it's a valid date string
+    return { value: date, type: 'Date' };
+  }
+
+  // Check for array or object
+  try {
+    const parsedValue = JSON.parse(value);
+    if (Array.isArray(parsedValue)) {
+      return { value: parsedValue, type: 'array' };
+    }
+    if (typeof parsedValue === 'object' && parsedValue !== null) {
+      return { value: parsedValue, type: 'object' };
+    }
+  } catch (e) {
+    // Not a valid JSON string
+  }
+
+  // If none of the above, return the original string
+  return { value, type: typeof value };
+};
+
 export {
   isObject,
   removeUndefined,
@@ -340,4 +417,6 @@ export {
   isDeepEqual,
   mergeDeep,
   collectChangedValues,
+  simplifyObject,
+  detectAndCast,
 };
