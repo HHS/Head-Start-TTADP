@@ -212,7 +212,7 @@ const RECIPIENT_PARTICIPANTS = [
     'RTTAPA development',
     'Recipient request',
     'Regional office priority',
-    'Training event follow-up',
+    'Training event',
   ];
 
   exports.GOAL_SOURCES = GOAL_SOURCES;
