@@ -14,7 +14,7 @@ jest.mock('../../modelUtils', () => ({
 }));
 
 describe('processRecords', () => {
-  const mockXmlClient = new XMLStream();
+  const mockXmlClient = new XMLStream(true);
   const mockGetNextObject = jest.fn();
   mockXmlClient.getNextObject = mockGetNextObject;
 
