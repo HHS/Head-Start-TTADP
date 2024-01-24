@@ -1,6 +1,6 @@
 import { Readable } from 'stream';
 import * as unzipper from 'unzipper';
-import ZipStream, { FileInfo } from '../zip';
+import ZipStream from '../zip';
 
 describe('ZipStream', () => {
   let zipStream;
