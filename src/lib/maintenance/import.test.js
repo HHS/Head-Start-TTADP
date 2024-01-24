@@ -10,9 +10,9 @@ import {
 import { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } from '../../constants';
 import {
   addCronJob,
-  addQueueProcessor,
   enqueueMaintenanceJob,
   maintenanceCommand,
+  hasQueueProcessor,
 } from './common';
 import {
   download as downloadImport,
@@ -21,7 +21,6 @@ import {
   moreToProcess,
   getImportSchedules,
 } from '../importSystem';
-import { expect } from '@playwright/test';
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation(() => ({
@@ -50,6 +49,28 @@ describe('import', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
+
+  describe('enqueueImportMaintenanceJob', () => {
+    it('should enqueue a maintenance job with the correct category and type', () => {
+      const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
+      const id = 123;
+      enqueueImportMaintenanceJob(type, id);
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
+        MAINTENANCE_CATEGORY.IMPORT,
+        { type, id },
+      );
+    });
+
+    it('should be able to enqueue a job without an id', () => {
+      const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
+      enqueueImportMaintenanceJob(type);
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
+        MAINTENANCE_CATEGORY.IMPORT,
+        { type, id: undefined },
+      );
+    });
+  });
+
   describe('scheduleImportCrons', () => {
     it('should schedule cron jobs for each import schedule', async () => {
       const mockSchedules = [
@@ -63,7 +84,11 @@ describe('import', () => {
       expect(getImportSchedules).toHaveBeenCalled();
 
       expect(addCronJob).toHaveBeenCalledTimes(mockSchedules.length);
-      mockSchedules.forEach(async ({ id, name, schedule }, index) => {
+
+      let index = 0;
+      let { id, name, schedule } = mockSchedules[index];
+
+      {
         expect(addCronJob).toHaveBeenNthCalledWith(
           index + 1,
           MAINTENANCE_CATEGORY.IMPORT,
@@ -93,14 +118,57 @@ describe('import', () => {
             MAINTENANCE_CATEGORY.IMPORT,
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
           );
-      });
+      }
+
+      index = 1;
+      ({ id, name, schedule } = mockSchedules[index]);
+
+      {
+        expect(addCronJob).toHaveBeenNthCalledWith(
+          index + 1,
+          MAINTENANCE_CATEGORY.IMPORT,
+          MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+          expect.any(Function),
+          schedule,
+        );
+
+        const [
+          catagory,
+          type,
+          jobCommand,
+          suppliedSchedule,
+        ] = addCronJob.mock.calls[index];
+        await jobCommand(catagory, type, '', suppliedSchedule);
+        const [
+          cronSchedule,
+          callbackCommand,
+          something,
+          autoStart,
+          timezone,
+        ] = CronJob.mock.calls[index];
+        await callbackCommand();
+        expect(enqueueMaintenanceJob)
+          .toHaveBeenNthCalledWith(
+            index + 1,
+            MAINTENANCE_CATEGORY.IMPORT,
+            { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+          );
+      }
 
       expect(result?.isSuccessful).toBe(true);
+    });
+
+    it('should throw an error if retrieving import schedules fails', async () => {
+      getImportSchedules.mockRejectedValue(new Error('Failed to retrieve schedules'));
+      const result = await scheduleImportCrons();
+      expect(result?.isSuccessful).toBe(false);
+      expect(result?.error).toBe('Failed to retrieve schedules');
     });
   });
 
   describe('importSchedule', () => {
     it('should return an object with isSuccessful true when no errors occur', async () => {
+      maintenanceCommand.mockResolvedValue({ isSuccessful: true });
       const id = 123;
       const scheduledImport = {
         id,
@@ -118,7 +186,7 @@ describe('import', () => {
         MAINTENANCE_TYPE.IMPORT_SCHEDULE,
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
-      const results = await anonymousFunction();
+      await anonymousFunction();
 
       expect(getImportSchedules).toHaveBeenCalled();
       expect(addCronJob).toHaveBeenCalledTimes(1);
@@ -135,10 +203,21 @@ describe('import', () => {
     });
 
     it('should return an object with isSuccessful false and error when an error occurs', async () => {
+      maintenanceCommand.mockResolvedValue({ isSuccessful: false });
       getImportSchedules.mockRejectedValue(new Error('Error fetching schedules'));
       const result = await importSchedule();
+      expect(maintenanceCommand).toHaveBeenCalledTimes(1);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_SCHEDULE,
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(results.isSuccessful).toBe(false);
+      expect(results.error).toBe('Error fetching schedules');
       expect(result.isSuccessful).toBe(false);
-      expect(result.error).toBeDefined();
     });
   });
 
@@ -148,8 +227,7 @@ describe('import', () => {
       downloadImport.mockResolvedValue([{}, {}]);
       moreToDownload.mockResolvedValue(true);
 
-      const result = await importDownload(id);
-
+      await importDownload(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
@@ -174,8 +252,7 @@ describe('import', () => {
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
         );
-      expect(results).toBe({ isSuccessful: true });
-      expect(result).toBe({ isSuccessful: true });
+      expect(results?.isSuccessful).toBe(true);
     });
 
     it('should enqueue a processing job if there are items to process', async () => {
@@ -189,6 +266,14 @@ describe('import', () => {
         MAINTENANCE_TYPE.IMPORT_PROCESS,
         id,
       );
+    });
+
+    it('should return an object with isSuccessful false when download fails', async () => {
+      const id = 123;
+      downloadImport.mockRejectedValue(new Error('Download failed'));
+      const result = await importDownload(id);
+      expect(result.isSuccessful).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
@@ -215,6 +300,27 @@ describe('import', () => {
         MAINTENANCE_TYPE.IMPORT_PROCESS,
         id,
       );
+    });
+
+    it('should not enqueue a new job if there are no more items to process', async () => {
+      const id = 123;
+      processImport.mockResolvedValue({});
+      moreToProcess.mockResolvedValue(false);
+
+      await importProcess(id);
+
+      expect(enqueueImportMaintenanceJob).not.toHaveBeenCalledWith(
+        MAINTENANCE_TYPE.IMPORT_PROCESS,
+        id,
+      );
+    });
+
+    it('should return an object with isSuccessful false when processing fails', async () => {
+      const id = 123;
+      processImport.mockRejectedValue(new Error('Processing failed'));
+      const result = await importProcess(id);
+      expect(result.isSuccessful).toBe(false);
+      expect(result.error).toBeDefined();
     });
   });
 
@@ -274,100 +380,6 @@ describe('import', () => {
 
       expect(importProcess).toHaveBeenCalledWith(job.data.id);
     });
-  });
-
-  describe('addQueueProcessor', () => {
-    it('should add a queue processor for the import maintenance category', () => {
-      expect(addQueueProcessor).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        expect.any(Function),
-      );
-    });
-  });
-
-  describe('enqueueImportMaintenanceJob', () => {
-    it('should enqueue a maintenance job with the correct category and type', () => {
-      const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
-      const id = 123;
-      enqueueImportMaintenanceJob(type, id);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id },
-      );
-    });
-
-    it('should be able to enqueue a job without an id', () => {
-      const type = MAINTENANCE_TYPE.IMPORT_SCHEDULE;
-      enqueueImportMaintenanceJob(type);
-      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_CATEGORY.IMPORT,
-        { type, id: undefined },
-      );
-    });
-  });
-
-  // Additional tests for edge cases and error handling
-  describe('importDownload error handling', () => {
-    it('should return an object with isSuccessful false when download fails', async () => {
-      const id = 123;
-      downloadImport.mockRejectedValue(new Error('Download failed'));
-      const result = await importDownload(id);
-      expect(result.isSuccessful).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-  });
-
-  describe('importProcess error handling', () => {
-    it('should return an object with isSuccessful false when processing fails', async () => {
-      const id = 123;
-      processImport.mockRejectedValue(new Error('Processing failed'));
-      const result = await importProcess(id);
-      expect(result.isSuccessful).toBe(false);
-      expect(result.error).toBeDefined();
-    });
-  });
-
-  // Continuing from the previous test cases...
-
-  describe('scheduleImportCrons error handling', () => {
-    it('should throw an error if retrieving import schedules fails', async () => {
-      getImportSchedules.mockRejectedValue(new Error('Failed to retrieve schedules'));
-      await expect(scheduleImportCrons()).rejects.toThrow('Failed to retrieve schedules');
-    });
-  });
-
-  describe('importDownload moreToDownload handling', () => {
-    it('should enqueue another download job if more items are available to download', async () => {
-      const id = 123;
-      downloadImport.mockResolvedValue({ length: 1 });
-      moreToDownload.mockResolvedValue(true);
-
-      await importDownload(id);
-
-      expect(enqueueImportMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        id,
-      );
-    });
-  });
-
-  describe('importProcess moreToProcess handling', () => {
-    it('should not enqueue a new job if there are no more items to process', async () => {
-      const id = 123;
-      processImport.mockResolvedValue({});
-      moreToProcess.mockResolvedValue(false);
-
-      await importProcess(id);
-
-      expect(enqueueImportMaintenanceJob).not.toHaveBeenCalledWith(
-        MAINTENANCE_TYPE.IMPORT_PROCESS,
-        id,
-      );
-    });
-  });
-
-  describe('importMaintenance delegation', () => {
-    // ... existing test cases ...
 
     it('should return the result of the importSchedule function for schedule jobs', async () => {
       const job = {
@@ -414,6 +426,10 @@ describe('import', () => {
       expect(result).toEqual(mockResult);
     });
   });
+
+  describe('addQueueProcessor', () => {
+    it('should add a queue processor for the import maintenance category', () => {
+      expect(hasQueueProcessor(MAINTENANCE_CATEGORY.IMPORT)).toBe(true);
+    });
+  });
 });
-// Note: Additional tests can be added for each function to cover more scenarios,
-// such as handling of different types of errors, testing of side effects, etc.
