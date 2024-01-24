@@ -66,7 +66,7 @@ const processRecords = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: Promise<any>[],
 }> => {
-  const record = await xmlClient.getNextObject();
+  const record = await xmlClient.getNextObject(true);
   // @ts-ignore
   const model: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -283,7 +283,7 @@ const processFile = async (
     const usableStream = fileStream.pipe(hashStream).pipe(encodingConverter);
 
     // Create a new instance of XMLStream using the usableStream
-    const xmlClient = new XMLStream(usableStream);
+    const xmlClient = new XMLStream(usableStream, true);
 
     // Check if key property exists in processDefinition, if not throw an error
     if (!xmlClient) throw new Error('XMLStream failed');
