@@ -11,6 +11,7 @@ import Drawer from '../Drawer';
 import Req from '../Req';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
 import './ObjectiveTopics.scss';
+import DrawerTriggerButton from '../DrawerTriggerButton';
 
 export default function ObjectiveTopics({
   error,
@@ -96,13 +97,9 @@ export default function ObjectiveTopics({
               <Req />
             </>
           </Label>
-          <button
-            type="button"
-            className="usa-button__topics-drawer-trigger usa-button usa-button--unstyled margin-left-1"
-            ref={drawerTriggerRef}
-          >
+          <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
             Get help choosing topics
-          </button>
+          </DrawerTriggerButton>
         </div>
         {error}
         <Select
