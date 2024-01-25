@@ -163,13 +163,18 @@ export default class ActivityReport {
 
   // This is a helper function to determine if the report is in a state where it can be edited
   reportHasEditableStatus() {
-    // if the report is in draft
-    return this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
-    // or if it's been marked as needs action
-      || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION || (
-    // or if it's submitted and the calculated status is not submitted for some reason
-      this.activityReport.submissionStatus === REPORT_STATUSES.SUBMITTED
-        && this.activityReport.calculatedStatus !== REPORT_STATUSES.SUBMITTED
-    );
+    // if the report is in draft, it's editable
+    if (this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
+      || this.activityReport.calculatedStatus === REPORT_STATUSES.DRAFT) {
+      return true;
+    }
+
+    // if the report is in needs action, it's editable,
+    // regardless of whether the report is submitted
+    if (this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      return true;
+    }
+
+    return false;
   }
 }
