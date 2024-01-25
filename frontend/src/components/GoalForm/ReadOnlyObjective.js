@@ -97,6 +97,13 @@ export default function ReadOnlyObjective({ objective }) {
 
       {objective.ttaProvided ? <TTAProvided tta={objective.ttaProvided} /> : null}
 
+      {objective.supportType ? (
+        <div className="margin-bottom-2">
+          <h4 className="margin-0">Support type</h4>
+          <p className="usa-prose margin-0">{objective.supportType}</p>
+        </div>
+      ) : null }
+
       {objective.status
         ? (
           <div className="margin-bottom-2">
@@ -124,6 +131,7 @@ ReadOnlyObjective.propTypes = {
       key: PropTypes.string,
       value: PropTypes.string,
     })),
+    supportType: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string,
     })),

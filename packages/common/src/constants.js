@@ -307,3 +307,12 @@ exports.LANGUAGES = LANGUAGES;
   };
 
   exports.GOAL_STATUS = GOAL_STATUS;
+
+  const SUPPORT_TYPES = [ 
+    'Introducing',
+    'Planning',
+    'Implementing',
+    'Maintaining',
+  ];
+
+exports.SUPPORT_TYPES = SUPPORT_TYPES;

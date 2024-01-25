@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -147,6 +147,10 @@ export default (sequelize, DataTypes) => {
     },
     closeSuspendContext: {
       type: DataTypes.TEXT,
+    },
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
     },
     mapsToParentObjectiveId: {
       type: DataTypes.INTEGER,

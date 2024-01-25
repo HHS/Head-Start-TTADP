@@ -4,6 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -45,8 +46,8 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
+import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import '../../../components/GoalForm/ObjectiveSupportType.scss';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 
 const DEFAULT_RESOURCE = {
@@ -604,14 +605,9 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
-        <Drawer
-          triggerRef={supportTypeDrawerTriggerRef}
-          stickyHeader
-          stickyFooter
-          title="Support type guidance"
-        >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
-        </Drawer>
+        <SupportTypeDrawer
+          drawerTriggerRef={supportTypeDrawerTriggerRef}
+        />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
             <>
@@ -636,12 +632,7 @@ const SessionSummary = ({ datePickerKey }) => {
           required
         >
           <option disabled hidden value="">Select one</option>
-          {[
-            'Introducing',
-            'Planning',
-            'Implementing',
-            'Maintaining',
-          ].map((option) => (<option key={option}>{option}</option>))}
+          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
         </Dropdown>
       </div>
 
