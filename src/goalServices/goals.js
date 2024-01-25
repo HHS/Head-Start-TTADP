@@ -528,13 +528,14 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         exists,
       );
 
-      exists.files = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveFiles',
-        'file',
-        exists,
-      );
-
+      exists.files = uniqBy([
+        ...exists.files,
+        ...(objective.activityReportObjectives
+          && objective.activityReportObjectives.length > 0
+          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+          : []),
+      ], (e) => e.key);
       return objectives;
     }
 
@@ -587,11 +588,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         'activityReportObjectiveResources',
         'resource',
       ),
-      files: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveFiles',
-        'file',
-      ),
+      files: objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
+          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
+        : [],
       courses: reduceRelationThroughActivityReportObjectives(
         objective,
         'activityReportObjectiveCourses',
