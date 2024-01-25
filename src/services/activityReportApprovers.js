@@ -6,7 +6,12 @@ import { ActivityReportApprover, User } from '../models';
  * @param {*} values - object containing Approver properties to create or update
  */
 export async function upsertApprover(values) {
-  const { activityReportId, userId, status } = values;
+  const {
+    activityReportId,
+    userId,
+    status,
+    note,
+  } = values;
 
   let approver = await ActivityReportApprover.findOne({
     where: {
@@ -23,11 +28,11 @@ export async function upsertApprover(values) {
     approver.changed('updatedAt', true);
     approver.set('updatedAt', new Date());
 
-    if (approver.status) {
+    if (status) {
       approver.set('status', status);
     }
 
-    if (approver.note) {
+    if (note) {
       approver.set('note', values.note);
     }
 
