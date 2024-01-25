@@ -480,7 +480,7 @@ class ImportFiles{
  * createdAt : timestamp with time zone
  * downloadAttempts : integer : 0
  * processAttempts : integer : 0
-!issue='column default does not match model' * status : enum : 'IDENTIFIED'::"enum_ImportFiles_status"
+ * status : enum : 'IDENTIFIED'::"enum_ImportFiles_status"
  * updatedAt : timestamp with time zone
  ftpFileInfo : jsonb
  hash : text
