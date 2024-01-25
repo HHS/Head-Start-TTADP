@@ -476,6 +476,7 @@ const reduceRelationThroughActivityReportObjectives = (
   join,
   relation,
   exists = {},
+  uniqueBy = 'id',
 ) => {
   const existingRelation = exists[relation] || [];
   return uniqBy([
@@ -486,7 +487,7 @@ const reduceRelationThroughActivityReportObjectives = (
         .map((t) => t[relation].dataValues)
         .filter((t) => t)
       : []),
-  ], (e) => e.id);
+  ], (e) => e[uniqueBy]);
 };
 
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
@@ -518,6 +519,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         'activityReportObjectiveResources',
         'resource',
         exists,
+        'value',
       );
 
       exists.topics = reduceRelationThroughActivityReportObjectives(
@@ -594,6 +596,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
         objective,
         'activityReportObjectiveResources',
         'resource',
+        {},
+        'value',
       ),
       files: objective.activityReportObjectives
       && objective.activityReportObjectives.length > 0
