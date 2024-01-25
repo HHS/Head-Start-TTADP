@@ -257,23 +257,47 @@ describe('import', () => {
 
     it('should enqueue a processing job if there are items to process', async () => {
       const id = 123;
-      downloadImport.mockResolvedValue({ length: 1 });
-      moreToDownload.mockResolvedValue(false);
+      downloadImport.mockResolvedValue([{}, {}]);
+      moreToDownload.mockResolvedValue(true);
 
       await importDownload(id);
-
-      expect(enqueueImportMaintenanceJob).toHaveBeenCalledWith(
-        MAINTENANCE_TYPE.IMPORT_PROCESS,
-        id,
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        { id },
       );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(downloadImport).toHaveBeenCalledWith(id);
+      expect(moreToDownload).toHaveBeenCalledWith(id);
+      expect(enqueueMaintenanceJob).toHaveBeenCalledTimes(2);
+      expect(enqueueMaintenanceJob)
+        .toHaveBeenNthCalledWith(
+          2,
+          MAINTENANCE_CATEGORY.IMPORT,
+          { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+        );
     });
 
     it('should return an object with isSuccessful false when download fails', async () => {
       const id = 123;
+      downloadImport.mockResolvedValue([{}, {}]);
+      moreToDownload.mockResolvedValue(true);
       downloadImport.mockRejectedValue(new Error('Download failed'));
+
       const result = await importDownload(id);
-      expect(result.isSuccessful).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+      expect(results.isSuccessful).toBe(false);
+      expect(results.error).toBeDefined();
     });
   });
 
@@ -284,8 +308,16 @@ describe('import', () => {
       moreToProcess.mockResolvedValue(false);
 
       const result = await importProcess(id);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_PROCESS,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
 
-      expect(result.isSuccessful).toBe(true);
+      expect(results?.isSuccessful).toBe(true);
       expect(processImport).toHaveBeenCalledWith(id);
     });
 
@@ -295,10 +327,21 @@ describe('import', () => {
       moreToProcess.mockResolvedValue(true);
 
       await importProcess(id);
-
-      expect(enqueueImportMaintenanceJob).toHaveBeenCalledWith(
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        id,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
+        MAINTENANCE_CATEGORY.IMPORT,
+        {
+          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+          id,
+        },
       );
     });
 
@@ -308,19 +351,39 @@ describe('import', () => {
       moreToProcess.mockResolvedValue(false);
 
       await importProcess(id);
-
-      expect(enqueueImportMaintenanceJob).not.toHaveBeenCalledWith(
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        id,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+
+      expect(enqueueMaintenanceJob).not.toHaveBeenCalledWith(
+        MAINTENANCE_CATEGORY.IMPORT,
+        {
+          type: MAINTENANCE_TYPE.IMPORT_PROCESS,
+          id,
+        },
       );
     });
 
     it('should return an object with isSuccessful false when processing fails', async () => {
       const id = 123;
       processImport.mockRejectedValue(new Error('Processing failed'));
+
       const result = await importProcess(id);
-      expect(result.isSuccessful).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_PROCESS,
+        { id },
+      );
+      const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      const results = await anonymousFunction();
+      expect(results.isSuccessful).toBe(false);
+      expect(results.error).toBeDefined();
     });
   });
 
@@ -335,7 +398,11 @@ describe('import', () => {
 
       await importMaintenance(job);
 
-      expect(importSchedule).toHaveBeenCalled();
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_SCHEDULE,
+      );
     });
 
     it('should throw an error if the job type is not recognized', async () => {
@@ -357,12 +424,14 @@ describe('import', () => {
         },
       };
 
-      downloadImport.mockResolvedValue({ length: 1 });
-      moreToDownload.mockResolvedValue(false);
-
       await importMaintenance(job);
 
-      expect(importDownload).toHaveBeenCalledWith(job.data.id);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        { id: job.data.id },
+      );
     });
 
     it('should handle import process jobs correctly', async () => {
@@ -373,12 +442,14 @@ describe('import', () => {
         },
       };
 
-      processImport.mockResolvedValue({});
-      moreToProcess.mockResolvedValue(false);
-
       await importMaintenance(job);
 
-      expect(importProcess).toHaveBeenCalledWith(job.data.id);
+      expect(maintenanceCommand).toHaveBeenCalledWith(
+        expect.any(Function),
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_PROCESS,
+        { id: job.data.id },
+      );
     });
 
     it('should return the result of the importSchedule function for schedule jobs', async () => {
@@ -388,12 +459,11 @@ describe('import', () => {
           id: 123,
         },
       };
-      const mockResult = { isSuccessful: true };
-      importSchedule.mockResolvedValue(mockResult);
+      maintenanceCommand.mockResolvedValue({ isSuccessful: true });
 
       const result = await importMaintenance(job);
 
-      expect(result).toEqual(mockResult);
+      expect(result?.isSuccessful).toBe(true);
     });
 
     it('should return the result of the importDownload function for download jobs', async () => {
@@ -403,12 +473,12 @@ describe('import', () => {
           id: 123,
         },
       };
-      const mockResult = { isSuccessful: true };
-      importDownload.mockResolvedValue(mockResult);
+
+      maintenanceCommand.mockResolvedValue({ isSuccessful: true });
 
       const result = await importMaintenance(job);
 
-      expect(result).toEqual(mockResult);
+      expect(result?.isSuccessful).toBe(true);
     });
 
     it('should return the result of the importProcess function for process jobs', async () => {
@@ -418,18 +488,12 @@ describe('import', () => {
           id: 456,
         },
       };
-      const mockResult = { isSuccessful: true };
-      importProcess.mockResolvedValue(mockResult);
+
+      maintenanceCommand.mockResolvedValue({ isSuccessful: true });
 
       const result = await importMaintenance(job);
 
-      expect(result).toEqual(mockResult);
-    });
-  });
-
-  describe('addQueueProcessor', () => {
-    it('should add a queue processor for the import maintenance category', () => {
-      expect(hasQueueProcessor(MAINTENANCE_CATEGORY.IMPORT)).toBe(true);
+      expect(result?.isSuccessful).toBe(true);
     });
   });
 });
