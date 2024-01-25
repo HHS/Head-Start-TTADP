@@ -32,7 +32,6 @@ class FtpClient {
 
   // Use a static method to handle cleanup
   static handleCleanup(client: FTP) {
-    console.log(client);
     if (client && client.connected) {
       client.end();
     }
