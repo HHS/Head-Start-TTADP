@@ -7,7 +7,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
 import UserContext from '../../../../../UserContext';
