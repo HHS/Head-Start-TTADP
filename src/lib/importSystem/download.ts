@@ -224,12 +224,12 @@ const collectFilesFromSource = async (
     stream?: Promise<Readable>,
   }[];
   try {
-  availableFiles = await ftpClient.listFiles(
-    path, // The path on the FTP server to search for files
-    fileMask, // The file mask to filter files
-    priorFile, // The prior file for comparison
-    true, // Include directories in the file list
-  ); // Get the list of available files on the FTP server
+    availableFiles = await ftpClient.listFiles(
+      path, // The path on the FTP server to search for files
+      fileMask, // The file mask to filter files
+      priorFile, // The prior file for comparison
+      true, // Include directories in the file list
+    ); // Get the list of available files on the FTP server
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }
