@@ -44,6 +44,7 @@ describe('Activity report print and share view', () => {
       },
     ],
     targetPopulations: ['Mid size sedans'],
+    language: [],
     activityRecipientType: 'recipient',
     specialistNextSteps: [],
     recipientNextSteps: [],
