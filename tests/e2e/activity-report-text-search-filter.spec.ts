@@ -137,7 +137,14 @@ test.describe('Activity Report Text Search Filter', () => {
     // TTA provided.
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).fill('Basic prep instruction.');
     await page.waitForTimeout(10000);
+
     await blur(page);
+
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
+    
+    await blur(page);  
+        
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     await page.waitForTimeout(10000);
