@@ -1,6 +1,5 @@
-import * as fs from 'fs'; // Import the 'fs' module for file system operations
-import * as FTP from 'ftp'; // Import the 'ftp' module for FTP operations
-import { finalize } from 'node-cleanup'; // Import the 'finalize' function from the 'node-cleanup' module
+import FTP from 'ftp'; // Import the 'ftp' module for FTP operations
+import nodeCleanup from 'node-cleanup'; // Import the 'finalize' function from the 'node-cleanup' module
 import { Readable } from 'stream';
 
 interface FTPSettings {
@@ -20,16 +19,35 @@ interface FileInfo {
   stream?: Readable, // Stream to file (optional)
 }
 
+function joinPaths(basePath: string, fileName: string): string {
+  if (!basePath || !fileName) return basePath || fileName;
+  return `${basePath.replace(/\/+$/, '')}/${fileName.replace(/^\/+/, '')}`;
+}
+
 class FtpClient {
-  private client: FTP; // Private property to store the FTP client instance
+  private client; // Private property to store the FTP client instance
+
+  // One way to handle this is to use a static property to track if cleanup has been registered
+  static cleanupRegistered = false;
+
+  // Use a static method to handle cleanup
+  static handleCleanup(client: FTP) {
+    console.log(client);
+    if (client && client.connected) {
+      client.end();
+    }
+  }
 
   constructor(
     private ftpSettings: FTPSettings, // Constructor parameter to store the FTP settings
   ) {
     this.client = new FTP(); // Create a new FTP client instance
-    finalize(() => { // Register a cleanup function to be called when the process exits
-      this.disconnect(); // Disconnect from the FTP server
-    });
+    if (!FtpClient.cleanupRegistered) {
+      nodeCleanup(() => {
+        FtpClient.handleCleanup(this.client);
+      });
+      FtpClient.cleanupRegistered = true;
+    }
   }
 
   /**
@@ -38,13 +56,20 @@ class FtpClient {
    */
   connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.client.on('ready', () => { // Event handler for the 'ready' event, emitted when the connection is established
+      let onError;
+      const onReady = () => {
+        this.client.removeListener('error', onError); // Remove error listener
+        this.client.removeListener('ready', onReady); // Remove ready listener
         resolve();
-      });
-
-      this.client.on('error', (err) => { // Event handler for the 'error' event, emitted when there is an error during the connection
+      };
+      onError = (err: Error) => {
+        this.client.removeListener('error', onError); // Remove error listener
+        this.client.removeListener('ready', onReady); // Remove ready listener
         reject(err);
-      });
+      };
+
+      this.client.once('ready', onReady);
+      this.client.once('error', onError);
 
       this.client.connect({ // Connect to the FTP server using the provided settings
         host: this.ftpSettings.host,
@@ -59,7 +84,7 @@ class FtpClient {
    * Disconnects from the FTP server.
    */
   disconnect(): void {
-    this.client.end(); // Close the FTP client connection
+    FtpClient.handleCleanup(this.client);
   }
 
   /**
@@ -85,27 +110,42 @@ class FtpClient {
           return;
         }
 
+        if (!Array.isArray(files)) {
+          reject(new Error('Invalid server response'));
+          return;
+        }
+
+        const fileMaskRegex = fileMask
+          ? new RegExp(fileMask)
+          : null;
+        const isAfterPriorFile = priorFile
+          ? (name: string) => name > priorFile
+          : () => true;
+
         // Map the returned files to FileInfo objects
         const fileInfoList: {
           fullPath: string,
           fileInfo: FileInfo,
           stream?: Promise<Readable>,
         }[] = files
-          .filter(({ name }) => fileMask === undefined
-            || new RegExp(fileMask).test(name))
-          .filter(({ name }) => priorFile === undefined
-            || name > priorFile)
+          .filter((file) => typeof file === 'object'
+            && 'name' in file
+            && 'type' in file
+            && 'size' in file
+            && 'date' in file)
+          .filter(({ name }) => !fileMaskRegex || fileMaskRegex.test(name))
+          .filter(({ name }) => isAfterPriorFile(name))
           .map((file) => ({
-            fullPath: `${path}/${file.name}`,
+            fullPath: joinPaths(path, file.name),
             fileInfo: {
               path,
               name: file.name,
               type: file.type,
               size: file.size,
               date: file.date,
-              target: file.target,
+              ...(file.target && { target: file.target }),
             },
-            ...(includeStream && { stream: this.downloadAsStream(`${path}/${file}`) }),
+            ...(includeStream && { stream: this.downloadAsStream(`${path}/${file.name}`) }),
           }));
 
         resolve(fileInfoList);
@@ -119,12 +159,12 @@ class FtpClient {
    * @returns A promise that resolves with a readable stream representing the downloaded file, or
    * rejects with an error.
    */
-  downloadAsStream(remoteFilePath: string): Promise<fs.ReadStream> {
+  downloadAsStream(remoteFilePath: string, useCompression = true): Promise<Readable> {
     return new Promise((resolve, reject) => {
       // Get a readable stream for the specified file on the FTP server
       this.client.get(
         remoteFilePath,
-        true, // use compression
+        useCompression,
         (err, stream) => {
           if (err) {
             reject(err);
