@@ -95,8 +95,6 @@ export async function syncApprovers(activityReportId, userIds = []) {
     await Promise.all(destroyPromises);
   }
 
-  console.log({ userIds });
-
   // Create or restore approvers
   if (userIds.length > 0) {
     const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
