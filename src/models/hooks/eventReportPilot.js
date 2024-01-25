@@ -108,7 +108,12 @@ const updateGoalText = async (sequelize, instance, options) => {
 
   // Compare the previous and current goal text field.
   const previous = instance.previous().data || null;
-  const current = JSON.parse(instance.data.val) || null;
+  let current;
+  if (instance.data?.val) {
+    current = JSON.parse(instance.data.val) || null;
+  } else {
+    current = instance.data || null;
+  }
 
   if (!current || !previous) {
     return;
