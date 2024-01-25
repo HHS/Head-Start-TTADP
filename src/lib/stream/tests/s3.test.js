@@ -5,9 +5,19 @@ import S3Client from '../s3';
 
 jest.mock('aws-sdk');
 
+jest.mock('../../../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+}));
+
 describe('S3Client', () => {
   let s3Client;
   let mockS3;
+
+  beforeAll(() => {
+    jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+  });
 
   beforeEach(() => {
     mockS3 = {
