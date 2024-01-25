@@ -204,6 +204,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: [],
     };
 
     fetchMock.get(url, formData);
@@ -258,6 +259,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: [],
     };
 
     fetchMock.get(url, formData);
@@ -312,6 +314,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: ['English'],
     };
 
     fetchMock.get(url, formData);

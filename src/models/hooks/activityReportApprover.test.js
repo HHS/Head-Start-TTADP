@@ -9,7 +9,6 @@ import {
   calculateReportStatusFromApprovals,
   afterDestroy,
   afterRestore,
-  afterUpsert,
   afterUpdate,
 } from './activityReportApprover';
 
@@ -188,79 +187,6 @@ describe('activityReportApprover hooks', () => {
       expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.DRAFT);
 
       await ActivityReport.destroy({ where: { id: ar.id } });
-    });
-  });
-
-  describe('afterUpsert', () => {
-    it('fails fast if there is no instance', async () => {
-      const mockActivityReportFindByPk = jest.fn();
-      const mockActivityReportApproverFindAll = jest.fn();
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: mockActivityReportFindByPk,
-
-          },
-          ActivityReportApprover: {
-            findAll: mockActivityReportApproverFindAll,
-          },
-        },
-      };
-
-      const mockCreated = [];
-
-      await afterUpsert(mockSequelize, mockCreated);
-
-      expect(mockActivityReportFindByPk).not.toHaveBeenCalled();
-    });
-
-    it('calculates status after upsert', async () => {
-      const ar = await ActivityReport.create(
-        { ...draftObject, submissionStatus: REPORT_STATUSES.SUBMITTED },
-      );
-
-      const approvals = mockUserIds.map((userId) => ({
-        activityReportId: ar.id,
-        userId,
-        status: APPROVER_STATUSES.APPROVED,
-      }));
-
-      await ActivityReportApprover.bulkCreate(approvals);
-
-      const mockCreated = [{
-        activityReportId: ar.id,
-      }];
-
-      await afterUpsert(sequelize, mockCreated);
-      const updatedReport = await ActivityReport.findByPk(ar.id);
-      expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
-    });
-    it('doesn\'t calculate status if the report is not submitted', async () => {
-      const mockActivityReportUpdate = jest.fn();
-
-      const mockSequelize = {
-        models: {
-          ActivityReport: {
-            findByPk: jest.fn(() => ({ submissionStatus: REPORT_STATUSES.DRAFT })),
-            update: mockActivityReportUpdate,
-          },
-          ActivityReportApprover: {
-            findAll: jest.fn(() => ([
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-              { status: APPROVER_STATUSES.APPROVED },
-            ])),
-          },
-        },
-      };
-
-      const mockCreated = [{
-        activityReportId: 1,
-      }];
-
-      await afterUpsert(mockSequelize, mockCreated);
-
-      expect(mockActivityReportUpdate).not.toHaveBeenCalled();
     });
   });
 });
