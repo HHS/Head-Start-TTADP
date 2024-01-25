@@ -47,7 +47,8 @@ export default (sequelize, DataTypes) => {
     status: {
       type: DataTypes.ENUM(Object.values(IMPORT_STATUSES)),
       allowNull: false,
-      defaultValue: IMPORT_STATUSES.IDENTIFIED,
+      // eslint-disable-next-line @typescript-eslint/quotes
+      defaultValue: sequelize.literal(`'${IMPORT_STATUSES.IDENTIFIED}'::"enum_ImportFiles_status"`),
     },
     downloadAttempts: {
       type: DataTypes.INTEGER,
