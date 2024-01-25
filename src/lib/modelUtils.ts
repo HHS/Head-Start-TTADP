@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataTypes, Model } from 'sequelize';
+import merge from 'deepmerge';
 import * as dotWild from 'dot-wild';
 import { isObject } from './dataObjectUtils';
 
