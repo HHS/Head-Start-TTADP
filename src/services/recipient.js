@@ -10,6 +10,7 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
+  ActivityReportObjective,
   Objective,
   ActivityRecipient,
   Topic,
@@ -347,6 +348,10 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
+      // we grab the support types from the activity report objectives,
+      // filtering out empty strings
+      const { supportType } = objective;
+
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
       const {
@@ -368,7 +373,9 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
       const objectiveTopics = (objective.topics || []);
 
       const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle && o.status === objectiveStatus
+        o.title === objectiveTitle
+        && o.status === objectiveStatus
+        && o.supportType === supportType
       ));
 
       if (existing) {
@@ -397,6 +404,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
+        supportType: supportType || null,
       };
 
       formattedObjective.topics.sort();
@@ -570,6 +578,7 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
