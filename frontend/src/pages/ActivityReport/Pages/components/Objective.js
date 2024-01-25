@@ -1,5 +1,5 @@
 import React, {
-  useState, useMemo, useContext, useRef,
+  useState, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
@@ -319,7 +319,6 @@ export default function Objective({
     }
   };
 
-  console.log('objective: ', objective);
   return (
     <>
       <ObjectiveSelect
