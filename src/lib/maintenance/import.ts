@@ -246,19 +246,19 @@ const importMaintenance = async (job) => {
   switch (type) {
     // If the job type is import schedule, call the importSchedule function
     case MAINTENANCE_TYPE.IMPORT_SCHEDULE:
-      action = importSchedule();
+      action = await importSchedule();
       break;
     // If the job type is import download, call the importDownload function with the provided id
     case MAINTENANCE_TYPE.IMPORT_DOWNLOAD:
-      action = importDownload(id);
+      action = await importDownload(id);
       break;
     // If the job type is import process, call the importProcess function with the provided id
     case MAINTENANCE_TYPE.IMPORT_PROCESS:
-      action = importProcess(id);
+      action = await importProcess(id);
       break;
     // If the job type does not match any case, throw an error
     default:
-      throw new Error();
+      throw new Error('Unknown type');
   }
 
   // Return the result of the action performed
