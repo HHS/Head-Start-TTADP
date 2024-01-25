@@ -1,12 +1,17 @@
 import * as fs from 'fs';
-import * as FTP from 'ftp';
+import FTP from 'ftp';
 import FtpClient from '../ftp';
 
 describe('FtpClient', () => {
   let ftpClient;
 
   beforeEach(() => {
-    ftpClient = new FtpClient('localhost', 21, 'username', 'password');
+    ftpClient = new FtpClient({
+      host: 'localhost',
+      port: 22,
+      username: 'tta_ro',
+      password: 'password',
+    });
   });
 
   afterEach(() => {
@@ -15,12 +20,13 @@ describe('FtpClient', () => {
 
   describe('connect', () => {
     it('should resolve if connection is successful', async () => {
-      const connectSpy = jest.spyOn(FTP.prototype, 'connect').mockImplementation((config) => {
-        expect(config.host).toBe('localhost');
-        expect(config.port).toBe(21);
-        expect(config.user).toBe('username');
-        expect(config.password).toBe('password');
+      const connectSpy = jest.spyOn(FTP.prototype, 'connect').mockImplementation((options) => {
+        expect(options.host).toBe('localhost');
+        expect(options.port).toBe(22);
+        expect(options.user).toBe('tta_ro');
+        expect(options.password).toBe('password');
         ftpClient.client.emit('ready');
+        ftpClient.client.connected = true;
       });
 
       await expect(ftpClient.connect()).resolves.toBeUndefined();
@@ -38,9 +44,13 @@ describe('FtpClient', () => {
   });
 
   describe('disconnect', () => {
-    it('should call end method of the FTP client', () => {
+    it('should call end method of the FTP client', async () => {
+      const connectSpy = jest.spyOn(FTP.prototype, 'connect').mockImplementation((options) => {
+        ftpClient.client.emit('ready');
+        ftpClient.client.connected = true;
+      });
       const endSpy = jest.spyOn(FTP.prototype, 'end');
-
+      await ftpClient.connect();
       ftpClient.disconnect();
 
       expect(endSpy).toHaveBeenCalledTimes(1);
@@ -49,6 +59,7 @@ describe('FtpClient', () => {
 
   describe('listFiles', () => {
     it('should resolve with file info list if listing is successful', async () => {
+      const path = '/path/to/files';
       const fileList = [
         {
           path: '',
@@ -67,13 +78,19 @@ describe('FtpClient', () => {
       ];
 
       const listSpy = jest.spyOn(FTP.prototype, 'list').mockImplementation((fullPath, callback) => {
-        expect(fullPath).toBe('/path/to/files');
+        expect(fullPath).toBe(path);
         callback(null, fileList);
       });
 
-      const result = await ftpClient.listFiles('/path/to/files');
+      const result = await ftpClient.listFiles(path);
 
-      expect(result).toEqual(fileList);
+      expect(result).toEqual(fileList.map((file) => ({
+        fileInfo: {
+          ...file,
+          path,
+        },
+        fullPath: `${path}/${file.name}`,
+      })));
       expect(listSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -92,7 +109,7 @@ describe('FtpClient', () => {
     it('should resolve with read stream if download is successful', async () => {
       const stream = fs.createReadStream('test.txt');
 
-      const getSpy = jest.spyOn(FTP.prototype, 'get').mockImplementation((remoteFilePath, callback) => {
+      const getSpy = jest.spyOn(FTP.prototype, 'get').mockImplementation((remoteFilePath, _compress, callback) => {
         expect(remoteFilePath).toBe('/path/to/file.txt');
         callback(null, stream);
       });
@@ -104,7 +121,7 @@ describe('FtpClient', () => {
     });
 
     it('should reject with error if download fails', async () => {
-      const getSpy = jest.spyOn(FTP.prototype, 'get').mockImplementation((remoteFilePath, callback) => {
+      const getSpy = jest.spyOn(FTP.prototype, 'get').mockImplementation((remoteFilePath, _compress, callback) => {
         expect(remoteFilePath).toBe('/path/to/file.txt');
         callback(new Error('Download failed'));
       });
