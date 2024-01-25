@@ -16,11 +16,22 @@ export async function upsertApprover(values) {
     paranoid: false,
   });
 
-  if (approver && status) {
-    await approver.update({
-      status,
-      note: values.note,
-    }, {
+  if (approver) {
+    // we always want to recalculate updatedAt
+    // so we trigger the hooks, since we are no longer
+    // using upsert
+    approver.changed('updatedAt', true);
+    approver.set('updatedAt', new Date());
+
+    if (approver.status) {
+      approver.set('status', status);
+    }
+
+    if (approver.note) {
+      approver.set('note', values.note);
+    }
+
+    await approver.save({
       individualHooks: true,
     });
   }
@@ -56,7 +67,7 @@ export async function upsertApprover(values) {
  * @param {*} userIds - array of userIds for approver records, ActivityReportApprovers will be
  * deleted or created to match this list
  */
-export async function syncApprovers(activityReportId, userIds = [], log = false) {
+export async function syncApprovers(activityReportId, userIds = []) {
   const preexistingApprovers = await ActivityReportApprover.findAll({
     where: { activityReportId },
   });
@@ -83,6 +94,8 @@ export async function syncApprovers(activityReportId, userIds = [], log = false)
     });
     await Promise.all(destroyPromises);
   }
+
+  console.log({ userIds });
 
   // Create or restore approvers
   if (userIds.length > 0) {
