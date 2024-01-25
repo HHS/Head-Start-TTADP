@@ -212,16 +212,27 @@ const collectFilesFromSource = async (
 
   const priorFile = await getPriorFile(importId); // Get the prior file for the import
 
-  const availableFiles: {
+  try {
+    await ftpClient.connect();
+  } catch (err) {
+    throw new Error(`Failed to connect to FTP: ${err.message}`);
+  }
+
+  let availableFiles: {
     fullPath: string,
     fileInfo: FTPFileInfo,
     stream?: Promise<Readable>,
-  }[] = await ftpClient.listFiles(
+  }[];
+  try {
+  availableFiles = await ftpClient.listFiles(
     path, // The path on the FTP server to search for files
     fileMask, // The file mask to filter files
     priorFile, // The prior file for comparison
     true, // Include directories in the file list
   ); // Get the list of available files on the FTP server
+  } catch (err) {
+    throw new Error(`Failed to list files from FTP: ${err.message}`);
+  }
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
@@ -241,7 +252,11 @@ const collectFilesFromSource = async (
     },
   ); // Collect the next file within the time limit
 
-  // TODO - if hasRemainingFiles is true, the download should be retriggered
+  try {
+    await ftpClient.disconnect();
+  } catch (err) {
+    throw new Error(`Failed to disconnect from FTP: ${err.message}`);
+  }
 
   return collectedFiles; // Return the collected files
 };
