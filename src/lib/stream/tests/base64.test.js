@@ -68,12 +68,16 @@ describe('Base64Stream', () => {
 
       try {
         await new Promise((resolve, reject) => {
-          passThrough.pipe(base64Stream).on('error', reject);
+          passThrough
+            .pipe(base64Stream)
+            .on('error', reject)
+            .on('finish', resolve); // Listen for the 'finish' event as well
           passThrough.end(input);
         });
       } catch (error) {
         err = error;
       }
+
       expect(err).toBeInstanceOf(Error);
     });
   });
