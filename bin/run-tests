@@ -172,17 +172,18 @@ main() {
           node \
           --expose-gc \
           ./node_modules/.bin/jest \
-          src/$target \
           --coverage \
           --colors \
           --reporters=jest-junit \
           --reporters=default \
           --runInBand \
           --silent \
-          --colors \
           --logHeapUsage \
           --coverageDirectory=\$(pwd)/coverage/src/$target \
           --collectCoverageFrom=src/$target/**/*.js \
+          --testMatch=\"<rootDir>/src/$target/**/?(*.)+(spec|test).[jt]s?(x)\" \
+          --testMatch=\"<rootDir>/src/$target/test/**/?(*.)+(spec|test).[jt]s?(x)\" \
+          --testMatch=\"<rootDir>/src/$target/tests/**/?(*.)+(spec|test).[jt]s?(x)\" \
           --forceExit"
 
           if [[ $docker == "true" ]]; then
