@@ -42,6 +42,7 @@ const [
   objectiveTextError,
   objectiveTopicsError,
   objectiveResourcesError,
+  objectiveSupportTypeError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -382,11 +383,7 @@ export default function GoalForm({
     const newObjectiveErrors = objectives.map((objective) => {
       if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
         return [
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-          <></>,
+          ...OBJECTIVE_DEFAULT_ERRORS,
         ];
       }
 
@@ -394,6 +391,7 @@ export default function GoalForm({
         isValid = false;
         return [
           <span className="usa-error-message">{objectiveTextError}</span>,
+          <></>,
           <></>,
           <></>,
           <></>,
@@ -409,6 +407,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -418,6 +417,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
+          <></>,
           <></>,
           <></>,
         ];
@@ -431,15 +431,24 @@ export default function GoalForm({
           <></>,
           <span className="usa-error-message">{objectiveStatusError}</span>,
           <></>,
+          <></>,
+        ];
+      }
+
+      if (!objective.supportType) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveSupportTypeError}</span>,
         ];
       }
 
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 
@@ -466,14 +475,11 @@ export default function GoalForm({
           <span className="usa-error-message">{objectiveResourcesError}</span>,
           <></>,
           <></>,
+          <></>,
         ];
       }
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 

@@ -28,22 +28,13 @@ async function getUserRegionsByPermissions(userId, scopeIds) {
 }
 
 export async function validateUserAuthForAccess(userId) {
-  try {
-    if (!userId || typeof userId !== 'number') {
-      return false;
-    }
-
-    const userPermission = await Permission.findOne({
-      where: {
-        userId,
-        scopeId: SITE_ACCESS,
-      },
-    });
-    return userPermission !== null;
-  } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
-    return false;
-  }
+  const userPermission = await Permission.findOne({
+    where: {
+      userId,
+      scopeId: SITE_ACCESS,
+    },
+  });
+  return userPermission !== null;
 }
 
 export async function userIsPocRegionalCollaborator(userId) {
@@ -72,10 +63,6 @@ export async function userIsPocRegionalCollaborator(userId) {
 }
 
 export async function validateUserAuthForAdmin(userId) {
-  if (!userId || typeof userId !== 'number') {
-    return false;
-  }
-
   try {
     const userPermission = await Permission.findOne({
       where: {

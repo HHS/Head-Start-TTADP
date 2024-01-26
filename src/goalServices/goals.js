@@ -95,6 +95,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'status',
         'onApprovedAR',
         'rtrOrder',
+        'supportType',
         [
           'onAR',
           'onAnyReport',
@@ -496,6 +497,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0].status
       ? objective.activityReportObjectives[0].status : objective.status;
 
+    const objectiveSupportType = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].supportType
+      ? objective.activityReportObjectives[0].supportType : objective.supportType;
+
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
@@ -567,6 +573,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
+      supportType: objectiveSupportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
@@ -835,6 +842,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'title',
           'status',
           'goalId',
+          'supportType',
         ],
         required: false,
         include: [
@@ -986,6 +994,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
           'title',
           'title',
           'status',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -1326,6 +1335,7 @@ export async function createOrUpdateGoals(goals) {
           id: objectiveIdsMayContainStrings,
           closeSuspendContext,
           closeSuspendReason,
+          supportType,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1384,6 +1394,7 @@ export async function createOrUpdateGoals(goals) {
               title,
               goalId: newGoal.id,
               createdVia: 'rtr',
+              supportType,
             });
           }
         }
@@ -1398,6 +1409,10 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
           rtrOrder: index + 1,
         });
+
+        if (objective.supportType && objective.supportType !== supportType) {
+          objective.set({ supportType });
+        }
 
         // if the objective has been suspended, a reason and context should have been collected
         if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
@@ -1929,6 +1944,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      supportType,
       courses,
       closeSuspendReason,
       closeSuspendContext,
@@ -1974,6 +1990,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
+          supportType,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',
@@ -2011,6 +2028,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         closeSuspendReason,
         ttaProvided: objective.ttaProvided,
         order: index,
+        supportType,
       },
     );
     return savedObjective;

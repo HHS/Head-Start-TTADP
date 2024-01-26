@@ -88,6 +88,7 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
+        'Support type': objective.supportType,
         'Objective status': objective.status,
         ...(objective.status === 'Suspended' ? {
           'Reason suspended': (

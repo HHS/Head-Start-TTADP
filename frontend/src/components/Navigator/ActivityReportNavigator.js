@@ -16,6 +16,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
+import UserContext from '../../UserContext';
 import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
@@ -130,6 +131,8 @@ const ActivityReportNavigator = ({
     defaultValues: formData,
     shouldUnregister: false,
   });
+
+  const { user } = useContext(UserContext);
 
   const {
     formState,
@@ -551,6 +554,7 @@ const ActivityReportNavigator = ({
     const areGoalsValid = validateGoals(
       [goal],
       setError,
+      user,
     );
 
     if (areGoalsValid !== true) {
