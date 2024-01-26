@@ -106,9 +106,9 @@ main(){
           --logHeapUsage \
           --coverageDirectory="$(pwd)"/coverage/src/"$(echo $target | sed 's#/#-#g')" \
           --collectCoverageFrom="src/$target/!(*CLI).js" \
-          --testMatch=\"<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)\" \
+          --testMatch="<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)" \
+          --testMatch="<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)" \
+          --testMatch="<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)" \
           --forceExit
 
       check_exit "$?"
