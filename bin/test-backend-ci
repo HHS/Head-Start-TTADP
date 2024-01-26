@@ -85,7 +85,7 @@ main(){
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
         # - some other useful flags
-
+        set -x
         node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME="$(echo $target | sed 's#/#-#g')".xml \
@@ -110,8 +110,9 @@ main(){
           --testMatch="<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)" \
           --testMatch="<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)" \
           --forceExit
-
-      check_exit "$?"
+        exitcode="$?"
+        set +x
+        check_exit "$exitcode"
     done
 
   if [[ $exit_code -ne 0 ]]; then
