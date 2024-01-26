@@ -480,31 +480,23 @@ export async function getGoalsByActivityRecipient(
   const limitNum = parseInt(limit, 10);
   const offSetNum = parseInt(offset, 10);
 
-  // Get all goal ids where the associated sessions are not "Complete"
-  // so that we can exclude these goals from the query.
-  const incompleteSessionGoals = await sequelize.query(`
-    SELECT s.data->>'status' AS "sessionStatus", g.id AS "goalId"
-    FROM "EventReportPilotGoals" e
-    LEFT JOIN "SessionReportPilots" as s ON e."sessionId" = s.id
-    LEFT JOIN "Goals" as g ON e."goalId" = g.id
-    WHERE s.data->>'status' != 'Complete'
-    AND e."goalId" IS NOT NULL;
-  `);
-
-  const incompleteSessionGoalIds = incompleteSessionGoals[0].map((j) => j.goalId);
-
   // Goal where.
   let goalWhere = {
     [Op.or]: [
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
-      { createdVia: ['rtr', 'admin', 'merge', 'tr'] },
+      { createdVia: ['rtr', 'admin', 'merge'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
     ],
     // [Op.and]: scopes,
     [Op.and]: [
       scopes,
-      { id: { [Op.notIn]: incompleteSessionGoalIds } },
+      {
+        createdVia: ['tr'],
+        status: {
+          [Op.not]: 'Draft',
+        },
+      },
     ],
   };
 
