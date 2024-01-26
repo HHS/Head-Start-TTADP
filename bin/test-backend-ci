@@ -48,6 +48,27 @@ sort_directories() {
     done
 }
 
+# Function to measure the maximum memory usage of a command
+measure_command() {
+  # Temporary file to hold /usr/bin/time output
+  local TIME_OUTPUT=$(mktemp)
+
+  # Run the command and capture its exit status
+  # Redirect command's stderr to stdout to capture all output together
+  { /usr/bin/time -v "$@" 2>&1; } 2> "$TIME_OUTPUT"
+  local COMMAND_EXIT_STATUS=$?
+
+  # Extract the maximum memory used
+  local MAX_MEMORY=$(grep 'Maximum resident set size (kbytes)' "$TIME_OUTPUT" | awk '{print $6}')
+  echo "Maximum memory used: $MAX_MEMORY kB" >&2
+
+  # Clean up the temporary file
+  rm "$TIME_OUTPUT"
+
+  # Return with the original exit status of the command
+  return $COMMAND_EXIT_STATUS
+}
+
 main(){
     # first get the tests in the root directory
     node_modules/.bin/cross-env \
@@ -85,8 +106,7 @@ main(){
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
         # - some other useful flags
-        set -x
-        node_modules/.bin/cross-env \
+        check_exit "$(measure_command node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME="$(echo $target | sed 's#/#-#g')".xml \
           POSTGRES_USERNAME=postgres \
@@ -109,10 +129,7 @@ main(){
           --testMatch="<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)" \
           --testMatch="<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)" \
           --testMatch="<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)" \
-          --forceExit
-        exitcode="$?"
-        set +x
-        check_exit "$exitcode"
+          --forceExit)"
     done
 
   if [[ $exit_code -ne 0 ]]; then
