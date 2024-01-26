@@ -114,6 +114,9 @@ main() {
       check_exit "$?"
     fi
 
+    # Set a common coverage directory
+    coverage_dir="$(pwd)/coverage"
+
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
       # Test backend
       echo
@@ -137,9 +140,8 @@ main() {
       --reporters=default \
       --runInBand \
       --silent \
-      --colors \
       --logHeapUsage \
-      --coverageDirectory=\$(pwd)/coverage/src/root \
+      --coverageDirectory=$coverage_dir \
       --collectCoverageFrom=src/*.js \
       --forceExit"
 
@@ -153,15 +155,9 @@ main() {
 
       # then list through the folders and run the tests
       readarray -t targets < <(sort_directories)
-      # old way: targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
 
-       for target in "${targets[@]}"; do
-
-        # jest command to
-        # - run tests in the target folder
-        # - collect coverage from the target folder
-        # - output coverage relative to the target folder
-        # - some other useful flags
+      for target in "${targets[@]}"; do
+        # jest command to run tests in the target folder and collect coverage
         command="node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME=unit.xml \
@@ -179,19 +175,19 @@ main() {
           --runInBand \
           --silent \
           --logHeapUsage \
-          --coverageDirectory=\$(pwd)/coverage/src/$target \
-          --collectCoverageFrom=src/$target/**/*.js \
-          --testMatch=\"<rootDir>/src/$target/**/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/test/**/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/tests/**/?(*.)+(spec|test).[jt]s?(x)\" \
+          --coverageDirectory=$coverage_dir \
+          --collectCoverageFrom=src/$target/*.js \
+          --testMatch=\"<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)\" \
+          --testMatch=\"<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)\" \
+          --testMatch=\"<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)\" \
           --forceExit"
 
-          if [[ $docker == "true" ]]; then
-            docker exec test-backend bash -c "$command"
-          else
-            $command
-          fi
-          check_exit "$?"
+        if [[ $docker == "true" ]]; then
+          docker exec test-backend bash -c "$command"
+        else
+          $command
+        fi
+        check_exit "$?"
       done
     fi
 
@@ -210,6 +206,11 @@ main() {
         fi
         check_exit "$?"
     fi
+
+    # After all tests have been run, generate a combined coverage report
+    echo
+    log "Generating combined coverage report"
+    jest --coverage --coverageDirectory="$coverage_dir" --coverageReporters="json-summary" --coverageReporters="lcov" --coverageReporters="text"
 
     # Cleanup
     echo
