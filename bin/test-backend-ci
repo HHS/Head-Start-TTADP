@@ -50,20 +50,31 @@ sort_directories() {
 
 # Function to measure the maximum memory usage of a command
 measure_command() {
-  # Temporary file to hold /usr/bin/time output
-  local TIME_OUTPUT=$(mktemp)
+  # Run the command in the background and redirect stdout and stderr to the console
+  "$@" > >(tee /dev/stderr) 2> >(tee /dev/stderr >&2) &
+  local COMMAND_PID=$!
 
-  # Run the command and capture its exit status
-  # Redirect command's stderr to stdout to capture all output together
-  { /usr/bin/time -v "$@" 2>&1; } 2> "$TIME_OUTPUT"
+  # Wait for the command to start
+  sleep 1
+
+  # Monitor memory usage in a loop
+  local MAX_MEMORY=0
+  while ps -p $COMMAND_PID > /dev/null 2>&1; do
+    # Get the current memory usage of the command
+    local MEMORY=$(ps -o rss= -p $COMMAND_PID)
+    # Update MAX_MEMORY if needed
+    if [ "$MEMORY" -gt "$MAX_MEMORY" ]; then
+      MAX_MEMORY=$MEMORY
+    fi
+    sleep 1
+  done
+
+  # Wait for the command to finish and capture its exit status
+  wait $COMMAND_PID
   local COMMAND_EXIT_STATUS=$?
 
-  # Extract the maximum memory used
-  local MAX_MEMORY=$(grep 'Maximum resident set size (kbytes)' "$TIME_OUTPUT" | awk '{print $6}')
+  # Output the maximum memory used
   echo "Maximum memory used: $MAX_MEMORY kB" >&2
-
-  # Clean up the temporary file
-  rm "$TIME_OUTPUT"
 
   # Return with the original exit status of the command
   return $COMMAND_EXIT_STATUS
