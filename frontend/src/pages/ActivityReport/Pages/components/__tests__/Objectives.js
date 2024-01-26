@@ -252,6 +252,9 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective']);
     const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
     expect(role.tagName).toBe('P');
+
+    // TTA provided remains editable.
+    expect(await screen.findByRole('textbox', { name: /tta provided for objective, required/i })).toBeVisible();
   });
 
   it('handles a "new" goal', async () => {
