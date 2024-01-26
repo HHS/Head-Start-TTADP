@@ -843,6 +843,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'status',
           'goalId',
           'supportType',
+          'onApprovedAR',
+          'onAR',
         ],
         required: false,
         include: [

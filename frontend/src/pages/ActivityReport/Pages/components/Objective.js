@@ -403,7 +403,7 @@ export default function Objective({
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
+        isOnApprovedReport={false}
         error={errors.ttaProvided
           ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
