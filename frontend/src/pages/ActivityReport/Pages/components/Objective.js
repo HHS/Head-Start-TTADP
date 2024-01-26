@@ -346,7 +346,7 @@ export default function Objective({
         savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
+        topics={objectiveTopics}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
@@ -356,7 +356,7 @@ export default function Objective({
         editingFromActivityReport
       />
       <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
         setResources={onChangeResources}
         error={errors.resources
