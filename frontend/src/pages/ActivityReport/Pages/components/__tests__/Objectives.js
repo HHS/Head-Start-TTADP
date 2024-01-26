@@ -7,7 +7,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
 import UserContext from '../../../../../UserContext';
@@ -96,7 +95,8 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -108,7 +108,8 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -136,7 +137,8 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'In Progress',
@@ -148,7 +150,8 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -184,7 +187,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -202,7 +206,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -235,9 +240,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [{
-        status: REPORT_STATUSES.APPROVED,
-      }],
+      onAR: true,
+      onApprovedAR: true,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -248,6 +252,9 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective']);
     const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
     expect(role.tagName).toBe('P');
+
+    // TTA provided remains editable.
+    expect(await screen.findByRole('textbox', { name: /tta provided for objective, required/i })).toBeVisible();
   });
 
   it('handles a "new" goal', async () => {
@@ -256,7 +263,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
