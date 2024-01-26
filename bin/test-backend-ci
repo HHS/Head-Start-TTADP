@@ -51,7 +51,7 @@ sort_directories() {
 # Function to measure the maximum memory usage of a command
 measure_command() {
   # Run the command in the background and redirect stdout and stderr to the console
-  "$@" > >(tee /dev/stderr) 2> >(tee /dev/stderr >&2) &
+  "$@" > >(tee /dev/stderr) 2>&1 &
   local COMMAND_PID=$!
 
   # Wait for the command to start
@@ -77,6 +77,7 @@ measure_command() {
   echo "Maximum memory used: $MAX_MEMORY kB" >&2
 
   # Return with the original exit status of the command
+  exit_code = $COMMAND_EXIT_STATUS
   return $COMMAND_EXIT_STATUS
 }
 
