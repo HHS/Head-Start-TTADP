@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import FTP from 'ftp';
+import { Readable } from 'stream';
 import FtpClient from '../ftp';
 
 describe('FtpClient', () => {
@@ -107,7 +108,9 @@ describe('FtpClient', () => {
 
   describe('downloadAsStream', () => {
     it('should resolve with read stream if download is successful', async () => {
-      const stream = fs.createReadStream('test.txt');
+      // Create a stream from a string
+      const stringContent = 'The content of the file';
+      const stream = Readable.from(stringContent);
 
       const getSpy = jest.spyOn(FTP.prototype, 'get').mockImplementation((remoteFilePath, _compress, callback) => {
         expect(remoteFilePath).toBe('/path/to/file.txt');
