@@ -42,19 +42,27 @@ class Base64Stream extends Transform {
   }
 
   // eslint-disable-next-line no-underscore-dangle
-  _flush(
-    callback: (error?: Error | null, data?: Buffer) => void,
-  ): void {
+  _flush(callback: (error?: Error | null, data?: Buffer) => void): void {
     if (this.mode === 'decode' && this.leftover.length > 0) {
-      // Attempt to process any remaining leftover data
+      // Pad the leftover data to make it a multiple of 4 characters
+      const paddedLeftover = this.leftover
+        .padEnd(this.leftover.length + (4 - (this.leftover.length % 4)), '=');
+
       try {
-        const decoded = Buffer.from(this.leftover, 'base64');
+        const decoded = Buffer.from(paddedLeftover, 'base64');
+        if (decoded.length === 0) {
+          callback(new Error('Invalid base64 data'));
+          return; // Explicit return after callback
+        }
         this.push(decoded);
+        callback();
+        return; // Explicit return after callback
       } catch (error) {
         callback(error);
       }
+    } else {
+      callback();
     }
-    callback();
   }
 }
 
