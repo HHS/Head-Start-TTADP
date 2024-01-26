@@ -12,7 +12,35 @@ export const OBJECTIVE_RESOURCES = 'Each resource should be a valid link. Invali
 export const OBJECTIVE_TTA = 'Describe the TTA provided';
 export const OBJECTIVE_TOPICS = 'Select at least one topic';
 
-export const unfinishedObjectives = (objectives, setError = () => {}, fieldArrayName = 'goalForEditing.objectives') => {
+/**
+ * Function to validate a single value based on a user's flags
+ * defaults to a boolean validator
+ * if the user does not have the flag, the value is considered valid
+ *
+ * @param {object} user
+ * @param {string} flag
+ * @param {string | number} value
+ * @param {function} validator
+ * @returns boolean
+ */
+export const validateOnlyWithFlag = (
+  user,
+  flag,
+  value,
+  validator = Boolean,
+) => {
+  if (user.flags && user.flags.includes(flag)) {
+    return validator(value);
+  }
+  return true;
+};
+
+export const unfinishedObjectives = (
+  objectives,
+  setError = () => {},
+  fieldArrayName = 'goalForEditing.objectives',
+  user = {},
+) => {
   const unfinished = objectives.some(
     (objective, index) => {
       let incomplete = false;
@@ -36,6 +64,14 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
         incomplete = true;
       }
 
+      if (!validateOnlyWithFlag(user, 'goal_source', objective.supportType)) {
+        setError(
+          `${fieldArrayName}[${index}].supportType`,
+          { message: 'Select a support type' },
+        );
+        incomplete = true;
+      }
+
       return incomplete;
     },
   );
@@ -43,7 +79,7 @@ export const unfinishedObjectives = (objectives, setError = () => {}, fieldArray
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };
 
-export const unfinishedGoals = (goals, setError = () => {}) => {
+export const unfinishedGoals = (goals, setError = () => {}, user = {}) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
 
@@ -54,7 +90,7 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
 
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError);
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives', user);
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
@@ -67,12 +103,12 @@ export const unfinishedGoals = (goals, setError = () => {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}) => {
+export const validateGoals = (goals, setError = () => {}, user = {}) => {
   if (goals.length < 1) {
     return GOALS_EMPTY;
   }
 
-  const unfinishedMessage = unfinishedGoals(goals, setError);
+  const unfinishedMessage = unfinishedGoals(goals, setError, user);
   if (unfinishedMessage) {
     return unfinishedMessage;
   }

@@ -13,7 +13,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
@@ -972,6 +972,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>sdgfsdfg</p>\n',
             status: 'Not Started',
             label: 'Create a new objective',
+            supportType: SUPPORT_TYPES[1],
           },
         ],
         name: 'Create new goal',
@@ -1119,6 +1120,7 @@ describe('ActivityReport', () => {
             ttaProvided: '<p>ASDF</p>\n',
             createdAt: '2023-06-21T17:54:17.172Z',
             updatedAt: '2023-06-21T17:54:17.207Z',
+            supportType: SUPPORT_TYPES[1],
             activityReportObjectiveTopics: [{
               id: 13747,
               activityReportObjectiveId: 104904,

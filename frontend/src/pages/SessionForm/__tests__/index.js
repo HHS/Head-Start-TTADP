@@ -4,10 +4,10 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SessionForm from '..';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -196,7 +196,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -251,7 +251,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -305,7 +305,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [1],
       recipients: [1],
