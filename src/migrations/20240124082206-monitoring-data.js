@@ -58,8 +58,8 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          ALTER TABLE "MonitoringReviewStatuses" 
-          ADD CONSTRAINT "MonitoringReviewStatuses_statusId_deletedAt_unique" 
+          ALTER TABLE "MonitoringReviewStatuses"
+          ADD CONSTRAINT "MonitoringReviewStatuses_statusId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewStatuses_statusId_deletedAt";
       `, { transaction });
 
@@ -141,8 +141,8 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          ALTER TABLE "MonitoringReviews" 
-          ADD CONSTRAINT "MonitoringReviews_reviewId_deletedAt_unique" 
+          ALTER TABLE "MonitoringReviews"
+          ADD CONSTRAINT "MonitoringReviews_reviewId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviews_reviewId_deletedAt";
       `, { transaction });
 
@@ -247,8 +247,8 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          ALTER TABLE "MonitoringReviewGrantees" 
-          ADD CONSTRAINT "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt_unique" 
+          ALTER TABLE "MonitoringReviewGrantees"
+          ADD CONSTRAINT "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt";
       `, { transaction });
 
@@ -320,8 +320,8 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          ALTER TABLE "MonitoringFindingHistories" 
-          ADD CONSTRAINT "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt_unique" 
+          ALTER TABLE "MonitoringFindingHistories"
+          ADD CONSTRAINT "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt";
       `, { transaction });
 
@@ -409,8 +409,8 @@ module.exports = {
       `, { transaction });
 
       await queryInterface.sequelize.query(`
-          ALTER TABLE "MonitoringClassSummaries" 
-          ADD CONSTRAINT "MonitoringClassSummaries_reviewId_grantNumber_deletedAt_unique" 
+          ALTER TABLE "MonitoringClassSummaries"
+          ADD CONSTRAINT "MonitoringClassSummaries_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt";
       `, { transaction });
 
@@ -458,7 +458,7 @@ module.exports = {
           ReviewType: 'reviewType',
           ReportDeliveryDate: 'reportDeliveryDate',
           Outcome: 'outcome',
-          '*': 'toHash.*',
+          '.': 'toHash.*',
         },
       });
       definitions.push({
@@ -483,7 +483,7 @@ module.exports = {
         remapDef: {
           FindingHistoryId: 'findingHistoryId',
           ReviewId: 'reviewId',
-          '*': 'toHash.*',
+          '.': 'toHash.*',
         },
       });
       definitions.push({
@@ -498,7 +498,7 @@ module.exports = {
           Domain_CO: 'classroomOrganization',
           Domain_IS: 'instructionalSupport',
           ReportDeliveryDate: 'reportDeliveryDate',
-          '*': 'toHash.*',
+          '.': 'toHash.*',
         },
       });
 
