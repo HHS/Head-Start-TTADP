@@ -1,94 +1,84 @@
-import { Readable } from 'stream';
+import { Readable, PassThrough } from 'stream';
 import * as unzipper from 'unzipper';
 import * as path from 'path';
 
 class ZipStream {
   private readonly zipStream: Readable;
 
+  private readonly fileDetails: FileInfo[] = [];
+
+  private readonly fileStreams: Map<string, Readable>;
+
+  private readonly processingComplete: Promise<void>;
+
+  private resolveProcessing: () => void;
+
   constructor(
     zipStream: Readable,
     private password?: string,
   ) {
     this.zipStream = zipStream;
+    this.fileStreams = new Map<string, Readable>();
 
-    // Set the password if provided
-    if (password) {
-      this.zipStream = this.zipStream
-        .pipe(unzipper.Parse({ password }));
-    }
-  }
+    // Create a PassThrough stream to duplicate the input stream
+    const passThrough = new PassThrough();
+    this.zipStream.pipe(passThrough);
 
-  /**
-   * Retrieves a list of files contained in the zip stream.
-   * @returns A promise that resolves to an array of file paths.
-   */
-  async listFiles(): Promise<string[]> {
-    const files: string[] = [];
+    // Initialize the processingComplete promise and its resolver
+    this.processingComplete = new Promise<void>((resolve) => {
+      this.resolveProcessing = resolve;
+    });
 
-    await this.zipStream
-      .pipe(unzipper.Parse())
+    passThrough
+      .pipe(unzipper.Parse({ password: this.password }))
       .on('entry', (entry) => {
-        if (!entry.isDirectory()) {
-          files.push(entry.path);
+        if (entry.type === 'File') {
+          const fileName = path.basename(entry.path);
+          const fileDir = path.dirname(entry.path);
+          const fileInfo: FileInfo = {
+            name: fileName,
+            path: fileDir,
+            type: entry.type,
+            size: entry.vars.uncompressedSize,
+            date: entry.vars.lastModifiedTime,
+          };
+
+          this.fileDetails.push(fileInfo);
+
+          // Duplicate the stream for this file
+          const fileStream = new PassThrough();
+          entry.pipe(fileStream);
+          this.fileStreams.set(entry.path, fileStream);
+        } else {
+          entry.autodrain();
         }
-        entry.autodrain();
       })
-      .promise();
-
-    return files;
+      .on('error', (error) => {
+        // Handle the error
+      })
+      .on('finish', () => {
+        this.resolveProcessing(); // Resolve the promise when the finish event is emitted
+      });
   }
 
-  /**
-   * Retrieves details about a specific file in the zip stream.
-   * @param filePath - The path of the file to retrieve details for.
-   * @returns A promise that resolves to a FileInfo object if the file exists, or null otherwise.
-   */
+  async listFiles(): Promise<string[]> {
+    await this.processingComplete; // Wait for the processing to complete
+    return this.fileDetails.map((file) => path.join(file.path, file.name));
+  }
+
   async getFileDetails(filePath: string): Promise<FileInfo | null> {
-    const entry = await this.zipStream
-      .pipe(unzipper.ParseOne(filePath))
-      .on('error', () => null)
-      .promise();
-
-    if (!entry || entry.isDirectory()) {
-      return null;
-    }
-
-    const fileName = path.basename(entry.path);
-    const fileDir = path.dirname(entry.path);
-
-    return {
-      name: fileName,
-      path: fileDir,
-      type: entry.type,
-      size: entry.vars.uncompressedSize,
-      date: entry.vars.lastModifiedTime,
-    };
+    await this.processingComplete; // Wait for the processing to complete
+    return this.fileDetails.find((file) => path.join(file.path, file.name) === filePath) || null;
   }
 
-  /**
-   * Retrieves details for all files.
-   * @returns A promise that resolves to an array of FileInfo objects or null.
-   */
-  async getAllFileDetails(): Promise<(FileInfo | null)[]> {
-    // Retrieve the list of files
-    const files = await this.listFiles();
-
-    // Retrieve the details for each file using Promise.all and map
-    return Promise.all(files.map(this.getFileDetails));
+  async getAllFileDetails(): Promise<FileInfo[]> {
+    await this.processingComplete; // Wait for the processing to complete
+    return this.fileDetails;
   }
 
-  /**
-   * Retrieves a readable stream for a specific file in the zip stream.
-   * @param filePath - The path of the file to retrieve the stream for.
-   * @returns A promise that resolves to a Readable stream if the file exists, or null otherwise.
-   */
   async getFileStream(filePath: string): Promise<Readable | null> {
-    const fileStream = await this.zipStream
-      .pipe(unzipper.ParseOne(filePath))
-      .on('error', () => null)
-      .promise();
-
-    return fileStream || null;
+    await this.processingComplete; // Wait for the processing to complete
+    return this.fileStreams.get(filePath) || null;
   }
 }
 
