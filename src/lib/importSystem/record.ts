@@ -2,6 +2,7 @@ import { Op } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import { FileInfo as FTPFileInfo } from '../stream/ftp';
+import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db, { Sequelize } from '../../models';
 import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
@@ -351,7 +352,7 @@ const updateAvailableDataFileMetadata = async (
   fileInfo: ZipFileInfo | { name: string },
   metadata: Record<
   string,
-  string | number | string[] | Record<
+  string | number | string[] | SchemaNode | Record<
   string,
   string | number | Record<
   string,
