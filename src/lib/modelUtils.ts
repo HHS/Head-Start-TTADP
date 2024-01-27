@@ -104,7 +104,11 @@ const modelForTable = (db, tableName: string) => Object.values(db.sequelize.mode
  * @returns An array of objects representing the columns, each containing the column name,
  * data type, and whether it allows null values.
  */
-const getColumnInformation = async (model: typeof Model) => {
+const getColumnInformation = async (model: typeof Model): Promise<{
+  columnName: string,
+  dataType,
+  allowNull: boolean,
+}[]> => {
   // Retrieve the table details using the describe() method of the model
   const tableDetails = await model.describe();
 
@@ -148,7 +152,10 @@ const getColumnNamesFromModelForType = async (
 const filterDataToModel = async (
   data: Record<string, any>,
   model: typeof Model,
-): Promise<{ matched: Record<string, any>, unmatched: Record<string, any> }> => {
+): Promise<{
+  matched: Record<string, any>,
+  unmatched: Record<string, any>,
+}> => {
   // Retrieve the column information for the model
   const modelData = await getColumnInformation(model);
 
