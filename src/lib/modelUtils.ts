@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { DataTypes, Model } from 'sequelize';
 import merge from 'deepmerge';
-import * as dotWild from 'dot-wild';
 import { isObject } from './dataObjectUtils';
 
 // Define a custom type SequelizeDataTypes that represents the available data types in Sequelize
@@ -206,6 +205,23 @@ const includeToFindAll = async (
   });
 };
 
+/**
+ * Transforms a nested object or array of objects by recursively stripping out
+ * Sequelize model instance metadata and retaining only the raw data values.
+ * This function is intended to be used with raw Sequelize query results.
+ *
+ * @param data - An object or array of objects potentially containing Sequelize
+ *               model instance properties such as `dataValues` and metadata.
+ *
+ * @returns A new object or array of objects similar to the input `data` but
+ *          with Sequelize-specific properties removed. The structure of the
+ *          input is preserved, and only the raw data values are retained.
+ *
+ * @remarks
+ * This function assumes that Sequelize model instances have a `dataValues`
+ * property containing the raw data, as well as other Sequelize-specific
+ * metadata properties. These metadata properties are excluded from the output.
+ */
 const nestedRawish = (
   data: { [key: string]: any } | { [key: string]: any }[],
 ): { [key: string]: any } | { [key: string]: any }[] => {
@@ -244,5 +260,7 @@ export {
   modelForTable,
   getColumnInformation,
   getColumnNamesFromModelForType,
+  includeToFindAll,
   filterDataToModel,
+  nestedRawish,
 };
