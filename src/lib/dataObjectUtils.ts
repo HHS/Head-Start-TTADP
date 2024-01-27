@@ -202,7 +202,6 @@ const remap = (
           });
         } else {
           const targetFunction = targetFunctions[targetAction];
-
           if (targetFunction) {
             const modifiedRecords = targetFunction(sourceValue);
             Object.entries(modifiedRecords).forEach(([recordKey, recordValue]) => {
@@ -408,6 +407,25 @@ const detectAndCast = (value: string): {
   return { value, type: typeof value };
 };
 
+/**
+ * Transforms the keys of the given object by making the first letter of each key lowercase.
+ * The original object is not modified; a new object with the transformed keys is returned.
+ *
+ * @param obj - An object with string keys, where the keys need to be transformed.
+ * @returns A new object with the same values as the input object but with each key's first
+ *  letter converted to lowercase.
+ */
+function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const result: Record<string, any> = {};
+
+  Object.keys(obj).forEach((key) => {
+    const lowercasedKey = key.charAt(0).toLowerCase() + key.slice(1);
+    result[lowercasedKey] = obj[key];
+  });
+
+  return result;
+}
+
 export {
   isObject,
   removeUndefined,
@@ -419,4 +437,5 @@ export {
   collectChangedValues,
   simplifyObject,
   detectAndCast,
+  lowercaseFirstLetterOfKeys,
 };
