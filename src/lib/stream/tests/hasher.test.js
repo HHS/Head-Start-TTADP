@@ -54,8 +54,22 @@ describe('getHash', () => {
     expect(hash).toBe(getHash(JSON.stringify(testData), Algorithms.SHA256));
   });
 
-  it('should return the same hash for the same content with the same algorithm', () => {
+  it('should return the same hash for the same content with the same algorithm - string', () => {
     const testData = 'Hello, World!';
+    const hash1 = getHash(testData, Algorithms.SHA256);
+    const hash2 = getHash(testData, Algorithms.SHA256);
+    expect(hash1).toBe(hash2);
+  });
+
+  it('should return the same hash for the same content with the same algorithm - array', () => {
+    const testData = ['Hello, World!'];
+    const hash1 = getHash(testData, Algorithms.SHA256);
+    const hash2 = getHash(testData, Algorithms.SHA256);
+    expect(hash1).toBe(hash2);
+  });
+
+  it('should return the same hash for the same content with the same algorithm - object', () => {
+    const testData = { x: 'Hello, World!' };
     const hash1 = getHash(testData, Algorithms.SHA256);
     const hash2 = getHash(testData, Algorithms.SHA256);
     expect(hash1).toBe(hash2);
