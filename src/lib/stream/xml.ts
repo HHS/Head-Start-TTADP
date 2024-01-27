@@ -271,8 +271,23 @@ class XMLStream {
    * object, or an empty string if no objects are available and reading is complete.
    */
   async getObjectSchema(): Promise<SchemaNode> {
-    return this.schema;
+    // Check if the stream has been fully read
+    if (this.isFullyRead) {
+      // If the stream is fully read, return the schema immediately
+      return this.schema;
+    }
+
+    // If the stream is not fully read, wait for the 'end' event
+    return new Promise<SchemaNode>((resolve) => {
+      this.saxStream.on('end', () => {
+        // Once the stream ends, resolve the promise with the schema
+        resolve(this.schema);
+      });
+    });
   }
 }
 
 export default XMLStream;
+export {
+  SchemaNode,
+};
