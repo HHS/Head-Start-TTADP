@@ -65,8 +65,6 @@ const processRecords = async (
   errors: Promise<any>[],
 }> => {
   const record = await xmlClient.getNextObject(true);
-  let i = 0;
-  console.log('!!', ++i, record);
   // @ts-ignore
   const model: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,7 +76,6 @@ const processRecords = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     destroy: (...args: any[]) => any,
   } = modelForTable(db, processDefinition.tableName);
-  console.log('!!', ++i, model);
 
   if (record && model) {
     try {
@@ -109,27 +106,15 @@ const processRecords = async (
           },
         },
       );
-      console.log('!!', ++i, data);
-      console.log({
-        dataTypeMapping,
-        modelForTable,
-        getColumnInformation,
-        getColumnNamesFromModelForType,
-        includeToFindAll,
-        filterDataToModel,
-        nestedRawish,
-      });
 
       // Filter the data to match the expected model
       const filteredData = await filterDataToModel(data, model as typeof Model);
-      console.log('!!', ++i);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
       processDefinition.keys.forEach((key) => {
         recordKey[key] = filteredData[key];
       });
-      console.log('!!', ++i, recordKey);
 
       // Check if there is an existing record with the same key value
       const currentData = await model.findOne({
@@ -137,7 +122,6 @@ const processRecords = async (
           ...recordKey,
         },
       });
-      console.log('!!', ++i, currentData);
 
       if (currentData === null || currentData === undefined) {
         // If the record is new, create it
