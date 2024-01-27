@@ -88,7 +88,6 @@ services:
       - NODE_ENV=development
   sftp:
     image: atmoz/sftp
-    container_name: monitoring-sftp
     volumes:
         - ./test-sftp:/home/tta_ro/ProdTTAHome
     ports:
