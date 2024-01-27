@@ -1,11 +1,11 @@
 import { Model, Op } from 'sequelize';
 import { Readable } from 'stream';
-import { remap, collectChangedValues } from '../dataObjectUtils';
+import { remap, collectChangedValues, lowercaseFirstLetterOfKeys } from '../dataObjectUtils';
 import { filterDataToModel, modelForTable } from '../modelUtils';
 import EncodingConverter from '../stream/encoding';
 import Hasher, { getHash } from '../stream/hasher';
 import S3Client from '../stream/s3';
-import XMLStream from '../stream/xml';
+import XMLStream, { SchemaNode } from '../stream/xml';
 import ZipStream, { FileInfo as ZipFileInfo } from '../stream/zip';
 import {
   getNextFileToProcess,
@@ -54,9 +54,7 @@ const processRecords = async (
     deletes: [],
     errors: [],
   },
-  schema: string[] = [],
 ): Promise<{
-  schema: string[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inserts: Promise<any>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -67,6 +65,8 @@ const processRecords = async (
   errors: Promise<any>[],
 }> => {
   const record = await xmlClient.getNextObject(true);
+  let i = 0;
+  console.log('!!', ++i, record);
   // @ts-ignore
   const model: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,8 +78,9 @@ const processRecords = async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     destroy: (...args: any[]) => any,
   } = modelForTable(db, processDefinition.tableName);
-  let newSchema = schema;
-  if (record) {
+  console.log('!!', ++i, model);
+
+  if (record && model) {
     try {
       // TODO: column/key alpha sort to retain order
       // 1. use the remap method to format data to structure needed
@@ -92,17 +93,14 @@ const processRecords = async (
       //   1. use the collectChangedValues to find the values to update
       //   2. update
       //   2. recordActions.update.push(uuid)
-      newSchema = [...new Set([
-        ...schema,
-        ...Object.keys(record),
-      ])];
 
       // Format the record data using the remap method
       // This changes the attribute names and structure into what will be saved
-      const data = remap(
+      const { mapped: data } = remap(
         record,
-        processDefinition.remapDef,
+        lowercaseFirstLetterOfKeys(processDefinition.remapDef),
         {
+          keepUnmappedValues: false,
           // defines a custom fuction that will replace the resulting structure
           // with the result of each function.
           targetFunctions: {
@@ -111,15 +109,27 @@ const processRecords = async (
           },
         },
       );
+      console.log('!!', ++i, data);
+      console.log({
+        dataTypeMapping,
+        modelForTable,
+        getColumnInformation,
+        getColumnNamesFromModelForType,
+        includeToFindAll,
+        filterDataToModel,
+        nestedRawish,
+      });
 
       // Filter the data to match the expected model
       const filteredData = await filterDataToModel(data, model as typeof Model);
+      console.log('!!', ++i);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
       processDefinition.keys.forEach((key) => {
         recordKey[key] = filteredData[key];
       });
+      console.log('!!', ++i, recordKey);
 
       // Check if there is an existing record with the same key value
       const currentData = await model.findOne({
@@ -127,6 +137,7 @@ const processRecords = async (
           ...recordKey,
         },
       });
+      console.log('!!', ++i, currentData);
 
       if (currentData === null || currentData === undefined) {
         // If the record is new, create it
@@ -205,10 +216,7 @@ const processRecords = async (
       auditLogger.log('error', err.message);
     }
 
-    return Promise.resolve({
-      schema: newSchema,
-      ...recordActions,
-    });
+    return Promise.resolve(recordActions);
   }
 
   // Recursively call the processRecords function to process the next record
@@ -217,7 +225,6 @@ const processRecords = async (
     xmlClient,
     fileDate,
     recordActions,
-    newSchema,
   );
 };
 
@@ -240,7 +247,7 @@ const processFile = async (
   fileStream: Readable,
 ): Promise<{
   hash?: string,
-  schema?: string[],
+  schema?: SchemaNode,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   inserts?: Promise<any>[],
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -252,7 +259,7 @@ const processFile = async (
 }> => {
   let result: {
     hash?: string,
-    schema?: string[],
+    schema?: SchemaNode,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     inserts?: Promise<any>[],
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -292,9 +299,11 @@ const processFile = async (
     // hash needs to be collected after processRecords returns to make sure all the data has
     // been processed for all records in the file
     const hash = await hashStream.getHash();
+    const schema = await xmlClient.getObjectSchema();
 
     result = {
       hash,
+      schema,
       ...processedRecords,
     };
   } catch (err) {
