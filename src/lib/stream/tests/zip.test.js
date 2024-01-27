@@ -70,7 +70,7 @@ describe('ZipStream', () => {
   });
 
   describe('listFiles', () => {
-    it('should return an array of file paths in the zip stream', async () => {
+    it('should return an array of file paths in the zip stream - a', async () => {
       // jest.setTimeout(60000); // Set timeout to 60 seconds
       // zipFilePath = `${__dirname}/2023_07_20_XML.zip`;
       // expect(existsSync(zipFilePath)).toBe(true);
