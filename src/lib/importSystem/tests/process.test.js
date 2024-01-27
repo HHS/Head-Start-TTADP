@@ -1,4 +1,5 @@
 // processRecords.test.ts
+import { Sequelize } from 'sequelize';
 import { processRecords } from '../process';
 import XMLStream from '../../stream/xml';
 import db from '../../../models';
@@ -19,11 +20,15 @@ describe('processRecords', () => {
   mockXmlClient.getNextObject = mockGetNextObject;
 
   const processDefinition = {
-    fileName: 'test.xml',
-    encoding: 'utf-8',
-    tableName: 'TestTable',
-    keys: ['id'],
-    remapDef: { oldKey: 'newKey' },
+    fileName: 'AMS_FindingHistory.xml',
+    encoding: 'utf16le',
+    tableName: 'MonitoringFindingHistories',
+    keys: ['findingHistoryId'],
+    remapDef: {
+      FindingHistoryId: 'findingHistoryId',
+      ReviewId: 'reviewId',
+      '.': 'toHash.*',
+    },
   };
 
   const fileDate = new Date();
@@ -39,15 +44,32 @@ describe('processRecords', () => {
   });
 
   it('should process a record and add it to inserts if it is new', async () => {
-    const mockRecord = { id: 1, oldKey: 'value' };
-    mockGetNextObject.mockResolvedValue(mockRecord);
+    const mockRecord = {
+      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+    };
+    mockGetNextObject.mockResolvedValueOnce(mockRecord);
 
-    const mockCreate = jest.fn().mockResolvedValue({ id: 1 });
+    const mockCreate = jest.fn().mockImplementation(() => new Promise((resolve, reject) => {
+      resolve({ id: 1 });
+    }));
     mockModelForTable.mockReturnValue({
       findOne: jest.fn().mockResolvedValue(null),
       create: mockCreate,
       update: jest.fn(),
       destroy: jest.fn(),
+      describe: jest.fn().mockResolvedValue({
+        reviewId: {
+          columnName: 'reviewId',
+          dataType: Sequelize.TEXT,
+          allowNull: true,
+        },
+        findingHistoryId: {
+          columnName: 'findingHistoryId',
+          dataType: Sequelize.TEXT,
+          allowNull: true,
+        },
+      }),
     });
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
