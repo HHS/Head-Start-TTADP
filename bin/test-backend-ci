@@ -13,104 +13,35 @@ log() {
     echo "$lr $*"
 }
 
-# Define the sorting script as a function
-sort_directories() {
-    declare -A dir_map
-
-    while IFS= read -r -d '' dir; do
-        # Remove the leading './src/' from the directory path
-        dir=${dir#./src/}
-
-        # Transform the directory path into space-separated words
-        transformed=$(echo "$dir" | perl -pe 's/(?<=[a-z])(?=[A-Z])/ /g')
-
-        # Split the path into an array of words
-        IFS='/' read -ra ADDR <<< "$transformed"
-
-        for i in "${!ADDR[@]}"; do
-            # For each part of the path, sort the words in reverse alphabetical order
-            sorted_part=$(echo "${ADDR[$i]}" | tr ' ' '\n' | sort -r | tr '\n' ' ' | sed 's/ $//')
-            ADDR[$i]=$sorted_part
-        done
-
-        # Join the array back into a path
-        sorted_path=$(IFS='/'; echo "${ADDR[*]}")
-
-        # Use the sorted path as a key and the original path as the value
-        dir_map["$sorted_path"]="$dir"
-    done < <(find ./src -type d -print0 | grep -zvP 'test(s)?|mock')
-
-    # Sort the keys and print the original directory names in sorted order
-    for key in "${!dir_map[@]}"; do
-        echo "$key"
-    done | sort -f | while read -r key; do
-        echo "${dir_map[$key]}"
-    done
-}
-
-# Function to measure the maximum memory usage of a command
-measure_command() {
-  # Run the command in the background and redirect stdout and stderr to the console
-  "$@" > >(tee /dev/stderr) 2>&1 &
-  local COMMAND_PID=$!
-
-  # Wait for the command to start
-  sleep 1
-
-  # Monitor memory usage in a loop
-  local MAX_MEMORY=0
-  while ps -p $COMMAND_PID > /dev/null 2>&1; do
-    # Get the current memory usage of the command
-    local MEMORY=$(ps -o rss= -p $COMMAND_PID)
-    # Update MAX_MEMORY if needed
-    if [ "$MEMORY" -gt "$MAX_MEMORY" ]; then
-      MAX_MEMORY=$MEMORY
-    fi
-    sleep 1
-  done
-
-  # Wait for the command to finish and capture its exit status
-  wait $COMMAND_PID
-  local COMMAND_EXIT_STATUS=$?
-
-  # Output the maximum memory used
-  echo "Maximum memory used: $MAX_MEMORY kB" >&2
-
-  # Return with the original exit status of the command
-  exit_code = $COMMAND_EXIT_STATUS
-  return $COMMAND_EXIT_STATUS
-}
-
 main(){
     # first get the tests in the root directory
     node_modules/.bin/cross-env \
-      JEST_JUNIT_OUTPUT_DIR=reports \
-      JEST_JUNIT_OUTPUT_NAME=root.xml \
-      POSTGRES_USERNAME=postgres \
-      POSTGRES_DB=ttasmarthub \
-      CURRENT_USER_ID=5 \
-      CI=true \
-      node \
-      --expose-gc \
-      ./node_modules/.bin/jest \
-      src/*.js \
-      --coverage \
-      --colors \
-      --reporters=jest-junit \
-      --reporters=default \
-      --runInBand \
-      --silent \
-      --colors \
-      --logHeapUsage \
-      --coverageDirectory="$(pwd)"/coverage/src/root \
-      --collectCoverageFrom=src/*.js \
-      --forceExit
+		JEST_JUNIT_OUTPUT_DIR=reports \
+		JEST_JUNIT_OUTPUT_NAME=root.xml \
+		POSTGRES_USERNAME=postgres \
+		POSTGRES_DB=ttasmarthub \
+		CURRENT_USER_ID=5 \
+		CI=true \
+		node \
+		--expose-gc \
+		./node_modules/.bin/jest \
+		src/*.js \
+		--coverage \
+		--colors \
+		--reporters=jest-junit \
+		--reporters=default \
+		--runInBand \
+		--silent \
+		--colors \
+		--logHeapUsage \
+		--coverageDirectory="$(pwd)"/coverage/src/root \
+		--collectCoverageFrom=src/*.js \
+		--forceExit
 
-  check_exit "$?"
+	check_exit "$?"
 
     # then list through the folders and run the tests
-    readarray -t targets < <(sort_directories)
-    # targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
 
     for target in "${targets[@]}"; do
         # jest command to
@@ -118,33 +49,34 @@ main(){
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
         # - some other useful flags
-        check_exit "$(measure_command node_modules/.bin/cross-env \
-          JEST_JUNIT_OUTPUT_DIR=reports \
-          JEST_JUNIT_OUTPUT_NAME="$(echo $target | sed 's#/#-#g')".xml \
-          POSTGRES_USERNAME=postgres \
-          POSTGRES_DB=ttasmarthub \
-          CURRENT_USER_ID=5 \
-          CI=true \
-          node \
-          --expose-gc \
-          ./node_modules/.bin/jest \
-          src/"$target" \
-          --coverage \
-          --colors \
-          --reporters=jest-junit \
-          --reporters=default \
-          --runInBand \
-          --silent \
-          --logHeapUsage \
-          --coverageDirectory="$(pwd)"/coverage/src/"$(echo $target | sed 's#/#-#g')" \
-          --collectCoverageFrom="src/$target/!(*CLI).js" \
-          --testMatch="<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)" \
-          --testMatch="<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)" \
-          --testMatch="<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)" \
-          --forceExit)"
+
+        node_modules/.bin/cross-env \
+			JEST_JUNIT_OUTPUT_DIR=reports \
+			JEST_JUNIT_OUTPUT_NAME="$target".xml \
+			POSTGRES_USERNAME=postgres \
+			POSTGRES_DB=ttasmarthub \
+			CURRENT_USER_ID=5 \
+			CI=true \
+			node \
+			--expose-gc \
+			./node_modules/.bin/jest \
+			src/"$target" \
+			--coverage \
+			--colors \
+			--reporters=jest-junit \
+			--reporters=default \
+			--runInBand \
+			--silent \
+			--colors \
+			--logHeapUsage \
+			--coverageDirectory="$(pwd)"/coverage/src/"$target" \
+			--collectCoverageFrom="src/$target/**/!(*CLI).js" \
+			--forceExit
+
+			check_exit "$?"
     done
 
-  if [[ $exit_code -ne 0 ]]; then
+	if [[ $exit_code -ne 0 ]]; then
         echo
         log "Errors occurred during script execution"
    	fi
