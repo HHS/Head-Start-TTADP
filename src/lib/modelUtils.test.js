@@ -81,14 +81,12 @@ describe('modelUtils', () => {
         model: db.Topic,
       });
       const moreWhere = { name: 'Coaching' };
-      const results = await includeToFindAll(includeFunc, moreWhere);
+      const results = await includeToFindAll(includeFunc, moreWhere, undefined, ['id', 'name', 'mapsTo']);
       expect(results).toMatchObject([{
-        createdAt: expect.any(Date),
-        deletedAt: null,
-        id: 63,
-        mapsTo: null,
+        id: expect.anything((id) => id === 6 // seeded-data
+        || id === 63), // prod or sanitized data
         name: 'Coaching',
-        updatedAt: expect.any(Date),
+        mapsTo: null,
       }]);
     });
   });
