@@ -14,41 +14,6 @@ check_exit() {
     fi
 }
 
-# Define the sorting script as a function
-sort_directories() {
-    declare -A dir_map
-
-    while IFS= read -r -d '' dir; do
-        # Remove the leading './src/' from the directory path
-        dir=${dir#./src/}
-
-        # Transform the directory path into space-separated words
-        transformed=$(echo "$dir" | perl -pe 's/(?<=[a-z])(?=[A-Z])/ /g')
-
-        # Split the path into an array of words
-        IFS='/' read -ra ADDR <<< "$transformed"
-
-        for i in "${!ADDR[@]}"; do
-            # For each part of the path, sort the words in reverse alphabetical order
-            sorted_part=$(echo "${ADDR[$i]}" | tr ' ' '\n' | sort -r | tr '\n' ' ' | sed 's/ $//')
-            ADDR[$i]=$sorted_part
-        done
-
-        # Join the array back into a path
-        sorted_path=$(IFS='/'; echo "${ADDR[*]}")
-
-        # Use the sorted path as a key and the original path as the value
-        dir_map["$sorted_path"]="$dir"
-    done < <(find ./src -type d -print0 | grep -zvP 'test(s)?|mock')
-
-    # Sort the keys and print the original directory names in sorted order
-    for key in "${!dir_map[@]}"; do
-        echo "$key"
-    done | sort -f | while read -r key; do
-        echo "${dir_map[$key]}"
-    done
-}
-
 main() {
     local opt=""
     local docker="true"
@@ -114,9 +79,6 @@ main() {
       check_exit "$?"
     fi
 
-    # Set a common coverage directory
-    coverage_dir="$(pwd)/coverage"
-
     if [[ "$opt" == "backend" || -z "$opt" ]]; then
       # Test backend
       echo
@@ -140,8 +102,9 @@ main() {
       --reporters=default \
       --runInBand \
       --silent \
+      --colors \
       --logHeapUsage \
-      --coverageDirectory=$coverage_dir \
+      --coverageDirectory=\$(pwd)/coverage/src/root \
       --collectCoverageFrom=src/*.js \
       --forceExit"
 
@@ -154,10 +117,15 @@ main() {
       check_exit "$?"
 
       # then list through the folders and run the tests
-      readarray -t targets < <(sort_directories)
+      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
 
-      for target in "${targets[@]}"; do
-        # jest command to run tests in the target folder and collect coverage
+       for target in "${targets[@]}"; do
+
+        # jest command to
+        # - run tests in the target folder
+        # - collect coverage from the target folder
+        # - output coverage relative to the target folder
+        # - some other useful flags
         command="node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME=unit.xml \
@@ -168,26 +136,25 @@ main() {
           node \
           --expose-gc \
           ./node_modules/.bin/jest \
+          src/$target \
           --coverage \
           --colors \
           --reporters=jest-junit \
           --reporters=default \
           --runInBand \
           --silent \
+          --colors \
           --logHeapUsage \
-          --coverageDirectory=$coverage_dir \
-          --collectCoverageFrom=src/$target/*.js \
-          --testMatch=\"<rootDir>/src/$target/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/test/?(*.)+(spec|test).[jt]s?(x)\" \
-          --testMatch=\"<rootDir>/src/$target/tests/?(*.)+(spec|test).[jt]s?(x)\" \
+          --coverageDirectory=\$(pwd)/coverage/src/$target \
+          --collectCoverageFrom=src/$target/**/*.js \
           --forceExit"
 
-        if [[ $docker == "true" ]]; then
-          docker exec test-backend bash -c "$command"
-        else
-          $command
-        fi
-        check_exit "$?"
+          if [[ $docker == "true" ]]; then
+            docker exec test-backend bash -c "$command"
+          else
+            $command
+          fi
+          check_exit "$?"
       done
     fi
 
@@ -206,11 +173,6 @@ main() {
         fi
         check_exit "$?"
     fi
-
-    # After all tests have been run, generate a combined coverage report
-    echo
-    log "Generating combined coverage report"
-    jest --coverage --coverageDirectory="$coverage_dir" --coverageReporters="json-summary" --coverageReporters="lcov" --coverageReporters="text"
 
     # Cleanup
     echo
