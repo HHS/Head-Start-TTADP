@@ -104,13 +104,18 @@ const modelForTable = (db, tableName: string) => Object.values(db.sequelize.mode
  * @returns An array of objects representing the columns, each containing the column name,
  * data type, and whether it allows null values.
  */
-const getColumnInformation = async (model: typeof Model): Promise<{
+const getColumnInformation = async (model): Promise<{
   columnName: string,
   dataType,
   allowNull: boolean,
 }[]> => {
   // Retrieve the table details using the describe() method of the model
-  const tableDetails = await model.describe();
+  const tableDetails:{
+    [key: string]:{
+      type,
+      allowNull: boolean,
+    },
+  } = await model.describe();
 
   // Map over the entries of the tableDetails object to transform them into an array of
   // column objects
@@ -151,7 +156,7 @@ const getColumnNamesFromModelForType = async (
  */
 const filterDataToModel = async (
   data: Record<string, any>,
-  model: typeof Model,
+  model,
 ): Promise<{
   matched: Record<string, any>,
   unmatched: Record<string, any>,
@@ -201,7 +206,9 @@ const includeToFindAll = async (
     model,
     where,
     ...args
-  } = includeFunc(...funcArgs);
+  } = funcArgs
+    ? includeFunc(...funcArgs)
+    : includeFunc();
 
   // Find all records of the model, applying the merged 'where' condition and any additional
   // conditions
