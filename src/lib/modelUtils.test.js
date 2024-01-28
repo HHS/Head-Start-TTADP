@@ -1,0 +1,117 @@
+import { Model, DataTypes } from 'sequelize';
+import db from '../models';
+import {
+  dataTypeMapping,
+  modelForTable,
+  getColumnInformation,
+  getColumnNamesFromModelForType,
+  filterDataToModel,
+  includeToFindAll,
+  nestedRawish,
+} from './modelUtils';
+
+describe('modelUtils', () => {
+  describe('modelForTable', () => {
+    it('should return the correct model for a given table name', () => {
+      const tableName = 'Users';
+      const model = modelForTable(db, tableName);
+      expect(Object.getPrototypeOf(model.prototype)).toBe(Model.prototype);
+    });
+
+    it('should return undefined if no model is found for the given table name', () => {
+      const tableName = 'NonExistentModel';
+      const model = modelForTable(db, tableName);
+      expect(model).toBeUndefined();
+    });
+  });
+
+  describe('getColumnInformation', () => {
+    it('should return column information for a given model', async () => {
+      const tableName = 'Topics';
+      const model = modelForTable(db, tableName);
+      const columns = await getColumnInformation(model);
+      expect(columns).toMatchObject([
+        { columnName: 'id', dataType: 'INTEGER', allowNull: false },
+        { columnName: 'name', dataType: 'CHARACTER VARYING(255)', allowNull: false },
+        { columnName: 'createdAt', dataType: 'TIMESTAMP WITH TIME ZONE', allowNull: false },
+        { columnName: 'updatedAt', dataType: 'TIMESTAMP WITH TIME ZONE', allowNull: false },
+        { columnName: 'deletedAt', dataType: 'TIMESTAMP WITH TIME ZONE', allowNull: true },
+        { columnName: 'mapsTo', dataType: 'INTEGER', allowNull: true },
+      ]);
+    });
+  });
+
+  describe('getColumnNamesFromModelForType', () => {
+    it('should return column names for a specific data type', async () => {
+      const mockModel = {
+        describe: jest.fn().mockResolvedValue({
+          id: { type: DataTypes.INTEGER, allowNull: false },
+          age: { type: DataTypes.INTEGER, allowNull: true },
+          name: { type: DataTypes.STRING, allowNull: true },
+        }),
+      };
+      const columnNames = await getColumnNamesFromModelForType(mockModel, DataTypes.INTEGER);
+      expect(columnNames).toEqual(['id', 'age']);
+    });
+  });
+
+  describe('filterDataToModel', () => {
+    it('should filter data object based on the column information of a model', async () => {
+      const mockModel = {
+        describe: jest.fn().mockResolvedValue({
+          id: { type: DataTypes.INTEGER, allowNull: false },
+          name: { type: DataTypes.STRING, allowNull: true },
+        }),
+      };
+      const data = {
+        id: 1,
+        name: 'John Doe',
+        email: 'john@example.com', // This field does not exist in the model
+      };
+      const { matched, unmatched } = await filterDataToModel(data, mockModel);
+      expect(matched).toEqual({ id: 1, name: 'John Doe' });
+      expect(unmatched).toEqual({ email: 'john@example.com' });
+    });
+  });
+
+  describe('includeToFindAll', () => {
+    it('should include a model and its associated data based on the provided include function', async () => {
+      const includeFunc = () => ({
+        as: 'topics',
+        model: db.Topic,
+      });
+      const moreWhere = { name: 'Coaching' };
+      const results = await includeToFindAll(includeFunc, moreWhere);
+      expect(results).toMatchObject([{
+        createdAt: expect.any(Date),
+        deletedAt: null,
+        id: 63,
+        mapsTo: null,
+        name: 'Coaching',
+        updatedAt: expect.any(Date),
+      }]);
+    });
+  });
+
+  describe('nestedRawish', () => {
+    it('should strip out Sequelize model instance metadata and retain only raw data values', () => {
+      const sequelizeData = {
+        dataValues: { id: 1, name: 'John Doe' },
+        _previousDataValues: { id: 1, name: 'Jane Doe' },
+        isNewRecord: false,
+        posts: [
+          {
+            dataValues: { id: 10, title: 'Post Title' },
+            isNewRecord: false,
+          },
+        ],
+      };
+      const rawishData = nestedRawish(sequelizeData);
+      expect(rawishData).toEqual({
+        id: 1,
+        name: 'John Doe',
+        posts: [{ id: 10, title: 'Post Title' }],
+      });
+    });
+  });
+});
