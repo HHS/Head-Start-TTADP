@@ -186,6 +186,7 @@ export default function GoalForm({
       />
 
       <FeatureFlag flag="goal_source">
+        1111
         <GoalSource
           error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
           source={goalSource}
@@ -197,6 +198,7 @@ export default function GoalForm({
           userCanEdit={!isCurated}
           isOnReport={false}
           isMultiRecipientGoal={isMultiRecipientReport}
+          disabled={goal.createdVia === 'tr'}
         />
       </FeatureFlag>
 
@@ -240,6 +242,7 @@ GoalForm.propTypes = {
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
     source: PropTypes.string,
+    createdVia: PropTypes.string,
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
