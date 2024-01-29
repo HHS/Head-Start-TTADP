@@ -1,10 +1,11 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
 const {
   afterCreate,
   beforeValidate,
   beforeDestroy,
   afterDestroy,
+  afterUpdate,
 } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
@@ -71,6 +72,10 @@ export default (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
     originalObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -90,6 +95,7 @@ export default (sequelize, DataTypes) => {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportObjective;
