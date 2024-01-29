@@ -373,6 +373,7 @@ class GoalTemplates{
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
+ source : varchar(255)
 }
 
 class Goals{
