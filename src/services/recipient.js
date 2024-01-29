@@ -487,6 +487,12 @@ export async function getGoalsByActivityRecipient(
       { isFromSmartsheetTtaPlan: true },
       { createdVia: ['rtr', 'admin', 'merge'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
+      {
+        createdVia: ['tr'],
+        status: {
+          [Op.not]: 'Draft',
+        },
+      },
     ],
     [Op.and]: scopes,
   };
