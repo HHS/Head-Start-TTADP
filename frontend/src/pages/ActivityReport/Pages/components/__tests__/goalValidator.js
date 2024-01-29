@@ -39,11 +39,10 @@ const validObjective = {
   supportType: SUPPORT_TYPES[1],
 };
 
-// TODO: Uncomment this when we have support types out from behind  "goal_source" feature flag
-// const missingSupportType = {
-//   ...validObjective,
-//   supportType: '',
-// };
+const missingSupportType = {
+  ...validObjective,
+  supportType: '',
+};
 
 const goalUnfinishedObjective = {
   name: 'Test goal',
@@ -111,20 +110,17 @@ describe('validateGoals', () => {
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
       });
 
-      // TODO: Uncomment this when we have support types out from behind  "goal_source" feature flag
-      // eslint-disable-next-line jest/no-commented-out-tests
-      // it('if one objective has no "supportType"', () => {
-      //   const objectives = [
-      //     { ...validObjective },
-      //     missingSupportType,
-      //   ];
+      it('if one objective has no "supportType"', () => {
+        const objectives = [
+          { ...validObjective },
+          missingSupportType,
+        ];
 
-      //   const setError = jest.fn();
-      //   const result = unfinishedObjectives(objectives, setError);
-      //   expect(result).toEqual(UNFINISHED_OBJECTIVES);
-      // eslint-disable-next-line max-len
-      //   expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
-      // });
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
+      });
 
       it('if one objective has invalid "resources"', () => {
         const objectives = [

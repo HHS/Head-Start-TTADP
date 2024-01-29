@@ -22,7 +22,7 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
   setError = hookForm.setError;
 
   return (
-    <UserContext.Provider value={{ user: { flags: ['goal_source'] } }}>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
       <FormProvider {...hookForm}>
         <OtherEntity recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
       </FormProvider>

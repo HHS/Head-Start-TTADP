@@ -39,7 +39,6 @@ export const unfinishedObjectives = (
   objectives,
   setError = () => {},
   fieldArrayName = 'goalForEditing.objectives',
-  user = {},
 ) => {
   const unfinished = objectives.some(
     (objective, index) => {
@@ -64,7 +63,7 @@ export const unfinishedObjectives = (
         incomplete = true;
       }
 
-      if (!validateOnlyWithFlag(user, 'goal_source', objective.supportType)) {
+      if (!objective.supportType) {
         setError(
           `${fieldArrayName}[${index}].supportType`,
           { message: 'Select a support type' },
@@ -79,7 +78,7 @@ export const unfinishedObjectives = (
   return unfinished ? UNFINISHED_OBJECTIVES : false;
 };
 
-export const unfinishedGoals = (goals, setError = () => {}, user = {}) => {
+export const unfinishedGoals = (goals, setError = () => {}) => {
   for (let i = 0; i < goals.length; i += 1) {
     const goal = goals[i];
 
@@ -90,7 +89,7 @@ export const unfinishedGoals = (goals, setError = () => {}, user = {}) => {
 
     // Every goal must have an objective or the `goals` field has unfinished goals
     if (goal.objectives && goal.objectives.length > 0) {
-      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives', user);
+      const objectivesUnfinished = unfinishedObjectives(goal.objectives, setError, 'goalForEditing.objectives');
       if (objectivesUnfinished) {
         return objectivesUnfinished;
       }
@@ -103,12 +102,12 @@ export const unfinishedGoals = (goals, setError = () => {}, user = {}) => {
   return false;
 };
 
-export const validateGoals = (goals, setError = () => {}, user = {}) => {
+export const validateGoals = (goals, setError = () => {}) => {
   if (goals.length < 1) {
     return GOALS_EMPTY;
   }
 
-  const unfinishedMessage = unfinishedGoals(goals, setError, user);
+  const unfinishedMessage = unfinishedGoals(goals, setError);
   if (unfinishedMessage) {
     return unfinishedMessage;
   }

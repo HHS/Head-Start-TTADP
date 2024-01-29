@@ -5,7 +5,6 @@ import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
 import Req from './Req';
 import SupportTypeDrawer from './SupportTypeDrawer';
 import DrawerTriggerButton from './DrawerTriggerButton';
-import FeatureFlag from './FeatureFlag';
 
 export default function ObjectiveSupportType({
   supportType,
@@ -17,33 +16,32 @@ export default function ObjectiveSupportType({
   const supportTypeDrawerTriggerRef = useRef(null);
   const hasError = !!(error.props.children);
   return (
-    <FeatureFlag flag="goal_source">
-      <FormGroup error={hasError}>
-        <SupportTypeDrawer
-          drawerTriggerRef={supportTypeDrawerTriggerRef}
-        />
-        <div className="display-flex">
-          <Label htmlFor={inputName}>
-            Support type
-            <Req />
-            {error}
-          </Label>
-          <DrawerTriggerButton drawerTriggerRef={supportTypeDrawerTriggerRef}>
-            Get help choosing a support type
-          </DrawerTriggerButton>
-        </div>
-        <Dropdown
-          onChange={(e) => onChangeSupportType(e.target.value)}
-          id={inputName}
-          name={inputName}
-          onBlur={onBlurSupportType}
-          value={supportType}
-        >
-          <option disabled hidden value="">Select one</option>
-          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
-        </Dropdown>
-      </FormGroup>
-    </FeatureFlag>
+    <FormGroup error={hasError}>
+      <SupportTypeDrawer
+        drawerTriggerRef={supportTypeDrawerTriggerRef}
+      />
+      <div className="display-flex">
+        <Label htmlFor={inputName}>
+          Support type
+          <Req />
+          {error}
+        </Label>
+        <DrawerTriggerButton drawerTriggerRef={supportTypeDrawerTriggerRef}>
+          Get help choosing a support type
+        </DrawerTriggerButton>
+      </div>
+      <Dropdown
+        onChange={(e) => onChangeSupportType(e.target.value)}
+        id={inputName}
+        name={inputName}
+        onBlur={onBlurSupportType}
+        value={supportType}
+      >
+        <option disabled hidden value="">Select one</option>
+        {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
+      </Dropdown>
+    </FormGroup>
+
   );
 }
 
