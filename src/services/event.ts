@@ -543,6 +543,9 @@ export async function csvImport(buffer: Buffer) {
 
       const data = mapLineToData(line);
 
+      data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
+      data.goal = '';
+
       // remove duplicates in reasons and targetPopulations
       data.reasons = [...new Set(data.reasons as string[])];
       data.targetPopulations = [...new Set(data.targetPopulations as string[])];
