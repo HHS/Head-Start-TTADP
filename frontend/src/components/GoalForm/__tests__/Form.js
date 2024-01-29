@@ -98,6 +98,18 @@ describe('Goal Form > Form component', () => {
     expect(sourceSelect).toBeDisabled();
   });
 
+  it('does not disables goal source if createdVia tr', () => {
+    renderGoalForm(
+      { ...DEFAULT_GOAL, createdVia: 'activityReport', source: 'Not Training event' },
+      [],
+      '',
+      { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
+    );
+    // Expect the goal source not to be disabled
+    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
+    expect(sourceSelect).not.toBeDisabled();
+  });
+
   it('shows an error when the fetch has failed', async () => {
     const objectives = [];
     renderGoalForm(DEFAULT_GOAL, objectives, 'There was a fetch error');
