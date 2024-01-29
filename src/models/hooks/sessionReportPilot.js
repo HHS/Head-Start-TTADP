@@ -199,6 +199,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
 
   try {
     if (sessionReportOrInstance instanceof sequelize.Sequelize.Model) {
+    if (sequelize.Sequelize && sessionReportOrInstance instanceof sequelize.Sequelize.Model) {
       await processSessionReport(sessionReportOrInstance);
     } else {
       const instance = await sequelize.models.SessionReportPilot.findByPk(sessionReportOrInstance.id, { transaction: options.transaction });

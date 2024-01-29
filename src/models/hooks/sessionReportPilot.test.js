@@ -412,15 +412,13 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
   const mockInstance = {
     id: 1,
     data: {
-      val: JSON.stringify({
-        event: {
-          id: '2',
-          data: {
-            goal: 'Increase knowledge about X',
-          },
+      event: {
+        id: '2',
+        data: {
+          goal: 'Increase knowledge about X',
         },
-        recipients: [{ value: '3' }],
-      }),
+      },
+      recipients: [{ value: '3' }],
     },
   };
 
@@ -430,12 +428,15 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
 
   it('creates a new goal and event report pilot goal if necessary', async () => {
     const mockSequelize = {
+      Sequelize: {
+        Model: jest.fn(),
+      },
       models: {
         EventReportPilot: { findByPk: jest.fn(() => true) },
         Grant: { findByPk: jest.fn(() => true) },
         EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
-        Goal: { create: jest.fn(() => ({ id: 4 })) },
-        SessionReportPilot: { findOne: jest.fn(() => null) },
+        Goal: { create: jest.fn(() => ({ id: 4 })), findOne: jest.fn(() => null) },
+        SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
       },
     };
 
@@ -446,12 +447,15 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
 
   it('does not create a new goal if one already exists', async () => {
     const mockSequelize = {
+      Sequelize: {
+        Model: jest.fn(),
+      },
       models: {
         EventReportPilot: { findByPk: jest.fn(() => true) },
         Grant: { findByPk: jest.fn(() => true) },
-        EventReportPilotGoal: { findOne: jest.fn(() => true) },
-        Goal: { create: jest.fn() },
-        SessionReportPilot: { findOne: jest.fn(() => null) },
+        EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => true) },
+        Goal: { create: jest.fn(), findOne: jest.fn(() => true) },
+        SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
       },
     };
 
