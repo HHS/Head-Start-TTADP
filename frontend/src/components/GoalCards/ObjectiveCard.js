@@ -26,6 +26,7 @@ function ObjectiveCard({
     status,
     grantNumbers,
     activityReports,
+    supportType,
   } = objective;
 
   const determineReasonMonitorStatus = (reason) => {
@@ -127,8 +128,14 @@ function ObjectiveCard({
           })}
         </ul>
       </li>
-      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 desktop:text-normal text-bold">Grant numbers </span>
+      {supportType && (
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Support type </span>
+        {supportType}
+      </li>
+      )}
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Grant numbers </span>
         {grantNumbers.join(', ')}
       </li>
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
@@ -172,6 +179,7 @@ export const objectivePropTypes = PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })),
+  supportType: PropTypes.string,
 });
 
 objectivePropTypes.defaultProps = {
@@ -181,6 +189,7 @@ objectivePropTypes.defaultProps = {
   reasons: [],
   grantNumbers: [],
   activityReports: [],
+  supportType: '',
 };
 ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,

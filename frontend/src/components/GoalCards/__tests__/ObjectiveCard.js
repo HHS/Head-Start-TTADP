@@ -17,6 +17,7 @@ describe('ObjectiveCard', () => {
       status: 'In Progress',
       grantNumbers: ['grant1', 'grant2'],
       topics: [],
+      supportTypes: ['Planning'],
       activityReports: [
         {
           displayId: 'r-123',
