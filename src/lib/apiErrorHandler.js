@@ -2,6 +2,7 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
 import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
+import { sequelize } from '../models';
 
 /**
  * Logs a request error and stores it in the database.
@@ -83,6 +84,10 @@ export const handleError = async (req, res, error, logContext) => {
   } else {
     operation = 'UNEXPECTED_ERROR';
     label = 'UNEXPECTED ERROR';
+  }
+
+  if (error instanceof Sequelize.ConnectionError) {
+    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
   }
 
   // Log the request error and get the error ID
