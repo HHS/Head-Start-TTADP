@@ -210,31 +210,6 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
   }
 };
 
-const destroyAssociatedGoals = async (sequelize, instance, options) => {
-  try {
-    const { EventReportPilotGoal } = sequelize.models;
-    const goals = await EventReportPilotGoal.findAll({
-      where: {
-        sessionId: instance.id,
-        eventId: instance.eventId,
-      },
-      transaction: options.transaction,
-    });
-
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const goal of goals) {
-      await sequelize.models.Goal.destroy({
-        where: {
-          id: goal.goalId,
-        },
-        transaction: options.transaction,
-      });
-    }
-  } catch (error) {
-    auditLogger.error(JSON.stringify({ error }));
-  }
-};
-
 const makeGoalsInProgressIfThisIsTheFirstCompletedSession = async (sequelize, instance, options) => {
   const { transaction } = options;
 
@@ -317,7 +292,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const beforeDestroy = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
-  await destroyAssociatedGoals(sequelize, instance, options);
 };
 
 export {
