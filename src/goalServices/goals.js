@@ -1,7 +1,9 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
+import {
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+} from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -1323,6 +1325,9 @@ export async function createOrUpdateGoals(goals) {
     }
 
     if (source && newGoal.source !== source) {
+      if (newGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
+        throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
+      }
       newGoal.set({ source });
     }
 
@@ -2108,9 +2113,11 @@ export async function saveGoalsForReport(goals, report) {
           status,
         }, { individualHooks: true });
       }
-
       if (!newOrUpdatedGoal.onApprovedAR) {
         if (source && newOrUpdatedGoal.source !== source) {
+          if (newOrUpdatedGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
+            throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
+          }
           newOrUpdatedGoal.set({ source });
         }
 

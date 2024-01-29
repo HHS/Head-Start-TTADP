@@ -317,6 +317,36 @@ describe('Goals DB service', () => {
       });
     });
 
+    it('prevents saving an invalid goal source when created via tr', async () => {
+      const existingGoal = {
+        id: mockGoalId,
+        name: 'name',
+        objectives: [],
+        grantIds: [mockGrantId, mockGrantId + 1],
+        goalIds: [mockGoalId],
+        createdVia: 'tr',
+        source: 'Not a TR source',
+      };
+
+      const set = jest.fn();
+      Goal.findOne.mockResolvedValue({
+        id: mockGoalId,
+        createdVia: 'tr',
+        source: 'Training event',
+        update: jest.fn(),
+        set,
+        save: jest.fn(),
+      });
+
+      let excMessage = '';
+      try {
+        await saveGoalsForReport([existingGoal], { id: mockActivityReportId });
+      } catch (e) {
+        excMessage = e.message;
+      }
+      expect(excMessage).toBe('Goals created via a TR must have a goal source of "Training event"');
+    });
+
     test.todo('can update an existing goal');
 
     it('can create new objectives', async () => {

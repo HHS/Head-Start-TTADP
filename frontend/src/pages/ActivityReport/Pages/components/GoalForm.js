@@ -186,7 +186,6 @@ export default function GoalForm({
       />
 
       <FeatureFlag flag="goal_source">
-        1111
         <GoalSource
           error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
           source={goalSource}

@@ -365,6 +365,32 @@ describe('createOrUpdateGoals', () => {
     expect(updatedObjective2.status).toBe('Complete');
   });
 
+  it('prevent saving goal with an invalid goal source when created via tr', async () => {
+    const trGoal = {
+      recipientId: recipient.id,
+      regionId: 1,
+      name: 'Goal for testing invalid tr source',
+      status: 'Draft',
+      isNew: true,
+      grantId: grants[1].id,
+      objectives: [],
+      createdVia: 'tr',
+      source: 'Not a valid tr soruce',
+    };
+
+    let exceptionMessage = '';
+    let updatedGoals = 0;
+    try {
+      updatedGoals = await createOrUpdateGoals([
+        trGoal,
+      ]);
+    } catch (e) {
+      exceptionMessage = e.message;
+    }
+    expect(exceptionMessage).toBe('Goals created via a TR must have a goal source of "Training event"');
+    expect(updatedGoals).toBe(0);
+  });
+
   it('you can change an objectives status For objective on approved AR', async () => {
     const basicGoal = {
       recipientId: recipient.id,
