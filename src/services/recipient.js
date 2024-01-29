@@ -10,7 +10,8 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
-  ActivityReportObjective,
+  EventReportPilot,
+  SessionReportPilot,
   Objective,
   ActivityRecipient,
   Topic,
@@ -334,9 +335,16 @@ function reduceTopicsOfDifferingType(topics) {
  * a goal, either an pre built one or one we are building on the fly as we reduce goals
  * @param {String[]} grantNumbers
  * passed into here to avoid having to refigure anything else, they come from the goal
+ * @param {Object[]} sessionObjectives
+ * a bespoke data collection from the goal->eventReportPilots->sessionReports
  * @returns {Object[]} sorted objectives
  */
-export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
+export function reduceObjectivesForRecipientRecord(
+  currentModel,
+  goal,
+  grantNumbers,
+  sessionObjectives = [],
+) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
@@ -428,7 +436,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
   current.reasons = uniq([...goal.reasons, ...reasons]);
   current.reasons.sort();
 
-  return objectives.map((obj) => {
+  return [...sessionObjectives, ...objectives].map((obj) => {
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
@@ -487,10 +495,6 @@ export async function getGoalsByActivityRecipient(
       { isFromSmartsheetTtaPlan: true },
       { createdVia: ['rtr', 'admin', 'merge'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
-    ],
-    // [Op.and]: scopes,
-    [Op.and]: [
-      scopes,
       {
         createdVia: ['tr'],
         status: {
@@ -498,6 +502,7 @@ export async function getGoalsByActivityRecipient(
         },
       },
     ],
+    [Op.and]: scopes,
   };
 
   // If we have specified goals only retrieve those else all for recipient.
@@ -557,6 +562,20 @@ export async function getGoalsByActivityRecipient(
     ],
     where: goalWhere,
     include: [
+      {
+        model: EventReportPilot,
+        as: 'eventReportPilots',
+        required: false,
+        attributes: ['id'],
+        include: [
+          {
+            model: SessionReportPilot,
+            as: 'sessionReports',
+            attributes: ['id', 'data'],
+            required: false,
+          },
+        ],
+      },
       {
         model: GoalFieldResponse,
         as: 'responses',
@@ -708,10 +727,23 @@ export async function getGoalsByActivityRecipient(
       createdVia: current.createdVia,
     };
 
+    const sessionObjectives = current.eventReportPilots
+      .map((erp) => erp.sessionReports.map((sr) => ({
+        type: 'session',
+        title: sr.data.objective,
+        topics: sr.data.objectiveTopics,
+        grantNumbers: [current.grant.number],
+        endDate: sr.data.endDate,
+        sessionName: sr.data.sessionName,
+        trainingReportId: sr.data.eventDisplayId,
+      })))
+      .flat();
+
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
       current,
       goalToAdd,
       [current.grant.number],
+      sessionObjectives,
     );
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
@@ -727,25 +759,6 @@ export async function getGoalsByActivityRecipient(
       id: allGoalIds,
     },
   });
-
-  // TODO - remove: this is for testing purposes only,
-  // and to demonstrate the schema required
-  // to be removed when the backend is complete or before merging, whichever is first
-
-  // r.goalRows[0].objectives = [
-  //   {
-  //     type: 'session',
-  //     title: 'To help recipients ensure that decisions are informed by data.',
-  //     trainingReportId: 'R01-TR-23-1037',
-  //     sessionName: 'Leadership and Governance: Managing Communication and Equity Considerations',
-  //     grantNumbers: [r.goalRows[0].grantNumbers[0]],
-  //     endDate: '09/20/2023',
-  //     topics: ['Change in Scope', 'Safety Practices', 'Teaching/Caregiving Practices'],
-  //   },
-  //   ...r.goalRows[0].objectives,
-  // ];
-
-  // r.goalRows[0].objectiveCount += 1;
 
   if (limitNum) {
     return {
