@@ -4,7 +4,6 @@ import AxeBuilder from '@axe-core/playwright';
 const axeUrls = [
   'http://localhost:3000/',
   'http://localhost:3000/activity-reports/new/activity-summary',
-  'http://localhost:3000/activity-reports/new/activity-summary',
   'http://localhost:3000/activity-reports/new/supporting-attachments',
   'http://localhost:3000/activity-reports/new/goals-objectives',
   'http://localhost:3000/activity-reports/new/next-steps',
@@ -30,8 +29,16 @@ const testForAxeViolations = async (page: Page, url: string) => {
   expect(results.violations).toEqual([]);
 };  
 
-test('run axe tests in playwright', async ({ page }) => {
-  for (const url of axeUrls) {
+// const people = ['Alice', 'Bob'];
+for (const url of axeUrls) {
+  test(`testing with ${url}`, async ({ page }) => {
     await testForAxeViolations(page, url);
-  }
-});
+  });
+  // You can also do it with test.describe() or with multiple tests as long the test name is unique.
+}
+
+// test('run axe tests in playwright', async ({ page }) => {
+//   for (const url of axeUrls) {
+//     await testForAxeViolations(page, url);
+//   }
+// });
