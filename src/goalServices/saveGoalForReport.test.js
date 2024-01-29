@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { GOAL_SOURCES, REPORT_STATUSES } from '@ttahub/common';
+import { GOAL_SOURCES, REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -566,6 +566,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topics: [],
       resources: [],
       files: [],
+      supportType: SUPPORT_TYPES[1],
     };
 
     const newGoals = [
@@ -727,8 +728,8 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterObjectives.length).toBe(1);
 
     const [afterObjective] = afterObjectives;
-
     expect(afterObjective.ttaProvided).toBe(newObjective.ttaProvided);
+    expect(afterObjective.supportType).toBe(newObjective.supportType);
 
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
     expect(savedObjective.title).toBe(newObjective.title);

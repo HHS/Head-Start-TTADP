@@ -21,6 +21,7 @@ import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
   DECIMAL_BASE,
+  LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -490,6 +491,21 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
+            label="Language used"
+            name="language"
+            required
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
+            />
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
             label="How was the activity conducted?"
             name="deliveryMethod"
             fieldSetWrapper
@@ -675,6 +691,7 @@ const sections = [
     anchor: 'tta',
     items: [
       { label: 'TTA provided', name: 'ttaType' },
+      { label: 'Language used', name: 'language' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],
   },
@@ -734,6 +751,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
 
     // numbers
     duration,
@@ -754,12 +772,18 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
+  // If language is null return false for now.
+  if (!language) {
+    return false;
+  }
+
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
     reason,
     ttaType,
     participants,
+    language,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {

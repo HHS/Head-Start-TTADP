@@ -18,7 +18,7 @@ describe('GoalDataController', () => {
   const RECIPIENT_ID = 1;
 
   beforeEach(() => {
-    const url = `/api/goals/similar/${RECIPIENT_ID}?cluster=true`;
+    const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
   });
 

@@ -438,6 +438,5 @@ const getResourceMetaDataJob = async (job) => {
 };
 
 export {
-  axios,
   getResourceMetaDataJob,
 };

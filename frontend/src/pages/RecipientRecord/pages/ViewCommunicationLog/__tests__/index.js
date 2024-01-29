@@ -101,6 +101,17 @@ describe('ViewCommunicationForm', () => {
     expect(await screen.findByRole('link', { name: 'Edit' })).toBeInTheDocument();
   });
 
+  it('shows error message', async () => {
+    const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    fetchMock.get(url, 500);
+
+    await act(() => waitFor(() => {
+      renderTest();
+    }));
+
+    expect(await screen.findByText(/There was an error fetching the communication log/i)).toBeInTheDocument();
+  });
+
   it('should render the view without edit button', async () => {
     const formData = {
       id: 1,

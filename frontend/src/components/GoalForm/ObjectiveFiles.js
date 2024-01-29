@@ -72,7 +72,7 @@ export default function ObjectiveFiles({
 
   return (
     <>
-      <Fieldset className="ttahub-objective-files margin-top-1">
+      <Fieldset className="ttahub-objective-files margin-top-3">
         { hideFileToggle ? null : (
           <>
             <legend>

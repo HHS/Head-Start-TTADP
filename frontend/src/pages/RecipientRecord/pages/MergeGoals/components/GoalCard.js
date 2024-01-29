@@ -23,6 +23,7 @@ function GoalCard({
 }) {
   const {
     id, // for keys and such, from the api
+    ids, // includes all goal IDs
     goalStatus,
     createdOn,
     goalText,
@@ -98,7 +99,7 @@ function GoalCard({
             <FormControl
               id={formControlId}
               name={formControlName}
-              value={id}
+              value={ids.join(',')}
               aria-label={formControlLabel}
               className="margin-right-1"
               inputRef={register(registration)}
@@ -109,7 +110,7 @@ function GoalCard({
               disabled
               id={formControlId}
               name={formControlName}
-              value={id}
+              value={ids.join(',')}
               aria-label={formControlLabel}
               className="margin-right-1"
               inputRef={register(registration)}

@@ -97,6 +97,14 @@ export default (sequelize, DataTypes) => {
         const { programType } = program;
 
         if (role.toLowerCase() === 'cfo') {
+          if (programType && programType.toLowerCase() === 'ehs') {
+            return 'Chief Financial Officer for Early Head Start';
+          }
+
+          if (programType && programType.toLowerCase() === 'hs') {
+            return 'Chief Financial Officer for Head Start';
+          }
+
           return 'Chief Financial Officer';
         }
 
@@ -105,7 +113,7 @@ export default (sequelize, DataTypes) => {
             return 'Director for Early Head Start';
           }
 
-          if (programType.toLowerCase() === 'hs') {
+          if (programType && programType.toLowerCase() === 'hs') {
             return 'Director for Head Start';
           }
 
