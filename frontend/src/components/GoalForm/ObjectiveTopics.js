@@ -11,6 +11,7 @@ import Drawer from '../Drawer';
 import Req from '../Req';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
 import './ObjectiveTopics.scss';
+import DrawerTriggerButton from '../DrawerTriggerButton';
 
 export default function ObjectiveTopics({
   error,
@@ -66,6 +67,10 @@ export default function ObjectiveTopics({
 
   topicOptions.sort((a, b) => a.name.localeCompare(b.name));
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
+  const onTopicsChange = (newTopics) => {
+    // We need to combine the new and fixed topics.
+    onChangeTopics([...newTopics, ...fixedTopics]);
+  };
 
   return (
     <>
@@ -96,13 +101,9 @@ export default function ObjectiveTopics({
               <Req />
             </>
           </Label>
-          <button
-            type="button"
-            className="usa-button__topics-drawer-trigger usa-button usa-button--unstyled margin-left-1"
-            ref={drawerTriggerRef}
-          >
+          <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
             Get help choosing topics
-          </button>
+          </DrawerTriggerButton>
         </div>
         {error}
         <Select
@@ -118,7 +119,7 @@ export default function ObjectiveTopics({
           options={filteredOptions}
           onBlur={validateObjectiveTopics}
           value={editableTopics}
-          onChange={onChangeTopics}
+          onChange={onTopicsChange}
           closeMenuOnSelect={false}
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}

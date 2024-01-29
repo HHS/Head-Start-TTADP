@@ -1,3 +1,4 @@
+import { SUPPORT_TYPES } from '@ttahub/common';
 import {
   unfinishedObjectives,
   unfinishedGoals,
@@ -10,6 +11,7 @@ import {
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
   validatePrompts,
+  validateOnlyWithFlag,
 } from '../goalValidator';
 import {
   GOAL_NAME_ERROR,
@@ -34,7 +36,14 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
+  supportType: SUPPORT_TYPES[1],
 };
+
+// TODO: Uncomment this when we have support types out from behind  "goal_source" feature flag
+// const missingSupportType = {
+//   ...validObjective,
+//   supportType: '',
+// };
 
 const goalUnfinishedObjective = {
   name: 'Test goal',
@@ -101,6 +110,21 @@ describe('validateGoals', () => {
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
       });
+
+      // TODO: Uncomment this when we have support types out from behind  "goal_source" feature flag
+      // eslint-disable-next-line jest/no-commented-out-tests
+      // it('if one objective has no "supportType"', () => {
+      //   const objectives = [
+      //     { ...validObjective },
+      //     missingSupportType,
+      //   ];
+
+      //   const setError = jest.fn();
+      //   const result = unfinishedObjectives(objectives, setError);
+      //   expect(result).toEqual(UNFINISHED_OBJECTIVES);
+      // eslint-disable-next-line max-len
+      //   expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
+      // });
 
       it('if one objective has invalid "resources"', () => {
         const objectives = [
@@ -254,6 +278,25 @@ describe('validateGoals', () => {
         const result = validateGoals(goals);
         expect(result).toEqual(true);
       });
+    });
+  });
+
+  describe('validateOnlyWithFlag', () => {
+    it('returns true if no flags on user', () => {
+      const result = validateOnlyWithFlag({}, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if user does not have flag', () => {
+      const result = validateOnlyWithFlag({ flags: [] }, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if flag is valid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', 1);
+      expect(result).toEqual(true);
+    });
+    it('returns false if flag is invalid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', false);
+      expect(result).toEqual(false);
     });
   });
 });
