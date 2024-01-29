@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
 const { Op } = require('sequelize');
-const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
+const { TRAINING_REPORT_STATUSES, GOAL_SOURCES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
@@ -174,6 +174,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, inst
           updatedAt: new Date(),
           status,
           createdVia: 'tr',
+          source: GOAL_SOURCES[4], // Training event
         }, { transaction: options.transaction });
 
         await sequelize.models.EventReportPilotGoal.create({

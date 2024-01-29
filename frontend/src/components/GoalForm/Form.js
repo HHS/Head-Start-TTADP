@@ -54,6 +54,7 @@ export default function Form({
   source,
   setSource,
   validateGoalSource,
+  createdVia,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -166,6 +167,7 @@ export default function Form({
           goalStatus={status}
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
+          disabled={createdVia === 'tr'}
         />
       </FeatureFlag>
 
@@ -284,6 +286,7 @@ Form.propTypes = {
   source: PropTypes.arrayOf(PropTypes.string).isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
+  createdVia: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

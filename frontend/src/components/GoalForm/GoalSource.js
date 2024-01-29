@@ -19,6 +19,7 @@ export default function GoalSource({
   userCanEdit,
   isMultiRecipientGoal,
   required,
+  disabled,
 }) {
   const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
     [goalStatus, userCanEdit]);
@@ -60,7 +61,7 @@ export default function GoalSource({
           onBlur={() => {
             validateGoalSource();
           }}
-          disabled={isLoading}
+          disabled={isLoading || disabled}
           value={source}
           required={required}
         >
@@ -86,6 +87,7 @@ GoalSource.propTypes = {
   userCanEdit: PropTypes.bool.isRequired,
   isMultiRecipientGoal: PropTypes.bool,
   required: PropTypes.bool,
+  disabled: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
@@ -93,4 +95,5 @@ GoalSource.defaultProps = {
   isLoading: false,
   isMultiRecipientGoal: false,
   required: true,
+  disabled: false,
 };

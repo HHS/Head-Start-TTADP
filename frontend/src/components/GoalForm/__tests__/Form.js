@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import Form from '../Form';
 import { FORM_FIELD_DEFAULT_ERRORS } from '../constants';
@@ -13,6 +14,11 @@ const DEFAULT_GOAL = {
   isOnApprovedReport: false,
   isOnReport: false,
   prompts: [],
+  source: null,
+};
+
+const DEFAULT_USER = {
+  id: 1, permissions: [], name: 'Ted User', flags: [],
 };
 
 describe('Goal Form > Form component', () => {
@@ -20,12 +26,11 @@ describe('Goal Form > Form component', () => {
     goal = DEFAULT_GOAL,
     objectives = [],
     fetchError = '',
+    user = DEFAULT_USER,
   ) => {
     render(
       <UserContext.Provider value={{
-        user: {
-          id: 1, permissions: [], name: 'Ted User', flags: [],
-        },
+        user,
       }}
       >
         <Form
@@ -69,6 +74,8 @@ describe('Goal Form > Form component', () => {
           validateGoalNameAndRecipients={jest.fn()}
           prompts={goal.prompts}
           userCanEdit
+          source={goal.source}
+          createdVia={goal.createdVia}
         />
       </UserContext.Provider>,
     );
@@ -77,6 +84,18 @@ describe('Goal Form > Form component', () => {
   it('should render the form', () => {
     renderGoalForm();
     expect(document.querySelector('.ttahub-create-goals-form')).not.toBeNull();
+  });
+
+  it('disables goal source if createdVia tr', () => {
+    renderGoalForm(
+      { ...DEFAULT_GOAL, createdVia: 'tr', source: 'Training event' },
+      [],
+      '',
+      { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
+    );
+    // Expect the goal source to be disabled
+    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
+    expect(sourceSelect).toBeDisabled();
   });
 
   it('shows an error when the fetch has failed', async () => {
