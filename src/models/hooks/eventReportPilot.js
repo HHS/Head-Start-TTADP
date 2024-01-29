@@ -125,7 +125,7 @@ const updateGoalText = async (sequelize, instance, options) => {
 
   // Disallow goal name propagation if any session on this event has been completed,
   // effectively locking down this goal text.
-  // We should probably disable this in the UI too.
+  // The UI also prevents this.
   const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
     where: {
       eventId: instance.id,
