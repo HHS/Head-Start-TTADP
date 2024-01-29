@@ -20,6 +20,7 @@ describe('OtherEntityReviewSection', () => {
           title: 'Objective 1',
           topics: [],
           resources: [],
+          courses: [{ id: 1, name: 'Test Course' }],
           ttaProvided: '<p>TTA Provided</p>',
           status: 'In Progress',
           files: [

@@ -14,6 +14,7 @@ describe('Approved Activity Report V2 component', () => {
       ActivityReportObjective: {
         ttaProvided: 'All of it',
       },
+      courses: [],
       topics: [{ label: 'being fancy' }],
       resources: [{ value: 'http://www.website.com', url: 'http://www.OtherEntity.com' }],
       status: 'Test status',
@@ -62,6 +63,7 @@ describe('Approved Activity Report V2 component', () => {
       completeDate: '2021-01-01',
     }],
     participants: ['Commander of Pants', 'Princess of Castles'],
+    language: [],
     numberOfParticipants: 3,
     reason: ['Needed it'],
     startDate: '1968-08-01',
@@ -136,6 +138,7 @@ describe('Approved Activity Report V2 component', () => {
       resources: [{ value: 'http://www.website.com' }],
       status: 'Test status',
       files: [],
+      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
@@ -155,6 +158,7 @@ describe('Approved Activity Report V2 component', () => {
       resources: [],
       status: 'Test status',
       files: [],
+      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
@@ -202,6 +206,15 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
+  });
+
+  it('language', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, language: ['Gobbledegook'],
+    }}
+    />);
+
+    expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {

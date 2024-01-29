@@ -12,7 +12,7 @@ import {
   NotStarted,
   Ceased,
 } from '../icons';
-import './ObjectiveCard.scss';
+import './ObjectiveCard.css';
 
 function ObjectiveCard({
   objective,
@@ -26,6 +26,7 @@ function ObjectiveCard({
     status,
     grantNumbers,
     activityReports,
+    supportType,
   } = objective;
 
   const determineReasonMonitorStatus = (reason) => {
@@ -105,12 +106,12 @@ function ObjectiveCard({
 
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Objective </span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
         <div>{title}</div>
       </li>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Activity reports </span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Activity reports </span>
         <ul className="usa-list usa-list--unstyled">
           {activityReports.map((report) => {
             const viewOrEditLink = `/activity-reports/view/${report.id}`;
@@ -127,27 +128,33 @@ function ObjectiveCard({
           })}
         </ul>
       </li>
+      {supportType && (
+      <li className="display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 minw-15">Support type </span>
+        {supportType}
+      </li>
+      )}
       <li className="display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 minw-15">Grant numbers </span>
         {grantNumbers.join(', ')}
       </li>
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">End date </span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">End date </span>
         {endDate}
       </li>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Topics</span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Topics</span>
         {topics.join(', ')}
       </li>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Reasons</span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Reasons</span>
         {reasons && displayReasonsList(reasons)}
       </li>
 
-      <li className="display-flex padding-bottom-05 flex-align-start">
-        <span className="margin-right-3 minw-15">Objective status </span>
+      <li className="desktop:display-flex padding-bottom-05 flex-align-start">
+        <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
         {getObjectiveStatusIcon}
         {displayObjStatus}
       </li>
@@ -172,6 +179,7 @@ export const objectivePropTypes = PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,
   })),
+  supportType: PropTypes.string,
 });
 
 objectivePropTypes.defaultProps = {
@@ -181,6 +189,7 @@ objectivePropTypes.defaultProps = {
   reasons: [],
   grantNumbers: [],
   activityReports: [],
+  supportType: '',
 };
 ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,
