@@ -10,6 +10,7 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
+  ActivityReportObjective,
   Objective,
   ActivityRecipient,
   Topic,
@@ -347,6 +348,10 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
+      // we grab the support types from the activity report objectives,
+      // filtering out empty strings
+      const { supportType } = objective;
+
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
       const {
@@ -368,7 +373,9 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
       const objectiveTopics = (objective.topics || []);
 
       const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle && o.status === objectiveStatus
+        o.title === objectiveTitle
+        && o.status === objectiveStatus
+        && o.supportType === supportType
       ));
 
       if (existing) {
@@ -397,6 +404,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
+        supportType: supportType || null,
       };
 
       formattedObjective.topics.sort();
@@ -570,6 +578,7 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -709,6 +718,25 @@ export async function getGoalsByActivityRecipient(
       id: allGoalIds,
     },
   });
+
+  // TODO - remove: this is for testing purposes only,
+  // and to demonstrate the schema required
+  // to be removed when the backend is complete or before merging, whichever is first
+
+  // r.goalRows[0].objectives = [
+  //   {
+  //     type: 'session',
+  //     title: 'To help recipients ensure that decisions are informed by data.',
+  //     trainingReportId: 'R01-TR-23-1037',
+  //     sessionName: 'Leadership and Governance: Managing Communication and Equity Considerations',
+  //     grantNumbers: [r.goalRows[0].grantNumbers[0]],
+  //     endDate: '09/20/2023',
+  //     topics: ['Change in Scope', 'Safety Practices', 'Teaching/Caregiving Practices'],
+  //   },
+  //   ...r.goalRows[0].objectives,
+  // ];
+
+  // r.goalRows[0].objectiveCount += 1;
 
   if (limitNum) {
     return {

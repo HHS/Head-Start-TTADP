@@ -93,6 +93,7 @@ describe('saveObjectiveAssociations', () => {
         resources,
         topics,
         files,
+        [],
         true,
       );
 
@@ -181,6 +182,7 @@ describe('saveObjectiveAssociations', () => {
         resources,
         topics,
         files,
+        [],
         true,
       );
 

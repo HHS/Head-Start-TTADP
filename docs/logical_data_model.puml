@@ -138,6 +138,7 @@ class ActivityReportObjectives{
  closeSuspendContext : text
  closeSuspendReason : enum
  status : varchar(255)
+ supportType : enum
  title : text
  ttaProvided : text
 }
@@ -180,6 +181,7 @@ class ActivityReports{
  ECLKCResourcesUsed : text[]
  endDate : date
  imported : jsonb
+ language : varchar(255)[]
  legacyId : varchar(255)
  nonECLKCResourcesUsed : text[]
  numberOfParticipants : integer
@@ -371,6 +373,7 @@ class GoalTemplates{
  * templateNameModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
+ source : varchar(255)
 }
 
 class Goals{
@@ -639,6 +642,7 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
+ supportType : enum
  title : text
 }
 
