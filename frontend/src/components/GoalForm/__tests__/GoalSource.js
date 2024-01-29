@@ -12,6 +12,7 @@ const defaults = {
   goalStatus: 'Draft',
   isMultiRecipientGoal: false,
   userCanEdit: true,
+  disabled: false,
 };
 
 describe('GoalSource', () => {
@@ -23,6 +24,7 @@ describe('GoalSource', () => {
       goalStatus,
       isMultiRecipientGoal,
       userCanEdit,
+      disabled,
     } = props;
     render(<GoalSource
       error={<></>}
@@ -33,6 +35,7 @@ describe('GoalSource', () => {
       isLoading={false}
       isMultiRecipientGoal={isMultiRecipientGoal}
       userCanEdit={userCanEdit}
+      disabled={disabled}
     />);
   };
 
@@ -58,6 +61,26 @@ describe('GoalSource', () => {
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     expect(screen.getByText(GOAL_SOURCES[0])).toBeInTheDocument();
     expect(document.querySelector('usa-select')).toBeNull();
+  });
+
+  it('disables drop down', async () => {
+    renderGoalSource({
+      ...defaults,
+      disabled: true,
+    });
+    expect(screen.getByText('Goal source')).toBeInTheDocument();
+    const dropdown = screen.getByLabelText(/Goal source/i);
+    expect(dropdown).toBeDisabled();
+  });
+
+  it('enables drop down', async () => {
+    renderGoalSource({
+      ...defaults,
+      disabled: false,
+    });
+    expect(screen.getByText('Goal source')).toBeInTheDocument();
+    const dropdown = screen.getByLabelText(/Goal source/i);
+    expect(dropdown).not.toBeDisabled();
   });
 
   it('shows the read only view when goal is closed', async () => {
