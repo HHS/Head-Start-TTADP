@@ -728,16 +728,24 @@ export async function getGoalsByActivityRecipient(
     };
 
     const sessionObjectives = current.eventReportPilots
-      .map((erp) => erp.sessionReports.map((sr) => ({
-        type: 'session',
-        title: sr.data.objective,
-        topics: sr.data.objectiveTopics,
-        grantNumbers: [current.grant.number],
-        endDate: sr.data.endDate,
-        sessionName: sr.data.sessionName,
-        trainingReportId: sr.data.eventDisplayId,
-      })))
-      .flat();
+      // shape the session objective, mold it into a form that
+      // satisfies the frontend's needs
+      .map((erp) => erp.sessionReports.map((sr) => {
+        if (!sr.data.objective) {
+          return null;
+        }
+
+        return {
+          type: 'session',
+          title: sr.data.objective,
+          topics: sr.data.objectiveTopics || [],
+          grantNumbers: [current.grant.number],
+          endDate: sr.data.endDate,
+          sessionName: sr.data.sessionName,
+          trainingReportId: sr.data.eventDisplayId,
+        };
+      // filter out nulls, and flatten the array
+      }).filter((sr) => sr)).flat();
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
       current,
