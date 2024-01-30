@@ -64,20 +64,34 @@ const processRecords = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: Promise<any>[],
 }> => {
-  const record = await xmlClient.getNextObject(true);
+  let i = 0;
+  console.log(++i);
+  let record;
+  try {
+    record = await xmlClient.getNextObject(true);
+  } catch (err) {
+    // record the error into the recordActions and continue on successfully as
+    // other entries may be process successfully
+    recordActions.errors.push(err.message);
+    auditLogger.log('error', err.message);
+  }
+  console.log(++i, {record});
   // @ts-ignore
-  const model: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    findOne: (...args: any[]) => any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    create: (...args: any[]) => any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    update: (...args: any[]) => any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    destroy: (...args: any[]) => any,
-  } = modelForTable(db, processDefinition.tableName);
+  let model;
+  try {
+    model = modelForTable(db, processDefinition.tableName);
+  } catch (err) {
+    // record the error into the recordActions and continue on successfully as
+    // other entries may be process successfully
+    recordActions.errors.push(err.message);
+    auditLogger.log('error', err.message);
 
-  if (record && model) {
+    // Unable to continue as a model is required to record any information
+    return Promise.reject(err);
+  }
+  console.log(++i, {model});
+
+  if (record) {
     try {
       // TODO: column/key alpha sort to retain order
       // 1. use the remap method to format data to structure needed
@@ -106,15 +120,18 @@ const processRecords = async (
           },
         },
       );
+      console.log(++i, {data});
 
       // Filter the data to match the expected model
-      const filteredData = await filterDataToModel(data, model as typeof Model);
+      const { matched: filteredData } = await filterDataToModel(data, model);
+      console.log(++i, {filteredData});
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
       processDefinition.keys.forEach((key) => {
         recordKey[key] = filteredData[key];
       });
+      console.log(++i, {recordKey});
 
       // Check if there is an existing record with the same key value
       const currentData = await model.findOne({
@@ -122,6 +139,7 @@ const processRecords = async (
           ...recordKey,
         },
       });
+      console.log(++i, {currentData});
 
       if (currentData === null || currentData === undefined) {
         // If the record is new, create it
@@ -132,7 +150,7 @@ const processRecords = async (
             sourceUpdatedAt: fileDate,
           },
           {
-            independentHooks: true,
+            individualHooks: true,
             returning: true,
             plain: true,
           },
@@ -141,6 +159,7 @@ const processRecords = async (
       } else {
         // If the record already exists, find the delta then update it
         const delta = collectChangedValues(filteredData, currentData);
+        console.log(++i, {filteredData, currentData, delta});
         const update = model.update(
           {
             ...delta,
@@ -148,7 +167,7 @@ const processRecords = async (
           },
           {
             where: { id: currentData.id },
-            independentHooks: true,
+            individualHooks: true,
             returning: true,
             plain: true,
           },
@@ -183,14 +202,14 @@ const processRecords = async (
         },
         {
           where: { id: { [Op.not]: affectedDataIds } },
-          independentHooks: true,
+          individualHooks: true,
         },
       );
 
       // Delete all records that are not in the affectedData array
       const destroys = model.destroy({
         where: { id: { [Op.not]: affectedDataIds } },
-        independentHooks: true,
+        individualHooks: true,
       });
 
       recordActions.deletes.push(destroys);
