@@ -8,11 +8,24 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
+      // Goals.
       await dropAndRecreateEnum(
         queryInterface,
         transaction,
         'enum_Goals_source',
         'Goals',
+        'source',
+        GOAL_SOURCES,
+        'text',
+        false,
+      );
+
+      // ActivityReportGoals.
+      await dropAndRecreateEnum(
+        queryInterface,
+        transaction,
+        'enum_ActivityReportGoals_source',
+        'ActivityReportGoals',
         'source',
         GOAL_SOURCES,
         'text',
