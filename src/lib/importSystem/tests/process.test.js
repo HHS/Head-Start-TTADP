@@ -125,7 +125,7 @@ describe('processRecords', () => {
         sourceUpdatedAt: expect.any(Date),
       },
       {
-        independentHooks: true,
+        individualHooks: true,
         returning: true,
         plain: true,
       },
@@ -175,7 +175,7 @@ describe('processRecords', () => {
         sourceUpdatedAt: expect.any(Date),
       },
       {
-        independentHooks: true,
+        individualHooks: true,
         returning: true,
         plain: true,
         where: {
@@ -198,24 +198,6 @@ describe('processRecords', () => {
     expect(result.errors[0]).toBe(mockError.message);
   });
 
-  it('should handle errors and add them to the errors array - modelForTable - throw', async () => {
-    const mockRecord = {
-      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
-      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
-    };
-    mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
-
-    const mockError = new Error('Test Error');
-    modelForTable.mockImplementation(() => {
-      throw mockError;
-    });
-
-    const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
-
-    expect(result.errors).toHaveLength(1);
-    expect(result.errors[0]).toBe(mockError.message);
-  });
-
   it('should handle errors and add them to the errors array - modelForTable - not found', async () => {
     const mockRecord = {
       reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
@@ -223,19 +205,22 @@ describe('processRecords', () => {
     };
     mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    modelForTable.mockResolvedValueOnce(null);
+    modelForTable.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/quotes
+      throw new Error(`Unable to find table for 'MonitoringFindingHistories'`);
+    });
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
     expect(result.errors).toHaveLength(1);
     // eslint-disable-next-line @typescript-eslint/quotes
-    expect(result.errors[0]).toBe(`Unable to find table for ''`);
+    expect(result.errors[0]).toBe(`Unable to find table for 'MonitoringFindingHistories'`);
   });
 
   it('should process deletion of records not present in the file', async () => {
     mockGetNextObject.mockResolvedValue(null); // Simulate end of XML stream
 
-    const mockDestroy = jest.fn().mockResolvedValue({ id: 1 });
+    const mockDestroy = jest.fn().mockResolvedValue({ id: 3 });
     mockModelForTable.mockReturnValue({
       findOne: jest.fn(),
       create: jest.fn(),
@@ -243,9 +228,15 @@ describe('processRecords', () => {
       destroy: mockDestroy,
     });
 
+    recordActions.updates.push({ id: 1 });
+    recordActions.updates.push({ id: 2 });
+
+    recordActions.inserts.push({ id: 4 });
+    recordActions.inserts.push({ id: 5 });
+
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
-    expect(mockDestroy).toHaveBeenCalled();
+    expect(mockDestroy).toHaveBeenCalledWith({});
     expect(result.deletes).toHaveLength(1);
   });
 
