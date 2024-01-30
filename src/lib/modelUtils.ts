@@ -96,7 +96,8 @@ const dataTypeMapping = {
 const modelForTable = (db, tableName: string) => Object.values(db.sequelize.models)
   // Retrieve all models from the database object and convert them into an array
   // Find the model whose table name matches the given table name
-  .find((m: typeof Model) => m.getTableName() === tableName);
+  .find((m: typeof Model) => m.getTableName() === tableName)
+  || (() => { throw new Error(`Unable to find table for '${tableName}'`); })();
 
 /**
  * Retrieves column information for a given model.
