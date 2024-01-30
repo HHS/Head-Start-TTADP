@@ -88,14 +88,13 @@ describe('Goal Form > Form component', () => {
 
   it('disables goal source if createdVia tr', () => {
     renderGoalForm(
-      { ...DEFAULT_GOAL, createdVia: 'tr', source: 'Training event' },
+      { ...DEFAULT_GOAL, createdVia: 'tr', source: 'Training event source' },
       [],
       '',
       { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
     );
-    // Expect the goal source to be disabled
-    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
-    expect(sourceSelect).toBeDisabled();
+    expect(screen.getByText(/goal source/i)).toBeVisible();
+    expect(screen.getByText(/training event source/i)).toBeVisible();
   });
 
   it('does not disables goal source if createdVia tr', () => {

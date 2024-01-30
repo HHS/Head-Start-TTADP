@@ -20,9 +20,9 @@ export default function GoalSource({
   userCanEdit,
   isMultiRecipientGoal,
   required,
-  disabled,
+  createdViaTr,
 }) {
-  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated;
+  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated || createdViaTr;
 
   if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
@@ -61,7 +61,7 @@ export default function GoalSource({
           onBlur={() => {
             validateGoalSource();
           }}
-          disabled={isLoading || disabled}
+          disabled={isLoading}
           value={source}
           required={required}
         >
@@ -88,7 +88,7 @@ GoalSource.propTypes = {
   isMultiRecipientGoal: PropTypes.bool,
   isCurated: PropTypes.bool,
   required: PropTypes.bool,
-  disabled: PropTypes.bool,
+  createdViaTr: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
@@ -97,5 +97,5 @@ GoalSource.defaultProps = {
   isMultiRecipientGoal: false,
   isCurated: false,
   required: true,
-  disabled: false,
+  createdViaTr: false,
 };

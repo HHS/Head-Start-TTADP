@@ -197,7 +197,7 @@ export default function GoalForm({
           userCanEdit={!isCurated}
           isOnReport={false}
           isMultiRecipientGoal={isMultiRecipientReport}
-          disabled={goal.createdVia === 'tr'}
+          createdViaTr={goal.createdVia === 'tr'}
         />
       </FeatureFlag>
 
