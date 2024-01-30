@@ -448,6 +448,8 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
         createdVia: 'tr',
         grantId: 3,
         name: 'Increase knowledge about X',
+        onAR: true,
+        onApprovedAR: false,
         source: 'Training event',
         status: 'Draft',
         updatedAt: expect.any(Date),
