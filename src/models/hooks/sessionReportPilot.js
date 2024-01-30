@@ -175,6 +175,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       });
 
       const status = hasCompleteSession ? 'In Progress' : 'Draft';
+      const onApprovedAR = !!(hasCompleteSession);
 
       const newGoal = await sequelize.models.Goal.create({
         name: event.data.goal,
@@ -184,6 +185,8 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
         status,
         createdVia: 'tr',
         source: GOAL_SOURCES[4], // Training event
+        onAR: true,
+        onApprovedAR,
       }, { transaction: options.transaction });
 
       await sequelize.models.EventReportPilotGoal.create({
@@ -265,7 +268,11 @@ const makeGoalsInProgressIfThisIsTheFirstCompletedSession = async (sequelize, in
   });
 
   // Update them all to In Progress.
-  await Promise.all(goals.map((goal) => goal.update({ status: 'In Progress', previousStatus: 'Draft' }, { transaction })));
+  await Promise.all(goals.map((goal) => goal.update({
+    status: 'In Progress',
+    onApprovedAR: true,
+    previousStatus: 'Draft',
+  }, { transaction })));
 };
 
 const afterCreate = async (sequelize, instance, options) => {
