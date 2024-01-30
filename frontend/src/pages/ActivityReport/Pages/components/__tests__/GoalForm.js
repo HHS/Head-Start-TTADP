@@ -150,11 +150,11 @@ describe('GoalForm', () => {
     };
     renderGoalForm(1, trGoal, user);
     // Expect to have the text "Training event source" in the goal source field.
-    expect(await screen.findByText(/goal source/i)).toBeVisible();
-    expect(await screen.findByText(/training event source/i)).toBeVisible();
+    expect(screen.getByText(/goal source/i)).toBeVisible();
+    expect(screen.getByText(/training event source/i)).toBeVisible();
   });
 
-  it('enables goal source when created via is not tr', async () => {
+  it('enables goal source when created via is not tr', () => {
     const trGoal = {
       id: 1,
       isNew: false,
