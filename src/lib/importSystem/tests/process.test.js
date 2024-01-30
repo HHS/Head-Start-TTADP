@@ -1,18 +1,59 @@
 // processRecords.test.ts
-import { Sequelize } from 'sequelize';
+import { DataTypes } from 'sequelize';
 import { processRecords } from '../process';
 import XMLStream from '../../stream/xml';
 import db from '../../../models';
+import { modelForTable } from '../../modelUtils';
 
 // Mock the external modules
 jest.mock('../../stream/xml');
 jest.mock('../../../models');
 
-// Mock the db and modelForTable function
-const mockModelForTable = jest.fn();
-jest.mock('../../modelUtils', () => ({
-  modelForTable: (...args) => mockModelForTable(...args),
-}));
+// jest.mock('../../modelUtils', () => {
+//   const actualModelUtils = jest.requireActual('../../modelUtils');
+//   return {
+//     filterDataToModel: actualModelUtils.filterDataToModel,
+//     // Return a function that itself returns the mock model when called
+//     modelForTable: jest.fn(() => ({
+//       findOne: jest.fn().mockResolvedValue(null),
+//       create: jest.fn().mockResolvedValue({ id: 1 }),
+//       update: jest.fn(),
+//       destroy: jest.fn(),
+//       describe: jest.fn().mockResolvedValue({
+//         // Simulate the model description
+//         reviewId: {
+//           type: 'text', // Sequelize.TEXT,
+//           allowNull: true,
+//         },
+//         findingHistoryId: {
+//           type: 'text', // Sequelize.TEXT,
+//           allowNull: true,
+//         },
+//         // Add other fields as necessary
+//       }),
+//       // Add other methods or properties as needed for your tests
+//     })),
+//   };
+// });
+const mockFindOne = jest.fn();
+const mockCreate = jest.fn();
+const mockUpdate = jest.fn();
+const mockDestroy = jest.fn();
+const mockDescribe = jest.fn();
+jest.mock('../../modelUtils', () => {
+  const actualModelUtils = jest.requireActual('../../modelUtils');
+  return {
+    filterDataToModel: actualModelUtils.filterDataToModel,
+    modelForTable: jest.fn(() => ({
+      findOne: mockFindOne,
+      create: mockCreate,
+      update: mockUpdate,
+      destroy: mockDestroy,
+      describe: mockDescribe, // Don't define the mockResolvedValue here
+      // Add other methods or properties as needed for your tests
+    })),
+  };
+});
 
 describe('processRecords', () => {
   const mockXmlClient = new XMLStream(true);
@@ -48,62 +89,147 @@ describe('processRecords', () => {
       reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
       findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
     };
-    mockGetNextObject.mockResolvedValueOnce(mockRecord);
+    mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    const mockCreate = jest.fn().mockImplementation(() => new Promise((resolve, reject) => {
+    mockFindOne.mockImplementation(() => new Promise((resolve, reject) => {
+      resolve(null);
+    }));
+    mockCreate.mockImplementation(() => new Promise((resolve, reject) => {
       resolve({ id: 1 });
     }));
-    mockModelForTable.mockReturnValue({
-      findOne: jest.fn().mockResolvedValue(null),
-      create: mockCreate,
-      update: jest.fn(),
-      destroy: jest.fn(),
-      describe: jest.fn().mockResolvedValue({
-        reviewId: {
-          columnName: 'reviewId',
-          dataType: Sequelize.TEXT,
-          allowNull: true,
-        },
-        findingHistoryId: {
-          columnName: 'findingHistoryId',
-          dataType: Sequelize.TEXT,
-          allowNull: true,
-        },
-      }),
+
+    // Define the mock behavior for this test
+    mockDescribe.mockResolvedValueOnce({
+      reviewId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      findingHistoryId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      hash: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     });
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
-    expect(mockCreate).toHaveBeenCalledWith(expect.any(Object), expect.any(Object));
+    expect(mockCreate).toHaveBeenCalledWith(
+      {
+        reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+        findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+        hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe5c',
+        sourceCreatedAt: expect.any(Date),
+        sourceUpdatedAt: expect.any(Date),
+      },
+      {
+        independentHooks: true,
+        returning: true,
+        plain: true,
+      },
+    );
     expect(result.inserts).toHaveLength(1);
   });
 
   it('should process a record and add it to updates if it exists', async () => {
-    const mockRecord = { id: 1, oldKey: 'value' };
-    mockGetNextObject.mockResolvedValue(mockRecord);
+    const mockRecord = {
+      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+    };
+    mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    const mockUpdate = jest.fn().mockResolvedValue({ id: 1 });
-    mockModelForTable.mockReturnValue({
-      findOne: jest.fn().mockResolvedValue({ id: 1 }),
-      create: jest.fn(),
-      update: mockUpdate,
-      destroy: jest.fn(),
+    mockFindOne.mockImplementation(() => new Promise((resolve, reject) => {
+      resolve({
+        id: 1,
+        reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+        findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+        hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe51',
+      });
+    }));
+
+    mockUpdate.mockResolvedValue({ id: 1 });
+
+    // Define the mock behavior for this test
+    mockDescribe.mockResolvedValueOnce({
+      reviewId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      findingHistoryId: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      hash: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
     });
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
-    expect(mockUpdate).toHaveBeenCalledWith(expect.any(Object), expect.any(Object));
+    expect(mockUpdate).toHaveBeenCalledWith(
+      {
+        hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe5c',
+        sourceUpdatedAt: expect.any(Date),
+      },
+      {
+        independentHooks: true,
+        returning: true,
+        plain: true,
+        where: {
+          id: 1,
+        },
+      },
+    );
     expect(result.updates).toHaveLength(1);
   });
 
-  it('should handle errors and add them to the errors array', async () => {
+  it('should handle errors and add them to the errors array - getNextObject', async () => {
     const mockError = new Error('Test Error');
-    mockGetNextObject.mockRejectedValue(mockError);
+    mockXmlClient.getNextObject.mockImplementation(() => {
+      throw mockError;
+    });
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]).toBe(mockError.message);
+  });
+
+  it('should handle errors and add them to the errors array - modelForTable - throw', async () => {
+    const mockRecord = {
+      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+    };
+    mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
+
+    const mockError = new Error('Test Error');
+    modelForTable.mockImplementation(() => {
+      throw mockError;
+    });
+
+    const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
+
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0]).toBe(mockError.message);
+  });
+
+  it('should handle errors and add them to the errors array - modelForTable - not found', async () => {
+    const mockRecord = {
+      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+    };
+    mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
+
+    modelForTable.mockResolvedValueOnce(null);
+
+    const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
+
+    expect(result.errors).toHaveLength(1);
+    // eslint-disable-next-line @typescript-eslint/quotes
+    expect(result.errors[0]).toBe(`Unable to find table for ''`);
   });
 
   it('should process deletion of records not present in the file', async () => {
