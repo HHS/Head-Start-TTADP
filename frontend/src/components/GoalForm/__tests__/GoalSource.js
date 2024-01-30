@@ -24,7 +24,7 @@ describe('GoalSource', () => {
       goalStatus,
       isMultiRecipientGoal,
       userCanEdit,
-      disabled,
+      createdViaTr,
     } = props;
     render(<GoalSource
       error={<></>}
@@ -35,7 +35,7 @@ describe('GoalSource', () => {
       isLoading={false}
       isMultiRecipientGoal={isMultiRecipientGoal}
       userCanEdit={userCanEdit}
-      disabled={disabled}
+      createdViaTr={createdViaTr}
     />);
   };
 
@@ -66,17 +66,17 @@ describe('GoalSource', () => {
   it('disables drop down', async () => {
     renderGoalSource({
       ...defaults,
-      disabled: true,
+      createdViaTr: true,
+      source: 'Training event source',
     });
     expect(screen.getByText('Goal source')).toBeInTheDocument();
-    const dropdown = screen.getByLabelText(/Goal source/i);
-    expect(dropdown).toBeDisabled();
+    expect(screen.getByText('Training event source')).toBeInTheDocument();
   });
 
   it('enables drop down', async () => {
     renderGoalSource({
       ...defaults,
-      disabled: false,
+      createdViaTr: false,
     });
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     const dropdown = screen.getByLabelText(/Goal source/i);

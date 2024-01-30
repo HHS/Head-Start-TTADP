@@ -142,16 +142,16 @@ describe('GoalForm', () => {
       isNew: false,
       goalIds: [123],
       createdVia: 'tr',
-      source: 'Training event',
+      source: 'Training event source',
     };
     const user = {
       ...DEFAULT_USER,
       permissions: [{ scopeId: SCOPE_IDS.ADMIN }],
     };
     renderGoalForm(1, trGoal, user);
-    // Expect the goal source to be disabled
-    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
-    expect(sourceSelect).toBeDisabled();
+    // Expect to have the text "Training event source" in the goal source field.
+    expect(await screen.findByText(/goal source/i)).toBeVisible();
+    expect(await screen.findByText(/training event source/i)).toBeVisible();
   });
 
   it('enables goal source when created via is not tr', async () => {

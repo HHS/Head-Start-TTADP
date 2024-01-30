@@ -168,8 +168,8 @@ export default function Form({
           goalStatus={status}
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
-          disabled={createdVia === 'tr'}
           isCurated={isCurated}
+          createdViaTr={createdVia === 'tr'}
         />
       </FeatureFlag>
 
