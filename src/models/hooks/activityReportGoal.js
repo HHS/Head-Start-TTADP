@@ -1,9 +1,9 @@
-const { GOAL_SOURCES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
+const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -78,16 +78,6 @@ const afterCreate = async (sequelize, instance, options) => {
   await autoPopulateLinker(sequelize, instance, options);
 };
 
-const onlyAllowTrGoalSourceForGoalsCreatedViaTr = (_sequelize, instance) => {
-  const changed = instance.changed();
-  if (instance.id !== null
-      && Array.isArray(changed)
-      && changed.includes('source')
-      && (instance.createdVia === 'tr' && instance.source !== GOAL_SOURCES[4])) {
-    throw new Error(`Goals created via a Training Report must have a source of "${GOAL_SOURCES[4]}".`);
-  }
-};
-
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -122,5 +112,4 @@ export {
   beforeDestroy,
   afterDestroy,
   afterUpdate,
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
 };

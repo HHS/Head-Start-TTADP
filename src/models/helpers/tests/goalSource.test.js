@@ -1,9 +1,11 @@
-const {
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
-} = require('./goal');
+const { Sequelize, DataTypes } = require('sequelize');
+const db = require('../..');
 
-describe('activityReportGoal hooks', () => {
-  describe('goalSourceValidations', () => {
+// Import the functions to be tested
+const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../goalSource');
+
+describe('goalSource test', () => {
+  describe('trGoalSourceValidations', () => {
     const sequelize = {};
     const instance = {
       changed: jest.fn(),

@@ -95,6 +95,7 @@ describe('Goal Form > Form component', () => {
     );
     expect(screen.getByText(/goal source/i)).toBeVisible();
     expect(screen.getByText(/training event source/i)).toBeVisible();
+    expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(0);
   });
 
   it('does not disables goal source if createdVia tr', () => {
