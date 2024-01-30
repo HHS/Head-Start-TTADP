@@ -1,3 +1,4 @@
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
@@ -77,6 +78,27 @@ const afterCreate = async (sequelize, instance, options) => {
   await autoPopulateLinker(sequelize, instance, options);
 };
 
+const onlyAllowTrGoalSourceForGoalsCreatedViaTr = (_sequelize, instance) => {
+  const changed = instance.changed();
+  if (instance.id !== null
+      && Array.isArray(changed)
+      && changed.includes('source')
+      && (instance.createdVia === 'tr' && instance.source !== GOAL_SOURCES[4])) {
+    throw new Error(`Goals created via a Training Report must have a source of "${GOAL_SOURCES[4]}".`);
+  }
+};
+
+const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+};
+
 const beforeDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToMetadata(sequelize, instance, options);
   await autoCleanupLinker(sequelize, instance, options);
@@ -91,6 +113,8 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
+  beforeValidate,
+  beforeUpdate,
   processForEmbeddedResources,
   recalculateOnAR,
   propagateDestroyToMetadata,
@@ -98,4 +122,5 @@ export {
   beforeDestroy,
   afterDestroy,
   afterUpdate,
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
 };
