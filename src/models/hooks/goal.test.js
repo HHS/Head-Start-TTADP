@@ -3,6 +3,7 @@ const {
   autoPopulateStatusChangeDates,
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
 } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { createRecipient, createGrant, createGoal } = require('../../testUtils');
@@ -238,6 +239,36 @@ describe('goal hooks', () => {
       calculateIsAutoDetectedForGoal.mockReturnValueOnce(false);
       await processForEmbeddedResources(sequelize, instance);
       expect(processGoalForResourcesById).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('goalSourceValidations', () => {
+    const sequelize = {};
+    const instance = {
+      changed: jest.fn(),
+      set: jest.fn(),
+    };
+    const options = {
+      fields: [],
+    };
+
+    afterEach(() => jest.clearAllMocks());
+    it('throws an error for invalid tr source', () => {
+      instance.changed.mockReturnValueOnce(['source']);
+      instance.source = 'invalid_tr_source';
+      instance.createdVia = 'tr';
+      expect(() => {
+        onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+      }).toThrowError('Goals created via a Training Report must have a source of "Training event".');
+    });
+
+    it('should not throw an error for valid tr source', () => {
+      instance.changed.mockReturnValueOnce(['source']);
+      instance.source = 'Training event';
+      instance.createdVia = 'tr';
+      expect(() => {
+        onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+      }).not.toThrowError();
     });
   });
 

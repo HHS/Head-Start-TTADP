@@ -1,4 +1,5 @@
 const { Op } = require('sequelize');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
@@ -59,6 +60,16 @@ const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
       && changed.includes('name')) {
       throw new Error('Goal name change not allowed for goals on approved activity reports.');
     }
+  }
+};
+
+const onlyAllowTrGoalSourceForGoalsCreatedViaTr = (_sequelize, instance) => {
+  const changed = instance.changed();
+  if (instance.id !== null
+      && Array.isArray(changed)
+      && changed.includes('source')
+      && (instance.createdVia === 'tr' && instance.source !== GOAL_SOURCES[4])) {
+    throw new Error(`Goals created via a Training Report must have a source of "${GOAL_SOURCES[4]}".`);
   }
 };
 
@@ -345,11 +356,13 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -377,6 +390,7 @@ export {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
   propagateName,
   beforeValidate,
   beforeUpdate,

@@ -1327,9 +1327,6 @@ export async function createOrUpdateGoals(goals) {
     }
 
     if (source && newGoal.source !== source) {
-      if (newGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
-        throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
-      }
       newGoal.set({ source });
     }
 
@@ -2117,9 +2114,6 @@ export async function saveGoalsForReport(goals, report) {
       }
 
       if (source && newOrUpdatedGoal.source !== source) {
-        if (newOrUpdatedGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
-          throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
-        }
         newOrUpdatedGoal.set({ source });
       }
 
