@@ -167,6 +167,56 @@ const collectNextFile = async (
 };
 
 /**
+ * Collects and returns the FTP server settings from environment variables.
+ * The settings include the host, port, username, and password.
+ *
+ * @returns An object containing the host, port, username, and password for the FTP server.
+ * @throws Will throw an error if any of the environment variables for the host, port, username,
+ * or password are not set.
+ */
+const collectServerSettings = (
+  importId: number,
+  ftpSettings: { host: string, port: string, username: string, password },
+) => {
+  const {
+    host: hostEnv, // The environment variable name for the FTP server host
+    port: portEnv, // The environment variable name for the FTP server port
+    username: usernameEnv, // The environment variable name for the FTP server username
+    password: passwordEnv, // The environment variable name for the FTP server password
+  } = ftpSettings;
+  // Retrieve the FTP server password from the environment variable
+  const {
+    [hostEnv]: host,
+    [portEnv]: port,
+    [usernameEnv]: username,
+    [passwordEnv]: password,
+  } = process.env;
+
+  if (!host || !port || !username || !password) {
+    const missing = [];
+    if (!host) {
+      missing.push(`'${hostEnv}' did not resolve to a value`);
+    }
+    if (!port) {
+      missing.push(`'${portEnv}' did not resolve to a value`);
+    }
+    if (!username) {
+      missing.push(`'${usernameEnv}' did not resolve to a value`);
+    }
+    if (!password) {
+      missing.push(`'${passwordEnv}' did not resolve to a value`);
+    }
+    throw new Error(`importId: ${importId} settings not found in Env: ${missing.join(', ')}`);
+  }
+  return {
+    host,
+    port: parseInt(port, 10),
+    username,
+    password,
+  };
+};
+
+/**
  * Collects files from an FTP server based on the provided parameters.
  *
  * @param importId - The unique identifier for the import.
@@ -186,17 +236,11 @@ const collectFilesFromSource = async (
   fileMask?: string | undefined, // The file mask to filter files (optional)
 ) => {
   const {
-    host, // The FTP server host
-    port, // The FTP server port
-    username, // The FTP server username
-    password: passwordENV, // The environment variable name for the FTP server password
-  } = ftpSettings;
-  // Retrieve the FTP server password from the environment variable
-  const password = process.env?.[passwordENV];
-
-  if (!password) {
-    throw new Error(`Password was not found for importId: ${importId} at ENV: ${passwordENV}`);
-  }
+    host,
+    port,
+    username,
+    password,
+  } = collectServerSettings(importId, ftpSettings);
 
   let ftpClient;
   try {
