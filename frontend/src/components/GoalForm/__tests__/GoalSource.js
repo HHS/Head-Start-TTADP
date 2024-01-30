@@ -71,6 +71,7 @@ describe('GoalSource', () => {
     });
     expect(screen.getByText('Goal source')).toBeInTheDocument();
     expect(screen.getByText('Training event source')).toBeInTheDocument();
+    expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(0);
   });
 
   it('enables drop down', async () => {

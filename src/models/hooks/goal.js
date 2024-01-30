@@ -1,10 +1,10 @@
 const { Op } = require('sequelize');
-const { GOAL_SOURCES } = require('@ttahub/common');
 const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
+const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (_sequelize, instance) => {
   // eslint-disable-next-line global-require
@@ -60,16 +60,6 @@ const preventNameChangeWhenOnApprovedAR = (_sequelize, instance) => {
       && changed.includes('name')) {
       throw new Error('Goal name change not allowed for goals on approved activity reports.');
     }
-  }
-};
-
-const onlyAllowTrGoalSourceForGoalsCreatedViaTr = (_sequelize, instance) => {
-  const changed = instance.changed();
-  if (instance.id !== null
-      && Array.isArray(changed)
-      && changed.includes('source')
-      && (instance.createdVia === 'tr' && instance.source !== GOAL_SOURCES[4])) {
-    throw new Error(`Goals created via a Training Report must have a source of "${GOAL_SOURCES[4]}".`);
   }
 };
 
@@ -390,7 +380,6 @@ export {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
   propagateName,
   beforeValidate,
   beforeUpdate,
