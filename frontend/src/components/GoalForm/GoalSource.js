@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -16,13 +16,13 @@ export default function GoalSource({
   goalStatus,
   inputName,
   isLoading,
+  isCurated,
   userCanEdit,
   isMultiRecipientGoal,
   required,
   disabled,
 }) {
-  const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
-    [goalStatus, userCanEdit]);
+  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated;
 
   if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
@@ -86,6 +86,7 @@ GoalSource.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
   isMultiRecipientGoal: PropTypes.bool,
+  isCurated: PropTypes.bool,
   required: PropTypes.bool,
   disabled: PropTypes.bool,
 };
@@ -94,6 +95,7 @@ GoalSource.defaultProps = {
   inputName: 'goal-source',
   isLoading: false,
   isMultiRecipientGoal: false,
+  isCurated: false,
   required: true,
   disabled: false,
 };

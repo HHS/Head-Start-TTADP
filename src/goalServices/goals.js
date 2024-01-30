@@ -849,6 +849,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'status',
           'goalId',
           'supportType',
+          'onApprovedAR',
+          'onAR',
         ],
         required: false,
         include: [
@@ -2113,14 +2115,15 @@ export async function saveGoalsForReport(goals, report) {
           status,
         }, { individualHooks: true });
       }
-      if (!newOrUpdatedGoal.onApprovedAR) {
-        if (source && newOrUpdatedGoal.source !== source) {
-          if (newOrUpdatedGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
-            throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
-          }
-          newOrUpdatedGoal.set({ source });
-        }
 
+      if (source && newOrUpdatedGoal.source !== source) {
+        if (newOrUpdatedGoal.createdVia === 'tr' && source !== GOAL_SOURCES[4]) {
+          throw new Error(`Goals created via a TR must have a goal source of "${GOAL_SOURCES[4]}"`);
+        }
+        newOrUpdatedGoal.set({ source });
+      }
+
+      if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
