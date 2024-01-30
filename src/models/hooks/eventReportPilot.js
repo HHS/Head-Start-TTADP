@@ -1,5 +1,8 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
+
+import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
+
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
@@ -122,6 +125,20 @@ const updateGoalText = async (sequelize, instance, options) => {
   if (current.goal === previous.goal) {
     return;
   }
+
+  // Get all SessionReportPilot instances for this event.
+  const sessions = await sequelize.models.SessionReportPilot.findAll({
+    where: {
+      eventId: instance.id,
+    },
+    transaction,
+  });
+
+  await Promise.all(sessions.map((session) => createGoalsForSessionRecipientsIfNecessary(
+    sequelize,
+    session,
+    options,
+  )));
 
   // Disallow goal name propagation if any session on this event has been completed,
   // effectively locking down this goal text.

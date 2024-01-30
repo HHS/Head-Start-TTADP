@@ -44,6 +44,7 @@ export default function Form({
   topicOptions,
   isOnApprovedReport,
   isOnReport,
+  isCurated,
   status,
   datePickerKey,
   fetchError,
@@ -168,6 +169,7 @@ export default function Form({
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
           disabled={createdVia === 'tr'}
+          isCurated={isCurated}
         />
       </FeatureFlag>
 
@@ -215,6 +217,7 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.shape({}),
