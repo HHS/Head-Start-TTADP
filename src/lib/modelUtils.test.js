@@ -18,10 +18,26 @@ describe('modelUtils', () => {
       expect(Object.getPrototypeOf(model.prototype)).toBe(Model.prototype);
     });
 
-    it('should return undefined if no model is found for the given table name', () => {
-      const tableName = 'NonExistentModel';
-      const model = modelForTable(db, tableName);
-      expect(model).toBeUndefined();
+    it('should throw an error if the table name does not match any model', () => {
+      // Mock sequelize models
+      const mockModels = {
+        User: class User extends Model {
+          static getTableName() {
+            return 'users';
+          }
+        },
+      };
+
+      // Mock db object
+      const mockDB = {
+        sequelize: {
+          models: mockModels,
+        },
+      };
+
+      const tableName = 'nonexistent';
+      // eslint-disable-next-line @typescript-eslint/quotes
+      expect(() => modelForTable(mockDB, tableName)).toThrow(`Unable to find table for 'nonexistent'`);
     });
   });
 
