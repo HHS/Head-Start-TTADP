@@ -8,7 +8,6 @@ const axeUrls = [
   'http://localhost:3000/activity-reports/new/goals-objectives',
   'http://localhost:3000/activity-reports/new/next-steps',
   'http://localhost:3000/activity-reports/new/review',
-  // 'http://localhost:3000/admin', this page is not accessible to the test user
   'http://localhost:3000/activity-reports/view/9999',
   'http://localhost:3000/regional-dashboard',
   'http://localhost:3000/training-reports',
@@ -29,16 +28,8 @@ const testForAxeViolations = async (page: Page, url: string) => {
   expect(results.violations).toEqual([]);
 };  
 
-// const people = ['Alice', 'Bob'];
 for (const url of axeUrls) {
   test(`testing with ${url}`, async ({ page }) => {
     await testForAxeViolations(page, url);
   });
-  // You can also do it with test.describe() or with multiple tests as long the test name is unique.
 }
-
-// test('run axe tests in playwright', async ({ page }) => {
-//   for (const url of axeUrls) {
-//     await testForAxeViolations(page, url);
-//   }
-// });
