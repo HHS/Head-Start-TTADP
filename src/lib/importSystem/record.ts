@@ -218,7 +218,7 @@ const recordAvailableFiles = async (
           ftpFileInfo: newFile.fileInfo,
           status: IMPORT_STATUSES.IDENTIFIED,
         })),
-        { independentHooks: true },
+        { individualHooks: true },
       )
       : Promise.resolve()),
     // Update matched files in the database if there are any
@@ -246,7 +246,7 @@ const recordAvailableFiles = async (
           importId,
           id: removedFiles.map(({ id }) => id),
         },
-        independentHooks: true,
+        individualHooks: true,
       })
       : Promise.resolve()),
   ]);
@@ -313,7 +313,7 @@ const recordAvailableDataFiles = async (
           fileInfo: newFile,
           status: IMPORT_STATUSES.IDENTIFIED,
         })),
-        { independentHooks: true },
+        { individualHooks: true },
       )
       : Promise.resolve()),
     // Update matched files in the database if there are any
@@ -341,7 +341,7 @@ const recordAvailableDataFiles = async (
           importFileId,
           id: removedFiles.map(({ id }) => id),
         },
-        independentHooks: true,
+        individualHooks: true,
       })
       : Promise.resolve()),
   ]);
@@ -374,7 +374,7 @@ const updateAvailableDataFileMetadata = async (
         fileInfo: {
           name: fileInfo.name,
         },
-        independentHooks: true,
+        individualHooks: true,
       },
     },
   );
