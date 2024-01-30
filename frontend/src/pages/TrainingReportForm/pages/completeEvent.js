@@ -15,6 +15,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import { InProgress, Closed } from '../../../components/icons';
+import { getEventIdSlug } from '../constants';
 
 const pages = {
   1: 'Event summary',
@@ -67,10 +68,7 @@ const CompleteEvent = ({
     async function getSessions() {
       try {
         setIsAppLoading(true);
-        // get sessions by event ID fragment
-        // a bit obtuse as is but waiting for generic refactor to
-        // clean a lot of these up
-        const res = await sessionsByEventId(formData.eventId.substring(formData.eventId.lastIndexOf('-') + 1));
+        const res = await sessionsByEventId(getEventIdSlug(formData.eventId));
         setSessions(res);
       } catch (e) {
         updateError('Unable to load sessions');
