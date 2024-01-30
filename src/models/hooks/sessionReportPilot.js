@@ -176,16 +176,15 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
 
       const status = hasCompleteSession ? 'In Progress' : 'Draft';
 
-      if (!existing) {
-        const newGoal = await sequelize.models.Goal.create({
-          name: event.data.goal,
-          grantId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status,
-          createdVia: 'tr',
-          source: GOAL_SOURCES[4], // Training event
-        }, { transaction: options.transaction });
+      const newGoal = await sequelize.models.Goal.create({
+        name: event.data.goal,
+        grantId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        status,
+        createdVia: 'tr',
+        source: GOAL_SOURCES[4], // Training event
+      }, { transaction: options.transaction });
 
       await sequelize.models.EventReportPilotGoal.create({
         goalId: newGoal.id,

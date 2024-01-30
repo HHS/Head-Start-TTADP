@@ -165,6 +165,7 @@ const dropAndRecreateEnum = async (
   columnName,
   enumValues = [],
   enumType = 'text',
+  isArray = true, // Only set this to false if you're sure the column is not an array.
 ) => {
   await queryInterface.sequelize.query(`
   -- rename the existing type
@@ -174,11 +175,15 @@ const dropAndRecreateEnum = async (
     ${enumValues.map((enumValue) => `'${enumValue}'`).join(',\n')}
   );`, { transaction });
 
+  const enumNameWithType = isArray ? `"${enumName}"[]` : `"${enumName}"`;
+  const enumTypeForAlter = isArray ? `${enumType}[]` : enumType;
+  const setArrayDefault = isArray ? `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];` : '';
+
   return queryInterface.sequelize.query(`
   -- update the columns to use the new type
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default null;
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE "${enumName}"[] USING "${columnName}"::${enumType}[]::"${enumName}"[];
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE ${enumNameWithType} USING "${columnName}"::${enumTypeForAlter}::${enumNameWithType};
+  ${setArrayDefault}
   -- remove the old type
   DROP TYPE "${enumName}_old";
 `, { transaction });

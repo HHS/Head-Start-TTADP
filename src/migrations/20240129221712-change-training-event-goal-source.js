@@ -8,26 +8,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      // Remove existing columns and enum.
-      await queryInterface.removeColumn('Goals', 'source');
-      await queryInterface.removeColumn('ActivityReportGoals', 'source');
-      await queryInterface.sequelize.query('DROP TYPE public."enum_Goals_source";');
-      await queryInterface.sequelize.query('DROP TYPE public."enum_ActivityReportGoals_source";');
-
-      // Goals.
-      await queryInterface.addColumn(
+      await dropAndRecreateEnum(
+        queryInterface,
+        transaction,
+        'enum_Goals_source',
         'Goals',
         'source',
-        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
-        { transaction },
-      );
-
-      // ActivityReportGoals.
-      await queryInterface.addColumn(
-        'ActivityReportGoals',
-        'source',
-        { type: Sequelize.DataTypes.ENUM(GOAL_SOURCES) },
-        { transaction },
+        GOAL_SOURCES,
+        'text',
+        false,
       );
     });
   },
