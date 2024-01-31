@@ -38,6 +38,10 @@ describe('ClassReview', () => {
   });
   const renderClassReview = () => render(<ClassReview grantNumber={grantId} />);
 
+  afterAll(() => {
+    fetchMock.restore();
+  });
+
   describe('emotional support', () => {
     afterEach(() => {
       fetchMock.restore();
