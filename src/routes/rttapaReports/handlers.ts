@@ -69,14 +69,9 @@ export async function getRttapas(req: Request, res: Response) {
       return;
     }
 
-    const { sortBy, direction } = req.query;
-
     const regionId = Number(req.params.regionId);
     const recipientId = Number(req.params.recipientId);
-    const reports = await findAllRttapa(regionId, recipientId, {
-      sortBy: String(sortBy),
-      direction: String(direction),
-    });
+    const reports = await findAllRttapa(regionId, recipientId);
 
     res.json(reports);
   } catch (e) {
