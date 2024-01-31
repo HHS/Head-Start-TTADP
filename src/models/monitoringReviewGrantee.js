@@ -65,7 +65,7 @@ export default (sequelize, DataTypes) => {
     },
     updateBy: {
       allowNull: false,
-      type: DataTypes.DATE,
+      type: DataTypes.TEXT,
     },
     grantNumber: {
       allowNull: false,
