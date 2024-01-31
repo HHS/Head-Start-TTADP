@@ -1,9 +1,7 @@
-/* eslint-disable max-len */
 import db from '../models';
 
 const {
   Grant,
-  Recipient,
   MonitoringReviewGrantee,
   MonitoringReviewStatus,
   MonitoringReview,
@@ -42,65 +40,61 @@ interface IMonitoringResponse {
   grant: string;
 }
 
-export async function monitoringData(recipientId: number, regionId: number): Promise<IMonitoringResponse[]> {
-  const recipientWithMonitoring = await Recipient.findOne({
-    attributes: ['id'],
-    where: { id: recipientId },
-    include: [{
-      model: Grant,
-      attributes: ['id', 'recipientId', 'regionId', 'number'],
-      where: { regionId },
-      required: true,
-      as: 'grants',
-      include: [
-        {
-          model: MonitoringReviewGrantee,
-          attributes: ['id', 'grantNumber', 'reviewId'],
-          required: true,
-          as: 'monitoringReviewGrantees',
-          include: [
-            {
-              model: MonitoringReview,
-              as: 'monitoringReview',
-              attributes: [
-                'reportDeliveryDate',
-                'id',
-                'reviewType',
-              ],
-              // only get the most recent review
-              // limit: 1,
-              // order: [['reportDeliveryDate', 'DESC']],
-              required: true,
-              include: [
-                {
-                  attributes: ['id', 'name', 'statusId'],
-                  model: MonitoringReviewStatus,
-                  as: 'status',
-                  required: true,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    }],
+export async function monitoringData(
+  recipientId: number,
+  regionId: number,
+): Promise<IMonitoringResponse[]> {
+  const grants = await Grant.findAll({
+    attributes: ['id', 'recipientId', 'regionId', 'number'],
+    where: { regionId, recipientId },
+    required: true,
+    include: [
+      {
+        model: MonitoringReviewGrantee,
+        attributes: ['id', 'grantNumber', 'reviewId'],
+        required: true,
+        as: 'monitoringReviewGrantees',
+        include: [
+          {
+            model: MonitoringReview,
+            as: 'monitoringReview',
+            attributes: [
+              'reportDeliveryDate',
+              'id',
+              'reviewType',
+              'reviewId',
+            ],
+            required: true,
+            include: [
+              {
+                attributes: ['id', 'name', 'statusId'],
+                model: MonitoringReviewStatus,
+                as: 'status',
+                required: true,
+              },
+            ],
+          },
+        ],
+      },
+    ],
   });
 
-  if (!recipientWithMonitoring) {
-    return [];
-  }
-
-  //   recipientId, // from request
-  //   regionId, // from request
-  //   reviewStatus: 'Compliant', status.name from recipient.grants.monitoringReviewGrantees.monitoringReview
-  //   reviewDate: '05/01/2023', reportDeliveryDate from recipient.grants.monitoringReviewGrantees.monitoringReview
-  //   reviewType: 'FA-2', // reviewType from recipient.grants.monitoringReviewGrantees.monitoringReview
-
-  const { grants } = recipientWithMonitoring;
   return grants.map((grant: IGrant) => {
     const { monitoringReviewGrantees } = grant;
-    const { monitoringReview } = monitoringReviewGrantees[0];
+
+    // get the most recent review
+    const monitoringReviews = monitoringReviewGrantees.map(
+      (review: IMonitoringReviewGrantee) => review.monitoringReview,
+    );
+    const monitoringReview = monitoringReviews.reduce((a, b) => {
+      if (a.reportDeliveryDate > b.reportDeliveryDate) {
+        return a;
+      }
+      return b;
+    }, monitoringReviews[0]);
+
     const { status } = monitoringReview;
+
     return {
       recipientId: grant.recipientId,
       regionId: grant.regionId,
