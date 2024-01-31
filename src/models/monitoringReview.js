@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReview,
         {
           foreignKey: 'statusId',
-          targetKey: 'statusId',
+          sourceKey: 'statusId',
           as: 'monitoringReviews',
         },
       );
@@ -28,7 +28,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReviewStatus,
         {
           foreignKey: 'statusId',
-          targetKey: 'statusId',
+          sourceKey: 'statusId',
           as: 'status',
         },
       );
@@ -43,15 +43,15 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     contentId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     statusId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     startDate: {
       type: DataTypes.DATEONLY,

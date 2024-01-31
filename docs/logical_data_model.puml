@@ -526,30 +526,30 @@ class MaintenanceLogs{
 class MonitoringClassSummaries{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * grantNumber : text
+ * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  classroomOrganization : decimal(5,4)
  deletedAt : timestamp with time zone
  emotionalSupport : decimal(5,4)
- grantNumber : text
  hash : text
  instructionalSupport : decimal(5,4)
  reportDeliveryDate : timestamp with time zone
- reviewId : text
  sourceDeletedAt : timestamp with time zone
 }
 
 class MonitoringFindingHistories{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
+ * findingHistoryId : text
+ * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
- findingHistoryId : text
  hash : text
- reviewId : text
  sourceDeletedAt : timestamp with time zone
 }
 
@@ -557,15 +557,15 @@ class MonitoringReviewGrantees{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * createTime : timestamp with time zone
+ * granteeId : text
  * grantNumber : text
+ * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
- * updateBy : timestamp with time zone
+ * updateBy : text
  * updatedAt : timestamp with time zone
  * updateTime : timestamp with time zone
  deletedAt : timestamp with time zone
- granteeId : text
- reviewId : text
  sourceDeletedAt : timestamp with time zone
 }
 
@@ -583,21 +583,21 @@ class MonitoringReviewStatuses{
 
 class MonitoringReviews{
  * id : integer : <generated>
+ * contentId : text
  * createdAt : timestamp with time zone
+ * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
+ * statusId : integer
  * updatedAt : timestamp with time zone
- contentId : text
  deletedAt : timestamp with time zone
  endDate : date
  hash : text
  outcome : text
  reportDeliveryDate : timestamp with time zone
- reviewId : text
  reviewType : text
  sourceDeletedAt : timestamp with time zone
  startDate : date
- statusId : integer
 }
 
 class NationalCenterUsers{

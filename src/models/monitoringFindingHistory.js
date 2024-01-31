@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringFindingHistory,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringFindingHistories',
         },
       );
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReview,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReview',
         },
       );
@@ -31,11 +31,11 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     findingHistoryId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     hash: {
       type: DataTypes.TEXT,
