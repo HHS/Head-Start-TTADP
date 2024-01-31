@@ -10,6 +10,15 @@ describe('dataValidation', () => {
     await sequelize.close();
   });
 
+  describe('countAndLastUpdated', () => {
+    it('should return the count and last updated value for the given table', async () => {
+      const tableName = 'Grants';
+      const { updatedAt, count } = await countAndLastUpdated(tableName);
+      expect(updatedAt).toBeInstanceOf(Date);
+      expect(Number.isNaN(parseInt(count, DECIMAL_BASE))).toBe(false);
+    });
+  });
+
   describe('run basic query', () => {
     it('should return the data in an object', async () => {
       const query = `
