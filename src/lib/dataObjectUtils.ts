@@ -7,10 +7,11 @@ import * as dotWild from 'dot-wild';
  * @param value - The value to be checked.
  * @returns A boolean indicating whether the value is an object or not.
  */
-const isObject = (value: any): boolean => (
-  typeof value === 'object' // Check if the value is of type 'object'
-  && value !== null // Check if the value is not null
-  && !Array.isArray(value) // Check if the value is not an array
+const isObject = (obj): boolean => (
+  !!obj
+  && typeof obj === 'object'
+  && !Array.isArray(obj)
+  && !(obj instanceof Date)
 );
 
 /**
@@ -19,23 +20,23 @@ const isObject = (value: any): boolean => (
  * @returns A new object or array with undefined values removed, or
  * undefined if all values are undefined.
  */
-const removeUndefined = (obj: any): any => {
-  // Check if the input is an object
-  if (!isObject(obj)) {
-    return obj;
-  }
-
+const removeUndefined = (obj) => {
   // Check if the input is an array
   if (Array.isArray(obj)) {
     // Map over each element in the array and recursively remove undefined values
     // Filter out any elements that are undefined
     return obj
       .map(removeUndefined)
-      .filter((value: any) => value !== undefined);
+      .filter((value) => value !== undefined);
+  }
+
+  // Check if the input is an object
+  if (!isObject(obj)) {
+    return obj;
   }
 
   // Create a new empty object
-  const result: any = {};
+  const result = {};
 
   // Iterate over each key in the object
   Object.keys(obj).forEach((key: string) => {
@@ -65,10 +66,22 @@ type RemappingDefinition = Record<string, string | (
   string
 )[]>;
 
+/**
+ * Takes an object and a path to prune from that object, optionally removing empty parent
+ * objects or arrays. It uses dot notation to access nested properties and can handle wildcards.
+ *
+ * @param data - The object from which properties should be pruned.
+ * @param prunePath - A string representing the path to the property that should be removed.
+ * Can include wildcards.
+ * @param options - An optional object with the following properties:
+ *   @property deleteEmptyParents - A boolean indicating whether to delete empty parent objects
+ * or arrays after pruning. Defaults to true.
+ * @returns The pruned object, with the specified path and potentially empty parents removed.
+ */
 const remapPrune = (
   data,
   prunePath: string,
-  options: { deleteEmptyParents?: boolean },
+  options: { deleteEmptyParents?: boolean } = {},
 ) => {
   const {
     deleteEmptyParents = true,
@@ -105,6 +118,7 @@ const remapPrune = (
   }
   return prune;
 };
+
 type TargetFunction = (input: string | object) => Record<string, any>;
 type TargetFunctions = { [key:string]: TargetFunction };
 
@@ -128,7 +142,10 @@ const remap = (
 ): {
   mapped: object | object[] | null,
   unmapped: object | object[] | null,
-} => {
+} | {
+  mapped: object | object[] | null,
+  unmapped: object | object[] | null,
+}[] => {
   // If data is null or undefined, return null
   if (data === null || data === undefined) return { mapped: null, unmapped: null };
   const {
@@ -220,8 +237,8 @@ const remap = (
       unmappedData = remapPrune(unmappedData, sourcePath, { deleteEmptyParents });
     }
   });
-  remappedData = removeUndefined(remappedData);
-  unmappedData = removeUndefined(unmappedData);
+  remappedData = removeUndefined(remappedData) || null;
+  unmappedData = removeUndefined(unmappedData) || null;
 
   return { mapped: remappedData, unmapped: unmappedData };
 };
@@ -265,34 +282,33 @@ const isDeepEqual = (value1: any, value2: any): boolean => {
  * @returns {object} - The merged object.
  */
 const mergeDeep = (...sources) => {
-  // If there are less than 2 sources, return the first source
-  if (sources.length < 2) return sources.shift();
+  // If there are less than 2 sources, return the first source or an empty object
+  if (sources.length < 1) return {};
+  if (sources.length < 2) return sources[0];
 
-  // Remove the first two sources from the array
-  const target = sources.shift();
-  const source = sources.shift();
+  const target = {};
+  sources.forEach((source) => {
+    if (isObject(source)) {
+      Object.keys(source).forEach((key) => {
+        if (isObject(source[key])) {
+          if (!target[key] || !isObject(target[key])) {
+            target[key] = {};
+          }
+          Object.assign(target[key], mergeDeep(target[key], source[key]));
+        } else {
+          Object.assign(target, { [key]: source[key] });
+        }
+      });
+    } else if (source instanceof Date) {
+      // If the source is a Date, we directly assign it
+      Object.assign(target, source);
+    } else {
+      // For other non-object types, we just copy the value
+      Object.assign(target, source);
+    }
+  });
 
-  // Check if both target and source are objects
-  if (isObject(target) && isObject(source)) {
-    // Iterate over each key in the source object
-    Object.keys(source).forEach((key) => {
-      // If the value at the current key in the source object is also an object
-      if (isObject(source[key])) {
-        // If the target object does not have a property with the current key,
-        // assign an empty object to that property
-        if (!target[key]) Object.assign(target, { [key]: {} });
-
-        // Recursively merge the nested objects
-        mergeDeep(target[key], source[key]);
-      } else {
-        // Assign the value at the current key in the source object to the target object
-        Object.assign(target, { [key]: source[key] });
-      }
-    });
-  }
-
-  // Recursively merge the remaining sources with the updated target object
-  return mergeDeep(target, ...sources);
+  return target;
 };
 
 /**
@@ -332,20 +348,40 @@ const collectChangedValues = (
 
 type SimplifiedObject = { [key: string]: string };
 
+/**
+ * Simplifies a nested object structure by flattening it into a single-level object with
+ * key-value pairs. The keys are determined by the 'name' property of child objects, and
+ * the values are taken from the property specified by the 'valueName' parameter. The
+ * function recursively processes child objects found under the property specified by the
+ * 'childrenName' parameter.
+ *
+ * @param obj - The object to simplify. Expected to be an object with nested child objects.
+ * @param childrenName - The property name in 'obj' that contains the array of child objects.
+ * @param valueName - The property name in child objects whose value will be extracted and
+ * added to the simplified object.
+ * @returns A new object of type SimplifiedObject that is a flattened version of 'obj',
+ * containing only the key-value pairs.
+ *
+ * Note: The function assumes that each child object has a 'name' property which is used as
+ * the key in the simplified object. If 'obj' does not have the expected structure, the function
+ * may not behave as intended.
+ */
 const simplifyObject = (obj: any, childrenName: string, valueName: string): SimplifiedObject => {
   let simplified: SimplifiedObject = {};
 
-  // Check if the object has children
+  // Check if the object has children and if it's an array
   if (obj[childrenName] && Array.isArray(obj[childrenName])) {
     obj[childrenName].forEach((child: any) => {
-      // If a child has text, add it to the simplified object
-      if (child[valueName]) {
+      // Check if the child is an object and has the specified value name
+      if (typeof child === 'object' && child !== null && child[valueName]) {
         simplified[child.name] = child[valueName];
       }
 
-      // Recursively simplify child objects
-      const childSimplified = simplifyObject(child, childrenName, valueName);
-      simplified = { ...simplified, ...childSimplified };
+      // Recursively simplify child objects if it's an object
+      if (typeof child === 'object' && child !== null) {
+        const childSimplified = simplifyObject(child, childrenName, valueName);
+        simplified = { ...simplified, ...childSimplified };
+      }
     });
   }
 
@@ -379,15 +415,23 @@ const detectAndCast = (value: string): {
   if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
 
   // Check for number
-  if (!Number.isNaN(value) && !Number.isNaN(parseFloat(value))) {
+  if (!Number.isNaN(Number(value)) && String(Number(value)) === value) {
     return { value: Number(value), type: 'number' };
   }
 
   // Check for date
-  const date = new Date(value);
-  if (!Number.isNaN(date.getTime())) {
-    // You might want to add additional checks to ensure it's a valid date string
-    return { value: date, type: 'Date' };
+  const dateRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z$/;
+  const match = value.match(dateRegex);
+  if (match) {
+    const year = +match[1];
+    const month = +match[2];
+    const day = +match[3];
+    const date = new Date(year, month - 1, day);
+    if (date.getUTCFullYear() === year
+    && date.getUTCMonth() === month - 1
+    && date.getUTCDate() === day) {
+      return { value: date, type: 'Date' };
+    }
   }
 
   // Check for array or object
@@ -418,10 +462,14 @@ const detectAndCast = (value: string): {
 function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Record<string, any> {
   const result: Record<string, any> = {};
 
-  Object.keys(obj).forEach((key) => {
-    const lowercasedKey = key.charAt(0).toLowerCase() + key.slice(1);
-    result[lowercasedKey] = obj[key];
-  });
+  if (typeof obj === 'object') {
+    Object.keys(obj).forEach((key) => {
+      const lowercasedKey = key.charAt(0).toLowerCase() + key.slice(1);
+      result[lowercasedKey] = obj[key];
+    });
+  } else {
+    throw new Error('Input is not an object');
+  }
 
   return result;
 }
