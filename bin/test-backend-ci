@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 declare lr=">>>>>>>>"
 declare -i exit_code=0
 
