@@ -36,6 +36,12 @@ describe('ClassReview', () => {
   afterEach(() => {
     fetchMock.restore();
   });
+  const renderClassReview = () => render(<ClassReview grantNumber={grantId} />);
+
+  describe('emotional support', () => {
+    afterEach(() => {
+      fetchMock.restore();
+    });
 
   describe('emotional support', () => {
     it('above all thresholds', () => testThreshold('ES', 6, 'Above all thresholds'));
