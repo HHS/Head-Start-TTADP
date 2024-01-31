@@ -51,10 +51,11 @@ export async function monitoringData(recipientId: number, regionId: number): Pro
       attributes: ['id', 'recipientId', 'regionId', 'number'],
       where: { regionId },
       required: true,
+      as: 'grants',
       include: [
         {
           model: MonitoringReviewGrantee,
-          attributes: ['id', 'grantId', 'reviewId'],
+          attributes: ['id', 'grantNumber', 'reviewId'],
           required: true,
           as: 'monitoringReviewGrantees',
           include: [
@@ -67,8 +68,8 @@ export async function monitoringData(recipientId: number, regionId: number): Pro
                 'reviewType',
               ],
               // only get the most recent review
-              limit: 1,
-              order: [['reportDeliveryDate', 'DESC']],
+              // limit: 1,
+              // order: [['reportDeliveryDate', 'DESC']],
               required: true,
               include: [
                 {
