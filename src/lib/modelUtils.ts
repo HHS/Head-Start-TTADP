@@ -94,7 +94,8 @@ const dataTypeMapping = {
  * @throws If no model is found for the given table name.
  */
 const modelForTable = (db, tableName) => {
-  const model = Object.values(db.sequelize.models).find((m) => m.getTableName() === tableName);
+  const model = Object.values(db.sequelize.models)
+    .find((m: { getTableName }) => m.getTableName() === tableName);
   if (!model) {
     throw new Error(`Unable to find table for '${tableName}'`);
   }
@@ -112,8 +113,6 @@ const getColumnInformation = async (model): Promise<{
   dataType,
   allowNull: boolean,
 }[]> => {
-  let i = 200;
-  console.log(++i, model.describe);
   // Retrieve the table details using the describe() method of the model
   const tableDetails:{
     [key: string]:{
@@ -121,7 +120,6 @@ const getColumnInformation = async (model): Promise<{
       allowNull: boolean,
     },
   } = await model.describe();
-  console.log(++i, { tableDetails });
 
   // Map over the entries of the tableDetails object to transform them into an array of
   // column objects
@@ -131,7 +129,6 @@ const getColumnInformation = async (model): Promise<{
       dataType: columnDetails.type, // Store the data type of the column
       allowNull: columnDetails.allowNull, // Store whether the column allows null values
     }));
-  console.log(++i, { columns });
 
   return columns; // Return the array of column objects
 };
@@ -168,24 +165,19 @@ const filterDataToModel = async (
   matched: Record<string, any>,
   unmatched: Record<string, any>,
 }> => {
-  let i = 100;
-  console.log(++i);
   // Retrieve the column information for the model
   const modelData = await getColumnInformation(model);
-  console.log(++i, {modelData});
 
   return Object.entries(data)
     .reduce((acc, [key, value]) => {
       // Find the matching column in the model data
       const matchColumn = modelData.find((md) => md.columnName === key);
-  console.log(++i, {matchColumn});
       if (matchColumn
         && ((value === null && matchColumn?.allowNull)
           || (typeof value === dataTypeMapping[matchColumn?.dataType?.key]))
       ) {
         // If the value matches the column criteria, add it to the matched object
         acc.matched[key] = value;
-        console.log(++i, {key, value});
       } else {
         // Otherwise, add it to the unmatched object
         acc.unmatched[key] = value;
