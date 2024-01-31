@@ -41,7 +41,6 @@ export async function findRttapa(reportId: number): Promise<RttapaResponse> {
 export async function findAllRttapa(
   regionId: number,
   recipientId: number,
-  { sortBy, direction }: { sortBy: string; direction: string } = { sortBy: 'reviewDate', direction: 'desc' },
 ): Promise<RttapaResponse[]> {
   return RttapaPilot.findAll({
     attributes: [
@@ -64,7 +63,6 @@ export async function findAllRttapa(
       'reviewDate',
     ],
     where: { regionId, recipientId },
-    order: [[sortBy, direction]],
     raw: true,
   });
 }
