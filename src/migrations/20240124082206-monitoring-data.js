@@ -185,7 +185,7 @@ module.exports = {
         },
         updateBy: {
           allowNull: false,
-          type: Sequelize.DATE,
+          type: Sequelize.TEXT,
         },
         grantNumber: {
           allowNull: false,
