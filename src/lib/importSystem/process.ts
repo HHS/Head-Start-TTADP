@@ -64,8 +64,6 @@ const processRecords = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: Promise<any>[],
 }> => {
-  let i = 0;
-  console.log(++i);
   let record;
   try {
     record = await xmlClient.getNextObject(true);
@@ -75,7 +73,6 @@ const processRecords = async (
     recordActions.errors.push(err.message);
     auditLogger.log('error', err.message);
   }
-  console.log(++i, {record});
   // @ts-ignore
   let model;
   try {
@@ -88,7 +85,6 @@ const processRecords = async (
     // Unable to continue as a model is required to record any information
     return Promise.reject(recordActions);
   }
-  console.log(++i, {model});
 
   if (record) {
     try {
@@ -119,18 +115,15 @@ const processRecords = async (
           },
         },
       );
-      console.log(++i, {data});
 
       // Filter the data to match the expected model
       const { matched: filteredData } = await filterDataToModel(data, model);
-      console.log(++i, {filteredData});
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
       processDefinition.keys.forEach((key) => {
         recordKey[key] = filteredData[key];
       });
-      console.log(++i, {recordKey});
 
       // Check if there is an existing record with the same key value
       const currentData = await model.findOne({
@@ -138,7 +131,6 @@ const processRecords = async (
           ...recordKey,
         },
       });
-      console.log(++i, {currentData});
 
       if (currentData === null || currentData === undefined) {
         // If the record is new, create it
@@ -158,7 +150,6 @@ const processRecords = async (
       } else {
         // If the record already exists, find the delta then update it
         const delta = collectChangedValues(filteredData, currentData);
-        console.log(++i, {filteredData, currentData, delta});
         const update = model.update(
           {
             ...delta,
