@@ -4,6 +4,18 @@ export default (sequelize, DataTypes) => {
   class MonitoringReview extends Model {
     static associate(models) {
       models.MonitoringReviewStatus.hasMany(
+      /**
+       * Associations:
+       *  monitoringReviewGrantees: MonitoringReviewGrantee.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringReviewGrantee.reviewId
+       *
+       *  monitoringFindingHistories: MonitoringFindingHistory.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringFindingHistory.reviewId
+       *
+       *  monitoringClassSummaries: MonitoringClassSummary.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringClassSummary.reviewId
+       */
+
         models.MonitoringReview,
         {
           foreignKey: 'statusId',

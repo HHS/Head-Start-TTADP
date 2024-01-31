@@ -1,4 +1,4 @@
-const { Model } = require('sequelize');
+import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class MonitoringReviewGrantee extends Model {
@@ -24,8 +24,8 @@ export default (sequelize, DataTypes) => {
       models.Grant.hasMany(
         models.MonitoringReviewGrantee,
         {
-          foreignKey: 'number',
-          targetKey: 'grantNumber',
+          foreignKey: 'grantNumber',
+          targetKey: 'number',
           as: 'monitoringReviewGrantees',
         },
       );
@@ -33,8 +33,8 @@ export default (sequelize, DataTypes) => {
       models.MonitoringReviewGrantee.belongsTo(
         models.Grant,
         {
-          foreignKey: 'grantNumber',
-          targetKey: 'number',
+          foreignKey: 'number',
+          targetKey: 'grantNumber',
           as: 'grant',
         },
       );
@@ -49,11 +49,11 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     granteeId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     createTime: {
       allowNull: false,
