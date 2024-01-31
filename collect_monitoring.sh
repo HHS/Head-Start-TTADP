@@ -1,4 +1,9 @@
 #!/bin/bash
+# this script requires you to target the sandbox space locally
+# of cloud foundry
+#
+#  (to change target space in cloud foundry
+# `cf target -s SPACE_NAME)
 
 # Define SFTP server details
 SFTP_SERVER="sftp.ams20.com"
