@@ -266,9 +266,13 @@ export default function CsvImport(
 }
 
 CsvImport.propTypes = {
-  validCsvHeaders: PropTypes.arrayOf(PropTypes.string).isRequired,
+  validCsvHeaders: PropTypes.arrayOf(PropTypes.string),
   requiredCsvHeaders: PropTypes.arrayOf(PropTypes.string).isRequired,
   typeName: PropTypes.string.isRequired,
   apiPathName: PropTypes.string.isRequired,
   primaryIdColumn: PropTypes.string.isRequired,
+};
+
+CsvImport.defaultProps = {
+  validCsvHeaders: [],
 };

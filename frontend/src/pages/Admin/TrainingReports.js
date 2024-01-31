@@ -6,6 +6,7 @@ function TrainingReports() {
   const typeName = 'training reports';
   const apiPathName = 'training-reports';
 
+  /*
   const validCsvHeaders = [
     'Sheet Name',
     'Event ID',
@@ -20,6 +21,7 @@ function TrainingReports() {
     'Audience',
     'Overall Vision/Goal for the PD Event',
   ];
+  */
 
   const requiredCsvHeaders = [
     'Event ID',
@@ -30,7 +32,6 @@ function TrainingReports() {
   return (
     <>
       <CsvImport
-        validCsvHeaders={validCsvHeaders}
         requiredCsvHeaders={requiredCsvHeaders}
         typeName={typeName}
         apiPathName={apiPathName}
