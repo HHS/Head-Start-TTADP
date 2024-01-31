@@ -118,10 +118,11 @@ const reviewClassSummaries = [
     id: 1,
     reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
     grantNumber: '14CH00002',
+    // Values approximate originals
     emotionalSupport: 6.2303,
     classroomOrganization: 5.2303,
     instructionalSupport: 3.2303,
-    reportDeliveryDate:  new Date('2023/05/23'),
+    reportDeliveryDate: new Date('2023/05/23'),
     hash: 'seedhashclasssum1',
     sourceCreatedAt: new Date('2023/05/23'),
     sourceUpdatedAt: new Date('2023/05/23'),
