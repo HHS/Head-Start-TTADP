@@ -81,13 +81,12 @@ const processRecords = async (
   try {
     model = modelForTable(db, processDefinition.tableName);
   } catch (err) {
-    // record the error into the recordActions and continue on successfully as
-    // other entries may be process successfully
+    // record the error into the recordActions
     recordActions.errors.push(err.message);
     auditLogger.log('error', err.message);
 
     // Unable to continue as a model is required to record any information
-    return Promise.reject(err);
+    return Promise.reject(recordActions);
   }
   console.log(++i, {model});
 
@@ -210,6 +209,8 @@ const processRecords = async (
       const destroys = model.destroy({
         where: { id: { [Op.not]: affectedDataIds } },
         individualHooks: true,
+        returning: true,
+        plain: true,
       });
 
       recordActions.deletes.push(destroys);
