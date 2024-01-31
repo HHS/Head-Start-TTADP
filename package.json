@@ -204,13 +204,14 @@
       "<rootDir>/src/logger.js",
       "<rootDir>/src/*/coverage/",
       "<rootDir>/src/coverage/",
-      "<rootDir>/src/index.js",
+      "<rootDir>/src/index.ts",
       "<rootDir>/src/worker.ts",
       "<rootDir>/src/app.js",
       "<rootDir>/src/lib/cron.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
       "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+      "<rootDir>/src/tools/populateLegacyResourceTitlesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
     "coverageThreshold": {
