@@ -138,7 +138,7 @@ module.exports = {
     await queryInterface.bulkInsert('MonitoringReviews', reviews);
     await queryInterface.bulkInsert('MonitoringReviewGrantees', review_grantees);
     await queryInterface.bulkInsert('MonitoringFindingHistories', review_finding_histories);
-    await queryInterface.bulkInsert('MonitoringClassSummaries', approvers);
+    await queryInterface.bulkInsert('MonitoringClassSummaries', review_class_summaries);
     // Probably unnecessary
     await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringReviews_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
     await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringReviewStatuses_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
