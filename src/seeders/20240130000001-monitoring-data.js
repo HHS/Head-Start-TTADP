@@ -37,7 +37,7 @@ const reviews = [
   },
 ];
 
-const review_statuses = [
+const reviewStatuses = [
   {
     id: 1,
     statusId: 6006,
@@ -51,7 +51,7 @@ const review_statuses = [
   },
 ];
 
-const review_grantees = [
+const reviewGrantees = [
   {
     id: 1,
     reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
@@ -86,7 +86,7 @@ const review_grantees = [
   },
 ];
 
-const review_finding_histories = [
+const reviewFindingHistories = [
   {
     id: 1,
     reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
@@ -113,7 +113,7 @@ const review_finding_histories = [
   },
 ];
 
-const review_class_summaries = [
+const reviewClassSummaries = [
   {
     id: 1,
     reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
@@ -134,17 +134,11 @@ const review_class_summaries = [
 
 module.exports = {
   up: async (queryInterface) => {
-    await queryInterface.bulkInsert('MonitoringReviewStatuses', review_statuses);
+    await queryInterface.bulkInsert('MonitoringReviewStatuses', reviewStatuses);
     await queryInterface.bulkInsert('MonitoringReviews', reviews);
-    await queryInterface.bulkInsert('MonitoringReviewGrantees', review_grantees);
-    await queryInterface.bulkInsert('MonitoringFindingHistories', review_finding_histories);
-    await queryInterface.bulkInsert('MonitoringClassSummaries', review_class_summaries);
-    // Probably unnecessary
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringReviews_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringReviewStatuses_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringReviewGrantees_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringFindingHistories_id_seq" RESTART WITH ${reports[reports.length - 1].id + 1};`);
-    await queryInterface.sequelize.query(`ALTER SEQUENCE "MonitoringClassSummaries_id_seq" RESTART WITH ${recipients[recipients.length - 1].id + 1};`);
+    await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
+    await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
+    await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
   },
 
   down: async (queryInterface) => {
