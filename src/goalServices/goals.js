@@ -1527,17 +1527,31 @@ export async function goalsForGrants(grantIds) {
       'onApprovedAR',
       'endDate',
       'source',
+      'createdVia',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
     where: {
+      name: {
+        [Op.ne]: '', // exclude "blank" goals
+      },
       '$grant.id$': ids,
       status: {
-        [Op.or]: [
-          { [Op.notIn]: ['Closed', 'Suspended'] },
-          { [Op.is]: null },
-        ],
+        [Op.notIn]: ['Closed', 'Suspended'],
       },
+      [Op.or]: [
+        {
+          createdVia: {
+            [Op.not]: 'tr',
+          },
+        },
+        {
+          createdVia: 'tr',
+          status: {
+            [Op.not]: 'Draft',
+          },
+        },
+      ],
     },
     include: [
       {

@@ -1,4 +1,4 @@
-const { Model } = require('sequelize');
+import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class MonitoringReviewGrantee extends Model {
@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReviewGrantees',
         },
       );
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReview,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReview',
         },
       );
@@ -24,8 +24,8 @@ export default (sequelize, DataTypes) => {
       models.Grant.hasMany(
         models.MonitoringReviewGrantee,
         {
-          foreignKey: 'number',
-          targetKey: 'grantNumber',
+          foreignKey: 'grantNumber',
+          sourceKey: 'number',
           as: 'monitoringReviewGrantees',
         },
       );
@@ -33,8 +33,8 @@ export default (sequelize, DataTypes) => {
       models.MonitoringReviewGrantee.belongsTo(
         models.Grant,
         {
-          foreignKey: 'grantNumber',
-          targetKey: 'number',
+          foreignKey: 'number',
+          sourceKey: 'grantNumber',
           as: 'grant',
         },
       );
@@ -49,11 +49,11 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     granteeId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     createTime: {
       allowNull: false,
@@ -65,7 +65,7 @@ export default (sequelize, DataTypes) => {
     },
     updateBy: {
       allowNull: false,
-      type: DataTypes.DATE,
+      type: DataTypes.TEXT,
     },
     grantNumber: {
       allowNull: false,

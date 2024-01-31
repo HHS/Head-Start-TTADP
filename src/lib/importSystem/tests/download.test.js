@@ -52,7 +52,7 @@ describe('collectFilesFromSource', () => {
       listFiles: jest.fn().mockResolvedValue([]),
       disconnect: jest.fn(),
     };
-    const FtpClient = require('../stream/ftp').default;
+    const { default: FtpClient } = jest.requireActual('../stream/ftp');
     FtpClient.mockImplementation(() => mockFtpClient);
 
     const importId = 1;
@@ -66,7 +66,13 @@ describe('collectFilesFromSource', () => {
     const path = '/';
     const fileMask = undefined;
 
-    const collectedFiles = await collectFilesFromSource(importId, timeBox, ftpSettings, path, fileMask);
+    const collectedFiles = await collectFilesFromSource(
+      importId,
+      timeBox,
+      ftpSettings,
+      path,
+      fileMask,
+    );
     expect(collectedFiles).toEqual([]);
     expect(mockFtpClient.connect).toHaveBeenCalled();
     expect(mockFtpClient.listFiles).toHaveBeenCalledWith(path, fileMask, undefined, true);

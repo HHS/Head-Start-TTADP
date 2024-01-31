@@ -142,10 +142,7 @@ const remap = (
 ): {
   mapped: object | object[] | null,
   unmapped: object | object[] | null,
-} | {
-  mapped: object | object[] | null,
-  unmapped: object | object[] | null,
-}[] => {
+} => {
   // If data is null or undefined, return null
   if (data === null || data === undefined) return { mapped: null, unmapped: null };
   const {

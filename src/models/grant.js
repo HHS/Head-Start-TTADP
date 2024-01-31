@@ -15,6 +15,15 @@ const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
 export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
+      /**
+       * Associations:
+       *  monitoringReviewGrantees: MonitoringReviewGrantee.grantNumber >- number
+       *  grant: number -< MonitoringReviewGrantee.grantNumber
+       *
+       *  monitoringClassSummaries: MonitoringClassSummary.grantNumber >- number
+       *  grant: number -< MonitoringClassSummary.grantNumber
+       */
+
       Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       Grant.belongsTo(models.Recipient, { foreignKey: 'recipientId', as: 'recipient' });
       Grant.hasMany(models.Goal, { foreignKey: 'grantId', as: 'goals' });
