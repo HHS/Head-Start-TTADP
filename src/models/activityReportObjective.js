@@ -1,6 +1,12 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
-const { beforeValidate, beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
+const {
+  afterCreate,
+  beforeValidate,
+  beforeDestroy,
+  afterDestroy,
+  afterUpdate,
+} = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -10,6 +16,7 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCourses' });
 
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
@@ -65,6 +72,10 @@ export default (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
     originalObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -80,9 +91,11 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportObjective',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportObjective;

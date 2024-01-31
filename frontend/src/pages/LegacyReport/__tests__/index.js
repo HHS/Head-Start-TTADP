@@ -1,14 +1,19 @@
 import '@testing-library/jest-dom';
+import join from 'url-join';
 import React from 'react';
+import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-
+import userEvent from '@testing-library/user-event';
 import LegacyReport from '../index';
+import UserContext from '../../../UserContext';
+
+const defaultUser = ({ id: 1, roles: [], permissions: [] });
 
 // eslint-disable-next-line react/prop-types
-const RenderLegacyReport = ({ report, fail = false }) => {
+const RenderLegacyReport = ({ report, fail = false, user = defaultUser }) => {
   // eslint-disable-next-line react/prop-types
   const { id } = report;
   const url = `/api/activity-reports/legacy/${id}`;
@@ -22,7 +27,9 @@ const RenderLegacyReport = ({ report, fail = false }) => {
 
   return (
     <Router history={history}>
-      <LegacyReport match={{ path: '', url: '', params: { legacyId: id } }} />
+      <UserContext.Provider value={{ user }}>
+        <LegacyReport match={{ path: '', url: '', params: { legacyId: id } }} />
+      </UserContext.Provider>
     </Router>
   );
 };
@@ -47,6 +54,36 @@ describe('LegacyReport', () => {
     render(<RenderLegacyReport report={report} fail />);
     const alert = await screen.findByTestId('alert');
     expect(alert).toHaveTextContent('Unable to load activity report');
+  });
+
+  it('shows edit form for admin', async () => {
+    const adminUser = { ...defaultUser, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] };
+    render(<RenderLegacyReport report={report} user={adminUser} />);
+
+    const editButton = await screen.findByRole('button', { name: 'Edit report users' });
+    userEvent.click(editButton);
+
+    expect(await screen.findByRole('heading', { name: 'Edit report users' })).toBeVisible();
+    const url = join('/', 'api', 'admin', 'legacy-reports', String(report.id), 'users');
+    fetchMock.put(url, { messages: ['success'] });
+    const saveButton = await screen.findByRole('button', { name: 'Save report users' });
+    userEvent.click(saveButton);
+    expect(await screen.findByText('success')).toBeVisible();
+  });
+
+  it('handles error to update admin', async () => {
+    const adminUser = { ...defaultUser, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] };
+    render(<RenderLegacyReport report={report} user={adminUser} />);
+
+    const editButton = await screen.findByRole('button', { name: 'Edit report users' });
+    userEvent.click(editButton);
+
+    expect(await screen.findByRole('heading', { name: 'Edit report users' })).toBeVisible();
+    const url = join('/', 'api', 'admin', 'legacy-reports', String(report.id), 'users');
+    fetchMock.put(url, 500);
+    const saveButton = await screen.findByRole('button', { name: 'Save report users' });
+    userEvent.click(saveButton);
+    expect(await screen.findByText('There was an error updating the report: Internal Server Error')).toBeVisible();
   });
 
   it('displays the report', async () => {

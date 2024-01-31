@@ -179,7 +179,7 @@ describe('Goals and Objectives', () => {
       },
     ];
 
-    fetchMock.get('/api/goals/similar/401?cluster=true', similarityResponse);
+    fetchMock.get('/api/goals/similar/region/1/recipient/401?cluster=true', similarityResponse);
   });
 
   afterEach(() => {

@@ -16,6 +16,12 @@ const RECIPIENT_PARTICIPANTS = [
   ];
   exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
+  const LANGUAGES = [
+    'English',
+    'Spanish',
+];
+exports.LANGUAGES = LANGUAGES;
+
   const OTHER_ENTITY_PARTICIPANTS = [
     'HSCO',
     'Local or State Agency',
@@ -301,3 +307,12 @@ const RECIPIENT_PARTICIPANTS = [
   };
 
   exports.GOAL_STATUS = GOAL_STATUS;
+
+  const SUPPORT_TYPES = [ 
+    'Introducing',
+    'Planning',
+    'Implementing',
+    'Maintaining',
+  ];
+
+exports.SUPPORT_TYPES = SUPPORT_TYPES;

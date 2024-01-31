@@ -71,6 +71,13 @@ const RecipientReviewSection = () => {
                           ))}
                         </ul>
                       </div>
+                      <div className="margin-top-1">
+                        <span className="text-bold">iPD courses:</span>
+                        {' '}
+                        {
+                          objective.courses.map((c) => c.name).join(', ')
+                        }
+                      </div>
                       <AttachmentReviewSection attachments={objective.files} />
                       <div className="margin-top-1">
                         <span className="text-bold">Objective status:</span>
@@ -94,6 +101,13 @@ const RecipientReviewSection = () => {
                           defaultEditorState={getEditorState(objective.ttaProvided)}
                         />
                       </div>
+                      {objective.supportType && (
+                        <div className="margin-top-1">
+                          <span className="text-bold">Support type:</span>
+                          {' '}
+                          {objective.supportType}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </>

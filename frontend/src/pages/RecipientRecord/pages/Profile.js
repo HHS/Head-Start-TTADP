@@ -13,7 +13,6 @@ import FeatureFlag from '../../../components/FeatureFlag';
 export default function Profile({
   recipientSummary,
   regionId,
-  recipientName,
   recipientId,
 }) {
   const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
@@ -21,11 +20,7 @@ export default function Profile({
   return (
     <>
       <Helmet>
-        <title>
-          Recipient Profile -
-          {' '}
-          {recipientName}
-        </title>
+        <title>Profile</title>
       </Helmet>
       <div className="maxw-widescreen">
         <Grid row gap={4}>
@@ -88,9 +83,4 @@ Profile.propTypes = {
         }),
       ),
     }).isRequired,
-  recipientName: PropTypes.string,
-};
-
-Profile.defaultProps = {
-  recipientName: '',
 };

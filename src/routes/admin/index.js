@@ -11,6 +11,8 @@ import emailRouter from './email';
 import groupRouter from './group';
 import goalRouter from './goal';
 import trainingReportRouter from './trainingReport';
+import legacyReportRouter from './legacyReports';
+import courseRouter from './course';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -31,5 +33,7 @@ router.use('/redis', redisRouter);
 router.use('/national-center', nationalCenterRouter);
 router.use('/email', emailRouter);
 router.use('/training-reports', trainingReportRouter);
+router.use('/legacy-reports', legacyReportRouter);
+router.use('/courses', courseRouter);
 
 export default router;

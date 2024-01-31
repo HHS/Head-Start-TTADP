@@ -451,6 +451,7 @@ const mappings: Record<string, string> = {
   Audience: 'audience',
   Creator: 'creator',
   'Edit Title': 'eventName',
+  'Event Title': 'eventName',
   'Event Duration/#NC Days of Support': 'eventDuration',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
@@ -541,6 +542,9 @@ export async function csvImport(buffer: Buffer) {
       await checkEventExists(eventId);
 
       const data = mapLineToData(line);
+
+      data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
+      data.goal = '';
 
       // remove duplicates in reasons and targetPopulations
       data.reasons = [...new Set(data.reasons as string[])];

@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
@@ -10,6 +10,7 @@ import {
   visionGoalFields,
   pageTouched,
   pageComplete,
+  getEventIdSlug,
 } from '../constants';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
@@ -17,26 +18,96 @@ import UserContext from '../../../UserContext';
 import PocCompleteCheckbox from '../../../components/PocCompleteCheckbox';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import PocCompleteView from '../../../components/PocCompleteView';
+import { sessionsByEventId } from '../../../fetchers/event';
+import AppLoadingContext from '../../../AppLoadingContext';
+
+const SESSION_COMPLETE = 'Complete';
+
+const Goal = ({
+  showReadOnlyView,
+  atLeastOneSessionIsComplete,
+  formData,
+}) => {
+  const { register } = useFormContext();
+  if (showReadOnlyView || atLeastOneSessionIsComplete) {
+    return (
+      <ReadOnlyField label="Event goal">
+        {formData.goal}
+      </ReadOnlyField>
+    );
+  }
+
+  return (
+    <FormItem
+      label="Event goal "
+      name="goal"
+      required
+    >
+      <Textarea
+        id="goal"
+        name="goal"
+        required
+        inputRef={register({
+          required: 'Describe the event goal',
+        })}
+      />
+    </FormItem>
+  );
+};
+
+Goal.propTypes = {
+  showReadOnlyView: PropTypes.bool.isRequired,
+  atLeastOneSessionIsComplete: PropTypes.bool.isRequired,
+  formData: PropTypes.shape({
+    goal: PropTypes.string,
+  }).isRequired,
+};
 
 const VisionGoal = ({ formData }) => {
+  const [sessions, setSessions] = useState();
   const { register } = useFormContext();
   const { user } = useContext(UserContext);
   const { isPoc } = useTrainingReportRole(formData, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  useEffect(() => {
+    async function getSessions() {
+      try {
+        setIsAppLoading(true);
+        const res = await sessionsByEventId(getEventIdSlug(formData.eventId));
+        setSessions(res);
+      } catch (e) {
+        setSessions([]);
+      } finally {
+        setIsAppLoading(false);
+      }
+    }
+
+    if (!sessions && formData.eventId) {
+      getSessions();
+    }
+  }, [formData.eventId, sessions, setIsAppLoading]);
+
+  const atLeastOneSessionIsComplete = (sessions && sessions.some(
+    (session) => session.data.status === SESSION_COMPLETE,
+  )) || false;
 
   if (showReadOnlyView) {
     return (
       <PocCompleteView formData={formData} userId={user.id} reportType="training">
         <Helmet>
-          <title>Vision and goal</title>
+          <title>Vision and Goal</title>
         </Helmet>
         <>
           <ReadOnlyField label="Event vision">
             {formData.vision}
           </ReadOnlyField>
-          <ReadOnlyField label="Event goal">
-            {formData.goal}
-          </ReadOnlyField>
+          <Goal
+            formData={formData}
+            showReadOnlyView={!!(showReadOnlyView)}
+            atLeastOneSessionIsComplete={atLeastOneSessionIsComplete}
+          />
         </>
       </PocCompleteView>
     );
@@ -45,7 +116,7 @@ const VisionGoal = ({ formData }) => {
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Vision and goal</title>
+        <title>Vision and Goal</title>
       </Helmet>
       <IndicatesRequiredField />
 
@@ -67,20 +138,11 @@ const VisionGoal = ({ formData }) => {
       </div>
 
       <div className="margin-top-2">
-        <FormItem
-          label="Event goal "
-          name="goal"
-          required
-        >
-          <Textarea
-            id="goal"
-            name="goal"
-            required
-            inputRef={register({
-              required: 'Describe the event goal',
-            })}
-          />
-        </FormItem>
+        <Goal
+          formData={formData}
+          showReadOnlyView={!!(showReadOnlyView)}
+          atLeastOneSessionIsComplete={atLeastOneSessionIsComplete}
+        />
       </div>
       <PocCompleteCheckbox
         userId={user.id}
@@ -92,6 +154,7 @@ const VisionGoal = ({ formData }) => {
 
 VisionGoal.propTypes = {
   formData: PropTypes.shape({
+    eventId: PropTypes.string,
     pocComplete: PropTypes.bool,
     event: PropTypes.shape({
       id: PropTypes.number,

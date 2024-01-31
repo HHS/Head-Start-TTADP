@@ -4,11 +4,13 @@ import db, {
   Recipient,
   Grant,
   Goal,
+  GoalCollaborator,
   GoalTemplate,
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   GoalResource,
   Objective,
+  ObjectiveCollaborator,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -17,17 +19,32 @@ import db, {
   Resource,
   Topic,
   File,
+  CollaboratorType,
+  GoalSimilarityGroup,
 } from '../models';
 import {
   mergeGoals,
   getGoalsForReport,
 } from './goals';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
+import { createSimilarityGroup } from '../services/goalSimilarityGroup';
 import {
   OBJECTIVE_STATUS,
   FILE_STATUSES,
   GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_COLLABORATORS,
 } from '../constants';
+
+// Mocking express-http-context
+jest.mock('express-http-context', () => {
+  const httpContext = jest.requireActual('express-http-context');
+
+  // Mock the get function to return 1
+  httpContext.get = jest.fn(() => 1);
+
+  return httpContext;
+});
 
 describe('mergeGoals', () => {
   let recipient;
@@ -42,6 +59,10 @@ describe('mergeGoals', () => {
   let goalThree;
 
   let objectiveOneForGoalOne;
+  let objectiveTwoForGoalOne;
+  let objectiveThreeForGoalOne;
+  let objectiveOneForGoalTwo;
+  let objectiveOneForGoalThree;
 
   const fileName = faker.system.fileName();
   const resourceUrl = faker.internet.url();
@@ -53,11 +74,12 @@ describe('mergeGoals', () => {
   let dummyGoal;
   let dummyGoalObjective;
   const dummyGoalName = `dummy goal ${faker.animal.cetacean()} ${faker.datatype.string()}`;
+  let similarityGroup;
 
   beforeAll(async () => {
     // Recipient.
     recipient = await Recipient.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       name: faker.name.firstName(),
       startDate: new Date(),
       endDate: new Date(),
@@ -65,7 +87,7 @@ describe('mergeGoals', () => {
 
     // Grant.
     grantOne = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -75,7 +97,7 @@ describe('mergeGoals', () => {
     });
 
     grantTwo = await Grant.create({
-      id: faker.datatype.number({ min: grantOne.id + 1 }),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -85,7 +107,7 @@ describe('mergeGoals', () => {
     });
 
     grantThree = await Grant.create({
-      id: faker.datatype.number(),
+      id: faker.datatype.number({ min: 9999 }),
       number: faker.datatype.string(),
       recipientId: recipient.id,
       regionId: 1,
@@ -111,7 +133,7 @@ describe('mergeGoals', () => {
     });
 
     oldGoal = await Goal.create({
-      name: `old goal${faker.animal.dog()}`,
+      name: `old goal${faker.animal.dog() + faker.datatype.string(100)}}`,
       status: GOAL_STATUS.IN_PROGRESS,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -121,7 +143,7 @@ describe('mergeGoals', () => {
     });
 
     goalOne = await Goal.create({
-      name: `Selected goal 1${faker.animal.dog()}`,
+      name: `Selected goal 1${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.IN_PROGRESS,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -131,7 +153,7 @@ describe('mergeGoals', () => {
     });
 
     goalTwo = await Goal.create({
-      name: `Selected goal 2${faker.animal.dog()}`,
+      name: `Selected goal 2${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.NOT_STARTED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -142,7 +164,7 @@ describe('mergeGoals', () => {
     });
 
     goalThree = await Goal.create({
-      name: `Selected goal 3${faker.animal.dog()}`,
+      name: `Selected goal 3${faker.animal.dog() + faker.datatype.string(100)}`,
       status: GOAL_STATUS.SUSPENDED,
       endDate: null,
       isFromSmartsheetTtaPlan: false,
@@ -232,7 +254,7 @@ describe('mergeGoals', () => {
       objectiveId: dummyGoalObjective.id,
     });
 
-    const objectiveTwoForGoalOne = await Objective.create({
+    objectiveTwoForGoalOne = await Objective.create({
       goalId: goalOne.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -243,7 +265,7 @@ describe('mergeGoals', () => {
       resourceId: resource.id,
     });
 
-    const objectiveThreeForGoalOne = await Objective.create({
+    objectiveThreeForGoalOne = await Objective.create({
       goalId: goalOne.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.NOT_STARTED,
@@ -255,7 +277,7 @@ describe('mergeGoals', () => {
       originalObjectiveId: dummyGoalObjective.id,
     });
 
-    const objectiveOneForGoalTwo = await Objective.create({
+    objectiveOneForGoalTwo = await Objective.create({
       goalId: goalTwo.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -271,7 +293,7 @@ describe('mergeGoals', () => {
       topicId: topic.id,
     });
 
-    const objectiveOneForGoalThree = await Objective.create({
+    objectiveOneForGoalThree = await Objective.create({
       goalId: goalThree.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
@@ -282,7 +304,47 @@ describe('mergeGoals', () => {
       fileId: file.id,
     });
 
-    mergedGoals = await mergeGoals(goalOne.id, [goalOne.id, goalTwo.id, goalThree.id]);
+    await GoalCollaborator.update(
+      { userId: 2 },
+      {
+        where: {
+          goalId: [
+            oldGoal.id,
+            goalOne.id,
+            goalTwo.id,
+            goalThree.id,
+            dummyGoal.id,
+          ],
+        },
+      },
+    );
+
+    await ObjectiveCollaborator.update(
+      { userId: 2 },
+      {
+        where: {
+          objectiveId: [
+            objectiveOneForGoalOne.id,
+            objectiveTwoForGoalOne.id,
+            objectiveThreeForGoalOne.id,
+            objectiveOneForGoalTwo.id,
+            objectiveOneForGoalThree.id,
+            dummyGoalObjective.id,
+          ],
+        },
+      },
+    );
+
+    similarityGroup = await createSimilarityGroup(
+      recipient.id,
+      [goalOne.id, goalTwo.id, goalThree.id],
+    );
+
+    mergedGoals = await mergeGoals(
+      goalOne.id,
+      [goalOne.id, goalTwo.id, goalThree.id],
+      similarityGroup.id,
+    );
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
   });
 
@@ -299,11 +361,31 @@ describe('mergeGoals', () => {
         id: [goalOne.id, goalTwo.id, goalThree.id],
       },
       attributes: ['id', 'mapsToParentGoalId'],
-      include: [{
-        model: Objective,
-        as: 'objectives',
-        attributes: ['id', 'mapsToParentObjectiveId', 'goalId'],
-      }],
+      include: [
+        {
+          model: GoalCollaborator,
+          as: 'goalCollaborators',
+          include: [{
+            model: CollaboratorType,
+            as: 'collaboratorType',
+          }],
+        },
+        {
+          model: Objective,
+          as: 'objectives',
+          attributes: ['id', 'mapsToParentObjectiveId', 'goalId'],
+          include: [
+            {
+              model: ObjectiveCollaborator,
+              as: 'objectiveCollaborators',
+              include: [{
+                model: CollaboratorType,
+                as: 'collaboratorType',
+              }],
+            },
+          ],
+        },
+      ],
     });
 
     expect(goalsThatAreMergedAway.length).toBe(3);
@@ -317,6 +399,27 @@ describe('mergeGoals', () => {
       [mergedGoalFromGrantOne.id, mergedGoalFromGrantOne.id, otherMergedGoal.id].sort(),
     ).toEqual(mapsToParentGoalIds);
 
+    goalsThatAreMergedAway.forEach((goal) => {
+      const creator = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.CREATOR);
+      const linkers = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.LINKER);
+      const mergeDeprecator = goal.goalCollaborators
+        .filter((
+          gc,
+        ) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.MERGE_DEPRECATOR);
+      /* eslint-disable jest/no-conditional-expect */
+      if (goal.id === goalOne.id || goal.id === goalTwo.id) {
+        expect(creator[0].dataValues.userId).toBe(2);
+        expect(linkers[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator[0].dataValues.userId).toBe(1);
+      } else if (goal.id === goalThree.id) {
+        expect(creator[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator[0].dataValues.userId).toBe(1);
+      }
+      /* eslint-enable jest/no-conditional-expect */
+    });
+
     const objectivesThatAreMergedAway = goalsThatAreMergedAway
       .map((g) => g.objectives).flat();
 
@@ -325,6 +428,29 @@ describe('mergeGoals', () => {
       expect([goalOne.id, goalTwo.id, goalThree.id]).toContain(objective.goalId);
       expect(objective.mapsToParentObjectiveId).not.toBeNull();
       expect(objective.mapsToParentObjectiveId).not.toBe(objective.id);
+
+      const creator = objective.objectiveCollaborators
+        .filter((oc) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.CREATOR);
+      const linkers = objective.objectiveCollaborators
+        .filter((oc) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.LINKER);
+      const mergeDeprecator = objective.objectiveCollaborators
+        .filter((
+          oc,
+        ) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR);
+
+      /* eslint-disable jest/no-conditional-expect */
+      if (objective.id === objectiveOneForGoalOne.id
+        && objective.id === objectiveThreeForGoalOne.id) {
+        expect(creator?.[0].dataValues.userId).toBe(2);
+        expect(linkers?.[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator?.[0].dataValues.userId).toBe(1);
+      } else if (objective.id === objectiveTwoForGoalOne.id
+        && objective.id === objectiveOneForGoalTwo.id
+        && objective.id === objectiveOneForGoalThree.id) {
+        expect(creator?.[0].dataValues.userId).toBe(2);
+        expect(mergeDeprecator?.[0].dataValues.userId).toBe(1);
+      }
+      /* eslint-enable jest/no-conditional-expect */
     });
   });
 
@@ -336,6 +462,14 @@ describe('mergeGoals', () => {
         id: mergedGoalIds,
       },
       include: [
+        {
+          model: GoalCollaborator,
+          as: 'goalCollaborators',
+          include: [{
+            model: CollaboratorType,
+            as: 'collaboratorType',
+          }],
+        },
         {
           model: ActivityReportGoal,
           as: 'activityReportGoals',
@@ -352,6 +486,14 @@ describe('mergeGoals', () => {
           model: Objective,
           as: 'objectives',
           include: [
+            {
+              model: ObjectiveCollaborator,
+              as: 'objectiveCollaborators',
+              include: [{
+                model: CollaboratorType,
+                as: 'collaboratorType',
+              }],
+            },
             {
               model: ObjectiveFile,
               as: 'objectiveFiles',
@@ -395,6 +537,22 @@ describe('mergeGoals', () => {
     const arGoalTwo = goalForGrantOne.activityReportGoals.find((g) => g.originalGoalId === goalTwo.id);
     expect(arGoalTwo.activityReportId).toBe(report.id);
 
+    goalsWithData.forEach((goal) => {
+      const mergeCreator = goal.goalCollaborators
+        .filter((gc) => gc.collaboratorType.dataValues.name === GOAL_COLLABORATORS.MERGE_CREATOR);
+
+      expect(mergeCreator[0].dataValues.userId).toBe(1);
+    });
+
+    goalForGrantOne.objectives.forEach((objective) => {
+      const mergeCreator = objective.objectiveCollaborators
+        .filter((
+          oc,
+        ) => oc.collaboratorType.dataValues.name === OBJECTIVE_COLLABORATORS.MERGE_CREATOR);
+
+      expect(mergeCreator?.[0].dataValues.userId).toBe(1);
+    });
+
     const aroForGoalForGrantOne = goalForGrantOne.objectives
       .map((o) => o.activityReportObjectives).flat();
     expect(aroForGoalForGrantOne.length).toBe(2);
@@ -426,7 +584,7 @@ describe('mergeGoals', () => {
     const goalForGrantTwo = goalsWithData.find((g) => g.grantId === grantThree.id);
     expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
     expect(goalForGrantTwo.objectives.length).toBe(1);
-    expect(goalForGrantTwo.responses.length).toBe(1);
+    expect(goalForGrantTwo.responses.length).toBe(0);
     expect(goalForGrantTwo.goalResources.length).toBe(0);
     expect(goalForGrantTwo.activityReportGoals.length).toBe(0);
 
@@ -596,6 +754,12 @@ describe('mergeGoals', () => {
         id: [grantOne.id, grantTwo.id, grantThree.id],
       },
       force: true,
+    });
+
+    await GoalSimilarityGroup.destroy({
+      where: {
+        id: similarityGroup.id,
+      },
     });
 
     await Recipient.destroy({

@@ -44,6 +44,7 @@ export default function Form({
   topicOptions,
   isOnApprovedReport,
   isOnReport,
+  isCurated,
   status,
   datePickerKey,
   fetchError,
@@ -97,7 +98,7 @@ export default function Form({
 
   const showAlert = isOnReport && status !== 'Closed';
 
-  const showNewObjectiveButton = (() => (status !== 'Closed' && userCanEdit))();
+  const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
 
   return (
     <div className="ttahub-create-goals-form">
@@ -150,12 +151,11 @@ export default function Form({
       />
 
       <ConditionalFields
-        isOnReport={isOnApprovedReport}
         prompts={prompts}
         setPrompts={setPrompts}
         validatePrompts={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
-        userCanEdit={userCanEdit}
+        userCanEdit={notClosedWithEditPermission}
       />
 
       <FeatureFlag flag="goal_source">
@@ -167,6 +167,7 @@ export default function Form({
           goalStatus={status}
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
+          isCurated={isCurated}
         />
       </FeatureFlag>
 
@@ -201,7 +202,7 @@ export default function Form({
         />
       ))}
 
-      { (showNewObjectiveButton) && (
+      { (notClosedWithEditPermission) && (
         <div className="margin-top-4">
           {errors[FORM_FIELD_INDEXES.OBJECTIVES_EMPTY]}
           <PlusButton onClick={onAddNewObjectiveClick} text="Add new objective" />
@@ -214,6 +215,7 @@ export default function Form({
 Form.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool.isRequired,
   errors: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.shape({}),

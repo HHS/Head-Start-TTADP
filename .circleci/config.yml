@@ -244,7 +244,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "fix-broken-deploy-config"
+    default: "kw-update-minio"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "jp/2059/profile-class"
@@ -353,6 +353,11 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Test backend
           command:  |
@@ -467,6 +472,11 @@ jobs:
           command: |
             npx playwright install
       - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
@@ -498,6 +508,11 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Install playwright dependencies
           command: |
