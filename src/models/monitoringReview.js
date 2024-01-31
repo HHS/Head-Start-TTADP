@@ -4,10 +4,22 @@ export default (sequelize, DataTypes) => {
   class MonitoringReview extends Model {
     static associate(models) {
       models.MonitoringReviewStatus.hasMany(
+      /**
+       * Associations:
+       *  monitoringReviewGrantees: MonitoringReviewGrantee.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringReviewGrantee.reviewId
+       *
+       *  monitoringFindingHistories: MonitoringFindingHistory.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringFindingHistory.reviewId
+       *
+       *  monitoringClassSummaries: MonitoringClassSummary.reviewId >- reviewId
+       *  monitoringReview: reviewId -< MonitoringClassSummary.reviewId
+       */
+
         models.MonitoringReview,
         {
           foreignKey: 'statusId',
-          targetKey: 'statusId',
+          sourceKey: 'statusId',
           as: 'monitoringReviews',
         },
       );
@@ -16,7 +28,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReviewStatus,
         {
           foreignKey: 'statusId',
-          targetKey: 'statusId',
+          sourceKey: 'statusId',
           as: 'status',
         },
       );
@@ -31,15 +43,15 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     contentId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     statusId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
     startDate: {
       type: DataTypes.DATEONLY,

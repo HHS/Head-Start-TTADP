@@ -3,6 +3,11 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class MonitoringReviewStatus extends Model {
     static associate(models) {
+      /**
+       * Associations:
+       *  monitoringReviews: MonitoringReview.statusId >- statusId
+       *  status: statusId -< MonitoringReview.statusId
+       */
     }
   }
   MonitoringReviewStatus.init({
