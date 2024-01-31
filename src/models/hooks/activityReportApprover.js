@@ -41,6 +41,12 @@ const updateReportStatus = async (sequelize, instance) => {
       submissionStatus: REPORT_STATUSES.SUBMITTED,
     },
   });
+
+  // we only update any of the report status fields if the report is submitted
+  if (!report) {
+    return;
+  }
+
   // We allow users to create approvers before submitting the report. Calculated
   // status should only exist for submitted reports.
 

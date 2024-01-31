@@ -67,6 +67,10 @@ export default function ObjectiveTopics({
 
   topicOptions.sort((a, b) => a.name.localeCompare(b.name));
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
+  const onTopicsChange = (newTopics) => {
+    // We need to combine the new and fixed topics.
+    onChangeTopics([...newTopics, ...fixedTopics]);
+  };
 
   return (
     <>
@@ -115,7 +119,7 @@ export default function ObjectiveTopics({
           options={filteredOptions}
           onBlur={validateObjectiveTopics}
           value={editableTopics}
-          onChange={onChangeTopics}
+          onChange={onTopicsChange}
           closeMenuOnSelect={false}
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}

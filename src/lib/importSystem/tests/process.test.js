@@ -1,5 +1,5 @@
 // processRecords.test.ts
-import { DataTypes } from 'sequelize';
+import { DataTypes, Op } from 'sequelize';
 import { processRecords } from '../process';
 import XMLStream from '../../stream/xml';
 import db from '../../../models';
@@ -9,32 +9,6 @@ import { modelForTable } from '../../modelUtils';
 jest.mock('../../stream/xml');
 jest.mock('../../../models');
 
-// jest.mock('../../modelUtils', () => {
-//   const actualModelUtils = jest.requireActual('../../modelUtils');
-//   return {
-//     filterDataToModel: actualModelUtils.filterDataToModel,
-//     // Return a function that itself returns the mock model when called
-//     modelForTable: jest.fn(() => ({
-//       findOne: jest.fn().mockResolvedValue(null),
-//       create: jest.fn().mockResolvedValue({ id: 1 }),
-//       update: jest.fn(),
-//       destroy: jest.fn(),
-//       describe: jest.fn().mockResolvedValue({
-//         // Simulate the model description
-//         reviewId: {
-//           type: 'text', // Sequelize.TEXT,
-//           allowNull: true,
-//         },
-//         findingHistoryId: {
-//           type: 'text', // Sequelize.TEXT,
-//           allowNull: true,
-//         },
-//         // Add other fields as necessary
-//       }),
-//       // Add other methods or properties as needed for your tests
-//     })),
-//   };
-// });
 const mockFindOne = jest.fn();
 const mockCreate = jest.fn();
 const mockUpdate = jest.fn();
@@ -49,8 +23,7 @@ jest.mock('../../modelUtils', () => {
       create: mockCreate,
       update: mockUpdate,
       destroy: mockDestroy,
-      describe: mockDescribe, // Don't define the mockResolvedValue here
-      // Add other methods or properties as needed for your tests
+      describe: mockDescribe,
     })),
   };
 });
@@ -73,15 +46,16 @@ describe('processRecords', () => {
   };
 
   const fileDate = new Date();
-  const recordActions = {
-    inserts: [],
-    updates: [],
-    deletes: [],
-    errors: [],
-  };
+  let recordActions;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    recordActions = {
+      inserts: [],
+      updates: [],
+      deletes: [],
+      errors: [],
+    };
   });
 
   it('should process a record and add it to inserts if it is new', async () => {
@@ -205,28 +179,36 @@ describe('processRecords', () => {
     };
     mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    modelForTable.mockImplementation(() => {
-      // eslint-disable-next-line @typescript-eslint/quotes
-      throw new Error(`Unable to find table for 'MonitoringFindingHistories'`);
-    });
+    const realModelUtils = jest.requireActual('../../modelUtils');
 
-    const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
+    modelForTable.mockImplementation(realModelUtils.modelForTable);
 
-    expect(result.errors).toHaveLength(1);
-    // eslint-disable-next-line @typescript-eslint/quotes
-    expect(result.errors[0]).toBe(`Unable to find table for 'MonitoringFindingHistories'`);
+    // If you expect processRecords to throw an error, you can mock it like this:
+    // processRecords.mockRejectedValueOnce(new Error(
+    //   `Unable to find table for '${processDefinition.tableName}'`,
+    // ));
+
+    try {
+      // Attempt to run processRecords, which is expected to fail
+      await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
+      // If processRecords does not throw, force the test to fail
+      expect(true).toBe(false);
+    } catch (error) {
+      // Check that the error is what you expect
+      // eslint-disable-next-line jest/no-conditional-expect
+      expect(error).toMatchObject({
+        inserts: [],
+        updates: [],
+        deletes: [],
+        errors: [`Unable to find table for '${processDefinition.tableName}'`],
+      });
+    }
   });
 
   it('should process deletion of records not present in the file', async () => {
     mockGetNextObject.mockResolvedValue(null); // Simulate end of XML stream
 
-    const mockDestroy = jest.fn().mockResolvedValue({ id: 3 });
-    mockModelForTable.mockReturnValue({
-      findOne: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      destroy: mockDestroy,
-    });
+    mockDestroy.mockResolvedValue({ id: 3 });
 
     recordActions.updates.push({ id: 1 });
     recordActions.updates.push({ id: 2 });
@@ -234,11 +216,24 @@ describe('processRecords', () => {
     recordActions.inserts.push({ id: 4 });
     recordActions.inserts.push({ id: 5 });
 
+    modelForTable.mockImplementation(jest.fn(() => ({
+      findOne: mockFindOne,
+      create: mockCreate,
+      update: mockUpdate,
+      destroy: mockDestroy,
+      describe: mockDescribe,
+    })));
+
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
-    expect(mockDestroy).toHaveBeenCalledWith({});
+    expect(mockDestroy).toHaveBeenCalledWith({
+      individualHooks: true,
+      plain: true,
+      returning: true,
+      where: {
+        id: { [Op.not]: [4, 5, 1, 2] },
+      },
+    });
     expect(result.deletes).toHaveLength(1);
   });
-
-// ... Add more tests to cover different branches and scenarios
 });
