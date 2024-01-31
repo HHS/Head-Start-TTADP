@@ -24,8 +24,8 @@ export default (sequelize, DataTypes) => {
       models.Grant.hasMany(
         models.MonitoringClassSummary,
         {
-          foreignKey: 'number',
-          targetKey: 'grantNumber',
+          foreignKey: 'grantNumber',
+          targetKey: 'number',
           as: 'monitoringClassSummaries',
         },
       );
@@ -33,8 +33,8 @@ export default (sequelize, DataTypes) => {
       models.MonitoringClassSummary.belongsTo(
         models.Grant,
         {
-          foreignKey: 'grantNumber',
-          targetKey: 'number',
+          foreignKey: 'number',
+          targetKey: 'grantNumber',
           as: 'grant',
         },
       );
