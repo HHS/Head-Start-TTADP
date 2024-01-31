@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReviewGrantees',
         },
       );
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReview,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReview',
         },
       );
@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'grantNumber',
-          targetKey: 'number',
+          sourceKey: 'number',
           as: 'monitoringReviewGrantees',
         },
       );
@@ -34,7 +34,7 @@ export default (sequelize, DataTypes) => {
         models.Grant,
         {
           foreignKey: 'number',
-          targetKey: 'grantNumber',
+          sourceKey: 'grantNumber',
           as: 'grant',
         },
       );

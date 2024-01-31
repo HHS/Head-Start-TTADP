@@ -72,15 +72,15 @@ module.exports = {
         },
         reviewId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         contentId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         statusId: {
           type: Sequelize.INTEGER,
-          allowNull: true,
+          allowNull: false,
         },
         startDate: {
           type: Sequelize.DATEONLY,
@@ -169,11 +169,11 @@ module.exports = {
         },
         reviewId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         granteeId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         createTime: {
           allowNull: false,
@@ -261,11 +261,11 @@ module.exports = {
         },
         reviewId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         findingHistoryId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         hash: {
           type: Sequelize.TEXT,
@@ -334,11 +334,11 @@ module.exports = {
         },
         reviewId: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         grantNumber: {
           type: Sequelize.TEXT,
-          allowNull: true,
+          allowNull: false,
         },
         emotionalSupport: {
           type: Sequelize.DECIMAL(5, 4),

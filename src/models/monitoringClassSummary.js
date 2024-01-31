@@ -7,7 +7,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringClassSummary,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringClassSummaries',
         },
       );
@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringReview,
         {
           foreignKey: 'reviewId',
-          targetKey: 'reviewId',
+          sourceKey: 'reviewId',
           as: 'monitoringReview',
         },
       );
@@ -25,7 +25,7 @@ export default (sequelize, DataTypes) => {
         models.MonitoringClassSummary,
         {
           foreignKey: 'grantNumber',
-          targetKey: 'number',
+          sourceKey: 'number',
           as: 'monitoringClassSummaries',
         },
       );
@@ -34,7 +34,7 @@ export default (sequelize, DataTypes) => {
         models.Grant,
         {
           foreignKey: 'number',
-          targetKey: 'grantNumber',
+          sourceKey: 'grantNumber',
           as: 'grant',
         },
       );
@@ -49,11 +49,11 @@ export default (sequelize, DataTypes) => {
     },
     reviewId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     grantNumber: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     emotionalSupport: {
       type: DataTypes.DECIMAL(5, 4),
