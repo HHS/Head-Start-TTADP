@@ -122,6 +122,9 @@ export async function monitoringData({
     return null;
   }
 
+  // since all the joins made in the query above are inner joins
+  // we can count on the rest of this data being present
+
   const { monitoringReviewGrantees } = grant.grantNumberLink;
 
   // get the most recent review
@@ -140,6 +143,7 @@ export async function monitoringData({
   }, monitoringReviews[0]);
 
   const { monitoringReviewStatuses } = monitoringReview.statusLink;
+  // I am presuming there can only be one status linked to a review
   const [status] = monitoringReviewStatuses;
 
   return {
