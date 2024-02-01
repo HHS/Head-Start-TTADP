@@ -137,6 +137,7 @@ const reviewClassSummaries = [
 
 const grantNumberLinks = [
   {
+    id: 1,
     grantNumber: '14CH00001',
     grantId: 3,
     createdAt: new Date('2023/11/16'),
@@ -144,6 +145,7 @@ const grantNumberLinks = [
     deletedAt: null,
   },
   {
+    id: 2,
     grantNumber: '14CH00002',
     grantId: 4,
     createdAt: new Date('2023/11/16'),
@@ -154,12 +156,14 @@ const grantNumberLinks = [
 
 const monitoringReviewLinks = [
   {
+    id: 1,
     reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
     createdAt: new Date('2022/12/20'),
     updatedAt: new Date('2023/02/24'),
     deletedAt: null,
   },
   {
+    id: 2,
     reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
     createdAt: new Date('2022/12/08'),
     updatedAt: new Date('2023/01/14'),
@@ -169,6 +173,7 @@ const monitoringReviewLinks = [
 
 const monitoringReviewStatusLinks = [
   {
+    id: 1,
     statusId: 6006,
     createdAt: new Date(),
     updatedAt: new Date(),
