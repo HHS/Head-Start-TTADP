@@ -24,6 +24,9 @@ describe('completeSession', () => {
       pageState: defaultPageState,
       event: {
         ownerId: 1,
+        data: {
+          goal: 'This is a goal',
+        },
       },
     };
 
