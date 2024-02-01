@@ -2,6 +2,7 @@ import db from '../models';
 
 const {
   Grant,
+  GrantNumberLink,
   MonitoringReviewGrantee,
   MonitoringReviewStatus,
   MonitoringReview,
@@ -44,7 +45,7 @@ export async function monitoringData({
   regionId: number;
   grantNumber: string;
 }): Promise<IMonitoringResponse> {
-  const grant = await Grant.findOne({
+  const grants = await Grant.findAll({
     // logging: console.log,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
     where: {
@@ -55,33 +56,39 @@ export async function monitoringData({
     required: true,
     include: [
       {
-        model: MonitoringReviewGrantee,
-        attributes: ['id', 'grantNumber', 'reviewId'],
-        required: true,
-        as: 'monitoringReviewGrantees',
+        model: GrantNumberLink,
+        as: 'grantNumberLink',
         include: [
           {
-            model: MonitoringReview,
-            as: 'monitoringReview',
-            attributes: [
-              'reportDeliveryDate',
-              'id',
-              'reviewType',
-              'reviewId',
-              'statusId',
-            ],
+            model: MonitoringReviewGrantee,
+            attributes: ['id', 'grantNumber', 'reviewId'],
             required: true,
+            as: 'monitoringReviewGrantees',
             include: [
               {
-                model: MonitoringReviewStatusLink,
-                as: 'statusLink',
+                model: MonitoringReview,
+                as: 'monitoringReview',
+                attributes: [
+                  'reportDeliveryDate',
+                  'id',
+                  'reviewType',
+                  'reviewId',
+                  'statusId',
+                ],
                 required: true,
                 include: [
                   {
-                    attributes: ['id', 'name', 'statusId'],
-                    model: MonitoringReviewStatus,
-                    as: 'monitoringReviewStatuses',
+                    model: MonitoringReviewStatusLink,
+                    as: 'statusLink',
                     required: true,
+                    include: [
+                      {
+                        attributes: ['id', 'name', 'statusId'],
+                        model: MonitoringReviewStatus,
+                        as: 'monitoringReviewStatuses',
+                        required: true,
+                      },
+                    ],
                   },
                 ],
               },
@@ -91,6 +98,8 @@ export async function monitoringData({
       },
     ],
   });
+
+  const [grant] = grants;
 
   const { monitoringReviewGrantees } = grant;
 

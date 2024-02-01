@@ -25,14 +25,20 @@ describe('monitoring services', () => {
   });
   describe('monitoringData', () => {
     it('returns data in the correct format', async () => {
-      const data = await monitoringData(
-        RECIPIENT_ID,
-        REGION_ID,
-      );
+      const recipientId = 9;
+      const regionId = 1;
+      const grantNumber = '01HP044444';
+
+      const data = await monitoringData({
+        recipientId,
+        regionId,
+        grantNumber,
+      });
 
       expect(data).toEqual({
-        recipientId: RECIPIENT_ID,
-        regionId: REGION_ID,
+        recipientId,
+        regionId,
+        grant: grantNumber,
         reviewStatus: expect.any(String),
         reviewDate: expect.any(String),
         reviewType: expect.any(String),
