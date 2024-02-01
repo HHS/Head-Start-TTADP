@@ -1,13 +1,33 @@
-const { Model } = require('sequelize');
+import { Model } from 'sequelize';
+import {
+  beforeCreate,
+  beforeUpdate,
+} from './hooks/monitoringReviewStatus';
 
 export default (sequelize, DataTypes) => {
   class MonitoringReviewStatus extends Model {
     static associate(models) {
       /**
        * Associations:
-       *  monitoringReviews: MonitoringReview.statusId >- statusId
-       *  status: statusId -< MonitoringReview.statusId
+       *  monitoringReviewStatusLink: MonitoringReviewStatusLink.statusId >- statusId
+       *  status: statusId -< MonitoringReviewStatusLink.statusId
        */
+
+      models.MonitoringReviewStatusLink.hasMany(
+        models.MonitoringReviewStatus,
+        {
+          foreignKey: 'statusId',
+          as: 'monitoringReviewStatuses',
+        },
+      );
+
+      models.MonitoringReviewStatus.belongsTo(
+        models.MonitoringReviewStatusLink,
+        {
+          foreignKey: 'statusId',
+          as: 'statusLink',
+        },
+      );
     }
   }
   MonitoringReviewStatus.init({
@@ -42,6 +62,10 @@ export default (sequelize, DataTypes) => {
     modelName: 'MonitoringReviewStatus',
     tableName: 'MonitoringReviewStatuses',
     paranoid: true,
+    hooks: {
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+    },
   });
   return MonitoringReviewStatus;
 };

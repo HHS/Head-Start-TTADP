@@ -1,6 +1,10 @@
 const {
   Model, Op,
 } = require('sequelize');
+const {
+  afterCreate,
+  afterUpdate,
+} = require('./hooks/grant');
 
 const { GRANT_INACTIVATION_REASONS } = require('../constants');
 
@@ -17,11 +21,8 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       /**
        * Associations:
-       *  monitoringReviewGrantees: MonitoringReviewGrantee.grantNumber >- number
-       *  grant: number -< MonitoringReviewGrantee.grantNumber
-       *
-       *  monitoringClassSummaries: MonitoringClassSummary.grantNumber >- number
-       *  grant: number -< MonitoringClassSummary.grantNumber
+       *  grantNumberLink: GrantNumberLink.grantId - id
+       *  grant: id - GrantNumberLink.grantId
        */
 
       Grant.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
@@ -139,6 +140,10 @@ export default (sequelize, DataTypes) => {
   // {
     sequelize,
     modelName: 'Grant',
+    hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+    },
   });
   return Grant;
 };
