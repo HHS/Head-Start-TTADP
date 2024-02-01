@@ -5,6 +5,7 @@ const {
   MonitoringReviewGrantee,
   MonitoringReviewStatus,
   MonitoringReview,
+  MonitoringReviewStatusLink,
 } = db;
 
 interface IMonitoringReview {
@@ -63,14 +64,22 @@ export async function monitoringData(
               'id',
               'reviewType',
               'reviewId',
+              'statusId',
             ],
             required: true,
             include: [
               {
-                attributes: ['id', 'name', 'statusId'],
-                model: MonitoringReviewStatus,
-                as: 'status',
+                model: MonitoringReviewStatusLink,
+                as: 'statusLink',
                 required: true,
+                include: [
+                  {
+                    attributes: ['id', 'name', 'statusId'],
+                    model: MonitoringReviewStatus,
+                    as: 'monitoringReviewStatuses',
+                    required: true,
+                  },
+                ],
               },
             ],
           },
