@@ -8,6 +8,9 @@ const {
   MonitoringClassSummary,
   MonitoringReview,
   MonitoringReviewLink,
+  MonitoringReviewGrantee,
+  MonitoringReviewStatus,
+  MonitoringReviewStatusLink,
   Recipient,
 } = db;
 
@@ -64,5 +67,112 @@ describe('MonitoringClassSummary', () => {
       monitoringReviewOutcome: 'Deficient',
       monitoringReviewType: 'RAN',
     }]);
+  });
+  it('use case', async () => {
+    const grants = await Grant.findAll({
+      attributes: ['id', 'recipientId', 'regionId', 'number'],
+      where: {
+        // regionId,
+        // recipientId,
+        number: '14CH00001', // since we query by grant number, there can only be one anyways
+      },
+      required: true,
+      include: [
+        {
+          model: Recipient,
+          as: 'recipient',
+          attributes: [],
+        },
+        {
+          model: GrantNumberLink,
+          as: 'grantNumberLink',
+          attributes: ['id'],
+          required: true,
+          include: [
+            {
+              model: MonitoringReviewGrantee,
+              attributes: ['id', 'grantNumber', 'reviewId'],
+              required: true,
+              as: 'monitoringReviewGrantees',
+              include: [
+                {
+                  model: MonitoringReviewLink,
+                  as: 'monitoringReviewLink',
+                  attributes: ['id'],
+                  include: [{
+                    model: MonitoringReview,
+                    as: 'monitoringReviews',
+                    attributes: [
+                      // 'reportDeliveryDate', - excluded from test because dates are hard to match
+                      'id',
+                      'reviewType',
+                      'reviewId',
+                      'statusId',
+                    ],
+                    required: true,
+                    include: [
+                      {
+                        model: MonitoringReviewStatusLink,
+                        as: 'statusLink',
+                        required: true,
+                        attributes: ['id'],
+                        include: [
+                          {
+                            attributes: ['id', 'name', 'statusId'],
+                            model: MonitoringReviewStatus,
+                            as: 'monitoringReviewStatuses',
+                            required: true,
+                          },
+                        ],
+                      },
+                    ],
+                  }],
+                },
+
+              ],
+            },
+          ],
+        },
+      ],
+    });
+    expect(nestedRawish(grants)).toMatchObject([
+      {
+        id: 3,
+        recipientId: 3,
+        regionId: 14,
+        number: '14CH00001',
+        grantNumberLink: {
+          id: 1,
+          monitoringReviewGrantees: [
+            {
+              id: 1,
+              grantNumber: '14CH00001',
+              reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
+              monitoringReviewLink: {
+                id: 1,
+                monitoringReviews: [
+                  {
+                    id: 1,
+                    reviewType: 'FA-1',
+                    reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
+                    statusId: 6006,
+                    statusLink: {
+                      id: 1,
+                      monitoringReviewStatuses: [
+                        {
+                          id: 1,
+                          name: 'Complete',
+                          statusId: 6006,
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ]);
   });
 });
