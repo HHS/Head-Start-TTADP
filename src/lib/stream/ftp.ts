@@ -1,6 +1,7 @@
 import FTP from 'ftp'; // Import the 'ftp' module for FTP operations
-import nodeCleanup from 'node-cleanup'; // Import the 'finalize' function from the 'node-cleanup' module
+import exitHook from 'exit-hook'; // Import exit-hook instead of node-cleanup
 import { Readable } from 'stream';
+import { setAuditLoggingState } from '../migration';
 
 interface FTPSettings {
   host: string, // The FTP server host
@@ -42,7 +43,7 @@ class FtpClient {
   ) {
     this.client = new FTP(); // Create a new FTP client instance
     if (!FtpClient.cleanupRegistered) {
-      nodeCleanup(() => {
+      exitHook(() => {
         FtpClient.handleCleanup(this.client);
       });
       FtpClient.cleanupRegistered = true;
@@ -69,12 +70,13 @@ class FtpClient {
 
       this.client.once('ready', onReady);
       this.client.once('error', onError);
-
+      const {
+        username: user,
+        ...settings
+      } = this.ftpSettings;
       this.client.connect({ // Connect to the FTP server using the provided settings
-        host: this.ftpSettings.host,
-        port: this.ftpSettings.port,
-        user: this.ftpSettings.username,
-        password: this.ftpSettings.password,
+        ...settings,
+        user,
       });
     });
   }
