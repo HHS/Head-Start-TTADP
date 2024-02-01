@@ -47,7 +47,7 @@ describe('rttapa service', () => {
 
   describe('allRttapas', () => {
     it('includes the correct fields', async () => {
-      const reports = await findAllRttapa(1, 1, { sortBy: 'reviewDate', direction: 'desc' });
+      const reports = await findAllRttapa(1, 1);
 
       reports.forEach((report) => {
         expect(report).toHaveProperty('regionId');
