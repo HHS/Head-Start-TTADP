@@ -55,6 +55,7 @@ export default function Form({
   source,
   setSource,
   validateGoalSource,
+  createdVia,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -168,6 +169,7 @@ export default function Form({
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
+          createdViaTr={createdVia === 'tr'}
         />
       </FeatureFlag>
 
@@ -287,6 +289,7 @@ Form.propTypes = {
   source: PropTypes.arrayOf(PropTypes.string).isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
+  createdVia: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

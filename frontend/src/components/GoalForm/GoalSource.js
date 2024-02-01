@@ -20,8 +20,9 @@ export default function GoalSource({
   userCanEdit,
   isMultiRecipientGoal,
   required,
+  createdViaTr,
 }) {
-  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated;
+  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated || createdViaTr;
 
   if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
@@ -87,6 +88,7 @@ GoalSource.propTypes = {
   isMultiRecipientGoal: PropTypes.bool,
   isCurated: PropTypes.bool,
   required: PropTypes.bool,
+  createdViaTr: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
@@ -95,4 +97,5 @@ GoalSource.defaultProps = {
   isMultiRecipientGoal: false,
   isCurated: false,
   required: true,
+  createdViaTr: false,
 };
