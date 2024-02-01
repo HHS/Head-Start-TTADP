@@ -74,7 +74,7 @@ describe('MonitoringClassSummary', () => {
       where: {
         // regionId,
         // recipientId,
-        number: '14CH00001', // since we query by grant number, there can only be one anyways
+        number: '09CH033333', // since we query by grant number, there can only be one anyways
       },
       required: true,
       include: [
@@ -137,16 +137,16 @@ describe('MonitoringClassSummary', () => {
     });
     expect(nestedRawish(grants)).toMatchObject([
       {
-        id: 3,
-        recipientId: 3,
-        regionId: 14,
-        number: '14CH00001',
+        id: 8,
+        recipientId: 7,
+        regionId: 9,
+        number: '09CH033333',
         grantNumberLink: {
           id: 1,
           monitoringReviewGrantees: [
             {
               id: 1,
-              grantNumber: '14CH00001',
+              grantNumber: '09CH033333',
               reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
               monitoringReviewLink: {
                 id: 1,
