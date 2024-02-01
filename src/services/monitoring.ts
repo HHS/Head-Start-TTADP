@@ -26,14 +26,6 @@ interface IMonitoringReviewGrantee {
   monitoringReview: IMonitoringReview;
 }
 
-interface IGrant {
-  id: number;
-  recipientId: number;
-  regionId: number;
-  number: string;
-  monitoringReviewGrantees: IMonitoringReviewGrantee[];
-}
-
 interface IMonitoringResponse {
   recipientId: number;
   regionId: number;
@@ -43,14 +35,23 @@ interface IMonitoringResponse {
   grant: string;
 }
 
-export async function monitoringData(
-  recipientId: number,
-  regionId: number,
-): Promise<IMonitoringResponse[]> {
-  const grants = await Grant.findAll({
+export async function monitoringData({
+  recipientId,
+  regionId,
+  grantNumber,
+}: {
+  recipientId: number;
+  regionId: number;
+  grantNumber: string;
+}): Promise<IMonitoringResponse> {
+  const grant = await Grant.findOne({
     // logging: console.log,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
-    where: { regionId, recipientId },
+    where: {
+      regionId,
+      recipientId,
+      number: grantNumber,
+    },
     required: true,
     include: [
       {
@@ -91,31 +92,29 @@ export async function monitoringData(
     ],
   });
 
-  return grants.map((grant: IGrant) => {
-    const { monitoringReviewGrantees } = grant;
+  const { monitoringReviewGrantees } = grant;
 
-    // get the most recent review
-    const monitoringReviews = monitoringReviewGrantees.map(
-      (review: IMonitoringReviewGrantee) => review.monitoringReview,
-    );
-    const monitoringReview = monitoringReviews.reduce((a, b) => {
-      if (a.reportDeliveryDate > b.reportDeliveryDate) {
-        return a;
-      }
-      return b;
-    }, monitoringReviews[0]);
+  // get the most recent review
+  const monitoringReviews = monitoringReviewGrantees.map(
+    (review: IMonitoringReviewGrantee) => review.monitoringReview,
+  );
+  const monitoringReview = monitoringReviews.reduce((a, b) => {
+    if (a.reportDeliveryDate > b.reportDeliveryDate) {
+      return a;
+    }
+    return b;
+  }, monitoringReviews[0]);
 
-    const { status } = monitoringReview.statusLink;
+  const { status } = monitoringReview.statusLink;
 
-    return {
-      recipientId: grant.recipientId,
-      regionId: grant.regionId,
-      reviewStatus: status.name,
-      reviewDate: monitoringReview.reportDeliveryDate,
-      reviewType: monitoringReview.reviewType,
-      grant: grant.number,
-    };
-  });
+  return {
+    recipientId: grant.recipientId,
+    regionId: grant.regionId,
+    reviewStatus: status.name,
+    reviewDate: monitoringReview.reportDeliveryDate,
+    reviewType: monitoringReview.reviewType,
+    grant: grant.number,
+  };
 }
 
 export async function classScore(recipientId: number, regionId: number) {
