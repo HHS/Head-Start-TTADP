@@ -451,7 +451,7 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
         name: 'Increase knowledge about X',
         onAR: true,
         onApprovedAR: false,
-        source: 'Training event follow-up',
+        source: 'Training event',
         status: 'Draft',
         updatedAt: expect.any(Date),
       },
