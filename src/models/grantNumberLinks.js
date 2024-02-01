@@ -38,6 +38,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   GrantNumberLink.init({
+    // Note: id column is only here for the audit log
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+    },
     grantNumber: {
       primaryKey: true,
       allowNull: false,

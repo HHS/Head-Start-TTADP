@@ -161,8 +161,8 @@ const monitoringReviewLinks = [
   },
   {
     reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-    sourceCreatedAt: new Date('2022/12/08'),
-    sourceUpdatedAt: new Date('2023/01/14'),
+    createdAt: new Date('2022/12/08'),
+    updatedAt: new Date('2023/01/14'),
     deletedAt: null,
   },
 ];

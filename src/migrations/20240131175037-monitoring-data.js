@@ -9,6 +9,11 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.createTable('GrantNumberLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
         grantNumber: {
           primaryKey: true,
           allowNull: false,
@@ -40,6 +45,11 @@ module.exports = {
       });
 
       await queryInterface.createTable('MonitoringReviewLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
         reviewId: {
           primaryKey: true,
           allowNull: false,
@@ -62,6 +72,11 @@ module.exports = {
       });
 
       await queryInterface.createTable('MonitoringReviewStatusLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
         statusId: {
           primaryKey: true,
           allowNull: false,

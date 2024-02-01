@@ -29,6 +29,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   MonitoringReviewLink.init({
+    // Note: id column is only here for the audit log
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+    },
     reviewId: {
       primaryKey: true,
       allowNull: false,
