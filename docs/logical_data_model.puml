@@ -420,6 +420,15 @@ class Goals{
  timeframe : text
 }
 
+class GrantNumberLinks{
+ * id : integer : <generated>
+!issue='column should allow null' grantId : integer : REFERENCES "Grants".id
+ * createdAt : timestamp with time zone
+ * grantNumber : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class Grants{
  * id : integer
  oldGrantId : integer : REFERENCES "Grants".id
@@ -525,9 +534,9 @@ class MaintenanceLogs{
 
 class MonitoringClassSummaries{
  * id : integer : <generated>
+!issue='column reference does not match model: "GrantNumberLinks"."grantNumber" !== "GrantNumberLinks".grantNumber' * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+!issue='column reference does not match model: "MonitoringReviewLinks"."reviewId" !== "MonitoringReviewLinks".reviewId' * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
- * grantNumber : text
- * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -542,9 +551,9 @@ class MonitoringClassSummaries{
 
 class MonitoringFindingHistories{
  * id : integer : <generated>
+!issue='column reference does not match model: "MonitoringReviewLinks"."reviewId" !== "MonitoringReviewLinks".reviewId' * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * findingHistoryId : text
- * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
@@ -555,11 +564,11 @@ class MonitoringFindingHistories{
 
 class MonitoringReviewGrantees{
  * id : integer : <generated>
+!issue='column reference does not match model: "GrantNumberLinks"."grantNumber" !== "Grants".number' * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+!issue='column reference does not match model: "MonitoringReviewLinks"."reviewId" !== "MonitoringReviews".reviewId' * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * createTime : timestamp with time zone
  * granteeId : text
- * grantNumber : text
- * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updateBy : text
@@ -569,13 +578,29 @@ class MonitoringReviewGrantees{
  sourceDeletedAt : timestamp with time zone
 }
 
+class MonitoringReviewLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * reviewId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class MonitoringReviewStatuses{
  * id : integer : <generated>
+!issue='column reference does not match model: "MonitoringReviewStatusLinks"."statusId" !== "MonitoringReviewStatusLinks".statusId' * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
  * createdAt : timestamp with time zone
  * name : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
- * statusId : integer
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  sourceDeletedAt : timestamp with time zone
@@ -583,12 +608,12 @@ class MonitoringReviewStatuses{
 
 class MonitoringReviews{
  * id : integer : <generated>
+!issue='column reference does not match model: "MonitoringReviewLinks"."reviewId" !== "MonitoringReviewLinks".reviewId' * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+!issue='column reference does not match model: "MonitoringReviewStatusLinks"."statusId" !== "MonitoringReviewStatusLinks".statusId' * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
  * contentId : text
  * createdAt : timestamp with time zone
- * reviewId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
- * statusId : integer
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
  endDate : date
@@ -1500,6 +1525,20 @@ class ZALGoals{
  session_sig : text
 }
 
+class ZALGrantNumberLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1641,6 +1680,34 @@ class ZALMonitoringFindingHistories{
 }
 
 class ZALMonitoringReviewGrantees{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewStatusLinks{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2233,6 +2300,7 @@ class ZALZAFilter{
 
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
+Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -2282,12 +2350,12 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : finalGoal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
+GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : grant, eventReportPilotGoals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
-Grants "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
@@ -2295,9 +2363,11 @@ Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrant
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
 Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFiles
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
-MonitoringReviewStatuses "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, status
-MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReview, monitoringClassSummaries
-MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReview, monitoringFindingHistories
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
 MonitoringReviews "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReview, monitoringReviewGrantees
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
@@ -2407,5 +2477,10 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+GrantNumberLinks o--[#yellow,bold,thickness=2]--o MonitoringReviewGrantees : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+MonitoringReviewLinks o--[#yellow,bold,thickness=2]--o MonitoringReviewGrantees : <color:#2491FF>missing-from-model</color>
 
 @enduml

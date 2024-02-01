@@ -1,41 +1,41 @@
-const { Model } = require('sequelize');
+import { Model } from 'sequelize';
+import {
+  beforeCreate,
+  beforeUpdate,
+} from './hooks/monitoringClassSummary';
 
 export default (sequelize, DataTypes) => {
   class MonitoringClassSummary extends Model {
     static associate(models) {
-      models.MonitoringReview.hasMany(
+      models.MonitoringReviewLink.hasMany(
         models.MonitoringClassSummary,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
           as: 'monitoringClassSummaries',
         },
       );
 
       models.MonitoringClassSummary.belongsTo(
-        models.MonitoringReview,
+        models.MonitoringReviewLink,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
-          as: 'monitoringReview',
+          as: 'monitoringReviewLink',
         },
       );
 
-      models.Grant.hasMany(
+      models.GrantNumberLink.hasMany(
         models.MonitoringClassSummary,
         {
           foreignKey: 'grantNumber',
-          sourceKey: 'number',
           as: 'monitoringClassSummaries',
         },
       );
 
       models.MonitoringClassSummary.belongsTo(
-        models.Grant,
+        models.GrantNumberLink,
         {
-          foreignKey: 'number',
-          sourceKey: 'grantNumber',
-          as: 'grant',
+          foreignKey: 'grantNumber',
+          as: 'grantNumberLink',
         },
       );
     }
@@ -50,10 +50,22 @@ export default (sequelize, DataTypes) => {
     reviewId: {
       type: DataTypes.TEXT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'MonitoringReviewLinks',
+        },
+        key: 'reviewId',
+      },
     },
     grantNumber: {
       type: DataTypes.TEXT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'GrantNumberLinks',
+        },
+        key: 'grantNumber',
+      },
     },
     emotionalSupport: {
       type: DataTypes.DECIMAL(5, 4),
@@ -92,6 +104,10 @@ export default (sequelize, DataTypes) => {
     modelName: 'MonitoringClassSummary',
     tableName: 'MonitoringClassSummaries',
     paranoid: true,
+    hooks: {
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+    },
   });
   return MonitoringClassSummary;
 };
