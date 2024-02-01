@@ -227,7 +227,29 @@ describe('Groups service', () => {
       expect(result.name).toBe('Group 1 Edited');
       expect(result.isPublic).toBe(true);
 
-      const currentGroupGrants = await GroupGrant.findAll({
+      let currentGroupGrants = await GroupGrant.findAll({
+        where: {
+          groupId: existingGroupToEdit.id,
+        },
+      });
+
+      expect(currentGroupGrants).toHaveLength(1);
+      expect(currentGroupGrants[0].grantId).toBe(grantTwo.id);
+
+      // we run again to make sure that the group grants are not duplicated
+      const result2 = await editGroup(existingGroupToEdit.id, {
+        name: 'Group 1 Edited',
+        grants: [grantTwo.id],
+        userId: mockUser.id,
+        isPublic: true,
+      });
+
+      expect(result2).toHaveProperty('id');
+      expect(result2).toHaveProperty('name');
+      expect(result2.name).toBe('Group 1 Edited');
+      expect(result2.isPublic).toBe(true);
+
+      currentGroupGrants = await GroupGrant.findAll({
         where: {
           groupId: existingGroupToEdit.id,
         },

@@ -1,261 +1,92 @@
-import {
-  createReadStream,
-  existsSync,
-  resolve,
-  accessSync,
-  constants,
-} from 'fs';
 import { Readable } from 'stream';
-import * as unzipper from 'unzipper';
-import ZipStream from '../zip';
+import ZipStream, { FileInfo } from '../zip';
 
-const zipEntry = {
-  isDirectory: jest.fn().mockReturnValue(false),
-  path: 'file.txt',
-  type: 'file',
-  vars: {
-    uncompressedSize: 100,
-    lastModifiedTime: new Date(),
-  },
-  autodrain: jest.fn(),
-};
-
-// At the top of your test file, after the imports
+// Mocks for the 'unzipper' and 'path' modules
 jest.mock('unzipper', () => {
-  const MockedUnzipper = {
+  // Import the Readable stream class inside the mock factory function
+  const { Readable: ReadableInMock } = jest.requireActual('stream');
+
+  return {
     Parse: jest.fn().mockImplementation(() => {
-      // Create a readable stream that does nothing on read
-      const parseStream = new Readable({ read() {} });
+      const mockStream = new ReadableInMock();
+      // eslint-disable-next-line no-underscore-dangle
+      mockStream._read = () => {}; // No-op
       process.nextTick(() => {
-        parseStream.emit('entry', zipEntry); // Simulate an 'entry' event with the zipEntry
-        parseStream.emit('close'); // Simulate the end of the unzip stream
+        mockStream.emit('entry', {
+          type: 'File',
+          path: 'folder/file.txt',
+          vars: {
+            uncompressedSize: 100,
+            lastModifiedTime: new Date('2020-01-01'),
+          },
+          pipe: jest.fn(),
+          autodrain: jest.fn(),
+        });
+        mockStream.emit('finish');
       });
-      return parseStream;
-    }),
-    ParseOne: jest.fn().mockImplementation((match) => {
-      const parseOneStream = new Readable({ read() {} });
-      process.nextTick(() => {
-        if (match === 'file.txt') {
-          parseOneStream.emit('entry', zipEntry); // Simulate an 'entry' event with the zipEntry
-        } else {
-          parseOneStream.emit('error', new Error('File not found')); // Simulate an error event
-        }
-        parseOneStream.emit('close'); // Simulate the end of the unzip stream
-      });
-      return parseOneStream;
+      return mockStream;
     }),
   };
-  return MockedUnzipper;
 });
 
+jest.mock('path', () => ({
+  basename: jest.fn((filePath) => filePath.split('/').pop()),
+  dirname: jest.fn((filePath) => filePath.split('/').slice(0, -1).join('/')),
+  join: jest.fn((...parts) => parts.join('/')),
+}));
+
 describe('ZipStream', () => {
-  let zipFilePath;
   let zipStream;
-  let zipFileStream;
-  // let zipEntry;
+  let mockReadable;
 
   beforeEach(() => {
-    zipStream = new Readable();
-    zipFileStream = new Readable();
-    // zipEntry = {
-    //   isDirectory: jest.fn().mockReturnValue(false),
-    //   path: 'file.txt',
-    //   type: 'file',
-    //   vars: {
-    //     uncompressedSize: 100,
-    //     lastModifiedTime: new Date(),
-    //   },
-    //   autodrain: jest.fn(),
-    // };
+    mockReadable = new Readable();
+    // eslint-disable-next-line no-underscore-dangle
+    mockReadable._read = () => {}; // No-op
+    zipStream = new ZipStream(mockReadable);
   });
 
-  describe('listFiles', () => {
-    it('should return an array of file paths in the zip stream - a', async () => {
-      // jest.setTimeout(60000); // Set timeout to 60 seconds
-      // zipFilePath = `${__dirname}/2023_07_20_XML.zip`;
-      // expect(existsSync(zipFilePath)).toBe(true);
+  test('listFiles should return file paths', async () => {
+    const files = await zipStream.listFiles();
+    expect(files).toEqual(['folder/file.txt']);
+  });
 
-      // zipStream = createReadStream(zipFilePath);
-      // expect(zipStream).not.toBe(null);
-      // console.log(zipStream);
-      // Arrange
-      const zip = new ZipStream(zipStream);
-
-      // Act
-      const result = await zip.listFiles();
-
-      // Assert
-      // You will need to update the expected result to match the actual contents of the zip file
-      expect(result).toEqual(['AMS_CLASS_SUMMARYGrants.xml']);
-    });
-    it('should return an empty array if there are no files in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseMock = jest.spyOn(unzipper, 'Parse').mockReturnValue(zipStream);
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const result = await zip.listFiles();
-
-      // Assert
-      expect(result).toEqual([]);
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.Parse());
-      expect(unzipperParseMock).toHaveBeenCalled();
-    });
-
-    it('should return an array of file paths in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseMock = jest.spyOn(unzipper, 'Parse').mockReturnValue(zipStream);
-      const entryEventCallback = zipStream.on.mock.calls[0][1];
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const promise = zip.listFiles();
-
-      // Simulate entry events
-      entryEventCallback(zipEntry);
-      entryEventCallback({ isDirectory: jest.fn().mockReturnValue(true) });
-      entryEventCallback(zipEntry);
-
-      const result = await promise;
-
-      // Assert
-      expect(result).toEqual(['file.txt', 'file.txt']);
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.Parse());
-      expect(unzipperParseMock).toHaveBeenCalled();
-      expect(zipEntry.autodrain).toHaveBeenCalledTimes(2);
+  test('getFileDetails should return file info if file exists', async () => {
+    const fileInfo = await zipStream.getFileDetails('folder/file.txt');
+    expect(fileInfo).toEqual({
+      name: 'file.txt',
+      path: 'folder',
+      type: 'File',
+      size: 100,
+      date: new Date('2020-01-01'),
     });
   });
 
-  describe('getFileDetails', () => {
-    it('should return null if the file does not exist in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipStream);
-      const errorEventCallback = zipStream.on.mock.calls[0][1];
+  test('getFileDetails should return null if file does not exist', async () => {
+    const fileInfo = await zipStream.getFileDetails('nonexistent/file.txt');
+    expect(fileInfo).toBeNull();
+  });
 
-      // Act
-      const zip = new ZipStream(zipStream);
-      const result = await zip.getFileDetails('nonexistent.txt');
-
-      // Simulate error event
-      errorEventCallback();
-
-      // Assert
-      expect(result).toBeNull();
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('nonexistent.txt'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
-
-    it('should return null if the file is a directory', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipStream);
-      const entryEventCallback = zipStream.on.mock.calls[0][1];
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const promise = zip.getFileDetails('directory/');
-
-      // Simulate entry event
-      entryEventCallback({ isDirectory: jest.fn().mockReturnValue(true) });
-
-      const result = await promise;
-
-      // Assert
-      expect(result).toBeNull();
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('directory/'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
-
-    it('should return the file details if the file exists in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipStream);
-      const entryEventCallback = zipStream.on.mock.calls[0][1];
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const promise = zip.getFileDetails('file.txt');
-
-      // Simulate entry event
-      entryEventCallback(zipEntry);
-
-      const result = await promise;
-
-      // Assert
-      expect(result).toEqual({
+  test('getAllFileDetails should return all file details', async () => {
+    const fileDetails = await zipStream.getAllFileDetails();
+    expect(fileDetails).toEqual([
+      {
         name: 'file.txt',
-        type: 'file',
+        path: 'folder',
+        type: 'File',
         size: 100,
-        date: expect.any(Date),
-      });
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('file.txt'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
+        date: new Date('2020-01-01'),
+      },
+    ]);
   });
 
-  describe('getFileStream', () => {
-    it('should return null if the file does not exist in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipStream);
-      const errorEventCallback = zipStream.on.mock.calls[0][1];
+  test('getFileStream should return a Readable stream for an existing file', async () => {
+    const fileStream = await zipStream.getFileStream('folder/file.txt');
+    expect(fileStream).toBeInstanceOf(Readable);
+  });
 
-      // Act
-      const zip = new ZipStream(zipStream);
-      const result = await zip.getFileStream('nonexistent.txt');
-
-      // Simulate error event
-      errorEventCallback();
-
-      // Assert
-      expect(result).toBeNull();
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('nonexistent.txt'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
-
-    it('should return null if the file is a directory', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipStream);
-      const entryEventCallback = zipStream.on.mock.calls[0][1];
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const promise = zip.getFileStream('directory/');
-
-      // Simulate entry event
-      entryEventCallback({ isDirectory: jest.fn().mockReturnValue(true) });
-
-      const result = await promise;
-
-      // Assert
-      expect(result).toBeNull();
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('directory/'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
-
-    it('should return the file stream if the file exists in the zip stream', async () => {
-      // Arrange
-      const zipStreamMock = jest.spyOn(zipStream, 'pipe').mockReturnValue(zipStream);
-      const unzipperParseOneMock = jest.spyOn(unzipper, 'ParseOne').mockReturnValue(zipFileStream);
-      const entryEventCallback = zipStream.on.mock.calls[0][1];
-
-      // Act
-      const zip = new ZipStream(zipStream);
-      const promise = zip.getFileStream('file.txt');
-
-      // Simulate entry event
-      entryEventCallback(zipEntry);
-
-      const result = await promise;
-
-      // Assert
-      expect(result).toBe(zipFileStream);
-      expect(zipStreamMock).toHaveBeenCalledWith(unzipper.ParseOne('file.txt'));
-      expect(unzipperParseOneMock).toHaveBeenCalled();
-    });
+  test('getFileStream should return null for a non-existing file', async () => {
+    const fileStream = await zipStream.getFileStream('nonexistent/file.txt');
+    expect(fileStream).toBeNull();
   });
 });

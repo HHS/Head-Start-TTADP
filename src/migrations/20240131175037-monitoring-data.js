@@ -8,6 +8,96 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
+      await queryInterface.createTable('GrantNumberLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
+        grantNumber: {
+          primaryKey: true,
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        grantId: {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+          references: {
+            model: {
+              tableName: 'Grants',
+            },
+          },
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+      }, {
+        transaction,
+      });
+
+      await queryInterface.createTable('MonitoringReviewLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
+        reviewId: {
+          primaryKey: true,
+          allowNull: false,
+          type: Sequelize.TEXT,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+      }, {
+        transaction,
+      });
+
+      await queryInterface.createTable('MonitoringReviewStatusLinks', {
+        id: {
+          type: Sequelize.INTEGER,
+          allowNull: false,
+          autoIncrement: true,
+        },
+        statusId: {
+          primaryKey: true,
+          allowNull: false,
+          type: Sequelize.INTEGER,
+        },
+        createdAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        updatedAt: {
+          allowNull: false,
+          type: Sequelize.DATE,
+        },
+        deletedAt: {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+      }, {
+        transaction,
+      });
+
       await queryInterface.createTable('MonitoringReviewStatuses', {
         id: {
           type: Sequelize.INTEGER,
@@ -18,6 +108,12 @@ module.exports = {
         statusId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewStatusLinks',
+            },
+            key: 'statusId',
+          },
         },
         name: {
           type: Sequelize.TEXT,
@@ -73,6 +169,12 @@ module.exports = {
         reviewId: {
           type: Sequelize.TEXT,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewLinks',
+            },
+            key: 'reviewId',
+          },
         },
         contentId: {
           type: Sequelize.TEXT,
@@ -81,6 +183,12 @@ module.exports = {
         statusId: {
           type: Sequelize.INTEGER,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewStatusLinks',
+            },
+            key: 'statusId',
+          },
         },
         startDate: {
           type: Sequelize.DATEONLY,
@@ -170,6 +278,12 @@ module.exports = {
         reviewId: {
           type: Sequelize.TEXT,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewLinks',
+            },
+            key: 'reviewId',
+          },
         },
         granteeId: {
           type: Sequelize.TEXT,
@@ -190,6 +304,12 @@ module.exports = {
         grantNumber: {
           allowNull: false,
           type: Sequelize.TEXT,
+          references: {
+            model: {
+              tableName: 'GrantNumberLinks',
+            },
+            key: 'grantNumber',
+          },
         },
         sourceCreatedAt: {
           allowNull: false,
@@ -262,6 +382,12 @@ module.exports = {
         reviewId: {
           type: Sequelize.TEXT,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewLinks',
+            },
+            key: 'reviewId',
+          },
         },
         findingHistoryId: {
           type: Sequelize.TEXT,
@@ -335,10 +461,22 @@ module.exports = {
         reviewId: {
           type: Sequelize.TEXT,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'MonitoringReviewLinks',
+            },
+            key: 'reviewId',
+          },
         },
         grantNumber: {
           type: Sequelize.TEXT,
           allowNull: false,
+          references: {
+            model: {
+              tableName: 'GrantNumberLinks',
+            },
+            key: 'grantNumber',
+          },
         },
         emotionalSupport: {
           type: Sequelize.DECIMAL(5, 4),

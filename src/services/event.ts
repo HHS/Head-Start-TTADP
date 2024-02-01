@@ -18,7 +18,7 @@ const {
   User,
 } = db;
 
-const validateFields = (request, requiredFields) => {
+export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {

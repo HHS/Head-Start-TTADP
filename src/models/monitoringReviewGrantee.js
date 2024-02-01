@@ -1,4 +1,8 @@
 import { Model } from 'sequelize';
+import {
+  beforeCreate,
+  beforeUpdate,
+} from './hooks/monitoringReviewGrantee';
 
 export default (sequelize, DataTypes) => {
   class MonitoringReviewGrantee extends Model {
@@ -88,6 +92,10 @@ export default (sequelize, DataTypes) => {
     modelName: 'MonitoringReviewGrantee',
     tableName: 'MonitoringReviewGrantees',
     paranoid: true,
+    hooks: {
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+    },
   });
   return MonitoringReviewGrantee;
 };
