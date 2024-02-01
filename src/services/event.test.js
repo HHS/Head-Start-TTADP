@@ -15,6 +15,7 @@ import {
   findEventsByRegionId,
   findEventsByStatus,
   csvImport,
+  validateFields,
 } from './event';
 
 describe('event service', () => {
@@ -546,6 +547,12 @@ describe('event service', () => {
         regionId: 1,
         scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
       });
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when fields are invalid', async () => {
+      expect(() => validateFields({ pig: 1 }, ['man'])).toThrow();
     });
   });
 });
