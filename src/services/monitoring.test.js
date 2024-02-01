@@ -30,13 +30,13 @@ describe('monitoring services', () => {
         REGION_ID,
       );
 
-      expect(data).toEqual([{
+      expect(data).toEqual({
         recipientId: RECIPIENT_ID,
         regionId: REGION_ID,
         reviewStatus: expect.any(String),
         reviewDate: expect.any(String),
         reviewType: expect.any(String),
-      }]);
+      });
     });
   });
 });
