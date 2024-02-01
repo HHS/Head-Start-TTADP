@@ -178,14 +178,14 @@ const monitoringReviewStatusLinks = [
 
 module.exports = {
   up: async (queryInterface) => {
+    await queryInterface.bulkInsert('GrantNumberLinks', grantNumberLinks);
+    await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks);
+    await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks);
     await queryInterface.bulkInsert('MonitoringReviewStatuses', reviewStatuses);
     await queryInterface.bulkInsert('MonitoringReviews', reviews);
     await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
     await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
     await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
-    await queryInterface.bulkInsert('GrantNumberLinks', grantNumberLinks);
-    await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks);
-    await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks);
   },
 
   down: async (queryInterface) => {
