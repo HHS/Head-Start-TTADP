@@ -6,12 +6,17 @@ import RecipientSummary from '../components/RecipientSummary';
 import GrantList from '../components/GrantsList';
 import RecipientLeadership from '../components/RecipientLeadership';
 import './Profile.css';
+import FeatureFlag from '../../../components/FeatureFlag';
+import ClassReview from './components/ClassReview';
+import MonitoringReview from './components/MonitoringReview';
 
 export default function Profile({
   recipientSummary,
   regionId,
   recipientId,
 }) {
+  const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
+
   return (
     <>
       <Helmet>
@@ -24,8 +29,41 @@ export default function Profile({
           </Grid>
           <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
             <RecipientLeadership recipientId={recipientId} regionId={regionId} />
+          </Grid>
+          <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
+          <FeatureFlag flag="monitoring">
+            {activeGrants.map((grant) => (
+              <React.Fragment key={grant.number}>
+                <Grid desktop={{ col: 12 }}>
+                  <h2 className="smart-hub-title-big-serif">
+                    Grant number
+                    {' '}
+                    {grant.number}
+                  </h2>
+                </Grid>
+                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                  <div>
+                    <ClassReview
+                      grantNumber={grant.number}
+                      regionId={regionId}
+                      recipientId={recipientId}
+                    />
+                  </div>
+                </Grid>
+                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                  <div>
+                    <MonitoringReview
+                      grantNumber={grant.number}
+                      regionId={regionId}
+                      recipientId={recipientId}
+                    />
+                  </div>
+                </Grid>
+              </React.Fragment>
+            ))}
+          </FeatureFlag>
         </Grid>
       </div>
     </>
@@ -33,7 +71,7 @@ export default function Profile({
 }
 
 Profile.propTypes = {
-  recipientId: PropTypes.number.isRequired,
+  recipientId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   recipientSummary:
     PropTypes.shape({
