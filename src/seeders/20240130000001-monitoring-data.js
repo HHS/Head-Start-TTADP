@@ -60,6 +60,7 @@ const reviewGrantees = [
     updateTime: new Date('2023/11/15'),
     updateBy: 'Support Team',
     // Original data: 02HP000452
+    // Links to Grant.id = 3
     grantNumber: '14CH00001',
     sourceCreatedAt: new Date('2023/11/15'),
     sourceUpdatedAt: new Date('2023/11/15'),
@@ -76,6 +77,7 @@ const reviewGrantees = [
     updateTime: new Date('2023/11/15'),
     updateBy: 'Support Team',
     // Original data: 90CI010025
+    // Links to Grant.id = 4
     grantNumber: '14CH00002',
     sourceCreatedAt: new Date('2023/11/15'),
     sourceUpdatedAt: new Date('2023/11/15'),
@@ -133,6 +135,47 @@ const reviewClassSummaries = [
   },
 ];
 
+const grantNumberLinks = [
+  {
+    grantNumber: '14CH00001',
+    grantId: 3,
+    createdAt: new Date('2023/11/16'),
+    updatedAt: new Date('2023/11/16'),
+    deletedAt: null,
+  },
+  {
+    grantNumber: '14CH00002',
+    grantId: 4,
+    createdAt: new Date('2023/11/16'),
+    updatedAt: new Date('2023/11/16'),
+    deletedAt: null,
+  },
+];
+
+const monitoringReviewLinks = [
+  {
+    reviewId: 'B34336CF-8033-46DD-A4CD-000619B73C54',
+    createdAt: new Date('2022/12/20'),
+    updatedAt: new Date('2023/02/24'),
+    deletedAt: null,
+  },
+  {
+    reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
+    sourceCreatedAt: new Date('2022/12/08'),
+    sourceUpdatedAt: new Date('2023/01/14'),
+    deletedAt: null,
+  },
+];
+
+const monitoringReviewStatusLinks = [
+  {
+    statusId: 6006,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+];
+
 module.exports = {
   up: async (queryInterface) => {
     await queryInterface.bulkInsert('MonitoringReviewStatuses', reviewStatuses);
@@ -140,6 +183,10 @@ module.exports = {
     await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
     await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
     await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
+    await queryInterface.bulkInsert('GrantNumberLinks', grantNumberLinks);
+    await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks);
+    await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks);
+  },
   },
 
   down: async (queryInterface) => {
@@ -148,5 +195,8 @@ module.exports = {
     await queryInterface.bulkDelete('MonitoringReviewStatuses', null);
     await queryInterface.bulkDelete('MonitoringFindingHistories', null);
     await queryInterface.bulkDelete('MonitoringClassSummaries', null);
+    await queryInterface.bulkDelete('GrantNumberLinks', null);
+    await queryInterface.bulkDelete('MonitoringReviewLinks', null);
+    await queryInterface.bulkDelete('MonitoringReviewStatusLinks', null);
   },
 };
