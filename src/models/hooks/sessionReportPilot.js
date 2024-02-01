@@ -239,23 +239,25 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
 
     if (!recipients || !recipients.length) return;
 
-    // Using the EventReportPilotGoal table, find all goals that were created for this recipient (grantId).
     // eslint-disable-next-line no-restricted-syntax
     for await (const entry of recipients) {
       if (!nextSessionRecipients.includes(entry.grantId)) {
-        // A recipient was removed.
-
-        // If the goal is referenced in an ARG, then it's in use and cannot be deleted.
-        // This should _never_ be possible, because this hook happens when a session is edited.
-        // If the session is edited, it's not complete, and therefore the goal should not be in use.
         const args = await sequelize.models.ActivityReportGoal.findAll({
           where: { goalId: entry.goalId },
           transaction: options.transaction,
           raw: true,
         });
 
-        if (!args || !args.length) {
-          // Destroy the Goal and the EventReportPilotGoal entry.
+        const otherSessionsUsingGoal = await sequelize.models.EventReportPilotGoal.findAll({
+          where: {
+            goalId: entry.goalId,
+            sessionId: { [sequelize.Sequelize.Op.ne]: sessionReport.id },
+          },
+          transaction: options.transaction,
+          raw: true,
+        });
+
+        if ((!args || !args.length) && (!otherSessionsUsingGoal || !otherSessionsUsingGoal.length)) {
           await sequelize.models.Goal.destroy({
             where: { id: entry.goalId },
             transaction: options.transaction,
