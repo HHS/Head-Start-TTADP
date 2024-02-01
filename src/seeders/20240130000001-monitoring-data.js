@@ -187,7 +187,6 @@ module.exports = {
     await queryInterface.bulkInsert('MonitoringReviewLinks', monitoringReviewLinks);
     await queryInterface.bulkInsert('MonitoringReviewStatusLinks', monitoringReviewStatusLinks);
   },
-  },
 
   down: async (queryInterface) => {
     await queryInterface.bulkDelete('MonitoringReviewGrantees', null);
