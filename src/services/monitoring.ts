@@ -11,7 +11,7 @@ const {
 } = db;
 
 interface IMonitoringReview {
-  reportDeliveryDate: string;
+  reportDeliveryDate: Date;
   id: number;
   reviewType: string;
   statusLink: {
@@ -25,7 +25,9 @@ interface IMonitoringReviewGrantee {
   id: number;
   grantId: number;
   reviewId: number;
-  monitoringReview: IMonitoringReview;
+  monitoringReviewLink: {
+    monitoringReviews: IMonitoringReview[];
+  }
 }
 
 interface IMonitoringResponse {
@@ -78,7 +80,7 @@ export async function monitoringData({
                 include: [
                   {
                     model: MonitoringReview,
-                    as: 'monitoringReview',
+                    as: 'monitoringReviews',
                     attributes: [
                       'reportDeliveryDate',
                       'id',
@@ -89,6 +91,7 @@ export async function monitoringData({
                     required: true,
                     include: [
                       {
+                        attributes: ['id', 'statusId'],
                         model: MonitoringReviewStatusLink,
                         as: 'statusLink',
                         required: true,
@@ -112,27 +115,32 @@ export async function monitoringData({
     ],
   });
 
-  const [grant] = grants;
+  const grant = (grants[0]?.toJSON() || null);
 
   if (!grant) {
     // not an error, it's valid for there to be no findings for a grant
     return null;
   }
 
-  const { monitoringReviewGrantees } = grant;
+  const { monitoringReviewGrantees } = grant.grantNumberLink;
 
   // get the most recent review
   const monitoringReviews = monitoringReviewGrantees.map(
-    (review: IMonitoringReviewGrantee) => review.monitoringReview,
-  );
-  const monitoringReview = monitoringReviews.reduce((a, b) => {
+    (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews,
+  ).flat();
+
+  const monitoringReview = monitoringReviews.reduce((
+    a: IMonitoringReview,
+    b: IMonitoringReview,
+  ) => {
     if (a.reportDeliveryDate > b.reportDeliveryDate) {
       return a;
     }
     return b;
   }, monitoringReviews[0]);
 
-  const { status } = monitoringReview.statusLink;
+  const { monitoringReviewStatuses } = monitoringReview.statusLink;
+  const [status] = monitoringReviewStatuses;
 
   return {
     recipientId: grant.recipientId,
