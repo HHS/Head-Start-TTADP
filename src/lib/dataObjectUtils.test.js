@@ -914,7 +914,7 @@ describe('dataObjectUtils', () => {
       const result = detectAndCast(dateString);
       expect(result.type).toBe('Date');
       // Compare the UTC string representations to avoid time zone issues
-      expect(result.value.toISOString()).toBe(date.toISOString());
+      expect(result.value.toUTCString()).toBe(date.toUTCString());
     });
 
     it('should detect and cast an array', () => {

@@ -20,7 +20,7 @@ interface CommLog {
 
 const COMMUNICATION_LOGS_PER_PAGE = 10;
 
-const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
+export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
   let result = [];
   switch (sortBy) {
     case 'authorName':
