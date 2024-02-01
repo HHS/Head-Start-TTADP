@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
 const { Op } = require('sequelize');
-const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
+const { TRAINING_REPORT_STATUSES, GOAL_SOURCES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
@@ -177,7 +177,6 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       const status = hasCompleteSession ? 'In Progress' : 'Draft';
       const onApprovedAR = !!(hasCompleteSession);
 
-      // Since there is no existing Goal, create it and the EventReportPilotGoal record.
       const newGoal = await sequelize.models.Goal.create({
         name: event.data.goal,
         grantId,
@@ -185,6 +184,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
         updatedAt: new Date(),
         status,
         createdVia: 'tr',
+        source: GOAL_SOURCES[4], // Training event
         onAR: true,
         onApprovedAR,
       }, { transaction: options.transaction });
