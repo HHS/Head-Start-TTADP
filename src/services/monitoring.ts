@@ -12,8 +12,10 @@ interface IMonitoringReview {
   reportDeliveryDate: string;
   id: number;
   reviewType: string;
-  status: {
-    name: string;
+  statusLink: {
+    status: {
+      name: string;
+    }
   };
 }
 
@@ -46,6 +48,7 @@ export async function monitoringData(
   regionId: number,
 ): Promise<IMonitoringResponse[]> {
   const grants = await Grant.findAll({
+    // logging: console.log,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
     where: { regionId, recipientId },
     required: true,
@@ -102,7 +105,7 @@ export async function monitoringData(
       return b;
     }, monitoringReviews[0]);
 
-    const { status } = monitoringReview;
+    const { status } = monitoringReview.statusLink;
 
     return {
       recipientId: grant.recipientId,
