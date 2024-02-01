@@ -16,6 +16,7 @@ describe('getMonitoringData', () => {
       params: {
         recipientId: '1',
         regionId: '2',
+        grantNumber: '01',
       },
     };
 
