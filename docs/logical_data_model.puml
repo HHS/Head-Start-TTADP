@@ -421,6 +421,7 @@ class Goals{
 }
 
 class GrantNumberLinks{
+ * id : integer : <generated>
 !issue='column should allow null' grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * grantNumber : text
@@ -578,6 +579,7 @@ class MonitoringReviewGrantees{
 }
 
 class MonitoringReviewLinks{
+ * id : integer : <generated>
  * createdAt : timestamp with time zone
  * reviewId : text
  * updatedAt : timestamp with time zone
@@ -585,6 +587,7 @@ class MonitoringReviewLinks{
 }
 
 class MonitoringReviewStatusLinks{
+ * id : integer : <generated>
  * createdAt : timestamp with time zone
  * statusId : integer
  * updatedAt : timestamp with time zone
