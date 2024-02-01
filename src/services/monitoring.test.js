@@ -1,3 +1,4 @@
+import sequelize from 'sequelize';
 import { classScore, monitoringData } from './monitoring';
 
 describe('monitoring services', () => {
@@ -6,6 +7,11 @@ describe('monitoring services', () => {
    */
   const RECIPIENT_ID = 1;
   const REGION_ID = 14;
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
   describe('classScore', () => {
     it('returns data in the correct format', async () => {
       const data = await classScore(

@@ -6,6 +6,7 @@ const {
   MonitoringReviewGrantee,
   MonitoringReviewStatus,
   MonitoringReview,
+  MonitoringReviewLink,
   MonitoringReviewStatusLink,
 } = db;
 
@@ -45,19 +46,25 @@ export async function monitoringData({
   regionId: number;
   grantNumber: string;
 }): Promise<IMonitoringResponse> {
+  /**
+   *
+   *
+   * because of the way these tables were linked,
+   * we cannot use a findOne here, although it is what we really want
+   */
   const grants = await Grant.findAll({
-    // logging: console.log,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
     where: {
       regionId,
       recipientId,
-      number: grantNumber,
+      number: grantNumber, // since we query by grant number, there can only be one anyways
     },
     required: true,
     include: [
       {
         model: GrantNumberLink,
         as: 'grantNumberLink',
+        required: true,
         include: [
           {
             model: MonitoringReviewGrantee,
@@ -66,27 +73,33 @@ export async function monitoringData({
             as: 'monitoringReviewGrantees',
             include: [
               {
-                model: MonitoringReview,
-                as: 'monitoringReview',
-                attributes: [
-                  'reportDeliveryDate',
-                  'id',
-                  'reviewType',
-                  'reviewId',
-                  'statusId',
-                ],
-                required: true,
+                model: MonitoringReviewLink,
+                as: 'monitoringReviewLink',
                 include: [
                   {
-                    model: MonitoringReviewStatusLink,
-                    as: 'statusLink',
+                    model: MonitoringReview,
+                    as: 'monitoringReview',
+                    attributes: [
+                      'reportDeliveryDate',
+                      'id',
+                      'reviewType',
+                      'reviewId',
+                      'statusId',
+                    ],
                     required: true,
                     include: [
                       {
-                        attributes: ['id', 'name', 'statusId'],
-                        model: MonitoringReviewStatus,
-                        as: 'monitoringReviewStatuses',
+                        model: MonitoringReviewStatusLink,
+                        as: 'statusLink',
                         required: true,
+                        include: [
+                          {
+                            attributes: ['id', 'name', 'statusId'],
+                            model: MonitoringReviewStatus,
+                            as: 'monitoringReviewStatuses',
+                            required: true,
+                          },
+                        ],
                       },
                     ],
                   },
@@ -100,6 +113,11 @@ export async function monitoringData({
   });
 
   const [grant] = grants;
+
+  if (!grant) {
+    // not an error, it's valid for there to be no findings for a grant
+    return null;
+  }
 
   const { monitoringReviewGrantees } = grant;
 
