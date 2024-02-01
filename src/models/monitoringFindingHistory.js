@@ -1,23 +1,25 @@
-const { Model } = require('sequelize');
+import { Model } from 'sequelize';
+import {
+  beforeCreate,
+  beforeUpdate,
+} from './hooks/monitoringFindingHistory';
 
 export default (sequelize, DataTypes) => {
   class MonitoringFindingHistory extends Model {
     static associate(models) {
-      models.MonitoringReview.hasMany(
+      models.MonitoringReviewLink.hasMany(
         models.MonitoringFindingHistory,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
           as: 'monitoringFindingHistories',
         },
       );
 
       models.MonitoringFindingHistory.belongsTo(
-        models.MonitoringReview,
+        models.MonitoringReviewLink,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
-          as: 'monitoringReview',
+          as: 'monitoringReviewLink',
         },
       );
     }
@@ -32,6 +34,12 @@ export default (sequelize, DataTypes) => {
     reviewId: {
       type: DataTypes.TEXT,
       allowNull: false,
+      references: {
+        model: {
+          tableName: 'MonitoringReviewLinks',
+        },
+        key: 'reviewId',
+      },
     },
     findingHistoryId: {
       type: DataTypes.TEXT,
@@ -58,6 +66,10 @@ export default (sequelize, DataTypes) => {
     modelName: 'MonitoringFindingHistory',
     tableName: 'MonitoringFindingHistories',
     paranoid: true,
+    hooks: {
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+    },
   });
   return MonitoringFindingHistory;
 };
