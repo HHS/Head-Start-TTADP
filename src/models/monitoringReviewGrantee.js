@@ -25,21 +25,19 @@ export default (sequelize, DataTypes) => {
         },
       );
 
-      models.Grant.hasMany(
+      models.GrantNumberLink.hasMany(
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'grantNumber',
-          sourceKey: 'number',
           as: 'monitoringReviewGrantees',
         },
       );
 
       models.MonitoringReviewGrantee.belongsTo(
-        models.Grant,
+        models.GrantNumberLink,
         {
-          foreignKey: 'number',
-          sourceKey: 'grantNumber',
-          as: 'grant',
+          foreignKey: 'grantNumber',
+          as: 'grantNumberLink',
         },
       );
     }
