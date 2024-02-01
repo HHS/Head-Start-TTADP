@@ -474,7 +474,7 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
     eventId: '2',
     sessionId: '1',
     grantId: '3',
-    goalId: '4'
+    goalId: '4',
   };
 
   afterEach(() => {
@@ -496,8 +496,8 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
             id: '1',
             data: {
               event: { id: '2' },
-              recipients: [] // No recipients, should trigger goal removal
-            }
+              recipients: [],
+            },
           })),
         },
         ActivityReportGoal: {
@@ -528,8 +528,8 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
             id: '1',
             data: {
               event: { id: '2' },
-              recipients: [] // No recipients, should trigger goal removal check
-            }
+              recipients: [], // No recipients, should trigger goal removal check
+            },
           })),
         },
         ActivityReportGoal: {
