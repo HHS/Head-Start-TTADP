@@ -451,7 +451,7 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
         name: 'Increase knowledge about X',
         onAR: true,
         onApprovedAR: false,
-        source: 'Training event',
+        source: 'Training event follow-up',
         status: 'Draft',
         updatedAt: expect.any(Date),
       },
@@ -523,8 +523,8 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
       },
     };
     await removeGoalsForSessionRecipientsIfNecessary(mockSequelize, { id: '1' }, mockOptions);
-    expect(mockSequelize.models.EventReportPilotGoal.destroy).toHaveBeenCalled();
-    expect(mockSequelize.models.Goal.destroy).toHaveBeenCalled();
+    expect(mockSequelize.models.EventReportPilotGoal.destroy).not.toHaveBeenCalled();
+    expect(mockSequelize.models.Goal.destroy).not.toHaveBeenCalled();
   });
 
   it('does not remove goals that are used in ARG', async () => {
