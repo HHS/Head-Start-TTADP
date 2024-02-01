@@ -26,10 +26,11 @@ const getPriorFile = async (
   status: string = IMPORT_STATUSES.COLLECTED,
 ) => {
   // Find the prior file associated with the given importId
-  const { name: priorFile } = await ImportFile.findOne({
+  const importFile = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
-      ['ftpFileInfo->>\'name\'', 'name'],
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
     ],
     where: {
       importId,
@@ -37,11 +38,18 @@ const getPriorFile = async (
     },
     // Ordering the results by ftpFileInfo.date in descending order
     // eslint-disable-next-line @typescript-eslint/quotes
-    order: [[`ftpFileInfo->>'date'`, 'DESC']],
+    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
     raw: true,
   });
-  // Return the name of the prior file
-  return priorFile;
+
+  // Check if a file was found
+  if (importFile) {
+    // Return the name of the prior file
+    return importFile.name;
+  }
+  // Handle the case where no file was found
+  // You could return null, undefined, or throw an error, depending on your application's needs
+  return null; // or throw new Error('No prior file found.');
 };
 
 /**
