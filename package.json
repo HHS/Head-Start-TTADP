@@ -258,6 +258,7 @@
     "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
     "@playwright/test": "^1.28.0",
+    "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.0.0",
