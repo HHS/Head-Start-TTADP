@@ -211,12 +211,8 @@ def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates
             {}
         )
 
-        # print(curated_templates)
-
         if curated_templates is not None:
             recipients.extend(curated_templates)   
-
-    print(recipients)
 
     # Fetch the embeddings for all the goals including the given goal_name
     goal_embeddings = [nlp(goal['name']).vector for goal in recipients]
