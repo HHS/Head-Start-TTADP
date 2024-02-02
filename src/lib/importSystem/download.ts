@@ -1,3 +1,4 @@
+/* eslint-disable no-plusplus */
 import { Readable } from 'stream';
 import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings } from '../stream/sftp';
 import Hasher from '../stream/hasher';
@@ -177,23 +178,23 @@ const collectNextFile = async (
  */
 const collectServerSettings = (
   importId: number,
-  ftpSettings: { host: string, port: string, user: string, password },
+  ftpSettings: { host: string, port: string, username: string, password },
 ) => {
   const {
     host: hostEnv, // The environment variable name for the FTP server host
     port: portEnv, // The environment variable name for the FTP server port
-    user: userEnv, // The environment variable name for the FTP server username
+    username: userEnv, // The environment variable name for the FTP server username
     password: passwordEnv, // The environment variable name for the FTP server password
   } = ftpSettings;
   // Retrieve the FTP server password from the environment variable
   const {
     [hostEnv]: host,
     [portEnv]: port,
-    [userEnv]: user,
+    [userEnv]: username,
     [passwordEnv]: password,
   } = process.env;
 
-  if (!host || !port || !user || !password) {
+  if (!host || !port || !username || !password) {
     const missing = [];
     if (!host) {
       missing.push(`'${hostEnv}' did not resolve to a value`);
@@ -201,7 +202,7 @@ const collectServerSettings = (
     if (!port) {
       missing.push(`'${portEnv}' did not resolve to a value`);
     }
-    if (!user) {
+    if (!username) {
       missing.push(`'${userEnv}' did not resolve to a value`);
     }
     if (!password) {
@@ -212,7 +213,7 @@ const collectServerSettings = (
   return {
     host,
     port: parseInt(port, 10),
-    user,
+    username,
     password,
   };
 };
@@ -238,7 +239,7 @@ const collectFilesFromSource = async (
 ) => {
   const serverSettings = collectServerSettings(importId, ftpSettings);
   let i = 0;
-console.log(++i, serverSettings);
+  console.log(++i, serverSettings);
   let ftpClient;
   try {
     // Create a new FTP client instance with the FTP server settings
@@ -269,7 +270,7 @@ console.log(++i, serverSettings);
       fileMask, // The file mask to filter files
       priorFile, // The prior file for comparison
       includeStream: true, // include streams
-  }); // Get the list of available files on the FTP server
+    }); // Get the list of available files on the FTP server
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }

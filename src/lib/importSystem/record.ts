@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-import { FileInfo as FTPFileInfo } from '../stream/ftp';
+import { FileInfo as FTPFileInfo } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db, { Sequelize } from '../../models';
@@ -394,7 +394,7 @@ const logFileToBeCollected = async (
     where: {
       importId,
       [Op.and]: [
-        Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
+        Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fullPath}'`),
         Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
       ],
       include: [{
@@ -429,7 +429,7 @@ const logFileToBeCollected = async (
         where: {
           importId,
           [Op.and]: [
-            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
+            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fullPath}'`),
             Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
           ],
         },
@@ -446,7 +446,7 @@ const logFileToBeCollected = async (
         where: {
           importId,
           [Op.and]: [
-            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
+            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fullPath}'`),
             Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
           ],
         },
