@@ -18,6 +18,7 @@ interface ListFileOptions {
 
 interface FileInfo {
   name: string;
+  path: string;
   type: string;
   size: number;
   modifyTime: Date;
@@ -266,14 +267,18 @@ class SftpClient {
           // Filter the files based on the provided file mask and whether they come after a
           // specified 'priorFile'
           }).filter((file) => {
-            const matchesMask = fileMask instanceof RegExp ? fileMask.test(file.name) : true;
-            const afterPriorFile = priorFile ? file.name.localeCompare(priorFile) > 0 : true;
+            const matchesMask = fileMask instanceof RegExp
+              ? fileMask.test(file.fileInfo.name)
+              : true;
+            const afterPriorFile = priorFile
+              ? file.fileInfo.name.localeCompare(priorFile) > 0
+              : true;
 
             return matchesMask && afterPriorFile;
           });
 
           // If the 'includeStream' option is true, attach a read stream for each file
-          if (includeStream) {
+          if (includeStream && files.length > 0) {
             files = files.map((file) => {
               const stream = sftp.createReadStream(file.fullPath);
               return { ...file, stream };
