@@ -827,8 +827,8 @@ jobs:
 workflows:
   build_test_deploy:
     jobs:
-      - build_and_lint
-      - build_and_lint_similarity_api
+      # - build_and_lint
+      # - build_and_lint_similarity_api
       # - test_backend:
       #     requires:
       #       - build_and_lint
@@ -881,8 +881,8 @@ workflows:
                 - << pipeline.parameters.staging_git_branch >>
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      # - build_and_lint
-      # - build_and_lint_similarity_api
+      - build_and_lint
+      - build_and_lint_similarity_api
       # - test_backend:
       #     requires:
       #       - build_and_lint

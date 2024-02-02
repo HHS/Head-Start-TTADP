@@ -36,7 +36,7 @@ applications:
       NODE_MODULES_CACHE: false
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
-      ITAMS_MD_PASSWORD: ((TEST_ITAMS_MD_PASSWORD))
+      TEST_ITAMS_MD_PASSWORD: ((TEST_ITAMS_MD_PASSWORD))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
