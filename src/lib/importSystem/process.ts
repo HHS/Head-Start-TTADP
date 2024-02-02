@@ -40,14 +40,10 @@ const processRecords = async (
   xmlClient: XMLStream,
   fileDate: Date,
   recordActions: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    inserts: Promise<any>[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updates: Promise<any>[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deletes: Promise<any>[],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    errors: Promise<any>[],
+    inserts,
+    updates,
+    deletes,
+    errors,
   } = {
     inserts: [],
     updates: [],
@@ -55,14 +51,10 @@ const processRecords = async (
     errors: [],
   },
 ): Promise<{
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  inserts: Promise<any>[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updates: Promise<any>[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deletes: Promise<any>[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errors: Promise<any>[],
+  inserts,
+  updates,
+  deletes,
+  errors,
 }> => {
   let record;
   try {
@@ -132,7 +124,7 @@ const processRecords = async (
         },
       });
 
-      if (currentData === null || currentData === undefined) {
+      if (!currentData) {
         // If the record is new, create it
         const insert = model.create(
           {

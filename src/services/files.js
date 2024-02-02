@@ -182,19 +182,14 @@ const updateStatus = async (fileId, fileStatus) => {
  * an error object if an error occurs.
  */
 const updateStatusByKey = async (key, fileStatus) => {
-  let file;
-  try {
-    // Update the file's status in the database using the File model
-    file = await File.update({ status: fileStatus }, {
-      where: { key },
-      individualHooks: true,
-    });
-    // Return the data values of the updated file
-    return file.dataValues;
-  } catch (error) {
-    // Return the error object if an error occurs during the update
-    return error;
-  }
+  // Update the file's status in the database using the File model
+  const results = await File.update({ status: fileStatus }, {
+    where: { key },
+    individualHooks: true,
+  });
+  const [, [file]] = results;
+  // Return the updated file
+  return file?.toJSON();
 };
 
 const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
