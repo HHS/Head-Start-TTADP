@@ -266,43 +266,31 @@ const recordAvailableDataFiles = async (
     raw: true,
   });
 
+  const fileMatches = (file, fileSet) => (currentImportDataFile, availableFile) => (
+    importFileId === currentImportDataFile.importFileId
+    && availableFile.path === currentImportDataFile.fileInfo.path
+    && availableFile.fileInfo.name === currentImportDataFile.fileInfo.name
+  );
+
   // Separate the available files into new, matched, and removed files
-  const [
-    newfiles,
-    matchedFiles,
-    removedFiles,
-  ] = [
-    // New files are those that are not already recorded in the database
-    availableFiles
-      .filter((availableFile) => !currentImportDataFiles
-        .some((currentImportDataFile) => (
-          importFileId === currentImportDataFile.importFileId
-          && availableFile.path === currentImportDataFile.fileInfo.path
-          && availableFile.name === currentImportDataFile.fileInfo.name
-        ))),
-    // Matched files are those that are already recorded in the database
-    availableFiles
-      .filter((availableFile) => currentImportDataFiles
-        .some((currentImportFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-    // Removed files are those that were recorded in the database but are no longer available
-    currentImportDataFiles
-      .filter((currentImportFile) => !availableFiles
-        .some((availableFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-  ];
+  // New files are those that are not already recorded in the database
+  const newFiles = availableFiles
+    .filter((availableFile) => !currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Matched files are those that are already recorded in the database
+  const matchedFiles = availableFiles
+    .filter((availableFile) => currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Removed files are those that were recorded in the database but are no longer available
+  const removedFiles = currentImportDataFiles
+    .filter((currentImportDataFile) => !availableFiles
+      .some((availableFile) => fileMatches(currentImportDataFile, availableFile)));
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newfiles.length > 0
+    (newFiles.length > 0
       ? ImportFile.bulkCreate(
-        newfiles.map((newFile) => ({
+        newFiles.map((newFile) => ({
           importFileId,
           fileInfo: newFile,
           status: IMPORT_STATUSES.IDENTIFIED,
