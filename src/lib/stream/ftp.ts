@@ -1,6 +1,13 @@
-import { Client, FileInfo, AccessOptions } from 'basic-ftp';
-import exitHook from 'exit-hook';
-import { Readable, PassThrough } from 'stream';
+import { Client, SFTPWrapper } from 'ssh2';
+import { Readable } from 'stream';
+
+interface ConnectConfig {
+  host: string;
+  port?: number;
+  username: string;
+  password?: string;
+  privateKey?: string;
+}
 
 interface ListFileOptions {
   path: string;
@@ -9,107 +16,158 @@ interface ListFileOptions {
   includeStream?: boolean;
 }
 
+interface FileInfo {
+  name: string;
+  type: string;
+  size: number;
+  modifyTime: Date;
+  accessTime: Date;
+  rights: {
+    user: string;
+    group: string;
+    other: string;
+  };
+  owner: number;
+  group: number;
+}
 interface FileListing {
   fullPath: string;
   fileInfo: FileInfo;
-  stream?: Promise<Readable>;
+  stream?: Readable;
 }
 
+/**
+ * Converts a numeric mode (from a file system stat call) into a human-readable string
+ * representing file permissions in the Unix `rwx` format.
+ *
+ * @param mode - The numeric mode value to be converted.
+ * @returns A string representing the file permissions and type. The first character
+ *          indicates the file type (e.g., '-' for regular file, 'd' for directory),
+ *          followed by nine characters representing the owner, group, and other
+ *          permissions (e.g., 'rwxr-xr--').
+ */
+/* eslint-disable no-bitwise */
+function modeToPermissions(mode: number): string {
+  // Constants for the permission bits
+  const READ = 4;
+  const WRITE = 2;
+  const EXECUTE = 1;
+
+  // Masks for the file type
+  const FILE_TYPE_MASK = 0o170000;
+  const REGULAR_FILE = 0o100000;
+  const DIRECTORY = 0o040000;
+  // ... add other file types as needed
+
+  // Helper function to convert a single octal digit to rwx string
+  function toRwxString(value: number): string {
+    return (
+      (value & READ ? 'r' : '-')
+      + (value & WRITE ? 'w' : '-')
+      + (value & EXECUTE ? 'x' : '-')
+    );
+  }
+
+  // Extract the file type and permissions
+  const fileType = mode & FILE_TYPE_MASK;
+  const ownerPermissions = (mode >> 6) & 0o7;
+  const groupPermissions = (mode >> 3) & 0o7;
+  const otherPermissions = mode & 0o7;
+
+  // Convert the file type to a string
+  let typeChar = '-';
+  if (fileType === REGULAR_FILE) {
+    typeChar = '-';
+  } else if (fileType === DIRECTORY) {
+    typeChar = 'd';
+  }
+  // ... add other file types as needed
+
+  // Convert permissions to string
+  const ownerPermsString = toRwxString(ownerPermissions);
+  const groupPermsString = toRwxString(groupPermissions);
+  const otherPermsString = toRwxString(otherPermissions);
+
+  return typeChar + ownerPermsString + groupPermsString + otherPermsString;
+}
+/* eslint-enable no-bitwise */
+
 class FtpClient {
-  private client: Client;
-
-  private connectionSettings: AccessOptions;
-
-  static cleanupRegistered = false;
+  private client = new Client();
 
   /**
-   * Asynchronously handles the cleanup process for a given client.
-   * If the client is not already closed, it closes the client connection.
-   *
-   * @param client - The client instance to be cleaned up.
-   * @returns A promise that resolves when the client has been closed.
-   * @throws If the client's close operation fails, an error may be thrown.
+   * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
+   * @param connectionSettings - The configuration settings used to connect to a service.
    */
-  static async handleCleanup(client: Client) {
-    if (client && !client.closed) {
-      await client.close();
-    }
-  }
-
-  /**
-   * Constructs a new FtpClient instance and initializes it with the provided connection settings.
-   * Registers a cleanup handler to be called on process exit if it has not been registered already.
-   *
-   * @param connectionSettings - The configuration options used to establish the FTP connection.
-   */
-  // Initialize the FtpClient instance with connection settings and prepare for cleanup.
-  constructor(connectionSettings: AccessOptions) {
-    // Create a new instance of the underlying Client.
-    this.client = new Client();
-    // Store the provided connection settings for later use.
-    this.connectionSettings = connectionSettings;
-
-    // Register a cleanup handler on process exit, but only once for all instances.
-    if (!FtpClient.cleanupRegistered) {
-      // Register an asynchronous exit hook to handle client cleanup on process termination.
-      exitHook(async () => FtpClient.handleCleanup(this.client));
-      // Mark that the cleanup handler has been registered to prevent duplicate registration.
-      FtpClient.cleanupRegistered = true;
-    }
-  }
-
-  /**
-   * Checks if the client is currently connected.
-   *
-   * @returns {boolean} - True if the client is connected, false if it is closed.
-   */
-  public isConnected(): boolean {
-    return !this.client.closed;
+  constructor(private connectionSettings: ConnectConfig) {
+    // Register the signal handlers when the instance is created
+    process.on('SIGINT', this.handleSignal.bind(this));
+    process.on('SIGTERM', this.handleSignal.bind(this));
+    process.on('SIGQUIT', this.handleSignal.bind(this));
   }
 
   /**
    * Establishes a connection using the client with the provided connection settings.
-   * It checks if the connection is already established before attempting to connect.
+   * It returns a promise that resolves when the client is ready and rejects if an error
+   * occurs during the connection attempt.
    *
-   * @returns {Promise<void>} A promise that resolves when the connection is established or
-   * if it's already connected.
-   *
-   * @throws {Error} Throws an error if the connection attempt fails.
+   * @returns {Promise<void>} A promise that resolves with no value when the connection
+   * is successfully established, or rejects with an error if the connection fails.
    */
-  public async connect(): Promise<void> {
-    if (!this.isConnected()) {
-      await this.client.access(this.connectionSettings);
-    }
+  public connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.client.on('ready', () => {
+        resolve();
+      }).connect(this.connectionSettings);
+      this.client.on('error', (err) => {
+        reject(err);
+      });
+    });
   }
 
   /**
-   * Disconnects the current FTP session by cleaning up resources associated with the FTP client.
-   * This function is asynchronous and returns a promise that resolves when the cleanup
-   * has completed.
-   *
-   * @returns {Promise<void>} A promise that resolves when the client has been disconnected and
-   * resources are cleaned up.
-   *
-   * @throws {Error} Throws an error if the cleanup process encounters any issues.
+   * Closes the connection to the client.
+   * This method does not take any parameters and does not return any value.
+   * If the client is already disconnected, calling this method may result in an error.
    */
-  public async disconnect(): Promise<void> {
-    await FtpClient.handleCleanup(this.client);
+  public disconnect(): void {
+    this.client.end();
   }
 
   /**
-   * Asynchronously lists files in a specified directory on the server.
+   * Handles the specified system signal by disconnecting the FTP client and
+   * terminating the process. This is meant to perform necessary cleanup when
+   * the process receives a signal like SIGINT or SIGTERM.
    *
-   * @param options - An object containing options for listing files.
-   * @param options.path - The directory path to list the files from.
-   * @param options.fileMask - An optional RegExp to filter files by name.
-   * @param options.priorFile - An optional string to list files after a certain file name.
-   * @param options.includeStream - An optional boolean to include a download stream for each file.
-   * @returns A promise that resolves to an array of FileListing objects, each representing a file.
-   *          If includeStream is true, each FileListing will include a stream to download the file.
-   * @throws Will throw an error if the connection to the server fails or if the listing fails.
+   * @param signal - The signal received from the NodeJS process.
    */
-  public async listFiles(options: ListFileOptions): Promise<FileListing[]> {
-    // Destructure options to extract individual settings.
+  private handleSignal(signal: NodeJS.Signals): void {
+    // console.log(`Received ${signal}, closing FTP client...`);
+    this.disconnect();
+    // After handling the cleanup, we should allow the process to exit naturally
+    process.exit();
+  }
+
+  /**
+   * Asynchronously lists files in a specified directory on a remote SFTP server.
+   *
+   * @param options - The `ListFileOptions` object containing the following properties:
+   *   - `path`: The directory path to list files from.
+   *   - `fileMask`: An optional RegExp to filter files by name.
+   *   - `priorFile`: An optional string to list files that come after this file name in
+   * lexicographical order.
+   *   - `includeStream`: An optional boolean to determine if a read stream should be
+   * included for each file.
+   *
+   * @returns A Promise that resolves to an array of `FileListing` objects, each representing
+   * a file and its details.
+   * If `includeStream` is true, each `FileListing` will also include a read stream for the file.
+   *
+   * The function rejects the Promise with an error if there's an issue connecting to the SFTP
+   * server or reading the directory.
+   */
+  public listFiles(options: ListFileOptions): Promise<FileListing[]> {
+    // Destructure options to extract individual settings
     const {
       path,
       fileMask,
@@ -117,55 +175,107 @@ class FtpClient {
       includeStream = false,
     } = options;
 
-    // Ensure there is a connection before proceeding.
-    await this.connect();
+    // Return a new promise that will handle the asynchronous file listing
+    return new Promise((resolve, reject) => {
+      // Use the SFTP client to start an SFTP session
+      this.client.sftp((err_sftp, sftp) => {
+        // If an error occurs during SFTP session initialization, reject the promise
+        if (err_sftp) {
+          reject(err_sftp);
+          return;
+        }
 
-    // Retrieve the list of files from the client at the specified path.
-    const files = await this.client.list(path);
+        // Read the directory contents at the given path
+        sftp.readdir(path, (err_readdir, list) => {
+          // If an error occurs while reading the directory, reject the promise
+          if (err_readdir) {
+            reject(err_readdir);
+            return;
+          }
 
-    // Filter the retrieved files based on the provided file mask and whether they come
-    // after a specified 'priorFile'.
-    const filteredFiles = files.filter((file) => {
-      const matchesMask = fileMask ? fileMask.test(file.name) : true;
-      const afterPriorFile = priorFile ? file.name.localeCompare(priorFile) > 0 : true;
-      return matchesMask && afterPriorFile;
+          // Map the raw directory listing to a structured format
+          let files = list.map(({ filename, longname, attrs }) => {
+            // Convert file permissions to a string, assuming Unix-like permissions in octal
+            const permissions = attrs.permissions
+              ? attrs.permissions.toString(8)
+              : modeToPermissions(attrs.mode);
+            // Construct a file listing object with detailed file information
+            return {
+              fullPath: `${path}/${filename}`,
+              fileInfo: {
+                name: filename,
+                path,
+                type: longname[0],
+                size: attrs.size,
+                modifyTime: attrs.mtime * 1000,
+                accessTime: attrs.atime * 1000,
+                rights: {
+                  user: permissions.substring(1, 4),
+                  group: permissions.substring(4, 7),
+                  other: permissions.substring(7, 10),
+                },
+                owner: attrs.uid,
+                group: attrs.gid,
+              },
+            };
+          // Filter the files based on the provided file mask and whether they come after a
+          // specified 'priorFile'
+          }).filter((file) => {
+            const matchesMask = fileMask instanceof RegExp ? fileMask.test(file.name) : true;
+            const afterPriorFile = priorFile ? file.name.localeCompare(priorFile) > 0 : true;
+
+            return matchesMask && afterPriorFile;
+          });
+
+          // If the 'includeStream' option is true, attach a read stream for each file
+          if (includeStream) {
+            files = files.map((file) => {
+              const stream = sftp.createReadStream(file.fullPath);
+              return { ...file, stream };
+            });
+          }
+
+          // Resolve the promise with the filtered and possibly augmented list of files
+          resolve(files);
+        });
+      });
     });
-
-    // Map the filtered files to a list of FileListing objects, including a download
-    // stream if requested.
-    const listings = filteredFiles.map((file) => {
-      const fullPath = `${path}/${file.name}`;
-      const listing: FileListing = { fullPath, fileInfo: file };
-      if (includeStream) {
-        // If streams are included, attach a stream to download the file.
-        listing.stream = this.downloadAsStream(fullPath);
-      }
-      return listing;
-    });
-
-    // Return the list of FileListing objects.
-    return listings;
   }
 
   /**
    * Initiates a download of a file from a remote path as a readable stream.
    *
-   * @param remoteFilePath - The path to the remote file to be downloaded.
-   * @param startAt - The byte offset at which to begin the download (default is 0).
-   * @returns A Promise that resolves to a Readable stream from which the file can be read.
-   *
-   * @throws Will throw an error if the connection fails or if the download encounters an error.
+   * @param remoteFilePath - The path to the file on the remote server.
+   * @param useCompression - Optional. If set to true, the stream will be compressed.
+   *                         Defaults to false.
+   * @returns A promise that resolves to a Readable stream of the requested file.
+   *          The promise will be rejected if there is an error initiating the SFTP connection
+   *          or creating the read stream.
    */
-  public async downloadAsStream(
+  public downloadAsStream(
     remoteFilePath: string,
-    startAt = 0,
+    useCompression = false,
   ): Promise<Readable> {
-    await this.connect();
-    const stream = new PassThrough(); // Create a PassThrough stream as a proxy
-    await this.client.downloadTo(stream, remoteFilePath, startAt);
-    return stream;
+    // Return a promise that will resolve with the readable stream or reject with an error.
+    return new Promise((resolve, reject) => {
+      // Use the SFTP client to establish an SFTP session.
+      this.client.sftp((err, sftp) => {
+        // If an error occurs while establishing the SFTP session, reject the promise.
+        if (err) {
+          reject(err);
+          return;
+        }
+
+        // Set stream options based on whether compression is used.
+        const streamOptions = useCompression ? { autoClose: true, highWaterMark: 65536 } : {};
+        // Create a read stream for the remote file with the specified options.
+        const stream = sftp.createReadStream(remoteFilePath, streamOptions);
+        // Resolve the promise with the created read stream.
+        resolve(stream);
+      });
+    });
   }
 }
 
 export default FtpClient; // Export the FtpClient class as the default export
-export { FileInfo, AccessOptions as FTPSettings }; // Export the FileInfo interface
+export { FileInfo, ConnectConfig as FTPSettings }; // Export the FileInfo interface
