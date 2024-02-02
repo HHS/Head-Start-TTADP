@@ -486,8 +486,7 @@ const mapLineToData = (line: Record<string, string>) => {
     if (Object.keys(mappings).includes(key)) {
       const mappedKey = mappings[key] || key;
       data[mappedKey] = toSplit.includes(mappedKey)
-        ? splitPipe(line[key]).map(applyReplacements)
-        : line[key];
+        ? splitPipe(line[key]).map(applyReplacements) : line[key];
     }
   });
 
@@ -528,23 +527,27 @@ export async function csvImport(buffer: Buffer) {
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
-      const eventId = line['Event ID'];
+      const cleanLine = Object.fromEntries(
+        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()]),
+      );
+
+      const eventId = cleanLine['Event ID'];
 
       // If the eventId doesn't start with the prefix R and two numbers, it's invalid.
       if (!eventId.match(/^R\d{2}/i)) {
-        skipped.push(`Invalid "Event ID" format: ${eventId}`);
+        skipped.push(`Invalid "Event ID" format expected R##-TR-#### received ${eventId}`);
         return false;
       }
 
       // Validate audience else skip.
-      if (!EVENT_AUDIENCE.includes(line.Audience)) {
-        skipped.push(`Invalid "Audience" for event: ${eventId}`);
+      if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
+        skipped.push(`Value "${cleanLine.Audience}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
         return false;
       }
 
       const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
-      const creator = line.Creator;
+      const creator = cleanLine.Creator;
       let owner;
       if (creator) {
         owner = await checkUserExists(creator);
@@ -560,7 +563,7 @@ export async function csvImport(buffer: Buffer) {
 
       await checkEventExists(eventId);
 
-      const data = mapLineToData(line);
+      const data = mapLineToData(cleanLine);
 
       data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
       data.goal = '';
@@ -578,7 +581,7 @@ export async function csvImport(buffer: Buffer) {
         ownerId: owner.id,
         regionId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
-        imported: sequelize.cast(JSON.stringify(line), 'jsonb'),
+        imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
       });
 
       return true;
