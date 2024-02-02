@@ -225,7 +225,8 @@
       }
     },
     "setupFiles": [
-      "./src/setupTest.js"
+      "./src/setupTest.js",
+      "./src/env.js"
     ]
   },
   "keywords": [],
@@ -313,7 +314,7 @@
     "cucumber-html-reporter": "^5.2.0",
     "deepmerge": "^4.3.1",
     "dot-wild": "^3.0.1",
-    "dotenv": "^10.0.0",
+    "dotenv": "^16.4.1",
     "email-templates": "^8.0.4",
     "exit-hook": "^4.0.0",
     "express": "^4.17.1",
