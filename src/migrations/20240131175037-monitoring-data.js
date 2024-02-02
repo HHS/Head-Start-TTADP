@@ -570,11 +570,12 @@ module.exports = {
 
       //-----------------------------------------------------------------------------------------
 
+      // All the values read for ENV base on the names
       const ftpSettings = {
-        host: 'sftp.ams20.gov', // TODO: need host
-        port: 22, // TODO: need port
-        username: 'tta_ro', // TODO: need username
-        password: '', // THE name of the ENV that holds the password
+        host: 'ITAMS_MD_HOST',
+        port: 'ITAMS_MD_PORT',
+        username: 'ITAMS_MD_USERNAME',
+        password: 'ITAMS_MD_PASSWORD',
       };
 
       /**

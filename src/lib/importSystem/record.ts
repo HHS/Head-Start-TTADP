@@ -26,10 +26,11 @@ const getPriorFile = async (
   status: string = IMPORT_STATUSES.COLLECTED,
 ) => {
   // Find the prior file associated with the given importId
-  const { name: priorFile } = await ImportFile.findOne({
+  const importFile = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
-      ['ftpFileInfo->>\'name\'', 'name'],
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
     ],
     where: {
       importId,
@@ -37,11 +38,18 @@ const getPriorFile = async (
     },
     // Ordering the results by ftpFileInfo.date in descending order
     // eslint-disable-next-line @typescript-eslint/quotes
-    order: [[`ftpFileInfo->>'date'`, 'DESC']],
+    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
     raw: true,
   });
-  // Return the name of the prior file
-  return priorFile;
+
+  // Check if a file was found
+  if (importFile) {
+    // Return the name of the prior file
+    return importFile.name;
+  }
+  // Handle the case where no file was found
+  // You could return null, undefined, or throw an error, depending on your application's needs
+  return null; // or throw new Error('No prior file found.');
 };
 
 /**
@@ -177,43 +185,30 @@ const recordAvailableFiles = async (
     raw: true,
   });
 
+  const fileMatches = (file, fileSet) => (currentImportFile, availableFile) => (
+    importId === currentImportFile.importId
+    && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+  );
+
   // Separate the available files into new, matched, and removed files
-  const [
-    newfiles,
-    matchedFiles,
-    removedFiles,
-  ] = [
-    // New files are those that are not already recorded in the database
-    availableFiles
-      .filter((availableFile) => !currentImportFiles
-        .some((currentImportFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-    // Matched files are those that are already recorded in the database
-    availableFiles
-      .filter((availableFile) => currentImportFiles
-        .some((currentImportFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-    // Removed files are those that were recorded in the database but are no longer available
-    currentImportFiles
-      .filter((currentImportFile) => !availableFiles
-        .some((availableFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-  ];
+  // New files are those that are not already recorded in the database
+  const newFiles = availableFiles
+    .filter((availableFile) => !currentImportFiles
+      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)));
+  // Matched files are those that are already recorded in the database
+  const matchedFiles = availableFiles
+    .filter((availableFile) => currentImportFiles
+      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)));
+  // Removed files are those that were recorded in the database but are no longer available
+  const removedFiles = currentImportFiles
+    .filter((currentImportFile) => !availableFiles
+      .some((availableFile) => fileMatches(currentImportFile, availableFile)));
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newfiles.length > 0
+    (newFiles.length > 0
       ? ImportFile.bulkCreate(
-        newfiles.map((newFile) => ({
+        newFiles.map((newFile) => ({
           importId,
           ftpFileInfo: newFile.fileInfo,
           status: IMPORT_STATUSES.IDENTIFIED,
@@ -232,7 +227,6 @@ const recordAvailableFiles = async (
           where: {
             importId,
             [Op.and]: [
-              Sequelize.literal(`"ftpFileInfo" -> 'path' = '${matchedFile.fileInfo.path}'`),
               Sequelize.literal(`"ftpFileInfo" -> 'name' = '${matchedFile.fileInfo.name}'`),
             ],
           },
@@ -272,43 +266,31 @@ const recordAvailableDataFiles = async (
     raw: true,
   });
 
+  const fileMatches = (file, fileSet) => (currentImportDataFile, availableFile) => (
+    importFileId === currentImportDataFile.importFileId
+    && availableFile.path === currentImportDataFile.fileInfo.path
+    && availableFile.fileInfo.name === currentImportDataFile.fileInfo.name
+  );
+
   // Separate the available files into new, matched, and removed files
-  const [
-    newfiles,
-    matchedFiles,
-    removedFiles,
-  ] = [
-    // New files are those that are not already recorded in the database
-    availableFiles
-      .filter((availableFile) => !currentImportDataFiles
-        .some((currentImportDataFile) => (
-          importFileId === currentImportDataFile.importFileId
-          && availableFile.path === currentImportDataFile.fileInfo.path
-          && availableFile.name === currentImportDataFile.fileInfo.name
-        ))),
-    // Matched files are those that are already recorded in the database
-    availableFiles
-      .filter((availableFile) => currentImportDataFiles
-        .some((currentImportFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-    // Removed files are those that were recorded in the database but are no longer available
-    currentImportDataFiles
-      .filter((currentImportFile) => !availableFiles
-        .some((availableFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-  ];
+  // New files are those that are not already recorded in the database
+  const newFiles = availableFiles
+    .filter((availableFile) => !currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Matched files are those that are already recorded in the database
+  const matchedFiles = availableFiles
+    .filter((availableFile) => currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Removed files are those that were recorded in the database but are no longer available
+  const removedFiles = currentImportDataFiles
+    .filter((currentImportDataFile) => !availableFiles
+      .some((availableFile) => fileMatches(currentImportDataFile, availableFile)));
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newfiles.length > 0
+    (newFiles.length > 0
       ? ImportFile.bulkCreate(
-        newfiles.map((newFile) => ({
+        newFiles.map((newFile) => ({
           importFileId,
           fileInfo: newFile,
           status: IMPORT_STATUSES.IDENTIFIED,

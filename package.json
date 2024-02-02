@@ -69,6 +69,7 @@
     "docker:db:migrate:undo": "docker-compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
     "docker:db:seed": "docker-compose run --rm backend yarn db:seed",
     "docker:db:seed:undo": "docker-compose run --rm backend yarn db:seed:undo",
+    "docker:import:system": "docker-compose run --rm backend yarn import:system",
     "docker:ldm": "docker-compose run --rm backend yarn ldm",
     "docker:makecolors": "docker-compose run --rm frontend yarn makecolors",
     "docker:yarn": "docker-compose run yarn",
@@ -82,6 +83,7 @@
     "import:goals": "node ./build/server/src/tools/importTTAPlanGoals.js",
     "import:hses:local": "./node_modules/.bin/babel-node ./src/tools/importGrantRecipientsCLI.js --skipdownload",
     "import:hses": "node ./build/server/src/tools/importGrantRecipientsCLI.js",
+    "import:system": "cross-env POSTGRES_USERNAME=postgres POSTGRES_DB=ttasmarthub tsx src/tools/importSystemCLI.ts",
     "reconcile:legacy": "node ./build/server/src/tools/reconcileLegacyReports.js",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
@@ -223,7 +225,8 @@
       }
     },
     "setupFiles": [
-      "./src/setupTest.js"
+      "./src/setupTest.js",
+      "./src/env.js"
     ]
   },
   "keywords": [],
@@ -256,6 +259,7 @@
     "@babel/preset-typescript": "^7.18.6",
     "@cucumber/cucumber": "^7.0.0",
     "@playwright/test": "^1.28.0",
+    "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^5.13.0",
     "@typescript-eslint/parser": "^5.0.0",
     "concurrently": "^7.0.0",
@@ -297,6 +301,7 @@
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
     "axios": "^0.24.0",
+    "basic-ftp": "^5.0.4",
     "bull": "^4.2.0",
     "chardet": "^2.0.0",
     "cheerio": "^1.0.0-rc.10",
@@ -309,8 +314,9 @@
     "cucumber-html-reporter": "^5.2.0",
     "deepmerge": "^4.3.1",
     "dot-wild": "^3.0.1",
-    "dotenv": "^10.0.0",
+    "dotenv": "^16.4.1",
     "email-templates": "^8.0.4",
+    "exit-hook": "^4.0.0",
     "express": "^4.17.1",
     "express-http-context": "^1.2.4",
     "express-unless": "^1.0.0",
@@ -329,7 +335,6 @@
     "multiparty": "^4.2.2",
     "mz": "^2.7.0",
     "newrelic": "^11.6.0",
-    "node-cleanup": "^2.1.2",
     "nodemailer": "^6.5.0",
     "pg": "^8.3.3",
     "plantuml-encoder": "^1.4.0",
@@ -338,6 +343,7 @@
     "sax": "^1.3.0",
     "sequelize": "^6.29.0",
     "sequelize-cli": "^6.2.0",
+    "ssh2": "^1.15.0",
     "throng": "^5.0.0",
     "through2": "^4.0.2",
     "unzipper": "^0.10.14",
