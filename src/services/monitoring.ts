@@ -77,6 +77,7 @@ export async function monitoringData({
               {
                 model: MonitoringReviewLink,
                 as: 'monitoringReviewLink',
+                required: true,
                 include: [
                   {
                     model: MonitoringReview,
