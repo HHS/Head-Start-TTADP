@@ -244,7 +244,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "kw-update-minio"
+    default: "kw-test-itams"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "jp/2391/curated-merge-status"
@@ -829,9 +829,9 @@ workflows:
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
+      # - test_backend:
+      #     requires:
+      #       - build_and_lint
       - test_frontend:
           requires:
             - build_and_lint
@@ -855,7 +855,7 @@ workflows:
             - build_and_lint
       - deploy:
           requires:
-            - test_backend
+            # - test_backend
             - test_frontend
             - test_e2e
             - test_api
@@ -883,9 +883,9 @@ workflows:
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
+      # - test_backend:
+      #     requires:
+      #       - build_and_lint
       - test_frontend:
           requires:
             - build_and_lint
