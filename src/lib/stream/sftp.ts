@@ -93,7 +93,7 @@ function modeToPermissions(mode: number): string {
 }
 /* eslint-enable no-bitwise */
 
-class FtpClient {
+class SftpClient {
   private client = new Client();
 
   private connected = false; // Add a property to track the connection state
@@ -323,5 +323,5 @@ class FtpClient {
   }
 }
 
-export default FtpClient; // Export the FtpClient class as the default export
-export { FileInfo, ConnectConfig as FTPSettings }; // Export the FileInfo interface
+export default SftpClient; // Export the FtpClient class as the default export
+export { FileInfo, ConnectConfig as SFTPSettings }; // Export the FileInfo interface
