@@ -4,7 +4,7 @@ import {
   collectFilesFromSource,
   downloadFilesFromSource,
 } from '../download';
-import { FileInfo as FTPFileInfo } from '../../stream/ftp';
+import { FileInfo as SFTPFileInfo } from '../../stream/sftp';
 import db from '../../../models';
 
 // Mocks for external dependencies

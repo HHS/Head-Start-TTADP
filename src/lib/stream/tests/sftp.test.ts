@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import FtpClient, { FTPSettings, FileInfo } from '../ftp';
+import SftpClient, { SFTPSettings, FileInfo } from '../sftp';
 
 function isInDocker(): boolean {
   try {
@@ -11,8 +11,8 @@ function isInDocker(): boolean {
 }
 
 describe('FtpClient Integration Tests', () => {
-  let ftpClient: FtpClient;
-  let connectionSettings: FTPSettings;
+  let sftpClient: SftpClient;
+  let connectionSettings: SFTPSettings;
 
   beforeAll(() => {
     // process.env = {}; // Optionally clear the previous env
@@ -29,40 +29,40 @@ describe('FtpClient Integration Tests', () => {
       password: process.env.ITAMS_MD_PASSWORD,
     };
     console.log(connectionSettings);
-    ftpClient = new FtpClient(connectionSettings);
+    sftpClient = new SftpClient(connectionSettings);
   });
 
   afterAll(async () => {
-    await ftpClient.disconnect();
+    await sftpClient.disconnect();
   });
 
   describe('connect and disconnect', () => {
     it('should connect to the SFTP server and then disconnect', async () => {
-      await ftpClient.connect();
-      expect(ftpClient.isConnected()).toBe(true);
+      await sftpClient.connect();
+      expect(sftpClient.isConnected()).toBe(true);
 
-      await ftpClient.disconnect();
-      expect(ftpClient.isConnected()).toBe(false);
+      await sftpClient.disconnect();
+      expect(sftpClient.isConnected()).toBe(false);
     });
     it('should re-connect to the SFTP server and then disconnect', async () => {
-      await ftpClient.connect();
-      expect(ftpClient.isConnected()).toBe(true);
+      await sftpClient.connect();
+      expect(sftpClient.isConnected()).toBe(true);
 
-      await ftpClient.disconnect();
-      expect(ftpClient.isConnected()).toBe(false);
+      await sftpClient.disconnect();
+      expect(sftpClient.isConnected()).toBe(false);
 
-      await ftpClient.connect();
-      expect(ftpClient.isConnected()).toBe(true);
+      await sftpClient.connect();
+      expect(sftpClient.isConnected()).toBe(true);
 
-      await ftpClient.disconnect();
-      expect(ftpClient.isConnected()).toBe(false);
+      await sftpClient.disconnect();
+      expect(sftpClient.isConnected()).toBe(false);
     });
   });
 
   describe('listFiles', () => {
     it('should list files in the specified directory', async () => {
-      await ftpClient.connect();
-      const files = await ftpClient.listFiles({ path: '/ProdTTAHome' });
+      await sftpClient.connect();
+      const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
       expect(Array.isArray(files)).toBe(true);
       files.forEach((file) => {
         expect(file).toHaveProperty('fullPath');
@@ -77,10 +77,10 @@ describe('FtpClient Integration Tests', () => {
 
   describe('downloadAsStream', () => {
     it('should download a file as a stream', async () => {
-      await ftpClient.connect();
+      await sftpClient.connect();
       const remoteFilePath = '/ProdTTAHome/2023_07_20_XML.zip'; // Replace with an actual file path on your SFTP server
 
-      const stream = await ftpClient.downloadAsStream(remoteFilePath);
+      const stream = await sftpClient.downloadAsStream(remoteFilePath);
       expect(stream).toBeDefined();
     });
   });

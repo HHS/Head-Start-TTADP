@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import FtpClient, { FileInfo as FTPFileInfo, FTPSettings } from '../stream/ftp';
+import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings } from '../stream/sftp';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
 import db from '../../models';
@@ -34,7 +34,7 @@ const collectNextFile = async (
   importId: number,
   availableFiles: {
     fullPath: string,
-    fileInfo: FTPFileInfo,
+    fileInfo: SFTPFileInfo,
     stream?: Promise<Readable>,
   }[],
   times: {
@@ -242,7 +242,7 @@ console.log(++i, serverSettings);
   let ftpClient;
   try {
     // Create a new FTP client instance with the FTP server settings
-    ftpClient = new FtpClient(serverSettings);
+    ftpClient = new SftpClient(serverSettings);
   } catch (error) {
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
@@ -260,7 +260,7 @@ console.log(++i, serverSettings);
 
   let availableFiles: {
     fullPath: string,
-    fileInfo: FTPFileInfo,
+    fileInfo: SFTPFileInfo,
     stream?: Promise<Readable>,
   }[];
   try {
@@ -316,7 +316,7 @@ const downloadFilesFromSource = async (
   // Retrieve import file data from the database
   const importFileData: {
     importId: number,
-    ftpSettings: FTPSettings,
+    ftpSettings: SFTPSettings,
     path: string,
     fileMask?: string | undefined,
   } = await Import.findOne({
