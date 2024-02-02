@@ -115,6 +115,7 @@ const collectNextFile = async (
       importFileData.key,
       hashStream,
     );
+
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED),
       setImportFileHash(
@@ -123,6 +124,7 @@ const collectNextFile = async (
         IMPORT_STATUSES.COLLECTED,
       ),
     ]);
+
     importedFiles.push(importFileData);
   } catch (err) {
     // Quinary exit - error during upload
@@ -133,6 +135,7 @@ const collectNextFile = async (
         IMPORT_STATUSES.COLLECTION_FAILED,
       ),
     ]);
+
     auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`);
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(
@@ -177,23 +180,23 @@ const collectNextFile = async (
  */
 const collectServerSettings = (
   importId: number,
-  ftpSettings: { host: string, port: string, user: string, password },
+  ftpSettings: { host: string, port: string, username: string, password },
 ) => {
   const {
     host: hostEnv, // The environment variable name for the FTP server host
     port: portEnv, // The environment variable name for the FTP server port
-    user: userEnv, // The environment variable name for the FTP server username
+    username: userEnv, // The environment variable name for the FTP server username
     password: passwordEnv, // The environment variable name for the FTP server password
   } = ftpSettings;
   // Retrieve the FTP server password from the environment variable
   const {
     [hostEnv]: host,
     [portEnv]: port,
-    [userEnv]: user,
+    [userEnv]: username,
     [passwordEnv]: password,
   } = process.env;
 
-  if (!host || !port || !user || !password) {
+  if (!host || !port || !username || !password) {
     const missing = [];
     if (!host) {
       missing.push(`'${hostEnv}' did not resolve to a value`);
@@ -201,7 +204,7 @@ const collectServerSettings = (
     if (!port) {
       missing.push(`'${portEnv}' did not resolve to a value`);
     }
-    if (!user) {
+    if (!username) {
       missing.push(`'${userEnv}' did not resolve to a value`);
     }
     if (!password) {
@@ -212,7 +215,7 @@ const collectServerSettings = (
   return {
     host,
     port: parseInt(port, 10),
-    user,
+    username,
     password,
   };
 };
@@ -237,8 +240,7 @@ const collectFilesFromSource = async (
   fileMask?: string | undefined, // The file mask to filter files (optional)
 ) => {
   const serverSettings = collectServerSettings(importId, ftpSettings);
-  let i = 0;
-console.log(++i, serverSettings);
+
   let ftpClient;
   try {
     // Create a new FTP client instance with the FTP server settings
@@ -247,16 +249,13 @@ console.log(++i, serverSettings);
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
-  console.log(++i, ftpClient);
   const priorFile = await getPriorFile(importId); // Get the prior file for the import
 
-  console.log(++i, priorFile);
   try {
     await ftpClient.connect();
   } catch (err) {
     throw new Error(`Failed to connect to FTP: ${err.message}`);
   }
-  console.log(++i, ftpClient);
 
   let availableFiles: {
     fullPath: string,
@@ -264,16 +263,22 @@ console.log(++i, serverSettings);
     stream?: Promise<Readable>,
   }[];
   try {
+    console.log('A', {
+      path, // The path on the FTP server to search for files
+      fileMask, // The file mask to filter files
+      priorFile, // The prior file for comparison
+      includeStream: true, // include streams
+    });
     availableFiles = await ftpClient.listFiles({
       path, // The path on the FTP server to search for files
       fileMask, // The file mask to filter files
       priorFile, // The prior file for comparison
       includeStream: true, // include streams
-  }); // Get the list of available files on the FTP server
+    }); // Get the list of available files on the FTP server
+    console.log('B', availableFiles);
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }
-  console.log(++i, availableFiles);
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
