@@ -574,7 +574,7 @@ module.exports = {
       const ftpSettings = {
         host: 'ITAMS_MD_HOST',
         port: 'ITAMS_MD_PORT',
-        user: 'ITAMS_MD_USERNAME',
+        username: 'ITAMS_MD_USERNAME',
         password: 'ITAMS_MD_PASSWORD',
       };
 
