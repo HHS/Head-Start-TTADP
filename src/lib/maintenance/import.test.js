@@ -133,12 +133,12 @@ describe('import', () => {
         );
 
         const [
-          catagory,
+          category,
           type,
           jobCommand,
           suppliedSchedule,
         ] = addCronJob.mock.calls[index];
-        await jobCommand(catagory, type, '', suppliedSchedule);
+        await jobCommand(category, type, '', suppliedSchedule);
         const [
           cronSchedule,
           callbackCommand,
