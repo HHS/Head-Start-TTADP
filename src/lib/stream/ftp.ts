@@ -30,6 +30,7 @@ interface FileInfo {
   owner: number;
   group: number;
 }
+
 interface FileListing {
   fullPath: string;
   fileInfo: FileInfo;
@@ -95,15 +96,34 @@ function modeToPermissions(mode: number): string {
 class FtpClient {
   private client = new Client();
 
+  private connected = false; // Add a property to track the connection state
+
   /**
    * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
    * @param connectionSettings - The configuration settings used to connect to a service.
    */
   constructor(private connectionSettings: ConnectConfig) {
+    // Set the connected flag to false when the connection is closed
+    this.client.on('end', () => {
+      this.connected = false;
+    });
+    this.client.on('close', () => {
+      this.connected = false;
+    });
+
     // Register the signal handlers when the instance is created
     process.on('SIGINT', this.handleSignal.bind(this));
     process.on('SIGTERM', this.handleSignal.bind(this));
     process.on('SIGQUIT', this.handleSignal.bind(this));
+  }
+
+  /**
+   * Checks if the client is currently connected.
+   *
+   * @returns {boolean} True if the client is connected, false otherwise.
+   */
+  public isConnected(): boolean {
+    return this.connected;
   }
 
   /**
@@ -116,12 +136,32 @@ class FtpClient {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.client.on('ready', () => {
+      if (this.connected) {
         resolve();
-      }).connect(this.connectionSettings);
-      this.client.on('error', (err) => {
+        return;
+      }
+
+      // Create a new Client instance if the previous one is unusable
+      this.client = new Client();
+
+      // Set up event listeners for the new Client instance
+      this.client.on('ready', () => {
+        this.connected = true;
+        resolve();
+      }).on('error', (err) => {
+        this.connected = false; // Ensure the connected flag is set to false on error
         reject(err);
+      }).on('end', () => {
+        this.connected = false;
+      }).on('close', (hadError) => {
+        this.connected = false;
+        if (hadError) {
+          reject(new Error('Connection closed due to a transmission error'));
+        }
       });
+
+      // Attempt to connect with the new Client instance
+      this.client.connect(this.connectionSettings);
     });
   }
 
@@ -131,7 +171,11 @@ class FtpClient {
    * If the client is already disconnected, calling this method may result in an error.
    */
   public disconnect(): void {
-    this.client.end();
+    if (this.isConnected()) {
+      this.client.end(); // End the current connection
+      this.connected = false;
+    }
+    this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
   }
 
   /**
@@ -166,7 +210,8 @@ class FtpClient {
    * The function rejects the Promise with an error if there's an issue connecting to the SFTP
    * server or reading the directory.
    */
-  public listFiles(options: ListFileOptions): Promise<FileListing[]> {
+  public async listFiles(options: ListFileOptions): Promise<FileListing[]> {
+    if (!this.isConnected()) await this.connect();
     // Destructure options to extract individual settings
     const {
       path,
@@ -252,10 +297,11 @@ class FtpClient {
    *          The promise will be rejected if there is an error initiating the SFTP connection
    *          or creating the read stream.
    */
-  public downloadAsStream(
+  public async downloadAsStream(
     remoteFilePath: string,
     useCompression = false,
   ): Promise<Readable> {
+    if (!this.isConnected()) await this.connect();
     // Return a promise that will resolve with the readable stream or reject with an error.
     return new Promise((resolve, reject) => {
       // Use the SFTP client to establish an SFTP session.
