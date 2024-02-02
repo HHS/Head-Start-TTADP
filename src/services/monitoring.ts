@@ -61,7 +61,6 @@ export async function monitoringData({
       recipientId,
       number: grantNumber, // since we query by grant number, there can only be one anyways
     },
-    required: true,
     include: [
       {
         model: GrantNumberLink,
@@ -116,6 +115,7 @@ export async function monitoringData({
     ],
   });
 
+  // get the first grant (remember, there can only be one)
   const grant = (grants[0]?.toJSON() || null);
 
   if (!grant) {
@@ -125,14 +125,15 @@ export async function monitoringData({
 
   // since all the joins made in the query above are inner joins
   // we can count on the rest of this data being present
-
   const { monitoringReviewGrantees } = grant.grantNumberLink;
 
   // get the most recent review
+  // - 1) first extract from the join tables
   const monitoringReviews = monitoringReviewGrantees.map(
     (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews,
   ).flat();
 
+  // - 2) then sort to get the most recent
   const monitoringReview = monitoringReviews.reduce((
     a: IMonitoringReview,
     b: IMonitoringReview,
@@ -143,8 +144,11 @@ export async function monitoringData({
     return b;
   }, monitoringReviews[0]);
 
+  // from the most recent review, get the status via the statusLink
   const { monitoringReviewStatuses } = monitoringReview.statusLink;
+
   // I am presuming there can only be one status linked to a review
+  // as that was the structure before tables were refactored
   const [status] = monitoringReviewStatuses;
 
   return {
