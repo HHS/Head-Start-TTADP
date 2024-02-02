@@ -316,3 +316,10 @@ exports.LANGUAGES = LANGUAGES;
   ];
 
 exports.SUPPORT_TYPES = SUPPORT_TYPES;
+
+const EVENT_AUDIENCE = [
+  'Recipients',
+  'Regional office/TTA',
+];
+
+exports.EVENT_AUDIENCE = EVENT_AUDIENCE;
