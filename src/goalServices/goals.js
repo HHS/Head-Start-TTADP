@@ -2844,7 +2844,82 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
   };
 }
 
-async function goalCombinatory(selectedGoals, finalGoal) {
+/**
+ *
+ * @param {number} finalGoalId
+ * @param {number[]} selectedGoalIds
+ */
+
+export async function mergeGoals(
+  finalGoalId,
+  selectedGoalIds,
+  goalSimiliarityGroupId,
+) {
+  // create a new goal from "finalGoalId"
+  // - update selectedGoalIds to point to newGoalId
+  // - i.e. { parentGoalId: newGoalId }
+  // - update goal template id
+  // createdAt should be min date of all goals
+  // update all the other goals to point to the new goal
+  // - derive status from chart in AC
+  const selectedGoals = await Goal.findAll({
+    where: {
+      id: uniq([finalGoalId, ...selectedGoalIds]),
+    },
+    include: [
+      {
+        model: ActivityReportGoal,
+        as: 'activityReportGoals',
+        attributes: [
+          'id',
+          'goalId',
+        ],
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        attributes: ['id', 'goalTemplateFieldPromptId', 'response'],
+      },
+      {
+        model: GoalResource,
+        as: 'goalResources',
+        attributes: ['id', 'resourceId'],
+      },
+      {
+        model: Objective,
+        as: 'objectives',
+        include: [
+          {
+            model: ObjectiveFile,
+            as: 'objectiveFiles',
+            attributes: ['id', 'fileId', 'objectiveId'],
+          },
+          {
+            model: ObjectiveResource,
+            as: 'objectiveResources',
+            attributes: ['id', 'resourceId', 'objectiveId'],
+          },
+          {
+            model: ObjectiveTopic,
+            as: 'objectiveTopics',
+            attributes: ['id', 'topicId', 'objectiveId'],
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: ['id', 'objectiveId'],
+          },
+        ],
+      },
+    ],
+  });
+
+  const finalGoal = selectedGoals.find((goal) => goal.id === parseInt(finalGoalId, DECIMAL_BASE));
+
+  if (!finalGoal) {
+    throw new Error(`Goal with id ${finalGoalId} not found in merge goals`);
+  }
+
   const finalGoalValues = determineFinalGoalValues(selectedGoals, finalGoal);
 
   /**
@@ -2974,6 +3049,9 @@ async function goalCombinatory(selectedGoals, finalGoal) {
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
         },
       ));
+
+      // TODO: if the report is not approved, the name, resources and responses should also
+      // be updated
     }
 
     // copy the goal resources
@@ -2989,7 +3067,7 @@ async function goalCombinatory(selectedGoals, finalGoal) {
       }));
     });
 
-    if (Number(g.id) === Number(finalGoal.id)) {
+    if (Number(g.id) === Number(finalGoalId)) {
       // copy the goal field responses
       g.responses.forEach((gfr) => {
         Object.values(grantToGoalDictionary).forEach((goalId) => {
@@ -3013,87 +3091,6 @@ async function goalCombinatory(selectedGoals, finalGoal) {
     return u;
   }));
 
-  return newGoals;
-}
-
-/**
- *
- * @param {number} finalGoalId
- * @param {number[]} selectedGoalIds
- */
-
-export async function mergeGoals(
-  finalGoalId,
-  selectedGoalIds,
-  goalSimiliarityGroupId,
-) {
-  // create a new goal from "finalGoalId"
-  // - update selectedGoalIds to point to newGoalId
-  // - i.e. { parentGoalId: newGoalId }
-  // - update goal template id
-  // createdAt should be min date of all goals
-  // update all the other goals to point to the new goal
-  // - derive status from chart in AC
-  const selectedGoals = await Goal.findAll({
-    where: {
-      id: uniq([finalGoalId, ...selectedGoalIds]),
-    },
-    include: [
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        attributes: [
-          'id',
-          'goalId',
-        ],
-      },
-      {
-        model: GoalFieldResponse,
-        as: 'responses',
-        attributes: ['id', 'goalTemplateFieldPromptId', 'response'],
-      },
-      {
-        model: GoalResource,
-        as: 'goalResources',
-        attributes: ['id', 'resourceId'],
-      },
-      {
-        model: Objective,
-        as: 'objectives',
-        include: [
-          {
-            model: ObjectiveFile,
-            as: 'objectiveFiles',
-            attributes: ['id', 'fileId', 'objectiveId'],
-          },
-          {
-            model: ObjectiveResource,
-            as: 'objectiveResources',
-            attributes: ['id', 'resourceId', 'objectiveId'],
-          },
-          {
-            model: ObjectiveTopic,
-            as: 'objectiveTopics',
-            attributes: ['id', 'topicId', 'objectiveId'],
-          },
-          {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            attributes: ['id', 'objectiveId'],
-          },
-        ],
-      },
-    ],
-  });
-
-  const finalGoal = selectedGoals.find((goal) => goal.id === parseInt(finalGoalId, DECIMAL_BASE));
-
-  if (!finalGoal) {
-    throw new Error(`Goal with id ${finalGoalId} not found in merge goals`);
-  }
-
-  const newGoals = await goalCombinatory(selectedGoals, finalGoal);
-
   // record the merge as complete
   await setSimilarityGroupAsUserMerged(
     goalSimiliarityGroupId,
@@ -3102,7 +3099,6 @@ export async function mergeGoals(
 
   return newGoals;
 }
-
 export async function goalRegionsById(goalIds) {
   const grants = await Grant.findAll({
     attributes: ['regionId', 'id'],
