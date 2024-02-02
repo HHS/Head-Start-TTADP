@@ -1,4 +1,26 @@
+import { GOAL_STATUS } from '../constants';
+import db from '../models';
 import { similarGoalsForRecipient } from '../services/similarity';
+
+const { sequelize, Goal, Grant } = db;
+
+interface ISimilarGoal {
+  ids: number[];
+  name: string;
+  status: string;
+  goalTemplateId: number;
+  isCuratedTemplate?: boolean;
+}
+
+interface ISimilarResult {
+  goal: {
+    grantId: number;
+    id: number;
+    name: string;
+    isTemplate: boolean;
+  };
+  similarity: number;
+}
 
 /**
  * Figures out how strict we want our match to be based
@@ -17,6 +39,7 @@ export function determineSimilarityAlpha(numberOfWords: number) {
 export default async function nudge(
   recipientId: number,
   text: string,
+  grantNumbers: string[],
 ) {
   // guess at number of words
   const numberOfWordsInText = text.split(' ').length;
@@ -28,19 +51,73 @@ export default async function nudge(
     false, // no clustering
     {
       alpha, // similarity alpha
+      include_curated_templates: 1,
     },
-  );
+  ) as { result: ISimilarResult[] };
 
-  //
-  //   TODO: we need to query Sequelize here (or alter the NLP service) to satisfy the following:
-  //
+  const goalIds = new Set<number>();
+  const goalTemplates = [];
+
+  // get the goal ids and template ids
+  similarGoals.result.forEach((result) => {
+    if (result.goal.isTemplate) {
+      goalTemplates.push(result.goal);
+    } else {
+      goalIds.add(result.goal.id);
+    }
+  });
+
   // - if multiple grant numbers are selected, the matched goals need to have all grants and
   //   those grants need to have the same status on the goal
-  //
-  // - Making OHS initiatives always available for goal creation. Curated goals already prevent
-  //   duplicates from being created. You can only have one open FEI or monitoring goal at a time,
-  //   but you can have many closed FEI and monitoring goals
-  //
 
-  return similarGoals;
+  const goals = (await Goal.findAll({
+    attributes: [
+      'name',
+      'status',
+      'goalTemplateId',
+      [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.id')), 'ids'],
+      [sequelize.literal('FALSE'), 'isCuratedTemplate'],
+    ],
+    where: {
+      id: Array.from(goalIds),
+    },
+    include: [
+      {
+        attributes: [],
+        as: 'grant',
+        model: Grant.unscoped(),
+        where: {
+          number: grantNumbers,
+        },
+      },
+    ],
+    group: [
+      '"Goal"."name"',
+      '"Goal"."status"',
+      '"Goal"."goalTemplateId"',
+    ],
+    order: [['name', 'ASC']],
+    having: sequelize.where(
+      sequelize.fn('COUNT', sequelize.col('grant.id')),
+      grantNumbers.length,
+    ),
+  })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
+
+  const templateIds = goals.map((goal) => goal.goalTemplateId);
+
+  // iterate through the goal templates and
+  // add any that are not already in the goals
+  goalTemplates.forEach((template) => {
+    if (!templateIds.includes(template.id)) {
+      goals.unshift({
+        ids: [template.id],
+        name: template.name,
+        status: GOAL_STATUS.NOT_STARTED,
+        goalTemplateId: template.id,
+        isCuratedTemplate: true,
+      });
+    }
+  });
+
+  return goals;
 }
