@@ -466,7 +466,7 @@ describe('event service', () => {
     Planning/Coordination"`;
     const organizer = 'Dumbledore';
 
-    const headings = ['Sheet Name', 'Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
+    const headings = ['Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
 
     beforeAll(async () => {
       await db.User.create({
@@ -484,8 +484,8 @@ describe('event service', () => {
       });
       user = await db.User.findOne({ where: { id: userId } });
       data = `${headings.join(',')}
-      ,${eventId},${editTitle},${istName},${email},${organizer},${duration},${reasons},${targetPopulation},${audience},${vision}
-      ,R01-TR-4234,bad_title,bad_istname,bad_email,bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
+${eventId},${editTitle},${istName},${email},${organizer},${duration},${reasons},${targetPopulation},${audience},${vision}
+R01-TR-4234,bad_title,bad_istname,bad_email,bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
 
       buffer = Buffer.from(data);
     });
@@ -524,7 +524,7 @@ describe('event service', () => {
       expect(result.errors).toEqual(['User bad_email does not exist']);
 
       const secondImport = `${headings.join(',')}
-      ,${eventId},bad_title,bad_istname,${email},bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
+${eventId},bad_title,bad_istname,${email},bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
 
       // Subsequent import with event ID that already exists in the database
       // should skip importing this TR.
@@ -548,9 +548,9 @@ describe('event service', () => {
     it('skips rows that don\'t start with the correct prefix', async () => {
       const reportId = 'R01-TR-5842';
       const dataToTest = `${headings.join(',')}
-      ,${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
-      ,01-TR-4256,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
-      ,R-TR-3426,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision`;
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
+01-TR-4256,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
+R-TR-3426,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision`;
 
       eventIdsToDestroy.push(reportId);
 
@@ -559,14 +559,16 @@ describe('event service', () => {
       const result = await csvImport(bufferWithSkips);
       expect(result.count).toEqual(1);
       expect(result.skipped.length).toEqual(2);
-      expect(result.skipped).toEqual(['Invalid "Event ID" format: 01-TR-4256', 'Invalid "Event ID" format: R-TR-3426']);
+      expect(result.skipped).toEqual(
+        ['Invalid "Event ID" format expected R##-TR-#### received 01-TR-4256', 'Invalid "Event ID" format expected R##-TR-#### received R-TR-3426'],
+      );
     });
 
     it('only imports valid columns ignores others', async () => {
       const mixedColumns = `${headings.join(',')},Extra Column`;
       const reportId = 'R01-TR-3478';
       const dataToTest = `${mixedColumns}
-      ,${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision,extra_data`;
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision,extra_data`;
 
       eventIdsToDestroy.push(reportId);
 
@@ -595,7 +597,7 @@ describe('event service', () => {
       Planning/Coordination
       Invalid Reason"`;
       const dataToTest = `${headings.join(',')}
-      ,${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,${reasonsToTest},tr_target,${audience},tr_vision`;
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,${reasonsToTest},tr_target,${audience},tr_vision`;
 
       eventIdsToDestroy.push(reportId);
 
@@ -621,7 +623,7 @@ describe('event service', () => {
       Pregnant Women / Pregnant Persons
       Invalid Pop"`;
       const dataToTest = `${headings.join(',')}
-      ,${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,Complaint,${tgtPopToTest},${audience},tr_vision`;
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,Complaint,${tgtPopToTest},${audience},tr_vision`;
 
       eventIdsToDestroy.push(reportId);
 
@@ -644,8 +646,8 @@ describe('event service', () => {
     it('skips rows that have an invalid audience', async () => {
       const reportId = 'R01-TR-5725';
       const dataToTest = `${headings.join(',')}
-      ,${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Regional office/TTA",tr_vision
-      ,R01-TR-4658,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Invalid Audience",tr_vision`;
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Regional office/TTA",tr_vision
+R01-TR-4658,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Invalid Audience",tr_vision`;
 
       eventIdsToDestroy.push(reportId);
 
@@ -654,7 +656,7 @@ describe('event service', () => {
       const result = await csvImport(bufferWithSkips);
       expect(result.count).toEqual(1);
       expect(result.skipped.length).toEqual(1);
-      expect(result.skipped).toEqual(['Invalid "Audience" for event: R01-TR-4658']);
+      expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-4658']);
 
       // Retrieve the imported event.
       const importedEvent = await db.EventReportPilot.findOne({
