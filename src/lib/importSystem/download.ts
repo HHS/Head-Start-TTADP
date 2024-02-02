@@ -13,6 +13,7 @@ import {
 import { updateStatusByKey } from '../../services/files';
 import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
 import addToScanQueue from '../../services/scanQueue';
+import { auditLogger } from '../../logger';
 
 const {
   Import,
@@ -66,18 +67,18 @@ const collectNextFile = async (
       hasImportedFiles: !!importedFiles,
       hasRemainingFiles: false,
     };
-  // Secondary exit - Ran out of time
   }
 
+  // Secondary exit - Ran out of time
   if (currentStart > limit) {
     return {
       collectedFiles: importedFiles,
       hasImportedFiles: !!importedFiles,
       hasRemainingFiles: !!availableFile,
     };
-  // Tertiary exit - trending duration will exceed alloted time
   }
 
+  // Tertiary exit - trending duration will exceed alloted time
   if ((used.length || 0) > 0) {
     const avg = (used?.reduce((acc, val) => acc + val, 0) || 1) / (used?.length || 1);
     if (new Date(currentStart.getTime() + avg) > limit) {
@@ -132,7 +133,7 @@ const collectNextFile = async (
         IMPORT_STATUSES.COLLECTION_FAILED,
       ),
     ]);
-    // TODO: log error
+    auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`);
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(
       importId,
@@ -176,23 +177,23 @@ const collectNextFile = async (
  */
 const collectServerSettings = (
   importId: number,
-  ftpSettings: { host: string, port: string, username: string, password },
+  ftpSettings: { host: string, port: string, user: string, password },
 ) => {
   const {
     host: hostEnv, // The environment variable name for the FTP server host
     port: portEnv, // The environment variable name for the FTP server port
-    username: usernameEnv, // The environment variable name for the FTP server username
+    user: userEnv, // The environment variable name for the FTP server username
     password: passwordEnv, // The environment variable name for the FTP server password
   } = ftpSettings;
   // Retrieve the FTP server password from the environment variable
   const {
     [hostEnv]: host,
     [portEnv]: port,
-    [usernameEnv]: username,
+    [userEnv]: user,
     [passwordEnv]: password,
   } = process.env;
 
-  if (!host || !port || !username || !password) {
+  if (!host || !port || !user || !password) {
     const missing = [];
     if (!host) {
       missing.push(`'${hostEnv}' did not resolve to a value`);
@@ -200,8 +201,8 @@ const collectServerSettings = (
     if (!port) {
       missing.push(`'${portEnv}' did not resolve to a value`);
     }
-    if (!username) {
-      missing.push(`'${usernameEnv}' did not resolve to a value`);
+    if (!user) {
+      missing.push(`'${userEnv}' did not resolve to a value`);
     }
     if (!password) {
       missing.push(`'${passwordEnv}' did not resolve to a value`);
@@ -211,7 +212,7 @@ const collectServerSettings = (
   return {
     host,
     port: parseInt(port, 10),
-    username,
+    user,
     password,
   };
 };
@@ -235,32 +236,27 @@ const collectFilesFromSource = async (
   path = '/', // The path on the FTP server to search for files (default is root directory)
   fileMask?: string | undefined, // The file mask to filter files (optional)
 ) => {
-  const {
-    host,
-    port,
-    username,
-    password,
-  } = collectServerSettings(importId, ftpSettings);
-
+  const serverSettings = collectServerSettings(importId, ftpSettings);
+  let i = 0;
+console.log(++i, serverSettings);
   let ftpClient;
   try {
-    ftpClient = new FtpClient({
-      host,
-      port,
-      username,
-      password,
-    }); // Create a new FTP client instance with the FTP server settings
+    // Create a new FTP client instance with the FTP server settings
+    ftpClient = new FtpClient(serverSettings);
   } catch (error) {
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
+  console.log(++i, ftpClient);
   const priorFile = await getPriorFile(importId); // Get the prior file for the import
 
+  console.log(++i, priorFile);
   try {
     await ftpClient.connect();
   } catch (err) {
     throw new Error(`Failed to connect to FTP: ${err.message}`);
   }
+  console.log(++i, ftpClient);
 
   let availableFiles: {
     fullPath: string,
@@ -277,6 +273,7 @@ const collectFilesFromSource = async (
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }
+  console.log(++i, availableFiles);
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
