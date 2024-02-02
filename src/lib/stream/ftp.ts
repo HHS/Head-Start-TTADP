@@ -1,183 +1,171 @@
-import FTP from 'ftp'; // Import the 'ftp' module for FTP operations
-import exitHook from 'exit-hook'; // Import exit-hook instead of node-cleanup
-import { Readable } from 'stream';
-import { setAuditLoggingState } from '../migration';
+import { Client, FileInfo, AccessOptions } from 'basic-ftp';
+import exitHook from 'exit-hook';
+import { Readable, PassThrough } from 'stream';
 
-interface FTPSettings {
-  host: string, // The FTP server host
-  port: number, // The FTP server port
-  username: string, // The FTP server username
-  password: string, // The FTP server password
+interface ListFileOptions {
+  path: string;
+  fileMask?: RegExp;
+  priorFile?: string;
+  includeStream?: boolean;
 }
 
-interface FileInfo {
-  path: string,
-  name: string, // The name of the file
-  type: string, // The type of the file (e.g., file or directory)
-  size: number, // The size of the file in bytes
-  date: Date, // The last modified date of the file
-  target?: string, // The target of a symbolic link (optional)
-  stream?: Readable, // Stream to file (optional)
-}
-
-function joinPaths(basePath: string, fileName: string): string {
-  if (!basePath || !fileName) return basePath || fileName;
-  return `${basePath.replace(/\/+$/, '')}/${fileName.replace(/^\/+/, '')}`;
+interface FileListing {
+  fullPath: string;
+  fileInfo: FileInfo;
+  stream?: Promise<Readable>;
 }
 
 class FtpClient {
-  private client; // Private property to store the FTP client instance
+  private client: Client;
 
-  // One way to handle this is to use a static property to track if cleanup has been registered
+  private connectionSettings: AccessOptions;
+
   static cleanupRegistered = false;
 
-  // Use a static method to handle cleanup
-  static handleCleanup(client: FTP) {
-    if (client && client.connected) {
-      client.end();
+  /**
+   * Asynchronously handles the cleanup process for a given client.
+   * If the client is not already closed, it closes the client connection.
+   *
+   * @param client - The client instance to be cleaned up.
+   * @returns A promise that resolves when the client has been closed.
+   * @throws If the client's close operation fails, an error may be thrown.
+   */
+  static async handleCleanup(client: Client) {
+    if (client && !client.closed) {
+      await client.close();
     }
   }
 
-  constructor(
-    private ftpSettings: FTPSettings, // Constructor parameter to store the FTP settings
-  ) {
-    this.client = new FTP(); // Create a new FTP client instance
+  /**
+   * Constructs a new FtpClient instance and initializes it with the provided connection settings.
+   * Registers a cleanup handler to be called on process exit if it has not been registered already.
+   *
+   * @param connectionSettings - The configuration options used to establish the FTP connection.
+   */
+  // Initialize the FtpClient instance with connection settings and prepare for cleanup.
+  constructor(connectionSettings: AccessOptions) {
+    // Create a new instance of the underlying Client.
+    this.client = new Client();
+    // Store the provided connection settings for later use.
+    this.connectionSettings = connectionSettings;
+
+    // Register a cleanup handler on process exit, but only once for all instances.
     if (!FtpClient.cleanupRegistered) {
-      exitHook(() => {
-        FtpClient.handleCleanup(this.client);
-      });
+      // Register an asynchronous exit hook to handle client cleanup on process termination.
+      exitHook(async () => FtpClient.handleCleanup(this.client));
+      // Mark that the cleanup handler has been registered to prevent duplicate registration.
       FtpClient.cleanupRegistered = true;
     }
   }
 
   /**
-   * Connects to the FTP server.
-   * @returns A promise that resolves when the connection is established, or rejects with an error.
+   * Checks if the client is currently connected.
+   *
+   * @returns {boolean} - True if the client is connected, false if it is closed.
    */
-  connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      let onError;
-      const onReady = () => {
-        this.client.removeListener('error', onError); // Remove error listener
-        this.client.removeListener('ready', onReady); // Remove ready listener
-        resolve();
-      };
-      onError = (err: Error) => {
-        this.client.removeListener('error', onError); // Remove error listener
-        this.client.removeListener('ready', onReady); // Remove ready listener
-        reject(err);
-      };
-
-      this.client.once('ready', onReady);
-      this.client.once('error', onError);
-      const {
-        username: user,
-        ...settings
-      } = this.ftpSettings;
-      this.client.connect({ // Connect to the FTP server using the provided settings
-        ...settings,
-        user,
-      });
-    });
+  public isConnected(): boolean {
+    return !this.client.closed;
   }
 
   /**
-   * Disconnects from the FTP server.
+   * Establishes a connection using the client with the provided connection settings.
+   * It checks if the connection is already established before attempting to connect.
+   *
+   * @returns {Promise<void>} A promise that resolves when the connection is established or
+   * if it's already connected.
+   *
+   * @throws {Error} Throws an error if the connection attempt fails.
    */
-  disconnect(): void {
-    FtpClient.handleCleanup(this.client);
+  public async connect(): Promise<void> {
+    if (!this.isConnected()) {
+      await this.client.access(this.connectionSettings);
+    }
   }
 
   /**
-   * Lists files in the specified path on the FTP server.
-   * @param path - The path to list files from.
-   * @returns A promise that resolves with an array of file information, or rejects with an error.
+   * Disconnects the current FTP session by cleaning up resources associated with the FTP client.
+   * This function is asynchronous and returns a promise that resolves when the cleanup
+   * has completed.
+   *
+   * @returns {Promise<void>} A promise that resolves when the client has been disconnected and
+   * resources are cleaned up.
+   *
+   * @throws {Error} Throws an error if the cleanup process encounters any issues.
    */
-  listFiles(
-    path = '/',
-    fileMask?: string,
-    priorFile?: string,
-    includeStream = false,
-  ): Promise<{
-      fullPath: string,
-      fileInfo: FileInfo,
-      stream?: Promise<Readable>,
-    }[]> {
-    return new Promise((resolve, reject) => {
-      // List files in the specified path on the FTP server
-      this.client.list(path, (err, files: FileInfo[]) => {
-        if (err) {
-          reject(err);
-          return;
-        }
-
-        if (!Array.isArray(files)) {
-          reject(new Error('Invalid server response'));
-          return;
-        }
-
-        const fileMaskRegex = fileMask
-          ? new RegExp(fileMask)
-          : null;
-        const isAfterPriorFile = priorFile
-          ? (name: string) => name > priorFile
-          : () => true;
-
-        // Map the returned files to FileInfo objects
-        const fileInfoList: {
-          fullPath: string,
-          fileInfo: FileInfo,
-          stream?: Promise<Readable>,
-        }[] = files
-          .filter((file) => typeof file === 'object'
-            && 'name' in file
-            && 'type' in file
-            && 'size' in file
-            && 'date' in file)
-          .filter(({ name }) => !fileMaskRegex || fileMaskRegex.test(name))
-          .filter(({ name }) => isAfterPriorFile(name))
-          .map((file) => ({
-            fullPath: joinPaths(path, file.name),
-            fileInfo: {
-              path,
-              name: file.name,
-              type: file.type,
-              size: file.size,
-              date: file.date,
-              ...(file.target && { target: file.target }),
-            },
-            ...(includeStream && { stream: this.downloadAsStream(`${path}/${file.name}`) }),
-          }));
-
-        resolve(fileInfoList);
-      });
-    });
+  public async disconnect(): Promise<void> {
+    await FtpClient.handleCleanup(this.client);
   }
 
   /**
-   * Downloads a file from the FTP server as a readable stream.
-   * @param remoteFilePath - The path of the file to download on the FTP server.
-   * @returns A promise that resolves with a readable stream representing the downloaded file, or
-   * rejects with an error.
+   * Asynchronously lists files in a specified directory on the server.
+   *
+   * @param options - An object containing options for listing files.
+   * @param options.path - The directory path to list the files from.
+   * @param options.fileMask - An optional RegExp to filter files by name.
+   * @param options.priorFile - An optional string to list files after a certain file name.
+   * @param options.includeStream - An optional boolean to include a download stream for each file.
+   * @returns A promise that resolves to an array of FileListing objects, each representing a file.
+   *          If includeStream is true, each FileListing will include a stream to download the file.
+   * @throws Will throw an error if the connection to the server fails or if the listing fails.
    */
-  downloadAsStream(remoteFilePath: string, useCompression = true): Promise<Readable> {
-    return new Promise((resolve, reject) => {
-      // Get a readable stream for the specified file on the FTP server
-      this.client.get(
-        remoteFilePath,
-        useCompression,
-        (err, stream) => {
-          if (err) {
-            reject(err);
-            return;
-          }
+  public async listFiles(options: ListFileOptions): Promise<FileListing[]> {
+    // Destructure options to extract individual settings.
+    const {
+      path,
+      fileMask,
+      priorFile,
+      includeStream = false,
+    } = options;
 
-          resolve(stream);
-        },
-      );
+    // Ensure there is a connection before proceeding.
+    await this.connect();
+
+    // Retrieve the list of files from the client at the specified path.
+    const files = await this.client.list(path);
+
+    // Filter the retrieved files based on the provided file mask and whether they come
+    // after a specified 'priorFile'.
+    const filteredFiles = files.filter((file) => {
+      const matchesMask = fileMask ? fileMask.test(file.name) : true;
+      const afterPriorFile = priorFile ? file.name.localeCompare(priorFile) > 0 : true;
+      return matchesMask && afterPriorFile;
     });
+
+    // Map the filtered files to a list of FileListing objects, including a download
+    // stream if requested.
+    const listings = filteredFiles.map((file) => {
+      const fullPath = `${path}/${file.name}`;
+      const listing: FileListing = { fullPath, fileInfo: file };
+      if (includeStream) {
+        // If streams are included, attach a stream to download the file.
+        listing.stream = this.downloadAsStream(fullPath);
+      }
+      return listing;
+    });
+
+    // Return the list of FileListing objects.
+    return listings;
+  }
+
+  /**
+   * Initiates a download of a file from a remote path as a readable stream.
+   *
+   * @param remoteFilePath - The path to the remote file to be downloaded.
+   * @param startAt - The byte offset at which to begin the download (default is 0).
+   * @returns A Promise that resolves to a Readable stream from which the file can be read.
+   *
+   * @throws Will throw an error if the connection fails or if the download encounters an error.
+   */
+  public async downloadAsStream(
+    remoteFilePath: string,
+    startAt = 0,
+  ): Promise<Readable> {
+    await this.connect();
+    const stream = new PassThrough(); // Create a PassThrough stream as a proxy
+    await this.client.downloadTo(stream, remoteFilePath, startAt);
+    return stream;
   }
 }
 
 export default FtpClient; // Export the FtpClient class as the default export
-export { FileInfo, FTPSettings }; // Export the FileInfo interface
+export { FileInfo, AccessOptions as FTPSettings }; // Export the FileInfo interface
