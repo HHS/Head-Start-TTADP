@@ -263,19 +263,12 @@ const collectFilesFromSource = async (
     stream?: Promise<Readable>,
   }[];
   try {
-    console.log('A', {
-      path, // The path on the FTP server to search for files
-      fileMask, // The file mask to filter files
-      priorFile, // The prior file for comparison
-      includeStream: true, // include streams
-    });
     availableFiles = await ftpClient.listFiles({
       path, // The path on the FTP server to search for files
       fileMask, // The file mask to filter files
       priorFile, // The prior file for comparison
       includeStream: true, // include streams
     }); // Get the list of available files on the FTP server
-    console.log('B', availableFiles);
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }
