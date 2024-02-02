@@ -91,7 +91,7 @@ services:
     volumes:
         - ./test-sftp:/home/tta_ro/ProdTTAHome
     ports:
-        - "${ITAMS_MD_PORT:-22}:22"
+        - "${SFTP_EXPOSED_PORT:-22}:22"
     command: ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
 volumes:
   dbdata: {}
