@@ -203,7 +203,7 @@ const remap = (
     );
 
     // If the source value exists
-    if (sourceValue !== undefined || sourceValue !== null) {
+    if (sourceValue !== undefined && sourceValue !== null) {
       targetActions.forEach((targetAction) => {
         /* TODO: fix later
         if (targetAction instanceof Function) {
