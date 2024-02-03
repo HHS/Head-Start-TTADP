@@ -1,0 +1,54 @@
+FROM node:18.18.2 as base
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends dumb-init lcov chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+COPY package.json yarn.lock ./
+RUN yarn global add node-gyp &&\
+    yarn install &&\ 
+    yarn cache clean
+
+FROM node:18.18.2-alpine as frontend-base
+WORKDIR /app
+RUN apk update && apk add yarn dumb-init
+COPY frontend/package.json frontend/yarn.lock ./
+RUN yarn install &&\ 
+    yarn cache clean
+
+FROM node:18.18.2 as build
+ENV NODE_OPTIONS=--max_old_space_size=2048
+WORKDIR /app
+COPY --from=base /app/node_modules /app/node_modules
+COPY . .
+RUN yarn build
+
+FROM node:18.18.2-alpine as frontend-build
+ENV NODE_OPTIONS=--max_old_space_size=2048
+WORKDIR /app
+ENV DISABLE_ESLINT_PLUGIN=true
+COPY --from=frontend-base /app/node_modules /app/node_modules
+COPY ./frontend .
+RUN yarn build:local
+
+FROM node:18.18.2-alpine as frontend
+RUN apk update
+ENV NODE_ENV dev
+ENV CHOKIDAR_USEPOLLING=true
+COPY --chown=node:node --from=frontend-base /usr/bin/dumb-init /usr/bin/dumb-init
+COPY --chown=node:node --from=frontend-build /app/build /app
+USER node
+WORKDIR /app
+COPY --chown=node:node --from=frontend-build /app/node_modules /app/node_modules
+COPY --chown=node:node --from=frontend-build /app/package.json /app/package.json
+
+CMD ["/usr/bin/dumb-init", "node", "server.js"]
+
+FROM node:18.18.2-slim as backend
+COPY --from=base /usr/bin/dumb-init /usr/bin/dumb-init
+COPY --from=build /app/build /app
+USER node
+WORKDIR /app
+COPY --chown=node:node --from=build /app/node_modules /app/node_modules
+COPY --chown=node:node --from=frontend-build /app/package.json /app/package.json
+COPY --chown=node:node . /app
+CMD ["dumb-init", "node", "server.js"]
