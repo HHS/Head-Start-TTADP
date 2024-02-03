@@ -50,6 +50,10 @@ services:
       - "./similarity_api/src:/app:rw"
   redis:
     image: redis:5.0.6-alpine
+    # https://github.com/docker-library/redis/issues/191
+    sysctls:
+      - net.core.somaxconn=511
+      # - vm.overcommit_memory=1
     command: ['redis-server', '--requirepass', '$REDIS_PASS']
     env_file: .env
     ports:
