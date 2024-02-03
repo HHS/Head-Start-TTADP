@@ -33,7 +33,7 @@ services:
     depends_on:
       - minio
   clamav-rest:
-    image: ajilaag/clamav-rest
+    image: kcirtapfromspace/clamav-rest
     ports:
       - "9443:9443"
     environment:
@@ -76,6 +76,12 @@ services:
   testingonly:
     build:
       context: .
+      dockerfile: ./Dockerfile.dev
+      # target: dependencies
+      cache_from: 
+        - node:18.18.2  # Using the base image as a cache source
+        - head-start-ttadp-worker:latest
+      target: backend
     ports:
       - "9999:9999"
     depends_on:

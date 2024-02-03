@@ -3,6 +3,12 @@ services:
   backend:
     build:
       context: .
+      dockerfile: ./Dockerfile.dev
+      cache_from: 
+        - node:18.18.2  # Using the base image as a cache source
+        - node:18.18.2-slim
+        - head-start-ttadp-backend:latest
+      target: backend
     command: yarn server
     user: ${CURRENT_USER:-root}
     ports:
@@ -32,6 +38,12 @@ services:
   frontend:
     build:
       context: .
+      dockerfile: ./Dockerfile.dev
+      cache_from: 
+        - node:18.18.2  # Using the base image as a cache source
+        - node:18.18.2-alpine
+        - head-start-ttadp-frontend:latest
+      target: frontend
     command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
@@ -48,6 +60,11 @@ services:
   worker:
     build:
       context: .
+      dockerfile: ./Dockerfile.dev
+      cache_from: 
+        - node:18.18.2  # Using the base image as a cache source
+        - head-start-ttadp-worker:latest
+      target: backend
     command: yarn worker
     env_file: .env
     depends_on:
@@ -73,7 +90,7 @@ services:
     image: owasp/zap2docker-stable:latest
     platform: linux/arm64
     user: zap
-    command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
+    command: zap-api-scan.py -t http://similarity_api:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw

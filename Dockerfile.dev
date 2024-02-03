@@ -32,23 +32,21 @@ RUN yarn build:local
 
 FROM node:18.18.2-alpine as frontend
 RUN apk update
-ENV NODE_ENV dev
-ENV CHOKIDAR_USEPOLLING=true
-COPY --chown=node:node --from=frontend-base /usr/bin/dumb-init /usr/bin/dumb-init
-COPY --chown=node:node --from=frontend-build /app/build /app
+
+# ENV CHOKIDAR_USEPOLLING=true
 USER node
 WORKDIR /app
-COPY --chown=node:node --from=frontend-build /app/node_modules /app/node_modules
-COPY --chown=node:node --from=frontend-build /app/package.json /app/package.json
-
+COPY  --chown=node:node --from=frontend-base /usr/bin/dumb-init /usr/bin/dumb-init
+COPY  --chown=node:node --from=frontend-build /app/build /app
+COPY  --chown=node:node --from=frontend-build /app/node_modules /app/node_modules
+COPY  --chown=node:node --from=frontend-build /app/package.json /app/package.json
 CMD ["/usr/bin/dumb-init", "node", "server.js"]
 
 FROM node:18.18.2-slim as backend
-COPY --from=base /usr/bin/dumb-init /usr/bin/dumb-init
-COPY --from=build /app/build /app
 USER node
 WORKDIR /app
+COPY --chown=node:node --from=base /usr/bin/dumb-init /usr/bin/dumb-init
+COPY --chown=node:node --from=build /app/build /app
 COPY --chown=node:node --from=build /app/node_modules /app/node_modules
-COPY --chown=node:node --from=frontend-build /app/package.json /app/package.json
-COPY --chown=node:node . /app
+COPY --chown=node:node --from=build /app/package.json /app/package.json
 CMD ["dumb-init", "node", "server.js"]
