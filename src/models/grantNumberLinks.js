@@ -49,7 +49,7 @@ export default (sequelize, DataTypes) => {
     },
     grantId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'grants',
