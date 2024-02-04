@@ -1,6 +1,5 @@
-const {
-  Model,
-} = require('sequelize');
+import { Model } from 'sequelize';
+import { IMPORT_DATA_STATUSES } from '../constants';
 
 export default (sequelize, DataTypes) => {
   class ImportDataFile extends Model {
@@ -34,10 +33,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    processed: {
-      type: DataTypes.BOOLEAN,
+    status: {
+      type: DataTypes.ENUM(Object.values(IMPORT_DATA_STATUSES)),
       allowNull: false,
-      defaultValue: false,
+      defaultValue: sequelize.literal(`'${IMPORT_DATA_STATUSES.IDENTIFIED}'::"enum_ImportDataFiles_status"`),
     },
     schema: {
       type: DataTypes.JSONB,
