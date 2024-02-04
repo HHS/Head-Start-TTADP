@@ -1,3 +1,6 @@
+
+const { updateSequence } = require('../lib/migration');
+
 const reviews = [
   {
     id: 1,
@@ -191,6 +194,15 @@ module.exports = {
     await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
     await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
     await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
+
+    await updateSequence(queryInterface, 'GrantNumberLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewStatusLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewStatuses');
+    await updateSequence(queryInterface, 'MonitoringReviews');
+    await updateSequence(queryInterface, 'MonitoringReviewGrantees');
+    await updateSequence(queryInterface, 'MonitoringFindingHistories');
+    await updateSequence(queryInterface, 'MonitoringClassSummaries');
   },
 
   down: async (queryInterface) => {
