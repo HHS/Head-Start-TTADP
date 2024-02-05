@@ -103,10 +103,6 @@ export default async function nudge(
       '"Goal"."goalTemplateId"',
     ],
     order: [['name', 'ASC']],
-    having: sequelize.where(
-      sequelize.fn('COUNT', sequelize.col('grant.id')),
-      grantNumbers.length,
-    ),
   })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
 
   const templateIds = goals.map((goal) => goal.goalTemplateId);
