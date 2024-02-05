@@ -394,7 +394,7 @@ describe('dataObjectUtils', () => {
         id: null,
         name: 'John Doe',
       };
-      const result = remap(dataWithNull, remappingDefinition);
+      const result = remap(dataWithNull, remappingDefinition, { keepUnmappedValues: false });
       expect(result.mapped).toEqual({
         userId: null,
         fullName: 'John Doe',

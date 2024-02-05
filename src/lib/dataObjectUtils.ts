@@ -204,7 +204,7 @@ const remap = (
     );
 
     // If the source value exists
-    if (sourceValue !== undefined && sourceValue !== null) {
+    if (sourceValue !== undefined) {
       targetActions.forEach((targetAction) => {
         /* TODO: fix later
         if (targetAction instanceof Function) {
@@ -463,6 +463,12 @@ const detectAndCast = (value: string): {
   // Check for boolean
   if (value.toLowerCase() === 'true') return { value: true, type: 'boolean' };
   if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
+
+  // check for number with leading zeros
+  if (/^0\d*$/.test(value)) {
+    // It's an octal number string or a string with leading zeros, return as a string
+    return { value, type: 'string' };
+  }
 
   // Check for number
   const numberRegex = /^-?\d+(\.\d+)?$/;
