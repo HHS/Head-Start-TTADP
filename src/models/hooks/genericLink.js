@@ -10,7 +10,8 @@ const semaphore = new Semaphore(1);
  * @param {Object} instance - The instance that is being linked.
  * @param {Object} options - An object containing transaction details.
  * @param {Model} model - The Sequelize model that is being linked to.
- * @param {string} entityName - The name of the entity field in the model.
+ * @param {string} sourceEntityName - The name of the entity field in the model.
+ * @param {string} targetEntityName - The name of the entity field in the model.
  * @param {number|string} entityId - The ID of the entity to link to.
  * @param {Function} onCreateCallbackWhileHoldingLock - A callback function to be called after
  * creating a new record, while still holding the semaphore lock.
@@ -25,7 +26,8 @@ const syncLink = async (
   instance,
   options,
   model,
-  entityName,
+  sourceEntityName,
+  targetEntityName,
   entityId,
   onCreateCallbackWhileHoldingLock,
 ) => {
@@ -34,7 +36,7 @@ const syncLink = async (
   if (!instance.isNewRecord) {
     const changed = Array.from(instance.changed());
 
-    if (!changed.includes(entityName)) return;
+    if (!changed.includes(sourceEntityName)) return;
   }
   // Generate a unique semaphore key based on the model name and entity ID
   const semaphoreKey = `${model.tableName}_${entityId}`;
@@ -43,15 +45,15 @@ const syncLink = async (
 
   // Check if there's an existing record for the given entity ID
   const [currentRecord] = await model.findAll({
-    attsributes: [entityName],
-    where: { [entityName]: entityId },
+    attsributes: [targetEntityName],
+    where: { [targetEntityName]: entityId },
     transaction: options.transactions,
   });
 
   // If no current record exists, create a new one
   if (!currentRecord) {
     const newRecord = await model.create({
-      [entityName]: entityId,
+      [targetEntityName]: entityId,
     }, {
       transaction: options.transactions,
     });
@@ -62,7 +64,7 @@ const syncLink = async (
         instance,
         options,
         model,
-        entityName,
+        targetEntityName,
         entityId,
       );
     }
@@ -126,13 +128,20 @@ const linkGrant = async (
  * @returns {Promise} A promise that resolves when the link synchronization is complete.
  * @throws {Error} Throws an error if the `syncLink` function encounters an issue.
  */
-const syncGrantNumberLink = async (sequelize, instance, options, columnName = 'grantNumber') => syncLink(
+const syncGrantNumberLink = async (
+  sequelize,
+  instance,
+  options,
+  sourceColumnName = 'grantNumber',
+  targetColumnName = 'grantNumber',
+) => syncLink(
   sequelize,
   instance,
   options,
   sequelize.models.GrantNumberLink,
-  columnName,
-  instance[columnName],
+  sourceColumnName,
+  targetColumnName,
+  instance[sourceColumnName],
   linkGrant,
 );
 
@@ -156,6 +165,7 @@ const syncMonitoringReviewLink = async (
   options,
   sequelize.models.MonitoringReviewLink,
   'reviewId',
+  'reviewId',
   instance.reviewId,
 );
 
@@ -178,6 +188,7 @@ const syncMonitoringReviewStatusLink = async (
   instance,
   options,
   sequelize.models.MonitoringReviewStatusLink,
+  'statusId',
   'statusId',
   instance.statusId,
 );
