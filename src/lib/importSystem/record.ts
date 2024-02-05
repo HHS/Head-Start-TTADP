@@ -5,7 +5,11 @@ import { FileInfo as FTPFileInfo } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db, { Sequelize } from '../../models';
-import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
+import {
+  FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
+} from '../../constants';
 
 const {
   File,
@@ -144,8 +148,7 @@ const getNextFileToProcess = async (
       ],
     },
     order: [
-      ['ftpFileInfo->>"name"', 'ASC'], // Order by file name in ascending order
-      ['ftpFileInfo->>"date"', 'ASC'], // Order by file date in ascending order
+      ['createdAt', 'ASC'],
     ],
     limit: 1, // Limit the result to 1 record
   });
@@ -235,6 +238,7 @@ const recordAvailableFiles = async (
               },
             },
           },
+          individualHooks: true,
         },
       ))
       : []),
@@ -244,6 +248,7 @@ const recordAvailableFiles = async (
         where: {
           importId,
           id: removedFiles.map(({ id }) => id),
+          status: [IMPORT_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
       })
@@ -263,7 +268,7 @@ const recordAvailableDataFiles = async (
     attributes: [
       'id',
       'importFileId',
-      ['zipFileInfo', 'fileInfo'],
+      'fileInfo',
     ],
     where: {
       importFileId,
@@ -294,18 +299,18 @@ const recordAvailableDataFiles = async (
   return Promise.all([
     // Create new files in the database if there are any
     (newFiles.length > 0
-      ? ImportFile.bulkCreate(
+      ? ImportDataFile.bulkCreate(
         newFiles.map((newFile) => ({
           importFileId,
           fileInfo: newFile,
-          status: IMPORT_STATUSES.IDENTIFIED,
+          status: IMPORT_DATA_STATUSES.IDENTIFIED,
         })),
         { individualHooks: true },
       )
       : Promise.resolve()),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
-      ? matchedFiles.map(async (matchedFile) => ImportFile.update(
+      ? matchedFiles.map(async (matchedFile) => ImportDataFile.update(
         {
           importFileId,
           fileInfo: matchedFile,
@@ -318,12 +323,13 @@ const recordAvailableDataFiles = async (
               Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
             ],
           },
+          individualHooks: true,
         },
       ))
       : []),
     // Delete removed files from the database if there are any
     (removedFiles.length > 0
-      ? ImportFile.destroy({
+      ? ImportDataFile.destroy({
         where: {
           importFileId,
           id: removedFiles.map(({ id }) => id),
@@ -337,6 +343,7 @@ const recordAvailableDataFiles = async (
 const updateAvailableDataFileMetadata = async (
   importFileId: number,
   fileInfo: ZipFileInfo | { name: string },
+  status: string,
   metadata: Record<
   string,
   string | number | string[] | SchemaNode | Record<
@@ -348,12 +355,10 @@ const updateAvailableDataFileMetadata = async (
   >
   >,
 ) => {
-  const isProcessed = !!metadata?.hash;
-
   const result = ImportDataFile.update(
     {
       ...metadata,
-      processed: isProcessed,
+      status,
     },
     {
       where: {
@@ -361,8 +366,8 @@ const updateAvailableDataFileMetadata = async (
         fileInfo: {
           name: fileInfo.name,
         },
-        individualHooks: true,
       },
+      individualHooks: true,
     },
   );
 
@@ -434,6 +439,7 @@ const logFileToBeCollected = async (
       {
         fileId: fileRecord.id,
         downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
@@ -453,6 +459,7 @@ const logFileToBeCollected = async (
     await ImportFile.update(
       {
         downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
@@ -520,6 +527,58 @@ const setImportFileStatus = async (
 );
 
 /**
+ * Updates the status of an import data file.
+ * @param importFileId - The ID of the import data file to update.
+ * @param status - The new status value to set.
+ * @returns A promise that resolves when the update is complete.
+ */
+const setImportDataFileStatus = async (
+  importDataFileId: number,
+  status: string,
+) => ImportDataFile.update(
+  {
+    status, // Set the status field to the provided value
+  },
+  {
+    where: { id: importDataFileId }, // Specify the import file to update based on its ID
+    individualHooks: true, // Enable individual hooks for each updated record
+  },
+);
+
+/**
+ * Asynchronously sets the status of an import data file based on its path and name.
+ * It first tries to find the file using the provided importFileId and fileInfo within
+ * the database. If the file is found, it updates the status; otherwise, it resolves the
+ * promise without any action.
+ *
+ * @param importFileId - The ID of the import file to which the data file belongs.
+ * @param fileInfo - An object containing the path and name of the file inside the zip.
+ * @param status - The new status to set for the import data file.
+ * @returns A promise that resolves to the result of setting the status if the file is found,
+ *          or resolves to undefined if the file is not found.
+ */
+const setImportDataFileStatusByPath = async (
+  importFileId: number,
+  fileInfo: ZipFileInfo,
+  status: string,
+) => {
+  const importDataFile = await ImportDataFile.findOne({
+    where: {
+      importFileId,
+      fileInfo: {
+        [Sequelize.Op.contains]: {
+          path: fileInfo.path,
+          name: fileInfo.name,
+        },
+      },
+    },
+  });
+  return importDataFile
+    ? setImportDataFileStatus(importDataFile.id, status)
+    : Promise.resolve();
+};
+
+/**
  * Asynchronously retrieves all enabled imports from the database with specific attributes.
  *
  * The function queries the database for all records in the Import model where the 'enabled'
@@ -554,6 +613,8 @@ export {
   logFileToBeCollected,
   setImportFileHash,
   setImportFileStatus,
+  setImportDataFileStatus,
+  setImportDataFileStatusByPath,
   updateAvailableDataFileMetadata,
   importSchedules,
 };
