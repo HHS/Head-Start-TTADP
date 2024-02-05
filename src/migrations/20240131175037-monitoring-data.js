@@ -591,16 +591,18 @@ module.exports = {
       const definitions = [];
       definitions.push({
         fileName: 'AMS_ReviewStatus.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviewStatuses',
-        keys: ['status_id'],
+        keys: ['statusId'],
         remapDef: {
-          StatusId: 'status_id',
+          StatusId: 'statusId',
           Name: 'name',
         },
       });
       definitions.push({
         fileName: 'AMS_Review.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviews',
         keys: ['reviewId'],
@@ -618,6 +620,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_ReviewGrantee.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviewGrantees',
         keys: ['reviewId', 'granteeId'],
@@ -632,6 +635,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_FindingHistory.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringFindingHistories',
         keys: ['findingHistoryId'],
@@ -643,6 +647,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_CLASS_SUMMARYGrants.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringClassSummaries',
         keys: ['reviewId'],

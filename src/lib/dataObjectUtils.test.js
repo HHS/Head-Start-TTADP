@@ -200,6 +200,31 @@ describe('dataObjectUtils', () => {
       'address.city': 'location.cityName',
     };
 
+    it('some values keep the same name', () => {
+      const data = {
+        date: '1970-01-01',
+        name: 'epoch',
+        description: 'Milliseconds since (January 1, 1970 UTC).',
+        junk: 12345,
+      };
+
+      const remapTest = {
+        date: 'timestamp',
+        name: 'name',
+        description: 'definition',
+      };
+
+      const result = remap(data, remapTest, { keepUnmappedValues: false });
+      expect(result).toEqual({
+        mapped: {
+          timestamp: '1970-01-01',
+          name: 'epoch',
+          definition: 'Milliseconds since (January 1, 1970 UTC).',
+        },
+        unmapped: { junk: 12345 },
+      });
+    });
+
     it('should correctly remap data based on the definition', () => {
       const result = remap(mockData, remappingDefinition);
       expect(result).toEqual({

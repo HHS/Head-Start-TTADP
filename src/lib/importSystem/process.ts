@@ -1,6 +1,6 @@
 import { Model, Op } from 'sequelize';
 import { Readable } from 'stream';
-import { remap, collectChangedValues, lowercaseFirstLetterOfKeys } from '../dataObjectUtils';
+import { remap, collectChangedValues, lowercaseKeys } from '../dataObjectUtils';
 import { filterDataToModel, modelForTable } from '../modelUtils';
 import EncodingConverter from '../stream/encoding';
 import Hasher, { getHash } from '../stream/hasher';
@@ -11,9 +11,10 @@ import {
   getNextFileToProcess,
   recordAvailableDataFiles,
   setImportFileStatus,
+  setImportDataFileStatusByPath,
   updateAvailableDataFileMetadata,
 } from './record';
-import { IMPORT_STATUSES } from '../../constants';
+import { IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../constants';
 import db from '../../models';
 import { auditLogger } from '../../logger';
 
@@ -63,8 +64,9 @@ const processRecords = async (
     // record the error into the recordActions and continue on successfully as
     // other entries may be process successfully
     recordActions.errors.push(err.message);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processRecords getNextObject ${err.message}`);
   }
+
   // @ts-ignore
   let model;
   try {
@@ -72,7 +74,7 @@ const processRecords = async (
   } catch (err) {
     // record the error into the recordActions
     recordActions.errors.push(err.message);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processRecords modelForTable ${err.message}`);
 
     // Unable to continue as a model is required to record any information
     return Promise.reject(recordActions);
@@ -96,7 +98,7 @@ const processRecords = async (
       // This changes the attribute names and structure into what will be saved
       const { mapped: data } = remap(
         record,
-        lowercaseFirstLetterOfKeys(processDefinition.remapDef),
+        lowercaseKeys(processDefinition.remapDef),
         {
           keepUnmappedValues: false,
           // defines a custom fuction that will replace the resulting structure
@@ -109,13 +111,25 @@ const processRecords = async (
       );
 
       // Filter the data to match the expected model
-      const { matched: filteredData } = await filterDataToModel(data, model);
+      const {
+        matched: filteredData,
+        unmatched: droppedData,
+      } = await filterDataToModel(data, model);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const recordKey: Record<string, any> = {};
       processDefinition.keys.forEach((key) => {
-        recordKey[key] = filteredData[key];
+        const value = filteredData[key];
+        if (value) {
+          recordKey[key] = value;
+        }
+        // TODO: handle case where all/part of the key may have been dropped
       });
+      if (Object.keys(droppedData).length > 0) {
+        // TODO: add some kind of note/warning that mapped data was filtered out at the model level
+        // The message should include the importDataFileId, the recordKey, and the column names.
+        // The column values should be excluded to prevent posable display of PII
+      }
 
       // Check if there is an existing record with the same key value
       const currentData = await model.findOne({
@@ -135,7 +149,6 @@ const processRecords = async (
           {
             individualHooks: true,
             returning: true,
-            plain: true,
           },
         );
         recordActions.inserts.push(insert);
@@ -146,12 +159,13 @@ const processRecords = async (
           {
             ...delta,
             sourceUpdatedAt: fileDate,
+            ...(currentData.sourceDeletedAt && { sourceDeletedAt: null }),
+            updatedAt: new Date(),
           },
           {
             where: { id: currentData.id },
             individualHooks: true,
             returning: true,
-            plain: true,
           },
         );
         recordActions.updates.push(update);
@@ -160,7 +174,7 @@ const processRecords = async (
       // record the error into the recordActions and continue on successfully as
       // other entries may be process successfully
       recordActions.errors.push(err.message);
-      auditLogger.log('error', err.message);
+      auditLogger.log('error', ` processRecords create/update ${err.message}`);
     }
   } else {
     try {
@@ -175,32 +189,29 @@ const processRecords = async (
         ...recordActions.updates,
       ]);
 
-      const affectedDataIds = affectedData.map(({ id }) => id);
-
+      const affectedDataIds = affectedData?.map(({ id }) => id) || [];
       // mark the source date when the records no longer are present in the processed file
-      await model.update(
-        {
-          sourceDeletedAt: fileDate,
-        },
-        {
-          where: { id: { [Op.not]: affectedDataIds } },
-          individualHooks: true,
-        },
-      );
+      // "Delete" all records that are not in the affectedData array
+      if (affectedDataIds.length) {
+        const destroys = model.update(
+          {
+            sourceDeletedAt: fileDate,
+          },
+          {
+            where: {
+              id: { [Op.not]: affectedDataIds },
+              sourceDeletedAt: null,
+            },
+            individualHooks: true,
+          },
+        );
 
-      // Delete all records that are not in the affectedData array
-      const destroys = model.destroy({
-        where: { id: { [Op.not]: affectedDataIds } },
-        individualHooks: true,
-        returning: true,
-        plain: true,
-      });
-
-      recordActions.deletes.push(destroys);
+        recordActions.deletes.push(destroys);
+      }
     } catch (err) {
       // record the error into the recordActions
       recordActions.deletes.push(err.message);
-      auditLogger.log('error', err.message);
+      auditLogger.log('error', ` processRecords destroy ${err.message}, ${JSON.stringify(err)}`);
     }
 
     return Promise.resolve(recordActions);
@@ -278,11 +289,13 @@ const processFile = async (
 
     // Create a new instance of XMLStream using the usableStream
     const xmlClient = new XMLStream(usableStream, true);
+    await xmlClient.initialize();
 
     // Check if key property exists in processDefinition, if not throw an error
     if (!xmlClient) throw new Error('XMLStream failed');
 
     const processedRecords = await processRecords(processDefinition, xmlClient, fileInfo.date);
+
     // hash needs to be collected after processRecords returns to make sure all the data has
     // been processed for all records in the file
     const hash = await hashStream.getHash();
@@ -295,7 +308,7 @@ const processFile = async (
     };
   } catch (err) {
     result.errors.push(err.message);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processFile ${err.message}`);
   }
 
   return result;
@@ -330,6 +343,11 @@ const processFilesFromZip = async (
       .find(({ name }) => name === nextToProcess.fileName);
 
     if (fileInfoToProcess) { // If the file to process is found
+      setImportDataFileStatusByPath(
+        importFileId,
+        fileInfoToProcess,
+        IMPORT_DATA_STATUSES.PROCESSING,
+      );
       // Get the file stream for the file to process from the zipClient
       const fileStream = await zipClient.getFileStream(fileInfoToProcess.name);
 
@@ -381,6 +399,7 @@ const processFilesFromZip = async (
       await updateAvailableDataFileMetadata(
         importFileId, // Pass the import file ID
         fileInfoToProcess, // Pass the ZipFileInfo object of the processed file
+        IMPORT_DATA_STATUSES.PROCESSED,
         {
           schema,
           hash,
@@ -397,6 +416,7 @@ const processFilesFromZip = async (
       await updateAvailableDataFileMetadata(
         importFileId, // Pass the import file ID
         fileInfoToProcess, // Pass the ZipFileInfo object of the unprocessed file
+        IMPORT_DATA_STATUSES.PROCESSING_FAILED,
         {},
       );
     }
@@ -406,6 +426,7 @@ const processFilesFromZip = async (
       {
         name: nextToProcess.fileName, // Pass the name of the file that caused the error
       },
+      IMPORT_DATA_STATUSES.PROCESSING_FAILED,
       {
         recordCounts: {
           errors: {
@@ -414,7 +435,7 @@ const processFilesFromZip = async (
         },
       },
     );
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processFilesFromZip ${err.message}`);
   }
 
   // Recursively call the processFilesFromZip function to process the remaining files
@@ -461,7 +482,7 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`);
     return Promise.resolve;
   }
 
@@ -469,9 +490,16 @@ const processZipFileFromS3 = async (
   let zipClient;
   let fileDetails;
 
+  const neededFiles = processDefinitions.map(({ fileName: name, path }) => ({ name, path }));
+
   try {
     // Create a new ZipStream instance using the downloaded file stream
-    zipClient = new ZipStream(s3FileStream);
+    zipClient = new ZipStream(
+      s3FileStream,
+      undefined,
+      neededFiles,
+    );
+
     // Get details of all files in the zip archive
     fileDetails = await zipClient.getAllFileDetails();
     // Record the available data files in the importFile
@@ -479,13 +507,29 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}`);
     return Promise.resolve;
   }
 
-  // Filter out null file details and cast the remaining ones as ZipFileInfo type
+  // Filter out null file details, and to the ones that streams were requested for
+  // then cast the remaining ones as ZipFileInfo type
   const filteredFileDetails = fileDetails
-    .filter((fileDetail) => fileDetail) as ZipFileInfo[];
+    .filter((fileDetail) => fileDetail)
+    .filter(({ name, path }) => neededFiles.some((neededFile) => (
+      neededFile.name === name
+      && neededFile.path === path
+    ))) as ZipFileInfo[];
+
+  await Promise.all(fileDetails
+    .filter(({ name, path }) => !neededFiles.some((neededFile) => (
+      neededFile.name === name
+      && neededFile.path === path
+    )))
+    .map(async (fileDetail) => setImportDataFileStatusByPath(
+      importFileId,
+      fileDetail,
+      IMPORT_DATA_STATUSES.WILL_NOT_PROCESS,
+    )));
 
   let results;
 
@@ -501,7 +545,7 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', err.message);
+    auditLogger.log('error', `processZipFileFromS3 processFilesFromZip ${err.message}`);
     return Promise.resolve;
   }
 

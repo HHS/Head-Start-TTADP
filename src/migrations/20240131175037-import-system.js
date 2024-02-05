@@ -1,4 +1,4 @@
-const { IMPORT_STATUSES } = require('../constants');
+const { IMPORT_STATUSES, IMPORT_DATA_STATUSES } = require('../constants');
 const { prepMigration, removeTables } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
@@ -153,10 +153,10 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        processed: {
-          type: Sequelize.BOOLEAN,
+        status: {
+          type: Sequelize.ENUM(Object.values(IMPORT_DATA_STATUSES)),
           allowNull: false,
-          defaultValue: false,
+          defaultValue: IMPORT_DATA_STATUSES.IDENTIFIED,
         },
         hash: {
           type: Sequelize.TEXT,
