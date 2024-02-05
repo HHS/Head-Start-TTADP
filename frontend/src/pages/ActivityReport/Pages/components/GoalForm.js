@@ -181,6 +181,7 @@ export default function GoalForm({
         userCanEdit={!isCurated}
         isOnReport={false}
         isMultiRecipientGoal={isMultiRecipientReport}
+        createdViaTr={goal.createdVia === 'tr'}
       />
 
       <GoalDate
@@ -223,6 +224,7 @@ GoalForm.propTypes = {
     onApprovedAR: PropTypes.bool,
     status: PropTypes.string,
     source: PropTypes.string,
+    createdVia: PropTypes.string,
     prompts: PropTypes.arrayOf(PropTypes.shape({
       type: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
