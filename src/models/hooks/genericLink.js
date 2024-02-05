@@ -110,7 +110,9 @@ const linkGrant = async (
     await model.update(
       { grantId: grant.grantId }, // Set the grantId in the model to the found grant's ID.
       {
-        [entityName]: grantNumber, // Use the entity name as a key to match the grant number.
+        where: {
+          [entityName]: grantNumber, // Use the entity name as a key to match the grant number.
+        },
         transaction: options.transactions, // Use the transaction provided in the options if any.
         individualHooks: true, // Enable individual hooks for the update operation.
       },
