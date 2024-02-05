@@ -60,7 +60,6 @@ class ZipStream {
           } else {
             entry.autodrain();
           }
-          console.log('zip:', {fileInfo});
         } else {
           entry.autodrain();
         }
