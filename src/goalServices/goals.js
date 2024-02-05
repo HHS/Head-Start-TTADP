@@ -3115,6 +3115,7 @@ export async function mergeGoals(
 
   return newGoals;
 }
+
 export async function goalRegionsById(goalIds) {
   const grants = await Grant.findAll({
     attributes: ['regionId', 'id'],
