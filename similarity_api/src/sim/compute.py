@@ -204,7 +204,13 @@ def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates
     if include_curated_templates:
         curated_templates = query_many(
             """
-            SELECT g."id", g."templateName" as name, NULL AS "grantId", TRUE as is_template
+            SELECT 
+              g."id", 
+              g."templateName" as name, 
+              NULL AS "grantId", 
+              TRUE as is_template,
+              COALESCE(g."source", '') as source,
+              '' as "endDate"
             FROM "GoalTemplates" g
             WHERE g."creationMethod" = 'Curated';
             """,
