@@ -1,6 +1,7 @@
 import { download, process } from '../lib/importSystem';
 
 export default async function manuallyTriggerImportSystem(action: string, importIdStr: string) {
+  if (!importIdStr || importIdStr.length === 0) throw new Error(`Bad or missing importId: '${importIdStr}'`);
   const importId = Number(importIdStr);
   if (!Number.isNaN(importId)) {
     switch (action) {
@@ -11,10 +12,10 @@ export default async function manuallyTriggerImportSystem(action: string, import
         await process(importId);
         break;
       default:
-        throw new Error(`Unknown action: ${action}`);
+        throw new Error(`Unknown action: '${action}'`);
         break;
     }
   } else {
-    throw new Error(`Bad or missing importId: ${importIdStr}`);
+    throw new Error(`Bad or missing importId: '${importIdStr}'`);
   }
 }
