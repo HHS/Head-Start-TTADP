@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as dotWild from 'dot-wild';
+import moment from 'moment-timezone';
 
 /**
  * Checks if a value is an object.
@@ -240,13 +241,53 @@ const remap = (
   return { mapped: remappedData, unmapped: unmappedData };
 };
 
+function areNumbersEqual(value1: any, value2: any): boolean {
+  // If neither value is a number, return true
+  if (typeof value1 !== 'number' && typeof value2 !== 'number') {
+    return true;
+  }
+
+  // If either value is a number, convert both to numbers and compare
+  const num1 = Number(value1);
+  const num2 = Number(value2);
+
+  // Check if the converted numbers are equal
+  return num1 === num2;
+}
+
+function areDatesEqual(value1: any, value2: any): boolean {
+  // Helper function to convert a value to a Date object if it's a string or already a Date
+  function toDate(value: any): Date | null {
+    if (typeof value === 'string' || value instanceof Date) {
+      const date = new Date(value);
+      // Check if the date is valid
+      if (!Number.isNaN(date.getTime())) {
+        return date;
+      }
+    }
+    return null;
+  }
+
+  // Convert both values to Date objects, if possible
+  const date1 = toDate(value1);
+  const date2 = toDate(value2);
+
+  // If either value could not be converted to a valid Date, they are not equal dates
+  if (date1 === null || date2 === null) {
+    return false;
+  }
+
+  // Compare the time values of the dates
+  return date1.getTime() === date2.getTime();
+}
+
 /**
  * Checks if two values are deeply equal.
  * @param value1 - The first value to compare.
  * @param value2 - The second value to compare.
  * @returns True if the values are deeply equal, false otherwise.
  */
-const isDeepEqual = (value1: any, value2: any): boolean => {
+const isDeepEqual = (value1: any, value2: any, ignoreType = false): boolean => {
   // Check if both values are objects
   if (isObject(value1) && isObject(value2)) {
     // Get the keys of each object
@@ -257,7 +298,7 @@ const isDeepEqual = (value1: any, value2: any): boolean => {
     if (keys1.length !== keys2.length) return false;
 
     // Recursively check if each key-value pair is deeply equal
-    return keys1.every((key) => isDeepEqual(value1[key], value2[key]));
+    return keys1.every((key) => isDeepEqual(value1[key], value2[key], ignoreType));
   }
 
   // Check if both values are arrays
@@ -267,6 +308,18 @@ const isDeepEqual = (value1: any, value2: any): boolean => {
 
     // Recursively check if each element in the arrays is deeply equal
     return value1.every((element, index) => isDeepEqual(element, value2[index]));
+  }
+
+  if (ignoreType
+    && (typeof value1 === 'number'
+    || typeof value2 === 'number')) {
+    return areNumbersEqual(value1, value2);
+  }
+
+  if (ignoreType
+    && (value1 instanceof Date
+    || value2 instanceof Date)) {
+    return areDatesEqual(value1, value2);
   }
 
   // If the values are not objects, perform a strict equality check
@@ -331,7 +384,7 @@ const collectChangedValues = (
   Object.entries(incomingValues)
     .forEach(([key, value]) => {
       // Check if the value has changed compared to the corresponding value in currentValues
-      if (!isDeepEqual(value, currentValues[key])
+      if (!isDeepEqual(value, currentValues[key], true)
       || (key === 'id'
       && value === currentValues[key])) {
         // Add the changed value to the changedValues object
@@ -412,21 +465,29 @@ const detectAndCast = (value: string): {
   if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
 
   // Check for number
-  if (!Number.isNaN(Number(value)) && String(Number(value)) === value) {
+  const numberRegex = /^-?\d+(\.\d+)?$/;
+  const numberMatch = value.match(numberRegex);
+  if (numberMatch) {
     return { value: Number(value), type: 'number' };
   }
 
   // Check for date
-  const dateRegex = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})\.(\d{3})Z$/;
-  const match = value.match(dateRegex);
-  if (match) {
-    const year = +match[1];
-    const month = +match[2];
-    const day = +match[3];
-    const date = new Date(year, month - 1, day);
+  const dateRegex = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})(\.(\d{3}))?Z?)?$/;
+  const dateMatch = value.match(dateRegex);
+  if (dateMatch) {
+    const year = +dateMatch[1];
+    const month = +dateMatch[2];
+    const day = +dateMatch[3];
+    const hour = +dateMatch[4] || 0;
+    const minute = +dateMatch[5] || 0;
+    const second = +dateMatch[6] || 0;
+    const date = moment.utc(value).toDate();
     if (date.getUTCFullYear() === year
     && date.getUTCMonth() === month - 1
-    && date.getUTCDate() === day) {
+    && date.getUTCDate() === day
+    && date.getUTCHours() === hour
+    && date.getUTCMinutes() === minute
+    && date.getUTCSeconds() === second) {
       return { value: date, type: 'Date' };
     }
   }
@@ -471,6 +532,28 @@ function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Reco
   return result;
 }
 
+/**
+ * Transforms all keys in the given object to lowercase.
+ *
+ * @param obj - The object whose keys are to be transformed to lowercase.
+ * @returns A new object with all keys in lowercase.
+ * @throws Will throw an error if the input is not an object.
+ */
+function lowercaseKeys<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const result: Record<string, any> = {};
+
+  if (typeof obj === 'object' && obj !== null) { // Check for null to ensure obj is a proper object
+    Object.keys(obj).forEach((key) => {
+      const lowercasedKey = key.toLowerCase(); // Lowercase the entire key
+      result[lowercasedKey] = obj[key];
+    });
+  } else {
+    throw new Error('Input is not an object');
+  }
+
+  return result;
+}
+
 export {
   isObject,
   removeUndefined,
@@ -483,4 +566,5 @@ export {
   simplifyObject,
   detectAndCast,
   lowercaseFirstLetterOfKeys,
+  lowercaseKeys,
 };

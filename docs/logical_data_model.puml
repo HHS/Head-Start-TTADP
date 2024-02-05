@@ -422,7 +422,7 @@ class Goals{
 
 class GrantNumberLinks{
  * id : integer : <generated>
-!issue='column should allow null' grantId : integer : REFERENCES "Grants".id
+ grantId : integer : REFERENCES "Grants".id
  * createdAt : timestamp with time zone
  * grantNumber : text
  * updatedAt : timestamp with time zone
@@ -474,7 +474,7 @@ class ImportDataFiles{
  * id : integer : <generated>
  * importFileId : integer : REFERENCES "ImportFiles".id
  * createdAt : timestamp with time zone
- * processed : boolean : false
+ * status : enum : 'IDENTIFIED'::"enum_ImportDataFiles_status"
  * updatedAt : timestamp with time zone
  fileInfo : jsonb
  hash : text

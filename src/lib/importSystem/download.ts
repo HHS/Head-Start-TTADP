@@ -116,6 +116,7 @@ const collectNextFile = async (
       importFileData.key,
       hashStream,
     );
+
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED),
       setImportFileHash(
@@ -124,6 +125,7 @@ const collectNextFile = async (
         IMPORT_STATUSES.COLLECTED,
       ),
     ]);
+
     importedFiles.push(importFileData);
   } catch (err) {
     // Quinary exit - error during upload
@@ -134,6 +136,7 @@ const collectNextFile = async (
         IMPORT_STATUSES.COLLECTION_FAILED,
       ),
     ]);
+
     auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`);
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(
@@ -238,8 +241,7 @@ const collectFilesFromSource = async (
   fileMask?: string | undefined, // The file mask to filter files (optional)
 ) => {
   const serverSettings = collectServerSettings(importId, ftpSettings);
-  let i = 0;
-  console.log(++i, serverSettings);
+
   let ftpClient;
   try {
     // Create a new FTP client instance with the FTP server settings
@@ -248,16 +250,13 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
-  console.log(++i, ftpClient);
   const priorFile = await getPriorFile(importId); // Get the prior file for the import
 
-  console.log(++i, priorFile);
   try {
     await ftpClient.connect();
   } catch (err) {
     throw new Error(`Failed to connect to FTP: ${err.message}`);
   }
-  console.log(++i, ftpClient);
 
   let availableFiles: {
     fullPath: string,
@@ -274,7 +273,6 @@ const collectFilesFromSource = async (
   } catch (err) {
     throw new Error(`Failed to list files from FTP: ${err.message}`);
   }
-  console.log(++i, availableFiles);
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
