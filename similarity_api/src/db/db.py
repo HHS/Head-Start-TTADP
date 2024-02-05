@@ -1,7 +1,7 @@
+import logging
+
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import text
-
-import logging
 
 db = SQLAlchemy()
 
@@ -15,3 +15,11 @@ def query_many(query_str, data):
         logging.exception(e)
         return None
 
+def query(query_str, data):
+    try:
+        query_str = text(query_str)
+        db.session.execute(query_str, params=data)
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logging.exception(e)

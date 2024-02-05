@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
   Button, Dropdown, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
+import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
+import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import { getEventIdSlug } from '../../TrainingReportForm/constants';
 
-const position = 4;
+const position = 5;
 const path = 'complete-session';
 
 const pages = {
@@ -33,6 +37,8 @@ const CompleteSession = ({
   // form is explicitly submitted
   const [updatedStatus, setUpdatedStatus] = useState(formData.status || 'In progress');
   const [showSubmissionError, setShowSubmissionError] = useState(false);
+  const { user } = useContext(UserContext);
+  const { isPoc } = useTrainingReportRole(formData.event, user.id);
 
   const incompletePages = (() => Object.keys(pages)
     // we don't want to include the current page in the list of incomplete pages
@@ -45,6 +51,21 @@ const CompleteSession = ({
   const onFormSubmit = async () => {
     if (updatedStatus !== 'Complete') {
       setError('status', { message: 'Status must be complete to submit session' });
+      return;
+    }
+
+    if (!formData.event.data.goal) {
+      const eventId = getEventIdSlug(formData.event.data.eventId);
+      setError('status', {
+        message: (
+          <span>
+            Vision and goal for
+            {' '}
+            <Link to={`/training-report/${eventId}/vision-goal`}>{formData.event.data.eventId}</Link>
+            {' '}
+            must be completed before completing session
+          </span>),
+      });
       return;
     }
 
@@ -72,7 +93,7 @@ const CompleteSession = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete session</title>
+        <title>Complete Session</title>
       </Helmet>
 
       <IndicatesRequiredField />
@@ -102,7 +123,7 @@ const CompleteSession = ({
 
       <DraftAlert />
       <div className="display-flex">
-        <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button>
+        {!isPoc ? <Button id="submit-event" className="margin-right-1" type="button" onClick={onFormSubmit}>Submit session</Button> : null }
         <Button id="save-draft" className="usa-button--outline" type="button" onClick={onSaveDraft}>Save draft</Button>
         <Button id="back-button" outline type="button" onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
@@ -136,6 +157,12 @@ const CompleteSession = ({
 CompleteSession.propTypes = {
   DraftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
+    event: PropTypes.shape({
+      data: PropTypes.shape({
+        eventId: PropTypes.string,
+        goal: PropTypes.string,
+      }),
+    }),
     id: PropTypes.number,
     status: PropTypes.string,
     pageState: PropTypes.shape({

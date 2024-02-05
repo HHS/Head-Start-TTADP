@@ -2,9 +2,11 @@ import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import filtersToScopes from '../index';
 
-import db, {
+import {
   User,
   EventReportPilot,
+  NationalCenterUser,
+  NationalCenter,
   sequelize,
 } from '../../models';
 
@@ -191,11 +193,17 @@ describe('filtersToScopes', () => {
       expect(found[0].id).toBe(reportWithoutRegion.id);
     });
   });
-  describe('collaborator', () => {
+  describe('National Center Names', () => {
     let reportWithCollaborator;
     let reportWithBothCollaborators;
     let reportWithOtherCollaborator;
     let possibleIds;
+    // National Centers.
+    let nationalCenterToFind;
+    let nationalCenterToNotFind;
+    // National Center Users.
+    let nationalCenterUserToFind;
+    let nationalCenterUserToNotFind;
 
     beforeAll(async () => {
       // create user.
@@ -203,6 +211,28 @@ describe('filtersToScopes', () => {
 
       // Create collaborator user.
       await User.create(mockCollaboratorUser);
+
+      // create national center to find.
+      nationalCenterToFind = await NationalCenter.create({
+        name: 'NC Test 1',
+      });
+
+      // create national center to not find.
+      nationalCenterToNotFind = await NationalCenter.create({
+        name: 'NC Test 2',
+      });
+
+      // create national center user to find.
+      nationalCenterUserToFind = await NationalCenterUser.create({
+        nationalCenterId: nationalCenterToFind.id,
+        userId: mockUser.id,
+      });
+
+      // create national center user to not find.
+      nationalCenterUserToNotFind = await NationalCenterUser.create({
+        nationalCenterId: nationalCenterToNotFind.id,
+        userId: mockCollaboratorUser.id,
+      });
 
       // create report with region 1.
       reportWithCollaborator = await EventReportPilot.create({
@@ -224,7 +254,7 @@ describe('filtersToScopes', () => {
 
       // create report with different region.
       reportWithOtherCollaborator = await EventReportPilot.create({
-        ownerId: mockUser.id,
+        ownerId: mockCollaboratorUser.id,
         pocIds: [mockUser.id],
         collaboratorIds: [mockCollaboratorUser.id],
         regionId: 3,
@@ -235,6 +265,110 @@ describe('filtersToScopes', () => {
         reportWithCollaborator.id,
         reportWithBothCollaborators.id,
         reportWithOtherCollaborator.id];
+    });
+    afterAll(async () => {
+      // destroy national centers users.
+      await NationalCenterUser.destroy({
+        where: {
+          id: [nationalCenterUserToFind.id, nationalCenterUserToNotFind.id],
+        },
+      });
+
+      // destroy national centers.
+      await NationalCenter.destroy({
+        where: {
+          id: [nationalCenterToFind.id, nationalCenterToNotFind.id],
+        },
+        force: true,
+      });
+
+      await NationalCenter.destroy({
+        where: {
+          id: [nationalCenterToFind.id, nationalCenterToNotFind.id],
+        },
+      });
+
+      // destroy reports.
+      await EventReportPilot.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+
+      // destroy user.
+      await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
+    });
+
+    it('before returns reports with mock contains collaborator national center', async () => {
+      const filters = { 'collaborators.in': 'NC Test 1' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+
+      const reportIds = found.map((report) => report.id);
+
+      expect(reportIds.includes(reportWithCollaborator.id)).toBe(true);
+      expect(reportIds.includes(reportWithBothCollaborators.id)).toBe(true);
+    });
+
+    it('before returns reports with mock contains creator national center', async () => {
+      const filters = { 'creator.in': 'NC Test 1' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+
+      const reportIds = found.map((report) => report.id);
+
+      expect(reportIds.includes(reportWithCollaborator.id)).toBe(true);
+      expect(reportIds.includes(reportWithBothCollaborators.id)).toBe(true);
+    });
+  });
+
+  describe('eventId', () => {
+    let reportWithEventId;
+    let reportWithoutEventId;
+    let reportWithNullEventId;
+    let possibleIds;
+
+    beforeAll(async () => {
+      // create user.
+      await User.create(mockUser);
+
+      // Report with event to find.
+      reportWithEventId = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { eventId: 'R01-TR-23-1035' },
+      });
+
+      // Report without event to find.
+      reportWithoutEventId = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { eventId: 'R01-TR-23-2484' },
+      });
+
+      // Report with null event.
+      reportWithNullEventId = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { },
+      });
+
+      possibleIds = [
+        reportWithEventId.id,
+        reportWithoutEventId.id,
+        reportWithNullEventId.id];
     });
     afterAll(async () => {
       // destroy reports.
@@ -248,25 +382,28 @@ describe('filtersToScopes', () => {
       await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
     });
 
-    it('before returns reports with mock contains collaborator', async () => {
-      const filters = { 'collaborators.ctn': 'John Smith' };
-      const { trainingReport: scope } = await filtersToScopes(filters);
-      const found = await EventReportPilot.findAll({
-        where: { [Op.and]: [scope, { id: possibleIds }] },
-      });
-      expect(found.length).toBe(2);
-      expect(found[0].id).toBe(reportWithCollaborator.id);
-      expect(found[1].id).toBe(reportWithBothCollaborators.id);
-    });
-
-    it('before returns reports with mock does not contain collaborator', async () => {
-      const filters = { 'collaborators.nctn': 'John Smith' };
+    it('returns event with event id', async () => {
+      const filters = { 'eventId.ctn': '1035' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found[0].id).toBe(reportWithOtherCollaborator.id);
+      expect(found[0].id).toBe(reportWithEventId.id);
+    });
+
+    it('returns events without event id', async () => {
+      const filters = { 'eventId.nctn': '1035' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(2);
+      const reportIds = found.map((report) => report.id);
+
+      // Assert report ids includes the report without event id.
+      expect(reportIds.includes(reportWithoutEventId.id)).toBe(true);
+      expect(reportIds.includes(reportWithNullEventId.id)).toBe(true);
     });
   });
 });

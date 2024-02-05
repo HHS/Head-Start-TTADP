@@ -16,6 +16,7 @@ describe('GoalCard', () => {
     objectiveCount: 1,
     goalNumbers: ['G-1'],
     source: 'The inferno',
+    createdVia: 'rtr',
     objectives: [
       {
         id: 1,
@@ -142,5 +143,18 @@ describe('GoalCard', () => {
     renderGoalCard({ ...DEFAULT_PROPS }, goalsWithMultipleObjectives);
     expect(screen.getByText(/last tta/i)).toBeInTheDocument();
     expect(screen.queryAllByText(/2023-01-01/i).length).toBe(2);
+  });
+
+  it('renders a merged goal', () => {
+    const mergedGoal = {
+      ...goal,
+      createdVia: 'merge',
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, mergedGoal);
+    const tags = document.querySelectorAll('.usa-tag');
+    expect(tags.length).toBe(1);
+    expect(tags[0].textContent).toBe('Merged');
+    expect(tags[0]).toBeVisible();
   });
 });

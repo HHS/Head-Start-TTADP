@@ -1,6 +1,12 @@
 const { Model } = require('sequelize');
-const { GOAL_SUSPEND_REASONS: SUSPEND_REASONS } = require('@ttahub/common');
-const { beforeDestroy, afterDestroy } = require('./hooks/activityReportObjective');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
+const {
+  afterCreate,
+  beforeValidate,
+  beforeDestroy,
+  afterDestroy,
+  afterUpdate,
+} = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
@@ -10,6 +16,8 @@ export default (sequelize, DataTypes) => {
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveFiles' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveTopic, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveTopics' });
       ActivityReportObjective.hasMany(models.ActivityReportObjectiveResource, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveResources' });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveCourse, { foreignKey: 'activityReportObjectiveId', as: 'activityReportObjectiveCourses' });
+
       ActivityReportObjective.belongsToMany(models.File, {
         through: models.ActivityReportObjectiveFile,
         foreignKey: 'activityReportObjectiveId',
@@ -27,6 +35,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportObjectiveId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      ActivityReportObjective.belongsTo(models.Objective, {
+        foreignKey: 'originalObjectiveId',
+        as: 'originalObjective',
       });
     }
   }
@@ -50,22 +62,40 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
       defaultValue: 1,
     },
-    suspendReason: {
+    closeSuspendReason: {
       allowNull: true,
-      type: DataTypes.ENUM(SUSPEND_REASONS),
+      type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
     },
-    suspendContext: {
+    closeSuspendContext: {
       type: DataTypes.TEXT,
     },
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
+    originalObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportObjective',
     hooks: {
+      afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportObjective;

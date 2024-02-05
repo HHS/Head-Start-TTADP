@@ -115,7 +115,7 @@ function ResourcesAssociatedWithTopics({
       subtitle="Number of resources cited on Activity Reports with a given topic. If an activity report has more than one topic, resources count towards each topic."
       loading={loading || localLoading}
       loadingLabel="Resource associated with topics loading"
-      showPaging
+      showPagingBottom
       currentPage={activePage}
       totalCount={topicCount}
       offset={offset}

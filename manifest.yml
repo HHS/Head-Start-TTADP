@@ -34,6 +34,8 @@ applications:
       SMTP_IGNORE_TLS: ((SMTP_IGNORE_TLS))
       FROM_EMAIL_ADDRESS: ((FROM_EMAIL_ADDRESS))
       NODE_MODULES_CACHE: false
+      SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
+      SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
@@ -63,6 +65,6 @@ applications:
     processes:
       - type: web
         instances: ((similarity_api_instances))
-        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app
+        command: gunicorn -w 4 -b 0.0.0.0:8080 app:app --preload
         memory: ((similarity_api_memory))
         disk_quota: ((similarity_api_disk_quota))

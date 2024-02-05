@@ -1,8 +1,8 @@
 import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import EventCard from '../EventCard';
 import UserContext from '../../../../UserContext';
@@ -31,7 +31,7 @@ describe('EventCard', () => {
           startDate: '01/02/2021',
           endDate: '01/03/2021',
           objective: 'This is my session objective',
-          objectiveSupportType: 'Implementing',
+          objectiveSupportType: SUPPORT_TYPES[2],
           objectiveTopics: ['Topic 1', 'Topic 2'],
           objectiveTrainers: ['Trainer 1', 'Trainer 2'],
           status: 'In Progress',
@@ -127,7 +127,7 @@ describe('EventCard', () => {
       {
         ...DEFAULT_USER,
         id: 2,
-        permissions: [{ scopeId: SCOPE_IDS.READ_TRAINING_REPORTS, regionId: 1 }],
+        permissions: [{ scopeId: SCOPE_IDS.READ_REPORTS, regionId: 1 }],
       });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -146,7 +146,7 @@ describe('EventCard', () => {
       id: 2,
       permissions: [
         {
-          scopeId: SCOPE_IDS.READ_TRAINING_REPORTS,
+          scopeId: SCOPE_IDS.READ_REPORTS,
           regionId: 1,
         },
       ],

@@ -3,6 +3,7 @@
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
@@ -17,6 +18,11 @@ import Tooltip from '../../components/Tooltip';
 import TableHeader from '../../components/TableHeader';
 import { cleanupLocalStorage } from '../ActivityReport';
 import UserContext from '../../UserContext';
+import {
+  PendingApprovalIcon,
+  Closed as ApprovedIcon,
+  NeedsActionIcon,
+} from '../../components/icons';
 
 const isCollaborator = (report, user) => {
   if (!report.activityReportCollaborators) return false;
@@ -24,6 +30,26 @@ const isCollaborator = (report, user) => {
 };
 
 const isCreator = (report, user) => report.userId === user.id;
+
+const ProperIcon = ({ approvalStatus }) => {
+  switch (approvalStatus) {
+    case APPROVER_STATUSES.APPROVED:
+      return <ApprovedIcon />;
+    case APPROVER_STATUSES.NEEDS_ACTION:
+      return <NeedsActionIcon />;
+    case APPROVER_STATUSES.PENDING:
+    default:
+      return <PendingApprovalIcon />;
+  }
+};
+
+ProperIcon.propTypes = {
+  approvalStatus: PropTypes.string,
+};
+
+ProperIcon.defaultProps = {
+  approvalStatus: APPROVER_STATUSES.PENDING,
+};
 
 export function ReportsRow({ reports, removeAlert, message }) {
   const history = useHistory();
@@ -47,19 +73,25 @@ export function ReportsRow({ reports, removeAlert, message }) {
       activityRecipients,
       startDate,
       calculatedStatus,
-      pendingApprovals,
       approvers,
       createdAt,
       creatorName,
       activityReportCollaborators,
     } = report;
 
-    const justSubmitted = message && message.reportId === id;
     const recipients = activityRecipients.map((ar) => (
       ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
     ));
 
-    const approversToolTipText = approvers ? approvers.map((a) => a.user.fullName) : [];
+    const approverNames = approvers ? approvers.sort((a, b) => (
+      a.user.fullName.localeCompare(b.user.fullName)
+    )).map((a) => (
+      <span key={a.id}>
+        <ProperIcon approvalStatus={a.status} />
+        {a.user.fullName}
+      </span>
+    )) : [];
+
     const collaboratorNames = activityReportCollaborators
       ? activityReportCollaborators.map((collaborator) => (
         collaborator.fullName)) : [];
@@ -68,12 +100,46 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const idLink = `/activity-reports/${id}`;
     const contextMenuLabel = `View activity report ${id}`;
     let statusClassName = `smart-hub--table-tag-status smart-hub--status-${calculatedStatus}`;
-    let displayStatus = calculatedStatus === 'needs_action' ? 'Needs action' : calculatedStatus;
+    let displayStatus = calculatedStatus;
 
-    if (justSubmitted && message.status !== calculatedStatus) {
-      displayStatus = message.status === 'unlocked' ? 'Needs action' : message.status;
-      statusClassName = `smart-hub--table-tag-status smart-hub--status-${message.status === 'unlocked' ? 'needs_action' : message.status}`;
+    const justSubmitted = message && Number(message.reportId) === id;
+    if (justSubmitted) {
+      displayStatus = 'Submitted';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.SUBMITTED}`;
     }
+
+    if (calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = 'Reviewed';
+      statusClassName = 'smart-hub--table-tag-status smart-hub--status-reviewed';
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.NEEDS_ACTION
+      && approvers && approvers.length > 0
+      && approvers.some((a) => a.status === APPROVER_STATUSES.NEEDS_ACTION)
+    ) {
+      displayStatus = 'Needs action';
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.NEEDS_ACTION}`;
+    }
+
+    if (
+      calculatedStatus !== REPORT_STATUSES.APPROVED
+      && approvers && approvers.length > 0
+      && approvers.every((a) => a.status === APPROVER_STATUSES.APPROVED)
+    ) {
+      displayStatus = REPORT_STATUSES.APPROVED;
+      statusClassName = `smart-hub--table-tag-status smart-hub--status-${REPORT_STATUSES.APPROVED}`;
+    }
+
     const menuItems = [
       {
         label: 'View',
@@ -117,16 +183,10 @@ export function ReportsRow({ reports, removeAlert, message }) {
         <td>
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
-        <td>
-          {approversToolTipText.length > 0
-            ? (
-              <Tooltip
-                displayText={pendingApprovals}
-                tooltipText={approversToolTipText.join('\n')}
-                buttonLabel={`pending approvals: ${approversToolTipText}. Click button to visually reveal this information.`}
-              />
-            )
-            : ''}
+        <td className="ttahub-approver-cell">
+          <div className="display-flex flex-column flex-justify">
+            {approverNames}
+          </div>
         </td>
         <td>
           <Tag
@@ -180,7 +240,7 @@ ReportsRow.propTypes = {
   removeAlert: PropTypes.func.isRequired,
   message: PropTypes.shape({
     time: PropTypes.string,
-    reportId: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     displayId: PropTypes.string,
     status: PropTypes.string,
   }),
@@ -210,12 +270,12 @@ function MyAlerts(props) {
     setAlertReportsCount,
     handleDownloadAllAlerts,
     loading,
-    message,
     isDownloadingAlerts,
     downloadAlertsError,
     setDownloadAlertsError,
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
+    message,
   } = props;
   const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
 
@@ -345,12 +405,6 @@ MyAlerts.propTypes = {
   setAlertReportsCount: PropTypes.func.isRequired,
   handleDownloadAllAlerts: PropTypes.func.isRequired,
   loading: PropTypes.bool.isRequired,
-  message: PropTypes.shape({
-    time: PropTypes.string,
-    reportId: PropTypes.number,
-    displayId: PropTypes.string,
-    status: PropTypes.string,
-  }),
   isDownloadingAlerts: PropTypes.bool,
   downloadAlertsError: PropTypes.bool,
   setDownloadAlertsError: PropTypes.func.isRequired,
@@ -362,6 +416,12 @@ MyAlerts.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
+  message: PropTypes.shape({
+    time: PropTypes.string,
+    reportId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    displayId: PropTypes.string,
+    status: PropTypes.string,
+  }),
 };
 
 MyAlerts.defaultProps = {
@@ -371,16 +431,16 @@ MyAlerts.defaultProps = {
   alertsOffset: 0,
   alertsPerPage: ALERTS_PER_PAGE,
   alertsActivePage: 1,
-  message: {
-    time: '',
-    reportId: null,
-    displayId: '',
-    status: '',
-  },
   isDownloadingAlerts: false,
   downloadAlertsError: false,
   downloadAllAlertsButtonRef: () => {},
   downloadSelectedAlertsButtonRef: () => {},
+  message: {
+    time: '',
+    reportId: '',
+    displayId: '',
+    status: '',
+  },
 };
 
 export default MyAlerts;

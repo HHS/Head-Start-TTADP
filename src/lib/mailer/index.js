@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
+import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
 import { sequelize } from '../../models';
 import { auditLogger, logger } from '../../logger';
-import newQueue from '../queue';
+import newQueue, { increaseListeners } from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
 import {
@@ -95,10 +96,10 @@ export const onFailedNotification = (job, error) => {
 
 export const onCompletedNotification = (job, result) => {
   if (result != null) {
-    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId}`);
+    logger.info(`Successfully sent ${job.name} notification for ${job.data.report.displayId || job.data.report.id}`);
     logEmailNotification(job, true, result);
   } else {
-    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId} preferences are not set or marked as "no-send"`);
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
   }
 };
 
@@ -414,6 +415,286 @@ export const programSpecialistRecipientReportApprovedNotification = (
   }
 };
 
+export const sendTrainingReportNotification = async (job, transport = defaultTransport) => {
+  // Set these inside the function to allow easier testing
+  const { FROM_EMAIL_ADDRESS, SEND_NOTIFICATIONS, CI } = process.env;
+  const { data } = job;
+
+  const {
+    emailTo,
+    templatePath,
+    debugMessage,
+  } = data;
+
+  const toEmails = filterAndDeduplicateEmails([emailTo]);
+
+  if (toEmails.length === 0) {
+    logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
+    return null;
+  }
+
+  logger.debug(debugMessage);
+
+  if (SEND_NOTIFICATIONS === 'true' && !CI) {
+    const email = new Email({
+      message: {
+        from: FROM_EMAIL_ADDRESS,
+      },
+      send,
+      transport,
+      htmlToText: {
+        wordwrap: 120,
+      },
+    });
+    return email.send({
+      template: path.resolve(emailTemplatePath, templatePath),
+      message: {
+        to: toEmails,
+      },
+      locals: data,
+    });
+  }
+  return Promise.resolve(null);
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trVisionAndGoalComplete = async (event) => {
+  if (process.env.CI) return;
+  try {
+    const thoseWhoRequireNotifying = uniq([
+      event.ownerId,
+      ...event.collaboratorIds,
+    ]);
+
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(event.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
+      const user = await userById(id);
+      const data = {
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
+        templatePath: 'tr_poc_vision_goal_complete',
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trPocSessionComplete = async (event) => {
+  if (process.env.CI) return;
+  try {
+    const thoseWhoRequireNotifying = [
+      event.ownerId,
+      ...event.collaboratorIds,
+    ];
+
+    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
+      const user = await userById(id);
+      const { eventId } = event.data;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+      const data = {
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
+        templatePath: 'tr_poc_session_complete',
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trSessionCreated = async (event) => {
+  if (process.env.CI) return;
+  try {
+    if (!event.pocIds && !event.pocIds.length) {
+      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    }
+
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id);
+
+      const { eventId } = event.data;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+      const data = {
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
+        templatePath: 'tr_session_created',
+        report: {
+          ...event,
+          displayId: eventId,
+        },
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ * @param {db.models.EventReportPilot.dataValues} event
+ */
+export const trSessionCompleted = async (event) => {
+  if (process.env.CI) return;
+  try {
+    if (!event.pocIds && !event.pocIds.length) {
+      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    }
+
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id);
+
+      const { eventId } = event.data;
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+      const data = {
+        displayId: eventId,
+        reportPath,
+        emailTo: [user.email],
+        debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
+        templatePath: 'tr_session_completed',
+      };
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trCollaboratorAdded = async (
+  report,
+  newCollaboratorId,
+) => {
+  if (process.env.CI) return;
+  try {
+    const collaborator = await userById(newCollaboratorId);
+    if (!collaborator) {
+      throw new Error(`Unable to notify user with ID ${newCollaboratorId} that they were added as a collaborator to TR ${report.id}, a user with that ID does not exist`);
+    }
+
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+    const data = {
+      displayId: eventId,
+      user: collaborator,
+      reportPath,
+      emailTo: [collaborator.email],
+      templatePath: 'tr_collaborator_added',
+      debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trPocAdded = async (
+  report,
+  newPocId,
+) => {
+  if (process.env.CI) return;
+  try {
+    const poc = await userById(newPocId);
+
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+    const data = {
+      displayId: eventId,
+      reportPath,
+      emailTo: [poc.email],
+      debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
+      templatePath: 'tr_poc_added',
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trPocEventComplete = async (
+  event,
+) => {
+  if (process.env.CI) return;
+  try {
+    if (!event.pocIds && !event.pocIds.length) {
+      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
+    }
+
+    await Promise.all(event.pocIds.map(async (id) => {
+      const user = await userById(id);
+      const parsedData = JSON.parse(event.data.val); // parse the JSON string
+      const { eventId } = parsedData; // extract the pretty url
+      const eId = eventId.split('-').pop();
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+      const data = {
+        displayId: eventId,
+        emailTo: [user.email],
+        reportPath,
+        debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
+        templatePath: 'tr_event_complete',
+      };
+
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
+    }));
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
 export const changesRequestedNotification = (
   report,
   approver,
@@ -709,6 +990,7 @@ export const processNotificationQueue = () => {
   // Notifications
   notificationQueue.on('failed', onFailedNotification);
   notificationQueue.on('completed', onCompletedNotification);
+  increaseListeners(notificationQueue, 10);
 
   notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
   notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
@@ -721,6 +1003,41 @@ export const processNotificationQueue = () => {
   notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
   notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
   notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+    sendTrainingReportNotification,
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+    sendTrainingReportNotification,
+  );
 };
 
 /**

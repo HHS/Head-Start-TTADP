@@ -1,0 +1,20 @@
+.ttahub-grid__nav {
+    grid-area: grid-nav; 
+}
+
+.ttahub-grid__content {
+    grid-area: grid-content; 
+}
+
+@media(min-width: 640px) {
+    .ttahub-grid__container {
+        display: grid;   
+        grid-template-columns: 1fr 3fr;
+        grid-template-areas: 
+            "grid-nav grid-content";
+    }
+
+    .ttahub-grid__container--gap-1 {
+        gap: 1rem;
+    }
+}

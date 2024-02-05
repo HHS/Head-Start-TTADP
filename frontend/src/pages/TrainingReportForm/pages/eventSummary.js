@@ -36,14 +36,20 @@ import isAdmin from '../../../permissions';
 
 const placeholderText = '- Select -';
 
-// we need to add three additional target populations to the AR target populations list
+// Get the first three values in TARGET_POPULATIONS.
+const tgtPop = [...TARGET_POPULATIONS];
+const firstThree = tgtPop.splice(0, 3);
+
 const targetPopulations = [
-  ...TARGET_POPULATIONS,
+  ...tgtPop,
   ...EVENT_TARGET_POPULATIONS,
 ];
 
-// sort the reasons alphabetically
+// Sort the reasons alphabetically.
 targetPopulations.sort();
+
+// Move the first three values in TARGET_POPULATIONS to the top of the list.
+targetPopulations.unshift(...firstThree);
 
 const eventOrganizerOptions = [
   'Regional PD Event (with National Centers)',
@@ -95,7 +101,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Event summary</title>
+        <title>Event Summary</title>
       </Helmet>
       <IndicatesRequiredField />
 

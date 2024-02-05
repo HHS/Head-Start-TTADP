@@ -1,5 +1,5 @@
 import waitFor from 'wait-for-expect';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   ActivityRecipient,
   ActivityReport,
@@ -146,18 +146,21 @@ describe('Objectives DB service', () => {
       activityReportId: report.id,
       ttaProvided: 'tta provided',
       status: objective.status,
+      supportType: SUPPORT_TYPES[2],
     });
 
     await ActivityReportObjective.create({
       objectiveId: secondObjective.id,
       activityReportId: report.id,
       status: secondObjective.status,
+      supportType: SUPPORT_TYPES[2],
     });
 
     thirdAro = await ActivityReportObjective.create({
       objectiveId: thirdObjective.id,
       activityReportId: report.id,
       status: secondObjective.status,
+      supportType: SUPPORT_TYPES[2],
     });
 
     // Create objective files.
@@ -245,7 +248,7 @@ describe('Objectives DB service', () => {
       where: { objectiveId: objective.id },
     });
 
-    let checkAROR = await ActivityReportObjectiveResource.findOne({
+    await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
 
@@ -265,13 +268,15 @@ describe('Objectives DB service', () => {
         ids: [objective.id],
         files: [{ id: keepFile.id }],
         resources: [{ value: 'https://keep-obj-resource.gov' }],
+        supportType: SUPPORT_TYPES[3],
       }], report);
     });
+
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
     });
 
-    checkAROR = await ActivityReportObjectiveResource.findOne({
+    await ActivityReportObjectiveResource.findOne({
       where: { activityReportObjectiveId: checkARO.id },
     });
 

@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { MemoryRouter } from 'react-router-dom';
 import join from 'url-join';
 import {
@@ -133,11 +134,29 @@ describe('sessionSummary', () => {
         { id: 2, name: 'Complaint' },
       ]);
 
-      fetchMock.get('/api/national-center', [
-        { id: 1, name: 'DTL' },
-        { id: 2, name: 'HBHS' },
-        { id: 3, name: 'PFCE' },
-        { id: 4, name: 'PFMO' },
+      fetchMock.get('/api/national-center', {
+        centers: [
+          { id: 1, name: 'DTL' },
+          { id: 2, name: 'HBHS' },
+          { id: 3, name: 'PFCE' },
+          { id: 4, name: 'PFMO' },
+        ],
+        users: [],
+      });
+
+      fetchMock.get('/api/courses', [
+        {
+          id: 1,
+          name: 'Sample Course 1',
+        },
+        {
+          id: 2,
+          name: 'Sample Course 2',
+        },
+        {
+          id: 3,
+          name: 'Sample Course 3',
+        },
       ]);
 
       fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
@@ -235,6 +254,32 @@ describe('sessionSummary', () => {
         fetchMock.called(deleteUrl, { method: 'DELETE' }),
       ).toBe(true));
 
+      // Select courses.
+      let yesCourses = document.querySelector('#useIpdCourses-yes');
+      act(async () => {
+        userEvent.click(yesCourses);
+      });
+
+      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      await selectEvent.select(courseSelect, ['Sample Course 2', 'Sample Course 3']);
+      expect(await screen.findByText(/Sample Course 2/i)).toBeVisible();
+      expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
+
+      const noCourses = document.querySelector('#useIpdCourses-no');
+      act(async () => {
+        userEvent.click(noCourses);
+      });
+
+      expect(await screen.findByText(/Sample Course 2/i)).not.toBeVisible();
+      expect(await screen.findByText(/Sample Course 3/i)).not.toBeVisible();
+
+      yesCourses = document.querySelector('#useIpdCourses-yes');
+      act(async () => {
+        userEvent.click(yesCourses);
+      });
+      await selectEvent.select(courseSelect, ['Sample Course 1']);
+      expect(await screen.findByText(/Sample Course 1/i)).toBeVisible();
+
       fetchMock.restore();
 
       const fileUrl = join('/', 'api', 'files');
@@ -270,7 +315,7 @@ describe('sessionSummary', () => {
 
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
-        userEvent.selectOptions(supportType, 'Planning');
+        userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
       });
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });

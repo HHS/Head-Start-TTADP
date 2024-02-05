@@ -29,6 +29,10 @@ import db, {
   Topic,
   Group,
   GroupGrant,
+  ActivityReportGoal,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
+  ActivityReportGoalFieldResponse,
 } from '../../models';
 import { createReport, destroyReport, createGrant } from '../../testUtils';
 import {
@@ -1415,6 +1419,173 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([excludedReport.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('activityReportGoalResponse', () => {
+    let recipient;
+    let grant;
+    let includedReport1;
+    let includedReport2;
+    let excludedReport;
+    let possibleReportIds;
+
+    let goal;
+    let goalTemplateFieldPrompt;
+    let goalFieldResponse;
+    let activityReportGoalFieldResponse1;
+    let activityReportGoalFieldResponse2;
+    let activityReportGoalFieldResponse3;
+
+    beforeAll(async () => {
+      // Recipient.
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 133434 }),
+        name: faker.name.firstName(),
+      });
+
+      // Grant.
+      grant = await Grant.create({
+        id: faker.datatype.number({ min: 133434 }),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      // Goal.
+      goal = await Goal.create({
+        name: 'Goal Response Test',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      // Reports.
+      includedReport1 = await ActivityReport.create(draftReport);
+      includedReport2 = await ActivityReport.create(draftReport);
+      excludedReport = await ActivityReport.create(draftReport);
+      possibleReportIds = [includedReport1.id, includedReport2.id, excludedReport.id];
+
+      // ActivityReportGoals.
+      const activityReportGoal1 = await ActivityReportGoal.create({
+        activityReportId: includedReport1.id,
+        goalId: goal.id,
+      });
+
+      const activityReportGoal2 = await ActivityReportGoal.create({
+        activityReportId: includedReport2.id,
+        goalId: goal.id,
+      });
+
+      const activityReportGoal3 = await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goal.id,
+      });
+
+      // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
+      goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      // Create GoalFieldResponse.
+      goalFieldResponse = await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Community Partnerships'],
+      });
+
+      // Create ActivityReportGoalFieldResponse.
+      activityReportGoalFieldResponse1 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal1.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Community Partnerships'],
+      });
+      activityReportGoalFieldResponse2 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal2.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Workforce', 'Community Partnerships', 'Family Circumstances'],
+      });
+      activityReportGoalFieldResponse3 = await ActivityReportGoalFieldResponse.create({
+        activityReportGoalId: activityReportGoal3.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Other ECE Care Option'],
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy ActivityReportGoalFieldResponses.
+      await ActivityReportGoalFieldResponse.destroy({
+        where: {
+          id: [
+            activityReportGoalFieldResponse1.id,
+            activityReportGoalFieldResponse2.id,
+            activityReportGoalFieldResponse3.id,
+          ],
+        },
+      });
+
+      // Destroy GoalFieldResponse.
+      await GoalFieldResponse.destroy({
+        where: { id: goalFieldResponse.id },
+      });
+
+      // Destroy ActivityReportGoals.
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [
+            includedReport1.id,
+            includedReport2.id,
+            excludedReport.id,
+          ],
+        },
+      });
+
+      // Destroy Reports.
+      await ActivityReport.destroy({
+        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+      });
+
+      // Destroy Goal.
+      await Goal.destroy({
+        where: { id: goal.id },
+      });
+
+      // Destroy Grant.
+      await Grant.destroy({
+        where: { id: grant.id },
+      });
+
+      // Destroy Recipient.
+      await Recipient.destroy({
+        where: { id: recipient.id },
+      });
+    });
+
+    it('find reports with fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.in': ['Community Partnerships'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleReportIds }] },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+    });
+
+    it('find reports without fei root cause response', async () => {
+      const filters = { 'activityReportGoalResponse.nin': ['Community Partnerships'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleReportIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([excludedReport.id]));
     });
   });
 

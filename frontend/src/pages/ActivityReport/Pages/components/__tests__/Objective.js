@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, within, act, fireEvent, waitFor,
@@ -9,6 +10,7 @@ import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
+import UserContext from '../../../../../UserContext';
 
 const defaultObjective = {
   id: 1,
@@ -73,66 +75,75 @@ const RenderObjective = ({
   };
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <AppLoadingContext.Provider value={
+    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+      <FormProvider {...hookForm}>
+        <AppLoadingContext.Provider value={
         {
           setAppLoadingText: jest.fn(),
           setIsAppLoading: jest.fn(),
         }
       }
-      >
-        <Objective
-          objective={defaultObjective}
-          topicOptions={[]}
-          options={[
-            {
-              label: 'Create a new objective',
-              value: 'Create a new objective',
-              topics: [],
-              resources: [],
-              files: [],
-              status: 'Not Started',
-              title: '',
-            },
-            {
-              label: 'Existing objective',
-              value: 123,
-              topics: [],
-              resources: [],
-              files: [],
-              status: 'Complete',
-              title: 'Existing objective',
-            }]}
-          index={1}
-          remove={onRemove}
-          fieldArrayName="objectives"
-          goalId={1}
-          onRemove={onRemove}
-          onUpdate={onUpdate}
-          parentLabel="goals"
-          objectiveAriaLabel="1 on goal 1"
-          goalIndex={0}
-          objectiveIndex={0}
-          errors={{}}
-          onObjectiveChange={jest.fn()}
-          onSaveDraft={jest.fn()}
-          parentGoal={{ status: 'In Progress' }}
-          initialObjectiveStatus="Not Started"
-          reportId={98123}
-        />
-      </AppLoadingContext.Provider>
-    </FormProvider>
+        >
+          <Objective
+            objective={defaultObjective}
+            topicOptions={[]}
+            options={[
+              {
+                label: 'Create a new objective',
+                value: 'Create a new objective',
+                topics: [],
+                resources: [],
+                files: [],
+                status: 'Not Started',
+                title: '',
+                courses: [],
+                supportType: '',
+              },
+              {
+                courses: [],
+                supportType: '',
+                label: 'Existing objective',
+                value: 123,
+                topics: [],
+                resources: [],
+                files: [],
+                status: 'Complete',
+                title: 'Existing objective',
+              }]}
+            index={1}
+            remove={onRemove}
+            fieldArrayName="objectives"
+            goalId={1}
+            onRemove={onRemove}
+            onUpdate={onUpdate}
+            parentLabel="goals"
+            objectiveAriaLabel="1 on goal 1"
+            goalIndex={0}
+            objectiveIndex={0}
+            errors={{}}
+            onObjectiveChange={jest.fn()}
+            onSaveDraft={jest.fn()}
+            parentGoal={{ status: 'In Progress' }}
+            initialObjectiveStatus="Not Started"
+            reportId={98123}
+          />
+        </AppLoadingContext.Provider>
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 
 describe('Objective', () => {
   afterEach(() => fetchMock.restore());
-  beforeEach(() => fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  beforeEach(async () => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Whats New</title>
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`));
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+
+    fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
+  });
 
   it('renders an objective', async () => {
     render(<RenderObjective />);
@@ -217,6 +228,15 @@ describe('Objective', () => {
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/reason suspended/i)).toBeVisible();
     expect(await screen.findByText(/recipient request - this is the context/i)).toBeVisible();
+  });
+
+  it('you can change status to in progress', async () => {
+    render(<RenderObjective />);
+    expect(await screen.findByText(/This is an objective title/i, { selector: 'textarea' })).toBeVisible();
+    const select = await screen.findByLabelText(/objective status/i);
+    userEvent.selectOptions(select, 'In Progress');
+
+    expect(await screen.findByLabelText(/objective status/i)).toHaveValue('In Progress');
   });
 
   it('when changing status to suspended, you can cancel', async () => {

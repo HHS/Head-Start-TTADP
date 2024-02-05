@@ -227,7 +227,6 @@ describe('frequency graph widget', () => {
     const { topics } = res;
     expect(topics.find((r) => r.category === 'Media Consumption').count).toBe(1);
 
-    // expect(topics.filter((r) => r.count > 0).length).toBe(4);
     expect(topics.find((r) => r.category === 'Home Visiting').count).toBe(3);
     expect(topics.find((r) => r.category === 'Five-Year Grant').count).toBe(2);
     expect(topics.find((r) => r.category === 'Fiscal / Budget').count).toBe(2);

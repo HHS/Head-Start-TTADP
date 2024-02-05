@@ -33,6 +33,6 @@ export async function getReportByDisplayId(req, res) {
 
     res.json(ActivityReportsPresenter.render(report));
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
