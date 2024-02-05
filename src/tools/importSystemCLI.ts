@@ -13,6 +13,6 @@ if (action && importId) {
     process.exit(1);
   });
 } else {
-  console.error('Please provide an arguments.');
+  auditLogger.error('Please provide an arguments.');
   process.exit(1); // Exit with a failure code
 }

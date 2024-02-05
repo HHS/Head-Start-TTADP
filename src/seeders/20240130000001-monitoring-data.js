@@ -1,4 +1,3 @@
-
 const { updateSequence } = require('../lib/migration');
 
 const reviews = [
