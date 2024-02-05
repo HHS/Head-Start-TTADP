@@ -442,6 +442,20 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
 
     await createGoalsForSessionRecipientsIfNecessary(mockSequelize, mockInstance, mockOptions);
     expect(mockSequelize.models.Goal.create).toHaveBeenCalled();
+    expect(mockSequelize.models.Goal.create).toHaveBeenCalledWith(
+      {
+        createdAt: expect.any(Date),
+        createdVia: 'tr',
+        grantId: 3,
+        name: 'Increase knowledge about X',
+        onAR: true,
+        onApprovedAR: false,
+        source: 'Training event',
+        status: 'Draft',
+        updatedAt: expect.any(Date),
+      },
+      { transaction: {} },
+    );
     expect(mockSequelize.models.EventReportPilotGoal.create).toHaveBeenCalled();
   });
 

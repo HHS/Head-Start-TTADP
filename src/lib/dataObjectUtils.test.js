@@ -3,12 +3,15 @@ import {
   removeUndefined,
   remapPrune,
   remap,
+  areNumbersEqual,
+  areDatesEqual,
   isDeepEqual,
   mergeDeep,
   collectChangedValues,
   simplifyObject,
   detectAndCast,
   lowercaseFirstLetterOfKeys,
+  lowercaseKeys,
 } from './dataObjectUtils';
 
 describe('dataObjectUtils', () => {
@@ -181,6 +184,31 @@ describe('dataObjectUtils', () => {
       remapPrune(data, 'a.b.c', { deleteEmptyParents: true });
       expect(data).toEqual(originalData);
     });
+    it('should remove an empty array and its parent path', () => {
+      // Arrange
+      const data = {
+        a: {
+          b: {
+            c: [1, 2, 3],
+            d: [], // This is the target empty array
+          },
+        },
+      };
+      const prunePath = 'a.b.d';
+
+      // Act
+      const result = remapPrune(data, prunePath);
+
+      // Assert
+      // Check that the empty array and its parent path have been removed
+      expect(result).toEqual({
+        a: {
+          b: {
+            c: [1, 2, 3],
+          },
+        },
+      });
+    });
   });
 
   describe('remap function', () => {
@@ -199,6 +227,31 @@ describe('dataObjectUtils', () => {
       'address.street': 'location.streetName',
       'address.city': 'location.cityName',
     };
+
+    it('some values keep the same name', () => {
+      const data = {
+        date: '1970-01-01',
+        name: 'epoch',
+        description: 'Milliseconds since (January 1, 1970 UTC).',
+        junk: 12345,
+      };
+
+      const remapTest = {
+        date: 'timestamp',
+        name: 'name',
+        description: 'definition',
+      };
+
+      const result = remap(data, remapTest, { keepUnmappedValues: false });
+      expect(result).toEqual({
+        mapped: {
+          timestamp: '1970-01-01',
+          name: 'epoch',
+          definition: 'Milliseconds since (January 1, 1970 UTC).',
+        },
+        unmapped: { junk: 12345 },
+      });
+    });
 
     it('should correctly remap data based on the definition', () => {
       const result = remap(mockData, remappingDefinition);
@@ -369,7 +422,7 @@ describe('dataObjectUtils', () => {
         id: null,
         name: 'John Doe',
       };
-      const result = remap(dataWithNull, remappingDefinition);
+      const result = remap(dataWithNull, remappingDefinition, { keepUnmappedValues: false });
       expect(result.mapped).toEqual({
         userId: null,
         fullName: 'John Doe',
@@ -491,6 +544,114 @@ describe('dataObjectUtils', () => {
         },
         unmapped: null,
       });
+    });
+  });
+
+  describe('areNumbersEqual', () => {
+    test('should return true when both values are not numbers', () => {
+      expect(areNumbersEqual('a', 'b')).toBe(true);
+      expect(areNumbersEqual(null, undefined)).toBe(true);
+      expect(areNumbersEqual({}, [])).toBe(true);
+    });
+
+    test('should return true when both values are the same number', () => {
+      expect(areNumbersEqual(1, 1)).toBe(true);
+      expect(areNumbersEqual(0, 0)).toBe(true);
+      expect(areNumbersEqual(-1, -1)).toBe(true);
+      expect(areNumbersEqual(3.14, 3.14)).toBe(true);
+    });
+
+    test('should return false when numbers are different', () => {
+      expect(areNumbersEqual(1, 2)).toBe(false);
+      expect(areNumbersEqual(-1, 1)).toBe(false);
+      expect(areNumbersEqual(0, 0.0001)).toBe(false);
+    });
+
+    test('should return true when numeric strings are equal to numbers', () => {
+      expect(areNumbersEqual('1', 1)).toBe(true);
+      expect(areNumbersEqual('0', 0)).toBe(true);
+      expect(areNumbersEqual('-1', -1)).toBe(true);
+    });
+
+    test('should return false when numeric strings are not equal to numbers', () => {
+      expect(areNumbersEqual('1', 2)).toBe(false);
+      expect(areNumbersEqual('0', -1)).toBe(false);
+      expect(areNumbersEqual('3.14', 3.15)).toBe(false);
+    });
+
+    test('should handle special number cases', () => {
+      expect(areNumbersEqual(NaN, NaN)).toBe(true); // Special case, as NaN is not equal to NaN
+      expect(areNumbersEqual(Infinity, Infinity)).toBe(true);
+      expect(areNumbersEqual(-Infinity, -Infinity)).toBe(true);
+      expect(areNumbersEqual(Infinity, -Infinity)).toBe(false);
+      expect(areNumbersEqual(Infinity, 'Infinity')).toBe(true);
+      expect(areNumbersEqual(-Infinity, '-Infinity')).toBe(true);
+    });
+  });
+
+  describe('areDatesEqual', () => {
+    it('should return true for equal date strings', () => {
+      const dateStr1 = '2021-01-01';
+      const dateStr2 = '2021-01-01';
+      expect(areDatesEqual(dateStr1, dateStr2)).toBe(true);
+    });
+
+    it('should return true for equal date objects', () => {
+      const dateObj1 = new Date('2021-01-01');
+      const dateObj2 = new Date('2021-01-01');
+      expect(areDatesEqual(dateObj1, dateObj2)).toBe(true);
+    });
+
+    it('should return true for a date string and a date object representing the same date', () => {
+      const dateStr = '2021-01-01';
+      const dateObj = new Date('2021-01-01');
+      expect(areDatesEqual(dateStr, dateObj)).toBe(true);
+    });
+
+    it('should return false for non-equal date strings', () => {
+      const dateStr1 = '2021-01-01';
+      const dateStr2 = '2021-01-02';
+      expect(areDatesEqual(dateStr1, dateStr2)).toBe(false);
+    });
+
+    it('should return false for non-equal date objects', () => {
+      const dateObj1 = new Date('2021-01-01');
+      const dateObj2 = new Date('2021-01-02');
+      expect(areDatesEqual(dateObj1, dateObj2)).toBe(false);
+    });
+
+    it('should return false for invalid date strings', () => {
+      const dateStr1 = 'not-a-date';
+      const dateStr2 = '2021-01-01';
+      expect(areDatesEqual(dateStr1, dateStr2)).toBe(false);
+    });
+
+    it('should return false for null and a valid date', () => {
+      const dateObj = new Date('2021-01-01');
+      expect(areDatesEqual(null, dateObj)).toBe(false);
+    });
+
+    it('should return false for undefined and a valid date', () => {
+      const dateObj = new Date('2021-01-01');
+      expect(areDatesEqual(undefined, dateObj)).toBe(false);
+    });
+
+    it('should return false for two invalid dates', () => {
+      const dateStr1 = 'not-a-date';
+      const dateStr2 = 'also-not-a-date';
+      expect(areDatesEqual(dateStr1, dateStr2)).toBe(false);
+    });
+
+    it('should return false for a valid date and an object that is not a date', () => {
+      const dateObj = new Date('2021-01-01');
+      const nonDateObj = {};
+      expect(areDatesEqual(dateObj, nonDateObj)).toBe(false);
+    });
+
+    it('should return false for two objects that are not dates', () => {
+      const nonDateObj1 = {};
+      const nonDateObj2 = {};
+      expect(areDatesEqual(nonDateObj1, nonDateObj2)).toBe(false);
     });
   });
 
@@ -1007,6 +1168,52 @@ describe('dataObjectUtils', () => {
     it('should throw an error if the input is not an object', () => {
       const input = 'not-an-object';
       expect(() => lowercaseFirstLetterOfKeys(input)).toThrow();
+    });
+  });
+
+  describe('lowercaseKeys', () => {
+    it('should return an empty object when the input is an empty object', () => {
+      expect(lowercaseKeys({})).toEqual({});
+    });
+
+    it('should lowercase all keys in a simple object', () => {
+      const input = { Name: 'Alice', AGE: 25, 'E-mAiL': 'alice@example.com' };
+      const expected = { name: 'Alice', age: 25, 'e-mail': 'alice@example.com' };
+      expect(lowercaseKeys(input)).toEqual(expected);
+    });
+
+    it('should not alter the values of the object', () => {
+      const input = { Name: 'Alice', AGE: 25 };
+      const result = lowercaseKeys(input);
+      expect(result.name).toBe('Alice');
+      expect(result.age).toBe(25);
+    });
+
+    it('should handle nested objects without altering the structure', () => {
+      const input = { User: { Name: 'Alice', AGE: 25 } };
+      const expected = { user: { Name: 'Alice', AGE: 25 } };
+      expect(lowercaseKeys(input)).toEqual(expected);
+    });
+
+    it('should throw an error if the input is not an object', () => {
+      const nonObjectInputs = [null, undefined, 42, 'string', true, []];
+      nonObjectInputs.forEach((input) => {
+        expect(() => lowercaseKeys(input)).toThrow('Input is not an object');
+      });
+    });
+
+    it('should not alter the original object', () => {
+      const input = { Name: 'Alice', AGE: 25 };
+      const originalInput = { ...input };
+      lowercaseKeys(input);
+      expect(input).toEqual(originalInput);
+    });
+
+    it('should handle objects with keys that would conflict when lowercased', () => {
+      const input = { name: 'Alice', NAME: 'Bob' };
+      const result = lowercaseKeys(input);
+      expect(Object.keys(result)).toHaveLength(1);
+      expect(result.name).toBe('Bob'); // The last key-value pair should overwrite the first
     });
   });
 });

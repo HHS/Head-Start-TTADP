@@ -44,6 +44,22 @@ module.exports = {
         transaction,
       });
 
+      await queryInterface.sequelize.query(/* sql */`
+          INSERT INTO "GrantNumberLinks"
+          (
+            "grantNumber",
+            "grantId",
+            "createdAt",
+            "updatedAt"
+          )
+          SELECT
+            "number",
+            "id",
+            "createdAt",
+            "updatedAt"
+          FROM "Grants";
+      `, { transaction });
+
       await queryInterface.createTable('MonitoringReviewLinks', {
         id: {
           type: Sequelize.INTEGER,
@@ -147,13 +163,13 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId_deletedAt"
           ON "MonitoringReviewStatuses"
           ("statusId", "deletedAt");
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           ALTER TABLE "MonitoringReviewStatuses"
           ADD CONSTRAINT "MonitoringReviewStatuses_statusId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewStatuses_statusId_deletedAt";
@@ -242,26 +258,26 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE UNIQUE INDEX "MonitoringReviews_reviewId_deletedAt"
           ON "MonitoringReviews"
           ("reviewId", "deletedAt");
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           ALTER TABLE "MonitoringReviews"
           ADD CONSTRAINT "MonitoringReviews_reviewId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviews_reviewId_deletedAt";
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringReviews_statusId"
           ON "MonitoringReviews"
           ("statusId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringReviews_reviewId_statusId"
           ON "MonitoringReviews"
           ("reviewId", "statusId")
@@ -339,34 +355,34 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringReviewGrantees_reviewId"
           ON "MonitoringReviewGrantees"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringReviewGrantees_granteeId"
           ON "MonitoringReviewGrantees"
           ("granteeId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringReviewGrantees_grantNumber"
           ON "MonitoringReviewGrantees"
           ("grantNumber")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt"
           ON "MonitoringReviewGrantees"
           ("reviewId", "grantNumber", "deletedAt");
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           ALTER TABLE "MonitoringReviewGrantees"
           ADD CONSTRAINT "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt";
@@ -425,27 +441,27 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringFindingHistories_reviewId"
           ON "MonitoringFindingHistories"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringFindingHistories_findingHistoryId"
           ON "MonitoringFindingHistories"
           ("findingHistoryId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt"
           ON "MonitoringFindingHistories"
           ("reviewId", "findingHistoryId", "deletedAt");
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           ALTER TABLE "MonitoringFindingHistories"
           ADD CONSTRAINT "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt";
@@ -526,27 +542,27 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringClassSummaries_reviewId"
           ON "MonitoringClassSummaries"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE INDEX "MonitoringClassSummaries_grantNumber"
           ON "MonitoringClassSummaries"
           ("grantNumber")
           WHERE "deletedAt" IS NULL;
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt"
           ON "MonitoringClassSummaries"
           ("reviewId", "grantNumber", "deletedAt");
       `, { transaction });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
           ALTER TABLE "MonitoringClassSummaries"
           ADD CONSTRAINT "MonitoringClassSummaries_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt";
@@ -554,11 +570,12 @@ module.exports = {
 
       //-----------------------------------------------------------------------------------------
 
+      // All the values read for ENV base on the names
       const ftpSettings = {
-        host: 'sftp.ams20.gov', // TODO: need host
-        port: 22, // TODO: need port
-        username: 'tta_ro', // TODO: need username
-        password: '', // THE name of the ENV that holds the password
+        host: 'ITAMS_MD_HOST',
+        port: 'ITAMS_MD_PORT',
+        username: 'ITAMS_MD_USERNAME',
+        password: 'ITAMS_MD_PASSWORD',
       };
 
       /**
@@ -574,16 +591,18 @@ module.exports = {
       const definitions = [];
       definitions.push({
         fileName: 'AMS_ReviewStatus.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviewStatuses',
-        keys: ['status_id'],
+        keys: ['statusId'],
         remapDef: {
-          StatusId: 'status_id',
+          StatusId: 'statusId',
           Name: 'name',
         },
       });
       definitions.push({
         fileName: 'AMS_Review.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviews',
         keys: ['reviewId'],
@@ -601,6 +620,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_ReviewGrantee.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringReviewGrantees',
         keys: ['reviewId', 'granteeId'],
@@ -615,6 +635,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_FindingHistory.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringFindingHistories',
         keys: ['findingHistoryId'],
@@ -626,6 +647,7 @@ module.exports = {
       });
       definitions.push({
         fileName: 'AMS_CLASS_SUMMARYGrants.xml',
+        path: '.',
         encoding: 'utf16le',
         tableName: 'MonitoringClassSummaries',
         keys: ['reviewId'],
@@ -675,6 +697,9 @@ module.exports = {
         'MonitoringReviews',
         'MonitoringReviewGrantees',
         'MonitoringFindingHistories',
+        'GrantNumberLinks',
+        'MonitoringReviewLinks',
+        'MonitoringReviewStatusLinks',
       ]);
       await await queryInterface.sequelize.query(/* sql */`
       DELETE FROM "Imports"

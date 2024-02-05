@@ -1,11 +1,15 @@
 import { Op } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-import { FileInfo as FTPFileInfo } from '../stream/ftp';
+import { FileInfo as FTPFileInfo } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db, { Sequelize } from '../../models';
-import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
+import {
+  FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
+} from '../../constants';
 
 const {
   File,
@@ -26,10 +30,11 @@ const getPriorFile = async (
   status: string = IMPORT_STATUSES.COLLECTED,
 ) => {
   // Find the prior file associated with the given importId
-  const { name: priorFile } = await ImportFile.findOne({
+  const importFile = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
-      ['ftpFileInfo->>\'name\'', 'name'],
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'name'],
     ],
     where: {
       importId,
@@ -37,11 +42,18 @@ const getPriorFile = async (
     },
     // Ordering the results by ftpFileInfo.date in descending order
     // eslint-disable-next-line @typescript-eslint/quotes
-    order: [[`ftpFileInfo->>'date'`, 'DESC']],
+    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
     raw: true,
   });
-  // Return the name of the prior file
-  return priorFile;
+
+  // Check if a file was found
+  if (importFile) {
+    // Return the name of the prior file
+    return importFile.name;
+  }
+  // Handle the case where no file was found
+  // You could return null, undefined, or throw an error, depending on your application's needs
+  return null; // or throw new Error('No prior file found.');
 };
 
 /**
@@ -136,8 +148,7 @@ const getNextFileToProcess = async (
       ],
     },
     order: [
-      ['ftpFileInfo->>"name"', 'ASC'], // Order by file name in ascending order
-      ['ftpFileInfo->>"date"', 'ASC'], // Order by file date in ascending order
+      ['createdAt', 'ASC'],
     ],
     limit: 1, // Limit the result to 1 record
   });
@@ -177,43 +188,33 @@ const recordAvailableFiles = async (
     raw: true,
   });
 
+  const fileMatches = (file, fileSet) => (currentImportFile, availableFile) => (
+    importId === currentImportFile.importId
+    && availableFile.fileInfo.path === currentImportFile.fileInfo.path
+    && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+  );
+
   // Separate the available files into new, matched, and removed files
-  const [
-    newfiles,
-    matchedFiles,
-    removedFiles,
-  ] = [
-    // New files are those that are not already recorded in the database
-    availableFiles
-      .filter((availableFile) => !currentImportFiles
-        .some((currentImportFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-    // Matched files are those that are already recorded in the database
-    availableFiles
-      .filter((availableFile) => currentImportFiles
-        .some((currentImportFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-    // Removed files are those that were recorded in the database but are no longer available
-    currentImportFiles
-      .filter((currentImportFile) => !availableFiles
-        .some((availableFile) => (
-          importId === currentImportFile.importId
-          && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-          && availableFile.fileInfo.name === currentImportFile.fileInfo.name
-        ))),
-  ];
+  // New files are those that are not already recorded in the database
+  const newFiles = availableFiles
+    .filter((availableFile) => !currentImportFiles
+      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)))
+    .map(({ stream: _stream, ...availableFile }) => availableFile);
+  // Matched files are those that are already recorded in the database
+  const matchedFiles = availableFiles
+    .filter((availableFile) => currentImportFiles
+      .some((currentImportFile) => fileMatches(currentImportFile, availableFile)))
+    .map(({ stream: _stream, ...availableFile }) => availableFile);
+  // Removed files are those that were recorded in the database but are no longer available
+  const removedFiles = currentImportFiles
+    .filter((currentImportFile) => !availableFiles
+      .some((availableFile) => fileMatches(currentImportFile, availableFile)));
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newfiles.length > 0
+    (newFiles.length > 0
       ? ImportFile.bulkCreate(
-        newfiles.map((newFile) => ({
+        newFiles.map((newFile) => ({
           importId,
           ftpFileInfo: newFile.fileInfo,
           status: IMPORT_STATUSES.IDENTIFIED,
@@ -225,17 +226,19 @@ const recordAvailableFiles = async (
     ...(matchedFiles.length > 0
       ? matchedFiles.map(async (matchedFile) => ImportFile.update(
         {
-          importId,
           ftpFileInfo: matchedFile.fileInfo,
         },
         {
           where: {
             importId,
-            [Op.and]: [
-              Sequelize.literal(`"ftpFileInfo" -> 'path' = '${matchedFile.fileInfo.path}'`),
-              Sequelize.literal(`"ftpFileInfo" -> 'name' = '${matchedFile.fileInfo.name}'`),
-            ],
+            ftpFileInfo: {
+              [Sequelize.Op.contains]: {
+                path: matchedFile.fileInfo.path,
+                name: matchedFile.fileInfo.name,
+              },
+            },
           },
+          individualHooks: true,
         },
       ))
       : []),
@@ -245,6 +248,7 @@ const recordAvailableFiles = async (
         where: {
           importId,
           id: removedFiles.map(({ id }) => id),
+          status: [IMPORT_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
       })
@@ -264,7 +268,7 @@ const recordAvailableDataFiles = async (
     attributes: [
       'id',
       'importFileId',
-      ['zipFileInfo', 'fileInfo'],
+      'fileInfo',
     ],
     where: {
       importFileId,
@@ -272,53 +276,41 @@ const recordAvailableDataFiles = async (
     raw: true,
   });
 
+  const fileMatches = (file, fileSet) => (currentImportDataFile, availableFile) => (
+    importFileId === currentImportDataFile.importFileId
+    && availableFile.path === currentImportDataFile.fileInfo.path
+    && availableFile.fileInfo.name === currentImportDataFile.fileInfo.name
+  );
+
   // Separate the available files into new, matched, and removed files
-  const [
-    newfiles,
-    matchedFiles,
-    removedFiles,
-  ] = [
-    // New files are those that are not already recorded in the database
-    availableFiles
-      .filter((availableFile) => !currentImportDataFiles
-        .some((currentImportDataFile) => (
-          importFileId === currentImportDataFile.importFileId
-          && availableFile.path === currentImportDataFile.fileInfo.path
-          && availableFile.name === currentImportDataFile.fileInfo.name
-        ))),
-    // Matched files are those that are already recorded in the database
-    availableFiles
-      .filter((availableFile) => currentImportDataFiles
-        .some((currentImportFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-    // Removed files are those that were recorded in the database but are no longer available
-    currentImportDataFiles
-      .filter((currentImportFile) => !availableFiles
-        .some((availableFile) => (
-          importFileId === currentImportFile.importFileId
-          && availableFile.path === currentImportFile.fileInfo.path
-          && availableFile.name === currentImportFile.fileInfo.name
-        ))),
-  ];
+  // New files are those that are not already recorded in the database
+  const newFiles = availableFiles
+    .filter((availableFile) => !currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Matched files are those that are already recorded in the database
+  const matchedFiles = availableFiles
+    .filter((availableFile) => currentImportDataFiles
+      .some((currentImportDataFile) => fileMatches(currentImportDataFile, availableFile)));
+  // Removed files are those that were recorded in the database but are no longer available
+  const removedFiles = currentImportDataFiles
+    .filter((currentImportDataFile) => !availableFiles
+      .some((availableFile) => fileMatches(currentImportDataFile, availableFile)));
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newfiles.length > 0
-      ? ImportFile.bulkCreate(
-        newfiles.map((newFile) => ({
+    (newFiles.length > 0
+      ? ImportDataFile.bulkCreate(
+        newFiles.map((newFile) => ({
           importFileId,
           fileInfo: newFile,
-          status: IMPORT_STATUSES.IDENTIFIED,
+          status: IMPORT_DATA_STATUSES.IDENTIFIED,
         })),
         { individualHooks: true },
       )
       : Promise.resolve()),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
-      ? matchedFiles.map(async (matchedFile) => ImportFile.update(
+      ? matchedFiles.map(async (matchedFile) => ImportDataFile.update(
         {
           importFileId,
           fileInfo: matchedFile,
@@ -331,12 +323,13 @@ const recordAvailableDataFiles = async (
               Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
             ],
           },
+          individualHooks: true,
         },
       ))
       : []),
     // Delete removed files from the database if there are any
     (removedFiles.length > 0
-      ? ImportFile.destroy({
+      ? ImportDataFile.destroy({
         where: {
           importFileId,
           id: removedFiles.map(({ id }) => id),
@@ -350,6 +343,7 @@ const recordAvailableDataFiles = async (
 const updateAvailableDataFileMetadata = async (
   importFileId: number,
   fileInfo: ZipFileInfo | { name: string },
+  status: string,
   metadata: Record<
   string,
   string | number | string[] | SchemaNode | Record<
@@ -361,12 +355,10 @@ const updateAvailableDataFileMetadata = async (
   >
   >,
 ) => {
-  const isProcessed = !!metadata?.hash;
-
   const result = ImportDataFile.update(
     {
       ...metadata,
-      processed: isProcessed,
+      status,
     },
     {
       where: {
@@ -374,8 +366,8 @@ const updateAvailableDataFileMetadata = async (
         fileInfo: {
           name: fileInfo.name,
         },
-        individualHooks: true,
       },
+      individualHooks: true,
     },
   );
 
@@ -405,22 +397,27 @@ const logFileToBeCollected = async (
   let key;
 
   // Find the import file record based on the import ID and available file information
-  const importFile = ImportFile.findOne({
+  const importFile = await ImportFile.findOne({
     attributes: [
+      'id',
       'fileId',
+      'downloadAttempts',
     ],
     where: {
       importId,
-      [Op.and]: [
-        Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
-        Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
-      ],
-      include: [{
-        model: File,
-        as: 'file',
-        attributes: ['key'],
-      }],
+      ftpFileInfo: {
+        [Sequelize.Op.contains]: {
+          path: availableFile.fileInfo.path,
+          name: availableFile.fileInfo.name,
+        },
+      },
     },
+    include: [{
+      model: File,
+      as: 'file',
+      attributes: ['key'],
+      require: false,
+    }],
   });
 
   if (!importFile.fileId) {
@@ -442,14 +439,17 @@ const logFileToBeCollected = async (
       {
         fileId: fileRecord.id,
         downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
           importId,
-          [Op.and]: [
-            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
-            Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
-          ],
+          ftpFileInfo: {
+            [Sequelize.Op.contains]: {
+              path: availableFile.fileInfo.path,
+              name: availableFile.fileInfo.name,
+            },
+          },
         },
       },
     );
@@ -459,14 +459,17 @@ const logFileToBeCollected = async (
     await ImportFile.update(
       {
         downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
           importId,
-          [Op.and]: [
-            Sequelize.literal(`"ftpFileInfo" -> 'path' = '${availableFile.fileInfo.path}'`),
-            Sequelize.literal(`"ftpFileInfo" -> 'name' = '${availableFile.fileInfo.name}'`),
-          ],
+          ftpFileInfo: {
+            [Sequelize.Op.contains]: {
+              path: availableFile.fileInfo.path,
+              name: availableFile.fileInfo.name,
+            },
+          },
         },
       },
     );
@@ -514,14 +517,66 @@ const setImportFileStatus = async (
 ) => ImportFile.update(
   {
     status, // Set the status field to the provided value
-    ...(!downloadAttempts && { downloadAttempts }),
-    ...(!processAttempts && { processAttempts }),
+    ...(downloadAttempts && { downloadAttempts }),
+    ...(processAttempts && { processAttempts }),
   },
   {
     where: { id: importFileId }, // Specify the import file to update based on its ID
     individualHooks: true, // Enable individual hooks for each updated record
   },
 );
+
+/**
+ * Updates the status of an import data file.
+ * @param importFileId - The ID of the import data file to update.
+ * @param status - The new status value to set.
+ * @returns A promise that resolves when the update is complete.
+ */
+const setImportDataFileStatus = async (
+  importDataFileId: number,
+  status: string,
+) => ImportDataFile.update(
+  {
+    status, // Set the status field to the provided value
+  },
+  {
+    where: { id: importDataFileId }, // Specify the import file to update based on its ID
+    individualHooks: true, // Enable individual hooks for each updated record
+  },
+);
+
+/**
+ * Asynchronously sets the status of an import data file based on its path and name.
+ * It first tries to find the file using the provided importFileId and fileInfo within
+ * the database. If the file is found, it updates the status; otherwise, it resolves the
+ * promise without any action.
+ *
+ * @param importFileId - The ID of the import file to which the data file belongs.
+ * @param fileInfo - An object containing the path and name of the file inside the zip.
+ * @param status - The new status to set for the import data file.
+ * @returns A promise that resolves to the result of setting the status if the file is found,
+ *          or resolves to undefined if the file is not found.
+ */
+const setImportDataFileStatusByPath = async (
+  importFileId: number,
+  fileInfo: ZipFileInfo,
+  status: string,
+) => {
+  const importDataFile = await ImportDataFile.findOne({
+    where: {
+      importFileId,
+      fileInfo: {
+        [Sequelize.Op.contains]: {
+          path: fileInfo.path,
+          name: fileInfo.name,
+        },
+      },
+    },
+  });
+  return importDataFile
+    ? setImportDataFileStatus(importDataFile.id, status)
+    : Promise.resolve();
+};
 
 /**
  * Asynchronously retrieves all enabled imports from the database with specific attributes.
@@ -558,6 +613,8 @@ export {
   logFileToBeCollected,
   setImportFileHash,
   setImportFileStatus,
+  setImportDataFileStatus,
+  setImportDataFileStatusByPath,
   updateAvailableDataFileMetadata,
   importSchedules,
 };

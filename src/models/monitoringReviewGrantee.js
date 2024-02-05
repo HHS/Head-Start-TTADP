@@ -7,39 +7,35 @@ import {
 export default (sequelize, DataTypes) => {
   class MonitoringReviewGrantee extends Model {
     static associate(models) {
-      models.MonitoringReview.hasMany(
+      models.MonitoringReviewLink.hasMany(
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
           as: 'monitoringReviewGrantees',
         },
       );
 
       models.MonitoringReviewGrantee.belongsTo(
-        models.MonitoringReview,
+        models.MonitoringReviewLink,
         {
           foreignKey: 'reviewId',
-          sourceKey: 'reviewId',
-          as: 'monitoringReview',
+          as: 'monitoringReviewLink',
         },
       );
 
-      models.Grant.hasMany(
+      models.GrantNumberLink.hasMany(
         models.MonitoringReviewGrantee,
         {
           foreignKey: 'grantNumber',
-          sourceKey: 'number',
           as: 'monitoringReviewGrantees',
         },
       );
 
       models.MonitoringReviewGrantee.belongsTo(
-        models.Grant,
+        models.GrantNumberLink,
         {
-          foreignKey: 'number',
-          sourceKey: 'grantNumber',
-          as: 'grant',
+          foreignKey: 'grantNumber',
+          as: 'grantNumberLink',
         },
       );
     }

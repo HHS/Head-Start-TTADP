@@ -1,12 +1,10 @@
 import { Model } from 'sequelize';
 
 /**
- * This table exists only as linking bridge between the Grant table and tables needing
- * to match on grant number. This is due to a limitation in sequelize that requires that
- * associations between tables must be made using a primary key. based on the data structure
- * of the incoming data what was not possible  while maintaining the structure of the
- * incoming data. maintaining the structure of the incoming data simplifies the effort to
- * keep the data in sync.
+ * The incoming data does not have traditional primary keys that can be used in
+ * Sequelize, and changing the data to fit Sequelize's expectations would complicate
+ * synchronization efforts and make it harder to identify and diagnose any errors
+ * in the incoming data.
  */
 
 export default (sequelize, DataTypes) => {
@@ -51,7 +49,7 @@ export default (sequelize, DataTypes) => {
     },
     grantId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'grants',
