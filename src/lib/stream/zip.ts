@@ -1,13 +1,15 @@
 import { Readable, PassThrough } from 'stream';
 import * as unzipper from 'unzipper';
 import * as path from 'path';
+import BufferStream from './buffer';
+import { auditLogger } from '../../logger';
 
 class ZipStream {
   private readonly zipStream: Readable;
 
   private readonly fileDetails: FileInfo[] = [];
 
-  private readonly fileStreams: Map<string, Readable>;
+  private readonly fileStreams: Map<string, Promise<Readable>>;
 
   private readonly processingComplete: Promise<void>;
 
@@ -16,9 +18,10 @@ class ZipStream {
   constructor(
     zipStream: Readable,
     private password?: string,
+    filesNeedingStreams: { name: string, path: string }[] = [],
   ) {
     this.zipStream = zipStream;
-    this.fileStreams = new Map<string, Readable>();
+    this.fileStreams = new Map<string, Promise<Readable>>();
 
     // Create a PassThrough stream to duplicate the input stream
     const passThrough = new PassThrough();
@@ -40,21 +43,34 @@ class ZipStream {
             path: fileDir,
             type: entry.type,
             size: entry.vars.uncompressedSize,
-            date: entry.vars.lastModifiedTime,
+            date: entry.vars.lastModifiedDateTime,
+            ...(entry.vars.crc32 && { crc32: entry.vars.crc32 }),
           };
 
           this.fileDetails.push(fileInfo);
 
-          // Duplicate the stream for this file
-          const fileStream = new PassThrough();
-          entry.pipe(fileStream);
-          this.fileStreams.set(entry.path, fileStream);
+          if (filesNeedingStreams.some((neededFile) => (
+            neededFile.name === fileName
+            && neededFile.path === fileDir
+          ))) {
+            // Duplicate the stream for this file
+            const bufferStream = new BufferStream();
+            entry.pipe(bufferStream);
+            this.fileStreams.set(fileName, bufferStream.getReadableStream());
+          } else {
+            entry.autodrain();
+          }
+          console.log('zip:', {fileInfo});
         } else {
           entry.autodrain();
         }
       })
       .on('error', (error) => {
         // Handle the error
+        auditLogger.error('Error in unzipper.Parse stream:', error);
+      })
+      .on('end', () => {
+        this.resolveProcessing(); // Resolve the promise when the finish event is emitted
       })
       .on('finish', () => {
         this.resolveProcessing(); // Resolve the promise when the finish event is emitted
@@ -76,9 +92,9 @@ class ZipStream {
     return this.fileDetails;
   }
 
-  async getFileStream(filePath: string): Promise<Readable | null> {
+  async getFileStream(fileName: string): Promise<Readable | null> {
     await this.processingComplete; // Wait for the processing to complete
-    return this.fileStreams.get(filePath) || null;
+    return this.fileStreams.get(fileName) || null;
   }
 }
 
@@ -91,6 +107,7 @@ interface FileInfo {
   type: string;
   size: number;
   date: Date;
+  crc32?: string;
 }
 
 export default ZipStream;
