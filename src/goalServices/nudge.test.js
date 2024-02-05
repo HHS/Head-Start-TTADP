@@ -1,6 +1,10 @@
+import db from '../models';
 import nudge, { determineSimilarityAlpha } from './nudge';
 import { GOAL_STATUS } from '../constants';
 import { similarGoalsForRecipient } from '../services/similarity';
+import { createGoal, createGrant, createRecipient } from '../testUtils';
+
+const { Goal, Grant, Recipient } = db;
 
 jest.mock('../services/similarity', () => ({
   similarGoalsForRecipient: jest.fn(),
@@ -11,13 +15,31 @@ jest.mock('../services/similarity', () => ({
  *
  */
 describe('nudge', () => {
+  let recipient;
+  let grant;
+  let goal;
+
+  beforeAll(async () => {
+    recipient = await createRecipient();
+    grant = await createGrant({ recipientId: recipient.id });
+    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.NOT_STARTED });
+  });
+
+  afterAll(async () => {
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id } });
+    await Recipient.destroy({ where: { id: recipient.id } });
+    await db.sequelize.close();
+  });
+
   it('should return a nudge', async () => {
-    const goalName = 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.';
-    const goalId = 1;
-    const grantNumber = '14CH1234';
-    const goalTemplateId = 2;
-    const recipientId = 1;
-    const grantId = 1;
+    const goalName = goal.name;
+    const goalId = goal.id;
+    const { goalTemplateId } = goal;
+
+    const grantNumber = grant.number;
+    const recipientId = recipient.id;
+    const grantId = grant.id;
 
     const curatedName = '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)';
     const templateId = 1;
