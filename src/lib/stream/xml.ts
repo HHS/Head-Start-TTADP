@@ -89,9 +89,9 @@ class XMLStream {
   async initialize(): Promise<void> {
     return new Promise((resolve, reject) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const stack: any[] = [];
+      const stack = [];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let currentObject: any = null;
+      let currentObject = null;
 
       // Set up the event handlers for the SAX stream
       this.saxStream.on('error', (err) => {
