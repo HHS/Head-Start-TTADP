@@ -9,12 +9,14 @@ const {
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
+  ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
   Objective,
   ObjectiveFile,
   ObjectiveResource,
+  ObjectiveCourse,
   ObjectiveTopic,
 } = require('../models');
 
@@ -164,6 +166,37 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
   ]);
 };
 
+export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
+  const courseIds = courses.map((course) => course.courseId);
+  const courseSet = new Set(courseIds);
+  const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalCourseIds = originalAroCourses.map((course) => course.courseId)
+    || [];
+  const removedCourseIds = originalCourseIds.filter((id) => !courseSet.has(id));
+  const currentCourseIds = new Set(originalCourseIds.filter((id) => courseSet.has(id)));
+  const newCourseIds = courseIds.filter((id) => !currentCourseIds.has(id));
+
+  return Promise.all([
+    ...newCourseIds.map(async (courseId) => ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId,
+      courseId,
+    })),
+    removedCourseIds.length > 0
+      ? ActivityReportObjectiveCourse.destroy({
+        where: {
+          activityReportObjectiveId,
+          courseId: { [Op.in]: removedCourseIds },
+        },
+        individualHooks: true,
+        hookMetadata: { objectiveId },
+      })
+      : Promise.resolve(),
+  ]);
+};
+
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
   const topicIds = topics.map((topic) => topic.topicId);
   const topicsSet = new Set(topicIds);
@@ -226,10 +259,13 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     topics,
     ttaProvided,
     status,
+    courses,
     order,
-    suspendContext,
-    suspendReason,
+    supportType,
+    closeSuspendContext,
+    closeSuspendReason,
   } = metadata;
+
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
     : objective.id;
@@ -249,14 +285,15 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const { id: activityReportObjectiveId } = aro;
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
-  // results in the following update cannot be in the Promise.all in the return.
+  // means the following update cannot be in the Promise.all in the return.
   await ActivityReportObjective.update({
     title: objective.title,
     status: status || objective.status,
     ttaProvided,
+    supportType: supportType || null,
     arOrder: order + 1,
-    suspendContext: suspendContext || null,
-    suspendReason: suspendReason || null,
+    closeSuspendContext: closeSuspendContext || null,
+    closeSuspendReason: closeSuspendReason || null,
   }, {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
@@ -269,6 +306,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
+    cacheCourses(objectiveId, activityReportObjectiveId, courses),
   ]);
 };
 

@@ -102,3 +102,46 @@ export const sendEmail = async (data) => {
   const result = await post((join('/', 'api', 'admin', 'email')), data);
   return result.json();
 };
+
+export const getGroupsByRegion = async (regionId) => {
+  const groups = await get((join('/', 'api', 'admin', 'groups', 'region', String(regionId))));
+  return groups.json();
+};
+
+export const getCuratedTemplates = async () => {
+  const templates = await get((join('/', 'api', 'admin', 'goals', 'curated-templates')));
+  return templates.json();
+};
+
+export const getCreatorsByRegion = async (regionId) => {
+  const creators = await get((join('/', 'api', 'admin', 'users', 'creators', 'region', String(regionId))));
+  return creators.json();
+};
+
+export const createMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await post((join('/', 'api', 'admin', 'goals')), data);
+  return result.json();
+};
+
+export const closeMultiRecipientGoalsFromAdmin = async (data) => {
+  const result = await put((join('/', 'api', 'admin', 'goals', 'close')), data);
+  return result.json();
+};
+
+export const importCsv = async (importType, data) => {
+  const adminImportUrl = join('/', 'api', 'admin', importType);
+  const res = await fetch(adminImportUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: data,
+  });
+  if (!res.ok) {
+    throw new Error(res.statusText);
+  }
+  return res.json();
+};
+
+export const updateLegacyUsers = async (id, data) => {
+  const result = await put((join('/', 'api', 'admin', 'legacy-reports', String(id), 'users')), data);
+  return result.json();
+};

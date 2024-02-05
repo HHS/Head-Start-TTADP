@@ -170,6 +170,9 @@ commands:
       smtp_password:
         description: "SMTP password"
         type: env_var_name
+      suppress_error_logging:
+        description: "Stop logging of non-sequelize errors to the db"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -200,7 +203,8 @@ commands:
               --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
-              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -240,10 +244,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-2146-queue-rate-limiter"
+    default: "kw-update-minio"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/similarity"
+    default: "jp/2391/curated-merge-status"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -312,11 +316,11 @@ jobs:
             cd similarity_api/src
             python3 -m venv venv
             source venv/bin/activate
-            pip install -U pip setuptools virtualenv wheel
+            pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
       - save_cache:
           paths:
-            - similarity_api
+            - similarity_api/src/venv
           key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
       - store_artifacts:  # store backend lint reports
           path: reports
@@ -349,6 +353,11 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Test backend
           command:  |
@@ -463,6 +472,11 @@ jobs:
           command: |
             npx playwright install
       - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
@@ -494,6 +508,11 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Install playwright dependencies
           command: |
@@ -650,6 +669,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Migrate database
                 command: |
@@ -698,6 +718,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Migrate database
                 command: |
@@ -746,6 +767,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Run database migrations
                 command: |
@@ -792,6 +814,7 @@ jobs:
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
             - run:
                 name: Run database migrations
                 command: |

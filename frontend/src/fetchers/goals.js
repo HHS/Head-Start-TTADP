@@ -47,3 +47,39 @@ export async function deleteGoal(goalIds, regionId) {
   const deleted = await destroy(url, { regionId });
   return deleted.json();
 }
+
+export async function mergeGoals(
+  selectedGoalIds,
+  finalGoalId,
+  recipientId,
+  regionId,
+  goalSimilarityGroupId,
+) {
+  const res = await post(join(
+    goalsUrl,
+    'recipient',
+    String(recipientId),
+    'region',
+    String(regionId),
+    'merge',
+  ), {
+    selectedGoalIds,
+    finalGoalId,
+    goalSimilarityGroupId,
+  });
+  return res.json();
+}
+
+export async function similarity(regionId, recipientId) {
+  const url = join(
+    goalsUrl,
+    'similar',
+    'region',
+    String(regionId),
+    'recipient',
+    String(recipientId),
+    '?cluster=true',
+  );
+  const response = await get(url);
+  return response.json();
+}

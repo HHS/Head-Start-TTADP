@@ -4,10 +4,15 @@ import {
   Label, Dropdown,
 } from '@trussworks/react-uswds';
 
-import { REGIONS } from '../Constants';
+import { ALL_REGIONS, REGIONS } from '../Constants';
 
 function RegionDropdown({
-  id, name, value, onChange, includeCentralOffice,
+  id,
+  name,
+  value,
+  onChange,
+  includeCentralOffice,
+  includeAll,
 }) {
   return (
     <>
@@ -19,6 +24,8 @@ function RegionDropdown({
         ))}
         {includeCentralOffice
         && <option name="central-office" value={14}>Central Office</option>}
+        {includeAll
+        && <option name="central-office" value={ALL_REGIONS}>All</option>}
       </Dropdown>
     </>
   );
@@ -30,11 +37,13 @@ RegionDropdown.propTypes = {
   value: PropTypes.number,
   onChange: PropTypes.func.isRequired,
   includeCentralOffice: PropTypes.bool,
+  includeAll: PropTypes.bool,
 };
 
 RegionDropdown.defaultProps = {
   value: 0,
   includeCentralOffice: false,
+  includeAll: false,
 };
 
 export default RegionDropdown;

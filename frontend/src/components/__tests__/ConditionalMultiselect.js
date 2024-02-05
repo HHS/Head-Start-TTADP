@@ -40,11 +40,10 @@ describe('ConditionalMultiselect', () => {
     },
     fieldName = 'test',
     fieldValue = [],
-    isOnReport = false,
     onBlur = jest.fn(),
     onChange = jest.fn(),
     error = <></>,
-    isComplete = false,
+    userCanEdit = true,
   }) => (
     <>
       <ConditionalMultiselect
@@ -52,11 +51,10 @@ describe('ConditionalMultiselect', () => {
         validations={validations}
         fieldName={fieldName}
         fieldValue={fieldValue}
-        isOnReport={isOnReport}
         onBlur={onBlur}
         onChange={onChange}
         error={error}
-        isComplete={isComplete}
+        userCanEdit={userCanEdit}
       />
       <button type="button">for blurrin</button>
     </>

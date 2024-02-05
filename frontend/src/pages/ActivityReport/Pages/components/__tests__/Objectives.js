@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import {
   render, screen, waitFor,
@@ -6,9 +7,9 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import Objectives from '../Objectives';
+import UserContext from '../../../../../UserContext';
 
 // eslint-disable-next-line react/prop-types
 const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
@@ -49,19 +50,20 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   ];
 
   return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
-    <FormProvider {...hookForm}>
-      <Objectives
-        objectiveOptions={objectiveOptions}
-        topicOptions={topicOptions}
-        goalId={goalId}
-        noObjectiveError={<></>}
-        goalStatus="In Progress"
-        reportId={12}
-        onSaveDraft={jest.fn()}
-      />
-      <button type="button">blur me</button>
-    </FormProvider>
+    <UserContext.Provider value={{ user: { id: 1, flags: ['goal_source'] } }}>
+      <FormProvider {...hookForm}>
+        <Objectives
+          objectiveOptions={objectiveOptions}
+          topicOptions={topicOptions}
+          goalId={goalId}
+          noObjectiveError={<></>}
+          goalStatus="In Progress"
+          reportId={12}
+          onSaveDraft={jest.fn()}
+        />
+        <button type="button">blur me</button>
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 
@@ -93,7 +95,8 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -105,7 +108,8 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -133,7 +137,8 @@ describe('Objectives', () => {
       label: 'Test objective 1',
       title: 'Test objective 1',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'In Progress',
@@ -145,7 +150,8 @@ describe('Objectives', () => {
       label: 'Test objective 2',
       title: 'Test objective 2',
       ttaProvided: '<p>hello 2</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -181,7 +187,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -199,7 +206,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -232,9 +240,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [{
-        status: REPORT_STATUSES.APPROVED,
-      }],
+      onAR: true,
+      onApprovedAR: true,
       resources: [],
       topics: [],
       status: 'Not Started',
@@ -245,6 +252,9 @@ describe('Objectives', () => {
     await selectEvent.select(select, ['Test objective']);
     const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
     expect(role.tagName).toBe('P');
+
+    // TTA provided remains editable.
+    expect(await screen.findByRole('textbox', { name: /tta provided for objective, required/i })).toBeVisible();
   });
 
   it('handles a "new" goal', async () => {
@@ -253,7 +263,8 @@ describe('Objectives', () => {
       label: 'Test objective',
       title: 'Test objective',
       ttaProvided: '<p>hello</p>',
-      activityReports: [],
+      onAR: false,
+      onApprovedAR: false,
       resources: [],
       topics: [],
       status: 'Not Started',

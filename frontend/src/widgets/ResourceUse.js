@@ -10,7 +10,7 @@ function ResourceUse({ data, loading }) {
       subtitle="Showing the 10 resources cited most often on Activity Reports"
       loading={loading}
       loadingLabel="Resource use loading"
-      showPaging={false}
+      showPagingBottom={false}
     >
       <HorizontalTableWidget
         id="resourceUse"

@@ -9,7 +9,7 @@ import FilterDateRange from '../FilterDateRange';
 import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
-  const renderFilterDateRange = (query, condition = 'is on or after', onApplyDateRange = jest.fn(), setError = jest.fn()) => {
+  const renderFilterDateRange = (query, condition = 'is on or after', onApplyDateRange = jest.fn(), setError = jest.fn(), customDateOptions = null) => {
     const updateSingleDate = jest.fn();
 
     render(
@@ -19,6 +19,7 @@ describe('FilterDateRange', () => {
           query={query}
           updateSingleDate={updateSingleDate}
           onApplyDateRange={onApplyDateRange}
+          customDateOptions={customDateOptions}
         />
       </FilterErrorContext.Provider>,
     );
@@ -50,6 +51,25 @@ describe('FilterDateRange', () => {
     renderFilterDateRange('', 'is', onApplyDateRange);
     const date = screen.getByRole('combobox', { name: /date/i });
     userEvent.selectOptions(date, 'Last thirty days');
+    expect(onApplyDateRange).toHaveBeenCalled();
+  });
+
+  it('renders custom date options', async () => {
+    const customDateOptions = [
+      {
+        label: 'Last three months',
+        value: jest.fn(),
+      },
+      {
+        label: 'Last six months',
+        value: jest.fn(),
+      },
+    ];
+    const onApplyDateRange = jest.fn();
+    renderFilterDateRange('', 'is', onApplyDateRange, jest.fn(), customDateOptions);
+    const date = screen.getByRole('combobox', { name: /date/i });
+    userEvent.selectOptions(date, 'Last three months');
+    userEvent.selectOptions(date, 'Last six months');
     expect(onApplyDateRange).toHaveBeenCalled();
   });
 });

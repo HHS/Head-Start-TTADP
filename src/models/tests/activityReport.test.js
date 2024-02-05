@@ -20,6 +20,10 @@ import {
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');
+jest.mock('express-http-context', () => ({
+  get: jest.fn().mockReturnValue(1),
+  set: jest.fn(),
+}));
 
 const mockUser = {
   name: 'Joe Green',
@@ -90,6 +94,7 @@ const sampleReport = {
   deliveryMethod: 'method',
   activityRecipientType: 'test',
   creatorRole: 'COR',
+  language: ['Spanish'],
   topics: ['topic', 'topic2', 'red', 'blue', 'declination'],
   participants: ['test'],
   duration: 0,
@@ -439,5 +444,21 @@ describe('Activity Reports model', () => {
     });
 
     expect(r2.sortedTopics).toStrictEqual([]);
+  });
+
+  it('language', async () => {
+    const r = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r.language).toStrictEqual(['Spanish']);
+
+    await r.update({ language: ['English', 'Spanish'] });
+
+    const r2 = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r2.language).toStrictEqual(['English', 'Spanish']);
   });
 });

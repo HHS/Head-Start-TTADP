@@ -1,9 +1,14 @@
 import { cast } from 'sequelize';
-import db from '../models';
+import db, { sequelize } from '../models';
 import { SessionReportShape } from './types/sessionReport';
 import { findEventBySmartsheetIdSuffix, findEventByDbId } from './event';
 
-const { SessionReportPilot, EventReportPilot, SessionReportPilotFile } = db;
+const {
+  SessionReportPilot,
+  EventReportPilot,
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+} = db;
 
 const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -14,10 +19,19 @@ const validateFields = (request, requiredFields) => {
 };
 
 export async function destroySession(id: number): Promise<void> {
+  // Delete files.
   await SessionReportPilotFile.destroy(
     { where: { sessionReportPilotId: id } },
     { individualHooks: true },
   );
+
+  // Delete supporting attachments.
+  await SessionReportPilotSupportingAttachment.destroy(
+    { where: { sessionReportPilotId: id } },
+    { individualHooks: true },
+  );
+
+  // Delete session.
   await SessionReportPilot.destroy({ where: { id } }, { individualHooks: true });
 }
 
@@ -28,7 +42,7 @@ type WhereOptions = {
 };
 
 // eslint-disable-next-line max-len
-async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
+export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
   let session;
 
   const query = {
@@ -37,8 +51,11 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       'eventId',
       'data',
       'updatedAt',
+      // eslint-disable-next-line @typescript-eslint/quotes
+      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
     ],
     where,
+    order: [['startDate', 'ASC']],
     include: [
       {
         model: db.File,
@@ -47,6 +64,10 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
       {
         model: EventReportPilot,
         as: 'event',
+      },
+      {
+        model: db.File,
+        as: 'supportingAttachments',
       },
     ],
   };
@@ -81,7 +102,9 @@ async function findSessionHelper(where: WhereOptions, plural = false): Promise<S
     eventId,
     data: session?.data ?? {},
     files: session?.files ?? [],
+    supportingAttachments: session?.supportingAttachments ?? [],
     updatedAt: session?.updatedAt,
+    event: session?.event ?? {},
   };
 }
 

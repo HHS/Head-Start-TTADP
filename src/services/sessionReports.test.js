@@ -8,7 +8,11 @@ import {
   findSessionsByEventId,
   updateSession,
   getPossibleSessionParticipants,
+  findSessionHelper,
 } from './sessionReports';
+import sessionReportPilot from '../models/sessionReportPilot';
+
+jest.mock('bull');
 
 describe('session reports service', () => {
   let event;
@@ -205,6 +209,45 @@ describe('session reports service', () => {
       expect(participants[0]).toHaveProperty('id');
       expect(participants[0]).toHaveProperty('name');
       expect(participants[0].grants.length).toBe(1);
+    });
+  });
+  describe('findSessionHelper', () => {
+    let createdEvent;
+    let sessionIds;
+    beforeAll(async () => {
+      const eventData = {
+        ownerId: 99_989,
+        regionId: 99_888,
+        pocIds: [99_888],
+        collaboratorIds: [99_888],
+        data: {
+          eventId,
+        },
+      };
+      createdEvent = await createEvent(eventData);
+
+      // Create Sessions.
+      const session1 = await createSession({ eventId: createdEvent.id, data: { startDate: '04/20/2022' } });
+      const session2 = await createSession({ eventId: createdEvent.id, data: { startDate: '01/01/2023' } });
+      const session3 = await createSession({ eventId: createdEvent.id, data: { startDate: '02/10/2022' } });
+      sessionIds = [session1.id, session2.id, session3.id];
+    });
+
+    afterAll(async () => {
+      await sessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+      destroyEvent(createdEvent.id);
+    });
+
+    it('check sessions sort order', async () => {
+      const sessions = await findSessionHelper({ eventId: createdEvent.id }, true);
+      expect(sessions.length).toBe(3);
+      expect(sessions[0].data.startDate).toBe('02/10/2022');
+      expect(sessions[1].data.startDate).toBe('04/20/2022');
+      expect(sessions[2].data.startDate).toBe('01/01/2023');
     });
   });
 });

@@ -121,6 +121,46 @@ describe('Email Notifications', () => {
       expect(logger.error).toHaveBeenCalled();
       expect(mailerLog).toBeNull();
     });
+
+    it('creates a digest for a training report notification', async () => {
+      const actions = [
+        EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+        EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+        EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+        EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+        EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+        EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+        EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+      ];
+
+      const mockTrJobDigest = {
+        id: '3',
+        data: {
+          emailTo: ['mockUser@test.gov'],
+          displayId: 'TR-04-1235',
+          reportPath: '/training-reports/1235',
+          templatePath: 'tr_session_created',
+          report: {
+            displayId: 'TR-04-1235',
+          },
+        },
+      };
+
+      for (let i = 0; i < actions.length; i += 1) {
+        // eslint-disable-next-line no-await-in-loop
+        const jobResult = await logEmailNotification({
+          ...mockTrJobDigest,
+          name: actions[i],
+        }, success, result);
+
+        expect(jobResult).not.toBeNull();
+        expect(jobResult.emailTo.length).toBe(1);
+        expect(jobResult.emailTo[0]).toEqual('mockUser@test.gov');
+        expect(jobResult.subject).toEqual('A session has been created for Training Report TR-04-1235');
+        expect(jobResult.success).toEqual(false);
+        expect(jobResult.result).toEqual(result);
+      }
+    });
   });
 
   describe('digest', () => {
@@ -169,6 +209,7 @@ describe('Email Notifications', () => {
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
     });
+
     it('logs on error', async () => {
       createMailerLogMock.mockRejectedValueOnce(new Error('Problem creating digest mailer log'));
       mockJobDigest.name = EMAIL_ACTIONS.APPROVED_DIGEST;

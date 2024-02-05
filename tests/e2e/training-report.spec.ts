@@ -10,11 +10,13 @@ test('can fill out and complete a training and session report', async ({ page })
   // event summary
   await page.getByText(/Event collaborators/i).click();
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter'); 
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
 
   await page.getByText(/Event region point of contact/i).click();
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter'); 
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
   await page.getByText('Recipients').click();
   await page.getByLabel('Event start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
@@ -49,6 +51,7 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByText(/Who were the trainers for this session/i).click()
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
 
   await page.locator('#ttaProvided').fill('TTA');
 
@@ -68,10 +71,18 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('Enter');
   await blur(page);
 
+  await page.getByText(/Language used/i).click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await blur(page);
+
   await page.getByText('Hybrid').click();
   await page.getByLabel('Number of participants attending in person *').fill('5');
   await page.getByLabel('Number of participants attending virtually *').fill('5');
 
+  await page.getByRole('button', { name: 'Save and continue' }).click();
+
+  // supporting attachments.
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // next steps

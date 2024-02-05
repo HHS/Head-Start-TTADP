@@ -16,6 +16,18 @@ jest.mock('./fileUtils', () => ({
 
 const SMALLEST_GRANT_ID = 1000;
 
+async function testStateCodeUpdate(grantId, incorrectStateCode, correctStateCode) {
+  await processFiles();
+  const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+  await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });
+  const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+
+  await processFiles();
+  const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+
+  return { grantWithIncorrectStateCode, grantWithCorrectStateCode };
+}
+
 describe('Update HSES data', () => {
   beforeEach(() => {
     const response = {
@@ -170,7 +182,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    expect(totalGrants.length).toBe(15);
+    expect(totalGrants.length).toBe(19);
   });
 
   it('should import or update program personnel', async () => {
@@ -813,6 +825,37 @@ describe('Update grants, program personnel, and recipients', () => {
     const recipient = await Recipient.findOne({ where: { id: 628 } });
     expect(recipient).not.toBeNull();
     expect(recipient.name).toBe('Entity name');
+  });
+
+  it('should set correct state code for grant 12128', async () => {
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(12128, 'PA', 'OH');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
+  });
+
+  it('should set correct state code for grant 10291', async () => {
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(10291, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
+  });
+
+  it('should set correct state code for grant 14869', async () => {
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(14869, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
+  });
+
+  it('should set correct state code for grants', async () => {
+    const id = 12129;
+    await processFiles();
+    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    // simulate updating an existing grant with incorrect state code
+    await grantBefore.update({ stateCode: 'AA' }, { individualHooks: true });
+    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('AA');
+    await processFiles();
+    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    expect(grantWithCorrectStateCode.stateCode).toEqual('TN');
   });
 
   it('should update an existing recipient if it exists in smarthub', async () => {

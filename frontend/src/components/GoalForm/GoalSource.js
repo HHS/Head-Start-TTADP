@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -16,11 +16,13 @@ export default function GoalSource({
   goalStatus,
   inputName,
   isLoading,
+  isCurated,
   userCanEdit,
   isMultiRecipientGoal,
+  required,
+  createdViaTr,
 }) {
-  const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
-    [goalStatus, userCanEdit]);
+  const readOnly = goalStatus === 'Closed' || !userCanEdit || isCurated || createdViaTr;
 
   if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
@@ -48,7 +50,7 @@ export default function GoalSource({
           <>
             Goal source
             {' '}
-            <Req />
+            {required && (<Req />)}
           </>
         </Label>
         {error}
@@ -61,7 +63,7 @@ export default function GoalSource({
           }}
           disabled={isLoading}
           value={source}
-          required
+          required={required}
         >
           <option value="" disabled selected hidden>- Select -</option>
           {GOAL_SOURCES.map((s) => (
@@ -84,10 +86,16 @@ GoalSource.propTypes = {
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
   isMultiRecipientGoal: PropTypes.bool,
+  isCurated: PropTypes.bool,
+  required: PropTypes.bool,
+  createdViaTr: PropTypes.bool,
 };
 
 GoalSource.defaultProps = {
   inputName: 'goal-source',
   isLoading: false,
   isMultiRecipientGoal: false,
+  isCurated: false,
+  required: true,
+  createdViaTr: false,
 };

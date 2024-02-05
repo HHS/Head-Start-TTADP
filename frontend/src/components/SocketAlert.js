@@ -8,7 +8,7 @@ import useArrayWithExpiration from '../hooks/useArrayWithExpiration';
 import './SocketAlert.css';
 
 const THIRTY_SECONDS = 30 * 1000;
-export default function SocketAlert({ store }) {
+export default function SocketAlert({ store, messageSubject }) {
   const [users, { push: pushUser }] = useArrayWithExpiration([], THIRTY_SECONDS);
   const isMobile = useMediaQuery({ maxWidth: 1023 });
 
@@ -35,7 +35,7 @@ export default function SocketAlert({ store }) {
       return `and ${user}`;
     }
     return user;
-  }).join(usersToRender.length < 3 ? ' ' : ', ')} ${usersToRender.length === 1 ? 'is' : 'are'} now also working in this section. Your changes may not be saved.`;
+  }).join(usersToRender.length < 3 ? ' ' : ', ')} ${usersToRender.length === 1 ? 'is' : 'are'} also working ${messageSubject}. Your changes may not be saved.`;
 
   return store && usersToRender.length ? (
     <Sticky className="ttahub-socket-alert margin-bottom-2" top={71} enabled={!isMobile}>
@@ -54,8 +54,10 @@ SocketAlert.propTypes = {
   store: PropTypes.shape({
     user: PropTypes.string,
   }),
+  messageSubject: PropTypes.string,
 };
 
 SocketAlert.defaultProps = {
   store: null,
+  messageSubject: 'in this section',
 };

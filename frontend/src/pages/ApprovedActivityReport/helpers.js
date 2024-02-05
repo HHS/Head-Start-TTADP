@@ -49,7 +49,7 @@ export function renderData(heading, data) {
 }
 
 export function formatSimpleArray(arr) {
-  return arr.sort().join(', ');
+  return arr ? arr.sort().join(', ') : '';
 }
 
 export function mapAttachments(attachments) {

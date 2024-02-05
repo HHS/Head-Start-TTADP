@@ -42,9 +42,16 @@ export function login(req, res) {
  */
 export default async function authMiddleware(req, res, next) {
   const userId = await currentUserId(req, res);
+
+  // current user ID can conceivably send a status of unauthorized back
+  // if it does, we need to return here
+  if (res.headersSent) {
+    return;
+  }
+
   if (!userId) {
     res.sendStatus(401);
-  } else if (await validateUserAuthForAccess(userId)) {
+  } else if (await validateUserAuthForAccess(Number(userId))) {
     next();
   } else {
     auditLogger.warn(`User ${userId} denied access due to missing SITE_ACCESS`);

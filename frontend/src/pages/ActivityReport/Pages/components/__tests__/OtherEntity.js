@@ -6,6 +6,7 @@ import React from 'react';
 import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
+import UserContext from '../../../../../UserContext';
 
 let setError;
 
@@ -21,9 +22,11 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
   setError = hookForm.setError;
 
   return (
-    <FormProvider {...hookForm}>
-      <OtherEntity recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
-    </FormProvider>
+    <UserContext.Provider value={{ user: { flags: ['goal_source'] } }}>
+      <FormProvider {...hookForm}>
+        <OtherEntity recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
+      </FormProvider>
+    </UserContext.Provider>
   );
 };
 
