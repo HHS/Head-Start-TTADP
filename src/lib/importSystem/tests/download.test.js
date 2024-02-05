@@ -4,12 +4,12 @@ import {
   collectFilesFromSource,
   downloadFilesFromSource,
 } from '../download';
-import { FileInfo as FTPFileInfo } from '../../stream/ftp';
+import { FileInfo as SFTPFileInfo } from '../../stream/sftp';
 import db from '../../../models';
 
 // Mocks for external dependencies
 jest.mock('stream');
-jest.mock('../../stream/ftp');
+jest.mock('../../stream/sftp');
 jest.mock('../../stream/hasher');
 jest.mock('../../stream/s3');
 jest.mock('../../../services/files');

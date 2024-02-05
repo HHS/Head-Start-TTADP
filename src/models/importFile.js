@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { afterDestroy } = require('./hooks/communicationLogFile');
+const { afterDestroy } = require('./hooks/importFile');
 const { IMPORT_STATUSES } = require('../constants');
 
 export default (sequelize, DataTypes) => {
@@ -9,8 +9,8 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       models.ImportFile.belongsTo(models.Import, { foreignKey: 'importId', as: 'import' });
       models.Import.hasMany(models.ImportFile, { foreignKey: 'importId', as: 'importFiles' });
-      models.ImportFile.belongsTo(models.File, { foreignKey: 'importId', as: 'file' });
-      models.File.hasOne(models.ImportFile, { foreignKey: 'importId', as: 'importFile' });
+      models.ImportFile.belongsTo(models.File, { foreignKey: 'fileId', as: 'file' });
+      models.File.hasOne(models.ImportFile, { foreignKey: 'fileId', as: 'importFile' });
     }
   }
   ImportFile.init({

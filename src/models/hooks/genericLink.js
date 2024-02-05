@@ -10,7 +10,8 @@ const semaphore = new Semaphore(1);
  * @param {Object} instance - The instance that is being linked.
  * @param {Object} options - An object containing transaction details.
  * @param {Model} model - The Sequelize model that is being linked to.
- * @param {string} entityName - The name of the entity field in the model.
+ * @param {string} sourceEntityName - The name of the entity field in the model.
+ * @param {string} targetEntityName - The name of the entity field in the model.
  * @param {number|string} entityId - The ID of the entity to link to.
  * @param {Function} onCreateCallbackWhileHoldingLock - A callback function to be called after
  * creating a new record, while still holding the semaphore lock.
@@ -25,31 +26,34 @@ const syncLink = async (
   instance,
   options,
   model,
-  entityName,
+  sourceEntityName,
+  targetEntityName,
   entityId,
   onCreateCallbackWhileHoldingLock,
 ) => {
-  if (!entityId || entityId.toString().length > 0) return;
+  if (!entityId || entityId.toString().length === 0) return;
 
   if (!instance.isNewRecord) {
     const changed = Array.from(instance.changed());
-    if (!changed.includes(entityName)) return;
+
+    if (!changed.includes(sourceEntityName)) return;
   }
   // Generate a unique semaphore key based on the model name and entity ID
-  const semaphoreKey = `${model.modelName}_${entityId}`;
+  const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
   await semaphore.acquire(semaphoreKey);
 
   // Check if there's an existing record for the given entity ID
-  const currentRecord = await model.findOne({
-    where: { [entityName]: entityId },
+  const [currentRecord] = await model.findAll({
+    attsributes: [targetEntityName],
+    where: { [targetEntityName]: entityId },
     transaction: options.transactions,
   });
 
   // If no current record exists, create a new one
   if (!currentRecord) {
     const newRecord = await model.create({
-      [entityName]: entityId,
+      [targetEntityName]: entityId,
     }, {
       transaction: options.transactions,
     });
@@ -60,7 +64,7 @@ const syncLink = async (
         instance,
         options,
         model,
-        entityName,
+        targetEntityName,
         entityId,
       );
     }
@@ -106,7 +110,9 @@ const linkGrant = async (
     await model.update(
       { grantId: grant.grantId }, // Set the grantId in the model to the found grant's ID.
       {
-        [entityName]: grantNumber, // Use the entity name as a key to match the grant number.
+        where: {
+          [entityName]: grantNumber, // Use the entity name as a key to match the grant number.
+        },
         transaction: options.transactions, // Use the transaction provided in the options if any.
         individualHooks: true, // Enable individual hooks for the update operation.
       },
@@ -115,7 +121,7 @@ const linkGrant = async (
 };
 
 /**
- * Asynchronously synchronizes a grant number link with the associated MonitoringReviewLink model.
+ * Asynchronously synchronizes a grant number link with the associated GrantNumberLink model.
  * This function delegates to the `syncLink` function with specific parameters.
  *
  * @param {Object} sequelize - An instance of Sequelize.
@@ -124,13 +130,20 @@ const linkGrant = async (
  * @returns {Promise} A promise that resolves when the link synchronization is complete.
  * @throws {Error} Throws an error if the `syncLink` function encounters an issue.
  */
-const syncGrantNumberLink = async (sequelize, instance, options, columnName = 'grantNumber') => syncLink(
+const syncGrantNumberLink = async (
   sequelize,
   instance,
   options,
-  sequelize.models.MonitoringReviewLink,
-  columnName,
-  instance[columnName],
+  sourceColumnName = 'grantNumber',
+  targetColumnName = 'grantNumber',
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.GrantNumberLink,
+  sourceColumnName,
+  targetColumnName,
+  instance[sourceColumnName],
   linkGrant,
 );
 
@@ -154,6 +167,7 @@ const syncMonitoringReviewLink = async (
   options,
   sequelize.models.MonitoringReviewLink,
   'reviewId',
+  'reviewId',
   instance.reviewId,
 );
 
@@ -175,7 +189,8 @@ const syncMonitoringReviewStatusLink = async (
   sequelize,
   instance,
   options,
-  sequelize.models.syncMonitoringReviewStatusLink,
+  sequelize.models.MonitoringReviewStatusLink,
+  'statusId',
   'statusId',
   instance.statusId,
 );

@@ -1,3 +1,5 @@
+const { updateSequence } = require('../lib/migration');
+
 const reviews = [
   {
     id: 1,
@@ -49,6 +51,17 @@ const reviewStatuses = [
     updatedAt: new Date(),
     deletedAt: null,
   },
+  {
+    id: 2,
+    statusId: 6007,
+    name: 'Cancelled',
+    sourceCreatedAt: new Date('2020/01/01'),
+    sourceUpdatedAt: new Date('2020/01/01'),
+    sourceDeletedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
 ];
 
 const reviewGrantees = [
@@ -60,8 +73,8 @@ const reviewGrantees = [
     updateTime: new Date('2023/11/15'),
     updateBy: 'Support Team',
     // Original data: 02HP000452
-    // Links to Grant.id = 3
-    grantNumber: '14CH00001',
+    // Links to Grant.id = 8
+    grantNumber: '09CH033333',
     sourceCreatedAt: new Date('2023/11/15'),
     sourceUpdatedAt: new Date('2023/11/15'),
     sourceDeletedAt: null,
@@ -77,8 +90,8 @@ const reviewGrantees = [
     updateTime: new Date('2023/11/15'),
     updateBy: 'Support Team',
     // Original data: 90CI010025
-    // Links to Grant.id = 4
-    grantNumber: '14CH00002',
+    // Links to Grant.id = 9
+    grantNumber: '09HP044444',
     sourceCreatedAt: new Date('2023/11/15'),
     sourceUpdatedAt: new Date('2023/11/15'),
     sourceDeletedAt: null,
@@ -119,7 +132,7 @@ const reviewClassSummaries = [
   {
     id: 1,
     reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-    grantNumber: '14CH00002',
+    grantNumber: '09HP044444',
     // Values approximate originals
     emotionalSupport: 6.2303,
     classroomOrganization: 5.2303,
@@ -138,16 +151,16 @@ const reviewClassSummaries = [
 const grantNumberLinks = [
   {
     id: 1,
-    grantNumber: '14CH00001',
-    grantId: 3,
+    grantNumber: '09CH033333',
+    grantId: 8,
     createdAt: new Date('2023/11/16'),
     updatedAt: new Date('2023/11/16'),
     deletedAt: null,
   },
   {
     id: 2,
-    grantNumber: '14CH00002',
-    grantId: 4,
+    grantNumber: '09HP044444',
+    grantId: 9,
     createdAt: new Date('2023/11/16'),
     updatedAt: new Date('2023/11/16'),
     deletedAt: null,
@@ -179,6 +192,13 @@ const monitoringReviewStatusLinks = [
     updatedAt: new Date(),
     deletedAt: null,
   },
+  {
+    id: 2,
+    statusId: 6007,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
 ];
 
 module.exports = {
@@ -191,6 +211,15 @@ module.exports = {
     await queryInterface.bulkInsert('MonitoringReviewGrantees', reviewGrantees);
     await queryInterface.bulkInsert('MonitoringFindingHistories', reviewFindingHistories);
     await queryInterface.bulkInsert('MonitoringClassSummaries', reviewClassSummaries);
+
+    await updateSequence(queryInterface, 'GrantNumberLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewStatusLinks');
+    await updateSequence(queryInterface, 'MonitoringReviewStatuses');
+    await updateSequence(queryInterface, 'MonitoringReviews');
+    await updateSequence(queryInterface, 'MonitoringReviewGrantees');
+    await updateSequence(queryInterface, 'MonitoringFindingHistories');
+    await updateSequence(queryInterface, 'MonitoringClassSummaries');
   },
 
   down: async (queryInterface) => {

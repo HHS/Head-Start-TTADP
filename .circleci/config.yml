@@ -40,6 +40,10 @@ executors:
           discovery.type: single-node
           DISABLE_SECURITY_PLUGIN: true
           ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      # - image: jmcombs/sftp
+      #   # volumes:
+      #   #     - ./test-sftp:/home/tta_ro/ProdTTAHome
+      #   command: tta_ro:password:1001
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -173,6 +177,18 @@ commands:
       suppress_error_logging:
         description: "Stop logging of non-sequelize errors to the db"
         type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -204,7 +220,11 @@ commands:
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
-              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -668,8 +688,12 @@ jobs:
                 smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                smtp_password: SMTP_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -719,6 +743,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -768,6 +796,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -815,6 +847,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
