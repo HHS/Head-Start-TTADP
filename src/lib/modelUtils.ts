@@ -59,10 +59,13 @@ const dataTypeMapping = {
   [DataTypes.REAL.key]: 'number',
   [DataTypes.DOUBLE.key]: 'number',
   [DataTypes.DECIMAL.key]: 'number',
+  NUMERIC: 'number', // not in DataTypes but seen in models return values
   [DataTypes.BOOLEAN.key]: 'boolean',
   [DataTypes.TIME.key]: 'string',
   [DataTypes.DATE.key]: 'string',
   [DataTypes.DATEONLY.key]: 'string',
+  TIMESTAMP: 'string', // not in DataTypes but seen in models return values
+  'TIMESTAMP WITH TIME ZONE': 'string', // not in DataTypes but seen in models return values
   [DataTypes.HSTORE.key]: undefined,
   [DataTypes.JSON.key]: 'object',
   [DataTypes.JSONB.key]: 'object',
@@ -113,13 +116,19 @@ const getColumnInformation = async (model): Promise<{
   dataType,
   allowNull: boolean,
 }[]> => {
+  if (!model.description) {
+    // cache the response to the model as this is a request to the database
+    // eslint-disable-next-line no-param-reassign
+    model.description = await model.describe();
+  }
+
   // Retrieve the table details using the describe() method of the model
   const tableDetails:{
     [key: string]:{
       type,
       allowNull: boolean,
     },
-  } = await model.describe();
+  } = model.description;
 
   // Map over the entries of the tableDetails object to transform them into an array of
   // column objects
@@ -170,15 +179,29 @@ const filterDataToModel = async (
 
   return Object.entries(data)
     .reduce((acc, [key, value]) => {
+      console.log('filterDataToModel 1', { key, value });
       // Find the matching column in the model data
       const matchColumn = modelData.find((md) => md.columnName === key);
-      if (matchColumn
+      const neededType = dataTypeMapping[matchColumn?.dataType?.key || matchColumn?.dataType];
+      const valueType = value instanceof Date
+        ? 'string'
+        : typeof value;
+      console.log('filterDataToModel 2', {
+        matchColumn,
+        null: (value === null && matchColumn?.allowNull),
+        type: (valueType === neededType),
+        valuetype: valueType,
+        neededType: neededType,
+      });
+      if (!!matchColumn
         && ((value === null && matchColumn?.allowNull)
-          || (typeof value === dataTypeMapping[matchColumn?.dataType?.key]))
+          || (valueType === neededType))
       ) {
+      console.log('filterDataToModel 3', { type: 'matched', key, value });
         // If the value matches the column criteria, add it to the matched object
         acc.matched[key] = value;
       } else {
+        console.log('filterDataToModel 4', { type: 'unmatched', key, value });
         // Otherwise, add it to the unmatched object
         acc.unmatched[key] = value;
       }
