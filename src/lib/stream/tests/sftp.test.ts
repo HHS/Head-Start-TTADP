@@ -28,7 +28,6 @@ describe('FtpClient Integration Tests', () => {
       username: process.env.ITAMS_MD_USERNAME,
       password: process.env.ITAMS_MD_PASSWORD,
     };
-    console.log(connectionSettings);
     sftpClient = new SftpClient(connectionSettings);
   });
 

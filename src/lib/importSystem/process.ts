@@ -57,8 +57,6 @@ const processRecords = async (
   deletes,
   errors,
 }> => {
-  let i = 400;
-
   let record;
   try {
     record = await xmlClient.getNextObject(true);
@@ -68,7 +66,7 @@ const processRecords = async (
     recordActions.errors.push(err.message);
     auditLogger.log('error', ` processRecords getNextObject ${err.message}`);
   }
-  
+
   // @ts-ignore
   let model;
   try {

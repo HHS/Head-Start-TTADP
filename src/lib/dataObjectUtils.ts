@@ -534,7 +534,7 @@ function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Reco
 
 /**
  * Transforms all keys in the given object to lowercase.
- * 
+ *
  * @param obj - The object whose keys are to be transformed to lowercase.
  * @returns A new object with all keys in lowercase.
  * @throws Will throw an error if the input is not an object.

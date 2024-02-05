@@ -179,29 +179,19 @@ const filterDataToModel = async (
 
   return Object.entries(data)
     .reduce((acc, [key, value]) => {
-      console.log('filterDataToModel 1', { key, value });
       // Find the matching column in the model data
       const matchColumn = modelData.find((md) => md.columnName === key);
       const neededType = dataTypeMapping[matchColumn?.dataType?.key || matchColumn?.dataType];
       const valueType = value instanceof Date
         ? 'string'
         : typeof value;
-      console.log('filterDataToModel 2', {
-        matchColumn,
-        null: (value === null && matchColumn?.allowNull),
-        type: (valueType === neededType),
-        valuetype: valueType,
-        neededType: neededType,
-      });
       if (!!matchColumn
         && ((value === null && matchColumn?.allowNull)
           || (valueType === neededType))
       ) {
-      console.log('filterDataToModel 3', { type: 'matched', key, value });
         // If the value matches the column criteria, add it to the matched object
         acc.matched[key] = value;
       } else {
-        console.log('filterDataToModel 4', { type: 'unmatched', key, value });
         // Otherwise, add it to the unmatched object
         acc.unmatched[key] = value;
       }
