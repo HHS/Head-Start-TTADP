@@ -836,7 +836,7 @@ workflows:
   build_test_deploy:
     jobs:
       - build_and_lint
-      # - build_and_lint_similarity_api
+      - build_and_lint_similarity_api
       # - test_backend:
       #     requires:
       #       - build_and_lint
