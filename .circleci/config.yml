@@ -688,6 +688,7 @@ jobs:
                 smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
                 smtp_password: SMTP_PASSWORD
                 itams_md_host: ITAMS_MD_HOST
                 itams_md_port: ITAMS_MD_PORT
