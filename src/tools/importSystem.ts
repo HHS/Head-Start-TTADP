@@ -13,7 +13,6 @@ export default async function manuallyTriggerImportSystem(action: string, import
         break;
       default:
         throw new Error(`Unknown action: '${action}'`);
-        break;
     }
   } else {
     throw new Error(`Bad or missing importId: '${importIdStr}'`);
