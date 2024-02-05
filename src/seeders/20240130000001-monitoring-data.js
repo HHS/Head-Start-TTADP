@@ -52,6 +52,17 @@ const reviewStatuses = [
     updatedAt: new Date(),
     deletedAt: null,
   },
+  {
+    id: 2,
+    statusId: 6007,
+    name: 'Cancelled',
+    sourceCreatedAt: new Date('2020/01/01'),
+    sourceUpdatedAt: new Date('2020/01/01'),
+    sourceDeletedAt: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
 ];
 
 const reviewGrantees = [
@@ -178,6 +189,13 @@ const monitoringReviewStatusLinks = [
   {
     id: 1,
     statusId: 6006,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    deletedAt: null,
+  },
+  {
+    id: 2,
+    statusId: 6007,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
