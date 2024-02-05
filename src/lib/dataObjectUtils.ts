@@ -242,6 +242,10 @@ const remap = (
 };
 
 function areNumbersEqual(value1: any, value2: any): boolean {
+  // Check if both values are NaN
+  if (Number.isNaN(value1) && Number.isNaN(value2)) {
+    return true;
+  }
   // If neither value is a number, return true
   if (typeof value1 !== 'number' && typeof value2 !== 'number') {
     return true;
@@ -548,7 +552,7 @@ function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Reco
 function lowercaseKeys<T extends Record<string, any>>(obj: T): Record<string, any> {
   const result: Record<string, any> = {};
 
-  if (typeof obj === 'object' && obj !== null) { // Check for null to ensure obj is a proper object
+  if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) { // Check for null to ensure obj is a proper object
     Object.keys(obj).forEach((key) => {
       const lowercasedKey = key.toLowerCase(); // Lowercase the entire key
       result[lowercasedKey] = obj[key];
@@ -566,6 +570,8 @@ export {
   type RemappingDefinition,
   remapPrune,
   remap,
+  areNumbersEqual,
+  areDatesEqual,
   isDeepEqual,
   mergeDeep,
   collectChangedValues,
