@@ -250,7 +250,6 @@ function areNumbersEqual(value1: any, value2: any): boolean {
   // If either value is a number, convert both to numbers and compare
   const num1 = Number(value1);
   const num2 = Number(value2);
-  console.log('areNumbersEqual', { num1, num2, equal: num1 === num2 });
 
   // Check if the converted numbers are equal
   return num1 === num2;
@@ -291,7 +290,6 @@ function areDatesEqual(value1: any, value2: any): boolean {
 const isDeepEqual = (value1: any, value2: any, ignoreType = false): boolean => {
   // Check if both values are objects
   if (isObject(value1) && isObject(value2)) {
-    console.log('isDeepEqual', { value1, value2, check: 'a'});
     // Get the keys of each object
     const keys1 = Object.keys(value1);
     const keys2 = Object.keys(value2);
@@ -305,7 +303,6 @@ const isDeepEqual = (value1: any, value2: any, ignoreType = false): boolean => {
 
   // Check if both values are arrays
   if (Array.isArray(value1) && Array.isArray(value2)) {
-    console.log('isDeepEqual', { value1, value2, check: 'b'});
     // If the lengths of the arrays are different, they are not deeply equal
     if (value1.length !== value2.length) return false;
 
@@ -316,18 +313,15 @@ const isDeepEqual = (value1: any, value2: any, ignoreType = false): boolean => {
   if (ignoreType
     && (typeof value1 === 'number'
     || typeof value2 === 'number')) {
-      console.log('isDeepEqual', { value1, value2, check: 'c'});
     return areNumbersEqual(value1, value2);
   }
 
   if (ignoreType
     && (value1 instanceof Date
     || value2 instanceof Date)) {
-      console.log('isDeepEqual', { value1, value2, check: 'd'});
     return areDatesEqual(value1, value2);
   }
 
-  console.log('isDeepEqual', { value1, value2, check: 'e', result: value1 === value2 });
   // If the values are not objects, perform a strict equality check
   return value1 === value2;
 };
@@ -389,13 +383,6 @@ const collectChangedValues = (
   // Iterate over each key-value pair in incomingValues
   Object.entries(incomingValues)
     .forEach(([key, value]) => {
-      console.log('collectChangedValues', {
-        value,
-        currentValue: currentValues[key],
-        deltaDeep: !isDeepEqual(value, currentValues[key], true),
-        deltaId: (key === 'id'
-        && value === currentValues[key]),
-      });
       // Check if the value has changed compared to the corresponding value in currentValues
       if (!isDeepEqual(value, currentValues[key], true)
       || (key === 'id'
