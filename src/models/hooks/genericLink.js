@@ -29,19 +29,21 @@ const syncLink = async (
   entityId,
   onCreateCallbackWhileHoldingLock,
 ) => {
-  if (!entityId || entityId.toString().length > 0) return;
+  if (!entityId || entityId.toString().length === 0) return;
 
   if (!instance.isNewRecord) {
     const changed = Array.from(instance.changed());
+
     if (!changed.includes(entityName)) return;
   }
   // Generate a unique semaphore key based on the model name and entity ID
-  const semaphoreKey = `${model.modelName}_${entityId}`;
+  const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
   await semaphore.acquire(semaphoreKey);
 
   // Check if there's an existing record for the given entity ID
-  const currentRecord = await model.findOne({
+  const [currentRecord] = await model.findAll({
+    attsributes: [entityName],
     where: { [entityName]: entityId },
     transaction: options.transactions,
   });
@@ -115,7 +117,7 @@ const linkGrant = async (
 };
 
 /**
- * Asynchronously synchronizes a grant number link with the associated MonitoringReviewLink model.
+ * Asynchronously synchronizes a grant number link with the associated GrantNumberLink model.
  * This function delegates to the `syncLink` function with specific parameters.
  *
  * @param {Object} sequelize - An instance of Sequelize.
@@ -128,7 +130,7 @@ const syncGrantNumberLink = async (sequelize, instance, options, columnName = 'g
   sequelize,
   instance,
   options,
-  sequelize.models.MonitoringReviewLink,
+  sequelize.models.GrantNumberLink,
   columnName,
   instance[columnName],
   linkGrant,
@@ -175,7 +177,7 @@ const syncMonitoringReviewStatusLink = async (
   sequelize,
   instance,
   options,
-  sequelize.models.syncMonitoringReviewStatusLink,
+  sequelize.models.MonitoringReviewStatusLink,
   'statusId',
   instance.statusId,
 );
