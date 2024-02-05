@@ -27,7 +27,6 @@ class BufferStream extends Writable {
 
   getReadableStream(): Promise<Readable> {
     if (this.finished) {
-      console.log('buffer size:', this.chunks.length);
       // If the stream is already finished, return a promise that resolves immediately.
       return Promise.resolve(Readable.from(this.getBuffer()));
     }
