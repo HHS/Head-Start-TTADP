@@ -1,6 +1,1 @@
-
-
 docker_compose(["./docker-compose.yml", "./docker-compose.override.yml"])
-
-local_resource('db:migrate', cmd='docker compose run --rm backend node_modules/.bin/sequelize db:migrate', deps=['package.json', 'db'])
-local_resource('db:seed', cmd='docker compose run --rm backend node_modules/.bin/sequelize db:migrate', deps=['package.json','db'])

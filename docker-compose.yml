@@ -17,6 +17,8 @@ services:
     volumes:
       - dbdata:/var/lib/postgresql/data
     shm_size: 1g
+    environment:
+      POSTGRES_HOST: localhost 
   minio:
     image: minio/minio:RELEASE.2024-01-01T16-36-33Z
     env_file: .env
@@ -84,14 +86,16 @@ services:
       # target: dependencies
       cache_from: 
         - node:18.18.2  # Using the base image as a cache source
-        - head-start-ttadp-worker:latest
+        - head-start-ttadp-testingonly:latest
       target: backend
     ports:
       - "9999:9999"
     depends_on:
       - db
     volumes:
-      - ".:/app:rw"
+      - "./src/:/app/src/:rw"
+      - "./tests/:/app/tests/:rw"
+      - "./config/:/app/config:rw"
     command: yarn start:testingonly
     environment:
       - POSTGRES_HOST=postgres_docker

@@ -19,8 +19,11 @@ FROM node:18.18.2 as build
 ENV NODE_OPTIONS=--max_old_space_size=2048
 WORKDIR /app
 COPY --from=base /app/node_modules /app/node_modules
-COPY . .
-RUN yarn build
+COPY --from=base /app/package.json /app/package.json
+COPY src/ /app/src/
+COPY tests/ /app/tests/
+COPY config/ /app/config/
+RUN yarn tsc --build --verbose src
 
 FROM node:18.18.2-alpine as frontend-build
 ENV NODE_OPTIONS=--max_old_space_size=2048
@@ -32,21 +35,25 @@ RUN yarn build:local
 
 FROM node:18.18.2-alpine as frontend
 RUN apk update
-
 # ENV CHOKIDAR_USEPOLLING=true
-USER node
 WORKDIR /app
-COPY  --chown=node:node --from=frontend-base /usr/bin/dumb-init /usr/bin/dumb-init
-COPY  --chown=node:node --from=frontend-build /app/build /app
-COPY  --chown=node:node --from=frontend-build /app/node_modules /app/node_modules
-COPY  --chown=node:node --from=frontend-build /app/package.json /app/package.json
-CMD ["/usr/bin/dumb-init", "node", "server.js"]
+COPY --chown=node:node --from=frontend-base /usr/bin/dumb-init /usr/bin/dumb-init
+COPY --chown=node:node --from=frontend-build /app/build /app
+COPY --chown=node:node --from=frontend-build /app/node_modules /app/node_modules
+COPY --chown=node:node --from=frontend-build /app/package.json /app/package.json
+USER node
+# CMD ["/usr/bin/dumb-init", "node", "server.js"]
 
 FROM node:18.18.2-slim as backend
-USER node
 WORKDIR /app
+COPY --chown=node:node .sequelizerc /app/.sequelizerc
 COPY --chown=node:node --from=base /usr/bin/dumb-init /usr/bin/dumb-init
 COPY --chown=node:node --from=build /app/build /app
-COPY --chown=node:node --from=build /app/node_modules /app/node_modules
+COPY --chown=node:node --from=build /app/node_modules/ /app/node_modules/
 COPY --chown=node:node --from=build /app/package.json /app/package.json
-CMD ["dumb-init", "node", "server.js"]
+USER node
+# CMD ["dumb-init", "node", "server.js"]
+
+FROM backend as worker
+
+FROM backend as testingonly
