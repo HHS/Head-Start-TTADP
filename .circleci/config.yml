@@ -347,59 +347,59 @@ jobs:
           paths:
             - similarity_api
     resource_class: large
-  # test_backend:
-  #   executor: docker-postgres-elasticsearch-executor
-  #   environment:
-  #       AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-  #       AWS_ELASTICSEARCH_ACCESS_KEY: admin
-  #       AWS_ELASTICSEARCH_SECRET_KEY: admin
-  #       SFTP_EXPOSED_PORT: 2222
-  #   steps:
-  #     - attach_workspace:
-  #         at: .
-  #     - setup_remote_docker:
-  #         version: 20.10.14
-  #     - run:
-  #         name: Audit vulnerability of backend node_modules
-  #         command: |
-  #           chmod 744 ./run-yarn-audit.sh
-  #           ./run-yarn-audit.sh;
-  #     - run:
-  #         name: Run migrations ci
-  #         command: yarn db:migrate:ci
-  #     - run:
-  #         name: Run seeders
-  #         command: yarn db:seed:ci
-  #     - run:
-  #         name: Run SFTP container
-  #         command: |
-  #           docker run -d \
-  #             -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
-  #             -p "${SFTP_EXPOSED_PORT:-22}:22" \
-  #             --name sftp \
-  #             -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
-  #             jmcombs/sftp:alpine \
-  #             /bin/sh -c "while true; do sleep 30; done"
-  #     - run:
-  #         name: Monitor database
-  #         command: |
-  #           docker attach  $(docker ps | grep postgres | awk '{print $1}')
-  #         background: true
-  #     - run:
-  #         name: Test backend
-  #         command:  |
-  #           chmod 744 ./bin/test-backend-ci
-  #           ./bin/test-backend-ci
-  #     - run:
-  #         name: Compress coverage artifacts
-  #         command: tar -cvzf backend-coverage-artifacts.tar coverage/
-  #     - store_artifacts:
-  #         path: coverage/
-  #     - store_artifacts:
-  #         path: backend-coverage-artifacts.tar
-  #     - store_test_results:
-  #         path: reports/
-  #   resource_class: large
+  test_backend:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+        SFTP_EXPOSED_PORT: 2222
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: 20.10.14
+      - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Run seeders
+          command: yarn db:seed:ci
+      - run:
+          name: Run SFTP container
+          command: |
+            docker run -d \
+              -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
+              -p "${SFTP_EXPOSED_PORT:-22}:22" \
+              --name sftp \
+              -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
+              jmcombs/sftp:alpine
+          background: true
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
+          name: Test backend
+          command:  |
+            chmod 744 ./bin/test-backend-ci
+            ./bin/test-backend-ci
+      - run:
+          name: Compress coverage artifacts
+          command: tar -cvzf backend-coverage-artifacts.tar coverage/
+      - store_artifacts:
+          path: coverage/
+      - store_artifacts:
+          path: backend-coverage-artifacts.tar
+      - store_test_results:
+          path: reports/
+    resource_class: large
   test_similarity_api:
     executor: docker-python-executor
     steps:
@@ -872,9 +872,9 @@ workflows:
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      # - test_backend:
-      #     requires:
-      #       - build_and_lint
+      - test_backend:
+          requires:
+            - build_and_lint
       - test_frontend:
           requires:
             - build_and_lint
