@@ -4,6 +4,7 @@ import { classScore, monitoringData } from './monitoring';
 describe('monitoring services', () => {
   const RECIPIENT_ID = 1;
   const REGION_ID = 14;
+  const GRANT_NUMBER = '09CH033333';
 
   afterAll(async () => {
     await sequelize.close();

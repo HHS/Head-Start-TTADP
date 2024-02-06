@@ -157,7 +157,7 @@ export async function monitoringData({
     recipientId: grant.recipientId,
     regionId: grant.regionId,
     reviewStatus: status.name,
-    reviewDate: monitoringReview.reportDeliveryDate,
+    reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
   };
