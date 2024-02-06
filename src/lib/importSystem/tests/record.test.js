@@ -928,7 +928,11 @@ describe('getPriorFile', () => {
       ImportDataFile.findOne.mockResolvedValue(null);
 
       // Act
-      const result = await setImportDataFileStatusByPath(mockImportFileId, mockFileInfo, mockStatus);
+      const result = await setImportDataFileStatusByPath(
+        mockImportFileId,
+        mockFileInfo,
+        mockStatus,
+      );
 
       // Assert
       expect(ImportDataFile.findOne).toHaveBeenCalledWith({
