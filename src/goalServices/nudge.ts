@@ -15,7 +15,13 @@ interface ISimilarGoal {
 }
 
 interface ISimilarResult {
-  goal: {
+  goal1: {
+    grantId: number;
+    id: number;
+    name: string;
+    isTemplate: boolean;
+  };
+  goal2: {
     grantId: number;
     id: number;
     name: string;
@@ -50,7 +56,7 @@ export default async function nudge(
   // query the NLP service for similar goals
   const similarGoals = await similarGoalsForRecipient(
     recipientId,
-    false, // no clustering
+    false,
     {
       alpha, // similarity alpha
       include_curated_templates: 1,
@@ -62,10 +68,16 @@ export default async function nudge(
 
   // get the goal ids and template ids
   similarGoals.result.forEach((result) => {
-    if (result.goal.isTemplate) {
-      goalTemplates.push(result.goal);
+    if (result.goal1.isTemplate) {
+      goalTemplates.push(result.goal1);
     } else {
-      goalIds.add(result.goal.id);
+      goalIds.add(result.goal1.id);
+    }
+
+    if (result.goal2.isTemplate) {
+      goalTemplates.push(result.goal2);
+    } else {
+      goalIds.add(result.goal2.id);
     }
   });
 
