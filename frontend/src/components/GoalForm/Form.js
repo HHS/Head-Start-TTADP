@@ -7,7 +7,6 @@ import {
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
-import GoalText from './GoalText';
 import GoalDate from './GoalDate';
 import FeatureFlag from '../FeatureFlag';
 import {
@@ -19,6 +18,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
 import GoalSource from './GoalSource';
+import GoalNudge from './GoalNudge';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -56,10 +56,14 @@ export default function Form({
   setSource,
   validateGoalSource,
   createdVia,
+  recipient,
+  regionId,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
-  const onUpdateText = (e) => setGoalName(e.target.value);
+  const onUpdateText = (e) => {
+    setGoalName(e.target.value);
+  };
 
   const onAddNewObjectiveClick = () => {
     // first we validate the goal text and the recipients
@@ -140,7 +144,7 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <GoalText
+      <GoalNudge
         error={errors[FORM_FIELD_INDEXES.NAME]}
         goalName={goalName}
         isOnReport={isOnReport}
@@ -149,6 +153,9 @@ export default function Form({
         isLoading={isAppLoading}
         goalStatus={status}
         userCanEdit={userCanEdit}
+        recipientId={recipient.id}
+        regionId={regionId}
+        selectedGrants={selectedGrants}
       />
 
       <ConditionalFields
@@ -215,6 +222,7 @@ export default function Form({
 }
 
 Form.propTypes = {
+  regionId: PropTypes.number.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   isCurated: PropTypes.bool.isRequired,
