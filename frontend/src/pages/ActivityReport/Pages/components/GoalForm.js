@@ -16,12 +16,9 @@ import {
   GOAL_NAME_ERROR,
 } from '../../../../components/GoalForm/constants';
 import { NO_ERROR, ERROR_FORMAT } from './constants';
-import isAdmin from '../../../../permissions';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import FeatureFlag from '../../../../components/FeatureFlag';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
-import UserContext from '../../../../UserContext';
 
 export default function GoalForm({
   goal,
@@ -88,23 +85,6 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
-  // goal source rules = required if activityRecipientType === 'recipient'
-  // and if user has the goal_source flag
-
-  const { user } = useContext(UserContext);
-
-  const goalSourceRules = useMemo(() => {
-    if (activityRecipientType === 'recipient' && ((user && user.flags.includes('goal_source')) || isAdmin(user))) {
-      return {
-        required: {
-          value: true,
-          message: 'Select a goal source',
-        },
-      };
-    }
-    return {};
-  }, [activityRecipientType, user]);
-
   const {
     field: {
       onChange: onUpdateGoalSource,
@@ -114,7 +94,12 @@ export default function GoalForm({
     },
   } = useController({
     name: 'goalSource',
-    rules: goalSourceRules,
+    rules: activityRecipientType === 'recipient' ? {
+      required: {
+        value: true,
+        message: 'Select a goal source',
+      },
+    } : {},
     defaultValue: '',
   });
 
@@ -185,21 +170,19 @@ export default function GoalForm({
         userCanEdit
       />
 
-      <FeatureFlag flag="goal_source">
-        <GoalSource
-          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-          source={goalSource}
-          validateGoalSource={onBlurGoalSource}
-          onChangeGoalSource={onUpdateGoalSource}
-          inputName={goalSourceInputName}
-          goalStatus={status}
-          isLoading={isAppLoading}
-          userCanEdit={!isCurated}
-          isOnReport={false}
-          isMultiRecipientGoal={isMultiRecipientReport}
-          createdViaTr={goal.createdVia === 'tr'}
-        />
-      </FeatureFlag>
+      <GoalSource
+        error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+        source={goalSource}
+        validateGoalSource={onBlurGoalSource}
+        onChangeGoalSource={onUpdateGoalSource}
+        inputName={goalSourceInputName}
+        goalStatus={status}
+        isLoading={isAppLoading}
+        userCanEdit={!isCurated}
+        isOnReport={false}
+        isMultiRecipientGoal={isMultiRecipientReport}
+        createdViaTr={goal.createdVia === 'tr'}
+      />
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}

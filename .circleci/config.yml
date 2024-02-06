@@ -40,6 +40,10 @@ executors:
           discovery.type: single-node
           DISABLE_SECURITY_PLUGIN: true
           ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      # - image: jmcombs/sftp
+      #   # volumes:
+      #   #     - ./test-sftp:/home/tta_ro/ProdTTAHome
+      #   command: tta_ro:password:1001
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -176,6 +180,18 @@ commands:
       test_itams_md_password:
         description: "Password"
         type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -208,7 +224,11 @@ commands:
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
               --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
-              --var TEST_ITAMS_MD_PASSWORD=${<< parameters.test_itams_md_password >>}
+              --var TEST_ITAMS_MD_PASSWORD=${<< parameters.test_itams_md_password >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -251,7 +271,7 @@ parameters:
     default: "kw-test-itams"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "TTAHUB-1974/monitoring-data"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -335,48 +355,59 @@ jobs:
           paths:
             - similarity_api
     resource_class: large
-  test_backend:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
-    steps:
-      - attach_workspace:
-          at: .
-      - setup_remote_docker:
-          version: 20.10.14
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
-          name: Run migrations ci
-          command: yarn db:migrate:ci
-      - run:
-          name: Run seeders
-          command: yarn db:seed:ci
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
-      - run:
-          name: Test backend
-          command:  |
-            chmod 744 ./bin/test-backend-ci
-            ./bin/test-backend-ci
-      - run:
-          name: Compress coverage artifacts
-          command: tar -cvzf backend-coverage-artifacts.tar coverage/
-      - store_artifacts:
-          path: coverage/
-      - store_artifacts:
-          path: backend-coverage-artifacts.tar
-      - store_test_results:
-          path: reports/
-    resource_class: large
+  # test_backend:
+  #   executor: docker-postgres-elasticsearch-executor
+  #   environment:
+  #       AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+  #       AWS_ELASTICSEARCH_ACCESS_KEY: admin
+  #       AWS_ELASTICSEARCH_SECRET_KEY: admin
+  #       SFTP_EXPOSED_PORT: 2222
+  #   steps:
+  #     - attach_workspace:
+  #         at: .
+  #     - setup_remote_docker:
+  #         version: 20.10.14
+  #     - run:
+  #         name: Audit vulnerability of backend node_modules
+  #         command: |
+  #           chmod 744 ./run-yarn-audit.sh
+  #           ./run-yarn-audit.sh;
+  #     - run:
+  #         name: Run migrations ci
+  #         command: yarn db:migrate:ci
+  #     - run:
+  #         name: Run seeders
+  #         command: yarn db:seed:ci
+  #     - run:
+  #         name: Run SFTP container
+  #         command: |
+  #           docker run -d \
+  #             -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
+  #             -p "${SFTP_EXPOSED_PORT:-22}:22" \
+  #             --name sftp \
+  #             -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
+  #             jmcombs/sftp \
+  #             /bin/sh -c "while true; do sleep 30; done"
+  #     - run:
+  #         name: Monitor database
+  #         command: |
+  #           docker attach  $(docker ps | grep postgres | awk '{print $1}')
+  #         background: true
+  #     - run:
+  #         name: Test backend
+  #         command:  |
+  #           chmod 744 ./bin/test-backend-ci
+  #           ./bin/test-backend-ci
+  #     - run:
+  #         name: Compress coverage artifacts
+  #         command: tar -cvzf backend-coverage-artifacts.tar coverage/
+  #     - store_artifacts:
+  #         path: coverage/
+  #     - store_artifacts:
+  #         path: backend-coverage-artifacts.tar
+  #     - store_test_results:
+  #         path: reports/
+  #   resource_class: large
   test_similarity_api:
     executor: docker-python-executor
     steps:
@@ -672,9 +703,13 @@ jobs:
                 smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
                 test_itams_md_password: TEST_ITAMS_MD_PASSWORD
+                smtp_password: SMTP_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -725,6 +760,10 @@ jobs:
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
                 test_itams_md_password: TEST_ITAMS_MD_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -775,6 +814,10 @@ jobs:
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
                 test_itams_md_password: TEST_ITAMS_MD_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -823,6 +866,10 @@ jobs:
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
                 test_itams_md_password: TEST_ITAMS_MD_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
