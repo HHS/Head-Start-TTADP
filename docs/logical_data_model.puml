@@ -1033,7 +1033,6 @@ class Users{
 enum enum_Users_flags {
  anv_statistics
  closed_goal_merge_override
- goal_source
  merge_goals
  monitoring
  regional_goal_dashboard

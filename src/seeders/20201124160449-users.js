@@ -381,11 +381,6 @@ module.exports = {
 
     await queryInterface.bulkInsert('Permissions', staticUserPermissions, {});
     await queryInterface.bulkInsert('Permissions', generatedUserPermissions.flat(), {});
-
-    await queryInterface.sequelize.query(`
-      -- give cuke the 'goal_source' feature flag
-      UPDATE "Users" SET "flags" = array_append("flags", 'goal_source') WHERE "id" = 5;
-    `);
   },
 
   down: async (queryInterface) => {
