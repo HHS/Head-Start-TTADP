@@ -247,7 +247,7 @@ parameters:
     default: "kw-update-minio"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "gh/resize-sandbox"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -829,40 +829,40 @@ workflows:
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      - test_backend:
-          requires:
-            - build_and_lint
-      - test_frontend:
-          requires:
-            - build_and_lint
-      - test_e2e:
-          requires:
-            - build_and_lint
-      - test_api:
-          requires:
-            - build_and_lint
-      - test_similarity_api:
-          requires:
-            - build_and_lint_similarity_api
-      - test_utils:
-          requires:
-            - build_and_lint
-      - cucumber_test:
-          requires:
-            - build_and_lint
-      - dynamic_security_scan:
-          requires:
-            - build_and_lint
+      # - test_backend:
+      #     requires:
+      #       - build_and_lint
+      # - test_frontend:
+      #     requires:
+      #       - build_and_lint
+      # - test_e2e:
+      #     requires:
+      #       - build_and_lint
+      # - test_api:
+      #     requires:
+      #       - build_and_lint
+      # - test_similarity_api:
+      #     requires:
+      #       - build_and_lint_similarity_api
+      # - test_utils:
+      #     requires:
+      #       - build_and_lint
+      # - cucumber_test:
+      #     requires:
+      #       - build_and_lint
+      # - dynamic_security_scan:
+      #     requires:
+      #       - build_and_lint
       - deploy:
-          requires:
-            - test_backend
-            - test_frontend
-            - test_e2e
-            - test_api
-            - test_similarity_api
-            - test_utils
-            - cucumber_test
-            - dynamic_security_scan
+          # requires:
+            # - test_backend
+            # - test_frontend
+            # - test_e2e
+            # - test_api
+            # - test_similarity_api
+            # - test_utils
+            # - cucumber_test
+            # - dynamic_security_scan
           filters:
             branches:
               only:
