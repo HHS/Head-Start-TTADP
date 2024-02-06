@@ -33,6 +33,7 @@ import feedRouter from './feeds';
 import communicationLogRouter from './communicationLog';
 import monitoringRouter from './monitoring';
 import coursesRouter from './courses';
+import apiDocsRouter from './apiDocs';
 import { currentUserId } from '../services/currentUser';
 
 export const loginPath = '/login';
@@ -61,6 +62,7 @@ router.use((req, res, next) => {
 
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
+router.use('/api-docs', apiDocsRouter);
 router.use('/users', usersRouter);
 router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
