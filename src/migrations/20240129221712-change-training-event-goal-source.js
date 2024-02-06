@@ -17,6 +17,14 @@ module.exports = {
       END $$;
     `);
 
+      await queryInterface.sequelize.query(`
+    DO $$ BEGIN
+      ALTER TYPE "enum_Goals_source" ADD VALUE 'Training event follow-up';
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
+
       // Update to new enum value.
       await queryInterface.sequelize.query(
         `UPDATE "Goals"
@@ -46,6 +54,14 @@ module.exports = {
         WHEN duplicate_object THEN null;
       END $$;
     `);
+
+      await queryInterface.sequelize.query(`
+    DO $$ BEGIN
+      ALTER TYPE "enum_ActivityReportGoals_source" ADD VALUE 'Training event follow-up';
+    EXCEPTION
+      WHEN duplicate_object THEN null;
+    END $$;
+  `);
       // Update to new enum value.
       await queryInterface.sequelize.query(
         `UPDATE "ActivityReportGoals"
