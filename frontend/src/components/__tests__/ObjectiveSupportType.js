@@ -12,7 +12,7 @@ describe('ObjectiveSupportType', () => {
   const error = <div>Error message</div>;
 
   const renderTest = () => render(
-    <UserContext.Provider value={{ user: { flags: ['goal_source'] } }}>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
       <ObjectiveSupportType
         supportType={supportType}
         onChangeSupportType={onChangeSupportType}
