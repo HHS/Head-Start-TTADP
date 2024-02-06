@@ -4,6 +4,7 @@ import { classScore, monitoringData } from './monitoring';
 describe('monitoring services', () => {
   const RECIPIENT_ID = 1;
   const REGION_ID = 14;
+  const GRANT_NUMBER = '09CH033333';
 
   afterAll(async () => {
     await sequelize.close();
@@ -11,14 +12,16 @@ describe('monitoring services', () => {
 
   describe('classScore', () => {
     it('returns data in the correct format', async () => {
-      const data = await classScore(
-        RECIPIENT_ID,
-        REGION_ID,
-      );
+      const data = await classScore({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
+      });
 
       expect(data).toEqual({
         recipientId: RECIPIENT_ID,
         regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
         received: expect.any(String),
         ES: expect.any(Number),
         CO: expect.any(Number),

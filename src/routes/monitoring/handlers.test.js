@@ -62,6 +62,7 @@ describe('getClassScore', () => {
       params: {
         recipientId: '1',
         regionId: '2',
+        grantNumber: '01',
       },
     };
 
@@ -75,7 +76,7 @@ describe('getClassScore', () => {
     await getClassScore(req, res);
 
     expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith(req, res);
-    expect(classScore).toHaveBeenCalledWith(1, 2);
+    expect(classScore).toHaveBeenCalledWith({ recipientId: 1, regionId: 2, grantNumber: '01' });
   });
 
   it('should call res.status with 200 and res.json with the data returned by classScore', async () => {
