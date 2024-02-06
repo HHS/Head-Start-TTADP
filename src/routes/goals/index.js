@@ -7,6 +7,7 @@ import {
   deleteGoal,
   mergeGoalHandler,
   getSimilarGoalsForRecipient,
+  getSimilarGoalsByText,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -19,7 +20,7 @@ router.get(
   '/recipient/:recipientId/region/:regionId/nudge',
   checkRegionIdParam,
   checkRecipientIdParam,
-  transactionWrapper(mergeGoalHandler),
+  transactionWrapper(getSimilarGoalsByText),
 );
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.post(

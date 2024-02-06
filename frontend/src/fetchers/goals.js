@@ -74,7 +74,7 @@ export async function similarity(regionId, recipientId) {
   const url = join(
     goalsUrl,
     'similar',
-    'region',
+    'recipient',
     String(regionId),
     'recipient',
     String(recipientId),
@@ -95,10 +95,10 @@ export async function similiarGoalsByText(
 
   const url = join(
     goalsUrl,
-    'region',
-    String(regionId),
     'recipient',
     String(recipientId),
+    'region',
+    String(regionId),
     'nudge',
     `?${parameterizedGoalName}&${parameterizedGrantNumbers}`,
   );
