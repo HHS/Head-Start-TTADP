@@ -1,4 +1,4 @@
-import { Client, SFTPWrapper } from 'ssh2';
+import { Client } from 'ssh2';
 import { Readable } from 'stream';
 
 interface ConnectConfig {
