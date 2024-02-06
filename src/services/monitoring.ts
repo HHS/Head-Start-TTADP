@@ -1,3 +1,4 @@
+import moment from 'moment';
 import db from '../models';
 
 const {
@@ -8,6 +9,7 @@ const {
   MonitoringReview,
   MonitoringReviewLink,
   MonitoringReviewStatusLink,
+  MonitoringClassSummary,
 } = db;
 
 interface IMonitoringReview {
@@ -161,14 +163,38 @@ export async function monitoringData({
   };
 }
 
-export async function classScore({ recipientId, grantNumber, regionId }: MonitoringDataArgs) {
+export async function classScore({ recipientId, grantNumber, regionId }: {
+  recipientId: number;
+  grantNumber: string;
+  regionId: number;
+}) {
+  const score = await MonitoringClassSummary.findOne({
+    where: {
+      grantNumber,
+    },
+    attributes: [
+      'emotionalSupport',
+      'classroomOrganization',
+      'instructionalSupport',
+      'reportDeliveryDate',
+    ],
+  }, {
+    raw: true,
+  });
+
+  if (!score) {
+    return {};
+  }
+
+  const formatted = moment(score.reportDeliveryDate).format('MM/DD/YYYY');
+
   return {
     recipientId,
     regionId,
     grantNumber,
-    received: '05/01/2023',
-    ES: 6,
-    CO: 3,
-    IS: 7,
+    received: formatted,
+    ES: score.emotionalSupport,
+    CO: score.classroomOrganization,
+    IS: score.instructionalSupport,
   };
 }
