@@ -25,6 +25,8 @@ export default function GrantSelect({
 }) {
   const cannotEdit = useMemo(() => isOnReport || goalStatus === 'Closed' || possibleGrants.length === 1 || !userCanEdit, [goalStatus, isOnReport, possibleGrants.length, userCanEdit]);
 
+  console.log(selectedGrants);
+
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName} className={cannotEdit ? 'text-bold' : ''}>
