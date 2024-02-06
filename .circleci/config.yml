@@ -374,6 +374,15 @@ jobs:
           name: Run seeders
           command: yarn db:seed:ci
       - run:
+          name: Run SFTP container
+          command: |
+            docker run -d \
+              -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
+              -p "${SFTP_EXPOSED_PORT:-22}:22" \
+              --name sftp \
+              jmcombs/sftp \
+              ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
+      - run:
           name: Monitor database
           command: |
             docker attach  $(docker ps | grep postgres | awk '{print $1}')
