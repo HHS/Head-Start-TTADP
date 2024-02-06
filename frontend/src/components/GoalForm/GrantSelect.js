@@ -25,8 +25,6 @@ export default function GrantSelect({
 }) {
   const cannotEdit = useMemo(() => isOnReport || goalStatus === 'Closed' || possibleGrants.length === 1 || !userCanEdit, [goalStatus, isOnReport, possibleGrants.length, userCanEdit]);
 
-  console.log(selectedGrants);
-
   return (
     <FormGroup error={error.props.children}>
       <Label htmlFor={inputName} className={cannotEdit ? 'text-bold' : ''}>
@@ -35,7 +33,7 @@ export default function GrantSelect({
         {!isOnReport ? <Req /> : null }
       </Label>
       {cannotEdit ? (
-        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
+        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
       ) : (
         <>
           {error}
@@ -54,6 +52,8 @@ export default function GrantSelect({
             isMulti
             onBlur={() => validateGrantNumbers(SELECT_GRANTS_ERROR)}
             isDisabled={isLoading}
+            getOptionLabel={(option) => option.numberWithProgramTypes}
+            getOptionValue={(option) => option.id}
           />
         </>
       )}

@@ -8,7 +8,6 @@ import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
 import GoalDate from './GoalDate';
-import FeatureFlag from '../FeatureFlag';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -166,19 +165,17 @@ export default function Form({
         userCanEdit={notClosedWithEditPermission}
       />
 
-      <FeatureFlag flag="goal_source">
-        <GoalSource
-          source={source}
-          onChangeGoalSource={setSource}
-          error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
-          isOnReport={isOnApprovedReport}
-          goalStatus={status}
-          userCanEdit={userCanEdit}
-          validateGoalSource={validateGoalSource}
-          isCurated={isCurated}
-          createdViaTr={createdVia === 'tr'}
-        />
-      </FeatureFlag>
+      <GoalSource
+        source={source}
+        onChangeGoalSource={setSource}
+        error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
+        isOnReport={isOnApprovedReport}
+        goalStatus={status}
+        userCanEdit={userCanEdit}
+        validateGoalSource={validateGoalSource}
+        isCurated={isCurated}
+        createdViaTr={createdVia === 'tr'}
+      />
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}

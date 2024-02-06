@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import {
   FormGroup,
@@ -6,7 +6,8 @@ import {
 } from '@trussworks/react-uswds';
 import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
 import Req from '../Req';
-// import { similiarGoalsByText } from '../../fetchers/goals';
+import { similiarGoalsByText } from '../../fetchers/goals';
+import useDebounceEffect from '../../hooks/useDebounceEffect';
 
 export default function GoalNudge({
   error,
@@ -22,12 +23,25 @@ export default function GoalNudge({
   recipientId,
   regionId,
 }) {
-  const onChangeHandler = async (e) => {
-    // await similiarGoalsByText();
-    // console.log({ selectedGrants, recipientId, regionId });
+  const [, setSimilarGoals] = useState([]);
 
-    onUpdateText(e);
-  };
+  useDebounceEffect(async () => {
+    // we need all of these to populate the query
+    if (!recipientId || !regionId || !selectedGrants.length) {
+      return;
+    }
+
+    // we shouldn't run any such query until the user has typed at least 15 characters
+    if (goalName.length > 15) {
+      const similarities = await similiarGoalsByText(
+        regionId,
+        recipientId,
+        goalName,
+        selectedGrants.map((grant) => grant.number),
+      );
+      setSimilarGoals(similarities);
+    }
+  }, [goalName, regionId, recipientId, selectedGrants]);
 
   return (
     <FormGroup error={error.props.children}>
@@ -42,7 +56,7 @@ export default function GoalNudge({
         <>
           {error}
           <AutomaticResizingTextarea
-            onUpdateText={onChangeHandler}
+            onUpdateText={onUpdateText}
             onBlur={() => {
               validateGoalName();
             }}
@@ -71,8 +85,9 @@ GoalNudge.propTypes = {
   recipientId: PropTypes.number.isRequired,
   selectedGrants: PropTypes.arrayOf(
     PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
+      numberWithProgramTypes: PropTypes.string,
+      number: PropTypes.string,
+      id: PropTypes.number,
     }),
   ).isRequired,
 };

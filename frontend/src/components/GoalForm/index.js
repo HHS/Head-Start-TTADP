@@ -46,14 +46,6 @@ const [
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
-const formatGrantsFromApi = (grants) => grants
-  .map((grant) => ({
-    value: grant.id,
-    label: grant.numberWithProgramTypes,
-    id: grant.id,
-    number: grant.number,
-  }));
-
 export default function GoalForm({
   recipient,
   regionId,
@@ -61,10 +53,7 @@ export default function GoalForm({
   isNew,
 }) {
   const history = useHistory();
-  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active')).map((g) => ({
-    value: g.id,
-    label: g.numberWithProgramTypes,
-  }));
+  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
   const goalDefaults = useMemo(() => ({
     name: '',
@@ -148,7 +137,7 @@ export default function GoalForm({
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setPrompts(goal.prompts);
-        setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
+        setSelectedGrants(goal.grants ? goal.grants : [goal.grant]);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
@@ -307,18 +296,16 @@ export default function GoalForm({
    */
 
   const validateGoalSource = () => {
-    const error = <></>;
+    let error = <></>;
 
-    // const newErrors = [...errors];
+    const newErrors = [...errors];
 
-    // here's where we'd need to validate if we were doing so
-    // i.e. if we were requiring a source
-    // if (!sources.length) {
-    //   error = <span className="usa-error-message">{GOAL_SOURCE_ERROR}</span>;
-    // }
+    if (!source) {
+      error = <span className="usa-error-message">Select a goal source</span>;
+    }
 
-    // newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
-    // setErrors(newErrors);
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
+    setErrors(newErrors);
 
     return !error.props.children;
   };
@@ -763,7 +750,7 @@ export default function GoalForm({
     setIsAppLoading(true);
     try {
       const newGoals = selectedGrants.map((g) => ({
-        grantId: g.value,
+        grantId: g.id,
         name: goalName,
         status,
         prompts: goalTemplatePrompts,
@@ -800,7 +787,7 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        grants: formatGrantsFromApi(goal.grants),
+        grants: goal.grants,
         objectives: goal.objectives.map((objective) => ({
           ...objective,
         })),

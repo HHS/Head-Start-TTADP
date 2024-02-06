@@ -54,7 +54,7 @@ export default function ReadOnlyGoal({
           ? (
             <div className="margin-bottom-2">
               <h4 className="margin-0">Recipient grant numbers</h4>
-              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.label).join(', ')}</p>
+              <p className="usa-prose margin-0">{goal.grants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
             </div>
           )
           : null }
