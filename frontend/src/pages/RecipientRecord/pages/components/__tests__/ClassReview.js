@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 
 import ClassReview from '../ClassReview';
+import { GrantDataProvider } from '../../GrantDataContext';
 
 const grantNumber = '1';
 const regionId = 1;
@@ -13,11 +14,13 @@ const recipientId = 1;
 const apiUrl = `/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`;
 
 const renderClassReview = () => render(
-  <ClassReview
-    grantNumber={grantNumber}
-    regionId={regionId}
-    recipientId={recipientId}
-  />,
+  <GrantDataProvider>
+    <ClassReview
+      grantNumber={grantNumber}
+      regionId={regionId}
+      recipientId={recipientId}
+    />
+  </GrantDataProvider>,
 );
 
 const testThreshold = async (area, score, expectedText, received = '05/01/2023') => {

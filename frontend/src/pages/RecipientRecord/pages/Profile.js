@@ -9,6 +9,7 @@ import './Profile.css';
 import FeatureFlag from '../../../components/FeatureFlag';
 import ClassReview from './components/ClassReview';
 import MonitoringReview from './components/MonitoringReview';
+import { GrantDataProvider } from './GrantDataContext';
 
 export default function Profile({
   recipientSummary,
@@ -22,50 +23,52 @@ export default function Profile({
       <Helmet>
         <title>Profile</title>
       </Helmet>
-      <div className="maxw-widescreen">
-        <Grid row gap={4}>
-          <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
-            <RecipientSummary summary={recipientSummary} regionId={regionId} />
+      <GrantDataProvider>
+        <div className="maxw-widescreen">
+          <Grid row gap={4}>
+            <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
+              <RecipientSummary summary={recipientSummary} regionId={regionId} />
+            </Grid>
+            <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
+              <RecipientLeadership recipientId={recipientId} regionId={regionId} />
+            </Grid>
+            <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
+              <GrantList summary={recipientSummary} />
+            </Grid>
+            <FeatureFlag flag="monitoring">
+              {activeGrants.map((grant) => (
+                <React.Fragment key={grant.number}>
+                  <Grid desktop={{ col: 12 }}>
+                    <h2 className="smart-hub-title-big-serif">
+                      Grant number
+                      {' '}
+                      {grant.number}
+                    </h2>
+                  </Grid>
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <ClassReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <MonitoringReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
+                </React.Fragment>
+              ))}
+            </FeatureFlag>
           </Grid>
-          <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
-            <RecipientLeadership recipientId={recipientId} regionId={regionId} />
-          </Grid>
-          <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
-            <GrantList summary={recipientSummary} />
-          </Grid>
-          <FeatureFlag flag="monitoring">
-            {activeGrants.map((grant) => (
-              <React.Fragment key={grant.number}>
-                <Grid desktop={{ col: 12 }}>
-                  <h2 className="smart-hub-title-big-serif">
-                    Grant number
-                    {' '}
-                    {grant.number}
-                  </h2>
-                </Grid>
-                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                  <div>
-                    <ClassReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
-                </Grid>
-                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                  <div>
-                    <MonitoringReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
-                </Grid>
-              </React.Fragment>
-            ))}
-          </FeatureFlag>
-        </Grid>
-      </div>
+        </div>
+      </GrantDataProvider>
     </>
   );
 }
