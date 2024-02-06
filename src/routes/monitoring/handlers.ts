@@ -10,11 +10,15 @@ const logContext = {
 };
 
 export async function getMonitoringData(req: Request, res: Response) {
-  const { recipientId, regionId } = req.params;
+  const { recipientId, grantNumber, regionId } = req.params;
 
   try {
     await checkRecipientAccessAndExistence(req, res);
-    const data = await monitoringData(Number(recipientId), Number(regionId));
+    const data = await monitoringData({
+      recipientId: Number(recipientId),
+      grantNumber: String(grantNumber),
+      regionId: Number(regionId),
+    });
 
     res.status(200).json(data);
   } catch (error) {
