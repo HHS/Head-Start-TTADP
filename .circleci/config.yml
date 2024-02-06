@@ -267,7 +267,7 @@ parameters:
     default: "kw-update-minio"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "TTAHUB-1974/monitoring-data"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
