@@ -51,6 +51,7 @@ const formatGrantsFromApi = (grants) => grants
     value: grant.id,
     label: grant.numberWithProgramTypes,
     id: grant.id,
+    number: grant.number,
   }));
 
 export default function GoalForm({

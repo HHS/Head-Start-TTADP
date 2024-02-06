@@ -18,9 +18,9 @@ export default function GoalNudge({
   isLoading,
   goalStatus,
   userCanEdit,
-//   selectedGrants,
-//   recipientId,
-//   regionId,
+  selectedGrants,
+  recipientId,
+  regionId,
 }) {
   const onChangeHandler = async (e) => {
     // await similiarGoalsByText();
@@ -67,14 +67,14 @@ GoalNudge.propTypes = {
   isLoading: PropTypes.bool,
   goalStatus: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
-//   regionId: PropTypes.number.isRequired,
-//   recipientId: PropTypes.number.isRequired,
-//   selectedGrants: PropTypes.arrayOf(
-//     PropTypes.shape({
-//       label: PropTypes.string,
-//       value: PropTypes.number,
-//     }),
-//   ).isRequired,
+  regionId: PropTypes.number.isRequired,
+  recipientId: PropTypes.number.isRequired,
+  selectedGrants: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    }),
+  ).isRequired,
 };
 
 GoalNudge.defaultProps = {
