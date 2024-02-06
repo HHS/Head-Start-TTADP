@@ -267,7 +267,7 @@ parameters:
     default: "kw-update-minio"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "TTAHUB-1974/monitoring-data"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -357,6 +357,7 @@ jobs:
         AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
         AWS_ELASTICSEARCH_ACCESS_KEY: admin
         AWS_ELASTICSEARCH_SECRET_KEY: admin
+        SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
@@ -373,6 +374,16 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      - run:
+          name: Run SFTP container
+          command: |
+            docker run -d \
+              -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
+              -p "${SFTP_EXPOSED_PORT:-22}:22" \
+              --name sftp \
+              -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
+              jmcombs/sftp \
+              /bin/sh -c "while true; do sleep 30; done"
       - run:
           name: Monitor database
           command: |
