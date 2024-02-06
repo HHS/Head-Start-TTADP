@@ -42,7 +42,7 @@ const getPriorFile = async (
     },
     // Ordering the results by ftpFileInfo.date in descending order
     // eslint-disable-next-line @typescript-eslint/quotes
-    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
+    order: [['id', 'DESC']],
     raw: true,
   });
 
