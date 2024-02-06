@@ -1,10 +1,10 @@
 env: sandbox
 web_instances: 1
-web_memory: 5GB
-web_disk_quota: 20GB
+web_memory: 3GB
+web_disk_quota: 2GB
 worker_instances: 2
-worker_memory: 512M
-worker_disk_quota: 10GB
+worker_memory: 1M
+worker_disk_quota: 2GB
 similarity_api_instances: 1
 similarity_api_memory: 1GB
 similarity_api_disk_quota: 5GB
