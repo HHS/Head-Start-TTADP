@@ -1,8 +1,14 @@
+import sequelize from 'sequelize';
 import { classScore, monitoringData } from './monitoring';
 
 describe('monitoring services', () => {
   const RECIPIENT_ID = 1;
-  const REGION_ID = 1;
+  const REGION_ID = 14;
+
+  afterAll(async () => {
+    await sequelize.close();
+  });
+
   describe('classScore', () => {
     it('returns data in the correct format', async () => {
       const data = await classScore(
@@ -21,18 +27,40 @@ describe('monitoring services', () => {
     });
   });
   describe('monitoringData', () => {
+    // we rely on the seeded data being present for this test to work
+
+    it('returns null when nothing is found', async () => {
+      const recipientId = 7;
+      const regionId = 12;
+      const grantNumber = '09CH033333';
+
+      const data = await monitoringData({
+        recipientId,
+        regionId,
+        grantNumber,
+      });
+
+      expect(data).toEqual(null);
+    });
+
     it('returns data in the correct format', async () => {
-      const data = await monitoringData(
-        RECIPIENT_ID,
-        REGION_ID,
-      );
+      const recipientId = 7;
+      const regionId = 9;
+      const grantNumber = '09CH033333';
+
+      const data = await monitoringData({
+        recipientId,
+        regionId,
+        grantNumber,
+      });
 
       expect(data).toEqual({
-        recipientId: RECIPIENT_ID,
-        regionId: REGION_ID,
-        reviewStatus: expect.any(String),
-        reviewDate: expect.any(String),
-        reviewType: expect.any(String),
+        recipientId,
+        regionId,
+        grant: grantNumber,
+        reviewStatus: 'Complete',
+        reviewDate: expect.any(Date),
+        reviewType: 'FA-1',
       });
     });
   });
