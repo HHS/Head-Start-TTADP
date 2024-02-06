@@ -1,5 +1,6 @@
 import { Client } from 'ssh2';
 import { Readable } from 'stream';
+import { auditLogger } from '../../logger';
 
 interface ConnectConfig {
   host: string;
@@ -152,6 +153,7 @@ class SftpClient {
         this.connected = true;
         resolve();
       }).on('error', (err) => {
+        auditLogger.error(JSON.stringify(err));
         this.connected = false; // Ensure the connected flag is set to false on error
         reject(err);
       }).on('end', () => {
@@ -159,6 +161,7 @@ class SftpClient {
       }).on('close', (hadError) => {
         this.connected = false;
         if (hadError) {
+          auditLogger.error(JSON.stringify(hadError));
           reject(new Error('Connection closed due to a transmission error'));
         }
       });
