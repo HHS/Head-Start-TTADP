@@ -7,6 +7,8 @@ interface ConnectConfig {
   username: string;
   password?: string;
   privateKey?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  algorithms?: Record<string, any>,
 }
 
 interface ListFileOptions {
@@ -161,8 +163,18 @@ class SftpClient {
         }
       });
 
+      const {
+        algorithms = {
+          serverHostKey: ['ssh-dss'],
+        },
+        ...connectionSettings
+      } = this.connectionSettings;
+
       // Attempt to connect with the new Client instance
-      this.client.connect(this.connectionSettings);
+      this.client.connect({
+        ...connectionSettings,
+        algorithms,
+      });
     });
   }
 

@@ -40,10 +40,6 @@ executors:
           discovery.type: single-node
           DISABLE_SECURITY_PLUGIN: true
           ES_JAVA_OPTS: "-Xms256m -Xmx256m"
-      # - image: jmcombs/sftp
-      #   # volumes:
-      #   #     - ./test-sftp:/home/tta_ro/ProdTTAHome
-      #   command: tta_ro:password:1001
   machine-executor:
     machine:
       image: ubuntu-2204:current
@@ -382,7 +378,7 @@ jobs:
   #             -p "${SFTP_EXPOSED_PORT:-22}:22" \
   #             --name sftp \
   #             -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
-  #             jmcombs/sftp \
+  #             jmcombs/sftp:alpine \
   #             /bin/sh -c "while true; do sleep 30; done"
   #     - run:
   #         name: Monitor database

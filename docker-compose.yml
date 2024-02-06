@@ -87,7 +87,7 @@ services:
       - POSTGRES_HOST=postgres_docker
       - NODE_ENV=development
   sftp:
-    image: jmcombs/sftp
+    image: jmcombs/sftp:alpine
     volumes:
         - ./test-sftp:/home/tta_ro/ProdTTAHome
     ports:
