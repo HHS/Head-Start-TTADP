@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 
 import MonitoringReview from '../MonitoringReview';
+import { GrantDataProvider } from '../../GrantDataContext';
 
 const grantNumber = '1';
 const regionId = 1;
@@ -13,11 +14,13 @@ const recipientId = 1;
 const apiUrl = `/api/monitoring/${recipientId}/region/${regionId}/grant/${grantNumber}`;
 
 const renderMonitoringReview = () => render(
-  <MonitoringReview
-    grantNumber={grantNumber}
-    regionId={regionId}
-    recipientId={recipientId}
-  />,
+  <GrantDataProvider>
+    <MonitoringReview
+      grantNumber={grantNumber}
+      regionId={regionId}
+      recipientId={recipientId}
+    />
+  </GrantDataProvider>,
 );
 
 const testReviewStatus = async (status, expectedText, reviewDate = '05/01/2023') => {

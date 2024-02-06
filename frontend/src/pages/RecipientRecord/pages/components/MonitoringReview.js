@@ -6,6 +6,7 @@ import { Button } from '@trussworks/react-uswds';
 import Container from '../../../../components/Container';
 import { getMonitoringData } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
+import { useGrantData } from '../GrantDataContext';
 
 const BadgeCompliant = () => (
   <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
@@ -20,14 +21,17 @@ const BadgeNoncompliant = (text = 'Noncompliant') => (
 );
 
 const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
+  const { updateGrantMonitoringData } = useGrantData();
   const [review, setReview] = useState({});
 
   useEffect(() => {
     const fetchReview = async () => {
       const data = await getMonitoringData({ grantNumber, recipientId, regionId });
       setReview(data);
+      updateGrantMonitoringData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchReview();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grantNumber, regionId, recipientId]);
 
   const getComplianceBadge = (key) => {
@@ -36,6 +40,8 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
     if (key === 'Deficient') return BadgeNoncompliant('Deficient');
     return null;
   };
+
+  if (!review || !Object.keys(review).length) return null;
 
   return (
     <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">

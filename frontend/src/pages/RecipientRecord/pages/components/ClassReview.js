@@ -8,6 +8,7 @@ import Container from '../../../../components/Container';
 import Drawer from '../../../../components/Drawer';
 import { getClassScores } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
+import { useGrantData } from '../GrantDataContext';
 
 const BadgeAbove = () => (
   <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
@@ -28,6 +29,7 @@ const BadgeBelowCompetetive = () => (
 );
 
 const ClassReview = ({ grantNumber, recipientId, regionId }) => {
+  const { updateGrantClassData } = useGrantData();
   const [scores, setScores] = useState({});
   const howMetRef = useRef(null);
 
@@ -35,8 +37,10 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
     const fetchScores = async () => {
       const data = await getClassScores({ grantNumber, recipientId, regionId });
       setScores(data);
+      updateGrantClassData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchScores();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [grantNumber, recipientId, regionId]);
 
   const getScoreBadge = (key, score, received) => {
@@ -66,6 +70,8 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
 
     return null;
   };
+
+  if (!scores || Object.keys(scores).length === 0) return null;
 
   return (
     <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">
