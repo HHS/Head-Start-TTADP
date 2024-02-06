@@ -3,8 +3,19 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
 import { getDistinctSortedArray } from '../../../utils';
+import { useGrantData } from '../pages/GrantDataContext';
 
 export default function GrantsList({ summary }) {
+  const { hasMonitoringData, hasClassData } = useGrantData();
+
+  const anyGrantHasMissingData = () => {
+    if (summary && summary.grants) {
+      return summary.grants.some((grant) => !hasMonitoringData(grant.number)
+        || !hasClassData(grant.number));
+    }
+    return false;
+  };
+
   const renderGrantsList = () => {
     if (summary && summary.grants) {
       return summary.grants.map((grant) => (
@@ -12,6 +23,9 @@ export default function GrantsList({ summary }) {
           <td>
             <a aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
               {grant.number}
+              {(hasMonitoringData(grant.number) && hasClassData(grant.number)) || (
+                <span>*</span>
+              )}
             </a>
           </td>
           <td>
@@ -64,6 +78,19 @@ export default function GrantsList({ summary }) {
               renderGrantsList()
             }
           </tbody>
+          {anyGrantHasMissingData() && (
+            <tfoot>
+              <tr>
+                <td colSpan="8">
+                  <p>
+                    <span>
+                      * CLASS and/or monitoring scores are not available
+                    </span>
+                  </p>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
     </Container>
