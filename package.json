@@ -245,7 +245,6 @@
     ]
   },
   "devDependencies": {
-    "turbo": "^1.9.6",
     "@axe-core/cli": "4.6.0",
     "@axe-core/playwright": "^4.6.0",
     "@babel/cli": "^7.11.6",
