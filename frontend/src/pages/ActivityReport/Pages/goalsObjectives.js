@@ -24,7 +24,6 @@ import ReadOnlyOtherEntityObjectives from '../../../components/GoalForm/ReadOnly
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { getGoalTemplates } from '../../../fetchers/goalTemplates';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
-import UserContext from '../../../UserContext';
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
@@ -48,7 +47,6 @@ const GoalsObjectives = ({
   const pageState = getValues('pageState');
   const isRecipientReport = activityRecipientType === 'recipient';
   const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const { user } = useContext(UserContext);
   const grantIds = isRecipientReport ? activityRecipients.map((r) => {
     if (r.grant) {
       return r.grant.id;
@@ -167,7 +165,6 @@ const GoalsObjectives = ({
           objectives: goalForEditingObjectives,
         }],
         setError,
-        user,
       );
 
       if (areGoalsValid !== true) {
