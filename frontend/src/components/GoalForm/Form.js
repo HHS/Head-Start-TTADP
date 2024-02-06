@@ -18,6 +18,7 @@ import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
 import GoalSource from './GoalSource';
 import GoalNudge from './GoalNudge';
+import PermissionsBasedFormField from './PermissionsBasedFormField';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -59,10 +60,6 @@ export default function Form({
   regionId,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
-
-  const onUpdateText = (e) => {
-    setGoalName(e.target.value);
-  };
 
   const onAddNewObjectiveClick = () => {
     // first we validate the goal text and the recipients
@@ -143,19 +140,26 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <GoalNudge
-        error={errors[FORM_FIELD_INDEXES.NAME]}
-        goalName={goalName}
-        isOnReport={isOnReport}
-        validateGoalName={validateGoalName}
-        onUpdateText={onUpdateText}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
-        recipientId={recipient.id}
-        regionId={regionId}
-        selectedGrants={selectedGrants}
-      />
+      <PermissionsBasedFormField
+        permissions={[
+          (!isOnReport),
+          (status !== 'Closed'),
+          (userCanEdit),
+        ]}
+        label="Recipient's goal"
+        value={goalName}
+      >
+        <GoalNudge
+          error={errors[FORM_FIELD_INDEXES.NAME]}
+          goalName={goalName}
+          validateGoalName={validateGoalName}
+          onUpdateText={setGoalName}
+          isLoading={isAppLoading}
+          recipientId={recipient.id}
+          regionId={regionId}
+          selectedGrants={selectedGrants}
+        />
+      </PermissionsBasedFormField>
 
       <ConditionalFields
         prompts={prompts}
