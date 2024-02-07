@@ -54,7 +54,7 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'uuid-mock'),
 }));
 
-describe('getPriorFile', () => {
+describe('record', () => {
   beforeEach(() => {
     // Clear all instances and calls to constructor and all methods:
     jest.clearAllMocks();
@@ -82,7 +82,7 @@ describe('getPriorFile', () => {
           status,
         },
         // eslint-disable-next-line @typescript-eslint/quotes
-        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
+        order: [['id', 'DESC']],
         raw: true,
       });
       expect(result).toBe(mockName);
