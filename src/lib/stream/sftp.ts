@@ -10,6 +10,7 @@ interface ConnectConfig {
   privateKey?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   algorithms?: Record<string, any>,
+  hostVerifier: (hashedKey:string, callback: (response) => void) => boolean,
 }
 
 interface ListFileOptions {
@@ -168,8 +169,9 @@ class SftpClient {
 
       const {
         algorithms = {
-          serverHostKey: ['ssh-dss'],
+          serverHostKey: ['ssh-dss', 'ssh-rsa'],
         },
+        hostVerifier = () => true,
         ...connectionSettings
       } = this.connectionSettings;
 
