@@ -249,7 +249,13 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
-  const priorFile = await getPriorFile(importId); // Get the prior file for the import
+  const priorFile = await getPriorFile(
+    importId,
+    [
+      IMPORT_STATUSES.COLLECTED,
+      IMPORT_STATUSES.PROCESSED,
+    ],
+  ); // Get the prior file for the import
 
   try {
     await ftpClient.connect();
