@@ -105,7 +105,7 @@ describe('record', () => {
           status,
         },
         // eslint-disable-next-line @typescript-eslint/quotes
-        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
+        order: [['id', 'DESC']],
         raw: true,
       });
       expect(result).toBeNull();
