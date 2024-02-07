@@ -375,10 +375,11 @@ jobs:
           command: |
             docker run -d \
               -v "$(pwd)/test-sftp:/home/tta_ro/ProdTTAHome" \
+              -v "$(pwd)/test-sftp/sshd_config:/etc/ssh/sshd_config" \
               -p "${SFTP_EXPOSED_PORT:-22}:22" \
               --name sftp \
-              -e "SFTP_USERS=${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001" \
-              jmcombs/sftp:alpine
+              jmcombs/sftp:alpine \
+              ${ITAMS_MD_USERNAME:-tta_ro}:${ITAMS_MD_PASSWORD:-password}:1001
           background: true
       - run:
           name: Monitor database
