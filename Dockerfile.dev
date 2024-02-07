@@ -5,15 +5,17 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 COPY package.json yarn.lock ./
 RUN yarn global add node-gyp &&\
-    yarn install &&\ 
-    yarn cache clean
+RUN --mount=type=cache,target=/root/.yarn \
+    YARN_CACHE_FOLDER=/root/.yarn \
+    yarn install
 
 FROM node:18.18.2-alpine as frontend-base
 WORKDIR /app
 RUN apk update && apk add yarn dumb-init
 COPY frontend/package.json frontend/yarn.lock ./
-RUN yarn install &&\ 
-    yarn cache clean
+RUN --mount=type=cache,target=/root/.yarn \
+    YARN_CACHE_FOLDER=/root/.yarn \
+    arn install
 
 FROM node:18.18.2 as build
 ENV NODE_OPTIONS=--max_old_space_size=2048
