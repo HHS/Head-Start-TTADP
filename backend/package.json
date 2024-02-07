@@ -1,0 +1,258 @@
+{
+    "name": "@repo/backend",
+    "version": "0.1.0",
+    "private": true,
+    "license": "ISC",
+    "main": "./src/index.ts", 
+    "publishConfig": {
+      "access": "public"
+    },
+    "scripts": {
+      "build": "tsc -p .",
+      "serve": "tsx watch --trace-warnings ./src/index.ts",
+      "dev": "tsx watch --trace-warnings ./src/index.ts",
+      "lint": "turbo run lint",
+      "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    },
+    "resolutions": {
+        "axe-core": "4.6.3",
+        "@axe-core/webdriverjs": "4.6.0",
+        "ansi-regex": "^5.0.1",
+        "colors": "1.4.0",
+        "follow-redirects": "^1.15.4",
+        "json-pointer": "0.6.2",
+        "marked": "^4.0.10",
+        "minimist": "^1.2.7",
+        "moment": "^2.29.2",
+        "nanoid": "^3.2.0",
+        "node-fetch": "^2.6.7",
+        "protobufjs": "^7.2.4",
+        "got": "^11.8.5",
+        "undici": "^5.10.0",
+        "selenium-webdriver": "4.3.0",
+        "json5": "^2.2.3",
+        "luxon": "^1.23.1",
+        "qs": "^6.9.7",
+        "cookiejar": "^2.1.4",
+        "http-cache-semantics": "^4.1.1",
+        "xml2js": "^0.5.0",
+        "semver": "^7.5.3",
+        "tough-cookie": "^4.1.3"
+      },
+      "eslintConfig": {
+        "extends": [
+          "airbnb-base",
+          "airbnb-typescript/base",
+          "plugin:jest/recommended",
+          "plugin:@typescript-eslint/recommended"
+        ],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+          "project": "./tsconfig.json"
+        },
+        "plugins": [
+          "@typescript-eslint"
+        ],
+        "ignorePatterns": [
+          "node_modules",
+          "**/node_modules",
+          "node_modules/*",
+          "playwright.config.js",
+          "tests/*",
+          "packages/*"
+        ],
+        "rules": {
+          "linebreak-style": 0,
+          "@typescript-eslint/no-var-requires": 0,
+          "@typescript-eslint/no-unused-vars": 0,
+          "@typescript-eslint/no-empty-function": 0,
+          "@typescript-eslint/ban-ts-comment": 0
+        }
+      },
+      "eslint-formatter-multiple": {
+        "formatters": [
+          {
+            "name": "stylish",
+            "output": "console"
+          },
+          {
+            "name": "junit",
+            "output": "file",
+            "path": "reports/lint.xml"
+          }
+        ]
+      },
+      "jest": {
+        "testPathIgnorePatterns": [
+          "<rootDir>/src/frontend/",
+          "<rootDir>/node_modules/",
+          "<rootDir>/src/build/",
+          "<rootDir>/src/makecolors.js",
+          "<rootDir>/src/newrelic.js",
+          "<rootDir>/src/testUtils.js",
+          "<rootDir>/src/logger.js",
+          "<rootDir>/src/*/coverage/",
+          "<rootDir>/src/packages/",
+          "<rootDir>/src/coverage/",
+          "<rootDir>/src/index.js",
+          "<rootDir>/src/worker.ts",
+          "<rootDir>/src/app.js",
+          "<rootDir>/src/tools/*CLI.js",
+          "<rootDir>/src/tools/*Cli.js",
+          "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+          "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
+          "<rootDir>/src/tools/importTTAPlanGoals.js"
+        ],
+        "testTimeout": 30000,
+        "coveragePathIgnorePatterns": [
+          "<rootDir>/src/middleware/newRelicMiddleware.js",
+          "<rootDir>/src/frontend/",
+          "<rootDir>/node_modules",
+          "<rootDir>/src/build/",
+          "<rootDir>/src/packages/",
+          "<rootDir>/src/makecolors.js",
+          "<rootDir>/src/newrelic.js",
+          "<rootDir>/src/testUtils.js",
+          "<rootDir>/src/logger.js",
+          "<rootDir>/src/*/coverage/",
+          "<rootDir>/src/coverage/",
+          "<rootDir>/src/index.js",
+          "<rootDir>/src/worker.ts",
+          "<rootDir>/src/app.js",
+          "<rootDir>/src/lib/cron.js",
+          "<rootDir>/src/tools/*CLI.js",
+          "<rootDir>/src/tools/*Cli.js",
+          "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
+          "<rootDir>/src/tools/importTTAPlanGoals.js"
+        ],
+        "coverageThreshold": {
+          "global": {
+            "statements": 75,
+            "functions": 75,
+            "branches": 75,
+            "lines": 75
+          }
+        },
+        "setupFiles": [
+          "./src/setupTest.js"
+        ]
+      },
+      "keywords": [],
+      "author": "",
+      "bugs": {
+        "url": "https://github.com/adhocteam/Head-Start-TTADP/issues"
+      },
+      "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
+      "nodemonConfig": {
+        "ignore": [
+          "./reports/",
+          "./cucumber/",
+          "./frontend/",
+          "./tests/",
+          "./playwright/",
+          "./playwright-report/",
+          "./test-results/",
+          "./playwright.config.js"
+        ]
+      },
+      "devDependencies": {
+        "@axe-core/cli": "4.6.0",
+        "@axe-core/playwright": "^4.6.0",
+        "@babel/cli": "^7.11.6",
+        "@babel/core": "^7.11.6",
+        "@babel/node": "^7.10.5",
+        "@babel/plugin-transform-runtime": "^7.11.0",
+        "@babel/preset-env": "^7.11.5",
+        "@babel/preset-typescript": "^7.18.6",
+        "@cucumber/cucumber": "^7.0.0",
+        "@playwright/test": "^1.28.0",
+        "@typescript-eslint/eslint-plugin": "^5.13.0",
+        "@typescript-eslint/parser": "^5.0.0",
+        "concurrently": "^7.0.0",
+        "cross-env": "^7.0.2",
+        "depcheck": "^1.2.0",
+        "eslint": "^7.20.0",
+        "eslint-config-airbnb-base": "^15.0.0",
+        "eslint-config-airbnb-typescript": "^17.0.0",
+        "eslint-formatter-multiple": "^1.0.0",
+        "eslint-plugin-import": "^2.22.0",
+        "eslint-plugin-jest": "^25.3.4",
+        "eslint-plugin-jsx-a11y": "^6.3.1",
+        "eslint-plugin-react": "^7.20.6",
+        "jest": "26.6.0",
+        "jest-cli": "26.4.2",
+        "jest-junit": "^12.0.0",
+        "joi": "^17.9.1",
+        "nodemon": "^2.0.4",
+        "playwright": "^1.28.0",
+        "puppeteer": "^13.1.1",
+        "puppeteer-select": "^1.0.3",
+        "redoc-cli": "^0.13.2",
+        "selenium-webdriver": "4.3.0",
+        "simple-git": "^3.19.1",
+        "sinon": "^15.0.0",
+        "supertest": "^6.1.3",
+        "tsx": "^3.12.2",
+        "typescript": "4.7.4",
+        "umzug": "^3.2.1"
+      },
+      "dependencies": {
+        "@babel/runtime": "^7.12.1",
+        "@elastic/elasticsearch": "^8.2.0-patch.1",
+        "@elastic/elasticsearch-mock": "^2.0.0",
+        "@faker-js/faker": "^6.0.0",
+        "@opensearch-project/opensearch": "^1.1.0",
+        "@ttahub/common": "2.0.11",
+        "adm-zip": "^0.5.1",
+        "aws-sdk": "^2.826.0",
+        "aws4": "^1.11.0",
+        "axios": "^0.24.0",
+        "bull": "^4.2.0",
+        "cheerio": "^1.0.0-rc.10",
+        "client-oauth2": "^4.3.3",
+        "cls-hooked": "^4.2.2",
+        "cookie-session": "^2.0.0",
+        "cron": "^1.8.2",
+        "csv-parse": "^4.14.1",
+        "csv-stringify": "^5.6.2",
+        "cucumber-html-reporter": "^5.2.0",
+        "dotenv": "^10.0.0",
+        "email-templates": "^8.0.4",
+        "express": "^4.17.1",
+        "express-http-context": "^1.2.4",
+        "express-unless": "^1.0.0",
+        "express-winston": "^4.0.5",
+        "file-type": "^16.5.4",
+        "form-data": "^4.0.0",
+        "he": "^1.2.0",
+        "helmet": "^5.0.1",
+        "html-to-text": "^8.1.0",
+        "http-codes": "^1.0.0",
+        "jsonwebtoken": "^9.0.0",
+        "lodash": "^4.17.20",
+        "md5": "^2.3.0",
+        "moment": "^2.29.4",
+        "multiparty": "^4.2.2",
+        "mz": "^2.7.0",
+        "newrelic": "^11.6.0",
+        "nodemailer": "^6.5.0",
+        "pg": "^8.3.3",
+        "plantuml-encoder": "^1.4.0",
+        "pug": "^3.0.2",
+        "redis": "^4.0.6",
+        "sequelize": "^6.29.0",
+        "sequelize-cli": "^6.2.0",
+        "throng": "^5.0.0",
+        "through2": "^4.0.2",
+        "turbo": "^1.12.3",
+        "url-join": "^4.0.1",
+        "uuid": "^8.3.2",
+        "validator": "^13.7.0",
+        "wait-for-expect": "^3.0.2",
+        "winston": "^3.3.3",
+        "ws": "^8.5.0",
+        "xml2json": "^0.12.0",
+        "yargs": "^17.3.1",
+        "yayson": "^2.1.0"
+      }
+    }    

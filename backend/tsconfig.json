@@ -10,8 +10,20 @@
     "removeComments": true
   },
   "include": [
-    "./**/*.js",
-    "./**/*.ts"
-  ]
+    "./src/**/*.js",
+    "./src/**/*.ts"
+  ],
+  "exclude": [
+    "dist",
+    "**/dist",
+    "build",
+    "**/build",
+    "node_modules",
+    "**/node_modules",
+    "node_modules/*",
+    "playwright.config.js",
+    "tests/*",
+    "packages/*"
+  ],
 }
 
