@@ -89,6 +89,7 @@ export async function monitoringData({
                       'reviewType',
                       'reviewId',
                       'statusId',
+                      'outcome',
                     ],
                     required: true,
                     include: [
@@ -157,7 +158,7 @@ export async function monitoringData({
   return {
     recipientId: grant.recipientId,
     regionId: grant.regionId,
-    reviewStatus: status.name,
+    reviewStatus: monitoringReview.outcome,
     reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
