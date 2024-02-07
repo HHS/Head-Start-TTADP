@@ -190,7 +190,7 @@ export default function GoalForm({
     }
 
     if (!fetchAttempted && !isNew && !isAppLoading) {
-      setAppLoadingText('Loading');
+      setAppLoadingText('Loading goal');
       setIsAppLoading(true);
       fetchGoal();
     }
@@ -736,6 +736,14 @@ export default function GoalForm({
     setDatePickerKey('DPK-00');
   };
 
+  const onSelectNudgedGoal = async (goal) => {
+    // TODO: Handle goal.isTemplate
+    setAppLoadingText('Retrieving existing goal');
+    const urlFragment = `id[]=${goal.ids.join(',')}`;
+    const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
+    history.push(url);
+  };
+
   const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
       // attempt to focus on the first invalid field
@@ -923,6 +931,8 @@ export default function GoalForm({
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
+              isNew={isNew}
+              onSelectNudgedGoal={onSelectNudgedGoal}
               fetchError={fetchError}
               onSaveDraft={onSaveDraft}
               possibleGrants={possibleGrants}
