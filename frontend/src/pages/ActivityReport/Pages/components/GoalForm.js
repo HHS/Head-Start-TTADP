@@ -19,6 +19,7 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
+import PermissionsBasedFormField from '../../../../components/GoalForm/PermissionsBasedFormField';
 
 export default function GoalForm({
   goal,
@@ -152,17 +153,26 @@ export default function GoalForm({
 
   return (
     <>
-      <GoalText
-        error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        goalName={goalText}
-        validateGoalName={onBlurGoalText}
-        onUpdateText={onUpdateText}
-        inputName={goalTextInputName}
-        isOnReport={goal.onApprovedAR || false}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit={!isCurated}
-      />
+      <PermissionsBasedFormField
+        permissions={[
+          !(goal.onApprovedAR),
+          !isCurated,
+          status !== 'Closed',
+        ]}
+        label="Recipient's goal"
+        value={goalText}
+      >
+        <GoalText
+          error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
+          goalName={goalText}
+          validateGoalName={onBlurGoalText}
+          onUpdateText={onUpdateText}
+          inputName={goalTextInputName}
+          isOnReport={goal.onApprovedAR || false}
+          goalStatus={status}
+          isLoading={isAppLoading}
+        />
+      </PermissionsBasedFormField>
 
       <ConditionalFields
         prompts={prompts}

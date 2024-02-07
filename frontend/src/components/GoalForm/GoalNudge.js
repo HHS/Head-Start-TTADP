@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
-  FormGroup,
-  Label,
-  Textarea,
+  Checkbox,
 } from '@trussworks/react-uswds';
-import Req from '../Req';
 import { similiarGoalsByText } from '../../fetchers/goals';
+import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useDebounceEffect from '../../hooks/useDebounceEffect';
-import SimilarGoals from './SimilarGoals';
+import GoalNudgeText from './GoalNudgeText';
+import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
@@ -22,15 +21,35 @@ export default function GoalNudge({
   selectedGrants,
   recipientId,
   regionId,
+  onSelectNudgedGoal,
 }) {
   const [similar, setSimilarGoals] = useState([]);
+  const [useOhsInitiativeGoal, setUseOhsInitiativeGoal] = useState(false);
   const [dismissSimilar, setDismissSimilar] = useState(false);
+  const [goalTemplates, setGoalTemplates] = useState(null);
 
   useEffect(() => {
     if (dismissSimilar) {
       setSimilarGoals([]);
     }
   }, [dismissSimilar]);
+
+  useEffect(() => {
+    async function fetchGoalTemplates() {
+      try {
+        if (!goalTemplates) {
+          const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
+          setGoalTemplates(templates);
+        }
+      } catch (err) {
+        setGoalTemplates([]);
+      }
+    }
+
+    if (useOhsInitiativeGoal && !goalTemplates) {
+      fetchGoalTemplates();
+    }
+  }, [goalTemplates, selectedGrants, useOhsInitiativeGoal]);
 
   useDebounceEffect(async () => {
     // we need all of these to populate the query
@@ -57,37 +76,48 @@ export default function GoalNudge({
     } catch (err) {
       setSimilarGoals([]);
     }
-  }, [goalName, regionId, recipientId, selectedGrants]);
+  }, [
+    goalName,
+    regionId,
+    recipientId,
+    selectedGrants,
+    dismissSimilar,
+  ]);
 
   const onChange = (e) => {
     onUpdateText(e.target.value);
   };
 
   return (
-    <FormGroup error={error.props.children} className="position-relative">
-      <Label htmlFor={inputName}>
-        Recipient&apos;s goal
-        {' '}
-        <Req />
-      </Label>
+    <>
+      <GoalNudgeText
+        error={error}
+        inputName={inputName}
+        validateGoalName={validateGoalName}
+        goalName={goalName}
+        onChange={onChange}
+        isLoading={isLoading}
+        similar={similar}
+        onSelectNudgedGoal={onSelectNudgedGoal}
+        setDismissSimilar={setDismissSimilar}
+        useOhsInitiativeGoal={useOhsInitiativeGoal}
+      />
 
-      <>
-        {error}
-        <Textarea
-          onBlur={() => {
-            validateGoalName();
-          }}
-          id={inputName}
-          name={inputName}
-          value={goalName}
-          onChange={onChange}
-          required
-          disabled={isLoading}
-          style={{ height: '160px' }}
-        />
-        <SimilarGoals similar={similar} setDismissSimilar={setDismissSimilar} />
-      </>
-    </FormGroup>
+      <GoalNudgeInitiativePicker
+        error={error}
+        useOhsInitiativeGoal={useOhsInitiativeGoal}
+        validateGoalName={validateGoalName}
+        goalTemplates={goalTemplates}
+      />
+      <Checkbox
+        id="use-ohs-initiative-goal"
+        name="use-ohs-initiative-goal"
+        label="Use OHS initiative goal"
+        className="margin-top-2"
+        onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
+        checked={useOhsInitiativeGoal}
+      />
+    </>
   );
 }
 
@@ -107,6 +137,7 @@ GoalNudge.propTypes = {
       id: PropTypes.number,
     }),
   ).isRequired,
+  onSelectNudgedGoal: PropTypes.func.isRequired,
 };
 
 GoalNudge.defaultProps = {

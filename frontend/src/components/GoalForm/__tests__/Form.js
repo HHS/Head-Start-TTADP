@@ -34,6 +34,7 @@ describe('Goal Form > Form component', () => {
       }}
       >
         <Form
+          isNew
           isOnReport={goal.isOnReport}
           isOnApprovedReport={goal.isOnApprovedReport}
           errors={FORM_FIELD_DEFAULT_ERRORS}

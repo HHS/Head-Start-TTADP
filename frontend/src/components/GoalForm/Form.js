@@ -17,12 +17,12 @@ import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
 import GoalSource from './GoalSource';
-import GoalNudge from './GoalNudge';
-import PermissionsBasedFormField from './PermissionsBasedFormField';
+import GoalName from './GoalName';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
+  onSelectNudgedGoal,
   possibleGrants,
   validatePrompts,
   selectedGrants,
@@ -45,6 +45,7 @@ export default function Form({
   isOnApprovedReport,
   isOnReport,
   isCurated,
+  isNew,
   status,
   datePickerKey,
   fetchError,
@@ -140,26 +141,21 @@ export default function Form({
         userCanEdit={userCanEdit}
       />
 
-      <PermissionsBasedFormField
-        permissions={[
-          (!isOnReport),
-          (status !== 'Closed'),
-          (userCanEdit),
-        ]}
-        label="Recipient's goal"
-        value={goalName}
-      >
-        <GoalNudge
-          error={errors[FORM_FIELD_INDEXES.NAME]}
-          goalName={goalName}
-          validateGoalName={validateGoalName}
-          onUpdateText={setGoalName}
-          isLoading={isAppLoading}
-          recipientId={recipient.id}
-          regionId={regionId}
-          selectedGrants={selectedGrants}
-        />
-      </PermissionsBasedFormField>
+      <GoalName
+        goalName={goalName}
+        goalNameError={errors[FORM_FIELD_INDEXES.NAME]}
+        setGoalName={setGoalName}
+        validateGoalName={validateGoalName}
+        isAppLoading={isAppLoading}
+        recipient={recipient}
+        regionId={regionId}
+        selectedGrants={selectedGrants}
+        onSelectNudgedGoal={onSelectNudgedGoal}
+        status={status}
+        isOnReport={isOnReport}
+        isNew={isNew}
+        userCanEdit={userCanEdit}
+      />
 
       <ConditionalFields
         prompts={prompts}
@@ -223,6 +219,7 @@ export default function Form({
 }
 
 Form.propTypes = {
+  onSelectNudgedGoal: PropTypes.func.isRequired,
   regionId: PropTypes.number.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
@@ -299,6 +296,7 @@ Form.propTypes = {
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
+  isNew: PropTypes.bool.isRequired,
 };
 
 Form.defaultProps = {
