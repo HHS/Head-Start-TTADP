@@ -79,27 +79,6 @@ services:
     ports:
       - 9200:9200
       - 9600:9600 # required for Performance Analyzer
-  testingonly:
-    build:
-      context: .
-      dockerfile: ./Dockerfile.dev
-      # target: dependencies
-      cache_from: 
-        - node:18.18.2  # Using the base image as a cache source
-        - head-start-ttadp-testingonly:latest
-      target: backend
-    ports:
-      - "9999:9999"
-    depends_on:
-      - db
-    volumes:
-      - "./src/:/app/src/:rw"
-      - "./tests/:/app/tests/:rw"
-      - "./config/:/app/config:rw"
-    command: yarn start:testingonly
-    environment:
-      - POSTGRES_HOST=postgres_docker
-      - NODE_ENV=development
 volumes:
   dbdata: {}
   minio-data: {}

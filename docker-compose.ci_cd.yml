@@ -1,0 +1,43 @@
+version: "3.7"
+services:
+  owasp_zap_backend:
+    image: ghcr.io/zaproxy/zaproxy:bare
+    # platform: linux/arm64
+    user: zap
+    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
+    volumes:
+      - ./zap.conf:/zap/wrk/zap.conf:ro
+      - ./reports:/zap/wrk:rw
+    depends_on:
+      - backend
+  owasp_zap_similarity:
+    image: ghcr.io/zaproxy/zaproxy:bare
+    # platform: linux/arm64
+    user: zap
+    command: zap-api-scan.py -t http://similarity_api:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
+    volumes:
+      - ./zap.conf:/zap/wrk/zap.conf:ro
+      - ./reports:/zap/wrk:rw
+    depends_on:
+      - similarity_api
+  testingonly:
+    build:
+      context: .
+      dockerfile: ./Dockerfile.dev
+      # target: dependencies
+      cache_from: 
+        - node:18.18.2  # Using the base image as a cache source
+        - head-start-ttadp-testingonly:latest
+      target: backend
+    ports:
+      - "9999:9999"
+    depends_on:
+      - db
+    volumes:
+      - "./src/:/app/src/:rw"
+      - "./tests/:/app/tests/:rw"
+      - "./config/:/app/config:rw"
+    command: yarn start:testingonly
+    environment:
+      - POSTGRES_HOST=postgres_docker
+      - NODE_ENV=development
