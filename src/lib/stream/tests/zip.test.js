@@ -17,7 +17,7 @@ jest.mock('unzipper', () => {
           path: 'folder/file.txt',
           vars: {
             uncompressedSize: 100,
-            lastModifiedTime: new Date('2020-01-01'),
+            lastModifiedDateTime: new Date('2020-01-01'),
           },
           pipe: jest.fn(),
           autodrain: jest.fn(),
