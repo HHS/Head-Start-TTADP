@@ -241,7 +241,6 @@ const FEATURE_FLAGS = [
   'rttapa_form',
   'anv_statistics',
   'regional_goal_dashboard',
-  'goal_source',
   'merge_goals',
   'monitoring',
   'closed_goal_merge_override',
