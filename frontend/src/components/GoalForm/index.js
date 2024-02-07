@@ -738,6 +738,7 @@ export default function GoalForm({
 
   const onSelectNudgedGoal = async (goal) => {
     // TODO: Handle goal.isTemplate
+    // TODO: Handle goal status == 'suspended'
     setAppLoadingText('Retrieving existing goal');
     const urlFragment = `id[]=${goal.ids.join(',')}`;
     const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
