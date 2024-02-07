@@ -163,10 +163,10 @@ export function ReportsRow({ reports, removeAlert, message }) {
             {displayId}
           </Link>
         </td>
-        <td>
+        <td label="Surname" type="text">
           <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
         </td>
-        <td>{startDate}</td>
+        <td aria-label="start date">{startDate}</td>
         <td>
           { creatorName && (
           <Tooltip
@@ -180,7 +180,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
         <td>
           {moment(createdAt).format('MM/DD/YYYY')}
         </td>
-        <td>
+        <td aria-label="??">
           <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
         </td>
         <td className="ttahub-approver-cell">

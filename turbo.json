@@ -1,0 +1,54 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDotEnv": [
+    ".env.local",
+    "**.env",
+    ".env"
+  ],
+  "globalDependencies": [
+    "jest.config.js",
+    ".eslintrc"
+  ],
+  "pipeline": {
+    "check-types": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+          "!README.md"
+        ]
+      },
+    "build": {
+      "outputs": [
+        ".next/**",
+        "build/**",
+        "!.next/cache/**",
+        "dist/**"
+      ],
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "outputs": ["coverage/**"],
+      "dependsOn": [
+        "build",
+        "lint"
+      ],
+      "inputs": [
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "src/**/*.js",
+        "test/**/*.ts", 
+        "test/**/*.js"
+      ],
+      "outputMode": "full"
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "clean": {
+      "cache": false
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    }
+  }
+}

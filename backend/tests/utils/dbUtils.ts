@@ -2,7 +2,7 @@ import { Sequelize }  from 'sequelize';
 import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
 import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
-import configs from '../../config/config';
+import configs from '../../../config/config';
 
 const getDB = () => {
   const env = process.env.NODE_ENV || 'development';

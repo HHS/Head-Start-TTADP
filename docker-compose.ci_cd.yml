@@ -33,6 +33,7 @@ services:
       - "9999:9999"
     depends_on:
       - db
+      - backend
     volumes:
       - "./src/:/app/src/:rw"
       - "./tests/:/app/tests/:rw"

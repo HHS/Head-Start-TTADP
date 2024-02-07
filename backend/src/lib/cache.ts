@@ -37,25 +37,34 @@ export default async function getCachedResponse(
 
   // we create a fake redis client because we don't want to fail the request if redis is down
   // or if we can't connect to it, or whatever else might go wrong
-  let redisClient = {
+  let redisClient: CustomRedisClientType = {
     connect: () => Promise.resolve(),
     get: (_k: string) => Promise.resolve(null),
-    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve(''),
+    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve('OK'),
     quit: () => Promise.resolve(),
   };
 
   let clientConnected = false;
   let response: string | null = null;
+  // Use type assertion to match the expected interface
 
   try {
     if (!ignoreCache) {
-      redisClient = createClient({
+      const actualRedisClient = createClient({
         url: redisUrl,
         socket: {
           tls: tlsEnabled,
         },
       });
-      await redisClient.connect();
+      await actualRedisClient.connect();
+      
+      redisClient = {
+        connect: () => actualRedisClient.connect().then(() => {}),
+        get: (k: string) => actualRedisClient.get(k),
+        set: (k: string, r: string | null, o: CacheOptions) => actualRedisClient.set(k, r, { EX: o.EX }).then(() => 'OK'),
+        quit: () => actualRedisClient.quit(),
+      } as CustomRedisClientType;
+
       response = await redisClient.get(key);
       clientConnected = true;
     }

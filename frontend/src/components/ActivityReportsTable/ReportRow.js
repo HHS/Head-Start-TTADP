@@ -118,7 +118,7 @@ function ReportRow({
           {displayId}
         </Link>
       </th>
-      <td data-label="Recipients">
+      <td data-label="Recipients" aria-label="Recipients">
         <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
       </td>
       <td data-label="Date started">{startDate}</td>
@@ -132,10 +132,10 @@ function ReportRow({
         ) : '' }
       </td>
       <td data-label="Created date">{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
-      <td data-label="Topics">
+      <td data-label="Topics" aria-label="Topicz">
         <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
       </td>
-      <td data-label="Collaborators">
+      <td data-label="Collaborators" aria-label="Collaborators">
         <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
       </td>
       <td data-label="Last saved">{lastSaved}</td>

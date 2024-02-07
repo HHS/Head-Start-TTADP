@@ -72,6 +72,7 @@ services:
     depends_on:
       - db
       - redis
+      - backend
     volumes:
       - "./src/:/app/src/:rw"
       - "./tests/:/app/tests/:rw"
