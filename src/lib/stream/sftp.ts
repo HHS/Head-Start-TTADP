@@ -10,7 +10,7 @@ interface ConnectConfig {
   privateKey?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   algorithms?: Record<string, any>,
-  hostVerifier: (hashedKey:string, callback: (response) => void) => boolean,
+  hostVerifier?: (hashedKey:string, callback: (response) => void) => boolean,
 }
 
 interface ListFileOptions {
@@ -189,11 +189,15 @@ class SftpClient {
    * If the client is already disconnected, calling this method may result in an error.
    */
   public disconnect(): void {
-    if (this.isConnected()) {
-      this.client.end(); // End the current connection
-      this.connected = false;
+    try {
+      if (this.isConnected()) {
+        this.client.end(); // End the current connection
+        this.connected = false;
+      }
+      this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+    } catch (e) {
+      auditLogger.error(JSON.stringify(e));
     }
-    this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
   }
 
   /**
