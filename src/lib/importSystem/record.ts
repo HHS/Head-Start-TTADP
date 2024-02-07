@@ -27,7 +27,7 @@ const {
  */
 const getPriorFile = async (
   importId: number,
-  status: string = IMPORT_STATUSES.COLLECTED,
+  status: string | string[] = IMPORT_STATUSES.COLLECTED,
 ) => {
   // Find the prior file associated with the given importId
   const importFile = await ImportFile.findOne({
