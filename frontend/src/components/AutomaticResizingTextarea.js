@@ -10,15 +10,10 @@ export default function AutomaticResizingTextarea({
   onUpdateText, onBlur, inputName, disabled, value, className,
 }) {
   const [height, setHeight] = useState(`${DEFAULT_TEXTAREA_HEIGHT}px`);
-
-  const autoResize = (e) => {
+  const onChange = (e) => {
     if (e.target && e.target.scrollHeight && e.target.scrollHeight > DEFAULT_TEXTAREA_HEIGHT) {
       setHeight(`${e.target.scrollHeight}px`);
     }
-  };
-
-  const onChange = (e) => {
-    autoResize(e);
     onUpdateText(e);
   };
 
