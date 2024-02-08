@@ -290,7 +290,8 @@ export async function getSimilarGoalsByText(req, res) {
     }
 
     const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
-    const similarGoals = await nudge(recipientId, name, grantNumbers);
+    // grant numbers can be a String or String[], thanks express
+    const similarGoals = await nudge(recipientId, name, [grantNumbers].flat());
     res.json(similarGoals);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_BY_TEXT`);

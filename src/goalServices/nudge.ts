@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { uniq } from 'lodash';
 import { GOAL_STATUS } from '../constants';
 import db from '../models';
 import { similarGoalsForRecipient } from '../services/similarity';
@@ -81,6 +82,7 @@ export default async function nudge(
       'goalTemplateId',
       'source',
       'endDate',
+      [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.closeSuspendReason')), 'closeSuspendReasons'],
       [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.id')), 'ids'],
       [sequelize.literal('FALSE'), 'isCuratedTemplate'],
     ],
@@ -96,7 +98,7 @@ export default async function nudge(
         as: 'grant',
         model: Grant.unscoped(),
         where: {
-          number: grantNumbers,
+          number: uniq(grantNumbers),
         },
       },
     ],
@@ -108,6 +110,7 @@ export default async function nudge(
       '"Goal"."goalTemplateId"',
     ],
     order: [['name', 'ASC']],
+    having: sequelize.where(sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('grant.number'))), grantNumbers.length),
   })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
 
   const templateIds = goals.map((goal) => goal.goalTemplateId);
