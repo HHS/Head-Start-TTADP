@@ -14,6 +14,7 @@ interface ISimilarGoal {
   endDate: string;
   source: string;
   isCuratedTemplate?: boolean;
+  closeSuspendReasons: string[] | null[];
 }
 
 interface ISimilarResult {
@@ -127,6 +128,7 @@ export default async function nudge(
         isCuratedTemplate: true,
         endDate: '',
         source: template.source,
+        closeSuspendReasons: [null],
       });
     }
   });
