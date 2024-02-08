@@ -12,6 +12,7 @@ import NationalCenters from './NationalCenters';
 import Email from './Email';
 import Goals from './Goals';
 import TrainingReports from './TrainingReports';
+import Courses from './Courses';
 
 function Admin() {
   return (
@@ -21,6 +22,9 @@ function Admin() {
       <div className="margin-bottom-2">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
+          Courses
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
@@ -93,6 +97,10 @@ function Admin() {
         <Route
           path="/admin/training-reports/"
           render={({ match }) => <TrainingReports match={match} />}
+        />
+        <Route
+          path="/admin/courses/"
+          render={({ match }) => <Courses match={match} />}
         />
       </Switch>
     </>

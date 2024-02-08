@@ -400,11 +400,14 @@ module.exports = {
               oc."objectiveId" "originalObjectiveId",
               (o.title = po.title) "isChosen"
             FROM "ObjectiveCollaborators" oc
+            JOIN "CollaboratorTypes" ct
+            ON oc."collaboratorTypeId" = ct.id
             JOIN "Objectives" o
             ON oc."objectiveId" = o.id
             JOIN "Objectives" po
             ON o."mapsToParentObjectiveId" = po.id
             WHERE o."mapsToParentObjectiveId" IS NOT NULL
+            AND ct.name NOT IN ('${OBJECTIVE_COLLABORATORS.MERGE_CREATOR}', '${OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR}')
           ),
           unrolled as (
             SELECT
@@ -477,7 +480,40 @@ module.exports = {
             "linkBack",
             "createdAt",
             "updatedAt"
-          FROM mapped_collaborators;`;
+          FROM mapped_collaborators
+          ON CONFLICT
+          (
+          "objectiveId",
+          "userId",
+          "collaboratorTypeId"
+          )
+          DO UPDATE SET
+          "updatedAt" = EXCLUDED."updatedAt",
+          "linkBack" = (
+            SELECT
+            JSONB_OBJECT_AGG(key_values.key, key_values.values)
+            FROM (
+            SELECT
+              je.key,
+              JSONB_AGG(DISTINCT jae.value ORDER BY jae.value) "values"
+            FROM (
+              SELECT "ObjectiveCollaborators"."linkBack"
+              UNION
+              SELECT EXCLUDED."linkBack"
+            ) "linkBacks"("linkBack")
+            CROSS JOIN jsonb_each("linkBacks"."linkBack") je
+            CROSS JOIN jsonb_array_elements(je.value) jae(value)
+            GROUP BY 1
+            ) key_values
+          )
+          RETURNING
+          "id" "objectiveCollaboratorId",
+          "objectiveId",
+          "userId",
+          "collaboratorTypeId",
+          "linkBack",
+          "createdAt",
+          "updatedAt";`;
 
       await queryInterface.sequelize.query(
         collectObjectiveCollaboratorsViaAuditLogAsCreator(),

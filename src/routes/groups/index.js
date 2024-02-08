@@ -10,7 +10,7 @@ import {
   deleteGroup,
   getEligibleRecipientGrantsForGroup,
   getEligibleCoOwnersForGroup,
-  getEligibleSharedWithForGroup
+  getEligibleSharedWithForGroup,
 } from './handlers';
 
 const router = express.Router();

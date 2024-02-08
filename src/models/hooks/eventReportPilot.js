@@ -1,5 +1,10 @@
+/* eslint-disable max-len */
 /* eslint-disable global-require */
+
+import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
+
 /* eslint-disable import/prefer-default-export */
+const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
@@ -98,6 +103,90 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
   }
 };
 
+/**
+ * This hook updates `Goal.name` for all goals that are associated with this training report.
+ */
+const updateGoalText = async (sequelize, instance, options) => {
+  const { transaction } = options;
+
+  // Compare the previous and current goal text field.
+  const previous = instance.previous().data || null;
+  let current;
+  if (instance.data?.val) {
+    current = JSON.parse(instance.data.val) || null;
+  } else {
+    current = instance.data || null;
+  }
+
+  if (!current || !previous) {
+    return;
+  }
+
+  if (current.goal === previous.goal) {
+    return;
+  }
+
+  // Get all SessionReportPilot instances for this event.
+  const sessions = await sequelize.models.SessionReportPilot.findAll({
+    where: {
+      eventId: instance.id,
+    },
+    transaction,
+  });
+
+  await Promise.all(sessions.map((session) => createGoalsForSessionRecipientsIfNecessary(
+    sequelize,
+    session,
+    options,
+  )));
+
+  // Disallow goal name propagation if any session on this event has been completed,
+  // effectively locking down this goal text.
+  // The UI also prevents this.
+  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
+    where: {
+      eventId: instance.id,
+      'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+    },
+    transaction,
+  });
+
+  if (hasCompleteSession) {
+    current.goal = previous.goal;
+    instance.set('data', previous);
+    return;
+  }
+
+  // Propagate the goal name to all goals associated with this event
+  const name = current.goal;
+  if (!name) return;
+
+  await sequelize.models.Goal.update(
+    { name },
+    {
+      where: {
+        [Op.and]: [
+          { name: { [Op.ne]: name } },
+          {
+            id: {
+              [Op.in]: sequelize.literal(`(
+                SELECT "goalId"
+                FROM "EventReportPilotGoals"
+                WHERE "eventId" = ${instance.id}
+              )`),
+            },
+          },
+        ],
+      },
+      transaction,
+    },
+  );
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  await updateGoalText(sequelize, instance, options);
+};
+
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
   await notifyPocEventComplete(sequelize, instance, options);
@@ -107,4 +196,5 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 export {
   afterUpdate,
+  beforeUpdate,
 };

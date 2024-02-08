@@ -314,4 +314,10 @@ describe('Total Hrs and Recipient Graph widget', () => {
     expect(data[2].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
     expect(data[2].y).toStrictEqual([0, 0, 3.2, 0, 0]);
   });
+
+  it('doesn\'t throw when likely no reports found (TTAHUB-2172)', async () => {
+    const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
+    const scopes = await filtersToScopes(query);
+    expect(() => totalHrsAndRecipientGraph(scopes, query)).not.toThrow();
+  });
 });
