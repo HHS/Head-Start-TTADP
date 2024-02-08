@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings } from '../stream/sftp';
+import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings, FileListing } from '../stream/sftp';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
 import db from '../../models';
@@ -32,11 +32,7 @@ const {
  */
 const collectNextFile = async (
   importId: number,
-  availableFiles: {
-    fullPath: string,
-    fileInfo: SFTPFileInfo,
-    stream?: Promise<Readable>,
-  }[],
+  availableFiles: FileListing[],
   times: {
     start: Date,
     limit: Date,
@@ -221,6 +217,16 @@ const collectServerSettings = (
 };
 
 /**
+ * Sorts an array of `FileListing` objects in place by their `fullPath` property using
+ * locale-sensitive string comparison.
+ *
+ * @param files - An array of `FileListing` objects to be sorted.
+ */
+function sortFilesByFullPath(files: FileListing[]): void {
+  files.sort((a, b) => a.fullPath.localeCompare(b.fullPath));
+}
+
+/**
  * Collects files from an FTP server based on the provided parameters.
  *
  * @param importId - The unique identifier for the import.
@@ -263,11 +269,7 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to connect to FTP: ${err.message}`);
   }
 
-  let availableFiles: {
-    fullPath: string,
-    fileInfo: SFTPFileInfo,
-    stream?: Promise<Readable>,
-  }[];
+  let availableFiles: FileListing[];
   try {
     availableFiles = await ftpClient.listFiles({
       path, // The path on the FTP server to search for files
@@ -281,6 +283,7 @@ const collectFilesFromSource = async (
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
+  sortFilesByFullPath(fetchableAvailableFiles);
 
   // Record the available files for the import
   await recordAvailableFiles(importId, fetchableAvailableFiles);
@@ -350,4 +353,5 @@ export {
   collectNextFile,
   collectFilesFromSource,
   downloadFilesFromSource,
+  sortFilesByFullPath,
 };
