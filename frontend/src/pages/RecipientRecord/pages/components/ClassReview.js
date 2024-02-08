@@ -83,7 +83,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       >
         <h3>Quality thresholds</h3>
         <p>
-          Beginning in Novembr 2020, the quality thresholds represent OHS&apos;s
+          Beginning in November 2020, the quality thresholds represent OHS&apos;s
           expectation for all grantees regarding the quality of classroom learning environments.
           These thresholds do not trigger competition; rather, a grantee with a score below a
           quality threshold receives support from OHS in improving the quality of teacher-child
@@ -94,7 +94,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
           <li>6 for the Classroom Organization domain.</li>
           <li>3 for the Instructional Support domain.</li>
         </ul>
-        <h3>Competetive thresholds</h3>
+        <h3>Competitive thresholds</h3>
         <p>
           Grantees with average CLASS® scores below the established competitive threshold
           on any of the three CLASS® domains is required to compete.
