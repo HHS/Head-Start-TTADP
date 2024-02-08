@@ -19,7 +19,7 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
-import PermissionsBasedFormField from '../../../../components/GoalForm/PermissionsBasedFormField';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function GoalForm({
   goal,
@@ -153,7 +153,7 @@ export default function GoalForm({
 
   return (
     <>
-      <PermissionsBasedFormField
+      <FormFieldThatIsSometimesReadOnly
         permissions={[
           !(goal.onApprovedAR),
           !isCurated,
@@ -172,7 +172,7 @@ export default function GoalForm({
           goalStatus={status}
           isLoading={isAppLoading}
         />
-      </PermissionsBasedFormField>
+      </FormFieldThatIsSometimesReadOnly>
 
       <ConditionalFields
         prompts={prompts}
