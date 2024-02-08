@@ -90,6 +90,7 @@ describe('nudge', () => {
         isCuratedTemplate: true,
         endDate: '',
         source: 'Regional office priority',
+        closeSuspendReasons: [null],
       },
       {
         ids: [goalId],
@@ -99,6 +100,7 @@ describe('nudge', () => {
         goalTemplateId,
         endDate: null,
         source: null,
+        closeSuspendReasons: [null],
       },
     ]);
   });
