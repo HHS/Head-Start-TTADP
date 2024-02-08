@@ -1,20 +1,32 @@
-import React, { useState } from 'react';
-import { uniqueId } from 'lodash';
+import React, {
+  useState,
+  useEffect,
+} from 'react';
+import Select from 'react-select';
 import PropTypes from 'prop-types';
 import {
   FormGroup,
-  Dropdown,
   Label,
 } from '@trussworks/react-uswds';
 import Req from '../Req';
+import selectOptionsReset from '../selectOptionsReset';
 
 export default function GoalNudgeInitiativePicker({
   error,
   useOhsInitiativeGoal,
   validateGoalName,
   goalTemplates,
+  onSelectNudgedGoal,
 }) {
   const [selection, setSelection] = useState('');
+
+  useEffect(() => {
+    // reset selection when useOhsInitiativeGoal is toggled
+    // or if we don't have any valid goal templates
+    if (!useOhsInitiativeGoal || !goalTemplates || !goalTemplates.length) {
+      setSelection('');
+    }
+  }, [goalTemplates, useOhsInitiativeGoal]);
 
   if (!useOhsInitiativeGoal) {
     return null;
@@ -27,24 +39,22 @@ export default function GoalNudgeInitiativePicker({
         {' '}
         <Req />
       </Label>
-      <Dropdown
-        id="goal-template"
+      <Select
+        inputId="goal-template"
         name="goal-template"
-        label="Goal template"
-        onChange={(e) => {
-          setSelection(e.target.value);
+        className="usa-select"
+        styles={selectOptionsReset}
+        onChange={(updatedSelection) => {
+          setSelection(updatedSelection);
+          onSelectNudgedGoal(updatedSelection);
         }}
-        onBlur={() => validateGoalName()}
+        options={goalTemplates || []}
+        placeholder="- Select -"
         value={selection}
-      >
-        <option name="default" disabled hidden value="">- Select -</option>
-        {(goalTemplates || []).map((template) => (
-          <option key={uniqueId('template-option-')} value={template.id}>
-            {template.name}
-          </option>
-        ))}
-      </Dropdown>
-
+        getOptionLabel={(option) => option.name}
+        getOptionValue={(option) => option.id}
+        onBlur={() => validateGoalName()}
+      />
     </FormGroup>
   );
 }
@@ -57,4 +67,5 @@ GoalNudgeInitiativePicker.propTypes = {
     name: PropTypes.string.isRequired,
   })).isRequired,
   useOhsInitiativeGoal: PropTypes.bool.isRequired,
+  onSelectNudgedGoal: PropTypes.func.isRequired,
 };

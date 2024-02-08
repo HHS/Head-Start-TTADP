@@ -3,6 +3,7 @@ import React, {
   useState,
   useMemo,
   useContext,
+  useRef,
 } from 'react';
 import moment from 'moment';
 import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
@@ -12,8 +13,9 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
@@ -37,6 +39,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import { combinePrompts } from '../condtionalFieldConstants';
+import VanillaModal from '../VanillaModal';
 
 const [
   objectiveTextError,
@@ -52,6 +55,7 @@ export default function GoalForm({
   showRTRnavigation,
   isNew,
 }) {
+  const modalRef = useRef(null);
   const history = useHistory();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
@@ -91,6 +95,8 @@ export default function GoalForm({
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
+
+  const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -194,14 +200,16 @@ export default function GoalForm({
       setIsAppLoading(true);
       fetchGoal();
     }
-  }, [errors,
+  }, [
+    errors,
     fetchAttempted,
     recipient.id,
     isNew,
     isAppLoading,
     ids,
     setAppLoadingText,
-    setIsAppLoading]);
+    setIsAppLoading,
+  ]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -537,7 +545,6 @@ export default function GoalForm({
           name: goal.name,
           status: statusToSave,
           endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
-          isRttapa: goal.isRttapa,
           regionId: parseInt(regionId, DECIMAL_BASE),
           recipientId: recipient.id,
           objectives: goal.objectives,
@@ -736,15 +743,6 @@ export default function GoalForm({
     setDatePickerKey('DPK-00');
   };
 
-  const onSelectNudgedGoal = async (goal) => {
-    // TODO: Handle goal.isTemplate
-    // TODO: Handle goal status == 'suspended'
-    setAppLoadingText('Retrieving existing goal');
-    const urlFragment = `id[]=${goal.ids.join(',')}`;
-    const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
-    history.push(url);
-  };
-
   const onSaveAndContinue = async (redirect = false) => {
     if (!isValidNotStarted()) {
       // attempt to focus on the first invalid field
@@ -883,6 +881,88 @@ export default function GoalForm({
     }
   };
 
+  const forwardToGoalWithIds = (goalIds) => {
+    const urlFragment = `id[]=${goalIds.join(',')}`;
+    const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
+    history.push(url);
+  };
+
+  const onSelectNudgedGoal = async (goal) => {
+    const onSelectInitiativeGoal = async () => {
+      setIsAppLoading(true);
+      const goals = selectedGrants.map((g) => ({
+        grantId: g.id,
+        name: goal.name,
+        status: goal.status,
+        prompts: [],
+        isCurated: true,
+        endDate: '',
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives: [],
+        source: goal.source,
+        goalTemplateId: goal.id,
+      }));
+
+      const created = await createOrUpdateGoals(goals);
+      forwardToGoalWithIds(created.map((g) => g.goalIds).flat());
+
+      setAlert({
+        message: 'There was an error creating your goal',
+        type: 'error',
+      });
+    };
+
+    try {
+      setAppLoadingText('Retrieving existing goal');
+      setNudgedGoalSelection(goal);
+
+      if (goal.isCurated) {
+      // we need to do a little magic here to get the goal
+        await onSelectInitiativeGoal();
+        return;
+      }
+
+      if (goal.status === 'Suspended') {
+        modalRef.current.toggleModal();
+        return;
+      }
+      forwardToGoalWithIds(goal.ids);
+    } catch (err) {
+      setAlert({
+        message: 'There was an error selecting your goal',
+        type: 'error',
+      });
+    } finally {
+      setIsAppLoading(false);
+      setAppLoadingText('Loading');
+    }
+  };
+
+  const unsuspender = async () => {
+    try {
+      setAppLoadingText('Reactivating goal');
+      setIsAppLoading(true);
+      const updatedGoals = await updateGoalStatus(
+        nudgedGoalSelection.ids,
+        'In Progress',
+        'Suspended',
+        null,
+        null,
+      );
+
+      forwardToGoalWithIds(updatedGoals.map((g) => g.id));
+    } catch (err) {
+      setAlert({
+        message: 'There was an error unsuspending your goal',
+        type: 'error',
+      });
+    } finally {
+      setIsAppLoading(false);
+      setAppLoadingText('Loading');
+    }
+  };
+
   if (!canView) {
     return (
       <Alert role="alert" className="margin-y-2" type="error">
@@ -928,7 +1008,30 @@ export default function GoalForm({
             </div>
           </>
         ) : null }
-
+        <VanillaModal
+          forceAction
+          id="reopen-suspended-goal"
+          heading="This goal is currently suspended"
+          modalRef={modalRef}
+        >
+          <p className="usa-prose">The reason for suspending the goal was:</p>
+          <ul className="usa-list">
+            {(nudgedGoalSelection.closeSuspendReasons || []).map((reason) => (
+              <li key={uniqueId('nudged-goalclose-suspend-reason-')}>{reason}</li>
+            ))}
+          </ul>
+          <p className="usa-prose">Would you like to reopen this goal and change the status to In progress?</p>
+          <Button
+            type="button"
+            onClick={async () => {
+              await unsuspender();
+              modalRef.current.toggleModal();
+            }}
+          >
+            Yes, reopen
+          </Button>
+          <button type="button" onClick={() => modalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
+        </VanillaModal>
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form

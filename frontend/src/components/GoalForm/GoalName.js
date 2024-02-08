@@ -18,6 +18,7 @@ export default function GoalName({
   isOnReport,
   isNew,
   userCanEdit,
+  isCurated,
 }) {
   return (
     <FormFieldThatIsSometimesReadOnly
@@ -25,6 +26,7 @@ export default function GoalName({
         (!isOnReport),
         (status !== 'Closed'),
         (userCanEdit),
+        !isCurated,
       ]}
       label="Recipient's goal"
       value={goalName}
@@ -74,4 +76,5 @@ GoalName.propTypes = {
   isOnReport: PropTypes.bool.isRequired,
   isNew: PropTypes.bool.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool.isRequired,
 };
