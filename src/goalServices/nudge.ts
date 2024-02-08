@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../constants';
 import db from '../models';
 import { similarGoalsForRecipient } from '../services/similarity';
@@ -85,6 +86,9 @@ export default async function nudge(
     ],
     where: {
       id: Array.from(goalIds),
+      status: {
+        [Op.not]: GOAL_STATUS.CLOSED, // we are leaving out closed goals for now
+      },
     },
     include: [
       {
