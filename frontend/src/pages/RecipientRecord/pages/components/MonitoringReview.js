@@ -35,9 +35,10 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
   }, [grantNumber, regionId, recipientId]);
 
   const getComplianceBadge = (key) => {
-    if (key === 'Compliant') return BadgeCompliant();
-    if (key === 'Noncompliant') return BadgeNoncompliant();
-    if (key === 'Deficient') return BadgeNoncompliant('Deficient');
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'compliant') return BadgeCompliant();
+    if (lowerKey === 'noncompliant' || lowerKey === 'non compliant') return BadgeNoncompliant();
+    if (lowerKey === 'deficient') return BadgeNoncompliant('Deficient');
     return null;
   };
 
