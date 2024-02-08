@@ -1,7 +1,7 @@
 @use '../../../../colors.scss' as *;
 
 %badge {
-  background-color: $success;
+  background-color: $success-darkest;
   border-radius: 12px;
   padding: 4px 12px;
 }
