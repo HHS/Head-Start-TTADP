@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import GoalNudge from './GoalNudge';
-import PermissionsBasedFormField from './PermissionsBasedFormField';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import GoalText from './GoalText';
 
 export default function GoalName({
@@ -20,7 +20,7 @@ export default function GoalName({
   userCanEdit,
 }) {
   return (
-    <PermissionsBasedFormField
+    <FormFieldThatIsSometimesReadOnly
       permissions={[
         (!isOnReport),
         (status !== 'Closed'),
@@ -54,7 +54,7 @@ export default function GoalName({
           isOnReport={isOnReport}
         />
       )}
-    </PermissionsBasedFormField>
+    </FormFieldThatIsSometimesReadOnly>
   );
 }
 
