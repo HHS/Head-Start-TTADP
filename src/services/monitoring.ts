@@ -188,7 +188,7 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     return {};
   }
 
-  const received = moment(score.reportDeliveryDate, 'MM/DD/YYYY');
+  const received = moment(score.reportDeliveryDate);
 
   // Do not show scores that are before Nov 9, 2020.
   if (received.isBefore('2020-11-09')) {
@@ -198,7 +198,7 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
   // Do not show scores for CDI grants.
   const isCDIGrant = await Grant.findOne({
     where: {
-      grantNumber,
+      number: grantNumber,
       cdi: true,
     },
   });
@@ -211,7 +211,7 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     recipientId,
     regionId,
     grantNumber,
-    received,
+    received: received.format('MM/DD/YYYY'),
     ES: score.emotionalSupport,
     CO: score.classroomOrganization,
     IS: score.instructionalSupport,
