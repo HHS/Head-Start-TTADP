@@ -323,7 +323,7 @@ module.exports = {
         "createdAt",
         "updatedAt"
       )
-      SELECT
+      SELECT 
         ctc."goalId",
         ctc."userId",
         ctc."collaboratorTypeId",
@@ -558,11 +558,14 @@ module.exports = {
               gc."goalId" "originalGoalId",
               (g.name = pg.name) "isChosen"
             FROM "GoalCollaborators" gc
+            JOIN "CollaboratorTypes" ct
+            ON gc."collaboratorTypeId" = ct.id
             JOIN "Goals" g
             ON gc."goalId" = g.id
             JOIN "Goals" pg
             ON g."mapsToParentGoalId" = pg.id
             WHERE g."mapsToParentGoalId" IS NOT NULL
+            AND ct.name NOT IN ('${GOAL_COLLABORATORS.MERGE_CREATOR}', '${GOAL_COLLABORATORS.MERGE_DEPRECATOR}')
           ),
           unrolled as (
             SELECT

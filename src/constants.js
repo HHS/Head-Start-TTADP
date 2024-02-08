@@ -226,10 +226,9 @@ const FEATURE_FLAGS = [
   'rttapa_form',
   'anv_statistics',
   'regional_goal_dashboard',
-  'goal_source',
   'merge_goals',
-  'communication_log',
   'monitoring',
+  'closed_goal_merge_override',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -237,7 +236,7 @@ const MAINTENANCE_CATEGORY = {
   MAINTENANCE: 'MAINTENANCE',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
 
 module.exports = {
   FILE_STATUSES,

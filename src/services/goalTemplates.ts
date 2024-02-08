@@ -63,6 +63,7 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
+      'source',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -311,9 +312,9 @@ export async function setFieldPromptForCuratedTemplate(
         { response },
         {
           where: {
+            // GoalFieldResponses should always be updated regardless of on approved ar.
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
-            onApprovedAR: false,
           },
           individualHooks: true,
         },

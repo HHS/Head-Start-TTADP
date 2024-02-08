@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import db from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';
@@ -22,6 +22,7 @@ const {
 interface GroupData {
   name: string;
   id?: number;
+  userId: number;
   grants: number[];
   isPublic: boolean;
   creator: { userId: number },
@@ -65,7 +66,6 @@ interface GroupResponse {
  * (true) or not (false).
  */
 export async function checkGroupNameAvailable(name: string, groupId?: number): Promise<boolean> {
-  console.log({ name, groupId });
   // Find an existing group with the given name and optional groupId
   const existingGroup = await Group.findOne({
     attributes: ['id'],
@@ -77,7 +77,6 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
       ...(groupId && { groupId: { [Op.not]: groupId } }),
     },
   });
-  console.log(existingGroup);
   return !!existingGroup; // Return true if an existing group is found, false otherwise
 }
 
@@ -88,8 +87,7 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
  * @returns A promise that resolves to an array of GroupResponse objects.
  * @throws This function does not throw any exceptions.
  */
-export async function groupsByRegion(userId: number, region: number): Promise<GroupResponse[]> {
-  // TODO: needs to take current userID as an arg so the permissions can be checked in the query
+export async function groupsByRegion(region: number, userId: number): Promise<GroupResponse[]> {
   return Group.findAll({
     attributes: [
       'id',
@@ -124,11 +122,13 @@ export async function groupsByRegion(userId: number, region: number): Promise<Gr
             attributes: [],
             required: true,
             where: { regionId: region },
-            through: { attributes: [] },
+            // through: { attributes: [] },
           }],
         }],
       },
       {
+        model: Grant,
+        as: 'grants',
         attributes: [
           'regionId',
           'recipientId',
@@ -137,16 +137,14 @@ export async function groupsByRegion(userId: number, region: number): Promise<Gr
           'granteeName',
           'recipientInfo',
         ],
-        model: Grant,
-        as: 'grants',
         include: [
           {
+            model: Recipient,
+            as: 'recipient',
             attributes: [
               'name',
               'id',
             ],
-            model: Recipient,
-            as: 'recipient',
           },
         ],
       },
@@ -193,15 +191,15 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name'],
-            include: [
-              {
-                model: Permission,
-                as: 'permissions',
-                attributes: ['regionId'],
-                where: { scopeId: SCOPES.READ_REPORTS },
-              },
-            ],
+            attributes: [],
+            required: true,
+            include: [{
+              model: Permission,
+              as: 'permissions',
+              attributes: [],
+              required: true,
+              where: { scopeId: SCOPES.READ_REPORTS },
+            }],
           },
         ],
         attributes: [],
@@ -245,6 +243,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
     attributes: [
       'id',
       'name',
+      'isPublic',
     ],
     where: {
       id: groupId,
@@ -264,19 +263,23 @@ export async function group(groupId: number): Promise<GroupResponse> {
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'name'],
-            include: [
-              {
-                model: Permission,
-                as: 'permissions',
-                attributes: ['userId', 'scopeId', 'regionId'],
-              },
-            ],
+            attributes: [],
+            required: true,
+            include: [{
+              model: Permission,
+              as: 'permissions',
+              attributes: [],
+              required: true,
+              // where: { regionId: region },
+              // through: { attributes: [] },
+            }],
           },
         ],
         attributes: [],
       },
       {
+        model: Grant,
+        as: 'grants',
         attributes: [
           'regionId',
           'recipientId',
@@ -285,16 +288,14 @@ export async function group(groupId: number): Promise<GroupResponse> {
           'granteeName',
           'recipientInfo',
         ],
-        model: Grant,
-        as: 'grants',
         include: [
           {
+            model: Recipient,
+            as: 'recipient',
             attributes: [
               'name',
               'id',
             ],
-            model: Recipient,
-            as: 'recipient',
           },
         ],
       },
@@ -615,7 +616,7 @@ export async function potentialRecipientGrants(
  * @throws {Error} If there is an error performing the database operations.
  */
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
-  const { grants, coOwners, shareWiths } = data;
+  const { grants, coOwners = [], shareWiths = [] } = data;
 
   // Get all existing group grants, current group co-owners, current group shareWiths,
   // and collaborator types
@@ -629,7 +630,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
     GroupGrant.findAll({
       where: {
         groupId,
-        grantId: data.grants,
+        // grantId: data.grants, // Do we want all the grants for this group?
       },
     }),
     // Find all group collaborators with matching groupId and collaboratorType 'co-owner'
@@ -821,6 +822,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     name,
     isPublic,
     grants,
+    userId,
     coOwners,
     shareWiths,
   } = data;
@@ -830,7 +832,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     collaboratorTypeMapping,
   ] = await Promise.all([
     // Create a new group with the given name and isPublic flag
-    Group.create({
+    await Group.create({
       name: name.trim(),
       isPublic,
     }),
@@ -846,12 +848,23 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
         { validate: true, individualHooks: true },
       )
       : Promise.resolve(),
+    // Add creator.
+    userId && userId > 0
+      ? GroupCollaborator.create(
+        {
+          groupId: newGroup.id,
+          userId,
+          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CREATOR],
+        },
+        { validate: true, individualHooks: true },
+      )
+      : Promise.resolve(),
     // If there are co-owners, create group collaborators with co-owner role
     coOwners && coOwners.length > 0
       ? GroupCollaborator.bulkCreate(
-        coOwners.map((userId) => ({
+        coOwners.map((coOwnerUserId) => ({
           groupId: newGroup.id,
-          userId,
+          userId: coOwnerUserId,
           collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CO_OWNER],
         })),
         { validate: true, individualHooks: true },
@@ -860,9 +873,9 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     // If there are shareWiths, create group collaborators with shareWith role
     shareWiths && shareWiths.length > 0
       ? GroupCollaborator.bulkCreate(
-        shareWiths.map((userId) => ({
+        shareWiths.map((sharedWithUserId) => ({
           groupId: newGroup.id,
-          userId,
+          userId: sharedWithUserId,
           collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],
         })),
         { validate: true, individualHooks: true },

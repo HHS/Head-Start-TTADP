@@ -21,6 +21,9 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 1.4.0 
+Add SUPPORT_TYPE
+
 ### 1.1.9/1.2.0
 (Sorry for the multiple versions) Update the name of the const COLLABORATOR_TRAINING_REPORTS to POC_TRAINING_REPORTS
 

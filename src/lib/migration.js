@@ -165,6 +165,7 @@ const dropAndRecreateEnum = async (
   columnName,
   enumValues = [],
   enumType = 'text',
+  isArray = true, // Only set this to false if you're sure the column is not an array.
 ) => {
   await queryInterface.sequelize.query(`
   -- rename the existing type
@@ -174,11 +175,15 @@ const dropAndRecreateEnum = async (
     ${enumValues.map((enumValue) => `'${enumValue}'`).join(',\n')}
   );`, { transaction });
 
+  const enumNameWithType = isArray ? `"${enumName}"[]` : `"${enumName}"`;
+  const enumTypeForAlter = isArray ? `${enumType}[]` : enumType;
+  const setArrayDefault = isArray ? `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];` : '';
+
   return queryInterface.sequelize.query(`
   -- update the columns to use the new type
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default null;
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE "${enumName}"[] USING "${columnName}"::${enumType}[]::"${enumName}"[];
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE ${enumNameWithType} USING "${columnName}"::${enumTypeForAlter}::${enumNameWithType};
+  ${setArrayDefault}
   -- remove the old type
   DROP TYPE "${enumName}_old";
 `, { transaction });
@@ -199,7 +204,35 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
   const columnName = 'flags';
 
   if (valuesToRemove && valuesToRemove.length) {
-    await Promise.all(valuesToRemove.map((value) => queryInterface.sequelize.query(`
+    const existingEnums = await Promise.all(
+      valuesToRemove.map(async (value) => {
+        /**
+         * because we run this function multiple times when setting up a test DB
+         * We need to check if the enum value exists before trying to remove it
+         * (it won't, if it's not in the constants.js FEATURE_FLAGS array)
+         */
+        const result = await queryInterface.sequelize.query(`
+          SELECT EXISTS(
+            SELECT 1
+            FROM pg_type t
+            JOIN pg_enum e ON t.oid = e.enumtypid
+            WHERE t.typname = '${enumName}' AND e.enumlabel = '${value}'
+          );
+        `, { transaction });
+
+        const enumIsValid = result[0][0].exists;
+
+        if (enumIsValid) {
+          return value;
+        }
+
+        return null;
+      }),
+    );
+
+    const validForRemove = existingEnums.filter((value) => value);
+
+    await Promise.all(validForRemove.map((value) => queryInterface.sequelize.query(`
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
   `, { transaction })));

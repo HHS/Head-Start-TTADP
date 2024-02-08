@@ -54,6 +54,9 @@ test.describe('Recipient record', () => {
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
+
     // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();

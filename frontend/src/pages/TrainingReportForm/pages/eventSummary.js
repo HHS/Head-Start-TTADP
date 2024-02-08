@@ -101,7 +101,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Event summary</title>
+        <title>Event Summary</title>
       </Helmet>
       <IndicatesRequiredField />
 

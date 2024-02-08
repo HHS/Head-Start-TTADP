@@ -6,6 +6,8 @@ import {
   goalsByIdAndRecipient,
   getRecipientLeadership,
   getMergeGoalPermissions,
+  markRecipientGoalGroupInvalid,
+  getRecipientGoalGroup,
 } from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -56,5 +58,19 @@ describe('recipient fetcher', () => {
     fetchMock.getOnce(url, { canMerge: true });
     const res = await getMergeGoalPermissions('1', '1');
     expect(res.canMerge).toBe(true);
+  });
+
+  it('markRecipientGoalGroupInvalid', async () => {
+    const url = join(recipientUrl, '1', 'region', '1', 'group', '1', 'invalid');
+    fetchMock.put(url, { message: 'success' });
+    const res = await markRecipientGoalGroupInvalid(1, 1, 1);
+    expect(res.message).toBe('success');
+  });
+
+  it('getRecipientGoalGroup', async () => {
+    const url = join(recipientUrl, '1', 'region', '1', 'group', '1');
+    fetchMock.get(url, { name: 'Tim Johnson the Recipient' });
+    const res = await getRecipientGoalGroup(1, 1, 1);
+    expect(res.name).toBe('Tim Johnson the Recipient');
   });
 });

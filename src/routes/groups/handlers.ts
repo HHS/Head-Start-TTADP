@@ -188,7 +188,7 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
       optionsForRecipientGrants,
     ] = await Promise.all([
       group(groupId),
-      potentialRecipientGrants(groupId),
+      potentialRecipientGrants({ groupId }),
     ]);
 
     // Create a new GroupPolicy instance based on the current user, an empty array of permissions,
@@ -338,57 +338,50 @@ export async function createGroup(req: Request, res: Response) {
       potentialRecipientGrants({ userId }),
       checkGroupNameAvailable(name),
     ]);
-    console.log({user, grants, nameAvailable});
+
+    const grantsWithId = grants.map((grant) => ({ ...grant, id: grant.grantId }));
 
     // Create a new GroupPolicy instance with the user and grants data
-    const policy = new GroupPolicy(user, grants);
-    console.log(policy);
+    const policy = new GroupPolicy(user, grantsWithId);
 
     // Check if the current user can add to the group
     if (!policy.canAddToGroup()) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
-    console.log('a');
 
     // Check if the co-owners have the necessary permissions
-    if (!checkBulkPermissions('canAddToGroup', coOwners, grants)) {
-      console.log('aa');
+    if (!checkBulkPermissions('canAddToGroup', coOwners, grantsWithId)) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'co-owner-permissions',
         message: GROUP_ERRORS.CO_OWNER_PERMISSIONS,
       });
       return;
     }
-    console.log('b');
 
     // Check if the sharedWith have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', sharedWith, grants, { id: -1, isPublic })) {
+    if (!checkBulkPermissions('canUseGroup', sharedWith, grantsWithId, { id: -1, isPublic })) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'shared-with-permissions',
         message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
       });
       return;
     }
-    console.log('c');
 
     // Check if the group name is already taken
     if (!nameAvailable) {
-      console.log('cc');
       res.status(httpCodes.ACCEPTED).json({
         error: 'new-group-name',
         message: GROUP_ERRORS.ALREADY_EXISTS,
       });
       return;
     }
-    console.log('d');
 
     // Create a new group with the filtered grants
     const groupResponse = await createNewGroup({
       ...req.body,
-      grants: grants.map(({ id }) => id), // filter to only active grants
+      grants: grants.map(({ grantId }) => grantId), // filter to only active grants
     });
-    console.log('e');
 
     // Send the group response as JSON
     res.json(groupResponse);
@@ -515,7 +508,6 @@ export async function updateGroup(req: Request, res: Response) {
  * @throws {Error} If an error occurs while deleting the group.
  */
 export async function deleteGroup(req: Request, res: Response) {
-  console.log(Object.keys(res));
   try {
     const { groupId: groupIdRaw } = req.params;
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
@@ -539,14 +531,12 @@ export async function deleteGroup(req: Request, res: Response) {
     // the groupData
     const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupData);
 
-    console.log('y');
     // Check if the user owns the group
     if (!policy.ownsGroup()) {
       // If the user does not own the group, respond with an HTTP status code of 403 (FORBIDDEN)
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
-    console.log('x');
     // Delete the group by calling the destroyGroup function asynchronously, passing in the groupId
     const groupResponse = await destroyGroup(groupId);
 

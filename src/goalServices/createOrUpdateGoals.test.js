@@ -64,12 +64,14 @@ describe('createOrUpdateGoals', () => {
       goalId: goal.id,
       title: 'This is some serious goal text',
       status: 'Not Started',
+      supportType: 'Maintaining',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
       status: 'Not Started',
+      supportType: 'Maintaining',
     });
 
     await processObjectiveForResourcesById(objective.id, [fakeUrl]);
@@ -163,6 +165,7 @@ describe('createOrUpdateGoals', () => {
             id: objective.id,
             status: 'Not Started',
             title: 'This is an objective',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -179,6 +182,7 @@ describe('createOrUpdateGoals', () => {
             isNew: true,
             status: 'Not Started',
             title: 'This is another objective',
+            supportType: 'Maintaining',
             resources: [],
             topics: [
               {
@@ -305,6 +309,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is an objective',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -337,6 +342,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'Complete',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -377,6 +383,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is a different objective ',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -413,6 +420,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'In Progress',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -451,6 +459,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'Complete',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -491,6 +500,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is a different objective ',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -523,6 +533,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: OBJECTIVE_STATUS.SUSPENDED,
+            supportType: 'Maintaining',
             closeSuspendReason: 'Recipient request',
             closeSuspendContext: 'Yeah, they just asked',
             resources: [

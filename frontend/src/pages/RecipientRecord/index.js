@@ -25,7 +25,7 @@ import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 
-function PageWithHeading({
+export function PageWithHeading({
   children,
   regionId,
   recipientId,
@@ -154,13 +154,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
   return (
     <>
-      <Helmet>
-        <title>
-          Recipient Profile -
-          {' '}
-          {recipientNameWithRegion}
-        </title>
-      </Helmet>
+      <Helmet titleTemplate={`%s - ${recipientName} | TTA Hub`} defaultTitle="Recipient TTA Record | TTA Hub" />
 
       <Switch>
         <Route
@@ -256,19 +250,16 @@ export default function RecipientRecord({ match, hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge"
-          render={({ location }) => (
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
+          render={({ location, match: routeMatch }) => (
             <>
               <Helmet>
-                <title>
-                  Merge goals for
-                  {' '}
-                  {recipientName}
-                </title>
+                <title>These Goals Might Be Duplicates</title>
               </Helmet>
               <MergeGoals
                 regionId={regionId}
                 recipientId={recipientId}
+                match={routeMatch}
                 location={location}
                 recipientNameWithRegion={recipientNameWithRegion}
                 canMergeGoals={canMergeGoals}
@@ -281,11 +272,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           render={() => (
             <>
               <Helmet>
-                <title>
-                  Create a goal for
-                  {' '}
-                  {recipientName}
-                </title>
+                <title>Create a New Goal</title>
               </Helmet>
               <GoalForm
                 regionId={regionId}
@@ -342,52 +329,37 @@ export default function RecipientRecord({ match, hasAlerts }) {
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
           render={({ match: routerMatch }) => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
-            >
-              <ViewCommunicationLog
-                recipientName={recipientName}
-                match={routerMatch}
-              />
-            </FeatureFlag>
+            <ViewCommunicationLog
+              recipientName={recipientName}
+              match={routerMatch}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match: routerMatch }) => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
-            >
-              <CommunicationLogForm
-                recipientName={recipientName}
-                match={routerMatch}
-              />
-            </FeatureFlag>
+            <CommunicationLogForm
+              recipientName={recipientName}
+              match={routerMatch}
+            />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
           render={() => (
-            <FeatureFlag
-              flag="communication_log"
-              renderNotFound
+            <PageWithHeading
+              regionId={regionId}
+              recipientId={recipientId}
+              error={error}
+              recipientNameWithRegion={recipientNameWithRegion}
+              hasAlerts={hasAlerts}
             >
-              <PageWithHeading
+              <CommunicationLog
                 regionId={regionId}
+                recipientName={recipientName}
                 recipientId={recipientId}
-                error={error}
-                recipientNameWithRegion={recipientNameWithRegion}
-                hasAlerts={hasAlerts}
-              >
-                <CommunicationLog
-                  regionId={regionId}
-                  recipientName={recipientName}
-                  recipientId={recipientId}
-                />
-              </PageWithHeading>
-            </FeatureFlag>
+              />
+            </PageWithHeading>
           )}
         />
 

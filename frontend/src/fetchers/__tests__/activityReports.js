@@ -13,6 +13,7 @@ import {
   downloadReports,
   unlockReport,
   getReportsForLocalStorageCleanup,
+  getReportsViaIdPost,
   getGroupsForActivityReport,
 } from '../activityReports';
 import { REPORTS_PER_PAGE } from '../../Constants';
@@ -24,6 +25,14 @@ const alerts = { alertsCount: 0, alerts: [], recipients: [] };
 
 describe('activityReports fetcher', () => {
   afterEach(() => fetchMock.restore());
+
+  describe('getReportsViaIdPost', () => {
+    it('fetches via post (OH NO)', async () => {
+      fetchMock.post(join('api', 'activity-reports', 'reportsByManyIds'), response);
+      await getReportsViaIdPost([1]);
+      expect(fetchMock.called()).toBeTruthy();
+    });
+  });
 
   describe('getReports', () => {
     it('defaults query params', async () => {

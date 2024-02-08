@@ -6,6 +6,7 @@ const {
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  afterDestroy,
 } = require('./hooks/goal');
 const { GOAL_CREATED_VIA } = require('../constants');
 
@@ -188,7 +189,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(GOAL_SOURCES),
     },
   }, {
-
     sequelize,
     modelName: 'Goal',
     paranoid: true,
@@ -197,6 +197,7 @@ export default (sequelize, DataTypes) => {
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
   });
   return Goal;

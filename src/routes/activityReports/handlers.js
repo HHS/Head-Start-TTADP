@@ -362,7 +362,7 @@ export async function getGroups(req, res) {
   try {
     // Get groups for shared users and region.
     // TODO: Add a optional check for shared users.
-    const groups = await groupsByRegion(regionNumber);
+    const groups = await groupsByRegion(regionNumber, userId);
 
     res.json(groups);
   } catch (error) {
@@ -749,6 +749,33 @@ export async function getReports(req, res) {
 }
 
 /**
+ * Retrieve activity reports
+ *
+ * @param {*} req - request
+ * @param {*} res - response
+ */
+export async function getReportsByManyIds(req, res) {
+  try {
+    const userId = await currentUserId(req, res);
+
+    const { reportIds } = req.body;
+
+    // this will return a query with region parameters based
+    // on the req user's permissions
+    const query = await setReadRegions({}, userId);
+
+    const reportsWithCount = await activityReports(query, false, userId, reportIds);
+    if (!reportsWithCount) {
+      res.sendStatus(404);
+    } else {
+      res.json(reportsWithCount);
+    }
+  } catch (err) {
+    await handleErrors(req, res, err, logContext);
+  }
+}
+
+/**
  * Retrieve activity report alerts
  *
  * @param {*} req - request
@@ -940,10 +967,13 @@ export async function downloadAllReports(req, res) {
     const userId = await currentUserId(req, res);
     const readRegions = await setReadRegions(req.query, userId);
 
+    const ids = req.query.id || [];
+
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
       { ...readRegions, limit: null },
       userId,
+      ids,
     );
 
     await sendActivityReportCSV(reports, res);

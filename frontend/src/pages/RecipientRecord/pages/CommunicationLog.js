@@ -32,7 +32,7 @@ const COMMUNICATION_LOG_FILTER_CONFIG = [
 
 COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
-export default function CommunicationLog({ recipientName, regionId, recipientId }) {
+export default function CommunicationLog({ regionId, recipientId }) {
   const [logs, setLogs] = useState();
   const [error, setError] = useState();
   const [sortConfig, setSortConfig] = useState({
@@ -170,15 +170,7 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
   return (
     <>
       <Helmet>
-        <title>
-          Communication Log
-          {' '}
-          {recipientName}
-          {' '}
-          Region
-          {' '}
-          {String(regionId)}
-        </title>
+        <title>Communication</title>
       </Helmet>
       <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
         <FilterPanel
@@ -226,7 +218,6 @@ export default function CommunicationLog({ recipientName, regionId, recipientId 
 }
 
 CommunicationLog.propTypes = {
-  recipientName: PropTypes.string.isRequired,
   recipientId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };

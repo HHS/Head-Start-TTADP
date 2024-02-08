@@ -25,14 +25,13 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
-  goalRegionsById,
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
 import { currentUserId } from '../../services/currentUser';
-import { validateMergeGoalPermissions } from '../recipient/handlers';
+import { validateMergeGoalPermissions } from '../utils';
 
-jest.mock('../recipient/handlers', () => ({
+jest.mock('../utils', () => ({
   validateMergeGoalPermissions: jest.fn(),
 }));
 
@@ -1016,18 +1015,7 @@ describe('similarGoalsForRecipient', () => {
       },
     };
 
-    currentUserId.mockResolvedValueOnce(1);
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        },
-      ],
-    });
-
     const simResponse = {
-
       result: [
         {
           matches: [{ id: 1 }, { id: 2 }],
@@ -1037,13 +1025,8 @@ describe('similarGoalsForRecipient', () => {
         },
       ],
     };
-
+    validateMergeGoalPermissions.mockResolvedValue(true);
     similarGoalsForRecipient.mockResolvedValueOnce(simResponse);
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-      objectives: [],
-      grant: { regionId: 2 },
-    });
 
     getGoalIdsBySimilarity.mockResolvedValueOnce({
       wokka: 'wokka',
@@ -1069,23 +1052,9 @@ describe('similarGoalsForRecipient', () => {
       },
     };
 
-    currentUserId.mockResolvedValueOnce(1);
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        },
-      ],
-    });
-
-    similarGoalsForRecipient.mockImplementationOnce(() => {
+    validateMergeGoalPermissions.mockResolvedValue(true);
+    getGoalIdsBySimilarity.mockImplementationOnce(() => {
       throw new Error('');
-    });
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValue({
-      objectives: [],
-      grant: { regionId: 2 },
     });
 
     await getSimilarGoalsForRecipient(req, mockResponse);

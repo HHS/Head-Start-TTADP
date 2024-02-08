@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -10,6 +11,7 @@ import FormItem from '../../../components/FormItem';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import UserContext from '../../../UserContext';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import { getEventIdSlug } from '../../TrainingReportForm/constants';
 
 const position = 5;
 const path = 'complete-session';
@@ -52,6 +54,21 @@ const CompleteSession = ({
       return;
     }
 
+    if (!formData.event.data.goal) {
+      const eventId = getEventIdSlug(formData.event.data.eventId);
+      setError('status', {
+        message: (
+          <span>
+            Vision and goal for
+            {' '}
+            <Link to={`/training-report/${eventId}/vision-goal`}>{formData.event.data.eventId}</Link>
+            {' '}
+            must be completed before completing session
+          </span>),
+      });
+      return;
+    }
+
     if (incompletePages.length) {
       setShowSubmissionError(true);
       return;
@@ -76,7 +93,7 @@ const CompleteSession = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete session</title>
+        <title>Complete Session</title>
       </Helmet>
 
       <IndicatesRequiredField />
@@ -140,7 +157,12 @@ const CompleteSession = ({
 CompleteSession.propTypes = {
   DraftAlert: PropTypes.node.isRequired,
   formData: PropTypes.shape({
-    event: PropTypes.shape({}),
+    event: PropTypes.shape({
+      data: PropTypes.shape({
+        eventId: PropTypes.string,
+        goal: PropTypes.string,
+      }),
+    }),
     id: PropTypes.number,
     status: PropTypes.string,
     pageState: PropTypes.shape({

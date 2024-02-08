@@ -91,7 +91,7 @@ export async function topicFrequencyGraph(scopes) {
     const allTopics = uniq(report.topics).map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
-    allTopics.forEach((topic) => {
+    allTopics?.forEach((topic) => {
       const topicIndex = acc.findIndex((t) => t.topic === topic);
       if (topicIndex !== -1) {
         acc[topicIndex].count += 1;
@@ -207,13 +207,13 @@ export async function topicFrequencyGraphViaGoals(scopes) {
     reportIds: new Set(),
   }));
 
-  topicsAndParticipants.forEach((goalData) => {
+  topicsAndParticipants?.forEach((goalData) => {
     goalData
       .get('topics')?.forEach(({ topic, reportIds }) => {
         const topicResponce = topicsResponse
           .find((t) => t.topic === lookUpTopic.get(topic));
 
-        reportIds.forEach((id) => topicResponce.reportIds.add(id));
+        reportIds?.forEach((id) => topicResponce.reportIds.add(id));
       });
   });
 
