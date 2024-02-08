@@ -15,7 +15,14 @@ const getSingleFeedItemByTag = async (tag) => {
   return response.text();
 };
 
+const getClassGuidanceFeed = async () => {
+  const url = join(feedUrl, 'class-guidance');
+  const response = await get(url);
+  return response.text();
+};
+
 export {
   getNotifications,
   getSingleFeedItemByTag,
+  getClassGuidanceFeed,
 };

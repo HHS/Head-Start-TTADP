@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { getWhatsNewFeedData, getSingleFeedData } from '../../services/feed';
+import { getWhatsNewFeedData, getSingleFeedData, getClassGuidanceData } from '../../services/feed';
 import handleErrors from '../../lib/apiErrorHandler';
 
 export async function whatsNewFeedHandler(req: Request, res: Response) {
@@ -18,5 +18,14 @@ export async function singleFeedByTagHandler(req: Request, res: Response) {
     res.send(feed);
   } catch (error) {
     await handleErrors(req, res, error, 'singleByTagFeedHandler');
+  }
+}
+
+export async function classGuidanceFeedHandler(req: Request, res: Response) {
+  try {
+    const feed = await getClassGuidanceData();
+    res.send(feed);
+  } catch (error) {
+    await handleErrors(req, res, error, 'classGuidanceFeedHandler');
   }
 }
