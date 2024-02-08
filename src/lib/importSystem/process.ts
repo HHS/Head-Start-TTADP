@@ -536,7 +536,7 @@ const processZipFileFromS3 = async (
   try {
     // Process files from the zip archive using the importFileId, zipClient, filteredFileDetails,
     // and processDefinitions
-    results = processFilesFromZip(
+    results = await processFilesFromZip(
       importFileId,
       zipClient,
       filteredFileDetails,
