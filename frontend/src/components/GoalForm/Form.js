@@ -155,6 +155,7 @@ export default function Form({
         isOnReport={isOnReport}
         isNew={isNew}
         userCanEdit={userCanEdit}
+        isCurated={isCurated}
       />
 
       <ConditionalFields

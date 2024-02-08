@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import {
   Checkbox,
 } from '@trussworks/react-uswds';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { similiarGoalsByText } from '../../fetchers/goals';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
 import useDebounceEffect from '../../hooks/useDebounceEffect';
@@ -11,6 +12,11 @@ import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
+const filterOutGrantUsedGoalTemplates = (goalTemplates, selectedGrants) => goalTemplates
+  .filter((template) => {
+    const usedGrantIds = template.goals.map((goal) => goal.grantId);
+    return !selectedGrants.some((grant) => usedGrantIds.includes(grant.id));
+  });
 export default function GoalNudge({
   error,
   goalName,
@@ -34,22 +40,22 @@ export default function GoalNudge({
     }
   }, [dismissSimilar]);
 
-  useEffect(() => {
+  // using DeepCompareEffect to avoid unnecessary fetches
+  // as we have an object (selectedGrants) in the dependency array
+  useDeepCompareEffect(() => {
     async function fetchGoalTemplates() {
       try {
-        if (!goalTemplates) {
-          const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
-          setGoalTemplates(templates);
-        }
+        const templates = await getGoalTemplates(selectedGrants.map((grant) => grant.id));
+        setGoalTemplates(filterOutGrantUsedGoalTemplates(templates, selectedGrants));
       } catch (err) {
         setGoalTemplates([]);
       }
     }
 
-    if (useOhsInitiativeGoal && !goalTemplates) {
+    if (selectedGrants && selectedGrants.length > 0) {
       fetchGoalTemplates();
     }
-  }, [goalTemplates, selectedGrants, useOhsInitiativeGoal]);
+  }, [selectedGrants]);
 
   useDebounceEffect(async () => {
     // we need all of these to populate the query
@@ -88,8 +94,11 @@ export default function GoalNudge({
     onUpdateText(e.target.value);
   };
 
+  // what a hack
+  const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
+
   return (
-    <>
+    <div className="position-relative">
       <GoalNudgeText
         error={error}
         inputName={inputName}
@@ -102,22 +111,24 @@ export default function GoalNudge({
         setDismissSimilar={setDismissSimilar}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
       />
-
       <GoalNudgeInitiativePicker
         error={error}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
         validateGoalName={validateGoalName}
         goalTemplates={goalTemplates}
+        onSelectNudgedGoal={onSelectNudgedGoal}
       />
-      <Checkbox
-        id="use-ohs-initiative-goal"
-        name="use-ohs-initiative-goal"
-        label="Use OHS initiative goal"
-        className="margin-top-2"
-        onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
-        checked={useOhsInitiativeGoal}
-      />
-    </>
+      { (goalTemplates && goalTemplates.length > 0) && (
+        <Checkbox
+          id="use-ohs-initiative-goal"
+          name="use-ohs-initiative-goal"
+          label="Use OHS initiative goal"
+          className={`margin-top-2 position-relative ${checkboxZed}`}
+          onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
+          checked={useOhsInitiativeGoal}
+        />
+      )}
+    </div>
   );
 }
 
