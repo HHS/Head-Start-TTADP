@@ -1,7 +1,7 @@
 import { Sequelize, Op } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-import { FileInfo as FTPFileInfo } from '../stream/sftp';
+import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
 import db from '../../models';
@@ -111,6 +111,11 @@ const getNextFileToProcess = async (
   importId: number,
   maxAttempts = 5,
 ) => {
+  const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60000);
+
+  const query = {
+    updatedAt: { [Op.gt]: tenMinutesAgo },
+  };
   // Find the next import file to process
   const importFile = await ImportFile.findOne({
     attributes: [
@@ -138,11 +143,21 @@ const getNextFileToProcess = async (
     where: {
       importId,
       [Op.or]: [
+        // New Work
         { status: IMPORT_STATUSES.COLLECTED }, // Import file is in the "collected" status
+        // Rework
         {
           // Import file is in the "processing_failed" status
           status: IMPORT_STATUSES.PROCESSING_FAILED,
           // Number of process attempts is less than the maximum allowed attempts
+          processAttempts: { [Op.lt]: maxAttempts },
+        },
+        // Recover
+        {
+          // Import file is in the "processing" status
+          status: IMPORT_STATUSES.PROCESSING,
+          // Number of process attempts is less than the maximum allowed attempts
+          updatedAt: { [Op.gt]: tenMinutesAgo },
           processAttempts: { [Op.lt]: maxAttempts },
         },
       ],
@@ -164,11 +179,7 @@ const getNextFileToProcess = async (
  */
 const recordAvailableFiles = async (
   importId: number,
-  availableFiles: {
-    fullPath: string,
-    fileInfo: FTPFileInfo,
-    stream?: Promise<Readable>,
-  }[],
+  availableFiles: FileListing[],
 ) => {
   // Retrieve current import files from the database
   const currentImportFiles: {
@@ -412,11 +423,7 @@ const updateAvailableDataFileMetadata = async (
  */
 const logFileToBeCollected = async (
   importId: number,
-  availableFile: {
-    fullPath: string,
-    fileInfo: FTPFileInfo,
-    stream?: Promise<Readable>,
-  },
+  availableFile: FileListing,
 ): Promise<{
   importFileId: number,
   key: string,
