@@ -183,13 +183,27 @@ const processRecords = async (
       // 3. recordActions.delete.push(promises)
       // 4. pass back recordActions
 
-      // Get all the affected data from inserts and updates
-      const affectedData = await Promise.all([
-        ...recordActions.inserts,
-        ...recordActions.updates,
+      const [
+        affectedDataInserts,
+        affectedDataUpdates,
+      ] = await Promise.all([
+        Promise.all(recordActions.inserts),
+        Promise.all(recordActions.updates),
       ]);
 
-      const affectedDataIds = affectedData?.map(({ id }) => id) || [];
+      // Flatten the affectedDataUpdates array and extract the objects
+      const flattenedUpdates = affectedDataUpdates.flatMap(
+        // Assuming the second element of each sub-array is the array of objects
+        (update) => (Array.isArray(update[1]) ? update[1] : []),
+      );
+
+      // Combine the affected data from inserts and flattened updates
+      const affectedData = [
+        ...affectedDataInserts,
+        ...flattenedUpdates,
+      ];
+
+      const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || [];
       // mark the source date when the records no longer are present in the processed file
       // "Delete" all records that are not in the affectedData array
       if (affectedDataIds.length) {
