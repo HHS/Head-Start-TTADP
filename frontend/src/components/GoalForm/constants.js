@@ -104,3 +104,9 @@ export const validateListOfResources = (resources = []) => {
 
   return true;
 };
+
+export const dismissOnNoMatch = (event, selector, dismiss) => {
+  if (!event.relatedTarget || !event.relatedTarget.matches(selector)) {
+    dismiss(true);
+  }
+};

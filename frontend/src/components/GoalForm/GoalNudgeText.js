@@ -8,6 +8,7 @@ import {
 import Req from '../Req';
 import { SimilarGoalProp } from './SimilarGoal';
 import SimilarGoals from './SimilarGoals';
+import { dismissOnNoMatch } from './constants';
 
 export default function GoalNudgeText({
   error,
@@ -38,13 +39,8 @@ export default function GoalNudgeText({
       <>
         {error}
         <Textarea
-          onBlur={() => {
-            // todo: this needs to more complicated
-            // i.e. we can't dismiss similar goals if the
-            // user is trying to select one or tab into the
-            // similar goals list
-            // setDismissSimilar(true);
-
+          onBlur={(e) => {
+            dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
             validateGoalName();
           }}
           onFocus={() => {

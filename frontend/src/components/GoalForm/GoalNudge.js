@@ -6,7 +6,7 @@ import {
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { similiarGoalsByText } from '../../fetchers/goals';
 import { getGoalTemplates } from '../../fetchers/goalTemplates';
-import useDebounceEffect from '../../hooks/useDebounceEffect';
+import useAsyncDebounceEffect from '../../hooks/useAsyncDebounceEffect';
 import GoalNudgeText from './GoalNudgeText';
 import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 
@@ -57,7 +57,7 @@ export default function GoalNudge({
     }
   }, [selectedGrants]);
 
-  useDebounceEffect(async () => {
+  useAsyncDebounceEffect(async () => {
     // we need all of these to populate the query
     if (!recipientId || !regionId || !selectedGrants.length) {
       return;
@@ -98,7 +98,7 @@ export default function GoalNudge({
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
 
   return (
-    <div className="position-relative">
+    <div className="ttahub-goal-nudge--container position-relative">
       <GoalNudgeText
         error={error}
         inputName={inputName}
