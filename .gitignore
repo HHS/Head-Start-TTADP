@@ -47,3 +47,6 @@ newrelic_agent.log
 
 # Python cache
 __pycache__/
+out/
+**/out/
+.vscode/*

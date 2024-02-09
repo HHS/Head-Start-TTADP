@@ -3,7 +3,7 @@ services:
   backend:
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile.backend
       cache_from: 
         - node:18.18.2  # Using the base image as a cache source
         - node:18.18.2-slim
@@ -39,7 +39,7 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile.frontend
       cache_from: 
         - node:18.18.2  # Using the base image as a cache source
         - node:18.18.2-slim
@@ -47,7 +47,6 @@ services:
         - head-start-ttadp-frontend:latest
       target: frontend
     env_file: .env
-    command: yarn start
     user: ${CURRENT_USER:-root}
     stdin_open: true
     ports:
@@ -60,7 +59,7 @@ services:
   worker:
     build:
       context: .
-      dockerfile: ./Dockerfile.dev
+      dockerfile: ./Dockerfile.backend
       cache_from: 
         - node:18.18.2  # Using the base image as a cache source
         - node:18.18.2-slim

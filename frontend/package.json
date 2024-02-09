@@ -7,7 +7,7 @@
     "access": "public"
   },
   "dependencies": {
-    
+    "@babel/core": "^7.23.9",
     "@babel/runtime": "^7.12.1",
     "@fortawesome/fontawesome-svg-core": "^6.4.2",
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
@@ -66,8 +66,8 @@
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
-    "build:local": "INLINE_RUNTIME_CHUNK=false react-scripts build",
-    "build": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
+    "build": "INLINE_RUNTIME_CHUNK=false react-scripts build",
+    "build:ci": "INLINE_RUNTIME_CHUNK=false react-scripts build && mv build/ ../build/server/client",
     "eject": "react-scripts eject",
     "test": "cross-env TZ=America/New_York react-scripts test",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/react-scripts test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
@@ -162,7 +162,7 @@
     ]
   },
   "devDependencies": {
-    "postcss": "^8.4.33",
+    "@babel/plugin-proposal-private-property-in-object": "7.21.11",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",
@@ -174,9 +174,9 @@
     "eslint-config-airbnb": "^18.2.0",
     "eslint-formatter-multiple": "^1.0.0",
     "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^24.1.5",
+    "eslint-plugin-jest": "^25.3.4",
     "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.5",
+    "eslint-plugin-react": "^7.20.6",
     "eslint-plugin-react-hooks": "^4.0.8",
     "eslint-plugin-testing-library": "^3.10.1",
     "fetch-mock": "^9.11.0",
@@ -184,6 +184,7 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.4.33",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
   },

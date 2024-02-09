@@ -55,14 +55,17 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
     const migrations = await umzug.up();
 
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
-  } catch (error) {
-    if (error instanceof MigrationError) {
-      const original = error.cause;
-      auditLogger.error('Error executing migrations:', error.cause, '\n', error);
-    }
+} catch (error) {
+  const migrationError = error as MigrationError & { cause?: Error }; // Assuming `cause` is of type Error
+  if (migrationError instanceof MigrationError) {
+    const originalError = migrationError.cause;
+    auditLogger.error('Error executing migrations:', originalError, '\n', migrationError);
+  } else {
     auditLogger.error('Error executing migrations:', error);
-    throw error;
   }
+  throw error;
+}
+
 }
 
 export const reseed = async () => {

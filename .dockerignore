@@ -16,3 +16,5 @@ terraform/
 reports
 .env
 .turbo
+out/
+**/out/

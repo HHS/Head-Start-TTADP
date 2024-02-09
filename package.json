@@ -14,7 +14,7 @@
     "packages/*",
     "cucumber",
     "docs/*"
-    ],
+  ],
   "scripts": {
     "build": "turbo run build",
     "changeReportStatus:local": "./node_modules/.bin/babel-node ./src/tools/changeReportStatusCLI.js",
@@ -46,6 +46,7 @@
     "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
     "deps:local": "yarn global add node-gyp && yarn install && yarn --cwd frontend install",
     "deps": "yarn global add node-gyp && yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
+    "dev": "turbo run dev",
     "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
     "docker:db:migrate:undo": "docker compose run --rm backend node_modules/.bin/sequelize db:migrate:undo",
     "docker:db:migrate": "docker compose run --rm backend node_modules/.bin/sequelize db:migrate && yarn docker:ldm",
@@ -70,7 +71,6 @@
     "docker:yarn:fe": "docker compose run --rm frontend  yarn",
     "docker:yarn": "docker compose run yarn",
     "docs:serve": "npx redoc-cli serve -p 5003 docs/openapi/index.yaml",
-    "dev": "turbo run dev",
     "e2e:api": "./node_modules/.bin/playwright test --config=tests/api/playwright.config.js",
     "e2e:ci": "cross-env TTA_SMART_HUB_URI=http://localhost:3000 yarn e2e",
     "e2e:utils": "./node_modules/.bin/playwright test --config=tests/utilsTests/playwright.config.js",
@@ -93,6 +93,7 @@
     "migrate:create": "npx sequelize-cli migration:generate --name",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
+    "postinstall": "manypkg check",
     "processData:local": "./node_modules/.bin/babel-node ./src/tools/processDataCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish",
     "reconcile:legacy:local": "./node_modules/.bin/babel-node ./src/tools/reconcileLegacyReports.js",
@@ -123,12 +124,14 @@
   },
   "homepage": "https://github.com/adhocteam/Head-Start-TTADP#readme",
   "Dependencies": {
-    "turbo": "^1.12.3"
-  },
-  "devDependencies": {
-    "prettier": "^3.1.1",
     "turbo": "^1.12.3",
+    "@manypkg/cli": "latest"
+  },
+  "dependencies": {
+    "@manypkg/cli": "^0.21.2",
     "@vercel/style-guide": "^4.0.2",
-    "eslint-config-turbo": "^1.10.12"
+    "eslint-config-turbo": "^1.10.12",
+    "prettier": "^3.1.1",
+    "turbo": "^1.12.3"
   }
 }
