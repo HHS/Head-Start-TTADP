@@ -12,7 +12,7 @@ import GoalNudgeInitiativePicker from './GoalNudgeInitiativePicker';
 
 const MINIMUM_GOAL_NAME_LENGTH = 15;
 
-const filterOutGrantUsedGoalTemplates = (goalTemplates, selectedGrants) => goalTemplates
+export const filterOutGrantUsedGoalTemplates = (goalTemplates, selectedGrants) => goalTemplates
   .filter((template) => {
     const usedGrantIds = template.goals.map((goal) => goal.grantId);
     return !selectedGrants.some((grant) => usedGrantIds.includes(grant.id));
