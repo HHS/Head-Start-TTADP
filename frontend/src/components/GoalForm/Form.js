@@ -221,10 +221,13 @@ export default function Form({
 
 Form.propTypes = {
   onSelectNudgedGoal: PropTypes.func.isRequired,
-  regionId: PropTypes.number.isRequired,
+  regionId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
-  isCurated: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool,
   errors: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.shape({}),
@@ -282,7 +285,9 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  goalNumbers: PropTypes.oneOfType(
+    [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
+  ).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
@@ -293,7 +298,7 @@ Form.propTypes = {
   })).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
-  source: PropTypes.arrayOf(PropTypes.string).isRequired,
+  source: PropTypes.string.isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
@@ -303,4 +308,5 @@ Form.propTypes = {
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
+  isCurated: false,
 };
