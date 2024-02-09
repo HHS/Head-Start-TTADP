@@ -15,15 +15,11 @@ export default function SimilarGoals({
     return null;
   }
 
-  // TODO: ARIA-notifications
-  // Probably need a publisher component to handle all the
-  // explanations and notifications
-
   return (
     <div className="ttahub-similar-goals position-absolute shadow-2 z-top">
       <fieldset className="bg-white border-0 margin-0 padding-0">
         <legend className="ttahub-similar-goals--legend usa-prose padding-2">
-          <span className="text-bold" aria-live="polite" aria-label={`There are ${similar.length} goals with similar text to what you entered`}>
+          <span className="text-bold" aria-live="polite" aria-label={`There are ${similar.length} goals with similar text to what you entered. Advance focus to read similar goals.`}>
             Similar goals (
             {similar.length}
             )
