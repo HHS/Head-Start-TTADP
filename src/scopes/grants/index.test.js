@@ -12,6 +12,7 @@ import {
   GroupGrant,
   ActivityRecipient,
   sequelize,
+  GroupCollaborator,
 } from '../../models';
 
 const draftReport = {
@@ -302,10 +303,22 @@ describe('grant filtersToScopes', () => {
       isPublic: false,
     });
 
+    await GroupCollaborator.create({
+      userId: mockUser.id,
+      groupId: group.id,
+      collaboratorTypeId: 1,
+    });
+
     publicGroup = await Group.create({
       name: publicGroupName,
       userId: mockUserTwo.id,
       isPublic: true,
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: publicGroup.id,
+      collaboratorTypeId: 1,
     });
 
     grantGroupOne = await GroupGrant.create({
