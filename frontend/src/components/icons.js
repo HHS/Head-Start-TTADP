@@ -20,6 +20,9 @@ const Ceased = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-
 const Pencil = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faPencil} />;
 const Trash = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faTrash} />;
 
+const PendingApprovalIcon = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubOrange} icon={faClock} />;
+const NeedsActionIcon = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.errorDark} icon={faExclamationCircle} />;
+
 export {
   InProgress,
   Closed,
@@ -28,5 +31,7 @@ export {
   Draft,
   Ceased,
   Pencil,
+  PendingApprovalIcon,
+  NeedsActionIcon,
   Trash,
 };

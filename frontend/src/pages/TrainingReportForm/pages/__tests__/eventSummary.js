@@ -126,7 +126,7 @@ describe('eventSummary', () => {
 
       await selectEvent.select(screen.getByLabelText(/Event region point of contact/i), 'Ted User');
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women']);
+      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women / Pregnant Persons']);
       await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
       await selectEvent.select(screen.getByLabelText(/event organizer/i), 'IST TTA/Visit');
 

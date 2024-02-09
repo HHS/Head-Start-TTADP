@@ -5,7 +5,7 @@ main(){
     coverage_files=("coverage/src/root/lcov.info")
 
     # then list through the folders and run the tests
-    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets") 
+    targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices") 
     
     for target in "${targets[@]}"; do 
         coverage_files+=("coverage/src/$target/lcov.info")

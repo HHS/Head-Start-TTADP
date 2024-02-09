@@ -171,6 +171,9 @@ export default (sequelize, DataTypes) => {
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    language: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     virtualDeliveryType: {
       type: DataTypes.STRING,
     },

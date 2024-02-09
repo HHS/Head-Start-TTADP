@@ -30,7 +30,6 @@ export const allRegionsUserHasTrainingReportPermissionTo = (user, includeAdmin =
 
   const minPermissions = [
     SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    SCOPE_IDS.READ_TRAINING_REPORTS,
     SCOPE_IDS.POC_TRAINING_REPORTS,
   ];
 

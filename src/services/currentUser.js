@@ -34,6 +34,7 @@ export async function currentUserId(req, res) {
       httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
+
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
       const userId = process.env.CURRENT_USER_ID;
@@ -57,7 +58,7 @@ export async function currentUserId(req, res) {
         // Verify admin access.
         try {
           const userId = idFromSessionOrLocals();
-          if (!(await validateUserAuthForAdmin(userId))) {
+          if (!(await validateUserAuthForAdmin(Number(userId)))) {
             auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }

@@ -110,6 +110,8 @@ describe('goalFilters', () => {
       number: 'number',
     }]);
 
+    const grantFilterWithNoPossibleGrantsYet = grantNumberFilter([]);
+
     it('renders correctly', async () => {
       renderFilter(() => grantFilter.renderInput('1', 'test', ['number'], () => {}));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
@@ -122,6 +124,14 @@ describe('goalFilters', () => {
       ]);
 
       expect(q).toBe('number EHS');
+    });
+
+    it('displays the correct values with no possible grants', async () => {
+      const q = grantFilterWithNoPossibleGrantsYet.displayQuery([
+        'number',
+      ]);
+
+      expect(q).toBe('number');
     });
 
     it('calls onApply', async () => {

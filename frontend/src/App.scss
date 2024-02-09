@@ -1,4 +1,5 @@
 @use 'colors.scss' as *;
+@use './Grid.scss';
 
 @font-face {
   font-family: 'FontAwesome';
@@ -13,6 +14,8 @@ a {
 a:visited {
   color: $text-visited
 }
+
+/*|||||| Table resets |||||||*/
 
 .usa-table thead th a {
   color: $text-ink;
@@ -113,6 +116,10 @@ body {
   gap: 0.5em;
 }
 
+.flex-gap-2 {
+  gap: 1em;
+}
+
 /* ========== some form resets ========== */
 
 .usa-button:not(
@@ -148,6 +155,22 @@ button:not([disabled]):focus {
 
 .usa-radio__input:checked + .usa-radio__label::before {
   background-color: $ttahub-medium-blue;
+}
+
+/* ========== generic typography ========== */
+
+.smart-hub-serif {
+  font-family: Merriweather, serif;
+}
+
+.smart-hub-title-big-serif {
+  font-size: 30px;
+  font-family: Merriweather, serif;
+}
+
+/* =========== colors ================== */
+.base-dark {
+  color: $base-dark;
 }
 
 /* ========== page heading class to be shared ========== */
@@ -320,10 +343,7 @@ fill: #1B1B1B;
   z-index: 99999;
 }
 
-.smart-hub-title-big-serif {
-  font-size: 30px;
-  font-family: Merriweather, serif;
-}
+
 
 /* ========== some color helpers ========== */
 
@@ -348,6 +368,18 @@ fill: #1B1B1B;
   border-bottom: 1px solid;
 }
 
+/* ========== button overrides ========== */
+
+/**
+  * reset for "unstyled" buttons, like we use in the table headers
+  * different from .usa-button--unstyled
+  */
+
+.ttahub-button--unstyled {
+  background: transparent;
+  border: none;
+}
+
 /* Like .usa-button--unstyled, but preserves spacing and
  * radius so that it fits next to other styled buttons.
  * e.g. <Button className="use-button--subtle" />
@@ -358,4 +390,10 @@ fill: #1B1B1B;
   color: $ttahub-medium-blue;
   font-weight: normal;
   text-decoration: underline;
+}
+
+@media all and (min-width: 64em){
+  .desktop\:maxw-6 {
+    max-width: 3rem;
+  }
 }

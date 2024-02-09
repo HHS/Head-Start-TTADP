@@ -22,7 +22,7 @@ const SupportingAttachments = ({
   return (
     <>
       <Helmet>
-        <title>Supporting attachments</title>
+        <title>Supporting Attachments</title>
       </Helmet>
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>

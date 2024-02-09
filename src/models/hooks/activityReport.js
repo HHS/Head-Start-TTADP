@@ -1,6 +1,11 @@
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
-const { OBJECTIVE_STATUS, AWS_ELASTIC_SEARCH_INDEXES } = require('../../constants');
+const {
+  OBJECTIVE_STATUS,
+  AWS_ELASTIC_SEARCH_INDEXES,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_COLLABORATORS,
+} = require('../../constants');
 const { auditLogger } = require('../../logger');
 const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
@@ -12,6 +17,10 @@ const {
 const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
 const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
 const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
+const {
+  findOrCreateCollaborator,
+  removeCollaboratorsForType,
+} = require('../helpers/genericCollaborator');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -257,8 +266,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
           'id',
           'objectiveId',
           'status',
-          'suspendReason',
-          'suspendContext',
+          'closeSuspendReason',
+          'closeSuspendContext',
         ],
         where: {
           objectiveId: objectiveIds,
@@ -349,8 +358,8 @@ const determineObjectiveStatus = async (activityReportId, sequelize, isUnlocked)
        * if the objective is suspended, we want to capture the reason and context
        */
       if (newStatus === OBJECTIVE_STATUS.SUSPENDED) {
-        objectiveToUpdate.set('suspendReason', aro.suspendReason);
-        objectiveToUpdate.set('suspendContext', aro.suspendContext);
+        objectiveToUpdate.set('closeSuspendReason', aro.closeSuspendReason);
+        objectiveToUpdate.set('closeSuspendContext', aro.closeSuspendContext);
       }
 
       // if we've gotten this far, we want to update the status
@@ -838,6 +847,7 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
           data: {
             indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
             id: instance.id,
+            preventRethrow: true,
           },
         };
         await deleteIndexDocument(job);
@@ -861,11 +871,156 @@ const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
             indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
             id: instance.id,
             document,
+            preventRethrow: true,
           },
         };
         await addIndexDocument(job);
       }
     }
+  }
+};
+
+/**
+ * This function is responsible for auto-populating collaborators for a utilizer when the
+ * calculatedStatus of an instance changes to 'APPROVED'. It retrieves the collaborators
+ * and goals associated with the instance, and then populates the collaborators for each goal.
+ * @param {Object} sequelize - The Sequelize instance.
+ * @param {Object} instance - The instance object.
+ * @param {Object} options - Additional options.
+ */
+const autoPopulateUtilizer = async (sequelize, instance, options) => {
+  const changed = instance.changed(); // Get the changed attributes of the instance
+  if (
+    Array.isArray(changed)
+    // Check if 'calculatedStatus' attribute has changed
+    && changed.includes('calculatedStatus')
+    // Check if previous 'calculatedStatus' was not 'APPROVED'
+    && instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
+    // Check if current 'calculatedStatus' is 'APPROVED'
+    && instance.calculatedStatus === REPORT_STATUSES.APPROVED
+  ) {
+    const [
+      collaborators,
+      goals,
+      objectives,
+    ] = await Promise.all([
+      // Find all ActivityReportCollaborator models
+      sequelize.models.ActivityReportCollaborator.findAll({
+        attributes: ['userId'], // Select the 'userId' attribute for each model
+        where: { // Filter the models based on the following conditions
+          // The 'activityReportId' must match the 'id' of the 'instance'
+          activityReportId: instance.id,
+          // The 'userId' must not be equal to the 'userId' of the 'instance'
+          userId: { [Op.not]: instance.userId },
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }), // End of the first query
+      sequelize.models.ActivityReportGoal.findAll({ // Find all ActivityReportGoals models
+        attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }), // End of the second query
+      sequelize.models.ActivityReportObjective.findAll({ // Find all ActivityReportObjective models
+        attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }), // End of the second query
+    ]);
+
+    const users = [
+      ...collaborators, // Spread the elements of the 'collaborators' array into a new array
+      { userId: instance.userId }, // Add an object with a 'userId' property to the new array
+    ].filter(({ userId }) => userId);
+    await Promise.all([
+      ...users
+      // Use flatMap to iterate over each element in the new array asynchronously
+        .flatMap(async ({ userId }) => goals
+          // Use map to iterate over each element in the 'goals' array asynchronously
+          // Call the 'findOrCreateCollaborator' function with the following arguments
+          .map(async ({ goalId }) => findOrCreateCollaborator(
+            'goal',
+            sequelize, // The 'sequelize' variable
+            options.transaction, // The 'options' variable
+            goalId, // The 'goalId' from the current iteration of the 'goals' array
+            userId, // The 'userId' from the current iteration of the new array
+            GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
+            { activityReportIds: [instance.id] },
+          ))),
+      ...users
+      // Use flatMap to iterate over each element in the new array asynchronously
+        .flatMap(async ({ userId }) => objectives
+          // Use map to iterate over each element in the 'objectives' array asynchronously
+          // Call the 'findOrCreateCollaborator' function with the following arguments
+          .map(async ({ objectiveId }) => findOrCreateCollaborator(
+            'objective',
+            sequelize, // The 'sequelize' variable
+            options.transaction, // The 'options' variable
+            objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
+            userId, // The 'userId' from the current iteration of the new array
+            OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
+            { activityReportIds: [instance.id] },
+          ))),
+    ]);
+  }
+};
+
+const autoCleanupUtilizer = async (sequelize, instance, options) => {
+  const changed = instance.changed(); // Get the changed attributes of the instance
+  if (
+    Array.isArray(changed)
+    // Check if 'calculatedStatus' attribute has changed
+    && changed.includes('calculatedStatus')
+    // Check if previous 'calculatedStatus' was 'APPROVED'
+    && instance.previous('calculatedStatus') === REPORT_STATUSES.APPROVED
+    // Check if current 'calculatedStatus' is not 'APPROVED'
+    && instance.calculatedStatus !== REPORT_STATUSES.APPROVED
+  ) {
+    // Find all ActivityReportGoals models
+    const [
+      arGoals,
+      arObjectives,
+    ] = await Promise.all([
+      sequelize.models.ActivityReportGoal.findAll({
+        attributes: ['goalId'], // Select the 'goalId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }),
+      sequelize.models.ActivityReportObjective.findAll({
+        attributes: ['objectiveId'], // Select the 'objectiveId' attribute for each model
+        where: {
+          // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
+          activityReportId: instance.id,
+        },
+        raw: true, // Return raw data instead of Sequelize instances
+      }),
+    ]);
+    await Promise.all([
+      ...arGoals.map(async (arGoal) => removeCollaboratorsForType(
+        'goal',
+        sequelize,
+        options.transaction,
+        arGoal.goalId,
+        GOAL_COLLABORATORS.UTILIZER,
+        { activityReportIds: [instance.id] },
+      )),
+      ...arObjectives.map(async (arObjective) => removeCollaboratorsForType(
+        'objective',
+        sequelize,
+        options.transaction,
+        arObjective.objectiveId,
+        OBJECTIVE_COLLABORATORS.UTILIZER,
+        { activityReportIds: [instance.id] },
+      )),
+    ]);
   }
 };
 
@@ -891,6 +1046,8 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateApprovedStatus(sequelize, instance, options);
   await automaticStatusChangeOnApprovalForGoals(sequelize, instance, options);
   await automaticGoalObjectiveStatusCachingOnApproval(sequelize, instance, options);
+  await autoPopulateUtilizer(sequelize, instance, options);
+  await autoCleanupUtilizer(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
   await updateAwsElasticsearchIndexes(sequelize, instance);

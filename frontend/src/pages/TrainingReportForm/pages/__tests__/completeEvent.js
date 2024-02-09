@@ -25,9 +25,10 @@ describe('completeEvent', () => {
       status: 'Not started',
       pageState: defaultPageState,
       ownerId: 1,
+      eventId: 'R01-PD-1234',
     };
 
-    const sessionsUrl = '/api/session-reports/eventId/1';
+    const sessionsUrl = '/api/session-reports/eventId/1234';
     const onSubmit = jest.fn();
     const onSaveForm = jest.fn();
     const onUpdatePage = jest.fn();
@@ -331,7 +332,7 @@ describe('completeEvent', () => {
       fetchMock.getOnce(sessionsUrl, []);
 
       act(() => {
-        render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState }} />);
+        render(<RenderCompleteEvent defaultValues={{ id: 1, pageState: defaultPageState, eventId: 'R01-PD-1234' }} />);
       });
 
       const statusLabel = await screen.findByText('Event status');

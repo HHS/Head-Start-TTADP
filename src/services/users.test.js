@@ -10,6 +10,7 @@ import {
   setFlag,
   getTrainingReportUsersByRegion,
   getUserNamesByIds,
+  findAllUsersWithScope,
 } from './users';
 
 import SCOPES from '../middleware/scopeConstants';
@@ -110,6 +111,105 @@ describe('Users DB service', () => {
     it('retrieves the correct user if case differs', async () => {
       const user = await userByEmail('User51@Test.Gov');
       expect(user.id).toBe(51);
+    });
+  });
+
+  describe('findAllUsersWithScope', () => {
+    let user1;
+    let user2;
+    let user3;
+
+    beforeAll(async () => {
+      // User 1.
+      user1 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user1.id,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      // User 2.
+      user2 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 2,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user2.id,
+        regionId: 2,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+
+      // User 3.
+      user3 = await db.User.create({
+        id: faker.datatype.number(),
+        name: faker.datatype.string(),
+        homeRegionId: 3,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      await db.Permission.create({
+        userId: user3.id,
+        regionId: 3,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await db.Permission.create({
+        userId: user3.id,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy scopes for user 1, user 2, and user 3.
+      await db.Permission.destroy({
+        where: {
+          userId: [user1.id, user2.id, user3.id],
+        },
+      });
+
+      // Destroy all users.
+      await db.User.destroy({
+        where: {
+          id: [user1.id, user2.id, user3.id],
+        },
+      });
+    });
+
+    it('returns all users with the scope', async () => {
+      const results = await findAllUsersWithScope(SCOPES.READ_WRITE_TRAINING_REPORTS);
+      expect(results.length).toBeGreaterThanOrEqual(2);
+
+      // Ensure that user 1 and user 3 are returned.
+      const user1Result = results.find((result) => result.id === user1.id);
+      expect(user1Result).not.toBe(undefined);
+
+      const user3Result = results.find((result) => result.id === user3.id);
+      expect(user3Result).not.toBe(undefined);
+
+      // Ensure any remaining results are not user 2.
+      const user2Result = results.find((result) => result.id === user2.id);
+      expect(user2Result).toBe(undefined);
+    });
+
+    it('returns empty array if invalid scope passed', async () => {
+      const results = await findAllUsersWithScope('invalid scope');
+      expect(results.length).toBe(0);
     });
   });
 
@@ -296,6 +396,7 @@ describe('Users DB service', () => {
           collaboratorIds: [],
           regionId: [1],
           data: {
+            eventId: `-${eventReportPilotId}`,
           },
           imported: {},
         }),

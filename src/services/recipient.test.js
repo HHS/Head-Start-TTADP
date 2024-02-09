@@ -21,6 +21,8 @@ import db, {
   Permission,
   ProgramPersonnel,
   sequelize,
+  ActivityReportApprover,
+  ActivityReportCollaborator,
 } from '../models';
 import {
   allRecipients,
@@ -29,6 +31,7 @@ import {
   recipientsByUserId,
   getGoalsByActivityRecipient,
   recipientLeadership,
+  allArUserIdsByRecipientAndRegion,
 } from './recipient';
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
@@ -925,18 +928,21 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];
@@ -974,6 +980,7 @@ describe('Recipient DB service', () => {
       const aro = await ActivityReportObjective.create({
         activityReportId: report.id,
         objectiveId: objective1.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjectiveTopic.create({
@@ -1056,6 +1063,7 @@ describe('Recipient DB service', () => {
       const objective = goal.objectives[0];
       expect(objective.topics.length).toBe(4);
       expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
+      expect(objective.supportType).toBe('Planning');
       expect(objective.activityReports.length).toBe(1);
     });
   });
@@ -1233,6 +1241,167 @@ describe('Recipient DB service', () => {
         expect(p.fullName).toBe(expectedNamesAndTitles[i].fullName);
         expect(p.fullRole).toBe(expectedNamesAndTitles[i].fullRole);
       });
+    });
+  });
+
+  describe('allArUserIdsByRecipientAndRegion', () => {
+    let author;
+    let collaboratorOne;
+    let collaboratorTwo;
+    let approverOne;
+    let approverTwo;
+    let dummyUser;
+
+    let recipient;
+    let grant;
+    let report;
+
+    beforeAll(async () => {
+      author = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      collaboratorOne = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      collaboratorTwo = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      approverOne = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      approverTwo = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      dummyUser = await User.create({
+        id: faker.datatype.number(),
+        homeRegionId: 1,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        lastLogin: new Date(),
+      });
+
+      recipient = await Recipient.create({
+        id: faker.datatype.number({ min: 1000 }),
+        name: faker.datatype.string(),
+        uei: faker.datatype.string(),
+      });
+
+      grant = await Grant.create({
+        id: faker.datatype.number({ min: 1000 }),
+        recipientId: recipient.id,
+        regionId: 1,
+        number: faker.datatype.string(),
+        status: 'Active',
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      report = await createReport({
+        activityRecipients: [
+          {
+            grantId: grant.id,
+          },
+        ],
+        reason: ['test'],
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        regionId: 1,
+        userId: author.id,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: collaboratorOne.id,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: collaboratorTwo.id,
+      });
+
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: approverOne.id,
+      });
+
+      await ActivityReportApprover.create({
+        activityReportId: report.id,
+        userId: approverTwo.id,
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReportApprover.destroy({
+        where: {
+          userId: [approverOne.id, approverTwo.id],
+        },
+      });
+
+      await ActivityReportCollaborator.destroy({
+        where: {
+          userId: [collaboratorOne.id, collaboratorTwo.id],
+        },
+      });
+
+      await destroyReport(report);
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+      });
+
+      await User.destroy({
+        where: {
+          id: [
+            author.id,
+            collaboratorOne.id,
+            collaboratorTwo.id,
+            approverOne.id,
+            approverTwo.id,
+            dummyUser.id,
+          ],
+        },
+      });
+    });
+
+    it('returns all user ids for a recipient and region', async () => {
+      const userIds = await allArUserIdsByRecipientAndRegion(recipient.id, 1);
+      expect(userIds.length).toBe(5);
+      expect(userIds).toContain(author.id);
+      expect(userIds).toContain(collaboratorOne.id);
+      expect(userIds).toContain(collaboratorTwo.id);
+      expect(userIds).toContain(approverOne.id);
+      expect(userIds).toContain(approverTwo.id);
     });
   });
 });

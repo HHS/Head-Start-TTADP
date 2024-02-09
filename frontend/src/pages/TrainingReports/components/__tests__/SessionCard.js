@@ -1,5 +1,6 @@
 import React from 'react';
 import { Router } from 'react-router';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import SessionCard from '../SessionCard';
@@ -14,7 +15,7 @@ describe('SessionCard', () => {
       startDate: '01/02/2021',
       endDate: '01/03/2021',
       objective: 'This is my session objective',
-      objectiveSupportType: 'Implementing',
+      objectiveSupportType: SUPPORT_TYPES[2],
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',
@@ -39,17 +40,24 @@ describe('SessionCard', () => {
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByText(/01\/02\/2021 - 01\/03\/2021/i)).toBeInTheDocument();
     expect(screen.getByText('This is my session objective')).toBeInTheDocument();
-    expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText(SUPPORT_TYPES[2])).toBeInTheDocument();
     expect(screen.getByText(/Topic 1, Topic 2/i)).toBeInTheDocument();
 
     expect(screen.getByText(/trainer 1, trainer 2/i)).toBeInTheDocument();
     expect(screen.getByText(/in progress/i)).toBeInTheDocument();
   });
 
-  it('hides edit link', () => {
+  it('hides edit link based on permissions', () => {
     renderSessionCard(defaultSession, false);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+  });
+
+  it('hides edit link if session is complete', () => {
+    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/delete session/i)).not.toBeInTheDocument();
   });
 
   it('shows the edit link with the correct permissions', () => {

@@ -63,6 +63,7 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
+      'source',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -311,9 +312,9 @@ export async function setFieldPromptForCuratedTemplate(
         { response },
         {
           where: {
+            // GoalFieldResponses should always be updated regardless of on approved ar.
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
-            onApprovedAR: false,
           },
           individualHooks: true,
         },
@@ -344,4 +345,18 @@ export async function setFieldPromptsForCuratedTemplate(
         response,
       }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
   );
+}
+
+/**
+Retrieves field prompts for template name.
+@param name - Name of the goal field template prompt to retrieve templates.
+@returns An array of Field Prompts for the named goal template prompt.
+*/
+export async function getOptionsByGoalTemplateFieldPromptName(
+  name: string,
+): Promise<FieldPrompts[]> {
+  return GoalTemplateFieldPromptModel.findOne({
+    attributes: ['options'],
+    where: { title: name },
+  });
 }

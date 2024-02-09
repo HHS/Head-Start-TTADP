@@ -12,6 +12,7 @@ export default function FilterPanel({
   onApplyFilters,
   applyButtonAria,
   allUserRegions,
+  manageRegions,
 }) {
   const [filtersToShow, setFiltersToShow] = useState([]);
 
@@ -39,7 +40,7 @@ export default function FilterPanel({
   const onApply = (items) => {
     // Check for region filters.
     const regionFilters = items.filter((f) => f.topic === 'region');
-    onApplyFilters(items, regionFilters.length === 0);
+    onApplyFilters(items, (regionFilters.length === 0 && manageRegions));
   };
 
   const onRemoveFilterPill = (id) => {
@@ -80,4 +81,9 @@ FilterPanel.propTypes = {
   applyButtonAria: PropTypes.string.isRequired,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
   allUserRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
+  manageRegions: PropTypes.bool,
+};
+
+FilterPanel.defaultProps = {
+  manageRegions: true,
 };
