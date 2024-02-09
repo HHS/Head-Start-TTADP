@@ -344,7 +344,7 @@ const filterResourcesForSync = (
         }
         return {
           removed: [
-            ...resources.removed,
+            ...(resources.removed || []),
             {
               genericId: resource.genericId,
               resourceIds: [resource.resourceId],
@@ -375,7 +375,7 @@ const filterResourcesForSync = (
           return resources;
         }
         return {
-          removed: resources.removed,
+          removed: (resources.removed || []),
           reduced: [
             ...resources.reduced,
             {
