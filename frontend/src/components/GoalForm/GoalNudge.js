@@ -115,7 +115,7 @@ export default function GoalNudge({
         error={error}
         useOhsInitiativeGoal={useOhsInitiativeGoal}
         validateGoalName={validateGoalName}
-        goalTemplates={goalTemplates}
+        goalTemplates={goalTemplates || []}
         onSelectNudgedGoal={onSelectNudgedGoal}
       />
       { (goalTemplates && goalTemplates.length > 0) && (
