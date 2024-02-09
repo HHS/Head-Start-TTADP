@@ -2,7 +2,7 @@ import React from 'react';
 import CsvImport from './components/CsvImport';
 
 function Courses() {
-  const primaryIdColumn = 'Course Name';
+  const primaryIdColumn = 'course name';
   const typeName = 'courses';
   const apiPathName = 'courses';
 

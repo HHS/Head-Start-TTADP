@@ -16,6 +16,8 @@ const goodTrainingReportsCsv = "Sheet Name,Event ID,Edit Title,IST Name:,Creator
 const duplicateEventIdsCsv = "Sheet Name,Event ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nSheet Test,event test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nSheet Test,event test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
 // eslint-disable-next-line quotes
 const missingColumnsCsv = "Sheet Name,Event ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nSheet Test,event test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
+// eslint-disable-next-line quotes
+const invalidColumnsCsv = "Sheet Name,Invalid Column,Event ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nSheet Test 1,invalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\nSheet Test 2,invalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
 
 describe('Training Reports page', () => {
   afterEach(() => {
@@ -100,6 +102,27 @@ describe('Training Reports page', () => {
 
     // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
     const error = await screen.findByText(/Required headers missing: Event ID, Edit Title, Creator/i);
+    expect(error).toBeVisible();
+
+    // Assert button 'Upload training reports' is visible.
+    const uploadButton = await screen.findByRole('button', { name: /Upload training reports/i });
+    expect(uploadButton).toBeVisible();
+  });
+
+  it('displays invalid columns error', async () => {
+    const history = createMemoryHistory();
+    render(<Router history={history}><TrainingReports /></Router>);
+
+    // Assert by data-testid 'file-input-input'.
+    const fileInput = await screen.findByTestId('file-input-input');
+    expect(fileInput).toBeVisible();
+
+    // Load 'TrainingReports_Duplicate_EventIds.csv' into a file object.
+    const file = new File([invalidColumnsCsv], 'TrainingReports_Duplicate_EventIds.csv', { type: 'text/csv' });
+    userEvent.upload(fileInput, file);
+
+    // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
+    const error = await screen.findByText(/Invalid headers found: Invalid Column/i);
     expect(error).toBeVisible();
 
     // Assert button 'Upload training reports' is visible.

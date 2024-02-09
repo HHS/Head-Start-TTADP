@@ -1,13 +1,11 @@
 import React, {
-  useState, useMemo, useContext, useRef,
+  useState, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
 } from 'react-hook-form';
-import { REPORT_STATUSES } from '@ttahub/common';
-
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
@@ -15,6 +13,7 @@ import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
+import ObjectiveSupportType from '../../../../components/ObjectiveSupportType';
 import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
@@ -27,6 +26,7 @@ import { validateListOfResources } from '../../../../components/GoalForm/constan
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
+import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 
 export default function Objective({
   objective,
@@ -129,6 +129,33 @@ export default function Objective({
 
   const {
     field: {
+      onChange: onChangeUseIpdCourses,
+      onBlur: onBlurUseIpdCourses,
+      value: objectiveUseIpdCourses,
+      name: objectiveUseIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].useIpdCourses`,
+    defaultValue: !!(objective.courses && objective.courses.length) || false,
+  });
+
+  const {
+    field: {
+      onChange: onChangeIpdCourses,
+      onBlur: onBlurIpdCourses,
+      value: objectiveIpdCourses,
+      name: objectiveIpdCoursesInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].courses`,
+    defaultValue: objective.courses || [],
+    rules: {
+      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+    },
+  });
+
+  const {
+    field: {
       onChange: onChangeTta,
       onBlur: onBlurTta,
       value: objectiveTta,
@@ -142,6 +169,21 @@ export default function Objective({
       },
     },
     defaultValue: objective.ttaProvided ? objective.ttaProvided : '',
+  });
+
+  const {
+    field: {
+      onChange: onChangeSupportType,
+      onBlur: onBlurSupportType,
+      value: supportType,
+      name: supportTypeInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].supportType`,
+    rules: {
+      required: 'Please select a support type',
+    },
+    defaultValue: objective.supportType || '',
   });
 
   const {
@@ -182,15 +224,9 @@ export default function Objective({
     rules: { required: true },
     defaultValue: objective.closeSuspendContext || '',
   });
+  const isOnApprovedReport = objective.onApprovedAR;
 
-  const isOnApprovedReport = useMemo(() => objective.activityReports
-    && objective.activityReports.some(
-      (report) => report.status === REPORT_STATUSES.APPROVED,
-    ), [objective.activityReports]);
-
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length
-  ), [objective.activityReports]);
+  const isOnReport = objective.onAR;
 
   const onChangeObjective = (newObjective) => {
     setSelectedObjective(newObjective);
@@ -204,6 +240,7 @@ export default function Objective({
     }
 
     onChangeStatus(newObjective.status);
+    onChangeSupportType(newObjective.supportType);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
@@ -211,6 +248,10 @@ export default function Objective({
     // set a new initial status, which we went to preserve separately from the dropdown
     // this determines if the title is read only or not
     setStatusForCalculations(newObjective.status);
+
+    // ipd course
+    onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
+    onChangeIpdCourses(newObjective.courses);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -305,7 +346,7 @@ export default function Objective({
         savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
+        topics={objectiveTopics}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
@@ -315,7 +356,7 @@ export default function Objective({
         editingFromActivityReport
       />
       <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
         setResources={onChangeResources}
         error={errors.resources
@@ -327,6 +368,19 @@ export default function Objective({
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
         editingFromActivityReport
+      />
+      <IpdCourseSelect
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
       />
       <ObjectiveFiles
         objective={objective}
@@ -349,11 +403,21 @@ export default function Objective({
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
+        isOnApprovedReport={false}
         error={errors.ttaProvided
           ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
         validateTta={onBlurTta}
+      />
+
+      <ObjectiveSupportType
+        onBlurSupportType={onBlurSupportType}
+        supportType={supportType}
+        onChangeSupportType={onChangeSupportType}
+        inputName={supportTypeInputName}
+        error={errors.supportType
+          ? ERROR_FORMAT(errors.supportType.message)
+          : NO_ERROR}
       />
 
       <ObjectiveSuspendModal
@@ -389,6 +453,9 @@ Objective.propTypes = {
   index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
   errors: PropTypes.shape({
+    supportType: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     ttaProvided: PropTypes.shape({
       message: PropTypes.string,
     }),
@@ -396,6 +463,9 @@ Objective.propTypes = {
       message: PropTypes.string,
     }),
     resources: PropTypes.shape({
+      message: PropTypes.string,
+    }),
+    courses: PropTypes.shape({
       message: PropTypes.string,
     }),
     roles: PropTypes.shape({

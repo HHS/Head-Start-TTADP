@@ -1,7 +1,9 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
+import {
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+} from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -11,6 +13,7 @@ import {
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
+  ObjectiveCourse,
   ObjectiveResource,
   ObjectiveFile,
   ObjectiveTopic,
@@ -18,6 +21,7 @@ import {
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveCourse,
   sequelize,
   Recipient,
   Resource,
@@ -26,6 +30,7 @@ import {
   ActivityRecipient,
   ActivityReportGoalFieldResponse,
   Topic,
+  Course,
   Program,
   File,
 } from '../models';
@@ -92,6 +97,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
         'status',
         'onApprovedAR',
         'rtrOrder',
+        'supportType',
         [
           'onAR',
           'onAnyReport',
@@ -260,6 +266,7 @@ export async function saveObjectiveAssociations(
   resources = [],
   topics = [],
   files = [],
+  courses = [],
   deleteUnusedAssociations = false,
 ) {
   // We need to know if the objectiveTemplateId is populated to know if we
@@ -356,10 +363,48 @@ export async function saveObjectiveAssociations(
     });
   }
 
+  const objectiveCourses = await Promise.all(
+    courses.map(
+      async (course) => {
+        let ocourse = await ObjectiveCourse.findOne({
+          where: {
+            courseId: course.id,
+            objectiveId: objective.id,
+          },
+        });
+        if (!ocourse) {
+          ocourse = await ObjectiveCourse.create({
+            courseId: course.id,
+            objectiveId: objective.id,
+          }, {
+            // including this despite not really knowing why it's here
+            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
+          });
+        }
+        return ocourse;
+      },
+    ),
+  );
+
+  if (deleteUnusedAssociations) {
+    // cleanup objective courses
+    await ObjectiveCourse.destroy({
+      where: {
+        id: {
+          [Op.notIn]: objectiveCourses && objectiveCourses.length
+            ? objectiveCourses.map((oc) => oc.id) : [],
+        },
+        objectiveId: objective.id,
+      },
+      individualHooks: true,
+    });
+  }
+
   return {
     topics: objectiveTopics,
     resources: objectiveResources,
     files: objectiveFiles,
+    courses: objectiveCourses,
   };
 }
 
@@ -419,6 +464,34 @@ export function reduceObjectives(newObjectives, currentObjectives = []) {
   return objectivesToSort;
 }
 
+/**
+ * Reduces the relation through activity report objectives.
+ *
+ * @param {Object} objective - The objective object.
+ * @param {string} join tablename that joins aro <> relation. e.g. activityReportObjectiveResources
+ * @param {string} relation - The relation that will be returned. e.g. resource.
+ * @param {Object} [exists={}] - The existing relation object.
+ * @returns {Array} - The reduced relation array.
+ */
+const reduceRelationThroughActivityReportObjectives = (
+  objective,
+  join,
+  relation,
+  exists = {},
+  uniqueBy = 'id',
+) => {
+  const existingRelation = exists[relation] || [];
+  return uniqBy([
+    ...existingRelation,
+    ...(objective.activityReportObjectives
+      && objective.activityReportObjectives.length > 0
+      ? objective.activityReportObjectives[0][join]
+        .map((t) => t[relation].dataValues)
+        .filter((t) => t)
+      : []),
+  ], (e) => e[uniqueBy]);
+};
+
 export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
@@ -426,6 +499,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].status
       ? objective.activityReportObjectives[0].status : objective.status;
+
+    const objectiveSupportType = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].supportType
+      ? objective.activityReportObjectives[0].supportType : objective.supportType;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
@@ -438,23 +516,27 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
-      exists.resources = uniqBy([
-        ...exists.resources,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveResources
-            .map((r) => r.resource.dataValues)
-          : []),
-      ], (e) => e.value);
+      exists.resources = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+        exists,
+        'value',
+      );
 
-      exists.topics = uniqBy([
-        ...exists.topics,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-            .map((t) => t.topic.dataValues)
-          : []),
-      ], (e) => e.id);
+      exists.topics = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+        exists,
+      );
+
+      exists.courses = reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+        exists,
+      );
 
       exists.files = uniqBy([
         ...exists.files,
@@ -464,7 +546,6 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
             .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
       ], (e) => e.key);
-
       return objectives;
     }
 
@@ -496,6 +577,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       value: id,
       ids: [id],
       ttaProvided,
+      supportType: objectiveSupportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,
@@ -507,22 +589,28 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       // of the activity report not the state of the objective, which is what
       // we are getting at with this method (getGoalsForReport)
 
-      topics: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveTopics
-          .map((t) => (t.topic ? t.topic.dataValues : null))
-          .filter((t) => t)
-        : [],
-      resources: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveResources
-          .map((r) => r.resource.dataValues)
-        : [],
+      topics: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveTopics',
+        'topic',
+      ),
+      resources: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveResources',
+        'resource',
+        {},
+        'value',
+      ),
       files: objective.activityReportObjectives
-        && objective.activityReportObjectives.length > 0
+      && objective.activityReportObjectives.length > 0
         ? objective.activityReportObjectives[0].activityReportObjectiveFiles
           .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
         : [],
+      courses: reduceRelationThroughActivityReportObjectives(
+        objective,
+        'activityReportObjectiveCourses',
+        'course',
+      ),
     }];
   }, currentObjectives);
 
@@ -760,6 +848,9 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'title',
           'status',
           'goalId',
+          'supportType',
+          'onApprovedAR',
+          'onAR',
         ],
         required: false,
         include: [
@@ -797,6 +888,11 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           {
             model: Topic,
             as: 'topics',
+            required: false,
+          },
+          {
+            model: Course,
+            as: 'courses',
             required: false,
           },
           {
@@ -906,6 +1002,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
           'title',
           'title',
           'status',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -1246,6 +1343,7 @@ export async function createOrUpdateGoals(goals) {
           id: objectiveIdsMayContainStrings,
           closeSuspendContext,
           closeSuspendReason,
+          supportType,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1304,6 +1402,7 @@ export async function createOrUpdateGoals(goals) {
               title,
               goalId: newGoal.id,
               createdVia: 'rtr',
+              supportType,
             });
           }
         }
@@ -1318,6 +1417,10 @@ export async function createOrUpdateGoals(goals) {
           status: objectiveStatus,
           rtrOrder: index + 1,
         });
+
+        if (objective.supportType && objective.supportType !== supportType) {
+          objective.set({ supportType });
+        }
 
         // if the objective has been suspended, a reason and context should have been collected
         if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
@@ -1337,6 +1440,7 @@ export async function createOrUpdateGoals(goals) {
           resources,
           topics,
           files,
+          [],
           deleteUnusedAssociations,
         );
 
@@ -1425,17 +1529,31 @@ export async function goalsForGrants(grantIds) {
       'onApprovedAR',
       'endDate',
       'source',
+      'createdVia',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
     where: {
+      name: {
+        [Op.ne]: '', // exclude "blank" goals
+      },
       '$grant.id$': ids,
       status: {
-        [Op.or]: [
-          { [Op.notIn]: ['Closed', 'Suspended'] },
-          { [Op.is]: null },
-        ],
+        [Op.notIn]: ['Closed', 'Suspended'],
       },
+      [Op.or]: [
+        {
+          createdVia: {
+            [Op.not]: 'tr',
+          },
+        },
+        {
+          createdVia: 'tr',
+          status: {
+            [Op.not]: 'Draft',
+          },
+        },
+      ],
     },
     include: [
       {
@@ -1836,6 +1954,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
     || o.ttaProvided
     || o.topics.length
     || o.resources.length
+    || o.courses.length
     || o.files.length).map(async (objective, index) => {
     const {
       id,
@@ -1847,6 +1966,8 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      supportType,
+      courses,
       closeSuspendReason,
       closeSuspendContext,
       ...updatedFields
@@ -1891,6 +2012,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
+          supportType,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',
@@ -1911,6 +2033,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       resources,
       topics,
       files,
+      courses,
       deleteUnusedAssociations,
     );
 
@@ -1927,6 +2050,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
         closeSuspendReason,
         ttaProvided: objective.ttaProvided,
         order: index,
+        supportType,
       },
     );
     return savedObjective;
@@ -2003,11 +2127,11 @@ export async function saveGoalsForReport(goals, report) {
         }, { individualHooks: true });
       }
 
-      if (!newOrUpdatedGoal.onApprovedAR) {
-        if (source && newOrUpdatedGoal.source !== source) {
-          newOrUpdatedGoal.set({ source });
-        }
+      if (source && newOrUpdatedGoal.source !== source) {
+        newOrUpdatedGoal.set({ source });
+      }
 
+      if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
@@ -2239,6 +2363,18 @@ export async function getGoalsForReport(reportId) {
               },
               {
                 separate: true,
+                model: ActivityReportObjectiveCourse,
+                as: 'activityReportObjectiveCourses',
+                required: false,
+                include: [
+                  {
+                    model: Course,
+                    as: 'course',
+                  },
+                ],
+              },
+              {
+                separate: true,
                 model: ActivityReportObjectiveResource,
                 as: 'activityReportObjectiveResources',
                 required: false,
@@ -2406,15 +2542,18 @@ export async function destroyGoal(goalIds) {
 /**
  * @param {goals[]} include .activityReportGoals
  * @returns {
-*  reportId: countOfGoalsOnReport,
+*  reportId: { grantId: countOfGoalsOnReport },
 * }
 */
 export const getReportCountForGoals = (goals) => goals.reduce((acc, goal) => {
   (goal.activityReportGoals || []).forEach((arg) => {
     if (!acc[arg.activityReportId]) {
-      acc[arg.activityReportId] = 0;
+      acc[arg.activityReportId] = {};
     }
-    acc[arg.activityReportId] += 1;
+    if (!acc[arg.activityReportId][goal.grantId]) {
+      acc[arg.activityReportId][goal.grantId] = 0;
+    }
+    acc[arg.activityReportId][goal.grantId] += 1;
   });
 
   return acc;
@@ -2430,10 +2569,11 @@ const fieldMappingForDeduplication = {
 /**
 *
 * key is activityReportid, value is count of goals on that report
-* @param {{ number: number }} countObject
+* @param {{ number: { number: number } }} countObject
 */
 // eslint-disable-next-line max-len
-export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject).some((c) => c > 1);
+export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
+  .some((grants) => Object.values(grants).some((c) => c > 1));
 
 function goalGroupContainsClosedCuratedGoal(goalGroup) {
   return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
@@ -2925,6 +3065,9 @@ export async function mergeGoals(
           where: { id: g.activityReportGoals.map((arg) => arg.id) },
         },
       ));
+
+      // TODO: if the report is not approved, the name, resources and responses should also
+      // be updated
     }
 
     // copy the goal resources
@@ -2943,23 +3086,26 @@ export async function mergeGoals(
     if (Number(g.id) === Number(finalGoalId)) {
       // copy the goal field responses
       g.responses.forEach((gfr) => {
-        updatesToRelatedModels.push(GoalFieldResponse.create({
-          goalId: grantToGoalDictionary[
-            grantsWithReplacementsDictionary[g.grantId]
-          ],
-          goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
-          response: gfr.response,
-        }, { individualHooks: true }));
+        Object.values(grantToGoalDictionary).forEach((goalId) => {
+          updatesToRelatedModels.push(GoalFieldResponse.create({
+            goalId,
+            goalTemplateFieldPromptId: gfr.goalTemplateFieldPromptId,
+            response: gfr.response,
+          }, { individualHooks: true }));
+        });
       });
     }
   });
 
   await Promise.all(updatesToRelatedModels);
-  await Promise.all(selectedGoals.map((g) => g.update({
-    mapsToParentGoalId: grantToGoalDictionary[
-      grantsWithReplacementsDictionary[g.grantId]
-    ],
-  }, { individualHooks: true })));
+  await Promise.all(selectedGoals.map((g) => {
+    const u = g.update({
+      mapsToParentGoalId: grantToGoalDictionary[
+        grantsWithReplacementsDictionary[g.grantId]
+      ],
+    }, { individualHooks: true });
+    return u;
+  }));
 
   // record the merge as complete
   await setSimilarityGroupAsUserMerged(
