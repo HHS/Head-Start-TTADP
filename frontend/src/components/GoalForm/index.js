@@ -903,14 +903,8 @@ export default function GoalForm({
         source: goal.source,
         goalTemplateId: goal.id,
       }));
-
       const created = await createOrUpdateGoals(goals);
       forwardToGoalWithIds(created.map((g) => g.goalIds).flat());
-
-      setAlert({
-        message: 'There was an error creating your goal',
-        type: 'error',
-      });
     };
 
     try {
