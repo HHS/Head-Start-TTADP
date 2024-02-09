@@ -43,7 +43,7 @@ describe('Group', () => {
   describe('ownsGroup', () => {
     it('should return true if the user owns the group', () => {
       const user = { id: 1 };
-      const group = { userId: 1 };
+      const group = { groupCollaborators: [{ user: { id: 1 }, collaboratorType: { name: 'Creator' } }] };
 
       const g = new Group(user, [], group);
 

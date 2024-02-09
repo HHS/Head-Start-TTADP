@@ -338,7 +338,6 @@ export async function createGroup(req: Request, res: Response) {
       potentialRecipientGrants({ userId }),
       checkGroupNameAvailable(name),
     ]);
-
     const grantsWithId = grants.map((grant) => ({ ...grant, id: grant.grantId }));
 
     // Create a new GroupPolicy instance with the user and grants data
@@ -489,6 +488,7 @@ export async function updateGroup(req: Request, res: Response) {
     const groupResponse = await editGroup(groupId, {
       ...req.body,
     });
+
     res.json(groupResponse);
   } catch (e) {
     // Log any errors and send an internal server error response
@@ -537,6 +537,7 @@ export async function deleteGroup(req: Request, res: Response) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
+
     // Delete the group by calling the destroyGroup function asynchronously, passing in the groupId
     const groupResponse = await destroyGroup(groupId);
 

@@ -15,8 +15,10 @@ import {
   editGroup,
   destroyGroup,
   checkGroupNameAvailable,
+  potentialRecipientGrants,
 } from '../../services/groups';
 import { GROUP_COLLABORATORS } from '../../constants';
+import GroupPolicy from '../../policies/group';
 
 jest.mock('../../models', () => ({
   Group: {
@@ -30,6 +32,8 @@ jest.mock('../../models', () => ({
     findAll: jest.fn(),
   },
 }));
+
+jest.mock('../../policies/group');
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn((id) => ({
@@ -53,6 +57,7 @@ jest.mock('../../services/groups', () => ({
   editGroup: jest.fn(),
   destroyGroup: jest.fn(),
   checkGroupNameAvailable: jest.fn(),
+  potentialRecipientGrants: jest.fn(),
 }));
 
 describe('Groups Handlers', () => {
@@ -111,6 +116,9 @@ describe('Groups Handlers', () => {
           collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
         }],
       };
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+      }));
       group.mockReturnValueOnce(groupResponse);
       await getGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
@@ -169,7 +177,16 @@ describe('Groups Handlers', () => {
         recipientId: 1,
         status: 'Active',
       }]);
+
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
       checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
       createNewGroup.mockReturnValueOnce(groupResponse);
       await createGroup(req, res);
       expect(checkGroupNameAvailable).toHaveBeenCalled();
@@ -183,6 +200,14 @@ describe('Groups Handlers', () => {
         recipientId: 1,
         status: 'Active',
       }]);
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
       checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(false));
       await createGroup(req, res);
       expect(statusJson).toHaveBeenCalledWith({
@@ -198,6 +223,14 @@ describe('Groups Handlers', () => {
         recipientId: 1,
         status: 'Active',
       }]);
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
       checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
       createNewGroup.mockRejectedValue(new Error('Error'));
       await createGroup(req, res);
@@ -217,6 +250,8 @@ describe('Groups Handlers', () => {
         },
         body: {
           name: 'Group 1',
+          coOwners: [],
+          sharedWith: [],
         },
       };
       res = {
@@ -230,11 +265,25 @@ describe('Groups Handlers', () => {
       Group.findAll.mockReturnValueOnce([{ id: 1, name: 'Group 1', userId: 1 }]);
       const groupResponse = { id: 1, name: 'Group 1' };
       editGroup.mockReturnValue(groupResponse);
+
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
+      const groupsResponse = [{ id: 1, name: 'Group 1' }];
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      groups.mockReturnValueOnce(groupsResponse);
       await updateGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
     it('should return 200 with an error message if the group already exists', async () => {
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
       Group.findAll.mockReturnValue([{ id: 1, name: 'Group Old', userId: 1 }, { id: 2, name: 'Group 1', userId: 1 }]);
       const groupResponse = { id: 1, name: 'Group 1' };
       editGroup.mockReturnValue(groupResponse);
@@ -254,6 +303,14 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 500 if there is an error', async () => {
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
+      const groupsResponse = [{ id: 1, name: 'Group 1' }];
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      groups.mockReturnValueOnce(groupsResponse);
       Group.findAll.mockReturnValue([{ id: 1, name: 'Group 1', userId: 1 }]);
       Grant.findAll.mockReturnValueOnce([
         { regionId: 1 },
@@ -282,7 +339,9 @@ describe('Groups Handlers', () => {
       currentUserId.mockReturnValueOnce(userId);
     });
     it('should return 200 and the group', async () => {
-      // Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 1 });
+      GroupPolicy.mockImplementationOnce(() => ({
+        ownsGroup: () => true,
+      }));
       group.mockReturnValueOnce({
         id: 1,
         name: '',
@@ -301,10 +360,7 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 200 if the group no longer exists', async () => {
-      // Group.findOne.mockReturnValueOnce(null);
       group.mockReturnValueOnce(null);
-      const groupResponse = 1;
-      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.OK);
     });
@@ -322,13 +378,14 @@ describe('Groups Handlers', () => {
         }],
         isPublic: false,
       });
-      const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
-      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return 500 if there is an error', async () => {
+      GroupPolicy.mockImplementationOnce(() => ({
+        ownsGroup: () => true,
+      }));
       group.mockReturnValueOnce({
         id: 1,
         name: '',
@@ -340,7 +397,7 @@ describe('Groups Handlers', () => {
         }],
         isPublic: false,
       });
-      destroyGroup.mockReturnValueOnce(new Error('Error'));
+      destroyGroup.mockRejectedValue(new Error('Error'));
       await deleteGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
