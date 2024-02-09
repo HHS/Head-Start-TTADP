@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "declaration": false,
+    "esModuleInterop": true,
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "../build/server",
+    "removeComments": true,
+    "skipLibCheck": true,
+    "target": "esnext"
+
+  },
+  "include": [
+    "./src/**/*.js",
+    "./**/*.js",
+    "./src/**/*.ts",
+    "./**/*.ts",
+  ],
+  "exclude": [
+    "**/build",
+    "**/dist",
+    "**/node_modules",
+    "build",
+    "dist",
+    "node_modules",
+    "node_modules/*",
+    "packages/*",
+    "playwright.config.js",
+    "tests/*",
+  ],
+}
+

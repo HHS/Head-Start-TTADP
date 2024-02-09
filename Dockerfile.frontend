@@ -5,8 +5,8 @@ RUN apk update
 RUN yarn global add turbo node-gyp
 
 FROM base AS prune
-ENV TURBO_TOKEN=Riz8ofriZz2FFXtfYC1Qcqrl
-ENV TURBO_TEAM=kcirtapfromspace
+ENV TURBO_TOKEN=
+ENV TURBO_TEAM=
 RUN apk update
 # Set working directory
 WORKDIR /app
@@ -34,13 +34,14 @@ RUN --mount=type=cache,target=/root/.yarn \
     yarn install
 
 FROM base as builder 
-ENV TURBO_TOKEN=Riz8ofriZz2FFXtfYC1Qcqrl
-ENV TURBO_TEAM=kcirtapfromspaces-projects
+ENV TURBO_TOKEN=
+ENV TURBO_TEAM=
 WORKDIR /app
 RUN apk add --no-cache libc6-compat 
 RUN apk update
 # Build the project
 COPY --link --from=prune /app/out/full/ .
+COPY --link --from=prune /app/turbo.json .
 COPY --link --from=installer /app/node_modules /app/node_modules
 RUN turbo run build --filter=@repo/frontend
  

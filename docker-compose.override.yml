@@ -3,6 +3,7 @@ services:
   backend:
     build:
       context: .
+      # dockerfile: ./Dockerfile.dev
       dockerfile: ./Dockerfile.backend
       cache_from: 
         - node:18.18.2  # Using the base image as a cache source
@@ -10,15 +11,16 @@ services:
         - node:18.18.2-alpine
         - head-start-ttadp-backend:latest
       target: backend
-    command: yarn server
     user: ${CURRENT_USER:-root}
+    # command: ["yarn", "serve"]
     ports:
       - "8080:8080"
     depends_on:
       - db
       - redis
     env_file: .env
-    # environment:
+    environment:
+      NPM_CONFIG_LOGLEVEL: verbose
       # On an M1 mac, puppeteer install fails with the message:
       # "The chromium binary is not available for arm64"
       #
@@ -31,11 +33,16 @@ services:
       # export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 
     volumes:
-      - "./src/:/app/src/:rw"
+      - "./backend/config/:/app/config/:rw"
+      - "./backend/package.json:/app/package.json:ro"
+      - "./backend/src/:/app/src/:rw"
+      - "./backend/tsconfig.json:/app/tsconfig.json:ro"
+      - "./packages/:/packages/:rw"
+      - "./scripts:/app/scripts:rw"
       - "./tests/:/app/tests/:rw"
-      - "./config/:/app/config:rw"
-      - "./packages:/packages:ro"
       - ".env:/app/.env:ro"
+      - ".sequelizerc:/app/.sequelizerc:rw"
+
   frontend:
     build:
       context: .
@@ -52,9 +59,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - "./frontend:/app:rw"
-      - "./scripts:/app/scripts"
-      - "./packages:/packages:ro"
+      - "./frontend/public:/app/public:rw"
+      - "./frontend/src:/app/src:rw"
+      - "./frontend/scripts:/app/scripts:rw"
+      - "./packages:/app/packages:ro"
       - ".env:/app/.env:ro"
   worker:
     build:
@@ -73,8 +81,10 @@ services:
       - redis
       - backend
     volumes:
-      - "./src/:/app/src/:rw"
+      - "./backend/src/:/app/src/:rw"
       - "./tests/:/app/tests/:rw"
-      - "./config/:/app/config:rw"
+      - "./backend/package.json:/app/package.json:rw"
+      - "./backend/config/config.js:/app/config/config.js:rw"
       - ".env:/app/.env:ro"
+      - "./.log/node_trace.1.log:/app/node_trace.1.log:ro"
 

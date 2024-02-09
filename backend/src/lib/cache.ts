@@ -6,6 +6,13 @@ interface CacheOptions {
   EX?: number; // time in seconds
 }
 
+interface FakeRedisClientType {
+  connect: () => Promise<void>;
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string | null, options: CacheOptions) => Promise<string>;
+  quit: () => Promise<void>;
+}
+
 /**
  *
  * @param {string} key the key to use for the cache
@@ -37,7 +44,7 @@ export default async function getCachedResponse(
 
   // we create a fake redis client because we don't want to fail the request if redis is down
   // or if we can't connect to it, or whatever else might go wrong
-  let redisClient: CustomRedisClientType = {
+  let redisClient: FakeRedisClientType = {
     connect: () => Promise.resolve(),
     get: (_k: string) => Promise.resolve(null),
     set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve('OK'),
@@ -59,11 +66,29 @@ export default async function getCachedResponse(
       await actualRedisClient.connect();
       
       redisClient = {
-        connect: () => actualRedisClient.connect().then(() => {}),
+        connect: async () => {
+          await actualRedisClient.connect();
+          // No return value needed, implicitly returns Promise<void>
+        },
         get: (k: string) => actualRedisClient.get(k),
-        set: (k: string, r: string | null, o: CacheOptions) => actualRedisClient.set(k, r, { EX: o.EX }).then(() => 'OK'),
-        quit: () => actualRedisClient.quit(),
-      } as CustomRedisClientType;
+        // Adjusted set method to ensure it returns Promise<void>
+        set: (k: string, r: string | null, o: CacheOptions) => {
+          if (r === null) {
+              // Handle the case where 'r' is null if your logic requires
+              // For example, you might choose to not set anything in Redis and return a Promise that resolves to a specific string
+              return Promise.resolve('Value was null');
+          } else {
+              // Assuming actualRedisClient.set correctly returns a Promise<string> with 'OK' upon success
+              return actualRedisClient.set(k, r, { EX: o.EX });
+          }
+      },      
+        quit: async () => {
+          await actualRedisClient.quit();
+          // No return value needed, implicitly returns Promise<void>
+        },
+      }
+      
+      
 
       response = await redisClient.get(key);
       clientConnected = true;

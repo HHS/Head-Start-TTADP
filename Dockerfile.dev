@@ -1,68 +1,32 @@
-FROM node:18.18.2-alpine as base
-FROM node:18.18.2 as backend-base
-
-FROM base AS builder
-RUN apk add --no-cache libc6-compat
-RUN apk update
-# Set working directory
-WORKDIR /app
-COPY . .
-RUN yarn global add turbo
-RUN turbo prune --docker
-
-# Add lockfile and package.json's of isolated subworkspace
-FROM base AS installer
-RUN apk add --no-cache libc6-compat
-RUN apk update
-WORKDIR /app
- 
-# First install the dependencies (as they change less often)
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/yarn.lock ./yarn.lock
-RUN yarn install
- 
-# Build the project
-COPY --from=builder /app/out/full/ .
-RUN yarn turbo run build --filter=src
-
-FROM backend-base as backend-installer
+FROM node:18.18.2 as base
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends dumb-init lcov chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-RUN yarn global add node-gyp turbo &&\
-    turbo prune web --docker
-# First install the dependencies (as they change less often)
-COPY .gitignore .gitignore
-COPY --from=builder /app/out/json/ .
-COPY --from=builder /app/out/yarn.lock ./yarn.lock
-RUN yarn install
- 
-# Build the project
-COPY --from=builder /app/out/full/ .
-RUN yarn turbo run build --filter=frontend
+COPY backend/package.json backend/yarn.lock ./
+RUN yarn global add node-gyp &&\
+    # --mount=type=cache,target=/root/.yarn \
+    # YARN_CACHE_FOLDER=/root/.yarn \
+    yarn install
 
-
-
-
-FROM base as frontend-installer
+FROM node:18.18.2-alpine as frontend-base
 WORKDIR /app
 RUN apk update && apk add yarn dumb-init
 COPY frontend/package.json frontend/yarn.lock ./
-RUN yarn global add turbo &&\
-    yarn install &&\ 
-    yarn cache clean
+RUN --mount=type=cache,target=/root/.yarn \
+    YARN_CACHE_FOLDER=/root/.yarn \
+    yarn install
 
 FROM node:18.18.2 as build
 ENV NODE_OPTIONS=--max_old_space_size=2048
+RUN apt-get update && apt-get install -y --no-install-recommends yarn
 WORKDIR /app
 COPY --from=base /app/node_modules /app/node_modules
 COPY --from=base /app/package.json /app/package.json
-COPY src/ /app/src/
-COPY tests/ /app/tests/
-COPY config/ /app/config/
-RUN turbo prune web --docker
+COPY backend/src/ /app/src/
+COPY backend/tests/ /app/tests/
+COPY backend/config/ /app/config/
+RUN yarn tsc --build --verbose src
 
 FROM node:18.18.2-alpine as frontend-build
 ENV NODE_OPTIONS=--max_old_space_size=2048
@@ -70,7 +34,7 @@ WORKDIR /app
 ENV DISABLE_ESLINT_PLUGIN=true
 COPY --from=frontend-base /app/node_modules /app/node_modules
 COPY ./frontend .
-RUN turbo build
+RUN yarn build:local
 
 FROM node:18.18.2-alpine as frontend
 RUN apk update
