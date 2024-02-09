@@ -142,7 +142,10 @@ GoalNudge.propTypes = {
   onUpdateText: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
-  regionId: PropTypes.number.isRequired,
+  regionId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
   recipientId: PropTypes.number.isRequired,
   selectedGrants: PropTypes.arrayOf(
     PropTypes.shape({

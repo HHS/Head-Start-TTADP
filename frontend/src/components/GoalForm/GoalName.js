@@ -62,19 +62,26 @@ export default function GoalName({
 
 GoalName.propTypes = {
   goalName: PropTypes.string.isRequired,
-  goalNameError: PropTypes.string.isRequired,
+  goalNameError: PropTypes.node.isRequired,
   setGoalName: PropTypes.func.isRequired,
   validateGoalName: PropTypes.func.isRequired,
   isAppLoading: PropTypes.bool.isRequired,
   recipient: PropTypes.shape({
     id: PropTypes.number.isRequired,
   }).isRequired,
-  regionId: PropTypes.number.isRequired,
+  regionId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
   selectedGrants: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   onSelectNudgedGoal: PropTypes.func.isRequired,
   status: PropTypes.string.isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isNew: PropTypes.bool.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
-  isCurated: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool,
+};
+
+GoalName.defaultProps = {
+  isCurated: false,
 };
