@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 const useAsyncDebounceEffect = (
   callback,
   dependencies = [],
-  delay = 1000,
+  delay = 250,
 ) => {
   const inProgress = useRef(false);
   useEffect(() => {
