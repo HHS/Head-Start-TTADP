@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import './SimilarGoal.scss';
+import { dismissOnNoMatch } from './constants';
 
 export const SimilarGoalProp = PropTypes.shape({
   name: PropTypes.string,
@@ -26,9 +27,6 @@ const SimilarGoal = ({
     if (e.key === 'Enter') {
       await onClick();
     }
-
-    // TODO: handle arrow keys
-    // TODO: research other key events for dropdown
   };
 
   const id = uniqueId('similar-goal-');
@@ -37,16 +35,19 @@ const SimilarGoal = ({
     <div className="ttahub-similar-goal">
       <label
         htmlFor={id}
-        className="ttahub-similar-goal--label usa-label margin-top-0 padding-2 position-relative"
+        className="ttahub-similar-goal--label usa-label margin-top-0 padding-2 position-relative z-100"
       >
         <input
-          onClick={onClick}
+          onChange={onClick}
           type="radio"
-          className="ttahub-similar-goal--input position-absolute"
+          className="ttahub-similar-goal--input position-absolute z-200"
           id={id}
           value={goal.ids}
           name={id}
           onKeyDown={onKeyDown}
+          onBlur={(e) => {
+            dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
+          }}
         />
         <span>{goal.name}</span>
         {' '}

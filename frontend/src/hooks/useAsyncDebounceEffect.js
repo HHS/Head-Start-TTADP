@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-const useDebounceEffect = (
+const useAsyncDebounceEffect = (
   callback,
   dependencies = [],
   delay = 1000,
@@ -25,4 +25,4 @@ const useDebounceEffect = (
   }, dependencies);
 };
 
-export default useDebounceEffect;
+export default useAsyncDebounceEffect;

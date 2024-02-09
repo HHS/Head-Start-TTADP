@@ -39,7 +39,7 @@ describe('goals fetcher', () => {
   });
 
   it('fetches similar goals by text', async () => {
-    const url = '/api/goals/region/123/recipient/123/nudge?name=goal&grantNumbers=123&grantNumbers=456';
+    const url = '/api/goals/recipient/123/region/123/nudge?name=goal&grantNumbers=123&grantNumbers=456';
     fetchMock.get(
       url,
       { res: 'ok' },
