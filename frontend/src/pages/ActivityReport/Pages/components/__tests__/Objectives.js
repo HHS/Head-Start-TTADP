@@ -50,7 +50,7 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
   ];
 
   return (
-    <UserContext.Provider value={{ user: { id: 1, flags: ['goal_source'] } }}>
+    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
       <FormProvider {...hookForm}>
         <Objectives
           objectiveOptions={objectiveOptions}
