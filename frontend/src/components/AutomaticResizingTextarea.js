@@ -19,7 +19,7 @@ export default function AutomaticResizingTextarea({
 
   return (
     <Textarea
-      className={className}
+      className={`${className} ttahub-automatic-resizing-textarea`}
       onBlur={onBlur}
       id={inputName}
       name={inputName}

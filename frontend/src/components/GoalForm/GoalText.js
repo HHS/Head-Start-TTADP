@@ -45,7 +45,6 @@ GoalText.propTypes = {
   onUpdateText: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
-
 };
 
 GoalText.defaultProps = {
