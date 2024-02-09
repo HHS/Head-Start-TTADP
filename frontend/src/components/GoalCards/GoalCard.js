@@ -14,6 +14,35 @@ import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
+import SessionObjectiveCard from './SessionObjectiveCard';
+
+const SESSION_TYPE = 'session';
+
+export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
+  if (objective.type === SESSION_TYPE) {
+    return (
+      <SessionObjectiveCard
+        objective={objective}
+        objectivesExpanded={objectivesExpanded}
+      />
+    );
+  }
+
+  return (
+    <ObjectiveCard
+      objective={objective}
+      objectivesExpanded={objectivesExpanded}
+    />
+  );
+};
+
+ObjectiveSwitch.propTypes = {
+  objective: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    type: PropTypes.string,
+  }).isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+};
 
 function GoalCard({
   goal,
@@ -73,7 +102,7 @@ function GoalCard({
     },
   ];
 
-  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
+  const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
 
   const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
@@ -161,7 +190,7 @@ function GoalCard({
         />
       </div>
       {objectives.map((obj) => (
-        <ObjectiveCard
+        <ObjectiveSwitch
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}

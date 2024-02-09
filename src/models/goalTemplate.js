@@ -69,6 +69,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       type: DataTypes.DATE,
     },
+    source: {
+      allowNull: true,
+      type: DataTypes.STRING,
+    },
   }, {
     sequelize,
     modelName: 'GoalTemplate',

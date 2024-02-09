@@ -18,9 +18,14 @@ import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
 
-// TTAHUB-2126
+// TTAHUB-2126 TTAHUB-2334
+// Update the specific attribute (e.g., state code) for each grant,
+// identified by its grant number, in the map below.
+// This patch sets the new value for the grant to ensure data accuracy.
 const grantPatches = new Map([
   [12128, { stateCode: 'OH' }],
+  [10291, { stateCode: 'PW' }],
+  [14869, { stateCode: 'PW' }],
 ]);
 
 function valueFromXML(value) {

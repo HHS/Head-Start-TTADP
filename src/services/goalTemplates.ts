@@ -63,6 +63,7 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
+      'source',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],

@@ -28,6 +28,7 @@ describe('Merge goals', () => {
   const setIsAppLoading = jest.fn();
   const goals = [{
     id: 4598,
+    ids: [4598],
     goalStatus: 'In Progress',
     createdOn: '2021-06-15',
     goalText: 'This is goal text 1.',
@@ -47,6 +48,7 @@ describe('Merge goals', () => {
   },
   {
     id: 4600,
+    ids: [4600, 4601],
     goalStatus: 'Not Started',
     createdOn: '2021-07-15',
     goalText: 'This is goal text 2.',

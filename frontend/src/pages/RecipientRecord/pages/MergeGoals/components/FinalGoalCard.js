@@ -9,14 +9,14 @@ function FinalGoalCard({
   goals,
   finalGoalId,
 }) {
-  const final = goals.find((g) => g.id.toString() === finalGoalId);
+  const final = goals.find((g) => g.ids.join(',') === finalGoalId);
 
   if (!final) {
     return null;
   }
 
   const mergedGoals = goals.filter(
-    (g) => selectedGoalIds.includes(g.id.toString()) && g.id.toString() !== finalGoalId,
+    (g) => selectedGoalIds.includes(g.ids.join()) && g.ids.join(',') !== finalGoalId,
   );
 
   // combine objectives from all goals

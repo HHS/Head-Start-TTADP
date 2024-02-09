@@ -57,6 +57,7 @@ export const OBJECTIVE_DEFAULTS = (l) => ({
   isNew: true,
   closeSuspendReason: null,
   closeSuspendContext: null,
+  supportType: '',
 });
 
 export const OBJECTIVE_FORM_FIELD_INDEXES = {
@@ -65,9 +66,10 @@ export const OBJECTIVE_FORM_FIELD_INDEXES = {
   RESOURCES: 2,
   STATUS: 3,
   STATUS_SUSPEND_REASON: 4,
+  SUPPORT_TYPE: 5,
 };
 
-export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>];
+export const OBJECTIVE_DEFAULT_ERRORS = [<></>, <></>, <></>, <></>, <></>, <></>];
 
 export const TTA_OBJECTIVE_ERROR = 'Enter the TTA objective';
 export const OBJECTIVE_TOPIC_ERROR = 'Select at least one topic';
@@ -77,11 +79,13 @@ export const OBJECTIVE_LINK_ERROR = (
   </span>
 );
 export const OBJECTIVE_STATUS_ERROR = 'Select a status';
+export const OBJECTIVE_SUPPORT_TYPE_ERROR = 'Select a support type';
 
 export const OBJECTIVE_ERROR_MESSAGES = [
   TTA_OBJECTIVE_ERROR,
   OBJECTIVE_TOPIC_ERROR,
   OBJECTIVE_LINK_ERROR,
+  OBJECTIVE_SUPPORT_TYPE_ERROR,
   OBJECTIVE_STATUS_ERROR,
 ];
 

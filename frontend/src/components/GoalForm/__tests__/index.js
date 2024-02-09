@@ -100,6 +100,7 @@ describe('create goal', () => {
           value: 'https://search.marginalia.nu/',
         },
       ],
+      supportType: 'Implementing',
       id: 1,
     }],
   }];
@@ -206,6 +207,11 @@ describe('create goal', () => {
 
     const resourceOne = document.querySelector('#resource-1');
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     userEvent.click(save);
 
@@ -344,6 +350,11 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     expect(fetchMock.called('/api/goals')).toBe(false);
     userEvent.click(save);
 
@@ -403,6 +414,11 @@ describe('create goal', () => {
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
@@ -464,6 +480,11 @@ describe('create goal', () => {
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
+    let supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     let resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
@@ -505,6 +526,11 @@ describe('create goal', () => {
 
     topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -555,6 +581,11 @@ describe('create goal', () => {
 
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -628,6 +659,11 @@ describe('create goal', () => {
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     userEvent.click(save);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
@@ -676,6 +712,11 @@ describe('create goal', () => {
 
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'garrgeler');

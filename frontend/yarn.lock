@@ -2344,10 +2344,10 @@
   resolved "https://registry.yarnpkg.com/@trysound/sax/-/sax-0.2.0.tgz#cccaab758af56761eb7bf37af6f03f326dd798ad"
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
 
-"@ttahub/common@2.0.5":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.0.5.tgz#5b629a88f5908ef4610840ad270ac7ca5de523b7"
-  integrity sha512-M1NUETH4r5qE+VnNAn2reEJFsnu1diiBoF5Nf9Ha20n3bR5sGHUvCy1xKn5vZmzxolpZ8odKEhIXbMqyuJN/7w==
+"@ttahub/common@2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.0.11.tgz#2fd1c8ca7d67d16573012241770c1fc094b0a184"
+  integrity sha512-xwn+FVUzytSV4ake2zWHAWm8qWfSHq0CgpLZIUcSQLgAFSNjbf+DRjvWGvXFoV7G1BJSZLkg+4OmjCWJABIEUQ==
 
 "@turf/area@^6.4.0":
   version "6.5.0"
@@ -4534,6 +4534,11 @@ csstype@^3.0.2:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/csstype/-/csstype-3.1.1.tgz#841b532c45c758ee546a11d5bd7b7b473c8c30b9"
   integrity sha512-DJR/VvkAvSZW9bTouZue2sSxDwdTN92uHjqeKVm+0dAqdfNykRzQ95tay8aXMBAAPpUiq4Qcug2L7neoRh2Egw==
+
+csv-parse@^4.14.1:
+  version "4.16.3"
+  resolved "https://registry.yarnpkg.com/csv-parse/-/csv-parse-4.16.3.tgz#7ca624d517212ebc520a36873c3478fa66efbaf7"
+  integrity sha512-cO1I/zmz4w2dcKHVvpCr7JVRu8/FymG5OEpmvsZYlccYolPBLoVGKUHgNoc4ZGkFeFlWGEDmMyBM+TTqRdW/wg==
 
 d3-array@1, d3-array@^1.2.1:
   version "1.2.4"

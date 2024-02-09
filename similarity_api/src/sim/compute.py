@@ -19,6 +19,8 @@ from db.db import (
 nlp = spacy.load("en_core_web_sm")
 
 def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
+  # NOTE: in the query bellow there are two sections filtering out goals that are created via activity reports, but the report has not yet been approved.
+  # These section should be removed once we add support to the backend to allow merging these type of goals while maintaining the associated metadata correctly.
   recipients = query_many(
     """
     SELECT g."id", g."name", gr."id" AS "grantId"
@@ -27,8 +29,23 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
       ON g."grantId" = gr."id"
     JOIN "Recipients" r
       ON gr."recipientId" = r."id"
+    -- -------------------------------------------
+    -- Only needed to prevent goals created from non-approved reports from being merged
+    LEFT JOIN "ActivityReportGoals" arg
+      ON g.id = arg."goalId"
+    LEFT JOIN "ActivityReports" ar
+      ON arg."activityReportId" = ar.id
+    -- -------------------------------------------
     WHERE r."id" = :recipient_id
-      AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
+      AND NULLIF(TRIM(g."name"), '') IS NOT NULL
+    -- -------------------------------------------
+    -- Only needed to prevent goals created from non-approved reports from being merged
+      AND ((ar."approvedAt" IS NOT NULL
+        AND g."createdVia"::text = 'activityReport')
+        OR (g."createdVia"::text != 'activityReport')
+      )
+    -- -------------------------------------------
+    ;
     """,
     { 'recipient_id': recipient_id }
   )
