@@ -23,7 +23,7 @@ export default function GoalNudgeInitiativePicker({
   useEffect(() => {
     // reset selection when useOhsInitiativeGoal is toggled
     // or if we don't have any valid goal templates
-    if (!useOhsInitiativeGoal || !goalTemplates || !goalTemplates.length) {
+    if (!useOhsInitiativeGoal || !goalTemplates.length) {
       setSelection('');
     }
   }, [goalTemplates, useOhsInitiativeGoal]);
