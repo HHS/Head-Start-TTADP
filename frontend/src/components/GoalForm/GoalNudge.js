@@ -14,6 +14,9 @@ const MINIMUM_GOAL_NAME_LENGTH = 15;
 
 export const filterOutGrantUsedGoalTemplates = (goalTemplates, selectedGrants) => goalTemplates
   .filter((template) => {
+    if (!template.goals || !template.goals.length) {
+      return true;
+    }
     const usedGrantIds = template.goals.map((goal) => goal.grantId);
     return !selectedGrants.some((grant) => usedGrantIds.includes(grant.id));
   });
