@@ -15,6 +15,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import { sessionsByEventId } from '../../../fetchers/event';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 import { InProgress, Closed } from '../../../components/icons';
+import { getEventIdSlug } from '../constants';
 
 const pages = {
   1: 'Event summary',
@@ -67,7 +68,7 @@ const CompleteEvent = ({
     async function getSessions() {
       try {
         setIsAppLoading(true);
-        const res = await sessionsByEventId(formData.id);
+        const res = await sessionsByEventId(getEventIdSlug(formData.eventId));
         setSessions(res);
       } catch (e) {
         updateError('Unable to load sessions');
@@ -77,10 +78,10 @@ const CompleteEvent = ({
       }
     }
 
-    if (!sessions && formData.id) {
+    if (!sessions && formData.eventId) {
       getSessions();
     }
-  }, [formData.id, sessions, setIsAppLoading]);
+  }, [formData.eventId, sessions, setIsAppLoading]);
 
   useEffect(() => {
     if (errors.status && !showError && ((sessions && sessions.length === 0) || !isOwner)) {
@@ -162,11 +163,11 @@ const CompleteEvent = ({
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Complete event</title>
+        <title>Complete Event</title>
       </Helmet>
 
       <IndicatesRequiredField />
-      <p className="usa-prose">Review the information in each section before subitting. Once submitted, the report will no longer be editable.</p>
+      <p className="usa-prose">Review the information in each section before submitting. Once submitted, the report will no longer be editable.</p>
       {error && (
         <div className="margin-top-4">
           <Alert type="error">
@@ -292,6 +293,7 @@ const CompleteEvent = ({
 CompleteEvent.propTypes = {
   formData: PropTypes.shape({
     id: PropTypes.number,
+    eventId: PropTypes.string,
     status: PropTypes.string,
     pageState: PropTypes.shape({
       1: PropTypes.string,

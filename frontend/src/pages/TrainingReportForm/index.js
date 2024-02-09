@@ -137,7 +137,7 @@ export default function TrainingReportForm({ match }) {
     if (!trainingReportId) {
       return;
     }
-    const newPath = `/training-reports/${trainingReportId}}`;
+    const newPath = `/training-reports/${trainingReportId}`;
     setSocketPath(newPath);
   }, [currentPage, setSocketPath, trainingReportId]);
 
@@ -333,7 +333,7 @@ export default function TrainingReportForm({ match }) {
         {error}
       </Alert>
       )}
-      <Helmet titleTemplate="%s - Event | TTA Hub" defaultTitle="Event | TTA Hub" />
+      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Event - Training Report | TTA Hub" />
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>

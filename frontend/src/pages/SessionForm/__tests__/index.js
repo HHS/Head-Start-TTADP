@@ -4,6 +4,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -34,6 +35,7 @@ describe('SessionReportForm', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    jest.useRealTimers();
     fetchMock.reset();
 
     // the basic app before stuff
@@ -75,6 +77,7 @@ describe('SessionReportForm', () => {
   });
 
   it('fetches existing session report form', async () => {
+    jest.useFakeTimers();
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
@@ -86,7 +89,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-
     jest.advanceTimersByTime(30000);
 
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
@@ -186,6 +188,11 @@ describe('SessionReportForm', () => {
         2: COMPLETE,
         3: COMPLETE,
       },
+      event: {
+        data: {
+          goal: 'test goal',
+        },
+      },
       sessionName: 'Test session',
       duration: 1,
       context: '', // context missing
@@ -194,7 +201,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -202,6 +209,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: [],
     };
 
     fetchMock.get(url, formData);
@@ -240,6 +248,11 @@ describe('SessionReportForm', () => {
         2: COMPLETE,
         3: COMPLETE,
       },
+      event: {
+        data: {
+          goal: 'test goal',
+        },
+      },
       sessionName: 'Test session',
       duration: 1,
       context: '', // context missing
@@ -248,7 +261,7 @@ describe('SessionReportForm', () => {
       objectiveTrainers: ['DTL'],
       objectiveResources: [],
       files: [],
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       regionId: 1,
       participants: [],
       deliveryMethod: 'In person',
@@ -256,6 +269,7 @@ describe('SessionReportForm', () => {
       ttaProvided: 'oH YEAH',
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: [],
     };
 
     fetchMock.get(url, formData);
@@ -275,7 +289,7 @@ describe('SessionReportForm', () => {
 
     expect(await screen.findByText(/Status must be complete to submit session/i)).toBeInTheDocument();
   });
-  it('will submit if every page & the status is complete', async () => {
+  it('will submit if every page & the status & the event goal is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');
     const formData = {
       eventId: 1,
@@ -283,7 +297,142 @@ describe('SessionReportForm', () => {
       id: 1,
       ownerId: 1,
       eventName: 'Test event',
+      event: {
+        data: {
+          goal: 'test goal',
+        },
+      },
       status: 'In progress',
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+        4: COMPLETE,
+      },
+      'pageVisited-supporting-attachments': true,
+      sessionName: 'Test session',
+      endDate: '01/01/2024',
+      startDate: '01/01/2024',
+      duration: 1,
+      context: 'asasfdsafasdfsdaf',
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: SUPPORT_TYPES[1],
+      regionId: 1,
+      participants: [1],
+      recipients: [1],
+      deliveryMethod: 'In-person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: ['English'],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+
+    fetchMock.put(url, formData);
+
+    const submit = screen.getByRole('button', { name: /Submit/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).toBe(true));
+  });
+
+  it('will not submit if the event\'s goal is not complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT-123',
+      event: {
+        data: {
+          goal: '',
+          eventId: 'R-EVENT-123',
+        },
+      },
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: 'In progress',
+      pageState: {
+        1: IN_PROGRESS,
+        2: COMPLETE,
+        3: COMPLETE,
+        4: COMPLETE,
+      },
+      'pageVisited-supporting-attachments': true,
+      sessionName: 'Test session',
+      endDate: '01/01/2024',
+      startDate: '01/01/2024',
+      duration: 1,
+      context: 'asasfdsafasdfsdaf',
+      objective: 'test objective',
+      objectiveTopics: ['topic'],
+      objectiveTrainers: ['DTL'],
+      objectiveResources: [],
+      files: [],
+      objectiveSupportType: SUPPORT_TYPES[1],
+      regionId: 1,
+      participants: [1],
+      recipients: [1],
+      deliveryMethod: 'In-person',
+      numberOfParticipants: 1,
+      ttaProvided: 'oH YEAH',
+      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+      language: ['English'],
+    };
+
+    fetchMock.get(url, formData);
+
+    act(() => {
+      renderSessionForm('1', 'complete-session', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
+    act(() => {
+      userEvent.selectOptions(statusSelect, 'Complete');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    fetchMock.put(url, formData);
+    const submit = screen.getByRole('button', { name: /Submit/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
+
+    expect(await screen.findByText(/Vision and goal for/i)).toBeInTheDocument();
+  });
+
+  it('redirects if session is complete', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+    const formData = {
+      eventId: 1,
+      eventDisplayId: 'R-EVENT',
+      id: 1,
+      ownerId: 1,
+      eventName: 'Test event',
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
       pageState: {
         1: IN_PROGRESS,
         2: COMPLETE,
@@ -317,19 +466,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
-
-    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-    act(() => {
-      userEvent.selectOptions(statusSelect, 'Complete');
-    });
-
-    fetchMock.put(url, formData);
-
-    const submit = screen.getByRole('button', { name: /Submit/i });
-    act(() => {
-      userEvent.click(submit);
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).toBe(true));
+    expect(history.location.pathname).toBe('/training-report/view/1');
   });
 });

@@ -1,10 +1,11 @@
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Recipient {
-  constructor(user, recipient) {
+  constructor(user, recipient, isOnRecipientsReports = false) {
     this.user = user;
     this.recipient = recipient;
     this.regionIds = this.recipient.grants.map((grant) => grant.regionId);
+    this.isOnRecipientsReports = isOnRecipientsReports;
   }
 
   canReadInRegion(region) {
@@ -19,5 +20,17 @@ export default class Recipient {
 
   canView() {
     return this.regionIds.some((regionId) => this.canReadInRegion(regionId));
+  }
+
+  canMergeGoals() {
+    if (this.canView() && this.user?.roles?.some((r) => r.name === 'TTAC')) {
+      return true;
+    }
+
+    if (this.isOnRecipientsReports) {
+      return true;
+    }
+
+    return false;
   }
 }

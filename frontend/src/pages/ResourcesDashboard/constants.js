@@ -19,11 +19,13 @@ import {
   participantsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   grantNumberFilter,
   otherEntitiesFilter,
   participantsFilter,

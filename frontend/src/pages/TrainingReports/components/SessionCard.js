@@ -57,6 +57,8 @@ function SessionCard({
     }
   };
 
+  const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+
   const displaySessionStatus = getSessionDisplayStatusText();
 
   const getSessionStatusIcon = (() => {
@@ -94,7 +96,7 @@ function SessionCard({
             {sessionName}
           </p>
           {
-            isWriteable
+            isWriteable && !statusIsComplete
               ? (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
                   <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">

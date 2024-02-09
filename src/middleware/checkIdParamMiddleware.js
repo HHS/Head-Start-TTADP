@@ -172,3 +172,27 @@ export function checkIdParam(req, res, next, paramName) {
   auditLogger.error(msg);
   return res.status(httpCodes.BAD_REQUEST).send(msg);
 }
+
+export function checkCommunicationLogIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'communicationLogId');
+}
+
+export function checkSessionAttachmentIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'sessionAttachmentId');
+}
+
+export function checkRegionIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'regionId');
+}
+
+export function checkRecipientIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'recipientId');
+}
+
+export function checkGoalGroupIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'goalGroupId');
+}
+
+export function checkIdIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'id');
+}

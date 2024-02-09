@@ -4,8 +4,12 @@ import { get, put, destroy } from './index';
 
 const eventsUrl = join('/', 'api', 'events');
 
-export const eventById = async (id) => {
-  const res = await get(`/api/events/id/${id}`);
+export const eventById = async (id, readOnly = false) => {
+  let url = `/api/events/id/${id}`;
+  if (readOnly) {
+    url += '?readOnly=true';
+  }
+  const res = await get(url);
   return res.json();
 };
 

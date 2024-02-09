@@ -11,14 +11,18 @@ import { getUserRegions } from '../../../permissions';
 import GoalDataController from '../../../components/GoalCards/GoalDataController';
 
 export default function GoalsObjectives({
-  recipientId, regionId, recipient, location, recipientName,
+  recipientId,
+  regionId,
+  recipient,
+  location,
+  canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
-    GOALS_OBJECTIVES_FILTER_KEY,
+    GOALS_OBJECTIVES_FILTER_KEY(recipientId),
     [],
   );
 
@@ -41,11 +45,7 @@ export default function GoalsObjectives({
   return (
     <>
       <Helmet>
-        <title>
-          RTTAPA Goals and Objectives -
-          {' '}
-          {recipientName}
-        </title>
+        <title>RTTAPA</title>
       </Helmet>
       <div className="maxw-widescreen" id="recipientGoalsObjectives">
         <div className="display-flex display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
@@ -64,6 +64,7 @@ export default function GoalsObjectives({
           regionId={regionId}
           hasActiveGrants={hasActiveGrants}
           showNewGoals={showNewGoals || false}
+          canMergeGoals={canMergeGoals}
         />
       </div>
     </>
@@ -80,9 +81,5 @@ GoalsObjectives.propTypes = {
     })).isRequired,
   }).isRequired,
   location: ReactRouterPropTypes.location.isRequired,
-  recipientName: PropTypes.string,
-};
-
-GoalsObjectives.defaultProps = {
-  recipientName: '',
+  canMergeGoals: PropTypes.bool.isRequired,
 };

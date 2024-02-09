@@ -258,7 +258,7 @@ function Landing() {
   return (
     <>
       <Helmet>
-        <title>Landing</title>
+        <title>Activity Reports</title>
       </Helmet>
       <>
         <RegionPermissionModal
@@ -272,6 +272,7 @@ function Landing() {
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button
