@@ -86,7 +86,8 @@ export const handleError = async (req, res, error, logContext) => {
     label = 'UNEXPECTED ERROR';
   }
 
-  if (error instanceof Sequelize.ConnectionError) {
+  // eslint-disable-next-line max-len
+  if (error instanceof Sequelize.ConnectionError || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
   }
 
