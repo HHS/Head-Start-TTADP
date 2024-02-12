@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 import httpContext from 'express-http-context';
 import Semaphore from '../../lib/semaphore';
-import { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS, GROUP_COLLABORATORS } from '../../constants';
 
 const semaphore = new Semaphore(1);
 
@@ -23,6 +23,15 @@ const collaboratorDetails = {
     editor: OBJECTIVE_COLLABORATORS.EDITOR,
     mergeCreator: OBJECTIVE_COLLABORATORS.MERGE_CREATOR,
     mergeDeprecator: OBJECTIVE_COLLABORATORS.MERGE_DEPRECATOR,
+  },
+  group: {
+    idName: 'groupId',
+    validFor: 'Groups',
+    collaborators: 'GroupCollaborator',
+    creator: GROUP_COLLABORATORS.CREATOR,
+    // editor: GROUP_COLLABORATORS.EDITOR,
+    // mergeCreator: GROUP_COLLABORATORS.MERGE_CREATOR,
+    // mergeDeprecator: GROUP_COLLABORATORS.MERGE_DEPRECATOR,
   },
 };
 

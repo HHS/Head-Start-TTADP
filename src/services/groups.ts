@@ -1,5 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
-import db from '../models';
+import db, { sequelize } from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';
 import SCOPES from '../middleware/scopeConstants';
@@ -77,7 +77,8 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
       ...(groupId && { groupId: { [Op.not]: groupId } }),
     },
   });
-  return !!existingGroup; // Return true if an existing group is found, false otherwise
+  // Return true if the name is available, false otherwise.
+  return !existingGroup;
 }
 
 /**
@@ -160,7 +161,7 @@ export async function groupsByRegion(region: number, userId: number): Promise<Gr
  * @returns A promise that resolves to an array of GroupResponse objects.
  */
 export async function groups(userId: number, regions: number[] = []): Promise<GroupResponse[]> {
-  return Group.findAll({
+  const returnGroups = await Group.findAll({
     attributes: [
       'id',
       'name',
@@ -180,29 +181,29 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       {
         model: GroupCollaborator,
         as: 'groupCollaborators',
+        attributes: ['id'],
         required: true,
         include: [
           {
             model: CollaboratorType,
             as: 'collaboratorType',
             required: true,
-            attributes: ['name'],
+            attributes: ['id', 'name'],
           },
           {
             model: User,
             as: 'user',
-            attributes: [],
+            attributes: ['id', 'name'],
             required: true,
             include: [{
               model: Permission,
               as: 'permissions',
               attributes: [],
               required: true,
-              where: { scopeId: SCOPES.READ_REPORTS },
+              // where: { scopeId: SCOPES.READ_REPORTS },
             }],
           },
         ],
-        attributes: [],
       },
       {
         attributes: [
@@ -228,6 +229,42 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       },
     ],
   });
+
+  // Get  distinct list of groupIds
+  const groupIds = returnGroups.map((g) => g.id);
+
+  // Get all the users that have the creator role for the groups.
+  const creatorUsers = await GroupCollaborator.findAll({
+    attributes: ['id', 'groupId', 'userId'],
+    where: {
+      groupId: groupIds,
+    },
+    include: [{
+      model: CollaboratorType,
+      as: 'collaboratorType',
+      required: true,
+      where: {
+        name: GROUP_COLLABORATORS.CREATOR,
+      },
+    },
+    {
+      model: User,
+      as: 'user',
+      attributes: ['id', 'name'],
+      required: true,
+    }],
+  });
+
+  // Match each creator to its group and create a property for each group.
+  const groupsWithCreators = returnGroups.map((g) => {
+    const creator = creatorUsers.find((cu) => cu.groupId === g.id);
+    return {
+      ...g.dataValues,
+      creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
+    };
+  });
+
+  return groupsWithCreators;
 }
 
 /**
@@ -239,7 +276,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
  */
 export async function group(groupId: number): Promise<GroupResponse> {
   // Find a group with the given groupId
-  return Group.findOne({
+  const returnGroup = await Group.findOne({
     attributes: [
       'id',
       'name',
@@ -253,17 +290,18 @@ export async function group(groupId: number): Promise<GroupResponse> {
         model: GroupCollaborator,
         as: 'groupCollaborators',
         required: true,
+        attributes: ['id', 'userId', 'groupId'],
         include: [
           {
             model: CollaboratorType,
             as: 'collaboratorType',
             required: true,
-            attributes: ['name'],
+            attributes: ['id', 'name'],
           },
           {
             model: User,
             as: 'user',
-            attributes: [],
+            attributes: ['id', 'name'],
             required: true,
             include: [{
               model: Permission,
@@ -275,7 +313,6 @@ export async function group(groupId: number): Promise<GroupResponse> {
             }],
           },
         ],
-        attributes: [],
       },
       {
         model: Grant,
@@ -301,6 +338,17 @@ export async function group(groupId: number): Promise<GroupResponse> {
       },
     ],
   });
+
+  // Get the creator of the group.
+  const creator = returnGroup.groupCollaborators.find(
+    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
+  );
+
+  // Return the group with the creator.
+  return {
+    ...returnGroup.dataValues,
+    creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
+  };
 }
 
 /**
@@ -555,19 +603,19 @@ export async function potentialRecipientGrants(
       ['id', 'grantId'],
       // Alias the 'number' column as 'grantNumber'
       ['number', 'grantNumber'],
-      // Alias the 'recipient.columnName' as 'name'
-      ['recipient.columnName', 'name'],
+      // Alias the 'recipient.name' as 'name'
+      [sequelize.col('"recipient"."name"'), 'name'],
       // Include the 'regionId' column
       'regionId',
       // Alias the 'recipient.uei' column as 'uei'
-      ['recipient.uei', 'uei'],
+      [sequelize.col('"recipient"."uei"'), 'uei'],
       // Alias the 'program.programType' column as 'programType'
-      ['program.programType', 'programType'],
+      [sequelize.col('"programs"."programType"'), 'programType'],
     ],
     // Filter grants with 'status' as 'Active' and 'regionId' in creatorsRegionIds
     where: {
       status: 'Active',
-      regionId: creatorsRegionIds,
+      regionId: creatorsRegionIds.map(({ regionId }) => regionId.id),
       // Add the top-level where clause for null groupGrants.id
       '$groupGrants.id$': null,
     },
@@ -578,13 +626,14 @@ export async function potentialRecipientGrants(
         as: 'recipient',
         // Exclude all attributes of the 'Recipient' model
         attributes: [],
+        // attributes: ['id', 'name', 'uei'],
         // Require a matching record in the 'Recipient' model
         required: true,
       },
       // Include the 'Program' model with alias 'program'
       {
         model: Program,
-        as: 'program',
+        as: 'programs',
         // Exclude all attributes of the 'Program' model
         attributes: [],
         // Require a matching record in the 'Program' model

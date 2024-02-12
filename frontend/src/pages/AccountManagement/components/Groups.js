@@ -133,7 +133,7 @@ export default function Groups() {
                       {group.name}
                     </td>
                     <td data-label="Group owner">
-                      {group.user.name}
+                      {group.creator ? group.creator.name : ''}
                     </td>
                     <td align="right">
                       <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
