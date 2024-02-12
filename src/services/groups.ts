@@ -74,7 +74,7 @@ export async function checkGroupNameAvailable(name: string, groupId?: number): P
         [Op.iLike]: name.trim(), // Case-insensitive comparison of the name
       },
       // Exclude the group with the given groupId if provided
-      ...(groupId && { groupId: { [Op.not]: groupId } }),
+      ...(groupId && { id: { [Op.not]: groupId } }),
     },
   });
   // Return true if the name is available, false otherwise.

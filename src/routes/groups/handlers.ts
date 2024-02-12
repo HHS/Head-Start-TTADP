@@ -409,15 +409,14 @@ export async function updateGroup(req: Request, res: Response) {
   try {
     // Destructure the necessary properties from the request body
     const {
-      groupId: groupIdRaw,
+      id: groupIdRaw,
       name,
       grants: grantIds,
-      coOwners: coOwnerIds,
-      sharedWith: sharedWithIds,
+      coOwners: coOwnerIds = [],
+      sharedWith: sharedWithIds = [],
       isPublic: isPublicRaw,
     } = req.body;
     const isPublic = isPublicRaw === 'true';
-
     // Parse the groupId and retrieve necessary data from various async functions
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
     // Destructure the array returned by Promise.all into individual variables
@@ -435,7 +434,7 @@ export async function updateGroup(req: Request, res: Response) {
         attributes: [
           'id',
           'regionId',
-          'recipeintId',
+          'recipientId',
           'status',
         ],
         where: {

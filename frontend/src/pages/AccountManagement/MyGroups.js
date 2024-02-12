@@ -21,7 +21,7 @@ import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
 
 const mapGrants = (grants) => grants.map((grant) => ({
   value: grant.id,
-  label: grant.name,
+  label: grant.recipient.name,
 }));
 
 const mapRecipients = (recipients) => recipients.map((recipient) => ({
@@ -66,6 +66,7 @@ export default function MyGroups({ match }) {
       setIsAppLoading(true);
       try {
         const existingGroupData = await fetchGroup(groupId);
+        console.log('fetch group: ', existingGroupData);
         if (existingGroupData) {
           setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
@@ -91,6 +92,7 @@ export default function MyGroups({ match }) {
       try {
         setRecipientsFetched(true);
         const response = await getRecipientAndGrantsByUser();
+        console.log("recipients", mapRecipients(response));
         setRecipients(mapRecipients(response));
       } catch (err) {
         setError('There was an error fetching your recipients');
@@ -129,6 +131,7 @@ export default function MyGroups({ match }) {
       }
 
       if (groupId) {
+        console.log('updating group', groupId);
         const g = await updateGroup({
           id: groupId,
           ...post,
