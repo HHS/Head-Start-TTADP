@@ -1,7 +1,9 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
+import {
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+} from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -847,6 +849,8 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'status',
           'goalId',
           'supportType',
+          'onApprovedAR',
+          'onAR',
         ],
         required: false,
         include: [
@@ -1525,17 +1529,31 @@ export async function goalsForGrants(grantIds) {
       'onApprovedAR',
       'endDate',
       'source',
+      'createdVia',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
     where: {
+      name: {
+        [Op.ne]: '', // exclude "blank" goals
+      },
       '$grant.id$': ids,
       status: {
-        [Op.or]: [
-          { [Op.notIn]: ['Closed', 'Suspended'] },
-          { [Op.is]: null },
-        ],
+        [Op.notIn]: ['Closed', 'Suspended'],
       },
+      [Op.or]: [
+        {
+          createdVia: {
+            [Op.not]: 'tr',
+          },
+        },
+        {
+          createdVia: 'tr',
+          status: {
+            [Op.not]: 'Draft',
+          },
+        },
+      ],
     },
     include: [
       {
@@ -2109,11 +2127,11 @@ export async function saveGoalsForReport(goals, report) {
         }, { individualHooks: true });
       }
 
-      if (!newOrUpdatedGoal.onApprovedAR) {
-        if (source && newOrUpdatedGoal.source !== source) {
-          newOrUpdatedGoal.set({ source });
-        }
+      if (source && newOrUpdatedGoal.source !== source) {
+        newOrUpdatedGoal.set({ source });
+      }
 
+      if (!newOrUpdatedGoal.onApprovedAR) {
         if (fields.name !== newOrUpdatedGoal.name && fields.name) {
           newOrUpdatedGoal.set({ name: fields.name.trim() });
         }
