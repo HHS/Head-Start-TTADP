@@ -145,11 +145,12 @@ const collectNextFile = async (
   await Promise.all([
     // Scan file
     // Note: file will be queued for processing without waiting on status of scanning
-    addToScanQueue({ key: importFileData.key }),
-    updateStatusByKey(
-      importFileData.key,
-      FILE_STATUSES.QUEUED,
-    ),
+    // TODO: Files too big for current scanner, all will fail
+    // addToScanQueue({ key: importFileData.key }),
+    // updateStatusByKey(
+    //   importFileData.key,
+    //   FILE_STATUSES.QUEUED,
+    // ),
     setImportFileStatus(
       importFileData.importFileId,
       IMPORT_STATUSES.COLLECTED,
