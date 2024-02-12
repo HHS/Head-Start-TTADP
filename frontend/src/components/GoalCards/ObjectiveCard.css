@@ -1,0 +1,9 @@
+/**
+ Not using a built in breakpoint/width size from USDWS, because this 
+ first column has to sit parallel with the session objective card's first column.
+ (The text there is "Session objective" which is a bit longer than "Objective", and 
+ it was wrapping at minw-15) 
+**/
+.ttahub-goal-card__objective-list li span:first-child {
+    min-width: 130px;
+}

@@ -1,7 +1,6 @@
 import React, {
-  useState, useMemo, useContext, useRef,
+  useState, useContext, useRef,
 } from 'react';
-import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -225,15 +224,9 @@ export default function Objective({
     rules: { required: true },
     defaultValue: objective.closeSuspendContext || '',
   });
+  const isOnApprovedReport = objective.onApprovedAR;
 
-  const isOnApprovedReport = useMemo(() => objective.activityReports
-    && objective.activityReports.some(
-      (report) => report.status === REPORT_STATUSES.APPROVED,
-    ), [objective.activityReports]);
-
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length
-  ), [objective.activityReports]);
+  const isOnReport = objective.onAR;
 
   const onChangeObjective = (newObjective) => {
     setSelectedObjective(newObjective);
@@ -353,7 +346,7 @@ export default function Objective({
         savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
+        topics={objectiveTopics}
         isOnReport={isOnReport || false}
         isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
@@ -363,7 +356,7 @@ export default function Objective({
         editingFromActivityReport
       />
       <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
+        resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
         setResources={onChangeResources}
         error={errors.resources
@@ -410,7 +403,7 @@ export default function Objective({
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
+        isOnApprovedReport={false}
         error={errors.ttaProvided
           ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
