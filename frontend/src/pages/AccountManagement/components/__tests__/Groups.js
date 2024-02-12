@@ -43,20 +43,29 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        creator: {
+          name: 'Tom Jones',
+          id: 1,
+        },
       },
       {
         id: 2,
         name: 'group2',
         userId: 1,
         isPublic: true,
+        creator: {
+          name: 'Tom Jones',
+          id: 1,
+        },
       },
       {
         id: 3,
         name: 'group3',
         userId: 2,
         isPublic: true,
-        user: {
+        creator: {
           name: 'Tim User',
+          id: 2,
         },
       },
     ]);
@@ -98,7 +107,7 @@ describe('Groups', () => {
         name: 'group3',
         userId: 2,
         isPublic: true,
-        user: {
+        creator: {
           name: 'Tim User',
         },
       },
@@ -119,6 +128,10 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
     ]);
 
@@ -141,13 +154,16 @@ describe('Groups', () => {
   });
 
   it('you can delete a group', async () => {
-    fetchMock.get('/api/groups', [
-      {
+    fetchMock.get('/api/groups', [{
+      id: 1,
+      name: 'group1',
+      userId: 1,
+      isPublic: false,
+      creator: {
+        name: 'Tim User',
         id: 1,
-        name: 'group1',
-        userId: 1,
-        isPublic: false,
       },
+    },
     ]);
     fetchMock.delete('/api/groups/1', {});
 
@@ -182,6 +198,10 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        creator: {
+          name: 'Tim User',
+          id: 1,
+        },
       },
     ]);
     fetchMock.delete('/api/groups/1', 500);
@@ -225,7 +245,7 @@ describe('Groups', () => {
           name: `group${i}`,
           userId: 3,
           isPublic: true,
-          user: {
+          creator: {
             name: 'Tim User',
           },
         });

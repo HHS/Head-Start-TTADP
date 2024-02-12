@@ -22,10 +22,10 @@ export default function Groups() {
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
   const { myGroups, setMyGroups } = useContext(MyGroupsContext);
-
+  console.log('my gorups', myGroups);
   const groups = {
-    myGroups: (myGroups || []).filter((group) => group.userId === user.id),
-    publicGroups: (myGroups || []).filter((group) => group.userId !== user.id),
+    myGroups: (myGroups || []).filter((group) => group.creator.id === user.id),
+    publicGroups: (myGroups || []).filter((group) => group.creator.id !== user.id),
   };
 
   const getPageInfo = () => {
