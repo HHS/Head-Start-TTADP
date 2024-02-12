@@ -57,6 +57,7 @@ const processRecords = async (
   deletes,
   errors,
 }> => {
+  console.log('processRecords');
   let record;
   try {
     record = await xmlClient.getNextObject(true);
@@ -152,7 +153,7 @@ const processRecords = async (
           },
         );
         recordActions.inserts.push(insert);
-      } else {
+      } else if (fileDate > currentData.sourceUpdatedAt) {
         // If the record already exists, find the delta then update it
         const delta = collectChangedValues(filteredData, currentData);
         const update = model.update(
@@ -269,6 +270,7 @@ const processFile = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: Promise<any>[],
 }> => {
+  console.log('processFile');
   let result: {
     hash?: string,
     schema?: SchemaNode,
@@ -345,6 +347,7 @@ const processFilesFromZip = async (
   processDefinitions: ProcessDefinition[], // An array of process definitions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
+  console.log('processFilesFromZip');
   // If there are no more files to process, exit the function
   if (processDefinitions.length === 0) return Promise.resolve();
 
@@ -471,10 +474,13 @@ const processFilesFromZip = async (
 const processZipFileFromS3 = async (
   importId: number,
 ) => {
+  console.log('processZipFileFromS3');
+  const startTime = new Date(); // The start time for file collection
   // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
   if (!importFile) return Promise.resolve();
 
+  console.log('processZipFileFromS3');
   // Destructure properties from the importFile object
   const {
     dataValues: { importFileId, processAttempts = 0 },
@@ -497,7 +503,10 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // These must be let to properly wrap the population in a try/catch
@@ -522,7 +531,10 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // Filter out null file details, and to the ones that streams were requested for
@@ -560,12 +572,24 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', `processZipFileFromS3 processFilesFromZip ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      file: {
+        name: fileDetails.name,
+      },
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // Set the import file status to PROCESSED
   await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSED);
-  return results;
+  return {
+    ...results,
+    file: {
+      name: fileDetails.name,
+    },
+    duration: new Date().getTime() - startTime.getTime(),
+  };
 };
 
 export {
