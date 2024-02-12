@@ -6,6 +6,7 @@ import {
   enqueueMaintenanceJob,
   maintenanceCommand,
   addCronJob,
+  runMaintenanceCronJobs,
 } from './common';
 import {
   download as downloadImport,
@@ -14,6 +15,7 @@ import {
   moreToProcess,
   getImportSchedules,
 } from '../importSystem';
+import LockManager from '../lockManager';
 
 /**
  * Enqueues a maintenance job for imports with a specified type and optional id.
@@ -25,15 +27,19 @@ import {
  *
  * @throws Will throw an error if enqueueMaintenanceJob throws.
  */
-const enqueueImportMaintenanceJob = (
+const enqueueImportMaintenanceJob = async (
   type: typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE],
   id?: number,
+  requiresWorker = false,
+  requiresLock = false,
 ) => enqueueMaintenanceJob(
   MAINTENANCE_CATEGORY.IMPORT,
   {
     type,
     id,
   },
+  requiresWorker,
+  requiresLock,
 );
 
 /**
@@ -50,6 +56,7 @@ const scheduleImportCrons = async () => {
   try {
     // Retrieve a list of import schedules from a data source
     imports = await getImportSchedules();
+
     // Iterate over each import schedule to setup cron jobs
     imports.forEach(({
       id,
@@ -60,11 +67,11 @@ const scheduleImportCrons = async () => {
       MAINTENANCE_CATEGORY.IMPORT,
       MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
       // Define the function that creates a new CronJob instance
-      (category, type, timezone, schedule) => CronJob(
+      (category, type, timezone, schedule) => new CronJob(
         schedule,
         // Define the task to be executed by the cron job, which enqueues a maintenance job
-        () => enqueueImportMaintenanceJob(
-          MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        async () => enqueueImportMaintenanceJob(
+          type,
           id,
         ),
         null,
@@ -72,13 +79,15 @@ const scheduleImportCrons = async () => {
         timezone,
       ),
       importSchedule,
+      name,
     ));
+    await runMaintenanceCronJobs();
   } catch (err) {
     return { imports, isSuccessful: false, error: err.message };
   }
 
   // Return the list of import schedules
-  return { imports, isSuccessful: true };
+  return { imports, isSuccessful: true, scheduled: imports.map(({ name }) => name) };
 };
 
 /**
@@ -107,6 +116,7 @@ const importSchedule = async () => maintenanceCommand(
       return {
         isSuccessful: !Object.keys(scheduleResults).includes('error'),
         ...scheduleResults,
+        triggeredById,
       };
     } catch (err) {
       // If an error occurs during import, return an object indicating failure and the error.
@@ -145,17 +155,21 @@ const importDownload = async (id) => maintenanceCommand(
       // Attempt to download the import using the provided id.
       const downloadResults = await downloadImport(id);
       // Check if there are more items to download after the current batch.
-      const more = await moreToDownload(id);
+      const [downloadMore, processMore] = await Promise.all([
+        moreToDownload(id),
+        moreToProcess(id),
+      ]);
+
       // If there are more items to download, enqueue a job to download the next batch.
-      if (more) {
-        enqueueImportMaintenanceJob(
+      if (downloadMore) {
+        await enqueueImportMaintenanceJob(
           MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
           id,
         );
       }
       // If the download results have a length, enqueue a job to process the downloaded data.
-      if (downloadResults?.length) {
-        enqueueImportMaintenanceJob(
+      if (processMore) {
+        await enqueueImportMaintenanceJob(
           MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
         );
@@ -194,23 +208,28 @@ const importProcess = async (id) => maintenanceCommand(
   // utilities.
   async (logMessages, logBenchmarks, triggeredById) => {
     try {
-      // Process the import and await the results.
-      const processResults = await processImport(id);
-      // Check if there are more items to process after the current import.
-      const more = await moreToProcess(id);
-      if (more) {
-        // If more items need processing, enqueue a new import maintenance job.
-        enqueueImportMaintenanceJob(
-          MAINTENANCE_TYPE.IMPORT_PROCESS,
-          id,
-        );
-      }
-      // Return the process results along with a success flag indicating the absence of
-      // an 'error' key.
-      return {
-        isSuccessful: !Object.keys(processResults).includes('error'),
-        ...processResults,
-      };
+      const lockManager = new LockManager(`${MAINTENANCE_TYPE.IMPORT_PROCESS}-${id}`);
+      let result;
+      await lockManager.executeWithLock(async () => {
+        // Process the import and await the results.
+        const processResults = await processImport(id);
+        // Check if there are more items to process after the current import.
+        const more = await moreToProcess(id);
+        if (more) {
+          // If more items need processing, enqueue a new import maintenance job.
+          await enqueueImportMaintenanceJob(
+            MAINTENANCE_TYPE.IMPORT_PROCESS,
+            id,
+          );
+        }
+        // Return the process results along with a success flag indicating the absence of
+        // an 'error' key.
+        result = {
+          isSuccessful: !Object.keys(processResults).includes('error'),
+          ...processResults,
+        };
+      });
+      return result;
     } catch (err) {
       // In case of an error, return an object indicating the process was not successful and
       // include the error.
@@ -266,7 +285,11 @@ const importMaintenance = async (job) => {
 };
 
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
-enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE);
+// TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
+// needs to be addressed
+// if (process.env.WORKER_THRONG_ID === '1') {
+//   enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, true, true);
+// }
 
 export {
   enqueueImportMaintenanceJob,
