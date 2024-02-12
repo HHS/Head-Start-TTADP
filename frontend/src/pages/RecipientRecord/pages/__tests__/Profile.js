@@ -5,6 +5,7 @@ import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import { render, screen } from '@testing-library/react';
 import Profile from '../Profile';
 import UserContext from '../../../../UserContext';
+import { GrantDataProvider } from '../GrantDataContext';
 
 describe('Recipient Record - Profile', () => {
   const user = {
@@ -16,7 +17,9 @@ describe('Recipient Record - Profile', () => {
     fetchMock.get('/api/recipient/1/region/1/leadership', []);
     render(
       <UserContext.Provider value={{ user }}>
-        <Profile recipientSummary={summary} recipientId={1} regionId={1} />
+        <GrantDataProvider>
+          <Profile recipientSummary={summary} recipientId={1} regionId={1} />
+        </GrantDataProvider>
       </UserContext.Provider>,
     );
   };
