@@ -9,7 +9,7 @@ import './Profile.css';
 import FeatureFlag from '../../../components/FeatureFlag';
 import ClassReview from './components/ClassReview';
 import MonitoringReview from './components/MonitoringReview';
-import { GrantDataProvider } from './GrantDataContext';
+import { useGrantData } from './GrantDataContext';
 import { ClassGuidanceProvider } from './ClassGuidanceContext';
 
 export default function Profile({
@@ -18,6 +18,7 @@ export default function Profile({
   recipientId,
 }) {
   const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
+  const { hasMonitoringData, hasClassData } = useGrantData();
 
   return (
     <>
@@ -25,18 +26,18 @@ export default function Profile({
         <title>Profile</title>
       </Helmet>
       <ClassGuidanceProvider>
-        <GrantDataProvider>
-          <div className="maxw-widescreen">
-            <Grid row gap={4}>
-              <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
-                <RecipientSummary summary={recipientSummary} regionId={regionId} />
-              </Grid>
-              <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
-                <RecipientLeadership recipientId={recipientId} regionId={regionId} />
-              </Grid>
-              <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
-                <GrantList summary={recipientSummary} />
-              </Grid>
+        <div className="maxw-widescreen">
+          <Grid row gap={4}>
+            <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
+              <RecipientSummary summary={recipientSummary} regionId={regionId} />
+            </Grid>
+            <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
+              <RecipientLeadership recipientId={recipientId} regionId={regionId} />
+            </Grid>
+            <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
+              <GrantList summary={recipientSummary} />
+            </Grid>
+            {hasMonitoringData() || hasClassData() ? (
               <FeatureFlag flag="monitoring">
                 {activeGrants.map((grant) => (
                   <React.Fragment key={grant.number}>
@@ -68,9 +69,9 @@ export default function Profile({
                   </React.Fragment>
                 ))}
               </FeatureFlag>
-            </Grid>
-          </div>
-        </GrantDataProvider>
+            ) : null}
+          </Grid>
+        </div>
       </ClassGuidanceProvider>
     </>
   );
