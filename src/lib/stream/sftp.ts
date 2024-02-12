@@ -103,11 +103,11 @@ class SftpClient {
 
   private connected = false; // Add a property to track the connection state
 
+
   /**
-   * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
-   * @param connectionSettings - The configuration settings used to connect to a service.
+   * Attaches event listeners for handling connection status changes and registering signal handlers.
    */
-  constructor(private connectionSettings: ConnectConfig) {
+  private attachListeners(): void {
     // Set the connected flag to false when the connection is closed
     this.client.on('end', () => {
       this.connected = false;
@@ -120,6 +120,24 @@ class SftpClient {
     process.on('SIGINT', this.handleSignal.bind(this));
     process.on('SIGTERM', this.handleSignal.bind(this));
     process.on('SIGQUIT', this.handleSignal.bind(this));
+  }
+
+  /**
+   * Detaches event listeners to prevent memory leaks.
+   */
+  private detachListeners(): void {
+    this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+    process.removeListener('SIGINT', this.handleSignal.bind(this));
+    process.removeListener('SIGTERM', this.handleSignal.bind(this));
+    process.removeListener('SIGQUIT', this.handleSignal.bind(this));
+  }
+
+  /**
+   * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
+   * @param connectionSettings - The configuration settings used to connect to a service.
+   */
+  constructor(private connectionSettings: ConnectConfig) {
+    this.attachListeners();
   }
 
   /**
@@ -148,6 +166,7 @@ class SftpClient {
 
       // Create a new Client instance if the previous one is unusable
       this.client = new Client();
+      this.attachListeners();
 
       // Set up event listeners for the new Client instance
       this.client.on('ready', () => {
@@ -194,7 +213,7 @@ class SftpClient {
         this.client.end(); // End the current connection
         this.connected = false;
       }
-      this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+      this.detachListeners();
     } catch (e) {
       auditLogger.error(JSON.stringify(e));
     }
