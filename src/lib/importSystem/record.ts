@@ -1,4 +1,10 @@
-import { Sequelize, Op } from 'sequelize';
+import {
+  Sequelize,
+  fn,
+  col,
+  literal,
+  Op,
+} from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
@@ -16,6 +22,7 @@ const {
   Import,
   ImportFile,
   ImportDataFile,
+  ZALImportFile,
 } = db;
 
 /**
@@ -113,9 +120,62 @@ const getNextFileToProcess = async (
 ) => {
   const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60000);
 
-  const query = {
-    updatedAt: { [Op.gt]: tenMinutesAgo },
-  };
+  // Define the PostgresInterval interface
+  interface PostgresInterval {
+    seconds: number;
+    milliseconds: number;
+  }
+
+  // Use the PostgresInterval interface in the destructuring assignment
+  /* eslint-disable @typescript-eslint/quotes */
+  /* eslint-disable prefer-template */
+  const [{
+    avg = { seconds: 120, milliseconds: 0 },
+    stddev = { seconds: 0, milliseconds: 0 },
+  }] = await ZALImportFile.findAll({
+    attributes: [
+      // Using Sequelize.fn to calculate the average difference in timestamps
+      [fn('AVG', fn(
+        'AGE',
+        fn('CAST', literal(`new_row_data->>'updatedAt' AS TIMESTAMP`)),
+        fn('CAST', literal(`old_row_data->>'updatedAt' AS TIMESTAMP`)),
+      )),
+      'avg'],
+
+      // Using Sequelize.fn to calculate the standard deviation of the difference in timestamps
+      [literal(`STDDEV(extract ('epoch' from (new_row_data->>'updatedAt')::timestamp - (old_row_data->>'updatedAt')::timestamp)) * interval '1 sec'`),
+        'stddev'],
+    ],
+    where: {
+      [Op.and]: [
+        // Using Sequelize.literal to filter rows based on JSONB content
+        literal(`old_row_data->>'status' = 'PROCESSING'`),
+        literal(`new_row_data->>'status' = 'PROCESSED'`),
+      ],
+    },
+    raw: true, // This will give you raw JSON objects instead of model instances
+  }) as [{ avg: PostgresInterval, stddev: PostgresInterval }];
+  /* eslint-enable @typescript-eslint/quotes */
+  /* eslint-disable prefer-template */
+
+  // Calculate the total milliseconds for 3 * stddev
+  const totalStdDevMilliseconds = 3 * stddev.seconds * 1000 + 3 * stddev.milliseconds;
+
+  // Mark hung jobs as failed
+  await ImportFile.update(
+    {
+      status: IMPORT_STATUSES.PROCESSING_FAILED,
+    },
+    {
+      where: {
+        status: IMPORT_STATUSES.PROCESSING,
+        [Op.and]: [
+          literal(`"updatedAt" + INTERVAL '${avg.seconds + Math.floor(totalStdDevMilliseconds / 1000)} seconds ${totalStdDevMilliseconds % 1000} milliseconds' > NOW()`),
+        ],
+      },
+    },
+  );
+
   // Find the next import file to process
   const importFile = await ImportFile.findOne({
     attributes: [
@@ -150,14 +210,6 @@ const getNextFileToProcess = async (
           // Import file is in the "processing_failed" status
           status: IMPORT_STATUSES.PROCESSING_FAILED,
           // Number of process attempts is less than the maximum allowed attempts
-          processAttempts: { [Op.lt]: maxAttempts },
-        },
-        // Recover
-        {
-          // Import file is in the "processing" status
-          status: IMPORT_STATUSES.PROCESSING,
-          // Number of process attempts is less than the maximum allowed attempts
-          updatedAt: { [Op.gt]: tenMinutesAgo },
           processAttempts: { [Op.lt]: maxAttempts },
         },
       ],
