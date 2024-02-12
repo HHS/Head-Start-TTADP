@@ -290,7 +290,7 @@ class SftpClient {
           }).filter((file) => {
             const matchesMask = fileMask && fileMask.length > 0
               ? (new RegExp(fileMask)).test(file.fileInfo.name)
-              : false;
+              : true;
             const afterPriorFile = priorFile && priorFile.length > 0
               ? file.fileInfo.name.localeCompare(priorFile) > 0
               : true;
