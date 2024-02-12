@@ -37,7 +37,9 @@ describe('MyGroups', () => {
       grants: [
         {
           id: 1,
-          name: 'grant1',
+          recipient: {
+            name: 'grant1',
+          },
         },
       ],
     },
@@ -48,6 +50,9 @@ describe('MyGroups', () => {
         {
           id: 2,
           name: 'grant2',
+          recipient: {
+            name: 'grant2',
+          },
         },
       ],
     },
@@ -68,7 +73,9 @@ describe('MyGroups', () => {
       grants: [
         {
           id: 1,
-          name: 'grant1',
+          recipient: {
+            name: 'grant1',
+          },
         },
       ],
       isPublic: false,
