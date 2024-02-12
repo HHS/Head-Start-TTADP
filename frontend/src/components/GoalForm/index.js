@@ -575,7 +575,6 @@ export default function GoalForm({
       // that gets called on success
       redirectToGoalsPage(goals);
     } catch (err) {
-      console.log({ err });
       setAlert({
         message: 'There was an error saving your goal',
         type: 'error',
