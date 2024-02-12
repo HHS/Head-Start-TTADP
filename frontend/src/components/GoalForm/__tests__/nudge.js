@@ -202,6 +202,8 @@ describe('create goal:nudge', () => {
       userEvent.click(radio);
     });
 
+    jest.advanceTimersByTime(10000);
+
     expect(fetchMock.called('/api/goals', { method: 'POST' })).toBe(true);
     const error = await screen.findByRole('alert');
     expect(error).toHaveTextContent('There was an error selecting your goal');

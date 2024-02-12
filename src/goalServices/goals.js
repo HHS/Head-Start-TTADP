@@ -747,6 +747,12 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
+        if (!forReport) {
+          existingGoal.source = {
+            ...existingGoal.source,
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+          };
+        }
         existingGoal.prompts = reducePrompts(
           forReport,
           currentValue.dataValues.prompts || [],
@@ -764,6 +770,13 @@ function reduceGoals(goals, forReport = false) {
 
         return date;
       })();
+
+      let { source } = currentValue.dataValues;
+      if (!forReport) {
+        source = {
+          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+        };
+      }
 
       const goal = {
         ...currentValue.dataValues,
@@ -789,7 +802,7 @@ function reduceGoals(goals, forReport = false) {
         ),
         isNew: false,
         endDate,
-        source: currentValue.dataValues.source,
+        source,
       };
 
       return [...previousValues, goal];

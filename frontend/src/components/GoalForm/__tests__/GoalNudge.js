@@ -127,7 +127,7 @@ describe('GoalNudge', () => {
     fetchMock.get(url, [
       {
         ids: [1],
-        name: 'test goal',
+        name: 'unorthodox goal',
         status: 'test status',
       },
     ]);
@@ -147,6 +147,17 @@ describe('GoalNudge', () => {
     });
 
     expect(document.querySelector('.ttahub-similar-goal')).not.toBeInTheDocument();
+
+    const getSuggestions = await screen.findByRole('button', { name: 'Get suggestions' });
+    expect(getSuggestions).toBeInTheDocument();
+
+    act(() => {
+      userEvent.click(getSuggestions);
+    });
+
+    jest.advanceTimersByTime(2000);
+
+    expect(await screen.findByText('unorthodox goal')).toBeInTheDocument();
   });
 });
 

@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { uniq } from 'lodash';
 import {
   Alert,
 } from '@trussworks/react-uswds';
@@ -16,8 +17,9 @@ import {
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
-import GoalSource from './GoalSource';
 import GoalName from './GoalName';
+import RTRGoalSource from './RTRGoalSource';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -166,17 +168,28 @@ export default function Form({
         userCanEdit={notClosedWithEditPermission}
       />
 
-      <GoalSource
-        source={source}
-        onChangeGoalSource={setSource}
-        error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
-        isOnReport={isOnApprovedReport}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
-        validateGoalSource={validateGoalSource}
-        isCurated={isCurated}
-        createdViaTr={createdVia === 'tr'}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !isCurated,
+          status !== 'Closed',
+          createdVia !== 'tr',
+        ]}
+        label="Goal source"
+        value={uniq(Object.values(source || {})).join(', ') || ''}
+      >
+        <RTRGoalSource
+          source={source}
+          onChangeGoalSource={setSource}
+          error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
+          isOnReport={isOnApprovedReport}
+          goalStatus={status}
+          userCanEdit={userCanEdit}
+          validateGoalSource={validateGoalSource}
+          isCurated={isCurated}
+          createdViaTr={createdVia === 'tr'}
+          selectedGrants={selectedGrants}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
@@ -298,7 +311,9 @@ Form.propTypes = {
   })).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
-  source: PropTypes.string.isRequired,
+  source: PropTypes.shape({
+    [PropTypes.string]: PropTypes.string,
+  }).isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,

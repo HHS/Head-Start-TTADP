@@ -81,8 +81,6 @@ export default async function nudge(
       'name',
       'status',
       'goalTemplateId',
-      'source',
-      'endDate',
       [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.closeSuspendReason')), 'closeSuspendReasons'],
       [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.id')), 'ids'],
       [sequelize.literal('FALSE'), 'isCuratedTemplate'],
@@ -104,8 +102,6 @@ export default async function nudge(
       },
     ],
     group: [
-      '"Goal.source"',
-      '"Goal.endDate"',
       '"Goal"."name"',
       '"Goal"."status"',
       '"Goal"."goalTemplateId"',

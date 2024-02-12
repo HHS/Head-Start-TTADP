@@ -1,5 +1,6 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { DECIMAL_BASE } from '@ttahub/common';
 
 // regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
 const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
@@ -110,3 +111,61 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
     dismiss(true);
   }
 };
+
+export const grantsToSources = (grants, source = {}, defaultSource = '') => {
+  const current = [];
+
+  const newSource = grants.reduce((s, grant) => {
+    current.push(grant.numberWithProgramTypes);
+
+    if (source[grant.numberWithProgramTypes]) {
+      return {
+        ...s,
+        [grant.numberWithProgramTypes]: source[grant.numberWithProgramTypes],
+      };
+    }
+
+    return {
+      ...s,
+      [grant.numberWithProgramTypes]: defaultSource,
+    };
+  }, source);
+
+  const keys = Object.keys(newSource);
+  const removedKeys = keys.filter((k) => !current.includes(k));
+
+  removedKeys.forEach((k) => {
+    delete newSource[k];
+  });
+
+  return newSource;
+};
+
+export const grantsToGoals = ({
+  selectedGrants,
+  name,
+  status,
+  source,
+  isCurated,
+  endDate,
+  regionId,
+  recipient,
+  objectives,
+  ids,
+  prompts,
+}) => selectedGrants.map((g) => {
+  const goalSource = source ? source[g.numberWithProgramTypes] : '';
+  return {
+    grantId: g.id,
+    name,
+    status,
+    source: goalSource || null,
+    isCurated,
+    endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+    regionId: parseInt(regionId, DECIMAL_BASE),
+    recipientId: recipient.id,
+    objectives: objectivesWithValidResourcesOnly(objectives),
+    ids,
+    prompts,
+  };
+});

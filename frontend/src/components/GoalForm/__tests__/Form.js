@@ -14,7 +14,7 @@ const DEFAULT_GOAL = {
   isOnApprovedReport: false,
   isOnReport: false,
   prompts: [],
-  source: null,
+  source: {},
 };
 
 const DEFAULT_USER = {
@@ -77,6 +77,7 @@ describe('Goal Form > Form component', () => {
           userCanEdit
           source={goal.source}
           createdVia={goal.createdVia}
+          onSelectNudgedGoal={jest.fn()}
         />
       </UserContext.Provider>,
     );
@@ -89,7 +90,12 @@ describe('Goal Form > Form component', () => {
 
   it('disables goal source if createdVia tr', () => {
     renderGoalForm(
-      { ...DEFAULT_GOAL, createdVia: 'tr', source: 'Training event source' },
+      {
+        ...DEFAULT_GOAL,
+        createdVia: 'tr',
+        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
+        source: { 'GRANT_NUMBER EHS': 'training event source' },
+      },
       [],
       '',
       { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
@@ -99,16 +105,23 @@ describe('Goal Form > Form component', () => {
     expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(0);
   });
 
-  it('does not disables goal source if createdVia tr', () => {
+  it('does not disable goal source if createdVia tr', () => {
     renderGoalForm(
-      { ...DEFAULT_GOAL, createdVia: 'activityReport', source: 'Not Training event' },
+      {
+        ...DEFAULT_GOAL,
+        createdVia: 'activityReport',
+        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
+        source: { 'GRANT_NUMBER EHS': 'Not Training event' },
+      },
       [],
       '',
       { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
     );
     // Expect the goal source not to be disabled
-    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
-    expect(sourceSelect).not.toBeDisabled();
+    const sourceSelects = screen.getAllByRole('combobox', { name: /goal source/i });
+    sourceSelects.forEach((sourceSelect) => {
+      expect(sourceSelect).toBeEnabled();
+    });
   });
 
   it('shows an error when the fetch has failed', async () => {
