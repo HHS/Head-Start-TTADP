@@ -25,8 +25,12 @@ import {
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 
+// eslint-disable-next-line
+process.env.IS_WORKER = 'true';
+
 // Pull jobs off the redis queue and process them.
-async function start() {
+async function start(context: { id: number }) {
+  process.env.WORKER_THRONG_ID = `${context.id}`;
   // File Scanning Queue
   processScanQueue();
 
