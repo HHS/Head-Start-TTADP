@@ -379,7 +379,7 @@ export async function createGroup(req: Request, res: Response) {
     // Create a new group with the filtered grants
     const groupResponse = await createNewGroup({
       ...req.body,
-      grants: grants.map(({ grantId }) => grantId), // filter to only active grants
+      grants: grantIds, // filter to only active grants
     });
 
     // Send the group response as JSON
