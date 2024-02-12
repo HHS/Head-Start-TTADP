@@ -31,20 +31,22 @@ describe('FtpClient Integration Tests', () => {
     sftpClient = new SftpClient(connectionSettings);
   });
 
+  beforeEach(async () => {
+    await sftpClient.connect();
+  });
+
   afterAll(async () => {
     await sftpClient.disconnect();
   });
 
   describe('connect and disconnect', () => {
     it('should connect to the SFTP server and then disconnect', async () => {
-      await sftpClient.connect();
       expect(sftpClient.isConnected()).toBe(true);
 
       await sftpClient.disconnect();
       expect(sftpClient.isConnected()).toBe(false);
     });
     it('should re-connect to the SFTP server and then disconnect', async () => {
-      await sftpClient.connect();
       expect(sftpClient.isConnected()).toBe(true);
 
       await sftpClient.disconnect();
@@ -60,9 +62,9 @@ describe('FtpClient Integration Tests', () => {
 
   describe('listFiles', () => {
     it('should list files in the specified directory', async () => {
-      await sftpClient.connect();
       const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
       expect(Array.isArray(files)).toBe(true);
+      expect(files.length).toBeGreaterThan(0);
       files.forEach((file) => {
         expect(file).toHaveProperty('fullPath');
         expect(file).toHaveProperty('fileInfo');
@@ -76,11 +78,12 @@ describe('FtpClient Integration Tests', () => {
 
   describe('downloadAsStream', () => {
     it('should download a file as a stream', async () => {
-      await sftpClient.connect();
       const remoteFilePath = '/ProdTTAHome/2023_07_20_XML.zip'; // Replace with an actual file path on your SFTP server
 
-      const stream = await sftpClient.downloadAsStream(remoteFilePath);
-      expect(stream).toBeDefined();
+      const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
+
+      const stream = await sftpClient.downloadAsStream(files[0].fullPath);
+      expect(stream).not.toBeUndefined();
     });
   });
 });
