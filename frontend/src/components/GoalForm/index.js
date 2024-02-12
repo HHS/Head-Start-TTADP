@@ -13,7 +13,8 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
+import { isEqual, uniqueId } from 'lodash';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
@@ -30,7 +31,8 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  objectivesWithValidResourcesOnly,
+  grantsToSources,
+  grantsToGoals,
 } from './constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
@@ -70,7 +72,7 @@ export default function GoalForm({
     onAnyReport: false,
     prompts: [],
     isCurated: false,
-    source: '',
+    source: {},
     createdVia: '',
     goalTemplateId: null,
   }), [possibleGrants]);
@@ -87,7 +89,7 @@ export default function GoalForm({
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [source, setSource] = useState('');
+  const [source, setSource] = useState(grantsToSources(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
@@ -97,6 +99,13 @@ export default function GoalForm({
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
 
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
+
+  useDeepCompareEffect(() => {
+    const newSource = grantsToSources(selectedGrants, { ...source });
+    if ((!isEqual(newSource, source))) {
+      setSource(newSource);
+    }
+  }, [selectedGrants, source]);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -137,19 +146,22 @@ export default function GoalForm({
         const [goal] = await goalsByIdAndRecipient(
           ids, recipient.id.toString(),
         );
+
+        const selectedGoalGrants = goal.grants ? goal.grants : [goal.grant];
+
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
         setPrompts(goal.prompts);
-        setSelectedGrants(goal.grants ? goal.grants : [goal.grant]);
+        setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(goal.source || '');
+        setSource(grantsToSources(selectedGoalGrants, {}, goal.source));
         setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
@@ -540,16 +552,18 @@ export default function GoalForm({
       // if the goal is a draft, submission should move it to "not started"
       const gs = createdGoals.reduce((acc, goal) => {
         const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
-        const newGoals = goal.grants.map((grant) => ({
-          grantId: grant.id,
+        const newGoals = grantsToGoals({
+          selectedGrants: goal.grants,
           name: goal.name,
           status: statusToSave,
-          endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
+          source: goal.source,
+          isCurated: goal.isCurated,
+          endDate: goal.endDate,
           regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
+          recipient,
           objectives: goal.objectives,
-          ids,
-        }));
+          prompts: goal.prompts,
+        });
 
         return [...acc, ...newGoals];
       }, []);
@@ -561,6 +575,7 @@ export default function GoalForm({
       // that gets called on success
       redirectToGoalsPage(goals);
     } catch (err) {
+      console.log({ err });
       setAlert({
         message: 'There was an error saving your goal',
         type: 'error',
@@ -585,15 +600,19 @@ export default function GoalForm({
       // if so, we save the objective to the database first
       try {
         // but to do that, we first need to save the goals
-        const newGoals = selectedGrants.map((g) => ({
-          grantId: g.value,
+        const newGoals = grantsToGoals({
+          selectedGrants,
           name: goalName,
           status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
+          source,
+          isCurated,
+          endDate,
+          regionId,
+          recipient,
           objectives,
-        }));
+          ids,
+          prompts: goalTemplatePrompts,
+        });
 
         // so we save them, as before creating one for each grant
         const savedGoals = await createOrUpdateGoals(newGoals);
@@ -664,18 +683,19 @@ export default function GoalForm({
       let newGoals = [];
 
       if (showForm) {
-        newGoals = selectedGrants.map((g) => ({
-          grantId: g.value,
+        newGoals = grantsToGoals({
+          selectedGrants,
           name: goalName,
           status,
           source,
           isCurated,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives: objectivesWithValidResourcesOnly(objectives),
+          endDate,
+          regionId,
+          recipient,
+          objectives,
           ids,
-        }));
+          prompts: goalTemplatePrompts,
+        });
       }
 
       const mappedCreatedGoals = createdGoals.map((goal) => goal.grantIds.map((grantId) => ({
@@ -756,35 +776,34 @@ export default function GoalForm({
     setAppLoadingText('Saving');
     setIsAppLoading(true);
     try {
-      const newGoals = selectedGrants.map((g) => ({
-        grantId: g.id,
+      const newGoals = grantsToGoals({
+        selectedGrants,
         name: goalName,
         status,
-        prompts: goalTemplatePrompts,
+        source,
         isCurated,
         endDate,
-        regionId: parseInt(regionId, DECIMAL_BASE),
-        recipientId: recipient.id,
+        regionId,
+        recipient,
         objectives,
-        source,
         ids,
-      }));
+        prompts: goalTemplatePrompts,
+      });
 
       const goals = [
         ...createdGoals.reduce((acc, goal) => {
-          const g = goal.grants.map((grant) => ({
-            grantId: grant.id,
+          const g = grantsToGoals({
+            selectedGrants: goal.grants,
             name: goal.name,
+            status: goal.status,
+            source: goal.source,
             isCurated: goal.isCurated,
-            prompts: goal.prompts,
-            status,
-            source,
-            endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
+            endDate: goal.endDate,
             regionId: parseInt(regionId, DECIMAL_BASE),
-            recipientId: recipient.id,
-            objectives: objectivesWithValidResourcesOnly(goal.objectives),
-            isRttapa: goal.isRttapa,
-          }));
+            recipient,
+            objectives,
+            ids: [],
+          });
           return [...acc, ...g];
         }, []),
         ...newGoals,
@@ -900,7 +919,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives: [],
-        source: goal.source,
+        source: { grantId: goal.source },
         goalTemplateId: goal.id,
       }));
       const created = await createOrUpdateGoals(goals);

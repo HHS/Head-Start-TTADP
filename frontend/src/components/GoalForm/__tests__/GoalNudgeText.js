@@ -77,18 +77,4 @@ describe('GoalNudgeText', () => {
     expect(validateGoalName).toHaveBeenCalled();
     expect(setDismissSimilar).toHaveBeenCalled();
   });
-
-  it('calls the passed in handlers on focus', async () => {
-    const setDismissSimilar = jest.fn();
-    renderTest({
-      setDismissSimilar,
-    });
-    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
-
-    const input = screen.getByLabelText(/Recipient's goal/);
-    await act(async () => {
-      userEvent.click(input);
-    });
-    expect(setDismissSimilar).toHaveBeenCalled();
-  });
 });

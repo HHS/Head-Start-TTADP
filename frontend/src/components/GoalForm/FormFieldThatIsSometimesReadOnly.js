@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-
 import ReadOnlyField from '../ReadOnlyField';
+import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometimesReadOnlyContext';
 
 /**
  *
@@ -17,6 +17,18 @@ import ReadOnlyField from '../ReadOnlyField';
 
   @returns {Node} - The form field to display
  */
+
+const FormFieldThatIsSometimesReadOnlyProvider = ({ readOnly, children }) => (
+  <FormFieldThatIsSometimesReadOnlyContext.Provider value={{ readOnly }}>
+    {children}
+  </FormFieldThatIsSometimesReadOnlyContext.Provider>
+);
+
+FormFieldThatIsSometimesReadOnlyProvider.propTypes = {
+  readOnly: PropTypes.bool.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
 export default function FormFieldThatIsSometimesReadOnly({
   permissions,
   label,
@@ -27,15 +39,21 @@ export default function FormFieldThatIsSometimesReadOnly({
 
   if (readOnly) {
     return (
-      <ReadOnlyField
-        label={label}
-      >
-        {value}
-      </ReadOnlyField>
+      <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>
+        <ReadOnlyField
+          label={label}
+        >
+          {value}
+        </ReadOnlyField>
+      </FormFieldThatIsSometimesReadOnlyProvider>
     );
   }
 
-  return children;
+  return (
+    <FormFieldThatIsSometimesReadOnlyProvider readOnly={readOnly}>
+      {children}
+    </FormFieldThatIsSometimesReadOnlyProvider>
+  );
 }
 
 FormFieldThatIsSometimesReadOnly.propTypes = {

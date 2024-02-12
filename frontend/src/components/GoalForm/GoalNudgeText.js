@@ -43,9 +43,6 @@ export default function GoalNudgeText({
             dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
             validateGoalName();
           }}
-          onFocus={() => {
-            setDismissSimilar(false);
-          }}
           id={inputName}
           name={inputName}
           value={goalName}

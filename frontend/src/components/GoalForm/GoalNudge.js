@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import {
   Checkbox,
+  Button,
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { similiarGoalsByText } from '../../fetchers/goals';
@@ -121,16 +122,27 @@ export default function GoalNudge({
         goalTemplates={goalTemplates || []}
         onSelectNudgedGoal={onSelectNudgedGoal}
       />
-      { (goalTemplates && goalTemplates.length > 0) && (
+      <div className="desktop:display-flex flex-justify margin-top-2 smart-hub-maxw-form-field">
+        { (goalTemplates && goalTemplates.length > 0) && (
         <Checkbox
           id="use-ohs-initiative-goal"
           name="use-ohs-initiative-goal"
           label="Use OHS initiative goal"
-          className={`margin-top-2 position-relative ${checkboxZed}`}
+          className={`position-relative ${checkboxZed}`}
           onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
           checked={useOhsInitiativeGoal}
         />
-      )}
+        )}
+        {(dismissSimilar && !useOhsInitiativeGoal) && (
+        <Button
+          type="button"
+          unstyled
+          onClick={() => setDismissSimilar(false)}
+        >
+          Get suggestions
+        </Button>
+        )}
+      </div>
     </div>
   );
 }

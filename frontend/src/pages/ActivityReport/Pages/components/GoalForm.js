@@ -180,19 +180,29 @@ export default function GoalForm({
         userCanEdit
       />
 
-      <GoalSource
-        error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-        source={goalSource}
-        validateGoalSource={onBlurGoalSource}
-        onChangeGoalSource={onUpdateGoalSource}
-        inputName={goalSourceInputName}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit={!isCurated}
-        isOnReport={false}
-        isMultiRecipientGoal={isMultiRecipientReport}
-        createdViaTr={goal.createdVia === 'tr'}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !isCurated,
+          status !== 'Closed',
+          goal.createdVia !== 'tr',
+        ]}
+        label="Goal source"
+        value={goalSource}
+      >
+        <GoalSource
+          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+          source={goalSource}
+          validateGoalSource={onBlurGoalSource}
+          onChangeGoalSource={onUpdateGoalSource}
+          inputName={goalSourceInputName}
+          goalStatus={status}
+          isLoading={isAppLoading}
+          userCanEdit={!isCurated}
+          isOnReport={false}
+          isMultiRecipientGoal={isMultiRecipientReport}
+          createdViaTr={goal.createdVia === 'tr'}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}

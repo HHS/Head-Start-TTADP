@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { uniqueId } from 'lodash';
 import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
@@ -10,6 +11,14 @@ const formatPrompts = (prompts) => prompts.filter((prompt) => (
   title: prompt.title,
   response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
 }));
+
+const parseObjectValuesOrString = (d) => {
+  if (typeof d === 'string') {
+    return d;
+  }
+
+  return Object.values(d).join(', ');
+};
 
 export default function ReadOnlyGoal({
   onEdit,
@@ -62,10 +71,10 @@ export default function ReadOnlyGoal({
           <h4 className="margin-0">Recipient&apos;s goal</h4>
           <p className="usa-prose margin-0">{goal.name}</p>
         </div>
-        {(goal.source && goal.source.length) ? (
-          <div className="margin-bottom-2" key={goal.source}>
+        {(goal.source) ? (
+          <div className="margin-bottom-2" key={uniqueId('goal-source-read-only-')}>
             <h4 className="margin-0">Goal source</h4>
-            <p className="usa-prose margin-0">{goal.source}</p>
+            <p className="usa-prose margin-0">{parseObjectValuesOrString(goal.source)}</p>
           </div>
         ) : null}
         {(goal.prompts) && (
