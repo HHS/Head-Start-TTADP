@@ -1,4 +1,6 @@
 import { download, process } from '../lib/importSystem';
+import { enqueueImportMaintenanceJob } from '../lib/maintenance/import';
+import { MAINTENANCE_TYPE } from '../constants';
 import { auditLogger } from '../logger';
 
 export default async function manuallyTriggerImportSystem(
@@ -19,6 +21,12 @@ export default async function manuallyTriggerImportSystem(
           break;
         case 'process':
           await process(importId);
+          break;
+        case 'queueDownload':
+          enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_DOWNLOAD, importId);
+          break;
+        case 'queueProcess':
+          enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_PROCESS, importId);
           break;
         default:
           throw new Error(`Unknown action: '${action}'`);
