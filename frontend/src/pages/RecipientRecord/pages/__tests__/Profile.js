@@ -43,5 +43,24 @@ describe('Recipient Record - Profile', () => {
 
     expect(screen.getByRole('heading', { name: /recipient summary/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /grants/i })).toBeInTheDocument();
+
+    fetchMock.restore();
+  });
+
+  it('doesnt show the class/monitoring review headings if there is no grant data', async () => {
+    const summary = {
+      recipientId: '44',
+      grants: [{
+        number: 'asdf',
+        status: 'Froglike',
+        endDate: '2021-09-28',
+      }],
+    };
+    renderRecipientProfile(summary);
+
+    // should not see the heading "Grant number asdf"
+    expect(screen.queryByRole('heading', { name: /grant number asdf/i })).not.toBeInTheDocument();
+
+    fetchMock.restore();
   });
 });
