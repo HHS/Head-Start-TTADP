@@ -15,7 +15,7 @@ interface ConnectConfig {
 
 interface ListFileOptions {
   path: string;
-  fileMask?: RegExp;
+  fileMask?: string;
   priorFile?: string;
   includeStream?: boolean;
 }
@@ -288,13 +288,12 @@ class SftpClient {
           // Filter the files based on the provided file mask and whether they come after a
           // specified 'priorFile'
           }).filter((file) => {
-            const matchesMask = fileMask instanceof RegExp
-              ? fileMask.test(file.fileInfo.name)
-              : true;
-            const afterPriorFile = priorFile
+            const matchesMask = fileMask && fileMask.length > 0
+              ? (new RegExp(fileMask)).test(file.fileInfo.name)
+              : false;
+            const afterPriorFile = priorFile && priorFile.length > 0
               ? file.fileInfo.name.localeCompare(priorFile) > 0
               : true;
-
             return matchesMask && afterPriorFile;
           });
 
