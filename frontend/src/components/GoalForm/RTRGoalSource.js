@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { uniq, uniqueId } from 'lodash';
+import React from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import { Label, Radio } from '@trussworks/react-uswds';
 import GoalSource from './GoalSource';
-import Req from '../Req';
+import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
+import DivergenceRadio from './DivergenceRadio';
 import './RTRGoalSource.css';
 
 const GoalSourceProps = {
@@ -96,56 +96,26 @@ export default function RTRGoalSource({
   createdVia,
   selectedGrants,
 }) {
-  const sources = uniq(Object.values(source || {}));
-  const [sourcesDiverge, setSourcesDiverge] = useState(sources.length > 1);
+  const {
+    data: sources,
+    divergence: sourcesDiverge,
+    setDivergence: setSourcesDiverge,
+    updateSingle: updateSingleSource,
+    updateAll: updateAllSources,
+  } = usePerGrantMetadata(source, onChangeGoalSource);
 
   if (!selectedGrants.length) {
     return null;
   }
 
-  const updateSingleSource = (grantNumber, newSource) => {
-    onChangeGoalSource({
-      ...source,
-      [grantNumber]: newSource,
-    });
-  };
-
-  const updateAllSources = (newSource) => {
-    // set all keys to the newSource value
-    const newSources = Object.keys(source).reduce((acc, key) => {
-      acc[key] = newSource;
-      return acc;
-    }, {});
-
-    onChangeGoalSource(newSources);
-  };
-
   return (
     <>
       {selectedGrants.length > 1 && (
-      <>
-        <Label htmlFor="rtr-source-same">
-          Do all recipient grants have the same source?
-          {' '}
-          <Req />
-        </Label>
-        <Radio
-          id="rtr-source-same"
-          name="rtr-source"
-          value="same"
-          checked={!sourcesDiverge}
-          onChange={() => setSourcesDiverge(false)}
-          label="Yes"
-        />
-        <Radio
-          id="rtr-source-different"
-          name="rtr-source"
-          value="different"
-          checked={sourcesDiverge}
-          onChange={() => setSourcesDiverge(true)}
-          label="No"
-        />
-      </>
+      <DivergenceRadio
+        divergenceLabel="Do all recipient grants have the same source?"
+        divergence={sourcesDiverge}
+        setDivergence={setSourcesDiverge}
+      />
       )}
       <DisplayGoalSource
         source={source}
