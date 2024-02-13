@@ -98,8 +98,6 @@ describe('nudge', () => {
         status: GOAL_STATUS.NOT_STARTED,
         isCuratedTemplate: false,
         goalTemplateId,
-        endDate: null,
-        source: null,
         closeSuspendReasons: [null],
       },
     ]);

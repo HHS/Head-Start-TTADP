@@ -1,4 +1,5 @@
 import React from 'react';
+import { GOAL_SOURCES } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
@@ -94,10 +95,10 @@ describe('RTRGoalSource', () => {
     expect(dropdowns).toHaveLength(3);
 
     const [dropdown] = dropdowns;
-    userEvent.selectOptions(dropdown, 'Training event follow-up');
+    userEvent.selectOptions(dropdown, GOAL_SOURCES[0]);
 
     expect(setSource).toHaveBeenCalledWith({
-      1234: 'Training event follow-up',
+      1234: GOAL_SOURCES[0],
       5678: '',
       91011: '',
     });
@@ -136,12 +137,12 @@ describe('RTRGoalSource', () => {
 
     const dropdown = await screen.findByRole('combobox');
 
-    userEvent.selectOptions(dropdown, 'Training event follow-up');
+    userEvent.selectOptions(dropdown, GOAL_SOURCES[0]);
 
     expect(setSource).toHaveBeenCalledWith({
-      1234: 'Training event follow-up',
-      5678: 'Training event follow-up',
-      91011: 'Training event follow-up',
+      1234: GOAL_SOURCES[0],
+      5678: GOAL_SOURCES[0],
+      91011: GOAL_SOURCES[0],
     });
   });
 });
