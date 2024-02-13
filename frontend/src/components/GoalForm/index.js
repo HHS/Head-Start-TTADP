@@ -40,7 +40,6 @@ import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
-import { combinePrompts } from '../condtionalFieldConstants';
 import VanillaModal from '../VanillaModal';
 
 const [
@@ -99,7 +98,6 @@ export default function GoalForm({
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
-
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
 
   useDeepCompareEffect(() => {
@@ -251,7 +249,7 @@ export default function GoalForm({
         const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
         if (gtPrompts) {
           setGoalTemplatePrompts(
-            combinePrompts(gtPrompts, prompts),
+            gtPrompts,
           );
         } else {
           setGoalTemplatePrompts(prompts);
@@ -1064,7 +1062,8 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
-              prompts={goalTemplatePrompts}
+              prompts={prompts}
+              goalTemplatePrompts={goalTemplatePrompts}
               setPrompts={setGoalTemplatePrompts}
               setGoalName={setGoalName}
               recipient={recipient}

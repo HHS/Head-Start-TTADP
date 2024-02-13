@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
+// import { combinePrompts } from '../condtionalFieldConstants';
 
 const PromptProps = {
   value: PropTypes.shape({
@@ -11,7 +12,7 @@ const PromptProps = {
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   validate: PropTypes.func.isRequired,
-  error: PropTypes.node.isRequired,
+  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
   userCanEdit: PropTypes.bool,
   selectedGrants: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
@@ -21,20 +22,21 @@ const PromptProps = {
 
 const DisplayFields = ({
   value,
-  error,
+  errors,
   userCanEdit,
   validate,
   updateAll,
   updateSingle,
   divergence,
+  singleValue,
 }) => {
   if (!divergence) {
     return (
       <ConditionalFields
-        prompts={value}
+        prompts={singleValue}
         setPrompts={updateAll}
         validatePrompts={validate}
-        errors={error}
+        errors={errors}
         userCanEdit={userCanEdit}
       />
     );
@@ -50,10 +52,10 @@ const DisplayFields = ({
         {grantNumber}
       </h3>
       <ConditionalFields
-        prompts={value}
+        prompts={value[grantNumber]}
         setPrompts={() => updateSingle()}
         validatePrompts={validate}
-        errors={error}
+        errors={errors}
         userCanEdit={userCanEdit}
       />
     </div>
@@ -64,13 +66,14 @@ DisplayFields.propTypes = {
   ...PromptProps,
   divergence: PropTypes.bool.isRequired,
   updateAll: PropTypes.func.isRequired,
+  singleVale: PropTypes.shape({}).isRequired,
 };
 
 export default function RTRGoalPrompts({
   value,
   onChange,
   validate,
-  error,
+  errors,
   userCanEdit,
   selectedGrants,
 }) {
@@ -91,6 +94,7 @@ export default function RTRGoalPrompts({
 
   return (
     <>
+      {JSON.stringify(data, null, 2)}
       {selectedGrants.length > 1 && (
       <DivergenceRadio
         divergenceLabel="Do all recipient grants have the same FEI root cause?"
@@ -101,7 +105,7 @@ export default function RTRGoalPrompts({
       <DisplayFields
         value={value}
         onChange={onChange}
-        error={error}
+        errors={errors}
         userCanEdit={userCanEdit}
         validate={validate}
         updateAll={updateAll}

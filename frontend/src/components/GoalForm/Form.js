@@ -16,10 +16,11 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import ConditionalFields from '../ConditionalFields';
+// import ConditionalFields from '../ConditionalFields';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import RTRGoalPrompts from './RTRGoalPrompts';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -31,6 +32,7 @@ export default function Form({
   setSelectedGrants,
   goalName,
   prompts,
+  // goalTemplatePrompts,
   setPrompts,
   setGoalName,
   endDate,
@@ -151,7 +153,7 @@ export default function Form({
         isAppLoading={isAppLoading}
         recipient={recipient}
         regionId={regionId}
-        selectedGrants={selectedGrants}
+        selectedGrants={selectedGrants || []}
         onSelectNudgedGoal={onSelectNudgedGoal}
         status={status}
         isOnReport={isOnReport}
@@ -160,12 +162,13 @@ export default function Form({
         isCurated={isCurated}
       />
 
-      <ConditionalFields
-        prompts={prompts}
-        setPrompts={setPrompts}
-        validatePrompts={validatePrompts}
+      <RTRGoalPrompts
+        value={prompts}
+        onChange={setPrompts}
+        validate={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
         userCanEdit={notClosedWithEditPermission}
+        selectedGrants={selectedGrants || []}
       />
 
       <FormFieldThatIsSometimesReadOnly
@@ -309,6 +312,7 @@ Form.propTypes = {
     title: PropTypes.string.isRequired,
     response: PropTypes.arrayOf(PropTypes.string).isRequired,
   })).isRequired,
+  // goalTemplatePrompts: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
   source: PropTypes.shape({
