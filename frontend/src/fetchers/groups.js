@@ -14,7 +14,8 @@ export const fetchGroups = async () => {
 };
 
 export const fetchGroup = async (groupId) => {
-  const response = await get(join(groupsUrl, String(groupId)));
+  const getGroup = join(groupsUrl, String(groupId));
+  const response = await get(getGroup);
   return response.json();
 };
 
