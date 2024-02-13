@@ -438,6 +438,8 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
         EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
         Goal: { create: jest.fn(() => ({ id: 4 })), findOne: jest.fn(() => null) },
         SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
+        CollaboratorType: { findOne: jest.fn(() => ({ id: 1 })) },
+        GoalCollaborator: { findAll: jest.fn(() => []), create: jest.fn() },
       },
     };
 
@@ -458,6 +460,9 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
       { transaction: {} },
     );
     expect(mockSequelize.models.EventReportPilotGoal.create).toHaveBeenCalled();
+    expect(mockSequelize.models.CollaboratorType.findOne).toHaveBeenCalled();
+    expect(mockSequelize.models.GoalCollaborator.findAll).toHaveBeenCalledTimes(1);
+    expect(mockSequelize.models.GoalCollaborator.create).toHaveBeenCalledTimes(2);
   });
 
   it('does not create a new goal if one already exists', async () => {
