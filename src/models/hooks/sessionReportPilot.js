@@ -132,142 +132,166 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
   }
 };
 
-export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options) => {
-  const processSessionReport = async (sessionReport) => {
-    let event;
-    let recipients;
+const extractEventData = (sessionReport) => {
+  let event;
+  let recipients;
 
-    if (sessionReport && sessionReport.data) {
-      const data = (typeof sessionReport.data.val === 'string')
-        ? JSON.parse(sessionReport.data.val)
-        : sessionReport.data;
+  if (sessionReport && sessionReport.data) {
+    const data = (typeof sessionReport.data.val === 'string')
+      ? JSON.parse(sessionReport.data.val)
+      : sessionReport.data;
 
-      event = data.event;
-      recipients = data.recipients;
+    event = data.event;
+    recipients = data.recipients;
+  }
+
+  return { event, recipients };
+};
+
+const createOrUpdateGoal = async (sequelize, event, grantId, sessionReport, options) => {
+  const eventId = Number(event.id);
+  const existingGoal = await sequelize.models.EventReportPilotGoal.findOne({
+    where: { eventId, grantId },
+  });
+
+  if (existingGoal) {
+    return existingGoal.goalId;
+  }
+
+  const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
+  if (!grant) throw new Error('Grant not found');
+
+  const sessionId = sessionReport.id;
+
+  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
+    where: { eventId, 'data.status': TRAINING_REPORT_STATUSES.COMPLETE },
+    transaction: options.transaction,
+  });
+
+  const status = hasCompleteSession ? 'In Progress' : 'Draft';
+  const onApprovedAR = !!(hasCompleteSession);
+
+  const newGoal = await sequelize.models.Goal.create({
+    name: event.data.goal,
+    grantId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    status,
+    createdVia: 'tr',
+    source: GOAL_SOURCES[4], // Training event
+    onAR: true,
+    onApprovedAR,
+  }, { transaction: options.transaction });
+
+  await sequelize.models.EventReportPilotGoal.create({
+    goalId: newGoal.id,
+    eventId,
+    sessionId,
+    grantId,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }, { transaction: options.transaction });
+
+  return newGoal.id;
+};
+
+const updateCreatorCollaborator = async (sequelize, eventRecord, existingCollaborators, creatorTypeId, options) => {
+  const creatorCollaborator = existingCollaborators.find((c) => c.collaboratorTypeId === creatorTypeId.id);
+
+  const pocUsers = await sequelize.models.User.findAll({
+    where: { id: eventRecord.pocIds || [] },
+    transaction: options.transaction,
+  });
+
+  const firstPoc = pocUsers
+    .map((u) => ({ id: u.id, name: u.name }))
+    .sort((a, b) => a.name.localeCompare(b.name))[0];
+
+  if (!firstPoc) {
+    // No POCs defined on the event, so we use ourself as the creator.
+    const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+    if (creatorCollaborator.userId !== currentUserId) {
+      await creatorCollaborator.update({ userId: currentUserId }, { transaction: options.transaction });
     }
+  }
 
+  if (firstPoc && creatorCollaborator.userId !== firstPoc.id) {
+    await creatorCollaborator.update({ userId: firstPoc.id }, { transaction: options.transaction });
+  }
+};
+
+const createCreatorCollaborator = async (sequelize, eventRecord, goalId, sessionReport, creatorTypeId, options) => {
+  const pocUsers = await sequelize.models.User.findAll({
+    where: { id: eventRecord.pocIds },
+    transaction: options.transaction,
+  });
+
+  const firstPoc = pocUsers
+    .map((u) => ({ id: u.id, name: u.name }))
+    .sort((a, b) => a.name.localeCompare(b.name))[0];
+
+  if (firstPoc) {
+    await sequelize.models.GoalCollaborator.create({
+      goalId,
+      userId: firstPoc.id,
+      collaboratorTypeId: creatorTypeId.id,
+      linkBack: { sessionReportIds: [sessionReport.id] },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }, { transaction: options.transaction });
+  }
+};
+
+const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sessionReport, options) => {
+  const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+  const [creatorType, linkerType] = await Promise.all([
+    sequelize.models.CollaboratorType.findOne({ where: { name: 'Creator' }, transaction: options.transaction }),
+    sequelize.models.CollaboratorType.findOne({ where: { name: 'Linker' }, transaction: options.transaction }),
+  ]);
+
+  const existingCollaborators = await sequelize.models.GoalCollaborator.findAll({
+    where: {
+      goalId,
+      collaboratorTypeId: { [Op.in]: [creatorType.id, linkerType.id] },
+    },
+    transaction: options.transaction,
+  });
+
+  const hasCreator = existingCollaborators.some((c) => c.collaboratorTypeId === creatorType.id);
+
+  if (!hasCreator) {
+    await createCreatorCollaborator(sequelize, eventRecord, goalId, sessionReport, creatorType, options);
+  } else {
+    await updateCreatorCollaborator(sequelize, eventRecord, existingCollaborators, creatorType, options);
+  }
+
+  if (!existingCollaborators.some((c) => c.collaboratorTypeId === linkerType.id) && currentUserId) {
+    await sequelize.models.GoalCollaborator.create({
+      goalId,
+      userId: currentUserId,
+      collaboratorTypeId: linkerType.id,
+      linkBack: { sessionReportIds: [sessionReport.id] },
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }, { transaction: options.transaction });
+  }
+};
+
+export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options, eventCurrentRecord = null) => {
+  const processSessionReport = async (sessionReport) => {
+    const { event, recipients } = extractEventData(sessionReport);
     if (!event?.data?.goal || !event.id) return;
 
     const eventId = Number(event.id);
-    const eventRecord = await sequelize.models.EventReportPilot.findByPk(eventId, { transaction: options.transaction });
+    const eventRecord = eventCurrentRecord || await sequelize.models.EventReportPilot.findByPk(eventId, { transaction: options.transaction });
     if (!eventRecord) throw new Error('Event not found');
 
     // eslint-disable-next-line no-restricted-syntax
     for await (const { value: grantValue } of recipients) {
       const grantId = Number(grantValue);
-
-      // Check if a Goal already exists for the grantId.
-      const existingGoal = await sequelize.models.Goal.findOne({
-        where: { grantId, name: event.data.goal },
-      });
-
-      let goalId;
-
-      if (existingGoal) {
-        goalId = existingGoal.id;
-      } else {
-        const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
-        if (!grant) throw new Error('Grant not found');
-
-        const sessionId = sessionReport.id;
-
-        const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
-          where: { eventId, 'data.status': TRAINING_REPORT_STATUSES.COMPLETE },
-          transaction: options.transaction,
-        });
-
-        const status = hasCompleteSession ? 'In Progress' : 'Draft';
-        const onApprovedAR = !!(hasCompleteSession);
-
-        const newGoal = await sequelize.models.Goal.create({
-          name: event.data.goal,
-          grantId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          status,
-          createdVia: 'tr',
-          source: GOAL_SOURCES[4], // Training event
-          onAR: true,
-          onApprovedAR,
-        }, { transaction: options.transaction });
-
-        await sequelize.models.EventReportPilotGoal.create({
-          goalId: newGoal.id,
-          eventId,
-          sessionId,
-          grantId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }, { transaction: options.transaction });
-
-        goalId = newGoal.id;
-
-        const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-
-        const [creatorTypeId, linkerTypeId] = await Promise.all([
-          sequelize.models.CollaboratorType.findOne({ where: { name: 'Creator' }, transaction: options.transaction }),
-          sequelize.models.CollaboratorType.findOne({ where: { name: 'Linker' }, transaction: options.transaction }),
-        ]);
-
-        const existingCollaborators = await sequelize.models.GoalCollaborator.findAll({
-          where: {
-            goalId,
-            collaboratorTypeId: { [Op.in]: [creatorTypeId.id, linkerTypeId.id] },
-          },
-          transaction: options.transaction,
-        });
-
-        const hasCreator = existingCollaborators.some((c) => c.collaboratorTypeId === creatorTypeId.id);
-
-        if (!hasCreator) {
-          const pocUsers = await sequelize.models.User.findAll({
-            where: { id: eventRecord.pocIds },
-            transaction: options.transaction,
-          });
-
-          const firstPoc = pocUsers
-            .map((u) => ({ id: u.id, name: u.name }))
-            .sort((a, b) => a.name.localeCompare(b.name))[0];
-
-          if (firstPoc) {
-            await sequelize.models.GoalCollaborator.create({
-              goalId,
-              userId: firstPoc.id,
-              collaboratorTypeId: creatorTypeId.id,
-              linkBack: { sessionReportIds: [sessionReport.id] },
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            }, { transaction: options.transaction });
-          }
-        } else {
-          const creatorCollaborator = existingCollaborators.find((c) => c.collaboratorTypeId === creatorTypeId.id);
-          if (creatorCollaborator) {
-            const pocUsers = await sequelize.models.User.findAll({
-              where: { id: eventRecord.pocIds },
-              transaction: options.transaction,
-            });
-
-            const firstPoc = pocUsers
-              .map((u) => ({ id: u.id, name: u.name }))
-              .sort((a, b) => a.name.localeCompare(b.name))[0];
-
-            if (firstPoc) {
-              await creatorCollaborator.update({ userId: firstPoc.id }, { transaction: options.transaction });
-            }
-          }
-        }
-
-        if (!existingCollaborators.some((c) => c.collaboratorTypeId === linkerTypeId.id) && currentUserId) {
-          await sequelize.models.GoalCollaborator.create({
-            goalId,
-            userId: currentUserId,
-            collaboratorTypeId: linkerTypeId.id,
-            linkBack: { sessionReportIds: [sessionReport.id] },
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          }, { transaction: options.transaction });
-        }
-      }
+      const goalId = await createOrUpdateGoal(sequelize, event, grantId, sessionReport, options);
+      await syncGoalCollaborators(sequelize, eventRecord, goalId, sessionReport, options);
     }
   };
 
