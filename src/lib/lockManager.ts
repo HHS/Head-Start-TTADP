@@ -117,19 +117,10 @@ export default class LockManager {
     await this.stopRenewal(false);
     const callback = async () => {
       try {
-        // auditLogger.log(
-        //   'info',
-        //   `(${process.pid}) Attempting to renew the lock for key "${this.lockKey}".`,
-        // );
         const renewed = await this.renewHoldTTL(ttl);
         if (!renewed) {
           auditLogger.error(`Failed to renew the lock for key "${this.lockKey}". Another instance may take over.`);
           this.stopRenewal();
-        } else {
-          // auditLogger.log(
-          //   'info',
-          //   `Successfully renewed the lock for key "${this.lockKey}".`,
-          // );
         }
       } catch (error) {
         auditLogger.error(`An error occurred during renewal: ${error}`);
