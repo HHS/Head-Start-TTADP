@@ -155,7 +155,7 @@ export const grantsToGoals = ({
   prompts,
 }) => selectedGrants.map((g) => {
   const goalSource = source ? source[g.numberWithProgramTypes] : '';
-  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : null;
+  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
   return {
     grantId: g.id,
     name,

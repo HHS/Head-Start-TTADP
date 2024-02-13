@@ -753,11 +753,19 @@ function reduceGoals(goals, forReport = false) {
             [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
           };
         }
-        existingGoal.prompts = reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          existingGoal.prompts || [],
-        );
+
+        if (forReport) {
+          existingGoal.prompts = reducePrompts(
+            forReport,
+            currentValue.dataValues.prompts || [],
+            existingGoal.prompts || [],
+          );
+        } else {
+          existingGoal.prompts = {
+            ...existingGoal.prompts,
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.prompts || [],
+          };
+        }
         return previousValues;
       }
 
@@ -778,6 +786,18 @@ function reduceGoals(goals, forReport = false) {
         };
       }
 
+      let prompts = reducePrompts(
+        forReport,
+        currentValue.dataValues.prompts || [],
+        [],
+      );
+
+      if (!forReport) {
+        prompts = {
+          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.prompts || [],
+        };
+      }
+
       const goal = {
         ...currentValue.dataValues,
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
@@ -795,11 +815,7 @@ function reduceGoals(goals, forReport = false) {
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
-        prompts: reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          [],
-        ),
+        prompts,
         isNew: false,
         endDate,
         source,
@@ -2592,10 +2608,6 @@ const fieldMappingForDeduplication = {
 // eslint-disable-next-line max-len
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
-
-function goalGroupContainsClosedCuratedGoal(goalGroup) {
-  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
-}
 
 /**
 * @param {Number} recipientId

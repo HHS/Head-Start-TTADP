@@ -163,14 +163,14 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setPrompts(grantsToMultiValue(selectedGoalGrants, {}, goal.prompts));
+        setPrompts(grantsToMultiValue(selectedGoalGrants, goal.prompts, []));
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(grantsToMultiValue(selectedGoalGrants, {}, goal.source));
+        setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
