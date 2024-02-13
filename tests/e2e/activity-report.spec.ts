@@ -450,7 +450,7 @@ test.describe('Activity Report', () => {
     const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
     expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
 
     let objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
 

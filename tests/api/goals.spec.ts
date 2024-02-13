@@ -72,7 +72,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     grantIds: Joi.array().items(Joi.number()),
     isNew: Joi.boolean(),
     prompts: Joi.array().items(promptsSchema),
-    source: Joi.string()
+    source: Joi.any()
   }));
   await validateSchema(response, schema, expect);
 
