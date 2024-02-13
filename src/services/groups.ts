@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op } from 'sequelize';
 import db, { sequelize } from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';

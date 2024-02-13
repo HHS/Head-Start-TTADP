@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { GROUP_COLLABORATORS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
   User,
@@ -8,6 +9,8 @@ import {
   Recipient,
   GroupCollaborator,
   Grant,
+  ValidFor,
+  CollaboratorType,
   sequelize,
 } from '../models';
 import {
@@ -17,20 +20,56 @@ import {
   createNewGroup,
   editGroup,
   destroyGroup,
+  checkGroupNameAvailable,
 } from './groups';
 
 describe('Groups service', () => {
   let mockUser;
   let mockUserTwo;
+  let mockUserThree;
+  let mockUserFour;
   let recipient;
   let grantOne;
   let grantTwo;
   let existingGroupToEdit;
+  let existingGroupToEditWithCollabs;
   let groupToDelete;
   let publicGroup;
   let groupsToCleanup = [];
 
+  let creatorCollaboratorType;
+  let coOwnerCollaboratorType;
+  let sharedWithCollaboratorType;
+
   beforeAll(async () => {
+    // Get group collaborator types.
+    const groupValidFor = await ValidFor.findOne({
+      where: {
+        name: 'Groups',
+      },
+    });
+
+    creatorCollaboratorType = await CollaboratorType.findOne({
+      where: {
+        name: GROUP_COLLABORATORS.CREATOR,
+        validForId: groupValidFor.id,
+      },
+    });
+
+    coOwnerCollaboratorType = await CollaboratorType.findOne({
+      where: {
+        name: GROUP_COLLABORATORS.CO_OWNER,
+        validForId: groupValidFor.id,
+      },
+    });
+
+    sharedWithCollaboratorType = await CollaboratorType.findOne({
+      where: {
+        name: GROUP_COLLABORATORS.SHARED_WITH,
+        validForId: groupValidFor.id,
+      },
+    });
+
     mockUser = await User.create({
       name: faker.name.findName(),
       email: faker.internet.email(),
@@ -49,6 +88,24 @@ describe('Groups service', () => {
       lastLogin: new Date(),
     });
 
+    mockUserThree = await User.create({
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+      password: faker.internet.password(),
+      hsesUserId: faker.internet.email(),
+      hsesUsername: faker.internet.email(),
+      lastLogin: new Date(),
+    });
+
+    mockUserFour = await User.create({
+      name: faker.name.findName(),
+      email: faker.internet.email(),
+      password: faker.internet.password(),
+      hsesUserId: faker.internet.email(),
+      hsesUsername: faker.internet.email(),
+      lastLogin: new Date(),
+    });
+
     await Permission.create({
       regionId: 1,
       userId: mockUser.id,
@@ -58,6 +115,18 @@ describe('Groups service', () => {
     await Permission.create({
       regionId: 1,
       userId: mockUserTwo.id,
+      scopeId: SCOPES.READ_REPORTS,
+    });
+
+    await Permission.create({
+      regionId: 1,
+      userId: mockUserThree.id,
+      scopeId: SCOPES.READ_REPORTS,
+    });
+
+    await Permission.create({
+      regionId: 1,
+      userId: mockUserFour.id,
       scopeId: SCOPES.READ_REPORTS,
     });
 
@@ -97,12 +166,50 @@ describe('Groups service', () => {
     await GroupCollaborator.create({
       userId: mockUser.id,
       groupId: existingGroupToEdit.id,
-      collaboratorTypeId: 1,
+      collaboratorTypeId: creatorCollaboratorType.id,
     });
 
     // add the first grant to the group
     await GroupGrant.create({
       groupId: existingGroupToEdit.id,
+      grantId: grantOne.id,
+    });
+
+    // create a group to edit with collaborators.
+    existingGroupToEditWithCollabs = await Group.create({
+      name: 'Group 1 with collaborators',
+      // userId: mockUser.id,
+      isPublic: false,
+    });
+
+    // Create collaborators for existingGroupToEditWithCollabs.
+    await GroupCollaborator.create({
+      userId: mockUser.id,
+      groupId: existingGroupToEditWithCollabs.id,
+      collaboratorTypeId: creatorCollaboratorType.id, // Creator.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: existingGroupToEditWithCollabs.id,
+      collaboratorTypeId: coOwnerCollaboratorType.id, // Co-Owner.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserThree.id,
+      groupId: existingGroupToEditWithCollabs.id,
+      collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserFour.id,
+      groupId: existingGroupToEditWithCollabs.id,
+      collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
+    });
+
+    // add the first grant to the group
+    await GroupGrant.create({
+      groupId: existingGroupToEditWithCollabs.id,
       grantId: grantOne.id,
     });
 
@@ -117,7 +224,7 @@ describe('Groups service', () => {
     await GroupCollaborator.create({
       userId: mockUser.id,
       groupId: groupToDelete.id,
-      collaboratorTypeId: 1,
+      collaboratorTypeId: creatorCollaboratorType.id,
     });
 
     // add the second grant to the group
@@ -137,10 +244,15 @@ describe('Groups service', () => {
     await GroupCollaborator.create({
       userId: mockUserTwo.id,
       groupId: publicGroup.id,
-      collaboratorTypeId: 1,
+      collaboratorTypeId: creatorCollaboratorType.id,
     });
 
-    groupsToCleanup = [existingGroupToEdit, groupToDelete, publicGroup];
+    groupsToCleanup = [
+      existingGroupToEdit,
+      groupToDelete,
+      publicGroup,
+      existingGroupToEditWithCollabs,
+    ];
 
     await GroupGrant.create({
       groupId: publicGroup.id,
@@ -181,13 +293,18 @@ describe('Groups service', () => {
 
     await Permission.destroy({
       where: {
-        userId: [mockUser.id, mockUserTwo.id],
+        userId: [mockUser.id, mockUserTwo.id, mockUserThree.id, mockUserFour.id],
       },
     });
 
     await User.destroy({
       where: {
-        id: [mockUser.id, mockUserTwo.id],
+        id: [
+          mockUser.id,
+          mockUserTwo.id,
+          mockUserThree.id,
+          mockUserFour.id,
+        ],
       },
     });
 
@@ -197,22 +314,24 @@ describe('Groups service', () => {
   describe('groups', () => {
     it('returns a list of groups', async () => {
       const result = await groups(mockUser.id, [1]);
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4);
 
       const groupNames = result.map((gr) => gr.name);
       expect(groupNames).toContain('Group 1');
       expect(groupNames).toContain('Group 2');
       expect(groupNames).toContain('Public Group');
+      expect(groupNames).toContain('Group 1 with collaborators');
     });
 
     it('returns a list of groups by region', async () => {
       const result = await groupsByRegion(1, mockUser.id);
-      expect(result).toHaveLength(3);
+      expect(result).toHaveLength(4);
 
       const groupNames = result.map((gr) => gr.name);
       expect(groupNames).toContain('Group 1');
       expect(groupNames).toContain('Group 2');
       expect(groupNames).toContain('Public Group');
+      expect(groupNames).toContain('Group 1 with collaborators');
     });
   });
 
@@ -241,6 +360,52 @@ describe('Groups service', () => {
       expect(result.isPublic).toBe(false);
       expect(result).toHaveProperty('grants');
       expect(result.grants).toHaveLength(2);
+
+      groupsToCleanup.push(result);
+    });
+
+    it('creates a new group with shared users and co owners', async () => {
+      const result = await createNewGroup({
+        name: 'Group with collaborators',
+        grants: [grantOne.id, grantTwo.id],
+        userId: mockUser.id,
+        isPublic: false,
+        shareWiths: [mockUserTwo.id, mockUserThree.id],
+        coOwners: [mockUserFour.id],
+      });
+
+      groupsToCleanup.push(result);
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('name');
+      expect(result.name).toBe('Group with collaborators');
+      expect(result.isPublic).toBe(false);
+      expect(result).toHaveProperty('grants');
+      expect(result.grants).toHaveLength(2);
+
+      expect(result.groupCollaborators).toHaveLength(4);
+      const creatorCollab = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      expect(creatorCollab).toBeDefined();
+      expect(creatorCollab.userId).toBe(mockUser.id);
+
+      const sharedWithCollab = result.groupCollaborators.filter(
+        (gc) => gc.collaboratorType.name === 'SharedWith',
+      );
+      expect(sharedWithCollab).toHaveLength(2);
+      const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
+      expect(sharedWithsharedWithCollabIds).toContain(mockUserTwo.id);
+      expect(sharedWithsharedWithCollabIds).toContain(mockUserThree.id);
+
+      const coOwnersCollab = result.groupCollaborators.filter(
+        (gc) => gc.collaboratorType.name === 'Co-Owner',
+      );
+      expect(coOwnersCollab).toHaveLength(1);
+      const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
+      expect(coOwnersCollabIds).toContain(mockUserFour.id);
+
+      // Assert result.creator is mockUser.
+      expect(result.creator.id).toBe(mockUser.id);
+      expect(result.creator.name).toBe(mockUser.name);
     });
   });
 
@@ -267,6 +432,73 @@ describe('Groups service', () => {
       expect(currentGroupGrants).toHaveLength(1);
       expect(currentGroupGrants[0].grantId).toBe(grantTwo.id);
     });
+
+    it('edits existing group with shared users and co owners', async () => {
+      let result = await editGroup(existingGroupToEditWithCollabs.id, {
+        name: 'Group 1 with collaborators EDITED',
+        grants: [grantTwo.id],
+        userId: mockUser.id,
+        isPublic: false,
+        shareWiths: [mockUserTwo.id],
+        coOwners: [mockUserThree.id, mockUserFour.id],
+      });
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('name');
+      expect(result.name).toBe('Group 1 with collaborators EDITED');
+      expect(result.isPublic).toBe(false);
+
+      // Assert result.creator is mockUser.
+      expect(result.creator.id).toBe(mockUser.id);
+      expect(result.creator.name).toBe(mockUser.name);
+
+      // Assert result.groupCollaborators.
+      expect(result.groupCollaborators).toHaveLength(4);
+      const creatorCollab = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      expect(creatorCollab).toBeDefined();
+      expect(creatorCollab.userId).toBe(mockUser.id);
+
+      const sharedWithCollab = result.groupCollaborators.filter(
+        (gc) => gc.collaboratorType.name === 'SharedWith',
+      );
+      expect(sharedWithCollab).toHaveLength(1);
+      const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
+      expect(sharedWithsharedWithCollabIds).toContain(mockUserTwo.id);
+
+      const coOwnersCollab = result.groupCollaborators.filter(
+        (gc) => gc.collaboratorType.name === 'Co-Owner',
+      );
+      expect(coOwnersCollab).toHaveLength(2);
+      const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
+      expect(coOwnersCollabIds).toContain(mockUserThree.id);
+      expect(coOwnersCollabIds).toContain(mockUserFour.id);
+
+      // Assert the group grants.
+      const currentGroupGrants = await GroupGrant.findAll({
+        where: {
+          groupId: existingGroupToEditWithCollabs.id,
+        },
+      });
+
+      expect(currentGroupGrants).toHaveLength(1);
+      expect(currentGroupGrants[0].grantId).toBe(grantTwo.id);
+
+      // Remove existing collaborators.
+      result = await editGroup(existingGroupToEditWithCollabs.id, {
+        name: 'Group 1 with collaborators EDITED',
+        grants: [grantTwo.id],
+        userId: mockUser.id,
+        isPublic: false,
+        shareWiths: [],
+        coOwners: [],
+      });
+
+      // Assert result.groupCollaborators.
+      expect(result.groupCollaborators).toHaveLength(1);
+      const creatorCollabAfterEdit = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      expect(creatorCollabAfterEdit).toBeDefined();
+      expect(creatorCollabAfterEdit.userId).toBe(mockUser.id);
+    });
   });
 
   describe('destroyGroup', () => {
@@ -281,6 +513,27 @@ describe('Groups service', () => {
       });
 
       expect(currentGroupGrants).toHaveLength(0);
+
+      // Assert the group is deleted.
+      const currentGroup = await Group.findByPk(groupToDelete.id);
+      expect(currentGroup).toBeNull();
+
+      // Assert the groupCollaborators are deleted.
+      const currentGroupCollaborators = await GroupCollaborator.findAll({
+        where: {
+          groupId: groupToDelete.id,
+        },
+      });
+
+      expect(currentGroupCollaborators).toHaveLength(0);
+
+      // Assert the group grants are deleted.
+      const currentGroupGrantsAfterDelete = await GroupGrant.findAll({
+        where: {
+          groupId: groupToDelete.id,
+        },
+      });
+      expect(currentGroupGrantsAfterDelete).toHaveLength(0);
     });
   });
 
@@ -370,7 +623,7 @@ describe('Groups service', () => {
       const publicGroupRegion1Collaborator = await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: publicGroupRegion1.id,
-        collaboratorTypeId: 1,
+        collaboratorTypeId: creatorCollaboratorType.id,
       });
 
       // Create a private group for the user.
@@ -384,7 +637,7 @@ describe('Groups service', () => {
       const privateGroupRegion1Collaborator = await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: privateGroupRegion1.id,
-        collaboratorTypeId: 1,
+        collaboratorTypeId: creatorCollaboratorType.id,
       });
 
       // Create a public group for region 2.
@@ -398,7 +651,7 @@ describe('Groups service', () => {
       const publicGroupRegion2Collaborator = await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: publicGroupRegion2.id,
-        collaboratorTypeId: 1,
+        collaboratorTypeId: creatorCollaboratorType.id,
       });
 
       // Set the group ids.
@@ -497,6 +750,37 @@ describe('Groups service', () => {
       // Find the Group with the name 'Public Group Region 1'.
       const publicGroupRegion1 = groupsToCheck.find((g) => g.name === 'Public Group Region 1');
       expect(publicGroupRegion1).toBeDefined();
+    });
+  });
+
+  describe('checkGroupNameAvailable', () => {
+    let existingGroup;
+    beforeAll(async () => {
+      // Create a group.
+      existingGroup = await Group.create({
+        id: faker.datatype.number(),
+        name: 'This group name is taken',
+        isPublic: false,
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy the group.
+      await Group.destroy({
+        where: {
+          id: existingGroup.id,
+        },
+      });
+    });
+
+    it('the group name is in use', async () => {
+      const result = await checkGroupNameAvailable('This GROUP NAME IS taken');
+      expect(result).toBe(false);
+    });
+
+    it('the group name is not in use', async () => {
+      const result = await checkGroupNameAvailable('This group name is available');
+      expect(result).toBe(true);
     });
   });
 });
