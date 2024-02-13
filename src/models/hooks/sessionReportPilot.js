@@ -201,57 +201,72 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
         }, { transaction: options.transaction });
 
         goalId = newGoal.id;
-      }
 
-      const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
 
-      const [creatorTypeId, linkerTypeId] = await Promise.all([
-        sequelize.models.CollaboratorType.findOne({ where: { name: 'Creator' }, transaction: options.transaction }),
-        sequelize.models.CollaboratorType.findOne({ where: { name: 'Linker' }, transaction: options.transaction }),
-      ]);
+        const [creatorTypeId, linkerTypeId] = await Promise.all([
+          sequelize.models.CollaboratorType.findOne({ where: { name: 'Creator' }, transaction: options.transaction }),
+          sequelize.models.CollaboratorType.findOne({ where: { name: 'Linker' }, transaction: options.transaction }),
+        ]);
 
-      const existingCollaborators = await sequelize.models.GoalCollaborator.findAll({
-        where: {
-          goalId,
-          collaboratorTypeId: { [Op.in]: [creatorTypeId.id, linkerTypeId.id] },
-        },
-        transaction: options.transaction,
-      });
-
-      const hasCreator = existingCollaborators.some((c) => c.collaboratorTypeId === creatorTypeId.id);
-      const hasLinker = existingCollaborators.some((c) => c.collaboratorTypeId === linkerTypeId.id);
-
-      if (!hasCreator) {
-        const pocUsers = await sequelize.models.User.findAll({
-          where: { id: eventRecord.pocIds },
+        const existingCollaborators = await sequelize.models.GoalCollaborator.findAll({
+          where: {
+            goalId,
+            collaboratorTypeId: { [Op.in]: [creatorTypeId.id, linkerTypeId.id] },
+          },
           transaction: options.transaction,
         });
 
-        const firstPoc = pocUsers
-          .map((u) => ({ id: u.id, name: u.name }))
-          .sort((a, b) => a.name.localeCompare(b.name))[0];
+        const hasCreator = existingCollaborators.some((c) => c.collaboratorTypeId === creatorTypeId.id);
 
-        if (firstPoc) {
+        if (!hasCreator) {
+          const pocUsers = await sequelize.models.User.findAll({
+            where: { id: eventRecord.pocIds },
+            transaction: options.transaction,
+          });
+
+          const firstPoc = pocUsers
+            .map((u) => ({ id: u.id, name: u.name }))
+            .sort((a, b) => a.name.localeCompare(b.name))[0];
+
+          if (firstPoc) {
+            await sequelize.models.GoalCollaborator.create({
+              goalId,
+              userId: firstPoc.id,
+              collaboratorTypeId: creatorTypeId.id,
+              linkBack: { sessionReportIds: [sessionReport.id] },
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }, { transaction: options.transaction });
+          }
+        } else {
+          const creatorCollaborator = existingCollaborators.find((c) => c.collaboratorTypeId === creatorTypeId.id);
+          if (creatorCollaborator) {
+            const pocUsers = await sequelize.models.User.findAll({
+              where: { id: eventRecord.pocIds },
+              transaction: options.transaction,
+            });
+
+            const firstPoc = pocUsers
+              .map((u) => ({ id: u.id, name: u.name }))
+              .sort((a, b) => a.name.localeCompare(b.name))[0];
+
+            if (firstPoc) {
+              await creatorCollaborator.update({ userId: firstPoc.id }, { transaction: options.transaction });
+            }
+          }
+        }
+
+        if (!existingCollaborators.some((c) => c.collaboratorTypeId === linkerTypeId.id) && currentUserId) {
           await sequelize.models.GoalCollaborator.create({
             goalId,
-            userId: firstPoc.id,
-            collaboratorTypeId: creatorTypeId.id,
+            userId: currentUserId,
+            collaboratorTypeId: linkerTypeId.id,
             linkBack: { sessionReportIds: [sessionReport.id] },
             createdAt: new Date(),
             updatedAt: new Date(),
           }, { transaction: options.transaction });
         }
-      }
-
-      if (!hasLinker && currentUserId) {
-        await sequelize.models.GoalCollaborator.create({
-          goalId,
-          userId: currentUserId,
-          collaboratorTypeId: linkerTypeId.id,
-          linkBack: { sessionReportIds: [sessionReport.id] },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        }, { transaction: options.transaction });
       }
     }
   };
