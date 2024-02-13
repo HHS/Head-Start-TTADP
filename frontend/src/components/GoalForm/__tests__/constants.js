@@ -3,7 +3,7 @@ import {
   FORM_FIELD_DEFAULT_ERRORS,
   FORM_FIELD_INDEXES,
   objectivesWithValidResourcesOnly,
-  grantsToSources,
+  grantsToMultiValue,
 } from '../constants';
 
 describe('form constants', () => {
@@ -81,7 +81,7 @@ test('grantsToSources function should return the correct source object', () => {
     789: '',
   };
 
-  const result = grantsToSources(grants, source);
+  const result = grantsToMultiValue(grants, source);
 
   expect(result).toEqual(expected);
 });
