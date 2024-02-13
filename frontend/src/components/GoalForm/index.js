@@ -918,7 +918,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives: [],
-        source: { grantId: goal.source },
+        source: goal.source,
         goalTemplateId: goal.id,
       }));
       const created = await createOrUpdateGoals(goals);
