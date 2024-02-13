@@ -1,5 +1,8 @@
 /* eslint-disable import/first */
-require('newrelic');
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  require('newrelic');
+}
 
 import {} from 'dotenv/config';
 import throng from 'throng';
