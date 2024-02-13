@@ -161,7 +161,7 @@ export default function GoalForm({
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(grantsToSources(selectedGoalGrants, {}, goal.source));
+        setSource(grantsToSources(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
