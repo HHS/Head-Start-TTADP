@@ -5,12 +5,15 @@ import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
 
-const formatPrompts = (prompts) => prompts.filter((prompt) => (
-  prompt.response && prompt.response.length)).map((prompt) => ({
-  key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
-  title: prompt.title,
-  response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
-}));
+const formatPrompts = (prompts) => {
+  const ps = Array.isArray(prompts) ? prompts : Object.values(prompts);
+  return ps.filter((prompt) => (
+    prompt.response && prompt.response.length)).map((prompt) => ({
+    key: prompt.title.replace(/\s/g, '-').toLowerCase() + prompt.ordinal,
+    title: prompt.title,
+    response: prompt.response.join ? prompt.response.join(', ') : prompt.response,
+  }));
+};
 
 const parseObjectValuesOrString = (d) => {
   if (typeof d === 'string') {
