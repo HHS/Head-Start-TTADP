@@ -3198,7 +3198,17 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
   if (!isError && grantIds.length > 0) {
     goalsForNameCheck = await Goal.findAll({
-      attributes: ['id', 'grantId'],
+      attributes: [
+        'id',
+        'grantId',
+      ],
+      include: [
+        {
+          model: Grant,
+          attributes: ['number'],
+          as: 'grant',
+        },
+      ],
       where: {
         grantId: grantIds,
         name,
@@ -3210,7 +3220,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
   if (goalsForNameCheck.length) {
     isError = true;
-    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grantId).join(', ')}`;
+    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
   }
 
   if (isError) {
