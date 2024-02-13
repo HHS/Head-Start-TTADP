@@ -79,7 +79,6 @@ const removeQueueProcessor = (category) => {
  * and completed tasks, and then processing each category using its corresponding processor.
  */
 const processMaintenanceQueue = () => {
-  console.log(process.pid, maintenanceCronJobs);
   // Attach event listener for failed tasks
   maintenanceQueue.on('failed', onFailedMaintenance);
   // Attach event listener for completed tasks
@@ -125,13 +124,10 @@ const enqueueMaintenanceJob = async (
     if (requiresWorker && launchScript === 'worker') {
       if (requiresLock) {
         let lockManager = lockManagers[`${category}-${data?.type}`];
-        console.log('enqueueMaintenanceJob', category, data?.type, lockManager);
         if (!lockManager) {
           lockManager = new LockManager(`maintenanceLock-${category}-${data?.type}`);
-          console.log('made new lock manager?');
           lockManagers[`${category}-${data?.type}`] = lockManager;
         }
-        console.log('enqueueMaintenanceJob', category, data?.type, lockManager);
         await lockManager.executeWithLock(action, true);
       } else {
         await action();
@@ -236,10 +232,8 @@ const removeCronJob = (category, type, name) => {
  * @returns {Object} - An object containing the job with its type as the key.
  */
 const createJob = (category, type, name, timezone, schedule, jobCommand) => {
-  console.log('AAAAA 1', category, type, name, timezone, schedule, jobCommand);
   // Create the job using the jobCommand function and the given parameters.
   const job = jobCommand(category, type, timezone, schedule);
-  console.log('AAAAA 2', job);
   // Start the job.
   try {
     if (!job.running) {
@@ -249,7 +243,6 @@ const createJob = (category, type, name, timezone, schedule, jobCommand) => {
     auditLogger.error(err);
   }
   maintenanceCronJobs[category][type][name].started = true;
-  console.log('AAAAA 3', category, type, name, timezone, schedule, jobCommand);
   // Return an object containing the job with its type as the key.
   return { [type]: job };
 };
@@ -263,7 +256,6 @@ const createJob = (category, type, name, timezone, schedule, jobCommand) => {
  * @returns {Object} - A category object with jobs for each type of job.
  */
 const createCategory = (category, typeJobs, timezone) => {
-  console.log('%%%%');
   // Create an object containing jobs for each type of job in the category.
   const jobs = Object.entries(typeJobs).reduce((acc, [type, names]) => {
     // Iterate over the nested structure
@@ -299,7 +291,6 @@ const createCategory = (category, typeJobs, timezone) => {
 const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
   const categories = Object.entries(maintenanceCronJobs)
     .reduce((acc, [category, typeJobs]) => {
-      console.log('~~~ runMaintenanceCronJobs', category, typeJobs);
       const categoryObj = createCategory(category, typeJobs, timezone);
       acc[categoryObj.name] = categoryObj.jobs;
       return acc;
