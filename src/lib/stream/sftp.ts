@@ -103,9 +103,9 @@ class SftpClient {
 
   private connected = false; // Add a property to track the connection state
 
-
   /**
-   * Attaches event listeners for handling connection status changes and registering signal handlers.
+   * Attaches event listeners for handling connection status changes and registering
+   * signal handlers.
    */
   private attachListeners(): void {
     // Set the connected flag to false when the connection is closed
