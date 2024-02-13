@@ -116,11 +116,13 @@ export default function CsvImport(
         }
 
         // Check for invalid headers.
-        const invalidHeaders = headersArray.filter((header) => !validCsvHeaders.includes(header));
-        if (invalidHeaders.length > 0) {
-          setError(`Invalid headers found: ${invalidHeaders.join(', ')}`);
-          fileInputRef.current.clearFiles();
-          return;
+        if (validCsvHeaders.length) {
+          const invalidHeaders = headersArray.filter((header) => !validCsvHeaders.includes(header));
+          if (invalidHeaders.length > 0) {
+            setError(`Invalid headers found: ${invalidHeaders.join(', ')}`);
+            fileInputRef.current.clearFiles();
+            return;
+          }
         }
 
         // Check for duplicate primary Id Column values.
@@ -266,9 +268,13 @@ export default function CsvImport(
 }
 
 CsvImport.propTypes = {
-  validCsvHeaders: PropTypes.arrayOf(PropTypes.string).isRequired,
+  validCsvHeaders: PropTypes.arrayOf(PropTypes.string),
   requiredCsvHeaders: PropTypes.arrayOf(PropTypes.string).isRequired,
   typeName: PropTypes.string.isRequired,
   apiPathName: PropTypes.string.isRequired,
   primaryIdColumn: PropTypes.string.isRequired,
+};
+
+CsvImport.defaultProps = {
+  validCsvHeaders: [],
 };

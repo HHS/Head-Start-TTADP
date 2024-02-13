@@ -34,7 +34,6 @@ export const dataPropTypes = PropTypes.shape({
   Audience: PropTypes.string,
   'Event ID': PropTypes.string,
   'Edit Title': PropTypes.string,
-  'Sheet Name': PropTypes.string,
   'Full Event Title': PropTypes.string,
   'Reason for Activity': PropTypes.string,
   'Target Population(s)': PropTypes.string,
