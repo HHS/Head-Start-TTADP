@@ -480,7 +480,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
     objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
     expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
 
