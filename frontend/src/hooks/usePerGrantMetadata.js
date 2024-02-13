@@ -8,21 +8,20 @@ export default function usePerGrantMetadata(
   const data = uniq(Object.values(currentValue || {}));
   const [divergence, setDivergence] = useState(data.length > 1);
 
-  const updateSingle = (grantNumber, newSource) => {
+  const updateSingle = (grantNumber, newValue) => {
     onChange({
       ...currentValue,
-      [grantNumber]: newSource,
+      [grantNumber]: newValue,
     });
   };
 
   const updateAll = (newSource) => {
-    // set all keys to the newSource value
-    const newSources = Object.keys(currentValue).reduce((acc, key) => {
+    const newValues = Object.keys(currentValue).reduce((acc, key) => {
       acc[key] = newSource;
       return acc;
     }, {});
 
-    onChange(newSources);
+    onChange(newValues);
   };
 
   return {

@@ -1,93 +1,78 @@
-/* eslint-disable no-unused-vars */
-/* eslint-disable react/prop-types */
-import React, { useState } from 'react';
-import { uniq, uniqueId } from 'lodash';
+import React from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-// import { Label, Radio } from '@trussworks/react-uswds';
-import GoalSource from './GoalSource';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
-// import Req from '../Req';
-import './RTRGoalSource.css';
 import DivergenceRadio from './DivergenceRadio';
+import ConditionalFields from '../ConditionalFields';
+
+const PromptProps = {
+  value: PropTypes.shape({
+    [PropTypes.string]: PropTypes.string,
+  }).isRequired,
+  onChange: PropTypes.func.isRequired,
+  validate: PropTypes.func.isRequired,
+  error: PropTypes.node.isRequired,
+  userCanEdit: PropTypes.bool,
+  selectedGrants: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    numberWithProgramTypes: PropTypes.string,
+  })).isRequired,
+};
 
 const DisplayFields = ({
-  source,
+  value,
   error,
-  isOnApprovedReport,
-  status,
   userCanEdit,
-  validateGoalSource,
-  isCurated,
-  sourcesDiverge,
-  updateSingleSource,
-  updateAllSources,
-  singleSource,
+  validate,
+  updateAll,
+  updateSingle,
+  divergence,
 }) => {
-  if (!sourcesDiverge) {
+  if (!divergence) {
     return (
-      null
-    //   <GoalSource
-    //     source={singleSource}
-    //     onChangeGoalSource={updateAllSources}
-    //     error={error}
-    //     isOnReport={isOnApprovedReport}
-    //     goalStatus={status}
-    //     userCanEdit={userCanEdit}
-    //     validateGoalSource={validateGoalSource}
-    //     isCurated={isCurated}
-    //   />
-    //   <ConditionalFields
-    //     prompts={prompts}
-    //     setPrompts={setPrompts}
-    //     validatePrompts={validatePrompts}
-    //     errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
-    //     userCanEdit={notClosedWithEditPermission}
-    //   />
-
+      <ConditionalFields
+        prompts={value}
+        setPrompts={updateAll}
+        validatePrompts={validate}
+        errors={error}
+        userCanEdit={userCanEdit}
+      />
     );
   }
 
-  const grantNumbers = Object.keys(source);
+  const grantNumbers = Object.keys(value);
 
   return grantNumbers.map((grantNumber) => (
-    <div key={uniqueId('source-by-grant-')} className="margin-top-1">
+    <div key={uniqueId('root-cause-by-grant-')} className="margin-top-1">
       <h3 className="ttahub-rtr-grant-number">
         Grant
         {' '}
         {grantNumber}
       </h3>
-      <GoalSource
-        source={source[grantNumber]}
-        onChangeGoalSource={(newSource) => updateSingleSource(grantNumber, newSource)}
-        error={error}
-        isOnReport={isOnApprovedReport}
-        goalStatus={status}
+      <ConditionalFields
+        prompts={value}
+        setPrompts={() => updateSingle()}
+        validatePrompts={validate}
+        errors={error}
         userCanEdit={userCanEdit}
-        validateGoalSource={validateGoalSource}
-        isCurated={isCurated}
-        inputName={uniqueId('source-')}
       />
     </div>
   ));
 };
 
-// DisplayGoalSource.propTypes = {
-//   ...PromptProps,
-//   sourcesDiverge: PropTypes.bool.isRequired,
-//   updateSingleSource: PropTypes.func.isRequired,
-//   updateAllSources: PropTypes.func.isRequired,
-//   singleSource: PropTypes.string.isRequired,
-// };
+DisplayFields.propTypes = {
+  ...PromptProps,
+  divergence: PropTypes.bool.isRequired,
+  updateAll: PropTypes.func.isRequired,
+};
 
 export default function RTRGoalPrompts({
   value,
   onChange,
-  setPrompts,
-  validatePrompts,
-  errors,
+  validate,
+  error,
   userCanEdit,
   selectedGrants,
-  divergenceLabel,
 }) {
   const {
     data,
@@ -113,24 +98,22 @@ export default function RTRGoalPrompts({
         setDivergence={setDivergence}
       />
       )}
-      {/* <DisplayFields
-        source={source}
-        setSource={onChangeGoalSource}
+      <DisplayFields
+        value={value}
+        onChange={onChange}
         error={error}
-        isOnApprovedReport={isOnApprovedReport}
-        status={status}
         userCanEdit={userCanEdit}
         validate={validate}
         updateAll={updateAll}
         updateSingle={updateSingle}
         divergence={divergence}
         singleValue={data[0]}
-      /> */}
+      />
     </>
   );
 }
 
-// RTRGoalPrompts.propTypes = PromptProps;
+RTRGoalPrompts.propTypes = PromptProps;
 
 RTRGoalPrompts.defaultProps = {
   userCanEdit: false,
