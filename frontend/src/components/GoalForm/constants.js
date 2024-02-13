@@ -112,33 +112,33 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
   }
 };
 
-export const grantsToSources = (grants, source = {}, defaultSource = '') => {
+export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
   const current = [];
 
-  const newSource = grants.reduce((s, grant) => {
+  const newValue = grants.reduce((s, grant) => {
     current.push(grant.numberWithProgramTypes);
 
-    if (source[grant.numberWithProgramTypes]) {
+    if (value[grant.numberWithProgramTypes]) {
       return {
         ...s,
-        [grant.numberWithProgramTypes]: source[grant.numberWithProgramTypes],
+        [grant.numberWithProgramTypes]: value[grant.numberWithProgramTypes],
       };
     }
 
     return {
       ...s,
-      [grant.numberWithProgramTypes]: defaultSource,
+      [grant.numberWithProgramTypes]: defaultValue,
     };
-  }, source);
+  }, value);
 
-  const keys = Object.keys(newSource);
+  const keys = Object.keys(newValue);
   const removedKeys = keys.filter((k) => !current.includes(k));
 
   removedKeys.forEach((k) => {
-    delete newSource[k];
+    delete newValue[k];
   });
 
-  return newSource;
+  return newValue;
 };
 
 export const grantsToGoals = ({
@@ -155,6 +155,7 @@ export const grantsToGoals = ({
   prompts,
 }) => selectedGrants.map((g) => {
   const goalSource = source ? source[g.numberWithProgramTypes] : '';
+  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : null;
   return {
     grantId: g.id,
     name,
@@ -166,6 +167,6 @@ export const grantsToGoals = ({
     recipientId: recipient.id,
     objectives: objectivesWithValidResourcesOnly(objectives),
     ids,
-    prompts,
+    prompts: goalPrompts,
   };
 });

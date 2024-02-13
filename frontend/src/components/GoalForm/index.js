@@ -31,7 +31,7 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  grantsToSources,
+  grantsToMultiValue,
   grantsToGoals,
 } from './constants';
 import ReadOnly from './ReadOnly';
@@ -70,7 +70,7 @@ export default function GoalForm({
     id: 'new',
     onApprovedAR: false,
     onAnyReport: false,
-    prompts: [],
+    prompts: {},
     isCurated: false,
     source: {},
     createdVia: '',
@@ -88,8 +88,10 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
-  const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [source, setSource] = useState(grantsToSources(goalDefaults.grants));
+  const [prompts, setPrompts] = useState(
+    grantsToMultiValue(goalDefaults.grants, goalDefaults.prompts, []),
+  );
+  const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
@@ -101,7 +103,14 @@ export default function GoalForm({
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
 
   useDeepCompareEffect(() => {
-    const newSource = grantsToSources(selectedGrants, { ...source });
+    const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
+    if ((!isEqual(newPrompts, prompts))) {
+      setSource(newPrompts);
+    }
+  }, [prompts, selectedGrants]);
+
+  useDeepCompareEffect(() => {
+    const newSource = grantsToMultiValue(selectedGrants, { ...source });
     if ((!isEqual(newSource, source))) {
       setSource(newSource);
     }
@@ -154,14 +163,14 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setPrompts(goal.prompts);
+        setPrompts(grantsToMultiValue(selectedGoalGrants, {}, goal.prompts));
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(grantsToSources(selectedGoalGrants, {}, goal.source));
+        setSource(grantsToMultiValue(selectedGoalGrants, {}, goal.source));
         setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
