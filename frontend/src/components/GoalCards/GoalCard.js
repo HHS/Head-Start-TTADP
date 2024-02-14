@@ -175,8 +175,8 @@ function GoalCard({
           <p className="usa-prose text-bold margin-y-0">Last TTA</p>
           <p className="usa-prose margin-y-0">{lastTTA}</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Last reviewed</p>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Entered by</p>
         </div>
       </div>
 
