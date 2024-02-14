@@ -17,6 +17,9 @@ describe('migration', () => {
     sequelize: {
       query: jest.fn(),
     },
+    createTable: jest.fn(),
+    dropTable: jest.fn(),
+    truncate: jest.fn(),
   };
   const transaction = {};
   describe('prepMigration', () => {
@@ -83,6 +86,10 @@ describe('migration', () => {
   });
 
   describe('removeTables', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+      jest.resetModules();
+    });
     it('should remove tables and their audit logs', async () => {
       // Mock database calls
       queryInterface.sequelize.query.mockResolvedValueOnce();
@@ -110,6 +117,9 @@ describe('migration', () => {
     });
 
     it('should handle empty array of tables', async () => {
+      queryInterface.createTable.mockImplementation((data) => { console.log(data); });
+      queryInterface.dropTable.mockImplementation((data) => { console.log(data); });
+      queryInterface.truncate.mockImplementation((data) => { console.log(data); });
       // Call removeTables function with empty array of tables
       await removeTables(queryInterface, transaction, []);
 
