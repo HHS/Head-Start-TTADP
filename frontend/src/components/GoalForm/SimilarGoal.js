@@ -15,7 +15,7 @@ const SimilarGoal = ({
   setDismissSimilar,
   onSelectNudgedGoal,
 }) => {
-  const onClick = async () => {
+  const onClick = () => {
     onSelectNudgedGoal(goal);
   };
 
