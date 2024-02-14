@@ -48,6 +48,9 @@ jest.mock('../../../models', () => ({
   File: {
     create: jest.fn(),
   },
+  ZALImportFile: {
+    findAll: jest.fn().mockReturnValue([]),
+  },
 }));
 
 jest.mock('uuid', () => ({
