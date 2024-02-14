@@ -60,7 +60,7 @@ const collectNextFile = async (
   if (availableFile === undefined || availableFile === null) {
     return {
       collectedFiles: importedFiles,
-      hasImportedFiles: !!importedFiles,
+      hasImportedFiles: importedFiles && importedFiles.length > 0,
       hasRemainingFiles: false,
     };
   }
@@ -69,7 +69,7 @@ const collectNextFile = async (
   if (currentStart > limit) {
     return {
       collectedFiles: importedFiles,
-      hasImportedFiles: !!importedFiles,
+      hasImportedFiles: importedFiles && importedFiles.length > 0,
       hasRemainingFiles: !!availableFile,
     };
   }
@@ -80,7 +80,7 @@ const collectNextFile = async (
     if (new Date(currentStart.getTime() + avg) > limit) {
       return {
         collectedFiles: importedFiles,
-        hasImportedFiles: !!importedFiles,
+        hasImportedFiles: importedFiles && importedFiles.length > 0,
         hasRemainingFiles: !!availableFile,
       };
     }
@@ -353,6 +353,7 @@ const downloadFilesFromSource = async (
 export {
   collectNextFile,
   collectFilesFromSource,
+  collectServerSettings,
   downloadFilesFromSource,
   sortFilesByFullPath,
 };
