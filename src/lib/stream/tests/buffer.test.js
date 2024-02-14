@@ -1,4 +1,4 @@
-import { Writable } from 'stream';
+import { Writable, Readable } from 'stream';
 import BufferStream from '../buffer';
 
 describe('BufferStream', () => {
@@ -8,15 +8,15 @@ describe('BufferStream', () => {
     bufferStream = new BufferStream();
   });
 
-  test('should be an instance of Writable', () => {
+  it('should be an instance of Writable', () => {
     expect(bufferStream).toBeInstanceOf(Writable);
   });
 
-  test('should start with an empty buffer', () => {
+  it('should start with an empty buffer', () => {
     expect(bufferStream.getSize()).toBe(0);
   });
 
-  test('should store written data in chunks', () => {
+  it('should store written data in chunks', () => {
     const data = 'test';
 
     // Return the promise
@@ -37,7 +37,7 @@ describe('BufferStream', () => {
     });
   });
 
-  test('should return a readable stream immediately if finished', async () => {
+  it('should return a readable stream immediately if finished', async () => {
     const data = 'test';
     bufferStream.write(data);
     bufferStream.end();
@@ -50,7 +50,7 @@ describe('BufferStream', () => {
     });
   });
 
-  test('should return a readable stream once finished if not already finished', () => {
+  it('should return a readable stream once finished if not already finished', () => {
     const data = 'test';
 
     bufferStream.write(data);
@@ -73,7 +73,7 @@ describe('BufferStream', () => {
     });
   });
 
-  test('should handle multiple writes before creating a readable stream', async () => {
+  it('should handle multiple writes before creating a readable stream', async () => {
     const data1 = 'hello';
     const data2 = 'world';
     bufferStream.write(data1);
@@ -92,10 +92,72 @@ describe('BufferStream', () => {
     expect(Buffer.concat(chunks).toString()).toBe(data1 + data2);
   });
 
-  test('should throw an error if non-buffer chunks are written', () => {
+  it('should throw an error if non-buffer chunks are written', () => {
     expect(() => {
       // @ts-ignore
       bufferStream.write(123);
     }).toThrow();
+  });
+
+  it('should return a promise that resolves to a Readable stream when finished', async () => {
+    // Write some data to the buffer stream
+    bufferStream.write('test data', 'utf-8', () => {});
+
+    // Simulate the finish event
+    bufferStream.end();
+
+    // Get the readable stream promise
+    const readablePromise = bufferStream.getReadableStream();
+
+    // Expect the promise to resolve to a Readable instance
+    await expect(readablePromise).resolves.toBeInstanceOf(Readable);
+
+    // Verify that the Readable stream contains the correct data
+    const readableStream = await readablePromise;
+    const chunks = [];
+    readableStream.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+
+    // Wait for the 'end' event before checking the content
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise((resolve) => readableStream.on('end', resolve));
+
+    // Concatenate the chunks and convert to a string
+    const data = Buffer.concat(chunks).toString();
+
+    // Verify the data matches what was written
+    expect(data).toBe('test data');
+  });
+
+  it('should return a promise that resolves to a Readable stream when not finished', async () => {
+    // Write some data to the buffer stream
+    bufferStream.write('test data', 'utf-8', () => {});
+
+    // Get the readable stream promise before finishing the stream
+    const readablePromise = bufferStream.getReadableStream();
+
+    // Simulate the finish event after setting up the promise
+    bufferStream.end();
+
+    // Expect the promise to resolve to a Readable instance
+    await expect(readablePromise).resolves.toBeInstanceOf(Readable);
+
+    // Verify that the Readable stream contains the correct data
+    const readableStream = await readablePromise;
+    const chunks = [];
+    readableStream.on('data', (chunk) => {
+      chunks.push(chunk);
+    });
+
+    // Wait for the 'end' event before checking the content
+    // eslint-disable-next-line no-promise-executor-return
+    await new Promise((resolve) => readableStream.on('end', resolve));
+
+    // Concatenate the chunks and convert to a string
+    const data = Buffer.concat(chunks).toString();
+
+    // Verify the data matches what was written
+    expect(data).toBe('test data');
   });
 });
