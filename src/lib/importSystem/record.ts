@@ -127,10 +127,7 @@ const getNextFileToProcess = async (
   // Use the PostgresInterval interface in the destructuring assignment
   /* eslint-disable @typescript-eslint/quotes */
   /* eslint-disable prefer-template */
-  const [{
-    avg = { seconds: 120, milliseconds: 0 },
-    stddev = { seconds: 0, milliseconds: 0 },
-  }] = await ZALImportFile.findAll({
+  const results = await ZALImportFile.findAll({
     attributes: [
       // Using Sequelize.fn to calculate the average difference in timestamps
       [fn('AVG', fn(
@@ -155,6 +152,16 @@ const getNextFileToProcess = async (
   }) as [{ avg: PostgresInterval, stddev: PostgresInterval }];
   /* eslint-enable @typescript-eslint/quotes */
   /* eslint-disable prefer-template */
+
+  const [{
+    avg,
+    stddev,
+  }] = results && results.length
+    ? results
+    : [{
+      avg: { seconds: 120, milliseconds: 0 },
+      stddev: { seconds: 0, milliseconds: 0 },
+    }];
 
   // Calculate the total milliseconds for 3 * stddev
   const totalStdDevMilliseconds = 3 * stddev.seconds * 1000 + 3 * stddev.milliseconds;
