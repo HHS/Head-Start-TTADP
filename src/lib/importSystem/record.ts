@@ -35,9 +35,9 @@ const {
 const getPriorFile = async (
   importId: number,
   status: string | string[] = IMPORT_STATUSES.COLLECTED,
-) => {
+): Promise<string | null> => {
   // Find the prior file associated with the given importId
-  const importFile = await ImportFile.findOne({
+  const importFile: { name: string } | null = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
       // eslint-disable-next-line @typescript-eslint/quotes
@@ -48,7 +48,6 @@ const getPriorFile = async (
       status,
     },
     // Ordering the results by ftpFileInfo.date in descending order
-    // eslint-disable-next-line @typescript-eslint/quotes
     order: [['id', 'DESC']],
     raw: true,
   });
@@ -59,7 +58,6 @@ const getPriorFile = async (
     return importFile.name;
   }
   // Handle the case where no file was found
-  // You could return null, undefined, or throw an error, depending on your application's needs
   return null; // or throw new Error('No prior file found.');
 };
 
