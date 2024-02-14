@@ -13,11 +13,23 @@ const formatPrompts = (prompts) => prompts.filter((prompt) => (
 }));
 
 const parseObjectValuesOrString = (d) => {
-  if (typeof d === 'string') {
-    return d;
-  }
+  try {
+  // if null or undefined, return empty string
+    if (!d) {
+      return '';
+    }
 
-  return Object.values(d).join(', ');
+    if (typeof d === 'string') {
+      return d;
+    }
+
+    // this gets arrays and numbers
+    // (although numbers are not expected
+    // and will be converted to empty arrays by Object.values)
+    return Object.values(d).join(', ');
+  } catch (e) {
+    return ''; // honestly, try breaking this function now, you can't
+  }
 };
 
 export default function ReadOnlyGoal({
