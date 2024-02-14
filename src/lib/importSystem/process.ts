@@ -57,7 +57,6 @@ const processRecords = async (
   deletes,
   errors,
 }> => {
-  console.log('processRecords');
   let record;
   try {
     record = await xmlClient.getNextObject(true);
@@ -270,7 +269,6 @@ const processFile = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   errors: Promise<any>[],
 }> => {
-  console.log('processFile');
   let result: {
     hash?: string,
     schema?: SchemaNode,
@@ -347,7 +345,6 @@ const processFilesFromZip = async (
   processDefinitions: ProcessDefinition[], // An array of process definitions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
-  console.log('processFilesFromZip');
   // If there are no more files to process, exit the function
   if (processDefinitions.length === 0) return Promise.resolve();
 
@@ -474,13 +471,11 @@ const processFilesFromZip = async (
 const processZipFileFromS3 = async (
   importId: number,
 ) => {
-  console.log('processZipFileFromS3');
   const startTime = new Date(); // The start time for file collection
   // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
   if (!importFile) return Promise.resolve();
 
-  console.log('processZipFileFromS3');
   // Destructure properties from the importFile object
   const {
     dataValues: { importFileId, processAttempts = 0 },
