@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { DECIMAL_BASE } from '@ttahub/common';
 import httpCodes from 'http-codes';
+import { GROUP_COLLABORATORS } from '../../constants';
 import db from '../../models';
 import { auditLogger } from '../../logger';
 import { userById } from '../../services/users';
@@ -15,8 +16,10 @@ import {
   potentialSharedWith,
   potentialRecipientGrants,
   checkGroupNameAvailable,
+  type GroupResponse,
 } from '../../services/groups';
 import GroupPolicy from '../../policies/group';
+import groupCollaborator from '../../models/groupCollaborator';
 
 const NAMESPACE = 'GROUPS';
 const {
@@ -77,19 +80,27 @@ export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
     // Extract the 'groupId' parameter from the request
     const { groupId: groupIdRaw } = req.params;
     // Parse the 'groupId' as an integer
-    const groupId = parseInt(groupIdRaw, 10);
+    const groupId = groupIdRaw === 'new' ? 0 : parseInt(groupIdRaw, 10);
     // Get the current user's ID
     const userId = await currentUserId(req, res);
+
     // Get the user data based on the user ID
     const user = await userById(userId);
 
-    // Fetch the group data and the potential co-owners asynchronously
+    // If the group isn't saved yet, create a group to check permissions.
+    const unsavedGroup = {
+      groupCollaborators: [{
+        user: { id: userId },
+        collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+      }],
+    };
+    // Fetch the group data and the potential co-owners asynchronously.
     const [
       groupData,
       optionsForCoOwners,
     ] = await Promise.all([
-      group(groupId),
-      potentialCoOwners(groupId),
+      groupId !== 0 ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
+      potentialCoOwners(groupId, userId),
     ]);
 
     // Create a GroupPolicy instance with the current user, an empty array of roles, and the
@@ -102,7 +113,6 @@ export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
       res.sendStatus(httpCodes.FORBIDDEN);
       return;
     }
-
     // Send the options for co-owners and sharedWith as a JSON response
     res.json(optionsForCoOwners);
   } catch (e) {
