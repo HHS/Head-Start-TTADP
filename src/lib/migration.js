@@ -1,3 +1,4 @@
+const { QueryTypes } = require('sequelize');
 const { FEATURE_FLAGS } = require('../constants');
 
 /**
@@ -270,8 +271,8 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
 const updateSequence = async (queryInterface, tableName, transaction = null) => {
   try {
     // Query to locate the sequence based on the table name
-    const findSequenceQuery = `
-      SELECT 
+    const findSequenceQuery = /* sql */`
+      SELECT
         c.table_name,
         c.column_name,
         s.sequence_name
@@ -285,7 +286,7 @@ const updateSequence = async (queryInterface, tableName, transaction = null) => 
     // Execute the find sequence query
     const sequences = await queryInterface.sequelize.query(findSequenceQuery, {
       replacements: { tableName },
-      type: queryInterface.sequelize.QueryTypes.SELECT,
+      type: QueryTypes.SELECT,
       transaction,
     });
 
@@ -297,15 +298,15 @@ const updateSequence = async (queryInterface, tableName, transaction = null) => 
     // Iterate through sequences (if a table has more than one sequence)
     await Promise.all(sequences.map(async ({ column_name, sequence_name }) => {
       // Find the maximum value of the ID column in the table
-      const maxValueQuery = `SELECT MAX("${column_name}") FROM "${tableName}"`;
+      const maxValueQuery = /* sql */`SELECT MAX("${column_name}") FROM "${tableName}"`;
       const maxResult = await queryInterface.sequelize.query(maxValueQuery, {
-        type: queryInterface.sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
         transaction,
       });
       const maxValue = maxResult[0].max || 0;
 
       // Update the sequence
-      const setValQuery = `SELECT setval('"${sequence_name}"', COALESCE(${maxValue} + 1, 1), false);`;
+      const setValQuery = /* sql */`SELECT setval('"${sequence_name}"', COALESCE(${maxValue} + 1, 1), false);`;
       await queryInterface.sequelize.query(setValQuery, { transaction });
     }));
   } catch (error) {
