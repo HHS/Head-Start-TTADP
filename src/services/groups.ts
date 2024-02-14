@@ -1,9 +1,8 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import db, { sequelize } from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';
 import SCOPES from '../middleware/scopeConstants';
-import Users from '../policies/user';
 
 const {
   CollaboratorType,
@@ -49,7 +48,7 @@ interface GroupCollaboratorsResponse {
   user: { id: number, name: string };
 }
 
-interface GroupResponse {
+export interface GroupResponse {
   id: number;
   name: string;
   grants: GrantsResponse[];
@@ -352,14 +351,15 @@ export async function group(groupId: number): Promise<GroupResponse> {
 }
 
 /**
- * Retrieves the region IDs of all users who have the specified group as their creator.
+ * Retrieves the region IDs of the current user (creator).
  *
  * @param groupId - The ID of the group.
  * @returns A promise that resolves to an array of region IDs.
  * @throws {Error} If there is an error retrieving the region IDs.
  */
-async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
-  return Permission.findAll({
+async function creatorRegionIds(userId: number): Promise<number[]> {
+  // Return a distinct list of region IDs
+  const regionResult: { regionId: number }[] = await Permission.findAll({
     attributes: ['regionId'],
     include: [
       {
@@ -367,20 +367,7 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
         as: 'user',
         attributes: [],
         required: true,
-        include: [{
-          model: GroupCollaborator,
-          as: 'groupCollaborators',
-          attributes: [],
-          required: true,
-          where: { groupId },
-          include: [{
-            model: CollaboratorType,
-            as: 'collaboratorType',
-            attributes: [],
-            required: true,
-            where: { name: GROUP_COLLABORATORS.CREATOR },
-          }],
-        }],
+        where: { id: userId },
       },
     ],
     where: {
@@ -392,6 +379,58 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
     },
     raw: true,
   });
+
+  return [...new Set(regionResult.map(({ regionId }) => regionId))];
+}
+
+/**
+ * Retrieves the region IDs of all users who have the specified group as their creator.
+ *
+ * @param groupId - The ID of the group.
+ * @returns A promise that resolves to an array of region IDs.
+ * @throws {Error} If there is an error retrieving the region IDs.
+ */
+async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
+  // Return a distinct list of region IDs
+  const regionResult: { regionId: number }[] = await Permission.findAll({
+    attributes: ['regionId'],
+    include: [
+      {
+        model: User,
+        as: 'user',
+        attributes: [],
+        required: true,
+        include: [
+          {
+            model: GroupCollaborator,
+            as: 'groupCollaborators',
+            attributes: [],
+            required: true,
+            where: { groupId },
+            include: [
+              {
+                model: CollaboratorType,
+                as: 'collaboratorType',
+                attributes: [],
+                required: true,
+                where: { name: GROUP_COLLABORATORS.CREATOR },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    where: {
+      scopeId: [
+        SCOPES.READ_REPORTS,
+        SCOPES.READ_WRITE_REPORTS,
+        SCOPES.APPROVE_REPORTS,
+      ],
+    },
+    raw: true,
+  });
+
+  return [...new Set(regionResult.map(({ regionId }) => regionId))];
 }
 
 /**
@@ -405,15 +444,35 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
  */
 export async function potentialCoOwners(
   groupId: number,
+  userId: number,
 ): Promise<{ userId: number, name: string }[]> {
-  // Retrieve the regionIds of group creator from permissions to access reports specified by group
-  const creatorsRegionIds = await groupCreatorRegionIds(groupId);
+  // Retrieve the regionIds of group creator or if we haven't saved yet the user id.
+  const creatorsRegionIds = groupId === 0
+    ? await creatorRegionIds(userId)
+    : await groupCreatorRegionIds(groupId);
 
   // Retrieve users who have the permission to access reports in all the regionIds obtained above
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let whereClause:WhereOptions = {
+    // Add the top-level where clause for null groupCollaborators.id
+    '$groupCollaborators.id$': null,
+  };
+
+  if (groupId === 0) {
+    // If the group is not saved yet, we need to filter out the current user.
+    whereClause = {
+      ...whereClause,
+      id: {
+        [Op.not]: userId,
+      },
+    };
+  }
+
   const users = await User.findAll({
     attributes: [
       ['id', 'userId'],
-      'name',
+      [sequelize.col('"User"."name"'), 'name'],
       [Sequelize.literal('ARRAY_AGG(DISTINCT "roles"."name")'), 'roles'],
     ],
     include: [
@@ -427,6 +486,7 @@ export async function potentialCoOwners(
             SCOPES.READ_REPORTS,
             SCOPES.READ_WRITE_REPORTS,
             SCOPES.APPROVE_REPORTS,
+            SCOPES.SITE_ACCESS,
           ],
           regionId: creatorsRegionIds,
         },
@@ -447,7 +507,7 @@ export async function potentialCoOwners(
         required: false,
         where: { groupId },
         include: [{
-          model: CollaboratorType,
+          model: CollaboratorType.unscoped(),
           as: 'collaboratorType',
           attributes: [],
           required: true,
@@ -460,13 +520,10 @@ export async function potentialCoOwners(
         }],
       },
     ],
-    where: {
-      // Add the top-level where clause for null groupCollaborators.id
-      '$groupCollaborators.id$': null,
-    },
+    where: whereClause,
     group: [
       ['userId', 'ASC'],
-      ['name', 'ASC'],
+      [sequelize.col('"User"."name"'), 'ASC'],
     ],
     having: {
       [Op.and]: [

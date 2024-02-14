@@ -12,6 +12,8 @@ import {
   ValidFor,
   CollaboratorType,
   sequelize,
+  Role,
+  UserRole,
 } from '../models';
 import {
   groupsByRegion,
@@ -21,6 +23,7 @@ import {
   editGroup,
   destroyGroup,
   checkGroupNameAvailable,
+  potentialCoOwners,
 } from './groups';
 
 describe('Groups service', () => {
@@ -781,6 +784,268 @@ describe('Groups service', () => {
     it('the group name is not in use', async () => {
       const result = await checkGroupNameAvailable('This group name is available');
       expect(result).toBe(true);
+    });
+  });
+
+  describe('potentialCoOwners', () => {
+    let creatorUser;
+    let potentialCoOwner1;
+    let potentialCoOwner2;
+    let invalidCoowner;
+    let savedGroup;
+
+    let usersToCleanup = [];
+
+    beforeAll(async () => {
+      // Get a role.
+      const role = await Role.findOne({
+        where: {
+          name: 'CO',
+        },
+      });
+
+      // Create saved group.Group.create(
+      savedGroup = await Group.create({
+        id: faker.datatype.number(),
+        name: 'This is a saved group with an ID',
+        isPublic: false,
+      });
+
+      // Creator users.
+      creatorUser = await User.create({
+        // name: faker.name.findName(),
+        name: 'TEST creator',
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add user role for creator.
+      await UserRole.create({
+        userId: creatorUser.id,
+        roleId: role.id,
+      });
+
+      // Add permissions for creator.
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
+      // Creator creator GroupCollaborator.
+      await GroupCollaborator.create({
+        userId: creatorUser.id,
+        groupId: savedGroup.id,
+        collaboratorTypeId: creatorCollaboratorType.id,
+      });
+
+      // Potential co-owners.
+      potentialCoOwner1 = await User.create({
+        // name: faker.name.findName(),
+        name: 'TEST potentialCoOwner1',
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add role for potentialCoOwner1.
+      await UserRole.create({
+        userId: potentialCoOwner1.id,
+        roleId: role.id,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner1.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner1.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner1.id,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner1.id,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
+      potentialCoOwner2 = await User.create({
+        name: 'TEST potentialCoOwner2',
+        // name: faker.name.findName(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add role for potentialCoOwner2.
+      await UserRole.create({
+        userId: potentialCoOwner2.id,
+        roleId: role.id,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner2.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner2.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner2.id,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: potentialCoOwner2.id,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
+      // Invalid co-owner.
+      invalidCoowner = await User.create({
+        name: 'TEST invalidCoowner',
+        // name: faker.name.findName(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add role for invalidCoowner.
+      await UserRole.create({
+        userId: invalidCoowner.id,
+        roleId: role.id,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: invalidCoowner.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: invalidCoowner.id,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 2,
+        userId: invalidCoowner.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 2,
+        userId: invalidCoowner.id,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 2,
+        userId: invalidCoowner.id,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
+      usersToCleanup = [
+        creatorUser.id,
+        potentialCoOwner1.id,
+        potentialCoOwner2.id,
+        invalidCoowner.id,
+      ];
+    });
+
+    afterAll(async () => {
+      // Destroy the group.
+      await Group.destroy({
+        where: {
+          id: savedGroup.id,
+        },
+      });
+
+      // Destroy the GroupCollaborator records.
+      await GroupCollaborator.destroy({
+        where: {
+          groupId: savedGroup.id,
+        },
+      });
+
+      // Destroy the User permissions.
+      await Permission.destroy({
+        where: {
+          userId: usersToCleanup,
+        },
+      });
+
+      // Destroy the User roles.
+      await UserRole.destroy({
+        where: {
+          userId: usersToCleanup,
+        },
+      });
+
+      // Destroy the User records.
+      await User.destroy({
+        where: {
+          id: usersToCleanup,
+        },
+      });
+    });
+    it('get potential co-owners for saved group', async () => {
+      const result = await potentialCoOwners(savedGroup.id);
+      expect(result).toHaveLength(2);
+      const potentialCoOwnerIds = result.map((co) => co.userId);
+      expect(potentialCoOwnerIds).toContain(potentialCoOwner1.id);
+      expect(potentialCoOwnerIds).toContain(potentialCoOwner2.id);
+    });
+
+    it('get potential co-owners without having a saved group', async () => {
+      const result = await potentialCoOwners(0, creatorUser.id);
+      expect(result).toHaveLength(2);
+      const potentialCoOwnerIds = result.map((co) => co.userId);
+      expect(potentialCoOwnerIds).toContain(potentialCoOwner1.id);
+      expect(potentialCoOwnerIds).toContain(potentialCoOwner2.id);
     });
   });
 });
