@@ -40,7 +40,9 @@ export default function GoalNudgeText({
         {error}
         <Textarea
           onBlur={(e) => {
-            dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
+            if (similar.length) {
+              dismissOnNoMatch(e, '.ttahub-goal-nudge--container *', setDismissSimilar);
+            }
             validateGoalName();
           }}
           id={inputName}
