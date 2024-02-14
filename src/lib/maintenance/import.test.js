@@ -58,6 +58,8 @@ describe('import', () => {
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id },
+        false,
+        false,
       );
     });
 
@@ -67,6 +69,8 @@ describe('import', () => {
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id: undefined },
+        false,
+        false,
       );
     });
   });
