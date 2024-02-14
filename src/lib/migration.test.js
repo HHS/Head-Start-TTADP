@@ -56,12 +56,6 @@ describe('migration', () => {
   });
 
   describe('setAuditLoggingState', () => {
-    const queryInterface = {
-      sequelize: {
-        query: jest.fn(),
-      },
-    };
-    const transaction = {};
     const enable = true;
 
     afterEach(() => {
@@ -89,21 +83,6 @@ describe('migration', () => {
   });
 
   describe('removeTables', () => {
-    let queryInterface;
-    let transaction;
-
-    beforeEach(() => {
-      queryInterface = {
-        sequelize: {
-          query: jest.fn(),
-        },
-        dropTable: jest.fn(),
-        createTable: jest.fn(),
-        truncate: jest.fn(),
-      };
-      transaction = {};
-    });
-
     it('should remove tables and their audit logs', async () => {
       // Mock database calls
       queryInterface.sequelize.query.mockResolvedValueOnce();
