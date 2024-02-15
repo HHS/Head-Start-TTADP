@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { uniqueId } from 'lodash';
+import { uniq, uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
 import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { combinePrompts } from '../condtionalFieldConstants';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
 const PromptProps = {
   value: PropTypes.shape({
@@ -13,7 +14,7 @@ const PromptProps = {
   }).isRequired,
   onChange: PropTypes.func.isRequired,
   validate: PropTypes.func.isRequired,
-  errors: PropTypes.arrayOf(PropTypes.node).isRequired,
+  errors: PropTypes.shape({}).isRequired,
   userCanEdit: PropTypes.bool,
   selectedGrants: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
@@ -113,7 +114,6 @@ export default function RTRGoalPrompts({
         setGoalTemplatePrompts([]);
       }
     }
-
     if (goalTemplateId) {
       fetchGoalTemplatePrompts();
     }
@@ -123,10 +123,18 @@ export default function RTRGoalPrompts({
     return null;
   }
 
-  // TODO: need to confirm here that the curated goal has conditional fields (not all do)
+  const singleValue = data[0];
+  const fieldData = combinePrompts(singleValue, goalTemplatePrompts);
+  const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
+
+  // console.log(fieldData[0].title, allResponses);
 
   return (
-    <>
+    <FormFieldThatIsSometimesReadOnly
+      permissions={[userCanEdit]}
+      label={fieldData[0].title}
+      value={allResponses}
+    >
       {selectedGrants.length > 1 && (
       <DivergenceRadio
         divergenceLabel="Do all recipient grants have the same FEI root cause?"
@@ -143,10 +151,10 @@ export default function RTRGoalPrompts({
         updateAll={updateAll}
         updateSingle={updateSingle}
         divergence={divergence}
-        singleValue={data[0]}
+        singleValue={singleValue}
         goalTemplatePrompts={goalTemplatePrompts}
       />
-    </>
+    </FormFieldThatIsSometimesReadOnly>
   );
 }
 
