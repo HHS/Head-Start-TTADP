@@ -1,93 +1,93 @@
-// import * as fs from 'fs';
-// import SftpClient, { SFTPSettings, FileInfo } from '../sftp';
+// // import * as fs from 'fs';
+// // import SftpClient, { SFTPSettings, FileInfo } from '../sftp';
 
-// function isInDocker(): boolean {
-//   try {
-//     fs.statSync('/.dockerenv');
-//     return true;
-//   } catch {
-//     return false;
-//   }
-// }
+// // function isInDocker(): boolean {
+// //   try {
+// //     fs.statSync('/.dockerenv');
+// //     return true;
+// //   } catch {
+// //     return false;
+// //   }
+// // }
 
-// describe('FtpClient Integration Tests', () => {
-//   let sftpClient: SftpClient;
-//   let connectionSettings: SFTPSettings;
+// // describe('FtpClient Integration Tests', () => {
+// //   let sftpClient: SftpClient;
+// //   let connectionSettings: SFTPSettings;
 
-//   beforeAll(() => {
-//     // process.env = {}; // Optionally clear the previous env
-//     // // eslint-disable-next-line global-require
-//     // require('dotenv').config(); // Re-import to refresh the env variables
-//     connectionSettings = {
-//       host: isInDocker()
-//         ? process.env.ITAMS_MD_HOST
-//         : '0.0.0.0',
-//       port: isInDocker()
-//         ? parseInt(process.env.ITAMS_MD_PORT || '22', 10)
-//         : parseInt(process.env.SFTP_EXPOSED_PORT || '22', 10),
-//       username: process.env.ITAMS_MD_USERNAME,
-//       password: process.env.ITAMS_MD_PASSWORD,
-//     };
-//     sftpClient = new SftpClient(connectionSettings);
-//   });
+// //   beforeAll(() => {
+// //     // process.env = {}; // Optionally clear the previous env
+// //     // // eslint-disable-next-line global-require
+// //     // require('dotenv').config(); // Re-import to refresh the env variables
+// //     connectionSettings = {
+// //       host: isInDocker()
+// //         ? process.env.ITAMS_MD_HOST
+// //         : '0.0.0.0',
+// //       port: isInDocker()
+// //         ? parseInt(process.env.ITAMS_MD_PORT || '22', 10)
+// //         : parseInt(process.env.SFTP_EXPOSED_PORT || '22', 10),
+// //       username: process.env.ITAMS_MD_USERNAME,
+// //       password: process.env.ITAMS_MD_PASSWORD,
+// //     };
+// //     sftpClient = new SftpClient(connectionSettings);
+// //   });
 
-//   beforeEach(async () => {
-//     await sftpClient.connect();
-//   });
+// //   beforeEach(async () => {
+// //     await sftpClient.connect();
+// //   });
 
-//   afterAll(async () => {
-//     await sftpClient.disconnect();
-//   });
+// //   afterAll(async () => {
+// //     await sftpClient.disconnect();
+// //   });
 
-//   describe('connect and disconnect', () => {
-//     it('should connect to the SFTP server and then disconnect', async () => {
-//       expect(sftpClient.isConnected()).toBe(true);
+// //   describe('connect and disconnect', () => {
+// //     it('should connect to the SFTP server and then disconnect', async () => {
+// //       expect(sftpClient.isConnected()).toBe(true);
 
-//       await sftpClient.disconnect();
-//       expect(sftpClient.isConnected()).toBe(false);
-//     });
-//     it('should re-connect to the SFTP server and then disconnect', async () => {
-//       expect(sftpClient.isConnected()).toBe(true);
+// //       await sftpClient.disconnect();
+// //       expect(sftpClient.isConnected()).toBe(false);
+// //     });
+// //     it('should re-connect to the SFTP server and then disconnect', async () => {
+// //       expect(sftpClient.isConnected()).toBe(true);
 
-//       await sftpClient.disconnect();
-//       expect(sftpClient.isConnected()).toBe(false);
+// //       await sftpClient.disconnect();
+// //       expect(sftpClient.isConnected()).toBe(false);
 
-//       await sftpClient.connect();
-//       expect(sftpClient.isConnected()).toBe(true);
+// //       await sftpClient.connect();
+// //       expect(sftpClient.isConnected()).toBe(true);
 
-//       await sftpClient.disconnect();
-//       expect(sftpClient.isConnected()).toBe(false);
-//     });
-//   });
+// //       await sftpClient.disconnect();
+// //       expect(sftpClient.isConnected()).toBe(false);
+// //     });
+// //   });
 
-//   describe('listFiles', () => {
-//     it('should list files in the specified directory', async () => {
-//       const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
-//       expect(Array.isArray(files)).toBe(true);
-//       expect(files.length).toBeGreaterThan(0);
-//       files.forEach((file) => {
-//         expect(file).toHaveProperty('fullPath');
-//         expect(file).toHaveProperty('fileInfo');
-//         expect(file.fileInfo).toMatchObject({
-//         });
-//       });
-//     });
+// //   describe('listFiles', () => {
+// //     it('should list files in the specified directory', async () => {
+// //       const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
+// //       expect(Array.isArray(files)).toBe(true);
+// //       expect(files.length).toBeGreaterThan(0);
+// //       files.forEach((file) => {
+// //         expect(file).toHaveProperty('fullPath');
+// //         expect(file).toHaveProperty('fileInfo');
+// //         expect(file.fileInfo).toMatchObject({
+// //         });
+// //       });
+// //     });
 
-//     // Add more tests as needed for fileMask, priorFile, and includeStream options
-//   });
+// //     // Add more tests as needed for fileMask, priorFile, and includeStream options
+// //   });
 
-//   describe('downloadAsStream', () => {
-//     it('should download a file as a stream', async () => {
-//       const remoteFilePath = '/ProdTTAHome/2023_07_20_XML.zip';
-// Replace with an actual file path on your SFTP server
+// //   describe('downloadAsStream', () => {
+// //     it('should download a file as a stream', async () => {
+// //       const remoteFilePath = '/ProdTTAHome/2023_07_20_XML.zip';
+// // Replace with an actual file path on your SFTP server
 
-//       const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
+// //       const files = await sftpClient.listFiles({ path: '/ProdTTAHome' });
 
-//       const stream = await sftpClient.downloadAsStream(files[0].fullPath);
-//       expect(stream).not.toBeUndefined();
-//     });
-//   });
-// });
+// //       const stream = await sftpClient.downloadAsStream(files[0].fullPath);
+// //       expect(stream).not.toBeUndefined();
+// //     });
+// //   });
+// // });
 
 import { Client } from 'ssh2';
 import { Readable } from 'stream';
