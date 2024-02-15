@@ -79,7 +79,7 @@ export async function getEligibleUsersForGroup(req: Request, res: Response) {
     // Extract the 'groupId' parameter from the request
     const { groupId: groupIdRaw } = req.params;
     // Parse the 'groupId' as an integer
-    const groupId = groupIdRaw === 'new' ? 0 : parseInt(groupIdRaw, 10);
+    const groupId = groupIdRaw === 'new' ? null : parseInt(groupIdRaw, 10);
     // Get the current user's ID
     const userId = await currentUserId(req, res);
 
@@ -135,18 +135,26 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
     // Extract the groupId from the request parameters
     const { groupId: groupIdRaw } = req.params;
     // Parse the groupId as an integer
-    const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
+    const groupId = groupIdRaw === 'new' ? null : parseInt(groupIdRaw, 10);
     // Get the current user's ID
     const userId = await currentUserId(req, res);
     // Get the user data based on the user ID
     const user = await userById(userId);
+
+    // If the group isn't saved yet, create a group to check permissions.
+    const unsavedGroup = {
+      groupCollaborators: [{
+        user: { id: userId },
+        collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+      }],
+    };
 
     // Retrieve the group data and potential recipient grants in parallel
     const [
       groupData,
       optionsForRecipientGrants,
     ] = await Promise.all([
-      group(groupId),
+      groupId !== 0 ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
       potentialRecipientGrants({ groupId }),
     ]);
 
