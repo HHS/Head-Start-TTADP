@@ -142,6 +142,11 @@ function calculateGoalsAndObjectives(report) {
                 { goal.activityReportGoals[0].endDate}
               </>
             ),
+            Source: (
+              <>
+                { goal.activityReportGoals[0].source}
+              </>
+            ),
           },
           striped: true,
         };

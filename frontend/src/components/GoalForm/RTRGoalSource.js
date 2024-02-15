@@ -12,12 +12,9 @@ const GoalSourceProps = {
   }).isRequired,
   onChangeGoalSource: PropTypes.func.isRequired,
   error: PropTypes.node.isRequired,
-  isOnApprovedReport: PropTypes.bool.isRequired,
-  status: PropTypes.string.isRequired,
   userCanEdit: PropTypes.bool.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   isCurated: PropTypes.bool.isRequired,
-  createdVia: PropTypes.string.isRequired,
   selectedGrants: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     numberWithProgramTypes: PropTypes.string,
@@ -27,8 +24,6 @@ const GoalSourceProps = {
 const DisplayGoalSource = ({
   source,
   error,
-  isOnApprovedReport,
-  status,
   userCanEdit,
   validateGoalSource,
   isCurated,
@@ -43,8 +38,6 @@ const DisplayGoalSource = ({
         source={singleSource}
         onChangeGoalSource={updateAllSources}
         error={error}
-        isOnReport={isOnApprovedReport}
-        goalStatus={status}
         userCanEdit={userCanEdit}
         validateGoalSource={validateGoalSource}
         isCurated={isCurated}
@@ -62,11 +55,9 @@ const DisplayGoalSource = ({
         {grantNumber}
       </h3>
       <GoalSource
-        source={source[grantNumber]}
+        source={source[grantNumber] || ''}
         onChangeGoalSource={(newSource) => updateSingleSource(grantNumber, newSource)}
         error={error}
-        isOnReport={isOnApprovedReport}
-        goalStatus={status}
         userCanEdit={userCanEdit}
         validateGoalSource={validateGoalSource}
         isCurated={isCurated}
@@ -81,19 +72,20 @@ DisplayGoalSource.propTypes = {
   sourcesDiverge: PropTypes.bool.isRequired,
   updateSingleSource: PropTypes.func.isRequired,
   updateAllSources: PropTypes.func.isRequired,
-  singleSource: PropTypes.string.isRequired,
+  singleSource: PropTypes.string,
+};
+
+DisplayGoalSource.defaultProps = {
+  singleSource: '',
 };
 
 export default function RTRGoalSource({
   source,
   onChangeGoalSource,
   error,
-  isOnApprovedReport,
-  status,
   userCanEdit,
   validateGoalSource,
   isCurated,
-  createdVia,
   selectedGrants,
 }) {
   const {
@@ -119,18 +111,16 @@ export default function RTRGoalSource({
       )}
       <DisplayGoalSource
         source={source}
-        setSource={onChangeGoalSource}
+        onChangeGoalSource={onChangeGoalSource}
         error={error}
-        isOnApprovedReport={isOnApprovedReport}
-        status={status}
         userCanEdit={userCanEdit}
         validateGoalSource={validateGoalSource}
         isCurated={isCurated}
-        createdVia={createdVia}
         updateAllSources={updateAllSources}
         updateSingleSource={updateSingleSource}
         sourcesDiverge={sourcesDiverge}
         singleSource={sources[0]}
+        selectedGrants={selectedGrants}
       />
     </>
   );

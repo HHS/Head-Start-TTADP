@@ -10,7 +10,7 @@ export default function DivergenceRadio({
 }) {
   return (
     <Fieldset>
-      <Label htmlFor="rtr-divergence-same">
+      <Label htmlFor="rtr-divergence-same" className="margin-top-0">
         {divergenceLabel}
         {' '}
         <Req />
