@@ -12,8 +12,7 @@ import {
   editGroup,
   createNewGroup,
   destroyGroup,
-  potentialCoOwners,
-  potentialSharedWith,
+  potentialGroupUsers,
   potentialRecipientGrants,
   checkGroupNameAvailable,
   type GroupResponse,
@@ -67,7 +66,7 @@ function checkBulkPermissions(
 }
 
 /**
- * Retrieves the eligible co-owners for a specified group.
+ * Retrieves the eligible users for a specified group.
  *
  * @param req - The request object containing the 'groupId' parameter.
  * @param res - The response object used to send the JSON response or status codes.
@@ -75,7 +74,7 @@ function checkBulkPermissions(
  * @throws - If an error occurs during the execution of the function, an internal server error
  * status code is sent.
  */
-export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
+export async function getEligibleUsersForGroup(req: Request, res: Response) {
   try {
     // Extract the 'groupId' parameter from the request
     const { groupId: groupIdRaw } = req.params;
@@ -100,7 +99,7 @@ export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
       optionsForCoOwners,
     ] = await Promise.all([
       groupId !== 0 ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
-      potentialCoOwners(groupId, userId),
+      potentialGroupUsers(groupId, userId),
     ]);
 
     // Create a GroupPolicy instance with the current user, an empty array of roles, and the
@@ -117,57 +116,7 @@ export async function getEligibleCoOwnersForGroup(req: Request, res: Response) {
     res.json(optionsForCoOwners);
   } catch (e) {
     // Log any errors that occur during the execution of the function
-    auditLogger.error(`${NAMESPACE} getEligibleCoOwnersForGroup, ${e}`);
-    // Send an internal server error status code
-    res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
-  }
-}
-
-/**
- * Retrieves the eligible sharedWith for a specified group.
- *
- * @param req - The request object containing the 'groupId' parameter.
- * @param res - The response object used to send the JSON response or status codes.
- * @returns - This function does not return anything.
- * @throws - If an error occurs during the execution of the function, an internal server error
- * status code is sent.
- */
-export async function getEligibleSharedWithForGroup(req: Request, res: Response) {
-  try {
-    // Extract the 'groupId' parameter from the request
-    const { groupId: groupIdRaw } = req.params;
-    // Parse the 'groupId' as an integer
-    const groupId = parseInt(groupIdRaw, 10);
-    // Get the current user's ID
-    const userId = await currentUserId(req, res);
-    // Get the user data based on the user ID
-    const user = await userById(userId);
-
-    // Fetch the group data and the potential co-owners and sharedWith asynchronously
-    const [
-      groupData,
-      optionsForSharedWith,
-    ] = await Promise.all([
-      group(groupId),
-      potentialSharedWith(groupId),
-    ]);
-
-    // Create a GroupPolicy instance with the current user, an empty array of roles, and the
-    // group data
-    const policy = new GroupPolicy(user, [], groupData);
-    // Check if the current user can edit the group
-    if (!policy.canEditGroup()) {
-      // If the user does not have permission to edit the group, send a forbidden status code
-      // and return
-      res.sendStatus(httpCodes.FORBIDDEN);
-      return;
-    }
-
-    // Send the options for co-owners and sharedWith as a JSON response
-    res.json(optionsForSharedWith);
-  } catch (e) {
-    // Log any errors that occur during the execution of the function
-    auditLogger.error(`${NAMESPACE} getEligibleSharedWithForGroup, ${e}`);
+    auditLogger.error(`${NAMESPACE} getEligibleUsersForGroup, ${e}`);
     // Send an internal server error status code
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }

@@ -442,7 +442,7 @@ async function groupCreatorRegionIds(groupId: number): Promise<number[]> {
  * in all the regions they have access to.
  * @throws {Error} If there is an error retrieving the users.
  */
-export async function potentialCoOwners(
+export async function potentialGroupUsers(
   groupId: number,
   userId: number,
 ): Promise<{ userId: number, name: string }[]> {
