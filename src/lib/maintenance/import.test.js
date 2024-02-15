@@ -35,6 +35,7 @@ jest.mock('./common', () => ({
   addQueueProcessor: jest.fn(),
   enqueueMaintenanceJob: jest.fn(),
   maintenanceCommand: jest.fn(),
+  runMaintenanceCronJobs: jest.fn(),
 }));
 
 jest.mock('../importSystem', () => ({
@@ -99,6 +100,7 @@ describe('import', () => {
           MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
           expect.any(Function),
           schedule,
+          name,
         );
 
         const [
@@ -107,7 +109,7 @@ describe('import', () => {
           jobCommand,
           suppliedSchedule,
         ] = addCronJob.mock.calls[index];
-        await jobCommand(catagory, type, '', suppliedSchedule);
+        await jobCommand(catagory, type, '', suppliedSchedule, false, false);
         const [
           cronSchedule,
           callbackCommand,
@@ -121,6 +123,8 @@ describe('import', () => {
             index + 1,
             MAINTENANCE_CATEGORY.IMPORT,
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+            false,
+            false,
           );
       }
 
@@ -134,6 +138,7 @@ describe('import', () => {
           MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
           expect.any(Function),
           schedule,
+          name,
         );
 
         const [
@@ -156,9 +161,11 @@ describe('import', () => {
             index + 1,
             MAINTENANCE_CATEGORY.IMPORT,
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+            false,
+            false,
           );
       }
-
+      console.log(result);
       expect(result?.isSuccessful).toBe(true);
     });
 
@@ -201,6 +208,7 @@ describe('import', () => {
           MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
           expect.any(Function),
           scheduledImport.schedule,
+          scheduledImport.name,
         );
 
       expect(result.isSuccessful).toBe(true);
@@ -230,6 +238,7 @@ describe('import', () => {
       const id = 123;
       downloadImport.mockResolvedValue([{}, {}]);
       moreToDownload.mockResolvedValue(true);
+      moreToProcess.mockResolvedValue(true);
 
       await importDownload(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
@@ -243,18 +252,23 @@ describe('import', () => {
 
       expect(downloadImport).toHaveBeenCalledWith(id);
       expect(moreToDownload).toHaveBeenCalledWith(id);
+      expect(moreToProcess).toHaveBeenCalledWith(id);
       expect(enqueueMaintenanceJob).toHaveBeenCalledTimes(2);
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           1,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+          false,
+          false,
         );
       expect(enqueueMaintenanceJob)
         .toHaveBeenNthCalledWith(
           2,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+          false,
+          false,
         );
       expect(results?.isSuccessful).toBe(true);
     });
@@ -282,6 +296,8 @@ describe('import', () => {
           2,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+          false,
+          false,
         );
     });
 
@@ -346,6 +362,8 @@ describe('import', () => {
           type: MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
         },
+        false,
+        false,
       );
     });
 
