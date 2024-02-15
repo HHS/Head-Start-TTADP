@@ -23,7 +23,7 @@ import {
   editGroup,
   destroyGroup,
   checkGroupNameAvailable,
-  potentialCoOwners,
+  potentialGroupUsers,
 } from './groups';
 
 describe('Groups service', () => {
@@ -787,7 +787,7 @@ describe('Groups service', () => {
     });
   });
 
-  describe('potentialCoOwners', () => {
+  describe('potentialGroupUsers', () => {
     let creatorUser;
     let potentialCoOwner1;
     let potentialCoOwner2;
@@ -1041,7 +1041,7 @@ describe('Groups service', () => {
       });
     });
     it('get potential co-owners for saved group', async () => {
-      const result = await potentialCoOwners(savedGroup.id);
+      const result = await potentialGroupUsers(savedGroup.id);
       expect(result).toHaveLength(2);
       const potentialCoOwnerIds = result.map((co) => co.userId);
       expect(potentialCoOwnerIds).toContain(potentialCoOwner1.id);
@@ -1049,7 +1049,7 @@ describe('Groups service', () => {
     });
 
     it('get potential co-owners without having a saved group', async () => {
-      const result = await potentialCoOwners(0, creatorUser.id);
+      const result = await potentialGroupUsers(0, creatorUser.id);
       expect(result).toHaveLength(2);
       const potentialCoOwnerIds = result.map((co) => co.userId);
       expect(potentialCoOwnerIds).toContain(potentialCoOwner1.id);
