@@ -1,7 +1,9 @@
 import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
-import { DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus } from '@ttahub/common';
+import {
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+} from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
@@ -1527,17 +1529,31 @@ export async function goalsForGrants(grantIds) {
       'onApprovedAR',
       'endDate',
       'source',
+      'createdVia',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
     where: {
+      name: {
+        [Op.ne]: '', // exclude "blank" goals
+      },
       '$grant.id$': ids,
       status: {
-        [Op.or]: [
-          { [Op.notIn]: ['Closed', 'Suspended'] },
-          { [Op.is]: null },
-        ],
+        [Op.notIn]: ['Closed', 'Suspended'],
       },
+      [Op.or]: [
+        {
+          createdVia: {
+            [Op.not]: 'tr',
+          },
+        },
+        {
+          createdVia: 'tr',
+          status: {
+            [Op.not]: 'Draft',
+          },
+        },
+      ],
     },
     include: [
       {
@@ -3182,7 +3198,17 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
   if (!isError && grantIds.length > 0) {
     goalsForNameCheck = await Goal.findAll({
-      attributes: ['id', 'grantId'],
+      attributes: [
+        'id',
+        'grantId',
+      ],
+      include: [
+        {
+          model: Grant,
+          attributes: ['number'],
+          as: 'grant',
+        },
+      ],
       where: {
         grantId: grantIds,
         name,
@@ -3194,7 +3220,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
   if (goalsForNameCheck.length) {
     isError = true;
-    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grantId).join(', ')}`;
+    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
   }
 
   if (isError) {
