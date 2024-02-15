@@ -165,7 +165,7 @@ describe('import', () => {
             false,
           );
       }
-      console.log(result);
+
       expect(result?.isSuccessful).toBe(true);
     });
 
