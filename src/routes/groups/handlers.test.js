@@ -7,6 +7,7 @@ import {
   updateGroup,
   deleteGroup,
   getEligibleUsersForGroup,
+  getEligibleRecipientGrantsForGroup,
 } from './handlers';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -504,6 +505,107 @@ describe('Groups Handlers', () => {
 
       destroyGroup.mockRejectedValue(new Error('Error'));
       await getEligibleUsersForGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('getEligibleRecipientGrantsForGroup', () => {
+    let req;
+    let res;
+    const statusJson = jest.fn();
+    const userId = 1;
+    beforeEach(() => {
+      res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: statusJson })),
+      };
+      currentUserId.mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the recipients', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      const resGrants = [{ id: 1, name: 'Grant 1' }];
+      potentialRecipientGrants.mockReturnValueOnce(resGrants);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => true,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleRecipientGrantsForGroup(req, res);
+      expect(res.json).toHaveBeenCalledWith(resGrants);
+    });
+
+    it('should return 403 forbidden', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return value once for potentialCoOwners().
+      const resGrants = [{ id: 1, name: 'Grant 1' }];
+      potentialGroupUsers.mockReturnValueOnce(resGrants);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => false,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleRecipientGrantsForGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('should return handle 500 error', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+      group.mockReturnValueOnce(mockGroup);
+
+      // Mock return error for potentialCoOwners().
+      potentialRecipientGrants.mockRejectedValue(new Error('Error'));
+
+      destroyGroup.mockRejectedValue(new Error('Error'));
+      await getEligibleRecipientGrantsForGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });

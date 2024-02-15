@@ -446,8 +446,10 @@ export async function potentialGroupUsers(
   groupId: number,
   userId: number,
 ): Promise<{ userId: number, name: string }[]> {
+  if (groupId === null && userId === null) return [];
+
   // Retrieve the regionIds of group creator or if we haven't saved yet the user id.
-  const creatorsRegionIds = groupId === 0
+  const creatorsRegionIds = groupId === null
     ? await creatorRegionIds(userId)
     : await groupCreatorRegionIds(groupId);
 
@@ -458,7 +460,7 @@ export async function potentialGroupUsers(
     '$groupCollaborators.id$': null,
   };
 
-  if (groupId === 0) {
+  if (groupId === null) {
     // If the group is not saved yet, we need to filter out the current user.
     whereClause = {
       ...whereClause,
@@ -642,10 +644,10 @@ export async function potentialRecipientGrants(
     userId,
   } = data;
   if (groupId === null && userId === null) return [];
+
   // Retrieve the regionIds of group creator from permissions to read reports specified by group
-  const creatorsRegionIds = groupId
-    ? await groupCreatorRegionIds(groupId)
-    : await Permission.findAll({
+  let creatorsRegionIds = !groupId
+    ? await Permission.findAll({
       attributes: ['regionId'],
       where: {
         userId,
@@ -656,7 +658,12 @@ export async function potentialRecipientGrants(
         ],
       },
       group: [['regionId', 'ASC']],
-    });
+    })
+    : await groupCreatorRegionIds(groupId);
+
+  if (groupId === null) {
+    creatorsRegionIds = creatorsRegionIds.map(({ regionId }) => regionId);
+  }
 
   // Retrieve grants with specific attributes and conditions
   const grants = await Grant.findAll({
@@ -677,7 +684,7 @@ export async function potentialRecipientGrants(
     // Filter grants with 'status' as 'Active' and 'regionId' in creatorsRegionIds
     where: {
       status: 'Active',
-      regionId: creatorsRegionIds.map(({ regionId }) => regionId.id),
+      regionId: creatorsRegionIds,
       // Add the top-level where clause for null groupGrants.id
       '$groupGrants.id$': null,
     },

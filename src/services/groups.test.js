@@ -14,6 +14,7 @@ import {
   sequelize,
   Role,
   UserRole,
+  Program,
 } from '../models';
 import {
   groupsByRegion,
@@ -24,6 +25,7 @@ import {
   destroyGroup,
   checkGroupNameAvailable,
   potentialGroupUsers,
+  potentialRecipientGrants,
 } from './groups';
 
 describe('Groups service', () => {
@@ -1049,11 +1051,315 @@ describe('Groups service', () => {
     });
 
     it('get potential co-owners without having a saved group', async () => {
-      const result = await potentialGroupUsers(0, creatorUser.id);
+      const result = await potentialGroupUsers(null, creatorUser.id);
       expect(result).toHaveLength(2);
       const potentialCoOwnerIds = result.map((co) => co.userId);
       expect(potentialCoOwnerIds).toContain(potentialCoOwner1.id);
       expect(potentialCoOwnerIds).toContain(potentialCoOwner2.id);
+    });
+  });
+
+  describe('potentialGroupRecipients', () => {
+    let creatorUser;
+    let savedGroup;
+
+    let grantForGroupOne;
+    let grantForGroupTwo;
+    let grantForGroupThree;
+    let grantForGroupFour;
+
+    let recipientOne;
+    let recipientTwo;
+    let recipientThree;
+    let recipientFour;
+    let programOne;
+    let programTwo;
+    let programThree;
+    let programFour;
+    const recipientIdsToClean = [];
+
+    let usersToCleanup = [];
+
+    const dummyProgram = {
+      startYear: '2020',
+      startDate: '2020-09-01',
+      endDate: '2020-09-02',
+      status: 'Active',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    beforeAll(async () => {
+      // Get a role.
+      const role = await Role.findOne({
+        where: {
+          name: 'CO',
+        },
+      });
+
+      // Create saved group.Group.create(
+      savedGroup = await Group.create({
+        id: faker.datatype.number(),
+        name: 'This is a saved group with an ID',
+        isPublic: false,
+      });
+
+      // Creator users.
+      creatorUser = await User.create({
+        // name: faker.name.findName(),
+        name: 'TEST creator',
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add user role for creator.
+      await UserRole.create({
+        userId: creatorUser.id,
+        roleId: role.id,
+      });
+
+      // Add REGION 1 permissions for creator.
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: creatorUser.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
+      // Add REGION 2 permissions for creator.
+      await Permission.create({
+        regionId: 2,
+        userId: creatorUser.id,
+        scopeId: SCOPES.READ_TRAINING_REPORTS,
+      });
+
+      // Add REGION 3 permissions for creator.
+      await Permission.create({
+        regionId: 3,
+        userId: creatorUser.id,
+        scopeId: SCOPES.APPROVE_REPORTS,
+      });
+
+      // Creator creator GroupCollaborator.
+      await GroupCollaborator.create({
+        userId: creatorUser.id,
+        groupId: savedGroup.id,
+        collaboratorTypeId: creatorCollaboratorType.id,
+      });
+
+      usersToCleanup = [
+        creatorUser.id,
+      ];
+
+      // Create recipients.
+      recipientOne = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      recipientTwo = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      recipientThree = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      recipientFour = await Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      recipientIdsToClean.push(recipientOne.id);
+      recipientIdsToClean.push(recipientTwo.id);
+      recipientIdsToClean.push(recipientThree.id);
+      recipientIdsToClean.push(recipientFour.id);
+
+      // Create grants.
+      grantForGroupOne = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientOne.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      });
+
+      grantForGroupTwo = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientTwo.id,
+        regionId: 2,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      });
+
+      grantForGroupThree = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientThree.id,
+        regionId: 3,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      });
+
+      // Linked to GrantGroup (should be excluded).
+      grantForGroupFour = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipientFour.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      });
+
+      // Create GroupGrant (should be excluded).
+      await GroupGrant.create({
+        groupId: savedGroup.id,
+        grantId: grantForGroupFour.id,
+      });
+
+      // Create a programs.
+      programOne = await Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number(),
+        name: faker.name.findName(),
+        grantId: grantForGroupOne.id,
+        programType: 'EHS',
+      });
+
+      programTwo = await Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number(),
+        name: faker.name.findName(),
+        grantId: grantForGroupTwo.id,
+        programType: 'EHS',
+      });
+
+      programThree = await Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number(),
+        name: faker.name.findName(),
+        grantId: grantForGroupThree.id,
+        programType: 'EHS',
+      });
+
+      programFour = await Program.create({
+        ...dummyProgram,
+        id: faker.datatype.number(),
+        name: faker.name.findName(),
+        grantId: grantForGroupFour.id,
+        programType: 'EHS',
+      });
+    });
+
+    afterAll(async () => {
+      // Destroy the programs.
+      await Program.destroy({
+        where: {
+          id: [programOne.id, programTwo.id, programThree.id, programFour.id],
+        },
+      });
+
+      // Destroy the group grant.
+      await GroupGrant.destroy({
+        where: {
+          groupId: savedGroup.id,
+        },
+      });
+
+      // Destroy the group.
+      await Group.destroy({
+        where: {
+          id: savedGroup.id,
+        },
+      });
+
+      // Destroy the GroupCollaborator records.
+      await GroupCollaborator.destroy({
+        where: {
+          groupId: savedGroup.id,
+        },
+      });
+
+      // Destroy the User permissions.
+      await Permission.destroy({
+        where: {
+          userId: usersToCleanup,
+        },
+      });
+
+      // Destroy the User roles.
+      await UserRole.destroy({
+        where: {
+          userId: usersToCleanup,
+        },
+      });
+
+      // Destroy Grants.
+      await Grant.destroy({
+        where: {
+          recipientId: recipientIdsToClean,
+        },
+      });
+
+      // Destroy the Recipient records.
+      await Recipient.destroy({
+        where: {
+          id: recipientIdsToClean,
+        },
+      });
+
+      // Destroy the User records.
+      await User.destroy({
+        where: {
+          id: usersToCleanup,
+        },
+      });
+    });
+    it('get potential recipients for saved group', async () => {
+      const result = await potentialRecipientGrants({
+        groupId: savedGroup.id, userId: creatorUser.id,
+      });
+      const grantsToCheck = result.filter((g) => [
+        grantForGroupOne.id,
+        grantForGroupTwo.id,
+        grantForGroupThree.id,
+      ].includes(g.grantId));
+
+      expect(grantsToCheck).toHaveLength(2);
+      const grantIds = grantsToCheck.map((g) => g.grantId);
+      expect(grantIds).toContain(grantForGroupOne.id);
+      expect(grantIds).toContain(grantForGroupThree.id);
+    });
+    it('get potential recipients without having a saved group', async () => {
+      const result = await potentialRecipientGrants({
+        groupId: null, userId: creatorUser.id,
+      });
+      const grantsToCheck = result.filter((g) => [
+        grantForGroupOne.id,
+        grantForGroupTwo.id,
+        grantForGroupThree.id,
+      ].includes(g.grantId));
+
+      expect(grantsToCheck).toHaveLength(2);
+      const grantIds = grantsToCheck.map((g) => g.grantId);
+      expect(grantIds).toContain(grantForGroupOne.id);
+      expect(grantIds).toContain(grantForGroupThree.id);
     });
   });
 });
