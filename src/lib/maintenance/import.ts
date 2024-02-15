@@ -16,6 +16,7 @@ import {
   getImportSchedules,
 } from '../importSystem';
 import LockManager from '../lockManager';
+import { auditLogger } from '../../logger';
 
 /**
  * Enqueues a maintenance job for imports with a specified type and optional id.
@@ -209,6 +210,8 @@ const importProcess = async (id) => maintenanceCommand(
   async (logMessages, logBenchmarks, triggeredById) => {
     try {
       const lockManager = new LockManager(`${MAINTENANCE_TYPE.IMPORT_PROCESS}-${id}`);
+      auditLogger.info(`Processing import ${id}`);
+      auditLogger.info('Lock manager created');
       let result;
       await lockManager.executeWithLock(async () => {
         // Process the import and await the results.
@@ -233,6 +236,7 @@ const importProcess = async (id) => maintenanceCommand(
     } catch (err) {
       // In case of an error, return an object indicating the process was not successful and
       // include the error.
+      auditLogger.error(`Error processing import ${id}: ${err}`);
       return { isSuccessful: false, error: err };
     }
   },
