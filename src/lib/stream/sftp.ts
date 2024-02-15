@@ -126,7 +126,9 @@ class SftpClient {
    * Detaches event listeners to prevent memory leaks.
    */
   private detachListeners(): void {
-    this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+    if (this.client && this.client.removeAllListeners) {
+      this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+    }
     process.removeListener('SIGINT', this.handleSignal.bind(this));
     process.removeListener('SIGTERM', this.handleSignal.bind(this));
     process.removeListener('SIGQUIT', this.handleSignal.bind(this));
@@ -159,46 +161,55 @@ class SftpClient {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.connected) {
-        resolve();
-        return;
-      }
-
-      // Create a new Client instance if the previous one is unusable
-      this.client = new Client();
-      this.attachListeners();
-
-      // Set up event listeners for the new Client instance
-      this.client.on('ready', () => {
-        this.connected = true;
-        resolve();
-      }).on('error', (err) => {
-        auditLogger.error(JSON.stringify(err));
-        this.connected = false; // Ensure the connected flag is set to false on error
-        reject(err);
-      }).on('end', () => {
-        this.connected = false;
-      }).on('close', (hadError) => {
-        this.connected = false;
-        if (hadError) {
-          auditLogger.error(JSON.stringify(hadError));
-          reject(new Error('Connection closed due to a transmission error'));
+      try {
+        if (this.connected) {
+          resolve();
+          return;
         }
-      });
+        this.detachListeners();
 
-      const {
-        algorithms = {
-          serverHostKey: ['ssh-dss', 'ssh-rsa'],
-        },
-        hostVerifier = () => true,
-        ...connectionSettings
-      } = this.connectionSettings;
+        // Create a new Client instance if the previous one is unusable
+        this.client = new Client();
+        this.attachListeners();
 
-      // Attempt to connect with the new Client instance
-      this.client.connect({
-        ...connectionSettings,
-        algorithms,
-      });
+        // Set up event listeners for the new Client instance
+        this.client
+          .on('ready', () => {
+            this.connected = true;
+            resolve();
+          })
+          .on('error', (err) => {
+            auditLogger.error(JSON.stringify(err));
+            this.connected = false; // Ensure the connected flag is set to false on error
+            reject(err);
+          })
+          .on('end', () => {
+            this.connected = false;
+          })
+          .on('close', (hadError) => {
+            this.connected = false;
+            if (hadError) {
+              auditLogger.error(JSON.stringify(hadError));
+              reject(new Error('Connection closed due to a transmission error'));
+            }
+          });
+
+        const {
+          algorithms = {
+            serverHostKey: ['ssh-dss', 'ssh-rsa'],
+          },
+          hostVerifier = () => true,
+          ...connectionSettings
+        } = this.connectionSettings;
+
+        // Attempt to connect with the new Client instance
+        this.client.connect({
+          ...connectionSettings,
+          algorithms,
+        });
+      } catch (err) {
+        reject(err.message);
+      }
     });
   }
 
