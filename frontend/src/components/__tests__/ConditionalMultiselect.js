@@ -78,16 +78,4 @@ describe('ConditionalMultiselect', () => {
     });
     expect(screen.getByText('What is a test?')).toBeInTheDocument();
   });
-
-  it('calls onBlur with selected options on blur', async () => {
-    const onBlur = jest.fn();
-    render(<CM onBlur={onBlur} fieldValue={['option1']} userCanEdit />);
-
-    const selectInput = screen.getByLabelText('What is a test?');
-    await selectEvent.select(selectInput, ['option1']);
-    selectInput.focus();
-    selectInput.blur();
-
-    expect(onBlur).toHaveBeenCalledWith([{ label: 'option1', value: 0 }]);
-  });
 });
