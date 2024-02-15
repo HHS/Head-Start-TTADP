@@ -12,7 +12,6 @@ import {
   addCronJob,
   enqueueMaintenanceJob,
   maintenanceCommand,
-  hasQueueProcessor,
 } from './common';
 import {
   download as downloadImport,
@@ -286,7 +285,7 @@ describe('import', () => {
         { id },
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
-      const results = await anonymousFunction();
+      await anonymousFunction();
 
       expect(downloadImport).toHaveBeenCalledWith(id);
       expect(moreToDownload).toHaveBeenCalledWith(id);
@@ -307,7 +306,7 @@ describe('import', () => {
       moreToDownload.mockResolvedValue(true);
       downloadImport.mockRejectedValue(new Error('Download failed'));
 
-      const result = await importDownload(id);
+      await importDownload(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
@@ -322,12 +321,15 @@ describe('import', () => {
   });
 
   describe('importProcess', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
     it('should return an object with isSuccessful true when processing is successful', async () => {
       const id = 123;
       processImport.mockResolvedValue({});
       moreToProcess.mockResolvedValue(false);
 
-      const result = await importProcess(id);
+      await importProcess(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
@@ -354,7 +356,7 @@ describe('import', () => {
         { id },
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
-      const results = await anonymousFunction();
+      await anonymousFunction();
 
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
@@ -380,7 +382,7 @@ describe('import', () => {
         { id },
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
-      const results = await anonymousFunction();
+      await anonymousFunction();
 
       expect(enqueueMaintenanceJob).not.toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
@@ -395,7 +397,7 @@ describe('import', () => {
       const id = 123;
       processImport.mockRejectedValue(new Error('Processing failed'));
 
-      const result = await importProcess(id);
+      await importProcess(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
