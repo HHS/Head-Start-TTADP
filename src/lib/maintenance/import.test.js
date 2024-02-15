@@ -20,6 +20,7 @@ import {
   moreToProcess,
   getImportSchedules,
 } from '../importSystem';
+import { auditLogger } from '../../logger';
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation(() => ({
@@ -337,8 +338,9 @@ describe('import', () => {
         { id },
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
+      auditLogger.info('anonymousFunction', anonymousFunction);
       const results = await anonymousFunction();
-
+      auditLogger.info('results', results);
       expect(results?.isSuccessful).toBe(true);
       expect(processImport).toHaveBeenCalledWith(id);
     });
