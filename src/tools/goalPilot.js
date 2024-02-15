@@ -28,7 +28,7 @@ async function parseCsv(fileKey) {
 export default async function createGoal(fileKey) {
   try {
     const recipients = await parseCsv(fileKey);
-    const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+    const goalName = '(Monitoring) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
 
     const goal = {
       name: goalName,
