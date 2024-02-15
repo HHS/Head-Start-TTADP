@@ -57,7 +57,8 @@ export default function GoalForm({
   showRTRnavigation,
   isNew,
 }) {
-  const modalRef = useRef(null);
+  const unsuspendModalRef = useRef(null);
+  const openExistingGoalModalRef = useRef(null);
   const history = useHistory();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
@@ -929,17 +930,18 @@ export default function GoalForm({
       setAppLoadingText('Retrieving existing goal');
       setNudgedGoalSelection(goal);
 
+      if (goal.status === 'Suspended') {
+        unsuspendModalRef.current.toggleModal();
+        return;
+      }
+
       if (goal.isCurated) {
       // we need to do a little magic here to get the goal
         await onSelectInitiativeGoal();
         return;
       }
 
-      if (goal.status === 'Suspended') {
-        modalRef.current.toggleModal();
-        return;
-      }
-      forwardToGoalWithIds(goal.ids);
+      openExistingGoalModalRef.current.toggleModal();
     } catch (err) {
       setAlert({
         message: 'There was an error selecting your goal',
@@ -1024,7 +1026,7 @@ export default function GoalForm({
           forceAction
           id="reopen-suspended-goal"
           heading="This goal is currently suspended"
-          modalRef={modalRef}
+          modalRef={unsuspendModalRef}
         >
           <p className="usa-prose">The reason for suspending the goal was:</p>
           <ul className="usa-list">
@@ -1037,12 +1039,31 @@ export default function GoalForm({
             type="button"
             onClick={async () => {
               await unsuspender();
-              modalRef.current.toggleModal();
+              unsuspendModalRef.current.toggleModal();
             }}
           >
             Yes, reopen
           </Button>
-          <button type="button" onClick={() => modalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
+          <button type="button" id="unsuspend" onClick={() => unsuspendModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
+        </VanillaModal>
+        <VanillaModal
+          forceAction
+          id="switch-to-existing-goal"
+          heading="You are selected an existing goal."
+          modalRef={openExistingGoalModalRef}
+        >
+          <p className="usa-prose">Do you want to edit this goal?</p>
+          <p className="usa-prose">Information entered here will be lost when choosing an existing goal.</p>
+          <Button
+            type="button"
+            onClick={async () => {
+              forwardToGoalWithIds(nudgedGoalSelection.ids);
+              openExistingGoalModalRef.current.toggleModal();
+            }}
+          >
+            Yes, edit
+          </Button>
+          <button type="button" id="openExisting" onClick={() => openExistingGoalModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
         </VanillaModal>
         <form onSubmit={onSubmit}>
           { showForm && (

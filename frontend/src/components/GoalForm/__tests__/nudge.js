@@ -136,6 +136,14 @@ describe('create goal:nudge', () => {
     act(() => {
       userEvent.click(radio);
     });
+
+    const confirm = await screen.findByRole('button', { name: /Yes, edit/i });
+    act(() => {
+      userEvent.click(confirm);
+    });
+
+    // No, create a new goal
+
     await waitFor(() => {
       expect(historySpy).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
     });
@@ -173,6 +181,45 @@ describe('create goal:nudge', () => {
     await waitFor(() => {
       expect(historySpy).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
     });
+  });
+
+  it('you can decline to select a nudged goal', async () => {
+    const historySpy = jest.spyOn(history, 'push');
+    fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
+      ids: [1, 2],
+      isCurated: false,
+      status: 'Not Started',
+      name: 'A long goal name, it must be really long, most of them are',
+    }]);
+    renderForm();
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+
+    const combo = await screen.findByLabelText(/Recipient grant numbers/i);
+    await selectEvent.select(combo, ['Turtle 2']);
+
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
+    userEvent.type(goalText, 'This is goal text, long enough to trigger the nudge');
+    jest.advanceTimersByTime(2000);
+
+    expect(fetchMock.called('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2')).toBe(true);
+
+    const radio = await screen.findByRole('radio', { name: /A long goal name, it must be really long, most of them are/i });
+    act(() => {
+      userEvent.click(radio);
+    });
+
+    const declinations = await screen.findAllByRole('button', { name: /No, create a new goal/i });
+    const [, decline] = declinations;
+    act(() => {
+      userEvent.click(decline);
+    });
+
+    await waitFor(() => {
+      expect(historySpy).not.toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+    });
+
+    expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).not.toBe(true);
   });
 
   it('an error selecting a nudged goal is handled', async () => {
@@ -214,7 +261,7 @@ describe('create goal:nudge', () => {
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
-      status: 'Suspeded',
+      status: 'Suspended',
       name: 'A long goal name, it must be really long, most of them are',
       closeSuspendReasons: ['Not enough time', 'Not enough money'],
     }]);
@@ -255,7 +302,7 @@ describe('create goal:nudge', () => {
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
-      status: 'Suspeded',
+      status: 'Suspended',
       name: 'A long goal name, it must be really long, most of them are',
       closeSuspendReasons: ['Not enough time', 'Not enough money'],
     }]);
@@ -287,5 +334,46 @@ describe('create goal:nudge', () => {
     });
 
     expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).toBe(true);
+  });
+
+  it('you can decline to unsuspend a suspended goal', async () => {
+    const historySpy = jest.spyOn(history, 'push');
+    fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
+      ids: [1, 2],
+      isCurated: false,
+      status: 'Suspended',
+      name: 'A long goal name, it must be really long, most of them are',
+      closeSuspendReasons: ['Not enough time', 'Not enough money'],
+    }]);
+    renderForm();
+
+    await screen.findByRole('heading', { name: 'Goal summary' });
+
+    const combo = await screen.findByLabelText(/Recipient grant numbers/i);
+    await selectEvent.select(combo, ['Turtle 2']);
+
+    const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
+    userEvent.type(goalText, 'This is goal text, long enough to trigger the nudge');
+    jest.advanceTimersByTime(2000);
+
+    expect(fetchMock.called('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2')).toBe(true);
+
+    fetchMock.post('/api/goals', [{ goalIds: [1, 2] }]);
+
+    const radio = await screen.findByRole('radio', { name: /A long goal name, it must be really long, most of them are/i });
+    act(() => {
+      userEvent.click(radio);
+    });
+
+    const declinations = await screen.findAllByRole('button', { name: /No, create a new goal/i });
+    const [decline] = declinations;
+    act(() => {
+      userEvent.click(decline);
+    });
+
+    expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).toBe(false);
+    await waitFor(() => {
+      expect(historySpy).not.toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+    });
   });
 });
