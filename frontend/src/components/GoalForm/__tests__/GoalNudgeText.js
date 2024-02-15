@@ -60,7 +60,38 @@ describe('GoalNudgeText', () => {
     expect(onChange).toHaveBeenCalled();
   });
 
+  /**
+   *   name: PropTypes.string,
+  status: PropTypes.string,
+  ids: PropTypes.arrayOf(PropTypes.number),
+   */
+
   it('calls the passed in handlers on blur', async () => {
+    const validateGoalName = jest.fn();
+    const setDismissSimilar = jest.fn();
+    renderTest({
+      validateGoalName,
+      setDismissSimilar,
+      similar: [
+        {
+          name: 'test',
+          status: 'Not Started',
+          ids: [1],
+        },
+      ],
+    });
+    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
+
+    const input = screen.getByLabelText(/Recipient's goal/);
+    await act(async () => {
+      userEvent.type(input, 'test');
+      userEvent.tab();
+    });
+    expect(validateGoalName).toHaveBeenCalled();
+    expect(setDismissSimilar).toHaveBeenCalled();
+  });
+
+  it('does not dismiss suggestions if there are not any', async () => {
     const validateGoalName = jest.fn();
     const setDismissSimilar = jest.fn();
     renderTest({
@@ -75,6 +106,6 @@ describe('GoalNudgeText', () => {
       userEvent.tab();
     });
     expect(validateGoalName).toHaveBeenCalled();
-    expect(setDismissSimilar).toHaveBeenCalled();
+    expect(setDismissSimilar).not.toHaveBeenCalled();
   });
 });
