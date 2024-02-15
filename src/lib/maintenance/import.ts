@@ -207,7 +207,7 @@ const importDownload = async (id) => maintenanceCommand(
 const importProcess = async (id) => maintenanceCommand(
   // Wrap the import logic within a maintenance command that provides logging and benchmarking
   // utilities.
-  async (logMessages, logBenchmarks, triggeredById) => {
+  async (_logMessages, _logBenchmarks, _triggeredById) => {
     try {
       const lockManager = new LockManager(`${MAINTENANCE_TYPE.IMPORT_PROCESS}-${id}`);
       auditLogger.info(`Processing import ${id}`);

@@ -20,7 +20,9 @@ import {
   moreToProcess,
   getImportSchedules,
 } from '../importSystem';
-import { auditLogger } from '../../logger';
+import LockManager from '../lockManager';
+
+jest.mock('../lockManager');
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation(() => ({
@@ -329,6 +331,9 @@ describe('import', () => {
       const id = 123;
       processImport.mockResolvedValue({});
       moreToProcess.mockResolvedValue(false);
+      LockManager.mockImplementation(() => ({
+        executeWithLock: jest.fn((cb) => cb()),
+      }));
 
       await importProcess(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
@@ -338,9 +343,7 @@ describe('import', () => {
         { id },
       );
       const anonymousFunction = maintenanceCommand.mock.calls[0][0];
-      auditLogger.info('anonymousFunction', anonymousFunction);
       const results = await anonymousFunction();
-      auditLogger.info('results', results);
       expect(results?.isSuccessful).toBe(true);
       expect(processImport).toHaveBeenCalledWith(id);
     });
@@ -349,6 +352,9 @@ describe('import', () => {
       const id = 123;
       processImport.mockResolvedValue({});
       moreToProcess.mockResolvedValue(true);
+      LockManager.mockImplementation(() => ({
+        executeWithLock: jest.fn((cb) => cb()),
+      }));
 
       await importProcess(id);
       expect(maintenanceCommand).toHaveBeenCalledWith(
