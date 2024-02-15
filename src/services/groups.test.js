@@ -828,7 +828,7 @@ describe('Groups service', () => {
         roleId: role.id,
       });
 
-      // Add permissions for creator.
+      // Add REGION 1 permissions for creator.
       await Permission.create({
         regionId: 1,
         userId: creatorUser.id,
@@ -841,16 +841,11 @@ describe('Groups service', () => {
         scopeId: SCOPES.READ_REPORTS,
       });
 
+      // Add REGION 2 permissions for creator.
       await Permission.create({
-        regionId: 1,
+        regionId: 2,
         userId: creatorUser.id,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 1,
-        userId: creatorUser.id,
-        scopeId: SCOPES.APPROVE_REPORTS,
+        scopeId: SCOPES.READ_REPORTS,
       });
 
       // Creator creator GroupCollaborator.
@@ -877,6 +872,7 @@ describe('Groups service', () => {
         roleId: role.id,
       });
 
+      // Add REGION 1 permissions for Potential co-owner.
       await Permission.create({
         regionId: 1,
         userId: potentialCoOwner1.id,
@@ -889,16 +885,11 @@ describe('Groups service', () => {
         scopeId: SCOPES.READ_REPORTS,
       });
 
+      // Add REGION 2 permissions for Potential co-owner.
       await Permission.create({
-        regionId: 1,
+        regionId: 2,
         userId: potentialCoOwner1.id,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 1,
-        userId: potentialCoOwner1.id,
-        scopeId: SCOPES.APPROVE_REPORTS,
+        scopeId: SCOPES.READ_REPORTS,
       });
 
       potentialCoOwner2 = await User.create({
@@ -917,6 +908,7 @@ describe('Groups service', () => {
         roleId: role.id,
       });
 
+      // Add REGION 1 permissions for Potential co-owner 2.
       await Permission.create({
         regionId: 1,
         userId: potentialCoOwner2.id,
@@ -929,16 +921,11 @@ describe('Groups service', () => {
         scopeId: SCOPES.READ_REPORTS,
       });
 
+      // Add REGION 2 permissions for Potential co-owner 2.
       await Permission.create({
-        regionId: 1,
+        regionId: 2,
         userId: potentialCoOwner2.id,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 1,
-        userId: potentialCoOwner2.id,
-        scopeId: SCOPES.APPROVE_REPORTS,
+        scopeId: SCOPES.READ_REPORTS,
       });
 
       // Invalid co-owner.
@@ -958,6 +945,7 @@ describe('Groups service', () => {
         roleId: role.id,
       });
 
+      // Add REGION 1 permissions for Invalid co-owner 2.
       await Permission.create({
         regionId: 1,
         userId: invalidCoowner.id,
@@ -967,25 +955,7 @@ describe('Groups service', () => {
       await Permission.create({
         regionId: 1,
         userId: invalidCoowner.id,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 2,
-        userId: invalidCoowner.id,
         scopeId: SCOPES.READ_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 2,
-        userId: invalidCoowner.id,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      });
-
-      await Permission.create({
-        regionId: 2,
-        userId: invalidCoowner.id,
-        scopeId: SCOPES.APPROVE_REPORTS,
       });
 
       usersToCleanup = [
