@@ -762,14 +762,18 @@ class Roles{
  mapsTo : integer
 }
 
-class RttapaPilots{
- * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
- * regionId : integer : REFERENCES "Regions".id
- * userId : integer : REFERENCES "Users".id
- * createdAt : timestamp with time zone
- * reviewDate : timestamp with time zone
- * updatedAt : timestamp with time zone
+!issue='model missing for table'
+class RttapaPilots #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : integer : <generated>
+!issue='column should not allow null'
+!issue='column reference missing' * recipientId : integer : REFERENCES "Recipients".id
+!issue='column should not allow null'
+!issue='column reference missing' * regionId : integer : REFERENCES "Regions".id
+!issue='column should not allow null'
+!issue='column reference missing' * userId : integer : REFERENCES "Users".id
+!issue='column should not allow null' * createdAt : timestamp with time zone
+!issue='column should not allow null' * reviewDate : timestamp with time zone
+!issue='column should not allow null' * updatedAt : timestamp with time zone
  goals : jsonb
  notes : text
 }
@@ -897,7 +901,6 @@ enum enum_Users_flags {
  monitoring
  regional_goal_dashboard
  resources_dashboard
- rttapa_form
 }
 
 enum_Users_flags <|-- Users
@@ -1776,14 +1779,15 @@ class ZALRoles{
  session_sig : text
 }
 
-class ZALRttapaPilots{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
+!issue='model missing for table'
+class ZALRttapaPilots #pink;line:red;line.bold;text:red {
+!issue='column should not allow null' * id : bigint : <generated>
+!issue='column should not allow null' * data_id : bigint
+!issue='column should not allow null' * dml_as : bigint
+!issue='column should not allow null' * dml_by : bigint
+!issue='column should not allow null' * dml_timestamp : timestamp with time zone
+!issue='column should not allow null' * dml_txid : uuid
+!issue='column should not allow null' * dml_type : enum
  descriptor_id : integer
  new_row_data : jsonb
  old_row_data : jsonb
@@ -2083,14 +2087,12 @@ Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, p
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : recipient, goalSimilarityGroups
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
-Regions "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, region
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : users, homeRegion
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
@@ -2121,7 +2123,6 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
-Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides
@@ -2169,5 +2170,12 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+Recipients o--[#yellow,bold,thickness=2]--o RttapaPilots : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Regions o--[#yellow,bold,thickness=2]--o RttapaPilots : <color:#2491FF>missing-from-model</color>
+!issue='associations need to be defined both directions'
+Users o--[#yellow,bold,thickness=2]--o RttapaPilots : <color:#2491FF>missing-from-model</color>
 
 @enduml
