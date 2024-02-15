@@ -32,7 +32,6 @@ export default function Form({
   setSelectedGrants,
   goalName,
   prompts,
-  // goalTemplatePrompts,
   setPrompts,
   setGoalName,
   endDate,
@@ -63,6 +62,7 @@ export default function Form({
   createdVia,
   recipient,
   regionId,
+  goalTemplateId,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -163,12 +163,14 @@ export default function Form({
       />
 
       <RTRGoalPrompts
+        isCurated={isCurated || false}
         value={prompts}
         onChange={setPrompts}
         validate={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
         userCanEdit={notClosedWithEditPermission}
         selectedGrants={selectedGrants || []}
+        goalTemplateId={goalTemplateId}
       />
 
       <FormFieldThatIsSometimesReadOnly
@@ -189,7 +191,6 @@ export default function Form({
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
-          createdViaTr={createdVia === 'tr'}
           selectedGrants={selectedGrants}
         />
       </FormFieldThatIsSometimesReadOnly>
@@ -308,11 +309,14 @@ Form.propTypes = {
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
-  prompts: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    response: PropTypes.arrayOf(PropTypes.string).isRequired,
-  })).isRequired,
-  // goalTemplatePrompts: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  prompts: PropTypes.shape({
+    [PropTypes.string]: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string.isRequired,
+        response: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }),
+    ),
+  }).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
   source: PropTypes.shape({
@@ -322,10 +326,12 @@ Form.propTypes = {
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
   isNew: PropTypes.bool.isRequired,
+  goalTemplateId: PropTypes.number,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
   isCurated: false,
+  goalTemplateId: null,
 };

@@ -17,7 +17,7 @@ import { isEqual, uniqueId } from 'lodash';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
-import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
+// import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -92,7 +92,7 @@ export default function GoalForm({
   );
   const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
-  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
+  // const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -243,22 +243,22 @@ export default function GoalForm({
     fetchTopics();
   }, []);
 
-  useEffect(() => {
-    async function fetchGoalTemplatePrompts() {
-      if (isCurated && goalTemplateId && ids) {
-        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
-        if (gtPrompts) {
-          setGoalTemplatePrompts(
-            gtPrompts,
-          );
-        } else {
-          setGoalTemplatePrompts(prompts);
-        }
-      }
-    }
+  // useEffect(() => {
+  //   async function fetchGoalTemplatePrompts() {
+  //     if (isCurated && goalTemplateId && ids) {
+  //       const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
+  //       if (gtPrompts) {
+  //         setGoalTemplatePrompts(
+  //           gtPrompts,
+  //         );
+  //       } else {
+  //         setGoalTemplatePrompts(prompts);
+  //       }
+  //     }
+  //   }
 
-    fetchGoalTemplatePrompts();
-  }, [goalTemplateId, ids, isCurated, prompts]);
+  //   fetchGoalTemplatePrompts();
+  // }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -617,7 +617,7 @@ export default function GoalForm({
           recipient,
           objectives,
           ids,
-          prompts: goalTemplatePrompts,
+          prompts,
         });
 
         // so we save them, as before creating one for each grant
@@ -700,7 +700,7 @@ export default function GoalForm({
           recipient,
           objectives,
           ids,
-          prompts: goalTemplatePrompts,
+          prompts,
         });
       }
 
@@ -793,7 +793,7 @@ export default function GoalForm({
         recipient,
         objectives,
         ids,
-        prompts: goalTemplatePrompts,
+        prompts,
       });
 
       const goals = [
@@ -805,6 +805,7 @@ export default function GoalForm({
             source: goal.source,
             isCurated: goal.isCurated,
             endDate: goal.endDate,
+            prompts: goal.prompts,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipient,
             objectives,
@@ -925,7 +926,7 @@ export default function GoalForm({
         regionId: parseInt(regionId, DECIMAL_BASE),
         recipientId: recipient.id,
         objectives: [],
-        source: { grantId: goal.source },
+        source: goal.source,
         goalTemplateId: goal.id,
       }));
       const created = await createOrUpdateGoals(goals);
@@ -1063,8 +1064,8 @@ export default function GoalForm({
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
               prompts={prompts}
-              goalTemplatePrompts={goalTemplatePrompts}
-              setPrompts={setGoalTemplatePrompts}
+              // goalTemplatePrompts={goalTemplatePrompts}
+              setPrompts={setPrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}
@@ -1093,6 +1094,7 @@ export default function GoalForm({
               setSource={setSource}
               validateGoalSource={validateGoalSource}
               createdVia={createdVia}
+              goalTemplateId={goalTemplateId}
             />
           )}
 

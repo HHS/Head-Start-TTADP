@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import usePerGrantMetadata from '../../hooks/usePerGrantMetadata';
 import DivergenceRadio from './DivergenceRadio';
 import ConditionalFields from '../ConditionalFields';
-// import { combinePrompts } from '../condtionalFieldConstants';
+import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
+import { combinePrompts } from '../condtionalFieldConstants';
 
 const PromptProps = {
   value: PropTypes.shape({
@@ -17,7 +18,7 @@ const PromptProps = {
   selectedGrants: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     numberWithProgramTypes: PropTypes.string,
-  })).isRequired,
+  })),
 };
 
 const DisplayFields = ({
@@ -29,11 +30,12 @@ const DisplayFields = ({
   updateSingle,
   divergence,
   singleValue,
+  goalTemplatePrompts,
 }) => {
   if (!divergence) {
     return (
       <ConditionalFields
-        prompts={singleValue}
+        prompts={combinePrompts(singleValue, goalTemplatePrompts)}
         setPrompts={updateAll}
         validatePrompts={validate}
         errors={errors}
@@ -52,8 +54,10 @@ const DisplayFields = ({
         {grantNumber}
       </h3>
       <ConditionalFields
-        prompts={value[grantNumber]}
-        setPrompts={() => updateSingle()}
+        prompts={combinePrompts(value[grantNumber], goalTemplatePrompts)}
+        setPrompts={(newValue) => {
+          updateSingle(grantNumber, newValue);
+        }}
         validatePrompts={validate}
         errors={errors}
         userCanEdit={userCanEdit}
@@ -66,7 +70,15 @@ DisplayFields.propTypes = {
   ...PromptProps,
   divergence: PropTypes.bool.isRequired,
   updateAll: PropTypes.func.isRequired,
-  singleVale: PropTypes.shape({}).isRequired,
+  singleValue: PropTypes.arrayOf(
+    PropTypes.shape({}),
+  ).isRequired,
+  goalTemplatePrompts: PropTypes.arrayOf(
+    PropTypes.shape({
+      fieldType: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
 };
 
 export default function RTRGoalPrompts({
@@ -76,6 +88,8 @@ export default function RTRGoalPrompts({
   errors,
   userCanEdit,
   selectedGrants,
+  isCurated,
+  goalTemplateId,
 }) {
   const {
     data,
@@ -88,13 +102,31 @@ export default function RTRGoalPrompts({
     onChange,
   );
 
-  if (!selectedGrants.length) {
+  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
+
+  useEffect(() => {
+    async function fetchGoalTemplatePrompts() {
+      try {
+        const prompts = await getGoalTemplatePrompts(goalTemplateId);
+        setGoalTemplatePrompts(prompts);
+      } catch (error) {
+        setGoalTemplatePrompts([]);
+      }
+    }
+
+    if (goalTemplateId) {
+      fetchGoalTemplatePrompts();
+    }
+  }, [goalTemplateId]);
+
+  if (!selectedGrants.length || !isCurated || !goalTemplateId) {
     return null;
   }
 
+  // TODO: need to confirm here that the curated goal has conditional fields (not all do)
+
   return (
     <>
-      {JSON.stringify(data, null, 2)}
       {selectedGrants.length > 1 && (
       <DivergenceRadio
         divergenceLabel="Do all recipient grants have the same FEI root cause?"
@@ -112,13 +144,25 @@ export default function RTRGoalPrompts({
         updateSingle={updateSingle}
         divergence={divergence}
         singleValue={data[0]}
+        goalTemplatePrompts={goalTemplatePrompts}
       />
     </>
   );
 }
 
-RTRGoalPrompts.propTypes = PromptProps;
+RTRGoalPrompts.propTypes = {
+  ...PromptProps,
+  isCurated: PropTypes.bool.isRequired,
+  goalTemplateId: PropTypes.number,
+  userCanEdit: PropTypes.bool,
+  selectedGrants: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    numberWithProgramTypes: PropTypes.string,
+  })),
+};
 
 RTRGoalPrompts.defaultProps = {
   userCanEdit: false,
+  selectedGrants: [],
+  goalTemplateId: null,
 };

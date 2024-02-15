@@ -747,13 +747,6 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
-        if (!forReport) {
-          existingGoal.source = {
-            ...existingGoal.source,
-            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-          };
-        }
-
         if (forReport) {
           existingGoal.prompts = reducePrompts(
             forReport,
@@ -763,7 +756,15 @@ function reduceGoals(goals, forReport = false) {
         } else {
           existingGoal.prompts = {
             ...existingGoal.prompts,
-            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.prompts || [],
+            [currentValue.grant.numberWithProgramTypes]: reducePrompts(
+              forReport,
+              currentValue.dataValues.prompts || [],
+              [], // we don't want to combine existing prompts if reducing for the RTR
+            ),
+          };
+          existingGoal.source = {
+            ...existingGoal.source,
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
           };
         }
         return previousValues;
@@ -780,12 +781,6 @@ function reduceGoals(goals, forReport = false) {
       })();
 
       let { source } = currentValue.dataValues;
-      if (!forReport) {
-        source = {
-          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-        };
-      }
-
       let prompts = reducePrompts(
         forReport,
         currentValue.dataValues.prompts || [],
@@ -793,8 +788,11 @@ function reduceGoals(goals, forReport = false) {
       );
 
       if (!forReport) {
+        source = {
+          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+        };
         prompts = {
-          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.prompts || [],
+          [currentValue.grant.numberWithProgramTypes]: prompts,
         };
       }
 
@@ -1331,7 +1329,7 @@ export async function createOrUpdateGoals(goals) {
       }
     }
 
-    if (isCurated) {
+    if (isCurated && prompts) {
       await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
     }
 
