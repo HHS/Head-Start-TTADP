@@ -117,9 +117,6 @@ describe('migration', () => {
     });
 
     it('should handle empty array of tables', async () => {
-      queryInterface.createTable.mockImplementation((data) => { console.log(data); });
-      queryInterface.dropTable.mockImplementation((data) => { console.log(data); });
-      queryInterface.truncate.mockImplementation((data) => { console.log(data); });
       // Call removeTables function with empty array of tables
       await removeTables(queryInterface, transaction, []);
 
