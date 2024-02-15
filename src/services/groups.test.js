@@ -792,6 +792,7 @@ describe('Groups service', () => {
     let potentialCoOwner1;
     let potentialCoOwner2;
     let invalidCoowner;
+    let invalidCoownerPermissions;
     let savedGroup;
 
     let usersToCleanup = [];
@@ -918,14 +919,14 @@ describe('Groups service', () => {
       await Permission.create({
         regionId: 1,
         userId: potentialCoOwner2.id,
-        scopeId: SCOPES.READ_REPORTS,
+        scopeId: SCOPES.APPROVE_REPORTS,
       });
 
       // Add REGION 2 permissions for Potential co-owner 2.
       await Permission.create({
         regionId: 2,
         userId: potentialCoOwner2.id,
-        scopeId: SCOPES.READ_REPORTS,
+        scopeId: SCOPES.READ_WRITE_REPORTS,
       });
 
       // Invalid co-owner.
@@ -958,11 +959,48 @@ describe('Groups service', () => {
         scopeId: SCOPES.READ_REPORTS,
       });
 
+      // Invalid co-owner permissions.
+      invalidCoownerPermissions = await User.create({
+        name: 'TEST invalidCoowner permissions',
+        // name: faker.name.findName(),
+        email: faker.internet.email(),
+        password: faker.internet.password(),
+        hsesUserId: faker.internet.email(),
+        hsesUsername: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+
+      // Add role for invalidCoowner permissions.
+      await UserRole.create({
+        userId: invalidCoownerPermissions.id,
+        roleId: role.id,
+      });
+
+      // Add REGION 1 permissions for Invalid permission co-owner.
+      await Permission.create({
+        regionId: 1,
+        userId: invalidCoownerPermissions.id,
+        scopeId: SCOPES.SITE_ACCESS,
+      });
+
+      await Permission.create({
+        regionId: 1,
+        userId: invalidCoownerPermissions.id,
+        scopeId: SCOPES.READ_TRAINING_REPORTS,
+      });
+
+      await Permission.create({
+        regionId: 2,
+        userId: invalidCoownerPermissions.id,
+        scopeId: SCOPES.READ_REPORTS,
+      });
+
       usersToCleanup = [
         creatorUser.id,
         potentialCoOwner1.id,
         potentialCoOwner2.id,
         invalidCoowner.id,
+        invalidCoownerPermissions.id,
       ];
     });
 

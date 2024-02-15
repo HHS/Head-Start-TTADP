@@ -526,11 +526,14 @@ export async function potentialCoOwners(
     ],
     having: {
       [Op.and]: [
-        // The below assumes that at the very least, every permission
-        // will have READ_REPORTS in each region. We use this count
-        // to determine the EXACT same number of regions as the creator.
-        // IE: The user would not be able to read write or approve reports without having read.
-        Sequelize.literal(`COUNT(DISTINCT "permissions"."regionId") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.READ_REPORTS}) = ${creatorsRegionIds.length}`),
+        Sequelize.literal(`COUNT(DISTINCT "permissions"."regionId")
+        FILTER
+        (
+          WHERE
+            "permissions"."scopeId" = ${SCOPES.READ_REPORTS}
+            OR "permissions"."scopeId" = ${SCOPES.READ_WRITE_REPORTS}
+            OR "permissions"."scopeId" = ${SCOPES.APPROVE_REPORTS}
+          ) = ${creatorsRegionIds.length}`),
         // The below ensures that the user has site access in at least one region permission.
         Sequelize.literal(`COUNT(DISTINCT "permissions"."id") FILTER (WHERE "permissions"."scopeId" = ${SCOPES.SITE_ACCESS}) >= 1`),
       ],
