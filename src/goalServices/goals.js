@@ -1309,24 +1309,13 @@ export async function createOrUpdateGoals(goals) {
     }
 
     if (!newGoal) {
-      newGoal = await Goal.findOne({
-        where: {
-          grantId,
-          status: {
-            [Op.not]: 'Closed',
-          },
-          name: options.name.trim(),
-        },
+      newGoal = await Goal.create({
+        grantId,
+        name: options.name.trim(),
+        status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+        isFromSmartsheetTtaPlan: false,
+        rtrOrder: rtrOrder + 1,
       });
-      if (!newGoal) {
-        newGoal = await Goal.create({
-          grantId,
-          name: options.name.trim(),
-          status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
-          isFromSmartsheetTtaPlan: false,
-          rtrOrder: rtrOrder + 1,
-        });
-      }
     }
 
     if (isCurated && prompts) {
