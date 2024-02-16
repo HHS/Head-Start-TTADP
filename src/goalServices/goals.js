@@ -2638,7 +2638,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
-        attributes: ['goalId', 'activityReportId'],
+        attributes: ['goalId', 'activityReportId', 'status'],
         required: false,
       },
       {
@@ -2683,18 +2683,35 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     }
   });
 
-  // filter out goal groups that include multiple goals on the same report
-  const filteredGoalGroups = goalGroups.filter((group) => {
+  const invalidStatusesForReportGoals = [
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ];
+
+  const filteredGoalGroups = goalGroups
+    .map((group) => (
+      group.filter((goal) => {
+        const { activityReportGoals } = goal;
+        const isOnActiveReport = activityReportGoals
+          .some((arg) => invalidStatusesForReportGoals.includes(arg.status));
+        return !(activityReportGoals.length) || !isOnActiveReport;
+      })))
+    .filter((group) => {
+    // filter out goals with weird FEI responses
     // eslint-disable-next-line max-len
-    const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
+      const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
 
-    if (uniqueFieldResponses.length > 2) {
-      return false;
-    }
-    const reportCount = getReportCountForGoals(group);
+      if (uniqueFieldResponses.length > 2) {
+        return false;
+      }
 
-    return !hasMultipleGoalsOnSameActivityReport(reportCount);
-  });
+      // filter out goal groups that include multiple goals on the same report
+      const reportCount = getReportCountForGoals(group);
+      const goalsNotOnTheSameReport = !hasMultipleGoalsOnSameActivityReport(reportCount);
+
+      return goalsNotOnTheSameReport;
+    });
 
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {

@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReportGoal,
   Grant,
@@ -53,6 +54,10 @@ describe('getGoalIdsBySimilarity', () => {
   let template;
   let report;
 
+  let draftReport;
+  let submittedReport;
+  let needsActionReport;
+
   beforeAll(async () => {
     recipient = await createRecipient();
     recipientTwo = await createRecipient();
@@ -78,33 +83,97 @@ describe('getGoalIdsBySimilarity', () => {
       oldGrantId: inactiveGrantWithReplacement.id,
     });
 
-    goalGroupOne = await Promise.all([
-      createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        name: goalTitleOne,
+    //  goals that will be ineligible for similarity
+    // because they are on reports that have ineligible statuses
+    const goalOnDraftReport = await createGoal({
+      status: GOAL_STATUS.NOT_STARTED,
+      name: goalTitleOne,
+      grantId: activeGrant.id,
+    });
+
+    draftReport = await createReport({
+      regionId: activeGrant.regionId,
+      activityRecipients: [{
         grantId: activeGrant.id,
-      }),
-      createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        name: goalTitleOne,
-        grantId: replacementGrant.id,
-      }),
-      createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        name: goalTitleOne,
-        grantId: inactiveGrantWithoutReplacement.id,
-      }),
-      createGoal({
-        status: GOAL_STATUS.NOT_STARTED,
-        name: goalTitleOne,
+      }],
+    });
+
+    await ActivityReportGoal.create({
+      activityReportId: draftReport.id,
+      goalId: goalOnDraftReport.id,
+      status: REPORT_STATUSES.DRAFT,
+    });
+
+    const goalOnSubmittedReport = await createGoal({
+      status: GOAL_STATUS.NOT_STARTED,
+      name: goalTitleOne,
+      grantId: activeGrant.id,
+    });
+
+    submittedReport = await createReport({
+      regionId: activeGrant.regionId,
+      activityRecipients: [{
         grantId: activeGrant.id,
-      }),
-      createGoal({
-        status: GOAL_STATUS.NOT_STARTED,
-        name: goalTitleOne,
-        grantId: inactiveGrantWithReplacement.id,
-      }),
-    ]);
+      }],
+    });
+
+    await ActivityReportGoal.create({
+      activityReportId: submittedReport.id,
+      goalId: goalOnSubmittedReport.id,
+      status: REPORT_STATUSES.SUBMITTED,
+    });
+
+    const goalOnNeedsActionReport = await createGoal({
+      status: GOAL_STATUS.NOT_STARTED,
+      name: goalTitleOne,
+      grantId: activeGrant.id,
+    });
+
+    needsActionReport = await createReport({
+      regionId: activeGrant.regionId,
+      activityRecipients: [{
+        grantId: activeGrant.id,
+      }],
+    });
+
+    await ActivityReportGoal.create({
+      activityReportId: needsActionReport.id,
+      goalId: goalOnNeedsActionReport.id,
+      status: REPORT_STATUSES.NEEDS_ACTION,
+    });
+
+    goalGroupOne = [
+      ...await Promise.all([
+        createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          name: goalTitleOne,
+          grantId: activeGrant.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          name: goalTitleOne,
+          grantId: replacementGrant.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.IN_PROGRESS,
+          name: goalTitleOne,
+          grantId: inactiveGrantWithoutReplacement.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitleOne,
+          grantId: activeGrant.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitleOne,
+          grantId: inactiveGrantWithReplacement.id,
+        }),
+      ]),
+      goalOnDraftReport,
+      goalOnSubmittedReport,
+      goalOnNeedsActionReport,
+    ];
 
     template = await createGoalTemplate({
       name: goalTitleTwo,
@@ -292,6 +361,9 @@ describe('getGoalIdsBySimilarity', () => {
       force: true,
     });
 
+    await destroyReport(draftReport);
+    await destroyReport(submittedReport);
+    await destroyReport(needsActionReport);
     await destroyReport(report);
 
     await Grant.destroy({
