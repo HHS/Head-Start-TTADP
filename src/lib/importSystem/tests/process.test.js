@@ -119,6 +119,7 @@ describe('processRecords', () => {
         reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
         findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
         hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe51',
+        sourceUpdatedAt: new Date('2023-12-30'),
       });
     }));
 
@@ -146,11 +147,11 @@ describe('processRecords', () => {
       {
         hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe5c',
         sourceUpdatedAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       },
       {
         individualHooks: true,
         returning: true,
-        plain: true,
         where: {
           id: 1,
         },
