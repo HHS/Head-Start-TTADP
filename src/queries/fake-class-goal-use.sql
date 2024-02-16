@@ -11,8 +11,8 @@
 * - jdi.createdVia - one or more verbatium created via values
 * - jdi.onApprovedAR - true or false
 * - jdi.createdbetween - two dates defining a range for the createdAt to be within
-* - jdi.startDate - two dates defining a range for the createdAt to be within
-* - jdi.endDate - two dates defining a range for the createdAt to be within
+* - jdi.startDate - two dates defining a range for the startDate to be within
+* - jdi.endDate - two dates defining a range for the endDate to be within
 *
 * zero or more JDI flags can be set within the same transaction as the query is executed.
 * The following is an example of how to set a JDI flag:
@@ -91,15 +91,15 @@ AND
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.createdbetween', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for startDate dates between two values if jdi.createdbetween is defined
-(NULLIF(current_setting('jdi.createdbetween', true), '') IS NULL
+-- Filter for startDate dates between two values if jdi.startDate is defined
+(NULLIF(current_setting('jdi.startDate', true), '') IS NULL
       OR ar."startDate"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.startDate', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for endDate dates between two values if jdi.createdbetween is defined
-(NULLIF(current_setting('jdi.createdbetween', true), '') IS NULL
+-- Filter for endDate dates between two values if jdi.endDate is defined
+(NULLIF(current_setting('jdi.endDate', true), '') IS NULL
       OR ar."endDate"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.endDate', true), ''),'[]')::json) AS value
