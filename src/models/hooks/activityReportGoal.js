@@ -1,3 +1,4 @@
+const { REPORT_STATUSES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
@@ -73,9 +74,76 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
   );
 };
 
+const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
+  const { goalId, status } = instance;
+
+  // if the report is in any other status than approved,
+  // we want to recalculate the similarity groups
+  if (status === REPORT_STATUSES.APPROVED) {
+    return;
+  }
+
+  // get a similarity group that contains the goal
+  /**
+   * this is a find one because we only need to know if there is any
+   * matching groups, and we need to know the recipientId
+   */
+  const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
+    attributes: ['recipientId', 'id'],
+    where: {
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+    include: [
+      {
+        model: sequelize.models.Goal,
+        as: 'goals',
+        attributes: ['id'],
+        required: true,
+        where: {
+          id: goalId,
+        },
+      },
+    ],
+    transaction: options.transaction,
+  });
+
+  // if there aren't any, we do not need to do anything
+  if (!similarityGroup) return;
+
+  // otherwise, we need to destroy all similarity groups for that recipient
+  // (that haven't been invalidated)
+  const similarityGroups = await sequelize.models.GoalSimilarityGroup.findAll({
+    attributes: ['id'],
+    where: {
+      recipientId: similarityGroup.recipientId,
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+    transaction: options.transaction,
+  });
+
+  await sequelize.models.GoalSimilarityGroupGoal.destroy({
+    where: {
+      similarityGroupId: similarityGroups.map((sg) => sg.id),
+    },
+    transaction: options.transaction,
+  });
+
+  await sequelize.models.GoalSimilarityGroup.destroy({
+    where: {
+      recipientId: similarityGroup.recipientId,
+      userHasInvalidated: false,
+      finalGoalId: null,
+    },
+    transaction: options.transaction,
+  });
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateLinker(sequelize, instance, options);
+  await destroyLinkedSimilarityGroups(sequelize, instance, options);
 };
 
 const beforeValidate = async (sequelize, instance, options) => {
@@ -96,10 +164,12 @@ const beforeDestroy = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
+  await destroyLinkedSimilarityGroups(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
+  await destroyLinkedSimilarityGroups(sequelize, instance, options);
 };
 
 export {
@@ -108,6 +178,7 @@ export {
   processForEmbeddedResources,
   recalculateOnAR,
   propagateDestroyToMetadata,
+  destroyLinkedSimilarityGroups,
   afterCreate,
   beforeDestroy,
   afterDestroy,
