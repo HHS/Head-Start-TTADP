@@ -19,7 +19,6 @@ const mockEvent = (data = {}) => ({
     reasons: ['Ongoing Quality Improvement'],
     audience: 'Recipients',
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-    'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['None'],
