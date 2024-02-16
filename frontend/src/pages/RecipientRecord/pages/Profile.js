@@ -29,10 +29,10 @@ export default function Profile({
         <div className="maxw-widescreen">
           <Grid row gap={4}>
             <Grid desktop={{ col: 3 }} tabletLg={{ col: 12 }}>
-              <RecipientSummary summary={recipientSummary} regionId={regionId} />
+              <RecipientSummary summary={recipientSummary} />
             </Grid>
             <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
-              <RecipientLeadership recipientId={recipientId} regionId={regionId} />
+              <RecipientLeadership recipientId={recipientId} />
             </Grid>
             <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
               <GrantList summary={recipientSummary} />
