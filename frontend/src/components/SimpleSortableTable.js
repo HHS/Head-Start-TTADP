@@ -12,10 +12,18 @@ const SimpleSortableTable = ({ data, columns, className }) => {
     const sortableItems = [...data];
     if (sortConfig.key !== null) {
       sortableItems.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+        if (React.isValidElement(aValue)) {
+          aValue = aValue.props.children.props['aria-label'];
+        }
+        if (React.isValidElement(bValue)) {
+          bValue = bValue.props.children.props['aria-label'];
+        }
+        if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
         }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
+        if (aValue > bValue) {
           return sortConfig.direction === 'asc' ? 1 : -1;
         }
         return 0;
