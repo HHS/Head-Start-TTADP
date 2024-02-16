@@ -337,7 +337,7 @@ describe('mergeGoals', () => {
 
     similarityGroup = await createSimilarityGroup(
       recipient.id,
-      [goalOne.id, goalTwo.id, goalThree.id],
+      [{ ids: [goalOne.id, goalTwo.id, goalThree.id], excludedIfNotAdmin: false }],
     );
 
     mergedGoals = await mergeGoals(
