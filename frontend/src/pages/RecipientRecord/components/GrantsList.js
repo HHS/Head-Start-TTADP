@@ -20,7 +20,9 @@ export default function GrantsList({ summary }) {
     { key: 'annualFundingMonth', name: 'Annual funding month' },
   ];
 
-  const grantsData = summary.grants.map((grant) => ({
+  const grants = summary && summary.grants ? summary.grants : [];
+
+  const grantsData = grants.map((grant) => ({
     ...grant,
     number: (
       <>
@@ -47,7 +49,7 @@ export default function GrantsList({ summary }) {
         columns={columns}
         className="ttahub-recipient-record--table ttahub--recipient-summary-table"
       />
-      {summary.grants.some((grant) => !hasMonitoringData(grant.number)
+      {grants.some((grant) => !hasMonitoringData(grant.number)
       || !hasClassData(grant.number)) && (
         <p className="usa-hint padding-2 border-top smart-hub-border-base-lighter">
           * CLASS and/or monitoring scores are not available
