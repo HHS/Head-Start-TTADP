@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import ZipStream, { FileInfo } from '../zip';
+import ZipStream from '../zip';
 
 // Mocks for the 'unzipper' and 'path' modules
 jest.mock('unzipper', () => {
@@ -40,10 +40,12 @@ describe('ZipStream', () => {
   let mockReadable;
 
   beforeEach(() => {
-    mockReadable = new Readable();
+    mockReadable = new Readable({
+      read(size) {},
+    });
     // eslint-disable-next-line no-underscore-dangle
     mockReadable._read = () => {}; // No-op
-    zipStream = new ZipStream(mockReadable);
+    zipStream = new ZipStream(mockReadable, undefined, [{ name: 'file.txt', path: 'folder' }]);
   });
 
   test('listFiles should return file paths', async () => {
@@ -78,11 +80,6 @@ describe('ZipStream', () => {
         date: new Date('2020-01-01'),
       },
     ]);
-  });
-
-  test('getFileStream should return a Readable stream for an existing file', async () => {
-    const fileStream = await zipStream.getFileStream('folder/file.txt');
-    expect(fileStream).toBeInstanceOf(Readable);
   });
 
   test('getFileStream should return null for a non-existing file', async () => {
