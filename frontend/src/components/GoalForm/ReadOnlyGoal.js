@@ -15,7 +15,7 @@ const formatPrompts = (prompts) => {
   }));
 };
 
-const parseObjectValuesOrString = (d) => {
+export const parseObjectValuesOrString = (d) => {
   try {
   // if null or undefined, return empty string
     if (!d) {
