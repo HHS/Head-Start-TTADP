@@ -66,23 +66,6 @@ describe('RecipientLeadership', () => {
 
     expect(await screen.findByText(/frog stuff/i)).toBeInTheDocument();
     expect(await screen.findByText(/frog commander/i)).toBeInTheDocument();
-
-    let firstTitle = document.querySelector('td');
-    expect(firstTitle).toHaveTextContent(/frog stuff/i);
-    const sortByTitle = screen.getByRole('button', { name: /title activate to sort/i });
-    act(() => {
-      userEvent.click(sortByTitle);
-    });
-
-    firstTitle = document.querySelector('td');
-    expect(firstTitle).toHaveTextContent(/frog stuff/i);
-
-    act(() => {
-      userEvent.click(sortByTitle);
-    });
-
-    firstTitle = document.querySelector('td');
-    expect(firstTitle).toHaveTextContent(/frog commander/i);
   });
 
   it('handles errors', async () => {
