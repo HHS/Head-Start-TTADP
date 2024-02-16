@@ -1,3 +1,4 @@
+import { CURRENT_GOAL_SIMILARITY_VERSION } from '../constants';
 import {
   Recipient,
   Goal,
@@ -13,7 +14,6 @@ import {
 } from '../testUtils';
 import {
   getSimilarityGroupsByRecipientId,
-  getSimilarityGroupsContainingGoalId,
   getSimilarityGroupByContainingGoalIds,
   setSimilarityGroupAsUserInvalidated,
   setSimilarityGroupAsUserMerged,
@@ -43,6 +43,7 @@ describe('goalSimilarityGroup services', () => {
 
     const group = await GoalSimilarityGroup.create({
       recipientId: recipient.id,
+      version: CURRENT_GOAL_SIMILARITY_VERSION,
     });
 
     await GoalSimilarityGroupGoal.bulkCreate([
@@ -62,12 +63,6 @@ describe('goalSimilarityGroup services', () => {
     await Grant.destroy({ where: { recipientId: recipient.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
-  });
-
-  test('getSimilarityGroupsContainingGoalId', async () => {
-    const groups = await getSimilarityGroupsContainingGoalId(goal2.id);
-    expect(groups.length).toBe(1);
-    expect(groups[0].goals.sort()).toEqual([goal1.id, goal2.id, goal3.id].sort());
   });
 
   test('getSimilarityGroupByContainingGoalIds', async () => {
@@ -109,7 +104,13 @@ describe('goalSimilarityGroup services', () => {
   });
 
   test('createSimilarityGroup & deleteSimilarityGroup', async () => {
-    const newGroup = await createSimilarityGroup(recipient.id, [goal4.id, goal5.id, goal6.id]);
+    const goals = [
+      {
+        excludedIfNotAdmin: false,
+        ids: [goal4.id, goal5.id, goal6.id],
+      },
+    ];
+    const newGroup = await createSimilarityGroup(recipient.id, goals);
     const groups = await getSimilarityGroupsByRecipientId(recipient.id);
 
     expect(groups.length).toBe(2);

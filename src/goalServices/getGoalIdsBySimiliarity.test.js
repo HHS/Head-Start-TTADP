@@ -33,13 +33,11 @@ jest.mock('../services/similarity');
 describe('getGoalIdsBySimilarity', () => {
   let goalGroupOne = [];
   let goalGroupTwo = [];
-  let goalGroupThree = [];
 
   const goalTitleOne = faker.lorem.sentence();
   const goalTitleTwo = faker.lorem.sentence();
   const goalTitleThree = faker.lorem.sentence();
   const goalTitleFour = faker.lorem.sentence();
-  const goalTitleFive = faker.lorem.sentence();
 
   let groupIneligibleForSimilarityForReportCount = [];
   let groupIneligibleForSimilarityViaResponse = [];
@@ -210,19 +208,6 @@ describe('getGoalIdsBySimilarity', () => {
       }),
     ]);
 
-    goalGroupThree = await Promise.all([
-      createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        name: goalTitleThree,
-        grantId: activeGrant.id,
-      }),
-      createGoal({
-        status: GOAL_STATUS.IN_PROGRESS,
-        name: goalTitleThree,
-        grantId: activeGrant.id,
-      }),
-    ]);
-
     report = await createReport({
       regionId: activeGrant.regionId,
       activityRecipients: [{
@@ -232,13 +217,13 @@ describe('getGoalIdsBySimilarity', () => {
 
     const ineligibleReportGoalOne = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
-      name: goalTitleFour,
+      name: goalTitleThree,
       grantId: activeGrant.id,
     });
 
     const ineligibleReportGoalTwo = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
-      name: goalTitleFour,
+      name: goalTitleThree,
       grantId: activeGrant.id,
     });
 
@@ -257,13 +242,13 @@ describe('getGoalIdsBySimilarity', () => {
 
     const ineligibleResponseGoalOne = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
-      name: goalTitleFive,
+      name: goalTitleFour,
       grantId: activeGrant.id,
     });
 
     const ineligibleResponseGoalTwo = await createGoal({
       status: GOAL_STATUS.IN_PROGRESS,
-      name: goalTitleFive,
+      name: goalTitleFour,
       grantId: activeGrant.id,
     });
 
@@ -302,7 +287,6 @@ describe('getGoalIdsBySimilarity', () => {
     const goals = [
       ...goalGroupOne,
       ...goalGroupTwo,
-      ...goalGroupThree,
       ...groupIneligibleForSimilarityForReportCount,
       ...groupIneligibleForSimilarityViaResponse,
     ];
@@ -395,7 +379,6 @@ describe('getGoalIdsBySimilarity', () => {
     const goals = [
       ...goalGroupOne,
       ...goalGroupTwo,
-      ...goalGroupThree,
       ...groupIneligibleForSimilarityForReportCount,
       ...groupIneligibleForSimilarityViaResponse,
     ];
@@ -420,11 +403,83 @@ describe('getGoalIdsBySimilarity', () => {
     expect(idsSets[0].goals).toHaveLength(0);
   });
 
+  it('sets the database values correctly', async () => {
+    const similarityResponse = [
+      goalGroupOne,
+      goalGroupTwo,
+      groupIneligibleForSimilarityForReportCount,
+      groupIneligibleForSimilarityViaResponse,
+    ].map((group) => ({
+      id: group[0].id,
+      name: group[0].name,
+      matches: group.map((g) => ({
+        id: g.id,
+        name: g.name,
+      })),
+    }));
+
+    similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
+
+    await getGoalIdsBySimilarity(recipient.id);
+
+    const goalGroupOneIds = goalGroupOne.map((g) => g.id);
+    const goalGroupOneSimilarityGroupGoals = await GoalSimilarityGroupGoal.findAll({
+      where: {
+        goalId: goalGroupOneIds,
+      },
+    });
+
+    // same length, minus the one that has the inactive grant
+    expect(goalGroupOneSimilarityGroupGoals).toHaveLength(goalGroupOne.length - 1);
+
+    // three should be excludedIfNotAdmin
+    const excludedIfNotAdminGoalGroupOne = goalGroupOneSimilarityGroupGoals
+      .filter((g) => g.excludedIfNotAdmin);
+    expect(excludedIfNotAdminGoalGroupOne).toHaveLength(3);
+
+    const goalGroupTwoIds = goalGroupTwo.map((g) => g.id);
+    const goalGroupTwoSimilarityGroupGoals = await GoalSimilarityGroupGoal.findAll({
+      where: {
+        goalId: goalGroupTwoIds,
+      },
+    });
+
+    expect(goalGroupTwoSimilarityGroupGoals).toHaveLength(goalGroupTwo.length);
+    const excludedIfNotAdminGoalGroupTwo = goalGroupTwoSimilarityGroupGoals
+      .filter((g) => g.excludedIfNotAdmin);
+
+    // one closed curated goal
+    expect(excludedIfNotAdminGoalGroupTwo).toHaveLength(1);
+
+    const groupIneligibleForSimilarityForReportCountIds = groupIneligibleForSimilarityForReportCount
+      .map((g) => g.id);
+
+    const ineligibleForSimilarityForReportCountSimilarityGroupGoals = await GoalSimilarityGroupGoal
+      .findAll({
+        where: {
+          goalId: groupIneligibleForSimilarityForReportCountIds,
+        },
+      });
+
+    expect(ineligibleForSimilarityForReportCountSimilarityGroupGoals).toHaveLength(0);
+
+    const groupIneligibleForSimilarityViaResponseIds = groupIneligibleForSimilarityViaResponse
+      .map((g) => g.id);
+
+    const ineligibleForSimilarityViaResponseSimilarityGroupGoals = await GoalSimilarityGroupGoal
+      .findAll({
+        where: {
+          goalId: groupIneligibleForSimilarityViaResponseIds,
+        },
+      });
+
+    expect(ineligibleForSimilarityViaResponseSimilarityGroupGoals).toHaveLength(0);
+  });
+
   it('shapes the similarity response when the user does not have permission to merge closed curated goals', async () => {
     const similarityResponse = [
       goalGroupOne,
       goalGroupTwo,
-      goalGroupThree,
       groupIneligibleForSimilarityForReportCount,
       groupIneligibleForSimilarityViaResponse,
     ].map((group) => ({
@@ -453,7 +508,7 @@ describe('getGoalIdsBySimilarity', () => {
     const [setOne, setTwo] = filteredSet;
 
     expect(setOne.goals.length).toBe(4);
-    expect(setTwo.goals.length).toBe(4);
+    expect(setTwo.goals.length).toBe(3);
 
     const goalIds = [...setOne.goals, ...setTwo.goals];
 
@@ -488,7 +543,6 @@ describe('getGoalIdsBySimilarity', () => {
     const similarityResponse = [
       goalGroupOne,
       goalGroupTwo,
-      goalGroupThree,
       groupIneligibleForSimilarityForReportCount,
       groupIneligibleForSimilarityViaResponse,
     ].map((group) => ({
@@ -521,7 +575,7 @@ describe('getGoalIdsBySimilarity', () => {
 
     const [setOne, setTwo] = filteredSet;
 
-    expect(setOne.goals.length).toBe(5);
+    expect(setOne.goals.length).toBe(7);
     expect(setTwo.goals.length).toBe(4);
   });
 

@@ -2,7 +2,9 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  determineMergeGoalStatus,
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
@@ -2575,10 +2577,6 @@ const fieldMappingForDeduplication = {
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
 
-function goalGroupContainsClosedCuratedGoal(goalGroup) {
-  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
-}
-
 /**
 * @param {Number} recipientId
 * @returns {
@@ -2596,7 +2594,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
-  const allowClosedCuratedGoal = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
+  const hasClosedMergeGoalOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
   const similiarityWhere = {
     userHasInvalidated: false,
@@ -2607,7 +2605,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
     recipientId,
     similiarityWhere,
-    allowClosedCuratedGoal,
+    hasClosedMergeGoalOverride,
   );
 
   if (existingRecipientGroups.length) {
@@ -2683,20 +2681,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     }
   });
 
-  const invalidStatusesForReportGoals = [
-    REPORT_STATUSES.SUBMITTED,
-    REPORT_STATUSES.DRAFT,
-    REPORT_STATUSES.NEEDS_ACTION,
-  ];
-
   const filteredGoalGroups = goalGroups
-    .map((group) => (
-      group.filter((goal) => {
-        const { activityReportGoals } = goal;
-        const isOnActiveReport = activityReportGoals
-          .some((arg) => invalidStatusesForReportGoals.includes(arg.status));
-        return !(activityReportGoals.length) || !isOnActiveReport;
-      })))
     .filter((group) => {
     // filter out goals with weird FEI responses
     // eslint-disable-next-line max-len
@@ -2713,17 +2698,38 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       return goalsNotOnTheSameReport;
     });
 
+  const invalidStatusesForReportGoals = [
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ];
+
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
       if (!grantLookup[current.grantId]) {
         return previous;
       }
 
+      let closedCurated = false;
+      if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+      }
+
+      // goal on an active report
+      let isOnActiveReport = false;
+      if (current.activityReportGoals.length) {
+        isOnActiveReport = current.activityReportGoals
+          .some((arg) => invalidStatusesForReportGoals.includes(arg.status));
+      }
+
+      const excludedIfNotAdmin = isOnActiveReport || closedCurated;
+
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
       // we'll add the current goal's ID to the existing goal's ID array
-      if (existingGoal) {
+
+      if (existingGoal && existingGoal.excludedIfNotAdmin === excludedIfNotAdmin) {
         existingGoal.ids.push(current.id);
         return previous;
       }
@@ -2736,6 +2742,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           status: current.status,
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
+          excludedIfNotAdmin,
         },
       ];
     }, []));
@@ -2752,11 +2759,15 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
-          uniq(gg.map((g) => g.ids).flat()),
+          gg,
         ))),
   );
 
-  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere, allowClosedCuratedGoal);
+  return getSimilarityGroupsByRecipientId(
+    recipientId,
+    similiarityWhere,
+    hasClosedMergeGoalOverride,
+  );
 }
 
 /**
