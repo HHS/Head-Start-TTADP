@@ -25,8 +25,8 @@ interface GroupData {
   grants: number[];
   isPublic: boolean;
   creator: { userId: number },
-  coOwners?: { userId: number }[],
-  shareWiths?: { userId: number }[],
+  coOwners?: number[];
+  sharedWith?: number[];
 }
 
 interface GroupGrantData {
@@ -164,6 +164,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
     attributes: [
       'id',
       'name',
+      'isPublic',
     ],
     where: {
       '$grants.regionId$': { [Op.in]: regions },
@@ -489,7 +490,8 @@ export async function potentialGroupUsers(
             SCOPES.APPROVE_REPORTS,
             SCOPES.SITE_ACCESS,
           ],
-          regionId: creatorsRegionIds,
+          // We only set site access permission on the user for region 14.
+          regionId: [...creatorsRegionIds, 14],
         },
       },
       {
@@ -542,7 +544,6 @@ export async function potentialGroupUsers(
     },
     raw: true,
   });
-
   return users;
 }
 
@@ -661,7 +662,7 @@ export async function potentialRecipientGrants(
     })
     : await groupCreatorRegionIds(groupId);
 
-  if (groupId === null) {
+  if (!groupId) {
     creatorsRegionIds = creatorsRegionIds.map(({ regionId }) => regionId);
   }
 
@@ -672,14 +673,16 @@ export async function potentialRecipientGrants(
       ['id', 'grantId'],
       // Alias the 'number' column as 'grantNumber'
       ['number', 'grantNumber'],
+      [sequelize.col('"recipient"."id"'), 'recipientId'],
       // Alias the 'recipient.name' as 'name'
       [sequelize.col('"recipient"."name"'), 'name'],
       // Include the 'regionId' column
       'regionId',
       // Alias the 'recipient.uei' column as 'uei'
       [sequelize.col('"recipient"."uei"'), 'uei'],
-      // Alias the 'program.programType' column as 'programType'
-      [sequelize.col('"programs"."programType"'), 'programType'],
+      // Alias the 'program.programType' column as 'programType'\
+      // Array aggregate the 'program.programType' column as 'programType'
+      [Sequelize.literal('ARRAY_AGG(DISTINCT "programs"."programType")'), 'programTypes'],
     ],
     // Filter grants with 'status' as 'Active' and 'regionId' in creatorsRegionIds
     where: {
@@ -718,6 +721,15 @@ export async function potentialRecipientGrants(
         },
       },
     ],
+    // Group by recipient id and grant id (programs creates dupes).
+    group: [
+      sequelize.col('"recipient"."id"'),
+      sequelize.col('"recipient"."name"'),
+      sequelize.col('"recipient"."uei"'),
+      sequelize.col('"Grant"."id"'),
+      sequelize.col('"Grant"."number"'),
+      sequelize.col('"Grant"."regionId"'),
+    ],
     // Return raw data instead of Sequelize model instances
     raw: true,
   });
@@ -734,7 +746,7 @@ export async function potentialRecipientGrants(
  * @throws {Error} If there is an error performing the database operations.
  */
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
-  const { grants, coOwners = [], shareWiths = [] } = data;
+  const { grants, coOwners = [], sharedWith = [] } = data;
 
   // Get all existing group grants, current group co-owners, current group shareWiths,
   // and collaborator types
@@ -812,31 +824,31 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       }) => grantId),
     // Find co-owners that are not already current group co-owners
     coOwners
-      .filter(({ userId }) => !currentGroupCoOwners
-        .find((cgco) => cgco.dataValues.userId === userId)),
+      .filter((id) => !currentGroupCoOwners
+        .find((cgco) => cgco.dataValues.userId === id)),
     // Find current group co-owners that are not in the co-owners list
     currentGroupCoOwners
       .filter(({
         dataValues: { userId },
       }: {
         dataValues: { userId: number },
-      }) => !coOwners.find(({ userId: user }) => user === userId))
+      }) => !coOwners.find((id) => id === userId))
       .map(({
         dataValues: { userId },
       }: {
         dataValues: { userId: number },
       }) => userId),
     // Find shareWiths that are not already current group shareWiths
-    shareWiths
-      .filter(({ userId }) => !currentGroupShareWiths
-        .find((cgc) => cgc.dataValues.userId === userId)),
+    sharedWith
+      .filter((id) => !currentGroupShareWiths
+        .find((cgc) => cgc.dataValues.userId === id)),
     // Find current group shareWiths that are not in the shareWiths list
     currentGroupShareWiths
       .filter(({
         dataValues: { userId },
       }: {
         dataValues: { userId: number },
-      }) => !coOwners.find(({ userId: user }) => user === userId))
+      }) => !sharedWith.find((id) => id === userId))
       .map(({
         dataValues: { userId },
       }: {
@@ -942,7 +954,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     grants,
     userId,
     coOwners,
-    shareWiths,
+    sharedWith,
   } = data;
 
   const [
@@ -966,17 +978,6 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
         { validate: true, individualHooks: true },
       )
       : Promise.resolve(),
-    // Add creator.
-    userId && userId > 0
-      ? GroupCollaborator.create(
-        {
-          groupId: newGroup.id,
-          userId,
-          collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.CREATOR],
-        },
-        { validate: true, individualHooks: true },
-      )
-      : Promise.resolve(),
     // If there are co-owners, create group collaborators with co-owner role
     coOwners && coOwners.length > 0
       ? GroupCollaborator.bulkCreate(
@@ -989,9 +990,9 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
       )
       : Promise.resolve(),
     // If there are shareWiths, create group collaborators with shareWith role
-    shareWiths && shareWiths.length > 0
+    sharedWith && sharedWith.length > 0
       ? GroupCollaborator.bulkCreate(
-        shareWiths.map((sharedWithUserId) => ({
+        sharedWith.map((sharedWithUserId) => ({
           groupId: newGroup.id,
           userId: sharedWithUserId,
           collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],

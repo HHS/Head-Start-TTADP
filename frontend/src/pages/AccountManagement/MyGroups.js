@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState, useContext } from 'react';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
@@ -13,23 +12,36 @@ import {
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
-import { getRecipientAndGrantsByUser, getGroupUsers } from '../../fetchers/recipient';
 import MultiSelect from '../../components/MultiSelect';
-import { createGroup, fetchGroup, updateGroup } from '../../fetchers/groups';
+import {
+  createGroup, fetchGroup, updateGroup, getGroupUsers, getGroupGrants,
+} from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
 import AppLoadingContext from '../../AppLoadingContext';
 import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
 
-const mapGrants = (grants) => grants.map((grant) => ({
+const mapSelectedRecipients = (grants) => grants.map((grant) => ({
   value: grant.id,
-  label: grant.recipient.name,
-  regionId: grant.regionId,
+  label: grant.recipientInfo,
 }));
 
-const mapRecipients = (recipients) => recipients.map((recipient) => ({
-  label: recipient.name,
-  options: mapGrants(recipient.grants),
-}));
+const reduceRecipients = (fetchedRecipients) => (
+  // Reduce the response to a format that the MultiSelect component can use.
+  fetchedRecipients.reduce((acc, recipient) => {
+    // Check if the recipient is already in the accumulator, else add it.
+    let existingRecipient = acc.find((a) => a.label === recipient.name);
+    if (!existingRecipient) {
+      existingRecipient = { label: recipient.name, options: [] };
+      acc.push(existingRecipient); // Add the new recipient to the accumulator.
+    }
+    // Add the grant to the recipient.
+    existingRecipient.options.push({
+      value: recipient.grantId,
+      label: `${recipient.name} - ${recipient.grantNumber}${recipient.programTypes.length > 0 ? ` - ${recipient.programTypes.join(', ')}` : ''}`,
+    });
+    return acc;
+  }, [])
+);
 
 export const GROUP_FIELD_NAMES = {
   NAME: 'new-group-name',
@@ -61,14 +73,13 @@ export default function MyGroups({ match }) {
 
   const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
-  const watchRecipients = watch(GROUP_FIELD_NAMES.RECIPIENTS);
-  const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
-  const watchIndividuals = watch(GROUP_FIELD_NAMES.INDIVIDUALS);
+  // const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
+  // const watchIndividuals = watch(GROUP_FIELD_NAMES.INDIVIDUALS);
 
   const { groupId } = match.params;
-  const [recipients, setRecipients] = useState([]);
-  const [coOwners, setCoOwners] = useState([]);
-  const [individuals, setIndividuals] = useState([]);
+  const [recipientOptions, setRecipientOptions] = useState([]);
+  const [coOwnerOptions, setCoOwnerOptions] = useState([]);
+  const [individualOptions, setIndividualOptions] = useState([]);
   const [error, setError] = useState(null);
   const history = useHistory();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
@@ -81,23 +92,35 @@ export default function MyGroups({ match }) {
     async function getGroup() {
       setIsAppLoading(true);
       try {
-        const existingGroupData = await fetchGroup(groupId);
-        console.log('existingGroupData.grants', existingGroupData.grants);
-        if (existingGroupData) {
-          setValue(GROUP_FIELD_NAMES.NAME, existingGroupData.name);
-          setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapGrants(existingGroupData.grants));
-          setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !existingGroupData.isPublic);
-          setValue(GROUP_FIELD_NAMES.CO_OWNERS, existingGroupData.coOwners.map((coOwner) => (
-            { value: coOwner.id, label: coOwner.name, regionId: coOwner.regionId }
-          )));
-          const individualsToSet = existingGroupData.individuals.map(
-            (individual) => (
-              { value: individual.id, label: individual.name, regionId: individual.regionId }
-            ),
-          );
+        const fetchedGroup = await fetchGroup(groupId);
 
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, individualsToSet);
-          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, !existingGroupData.shareWithEveryone ? 'everyone' : 'individuals');
+        if (fetchedGroup) {
+          // Set name.
+          setValue(GROUP_FIELD_NAMES.NAME, fetchedGroup.name);
+
+          // Set share with everyone (we need to make sure this is initially on the form).
+          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'individuals');
+
+          // Set recipients.
+          setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapSelectedRecipients(fetchedGroup.grants));
+
+          // Set is private.
+          setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !fetchedGroup.isPublic);
+
+          // Set group co-owners.
+          const coOwners = fetchedGroup.groupCollaborators.filter((uc) => uc.collaboratorType.name === 'Co-Owner');
+          setValue(GROUP_FIELD_NAMES.CO_OWNERS, coOwners.map((coOwner) => (
+            { value: coOwner.userId, label: coOwner.user.name }
+          )));
+
+          // Set group individuals.
+          const individualsUsers = fetchedGroup.groupCollaborators.filter((ui) => ui.collaboratorType.name === 'SharedWith');
+          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, individualsUsers.map((i) => (
+            { value: i.userId, label: i.user.name }
+          )));
+          if (individualsUsers.length === 0) {
+            setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'everyone');
+          }
         }
       } catch (err) {
         setError('There was an error fetching your group');
@@ -107,108 +130,63 @@ export default function MyGroups({ match }) {
     }
 
     // load existing group data from API based on query param
-    if (groupId) {
+    if (groupId && usersFetched && recipientsFetched) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading, setValue]);
+  }, [groupId, setIsAppLoading, setValue, usersFetched, recipientsFetched]);
 
   useEffect(() => {
     // get grants/recipients for user
     async function fetchRecipients() {
       setIsAppLoading(true);
       try {
-        const response = await getRecipientAndGrantsByUser();
-        setRecipients(mapRecipients(response));
+        const fetchedRecipients = await getGroupGrants(groupId || 'new');
+
+        // Map recipients.
+        const recipientsMapped = reduceRecipients(fetchedRecipients);
+        setRecipientOptions(recipientsMapped);
         setRecipientsFetched(true);
-        setUsersFetched(false);
       } catch (err) {
         setError('There was an error fetching your recipients');
       } finally {
         setIsAppLoading(false);
       }
     }
+
     if (!recipientsFetched) {
       fetchRecipients();
     }
-  }, [recipientsFetched, setIsAppLoading]);
+  }, [groupId, recipientsFetched, setIsAppLoading]);
 
-  useDeepCompareEffect(() => {
-    console.log('watchRecipients changed', watchRecipients);
+  useEffect(() => {
     // get co-owners and individuals.
-    async function fetchUsers(regionIds) {
+    async function fetchUsers() {
       setIsAppLoading(true);
       try {
         // Get co-owners and individuals for selected recipients.
-        const { coOwnerUsers, individualUsers } = await getGroupUsers(regionIds);
-        console.log('\n\n\n------ USERS coOwnerUsers: ', coOwnerUsers);
-        console.log('\n\n\n------ USERS individualUsers: ', individualUsers);
+        const groupUsers = await getGroupUsers(groupId || 'new');
 
         // Set available.
-        setCoOwners(coOwnerUsers.map((user) => ({
-          value: user.id, label: user.name, regionId: user.regionId,
-        })));
-        setIndividuals(individualUsers.map((user) => (
-          { value: user.id, label: user.name, regionId: user.regionId })));
+        const mappedUsers = groupUsers.map((user) => ({
+          value: user.userId, label: user.name,
+        }));
+
+        setCoOwnerOptions(mappedUsers);
+        setIndividualOptions(mappedUsers);
+
+        // Set users fetched.
         setUsersFetched(true);
-
-        // Update selected based on user id (region access).
-        const coOwnerIds = coOwnerUsers.map((user) => user.id);
-        const individualIds = individualUsers.map((user) => user.id);
-
-        // Clean Selected Co-Owners:
-        if (watchCoOwners.length > 0) {
-          const updatedCoOwners = watchCoOwners.filter(
-            (coOwner) => coOwnerIds.includes(coOwner.value),
-          );
-          setValue(GROUP_FIELD_NAMES.CO_OWNERS, updatedCoOwners);
-        }
-
-        // Clean Selected Individuals:
-        if (watchIndividuals.length > 0) {
-          const updatedIndividuals = watchIndividuals.filter(
-            (individual) => individualIds.includes(individual.value),
-          );
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, updatedIndividuals);
-        }
       } catch (err) {
         setError('There was an error fetching co-owners and individuals');
       } finally {
         setIsAppLoading(false);
       }
     }
-    console.log('watchRecipients', watchRecipients);
-    // Get a distinct list of region ids from watchRecipients.
-    const selectedRecipientRegionIds = [...new Set(
-      watchRecipients.map((recipient) => recipient.regionId),
-    )];
 
-    console.log('selectedRecipientRegionIds', selectedRecipientRegionIds);
-
-    // Update the co-owners and individuals based on the selected recipients.
-    if (recipientsFetched) {
-      if (selectedRecipientRegionIds.length === 0) {
-        //  No need to retrieve users again just clear everything that might be selected.
-        setCoOwners([]);
-        setIndividuals([]);
-      } else {
-      // Check if we have any selected co-owners or individuals
-      //  that are not in the selected regions.
-        const missingCoOwners = watchCoOwners.filter(
-          (coOwner) => !selectedRecipientRegionIds.includes(coOwner.regionId),
-        );
-
-        const missingIndividuals = watchIndividuals.filter(
-          (individual) => !selectedRecipientRegionIds.includes(individual.regionId),
-        );
-
-        // Handle two cases here initial load of users or a change in selected recipients.
-        if (!usersFetched || (missingCoOwners.length > 0 || missingIndividuals.length > 0)) {
-          fetchUsers(selectedRecipientRegionIds);
-        }
-      }
+    if (!usersFetched) {
+      fetchUsers();
     }
-    // If selected recipients change or recipients fetched.
-  }, [watchRecipients, recipientsFetched]);
+  }, [groupId, setIsAppLoading, usersFetched]);
 
   // you'll notice that "setMyGroups" is called below
   // - since we fetch that data once, way earlier, in App.js, we must update it here
@@ -220,6 +198,11 @@ export default function MyGroups({ match }) {
       grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
       name: data[GROUP_FIELD_NAMES.NAME],
       isPublic: !data[GROUP_FIELD_NAMES.IS_PRIVATE],
+      coOwners: data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => (value)),
+      // Because individuals may be on the form we have to handle the case where it's not there.
+      sharedWith: data[GROUP_FIELD_NAMES.INDIVIDUALS]
+        ? data[GROUP_FIELD_NAMES.INDIVIDUALS].map(({ value }) => (value))
+        : [],
     };
 
     setIsAppLoading(true);
@@ -318,7 +301,7 @@ export default function MyGroups({ match }) {
               <Req />
               <MultiSelect
                 name={GROUP_FIELD_NAMES.RECIPIENTS}
-                options={recipients}
+                options={recipientOptions}
                 control={control}
                 simple={false}
                 required="Select at least one"
@@ -363,7 +346,7 @@ export default function MyGroups({ match }) {
                   </div>
                   <MultiSelect
                     name={GROUP_FIELD_NAMES.CO_OWNERS}
-                    options={coOwners}
+                    options={coOwnerOptions}
                     control={control}
                     simple={false}
                     required="Select at least one"
@@ -410,7 +393,7 @@ export default function MyGroups({ match }) {
                         {nameError && <span className="usa-error-message">{individualsError.message}</span>}
                         <MultiSelect
                           name={GROUP_FIELD_NAMES.INDIVIDUALS}
-                          options={individuals}
+                          options={individualOptions}
                           control={control}
                           simple={false}
                           required="Select at least one"

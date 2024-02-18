@@ -58,11 +58,12 @@ function checkBulkPermissions(
   groupData?: { id: number, isPublic: boolean, grants?, groupCollaborators? },
 ): boolean {
   // Negate the result of the following expression
-  return userDatas
+  const resultz = userDatas
     // Map over the userDatas array and create a new GroupPolicy instance for each userData
     .map((userData) => (new GroupPolicy(userData, grants, groupData))[method]())
     // Check if every result is false
     .every((result) => result);
+  return resultz;
 }
 
 /**
@@ -98,7 +99,7 @@ export async function getEligibleUsersForGroup(req: Request, res: Response) {
       groupData,
       optionsForCoOwners,
     ] = await Promise.all([
-      groupId !== 0 ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
+      groupId !== null ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
       potentialGroupUsers(groupId, userId),
     ]);
 
@@ -154,8 +155,8 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
       groupData,
       optionsForRecipientGrants,
     ] = await Promise.all([
-      groupId !== 0 ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
-      potentialRecipientGrants({ groupId }),
+      groupId !== null ? group(groupId) : Promise.resolve(unsavedGroup as GroupResponse),
+      potentialRecipientGrants({ groupId, userId }),
     ]);
 
     // Create a new GroupPolicy instance based on the current user, an empty array of permissions,
@@ -276,10 +277,8 @@ export async function createGroup(req: Request, res: Response) {
       sharedWith: sharedWithIds = [],
       isPublic: isPublicRaw = false,
     } = req.body;
-
-    // Convert the isPublicRaw string to a boolean value
-    const isPublic = isPublicRaw === 'true';
-
+    // cast isPublic to boolean
+    const isPublic = isPublicRaw === 'true' || isPublicRaw === true;
     // Fetch the current user ID and related data in parallel
     const [
       userId,
@@ -287,10 +286,10 @@ export async function createGroup(req: Request, res: Response) {
       sharedWith,
     ] = await Promise.all([
       currentUserId(req, res),
-      sharedWithIds
+      coOwnerIds.length
         ? Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId)))
         : Promise.resolve([]),
-      sharedWithIds
+      sharedWithIds.length
         ? Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId)))
         : Promise.resolve([]),
     ]);
@@ -346,6 +345,7 @@ export async function createGroup(req: Request, res: Response) {
     // Create a new group with the filtered grants
     const groupResponse = await createNewGroup({
       ...req.body,
+      userId,
       grants: grantIds, // filter to only active grants
     });
 
@@ -383,7 +383,8 @@ export async function updateGroup(req: Request, res: Response) {
       sharedWith: sharedWithIds = [],
       isPublic: isPublicRaw,
     } = req.body;
-    const isPublic = isPublicRaw === 'true';
+
+    const isPublic = isPublicRaw === 'true' || isPublicRaw === true;
     // Parse the groupId and retrieve necessary data from various async functions
     const groupId = parseInt(groupIdRaw, DECIMAL_BASE);
     // Destructure the array returned by Promise.all into individual variables
@@ -453,6 +454,7 @@ export async function updateGroup(req: Request, res: Response) {
     // Edit the group and send the updated group response
     const groupResponse = await editGroup(groupId, {
       ...req.body,
+      grants: grantIds,
     });
 
     res.json(groupResponse);
