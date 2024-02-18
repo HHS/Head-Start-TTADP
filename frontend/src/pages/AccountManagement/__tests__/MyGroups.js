@@ -193,7 +193,6 @@ describe('MyGroups', () => {
     });
 
     // Expect co-owner1 and co-owner2 to be selected.
-    screen.debug(undefined, 1000000);
     expect(screen.getByText(/co-owner1/i)).toBeInTheDocument();
     expect(screen.getByText(/co-owner2/i)).toBeInTheDocument();
 
