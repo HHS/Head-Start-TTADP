@@ -69,10 +69,10 @@ describe('monitoring services', () => {
         endDate: '2024-02-12',
         reviewType: 'FA-1',
         reportDeliveryDate: '2023-01-12 21:00:00-08',
-        outcome: 'Deficient',
+        outcome: 'Complete',
         hash: 'seedhashrev2',
-        sourceCreatedAt: '2024-02-12 14:31:55.74-08',
-        sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
+        sourceCreatedAt: '2023-02-22 21:00:00-08',
+        sourceUpdatedAt: '2023-02-22 21:00:00-08',
       },
     });
     await MonitoringReviewLink.findOrCreate({
