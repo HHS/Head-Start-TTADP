@@ -198,13 +198,14 @@ export default function MyGroups({ match }) {
       grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
       name: data[GROUP_FIELD_NAMES.NAME],
       isPublic: !data[GROUP_FIELD_NAMES.IS_PRIVATE],
-      coOwners: data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => (value)),
-      // Because individuals may be on the form we have to handle the case where it's not there.
+      // Co-owners and Shared with Individuals might not be on the form.
+      coOwners: data[GROUP_FIELD_NAMES.CO_OWNERS]
+        ? data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => (value))
+        : [],
       sharedWith: data[GROUP_FIELD_NAMES.INDIVIDUALS]
         ? data[GROUP_FIELD_NAMES.INDIVIDUALS].map(({ value }) => (value))
         : [],
     };
-
     setIsAppLoading(true);
 
     try {
