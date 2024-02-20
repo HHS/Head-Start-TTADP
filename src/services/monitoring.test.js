@@ -47,7 +47,7 @@ describe('monitoring services', () => {
       },
     });
     await MonitoringReviewGrantee.findOrCreate({
-      where: { grantNumber: GRANT_NUMBER},
+      where: { grantNumber: GRANT_NUMBER },
       defaults: {
         reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
         granteeId: '14FC5A81-8E27-4B06-A107-9C28762BC2F6',
