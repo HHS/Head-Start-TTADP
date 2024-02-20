@@ -3224,7 +3224,6 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
 
   if (goalsForNameCheck.length && !data.createMissingGoals) {
     isError = true;
-    message = `${message}`;
   }
 
   if (isError) {
@@ -3255,7 +3254,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     goalTemplateId: template ? template.id : null,
   })), { individualHooks: true });
 
-  const goalIds = [...goals, ...goalsForNameCheck].map((g) => g.id);
+  const goalIds = goals.map((g) => g.id);
 
   const promptResponses = (data.goalPrompts || []).map((goalPrompt) => {
     const response = data[goalPrompt.fieldName];
@@ -3306,7 +3305,10 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport = await ActivityReport.create(reportData);
 
     await Promise.all([
-      ActivityReportGoal.bulkCreate(goalIds.map((goalId) => ({
+      ActivityReportGoal.bulkCreate([
+        ...goalIds,
+        ...goalsForNameCheck.map((g) => g.id),
+      ].map((goalId) => ({
         activityReportId: activityReport.id,
         goalId,
         isActivelyEdited: true,
