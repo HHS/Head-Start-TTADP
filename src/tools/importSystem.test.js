@@ -15,7 +15,7 @@ describe('manuallyTriggerImportSystem', () => {
     const action = 'download';
     const importIdStr = '1';
     await manuallyTriggerImportSystem(action, importIdStr);
-    expect(importSystem.download).toHaveBeenCalledWith(1);
+    expect(importSystem.download).toHaveBeenCalledWith(1, undefined);
     expect(importSystem.process).not.toHaveBeenCalled();
   });
 
