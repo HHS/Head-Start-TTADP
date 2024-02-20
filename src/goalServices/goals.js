@@ -3219,8 +3219,12 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   }
 
   if (goalsForNameCheck.length) {
+    message = `A goal with that name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+  }
+
+  if (goalsForNameCheck.length && !data.createMissingGoals) {
     isError = true;
-    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+    message = `${message}`;
   }
 
   if (isError) {
@@ -3237,7 +3241,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     endDate = data.goalDate;
   }
 
-  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+  const grantsToCreateGoalsFor = grantIds.filter(
+    (g) => !grantsForWhomGoalAlreadyExists.includes(g),
+  );
+
+  const goals = await Goal.bulkCreate(grantsToCreateGoalsFor.map((grantId) => ({
     name,
     grantId,
     source: data.goalSource || null,
@@ -3247,7 +3255,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     goalTemplateId: template ? template.id : null,
   })), { individualHooks: true });
 
-  const goalIds = goals.map((g) => g.id);
+  const goalIds = [...goals, ...goalsForNameCheck].map((g) => g.id);
 
   const promptResponses = (data.goalPrompts || []).map((goalPrompt) => {
     const response = data[goalPrompt.fieldName];
@@ -3319,8 +3327,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport,
     isError,
     message,
-    grantsForWhomGoalAlreadyExists: [],
-    grantsForWhichGoalWillBeCreated: [],
+    grantsForWhomGoalAlreadyExists,
   };
 }
 
