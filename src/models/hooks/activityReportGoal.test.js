@@ -8,6 +8,9 @@ describe('destroyLinkedSimilarityGroups', () => {
 
   const sequelize = {
     models: {
+      Recipient: {
+        findOne: jest.fn(),
+      },
       GoalSimilarityGroup: {
         findOne: jest.fn(),
         findAll: jest.fn(),
@@ -29,9 +32,8 @@ describe('destroyLinkedSimilarityGroups', () => {
       transaction: 'mockTransaction',
     };
 
-    const similarityGroup = {
+    const recipient = {
       id: 1,
-      recipientId: 1,
     };
 
     const similarityGroups = [
@@ -41,28 +43,32 @@ describe('destroyLinkedSimilarityGroups', () => {
     ];
 
     // Mock the necessary Sequelize methods
-    sequelize.models.GoalSimilarityGroup.findOne.mockResolvedValue(similarityGroup);
+    sequelize.models.Recipient.findOne.mockResolvedValue(recipient);
     sequelize.models.GoalSimilarityGroup.findAll.mockResolvedValue(similarityGroups);
     sequelize.models.GoalSimilarityGroupGoal.destroy.mockResolvedValue(true);
     sequelize.models.GoalSimilarityGroup.destroy.mockResolvedValue(true);
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
 
-    expect(sequelize.models.GoalSimilarityGroup.findOne).toHaveBeenCalledWith({
-      attributes: ['recipientId', 'id'],
-      where: {
-        userHasInvalidated: false,
-        finalGoalId: null,
-      },
+    expect(sequelize.models.Recipient.findOne).toHaveBeenCalledWith({
+      attributes: ['id'],
       include: [
         {
-          model: sequelize.models.Goal,
-          as: 'goals',
+          model: sequelize.models.Grant,
+          as: 'grants',
           attributes: ['id'],
           required: true,
-          where: {
-            id: instance.goalId,
-          },
+          include: [
+            {
+              model: sequelize.models.Goal,
+              as: 'goals',
+              attributes: ['id'],
+              required: true,
+              where: {
+                id: instance.goalId,
+              },
+            },
+          ],
         },
       ],
       transaction: options.transaction,
@@ -71,7 +77,7 @@ describe('destroyLinkedSimilarityGroups', () => {
     expect(sequelize.models.GoalSimilarityGroup.findAll).toHaveBeenCalledWith({
       attributes: ['id'],
       where: {
-        recipientId: similarityGroup.recipientId,
+        recipientId: recipient.id,
         userHasInvalidated: false,
         finalGoalId: null,
       },
@@ -80,14 +86,14 @@ describe('destroyLinkedSimilarityGroups', () => {
 
     expect(sequelize.models.GoalSimilarityGroupGoal.destroy).toHaveBeenCalledWith({
       where: {
-        similarityGroupId: similarityGroups.map((sg) => sg.id),
+        goalSimilarityGroupId: similarityGroups.map((sg) => sg.id),
       },
       transaction: options.transaction,
     });
 
     expect(sequelize.models.GoalSimilarityGroup.destroy).toHaveBeenCalledWith({
       where: {
-        recipientId: similarityGroup.recipientId,
+        recipientId: recipient.id,
         userHasInvalidated: false,
         finalGoalId: null,
       },
@@ -105,35 +111,52 @@ describe('destroyLinkedSimilarityGroups', () => {
       transaction: 'mockTransaction',
     };
 
+    const recipient = {
+      id: 1,
+    };
+
     // Mock the necessary Sequelize methods
-    sequelize.models.GoalSimilarityGroup.findOne.mockResolvedValue(null);
+    sequelize.models.Recipient.findOne.mockResolvedValue(recipient);
+
+    sequelize.models.GoalSimilarityGroup.findAll.mockResolvedValue([]);
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
 
-    expect(sequelize.models.GoalSimilarityGroup.findOne).toHaveBeenCalledWith({
-      attributes: ['recipientId', 'id'],
-      where: {
-        userHasInvalidated: false,
-        finalGoalId: null,
-      },
+    expect(sequelize.models.Recipient.findOne).toHaveBeenCalledWith({
+      attributes: ['id'],
       include: [
         {
-          model: sequelize.models.Goal,
-          as: 'goals',
+          model: sequelize.models.Grant,
+          as: 'grants',
           attributes: ['id'],
           required: true,
-          where: {
-            id: instance.goalId,
-          },
+          include: [
+            {
+              model: sequelize.models.Goal,
+              as: 'goals',
+              attributes: ['id'],
+              required: true,
+              where: {
+                id: instance.goalId,
+              },
+            },
+          ],
         },
       ],
       transaction: options.transaction,
     });
 
-    expect(sequelize.models.GoalSimilarityGroup.findAll).not.toHaveBeenCalled();
+    expect(sequelize.models.GoalSimilarityGroup.findAll).toHaveBeenCalledWith({
+      attributes: ['id'],
+      where: {
+        recipientId: recipient.id,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      },
+      transaction: options.transaction,
+    });
 
     expect(sequelize.models.GoalSimilarityGroupGoal.destroy).not.toHaveBeenCalled();
-
     expect(sequelize.models.GoalSimilarityGroup.destroy).not.toHaveBeenCalled();
   });
 
@@ -149,7 +172,7 @@ describe('destroyLinkedSimilarityGroups', () => {
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
 
-    expect(sequelize.models.GoalSimilarityGroup.findOne).not.toHaveBeenCalled();
+    expect(sequelize.models.Recipient.findOne).not.toHaveBeenCalled();
     expect(sequelize.models.GoalSimilarityGroup.findAll).not.toHaveBeenCalled();
     expect(sequelize.models.GoalSimilarityGroupGoal.destroy).not.toHaveBeenCalled();
     expect(sequelize.models.GoalSimilarityGroup.destroy).not.toHaveBeenCalled();

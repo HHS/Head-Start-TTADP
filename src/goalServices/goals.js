@@ -2626,6 +2626,12 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     return uniq([id, ...matches.map((match) => match.id)]);
   });
 
+  const invalidStatusesForReportGoals = [
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ];
+
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
@@ -2636,8 +2642,17 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
-        attributes: ['goalId', 'activityReportId', 'status'],
+        attributes: ['goalId', 'activityReportId'],
         required: false,
+        include: [{
+          model: ActivityReport,
+          as: 'activityReport',
+          required: false,
+          attributes: ['id', 'calculatedStatus'],
+          where: {
+            calculatedStatus: invalidStatusesForReportGoals,
+          },
+        }],
       },
       {
         model: Grant,
@@ -2698,12 +2713,6 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       return goalsNotOnTheSameReport;
     });
 
-  const invalidStatusesForReportGoals = [
-    REPORT_STATUSES.SUBMITTED,
-    REPORT_STATUSES.DRAFT,
-    REPORT_STATUSES.NEEDS_ACTION,
-  ];
-
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
       if (!grantLookup[current.grantId]) {
@@ -2719,7 +2728,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       let isOnActiveReport = false;
       if (current.activityReportGoals.length) {
         isOnActiveReport = current.activityReportGoals
-          .some((arg) => invalidStatusesForReportGoals.includes(arg.status));
+          .some((arg) => arg.activityReport);
       }
 
       const excludedIfNotAdmin = isOnActiveReport || closedCurated;

@@ -83,56 +83,59 @@ const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
     return;
   }
 
-  // get a similarity group that contains the goal
-  /**
-   * this is a find one because we only need to know if there is any
-   * matching groups, and we need to know the recipientId
-   */
-  const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
-    attributes: ['recipientId', 'id'],
-    where: {
-      userHasInvalidated: false,
-      finalGoalId: null,
-    },
+  /*
+  // we need to find the recipient that has the goal
+  */
+  const recipient = await sequelize.models.Recipient.findOne({
+    attributes: ['id'],
     include: [
       {
-        model: sequelize.models.Goal,
-        as: 'goals',
+        model: sequelize.models.Grant,
+        as: 'grants',
         attributes: ['id'],
         required: true,
-        where: {
-          id: goalId,
-        },
+        include: [
+          {
+            model: sequelize.models.Goal,
+            as: 'goals',
+            attributes: ['id'],
+            required: true,
+            where: {
+              id: goalId,
+            },
+          },
+        ],
       },
     ],
     transaction: options.transaction,
   });
 
-  // if there aren't any, we do not need to do anything
-  if (!similarityGroup) return;
-
-  // otherwise, we need to destroy all similarity groups for that recipient
+  // we need to destroy all similarity groups for that recipient
   // (that haven't been invalidated)
   const similarityGroups = await sequelize.models.GoalSimilarityGroup.findAll({
     attributes: ['id'],
     where: {
-      recipientId: similarityGroup.recipientId,
+      recipientId: recipient.id,
       userHasInvalidated: false,
       finalGoalId: null,
     },
     transaction: options.transaction,
   });
 
+  if (!similarityGroups.length) {
+    return;
+  }
+
   await sequelize.models.GoalSimilarityGroupGoal.destroy({
     where: {
-      similarityGroupId: similarityGroups.map((sg) => sg.id),
+      goalSimilarityGroupId: similarityGroups.map((sg) => sg.id),
     },
     transaction: options.transaction,
   });
 
   await sequelize.models.GoalSimilarityGroup.destroy({
     where: {
-      recipientId: similarityGroup.recipientId,
+      recipientId: recipient.id,
       userHasInvalidated: false,
       finalGoalId: null,
     },
