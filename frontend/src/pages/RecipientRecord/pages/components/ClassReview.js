@@ -42,8 +42,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       updateGrantClassData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchScores();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grantNumber, recipientId, regionId]);
+  }, [grantNumber, recipientId, regionId, updateGrantClassData]);
 
   const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {

@@ -31,8 +31,7 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
       updateGrantMonitoringData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchReview();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grantNumber, regionId, recipientId]);
+  }, [grantNumber, regionId, recipientId, updateGrantMonitoringData]);
 
   const getComplianceBadge = (key) => {
     const lowerKey = key.toLowerCase();
