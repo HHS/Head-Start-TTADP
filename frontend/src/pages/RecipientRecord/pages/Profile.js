@@ -32,15 +32,15 @@ export default function Profile({
               <RecipientSummary summary={recipientSummary} />
             </Grid>
             <Grid desktop={{ col: 9 }} tabletLg={{ col: 12 }}>
-              <RecipientLeadership recipientId={recipientId} />
+              <RecipientLeadership recipientId={recipientId} regionId={regionId} />
             </Grid>
             <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
               <GrantList summary={recipientSummary} />
             </Grid>
-            {hasMonitoringData() || hasClassData() ? (
-              <FeatureFlag flag="monitoring">
-                {activeGrants.map((grant) => (
-                  <React.Fragment key={grant.number}>
+            <FeatureFlag flag="monitoring">
+              {activeGrants.map((grant) => (
+                <React.Fragment key={grant.number}>
+                  {hasMonitoringData(grant.number) || hasClassData(grant.number) ? (
                     <Grid desktop={{ col: 12 }}>
                       <h2 className="smart-hub-title-big-serif">
                         Grant number
@@ -48,28 +48,28 @@ export default function Profile({
                         {grant.number}
                       </h2>
                     </Grid>
-                    <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                      <div>
-                        <ClassReview
-                          grantNumber={grant.number}
-                          regionId={regionId}
-                          recipientId={recipientId}
-                        />
-                      </div>
-                    </Grid>
-                    <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                      <div>
-                        <MonitoringReview
-                          grantNumber={grant.number}
-                          regionId={regionId}
-                          recipientId={recipientId}
-                        />
-                      </div>
-                    </Grid>
-                  </React.Fragment>
-                ))}
-              </FeatureFlag>
-            ) : null}
+                  ) : null}
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <ClassReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
+                  <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                    <div>
+                      <MonitoringReview
+                        grantNumber={grant.number}
+                        regionId={regionId}
+                        recipientId={recipientId}
+                      />
+                    </div>
+                  </Grid>
+                </React.Fragment>
+              ))}
+            </FeatureFlag>
           </Grid>
         </div>
       </ClassGuidanceProvider>
