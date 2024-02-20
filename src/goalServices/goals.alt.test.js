@@ -168,12 +168,14 @@ describe('Goals DB service', () => {
         where: {
           userId: user.id,
         },
+        force: true,
       });
 
       await Goal.destroy({
         where: {
           id: goalIds,
         },
+        force: true,
       });
 
       await GoalTemplate.destroy({
