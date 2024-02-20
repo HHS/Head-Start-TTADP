@@ -63,7 +63,7 @@ describe('monitoring services', () => {
         regionId,
         grant: grantNumber,
         reviewStatus: 'Complete',
-        reviewDate: "02/22/2023",
+        reviewDate: '02/22/2023',
         reviewType: 'FA-1',
       });
     });
