@@ -43,6 +43,7 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -53,6 +54,7 @@ describe('Groups', () => {
         name: 'group2',
         userId: 1,
         isPublic: true,
+        groupCollaborators: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -63,6 +65,7 @@ describe('Groups', () => {
         name: 'group3',
         userId: 2,
         isPublic: true,
+        groupCollaborators: [],
         creator: {
           name: 'Tim User',
           id: 2,
@@ -107,6 +110,7 @@ describe('Groups', () => {
         name: 'group3',
         userId: 2,
         isPublic: true,
+        groupCollaborators: [],
         creator: {
           name: 'Tim User',
         },
@@ -128,6 +132,7 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
         creator: {
           name: 'Tim User',
           id: 1,
@@ -140,7 +145,7 @@ describe('Groups', () => {
     const group1 = await screen.findByText(/group1/i);
     expect(group1).toBeInTheDocument();
 
-    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
   });
 
   it('handles fetch errors', async () => {
@@ -159,6 +164,7 @@ describe('Groups', () => {
       name: 'group1',
       userId: 1,
       isPublic: false,
+      groupCollaborators: [],
       creator: {
         name: 'Tim User',
         id: 1,
@@ -198,6 +204,7 @@ describe('Groups', () => {
         name: 'group1',
         userId: 1,
         isPublic: false,
+        groupCollaborators: [],
         creator: {
           name: 'Tim User',
           id: 1,
@@ -235,83 +242,14 @@ describe('Groups', () => {
     });
   });
 
-  it('more than 10 groups shows pagination', async () => {
-    const mockGroups = (length) => {
-      const groups = [];
-      // eslint-disable-next-line no-plusplus
-      for (let i = 1; i < length; i++) {
-        groups.push({
-          id: i,
-          name: `group${i}`,
-          userId: 3,
-          isPublic: true,
-          creator: {
-            name: 'Tim User',
-          },
-        });
-      }
-      return groups;
-    };
-
-    fetchMock.get('/api/groups', mockGroups(33));
-
-    act(() => {
-      renderGroups();
-    });
-
-    const group1 = await screen.findByText('group1');
-    expect(group1).toBeInTheDocument();
-
-    const page2 = await screen.findByRole('button', { name: /page 2/i });
-    expect(page2).toBeInTheDocument();
-
-    act(() => {
-      userEvent.click(page2);
-    });
-
-    const group11 = await screen.findByText(/group11/i);
-    expect(group11).toBeInTheDocument();
-
-    let nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    const group21 = await screen.findByText(/group21/i);
-    expect(group21).toBeInTheDocument();
-
-    const previousPage = await screen.findByRole('button', { name: /previous page/i });
-    act(() => {
-      userEvent.click(previousPage);
-    });
-
-    const group11Again = await screen.findByText(/group11/i);
-    expect(group11Again).toBeInTheDocument();
-
-    nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    nextPage = await screen.findByRole('button', { name: /next page/i });
-    act(() => {
-      userEvent.click(nextPage);
-    });
-
-    const group31 = await screen.findByText(/group31/i);
-    expect(group31).toBeInTheDocument();
-
-    nextPage = screen.queryByRole('button', { name: /next page/i });
-    expect(nextPage).toBeNull();
-  });
-
   it('handles null response', async () => {
     fetchMock.get('/api/groups', null);
 
     act(() => {
       renderGroups();
     });
-    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
-    expect(screen.getByText(/No one in your region has created a public group./i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
   });
 });

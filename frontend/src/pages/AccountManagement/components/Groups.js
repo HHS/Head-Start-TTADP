@@ -1,66 +1,59 @@
 import React, {
   useState,
-  useEffect,
   useContext,
 } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Alert,
   Table,
-  Pagination,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../UserContext';
 import MyGroup from './MyGroup';
 import WidgetCard from '../../../components/WidgetCard';
 import { MyGroupsContext } from '../../../components/MyGroupsProvider';
 
-const GROUPS_PER_PAGE = 10;
-
 export default function Groups() {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [offset, setOffset] = useState(0);
   const [error, setError] = useState(null);
   const { user } = useContext(UserContext);
   const { myGroups, setMyGroups } = useContext(MyGroupsContext);
-  const groups = {
-    myGroups: (myGroups || []).filter((group) => group.creator.id === user.id),
-    publicGroups: (myGroups || []).filter((group) => group.creator.id !== user.id),
+
+  const getGroupBuckets = () => {
+    // Get creator bucket.
+    const creatorGroups = (myGroups || []).filter((group) => group.creator.id === user.id);
+
+    // Get Co-owned bucket.
+    const coOwnedGroups = (myGroups || []).filter((group) => {
+      const found = group.groupCollaborators.filter((collaborator) => collaborator.collaboratorType.name === 'Co-Owner' && collaborator.user.id === user.id);
+      return found.length > 0;
+    });
+
+    // Get shared bucket.
+    const sharedGroups = (myGroups || []).filter((group) => {
+      const found = group.groupCollaborators.filter((collaborator) => collaborator.collaboratorType.name === 'SharedWith' && collaborator.user.id === user.id);
+      return found.length > 0;
+    });
+
+    // Get group ids for co-owned and shared groups.
+    const cowOwnerGroupIds = coOwnedGroups.map((group) => group.id);
+    const sharedGroupIds = sharedGroups.map((group) => group.id);
+
+    // Get public groups.
+    const publicGroups = (myGroups || []).filter((group) => group.creator.id !== user.id
+    && !cowOwnerGroupIds.includes(group)
+    && !sharedGroupIds.includes(group));
+
+    // Combine and sort shared and public groups.
+    const sharedWithMe = sharedGroups.concat(publicGroups).sort(
+      (a, b) => a.name.localeCompare(b.name),
+    );
+
+    return {
+      creatorGroups,
+      coOwnedGroups,
+      sharedWithMe,
+    };
   };
-
-  const getPageInfo = () => {
-    const from = offset >= groups.publicGroups.length ? 0 : offset + 1;
-    const offsetTo = GROUPS_PER_PAGE * currentPage;
-    let to;
-    if (offsetTo > groups.publicGroups.length) {
-      to = groups.publicGroups.length;
-    } else {
-      to = offsetTo;
-    }
-
-    return `${from}-${to} of ${groups.publicGroups.length}`;
-  };
-
-  const getTotalPages = () => {
-    const totalPages = Math.floor(groups.publicGroups.length / GROUPS_PER_PAGE);
-    return groups.publicGroups.length % GROUPS_PER_PAGE > 0 ? totalPages + 1 : totalPages;
-  };
-
-  useEffect(() => {
-    setOffset(GROUPS_PER_PAGE * (currentPage - 1));
-  }, [currentPage]);
-
-  const showPaging = groups && groups.publicGroups.length > GROUPS_PER_PAGE;
-
-  let groupsForDisplay = [];
-
-  if (groups) {
-    groupsForDisplay = groups.publicGroups;
-  }
-
-  if (showPaging) {
-    groupsForDisplay = groupsForDisplay.slice(offset, offset + GROUPS_PER_PAGE);
-  }
-
+  const groups = getGroupBuckets();
   return (
     <WidgetCard
       header={(
@@ -69,38 +62,23 @@ export default function Groups() {
           <Link to="/account/my-groups" className="usa-button text-white text-no-underline margin-left-2">Create a group</Link>
         </div>
       )}
-      footer={
-      showPaging
-        ? (
-          <div className="display-flex flex-justify flex-align-center padding-x-2">
-            <div>{getPageInfo()}</div>
-            <Pagination
-              className="margin-0"
-              currentPage={currentPage}
-              totalPages={getTotalPages()}
-              onClickNext={() => setCurrentPage(currentPage + 1)}
-              onClickPrevious={() => setCurrentPage(currentPage - 1)}
-              onClickPageNumber={(_e, page) => setCurrentPage(page)}
-            />
-          </div>
-        )
-        : null
-    }
     >
       <div className="margin-bottom-3 maxw-tablet-lg">
         { error ? <Alert type="error" role="alert">{error}</Alert> : null }
         <h3>Created by me</h3>
-        {!groups || !groups.myGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
+        {!groups || !groups.creatorGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
           <Table fullWidth stackedStyle="default">
             <thead>
               <tr>
                 <th scope="col">Group name</th>
-                <th scope="col">Group access</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Access</th>
+                <th scope="col">Last update</th>
                 <th scope="col"><span className="usa-sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
-              {groups.myGroups.map((group) => (
+              {groups.creatorGroups.map((group) => (
                 <MyGroup
                   key={group.id}
                   group={group}
@@ -114,34 +92,58 @@ export default function Groups() {
       </div>
 
       <div className="margin-bottom-3 maxw-tablet-lg">
-        <h3>Created by others (public)</h3>
-        {!groups || !groups.publicGroups.length ? <p className="usa-prose">No one in your region has created a public group.</p> : (
-          <>
-            <Table fullWidth stackedStyle="default">
-              <thead>
-                <tr>
-                  <th scope="col">Group name</th>
-                  <th scope="col">Group owner</th>
-                  <th scope="col"><span className="usa-sr-only">Actions</span></th>
-                </tr>
-              </thead>
-              <tbody>
-                {groupsForDisplay.map((group) => (
-                  <tr key={group.id}>
-                    <td data-label="Group name">
-                      {group.name}
-                    </td>
-                    <td data-label="Group owner">
-                      {group.creator ? group.creator.name : ''}
-                    </td>
-                    <td align="right">
-                      <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </>
+        <h3>Co-owned by me</h3>
+        {!groups || !groups.coOwnedGroups.length ? <p className="usa-prose">You haven&apos;t been added as a co-owner yet</p> : (
+          <Table fullWidth stackedStyle="default">
+            <thead>
+              <tr>
+                <th scope="col">Group name</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Access</th>
+                <th scope="col">Last update</th>
+                <th scope="col"><span className="usa-sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.coOwnedGroups.map((group) => (
+                <MyGroup
+                  key={group.id}
+                  group={group}
+                  setMyGroups={setMyGroups}
+                  setError={setError}
+                  isCoOwner
+                />
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </div>
+
+      <div className="margin-bottom-3 maxw-tablet-lg">
+        <h3>Shared with me</h3>
+        {!groups || !groups.sharedWithMe.length ? <p className="usa-prose">You don&apos;t have any shared groups yet</p> : (
+          <Table fullWidth stackedStyle="default">
+            <thead>
+              <tr>
+                <th scope="col">Group name</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Access</th>
+                <th scope="col">Last update</th>
+                <th scope="col"><span className="usa-sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.sharedWithMe.map((group) => (
+                <MyGroup
+                  key={group.id}
+                  group={group}
+                  setMyGroups={setMyGroups}
+                  setError={setError}
+                  isViewOnly
+                />
+              ))}
+            </tbody>
+          </Table>
         )}
       </div>
     </WidgetCard>
