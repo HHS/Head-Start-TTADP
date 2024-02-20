@@ -30,92 +30,77 @@ describe('MyGroups', () => {
 
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
-    fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
-    fetchMock.get('/api/recipient/user', [{
-      id: 1,
-      name: 'recipient1',
-      grants: [
-        {
-          id: 1,
-          regionId: 1,
-          recipient: {
-            name: 'grant1',
-          },
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: 'recipient2',
-      grants: [
-        {
-          id: 2,
-          name: 'grant2',
-          regionId: 2,
-          recipient: {
-            name: 'grant2',
-          },
-        },
-      ],
-    },
-    ]);
-
-    const groupUsersRegion1 = {
-      coOwnerUsers: [{
-        id: 1,
-        name: 'co-owner1',
+    const mockGrants = [
+      {
+        grantId: 1,
+        grantNumber: '111111',
+        recipientId: 1,
+        name: 'grant1',
         regionId: 1,
+        programTypes: [
+          'EHS',
+          'HS',
+        ],
       },
       {
-        id: 2,
-        name: 'co-owner2',
+        grantId: 2,
+        grantNumber: '222222',
+        recipientId: 2,
+        name: 'grant2',
         regionId: 1,
-      },
-      ],
-      individualUsers: [
-        {
-          id: 1,
-          name: 'individual1',
-          regionId: 1,
-        },
-        {
-          id: 2,
-          name: 'individual2',
-          regionId: 1,
-        },
-      ],
-    };
-
-    const groupUsersRegion1and2 = {
-      coOwnerUsers: [{
-        id: 1,
-        name: 'co-owner1',
-        regionId: 1,
+        programTypes: [
+          'EHS',
+        ],
       },
       {
-        id: 2,
-        name: 'co-owner2',
+        grantId: 3,
+        grantNumber: '333333',
+        recipientId: 3,
+        name: 'grant3',
         regionId: 2,
+        programTypes: [
+          'HS',
+        ],
       },
-      ],
-      individualUsers: [
-        {
-          id: 1,
-          name: 'individual1',
-          regionId: 1,
-        },
-        {
-          id: 2,
-          name: 'individual2',
-          regionId: 2,
-        },
-      ],
-    };
+    ];
 
-    // Users for region 1.
-    fetchMock.get('/api/recipient/user/groupUsers?regionIds=1', groupUsersRegion1);
-    // Users for region 1&2.
-    fetchMock.get('/api/recipient/user/groupUsers?regionIds=1&regionIds=2', groupUsersRegion1and2);
+    const mockUsers = [
+      {
+        id: 1,
+        userId: 1,
+        name: 'co-owner1',
+        regionId: 1,
+      },
+      {
+        id: 2,
+        userId: 2,
+        name: 'co-owner2',
+        regionId: 1,
+      },
+      {
+        id: 3,
+        userId: 3,
+        name: 'individual1',
+        regionId: 1,
+      },
+      {
+        id: 4,
+        userId: 4,
+        name: 'individual2',
+        regionId: 1,
+      },
+    ];
+
+    // Mock the group.
+    fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
+
+    // Mock the grants.
+    fetchMock.get('/api/groups/new/grants', mockGrants);
+    fetchMock.get('/api/groups/1/grants', mockGrants);
+
+    // Mock the users.
+    fetchMock.get('/api/groups/new/eligibleUsers', mockUsers);
+    fetchMock.get('/api/groups/1/eligibleUsers', mockUsers);
   });
 
   it('renders without crashing', async () => {
@@ -131,15 +116,46 @@ describe('MyGroups', () => {
     fetchMock.get('/api/groups/1', {
       id: 1,
       name: 'group1',
-      grants: [
+      isPublic: false,
+      groupCollaborators: [
         {
           id: 1,
-          recipient: {
-            name: 'grant1',
+          userId: 1,
+          groupId: 1,
+          collaboratorType: {
+            id: 1,
+            name: 'Creator',
+            mapsToCollaboratorType: null,
+          },
+          user: {
+            id: 352,
+            name: 'Creator User',
           },
         },
       ],
-      isPublic: false,
+      grants: [
+        {
+          recipientInfo: 'Grant 1 - 11111111 - HS',
+          regionId: 1,
+          recipientId: 1,
+          number: '11111111',
+          id: 1,
+          granteeName: 'Grant Name 1',
+          recipient: {
+            name: 'Recipient Name 1',
+            id: 1,
+          },
+          GroupGrant: {
+            id: 1,
+            grantId: 1,
+            groupId: 1,
+          },
+        },
+      ],
+      creator: {
+        id: 1,
+        name: 'Creator User',
+      },
     });
 
     act(() => {
@@ -150,7 +166,7 @@ describe('MyGroups', () => {
     expect(input).toBeInTheDocument();
     await waitFor(() => {
       expect(input.value).toBe('group1');
-      expect(screen.getByText(/grant1/i)).toBeInTheDocument();
+      expect(screen.getByText(/grant 1 - 11111111 - hs/i)).toBeInTheDocument();
     });
   });
 
@@ -173,7 +189,7 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
     });
 
     // Check the 'Keep this group private.' is NOT checkbox.
@@ -211,51 +227,11 @@ describe('MyGroups', () => {
     });
 
     // Expect individual1 and individual2 to be selected.
-    expect(screen.getByText(/individual1/i)).toBeInTheDocument();
-    expect(screen.getByText(/individual2/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/individual1/i).length).toBe(2);
+    expect(screen.queryAllByText(/individual2/i).length).toBe(2);
 
     // Prepare save mock.
-    fetchMock.post('/api/groups', {
-      id: 3,
-      name: 'group3',
-      grants: [
-        {
-          id: 1,
-          name: 'grant1',
-          regionId: 1,
-        },
-        {
-          id: 2,
-          name: 'grant2',
-          regionId: 1,
-        },
-      ],
-      coOwners: [
-        {
-          id: 1,
-          name: 'co-owner1',
-          regionId: 1,
-        },
-        {
-          id: 2,
-          name: 'co-owner2',
-          regionId: 1,
-        },
-      ],
-      individuals: [
-        {
-          id: 1,
-          name: 'individual1',
-          regionId: 1,
-        },
-        {
-          id: 2,
-          name: 'individual2',
-          regionId: 1,
-        },
-      ],
-      shareWithEveryone: false,
-    });
+    fetchMock.post('/api/groups', {});
     const save = screen.getByText(/Save group/i);
     act(() => {
       userEvent.click(save);
@@ -271,7 +247,7 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
     });
 
     // Check the 'Keep this group private.' checkbox.
@@ -329,7 +305,7 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
     });
 
     // Check the 'Keep this group private.' is NOT checkbox.
@@ -382,7 +358,7 @@ describe('MyGroups', () => {
     const input = screen.getByLabelText(/Group name/i);
     await act(async () => {
       userEvent.type(input, 'group3');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
     });
 
     fetchMock.post('/api/groups', {
@@ -402,20 +378,25 @@ describe('MyGroups', () => {
     act(() => {
       renderMyGroups();
     });
-    const input = screen.getByLabelText(/Group name/i);
-    const coOwner = screen.queryAllByLabelText(/Add co-owner/i);
-    await act(async () => {
-      userEvent.type(input, 'sample group name');
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
-      await selectEvent.select(coOwner[0], ['co-owner1']);
-    });
 
+    // Populate group name with the value "Test Group".
+    const input = screen.getByLabelText(/Group name/i);
+    userEvent.type(input, 'Test Group');
+
+    // Select recipient where value is 'grant1 - 111111 - EHS, HS'.
+    await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS']);
+
+    // Select the co-owner "co-owner1".
+    await selectEvent.select(screen.getByLabelText(/Add co-owner/i), ['co-owner1']);
+
+    // Click the "Save group" button.
     fetchMock.post('/api/groups', 500);
     const save = screen.getByText(/Save group/i);
     act(() => {
       userEvent.click(save);
     });
 
+    // Expect an error message to be displayed.
     const e = await screen.findByText(/There was an error saving your group/i);
     expect(e).toBeInTheDocument();
   });
@@ -424,30 +405,63 @@ describe('MyGroups', () => {
     fetchMock.get('/api/groups/1', {
       id: 1,
       name: 'group1',
+      isPublic: false,
       grants: [
         {
-          id: 1,
-          name: 'grant1',
+          recipientInfo: 'Grant 1 - 11111111 - HS',
           regionId: 1,
+          recipientId: 1,
+          number: '11111111',
+          id: 1,
+          granteeName: 'Grant Name 1',
           recipient: {
+            name: 'Recipient Name 1',
             id: 1,
-            name: 'grant1',
+          },
+          GroupGrant: {
+            id: 1,
+            grantId: 1,
+            groupId: 1,
           },
         },
         {
-          id: 2,
-          name: 'grant2',
+          recipientInfo: 'Grant 2 - 22222222 - HS',
           regionId: 2,
+          recipientId: 2,
+          number: '22222222',
+          id: 14921,
+          granteeName: 'Grant Name 2',
           recipient: {
+            name: 'Recipient Name 2',
             id: 2,
-            name: 'grant2',
+          },
+          GroupGrant: {
+            id: 2,
+            grantId: 2,
+            groupId: 2,
           },
         },
       ],
-      isPublic: false,
-      coOwners: [],
-      individuals: [],
-      shareWithEveryone: null,
+      groupCollaborators: [
+        {
+          id: 1,
+          userId: 1,
+          groupId: 1,
+          collaboratorType: {
+            id: 1,
+            name: 'Creator',
+            mapsToCollaboratorType: null,
+          },
+          user: {
+            id: 1,
+            name: 'User1',
+          },
+        },
+      ],
+      creator: {
+        id: 1,
+        name: 'Creator User',
+      },
     });
     await act(async () => {
       renderMyGroups(1);
@@ -500,66 +514,6 @@ describe('MyGroups', () => {
       });
     });
 
-    // Users for region 1.
-    fetchMock.get('/api/recipient/user/groupUsers?regionIds=2', {
-      coOwnerUsers: [{
-        id: 2,
-        name: 'co-owner2',
-        regionId: 2,
-      },
-      ],
-      individualUsers: [
-        {
-          id: 2,
-          name: 'individual2',
-          regionId: 2,
-        },
-      ],
-    });
-
-    // Clear all recipients and select a new one.
-    await act(async () => {
-      await waitFor(() => {
-        // Remove 'grant1'.
-        userEvent.click(screen.getByRole('button', { name: /remove grant1/i }));
-      });
-    });
-
-    // Assert that co-owner2 is the only option selected.
-    expect(screen.getByText(/co-owner2/i)).toBeInTheDocument();
-    expect(screen.queryByText(/co-owner1/i)).not.toBeInTheDocument();
-
-    // Assert that individual2 is the only option selected.
-    expect(screen.getByText(/individual2/i)).toBeInTheDocument();
-    expect(screen.queryByText(/individual1/i)).not.toBeInTheDocument();
-
-    // Prepare save mock.
-    fetchMock.put('/api/groups/1', {
-      id: 1,
-      name: 'group DING DONG',
-      grants: [
-        {
-          id: 1,
-          name: 'grant1',
-          regionId: 1,
-        },
-      ],
-      coOwners: [
-        {
-          id: 1,
-          name: 'co-owner2',
-          regionId: 2,
-        },
-      ],
-      individuals: [
-        {
-          id: 1,
-          name: 'individual2',
-          regionId: 2,
-        }],
-      shareWithEveryone: null,
-      isPublic: false,
-    });
     const save = screen.getByText(/Save group/i);
     act(() => {
       userEvent.click(save);
@@ -572,7 +526,7 @@ describe('MyGroups', () => {
     fetchMock.restore();
 
     fetchMock.get('/api/groups', [{ id: 1, name: 'group1', isPublic: false }]);
-    fetchMock.get('/api/recipient/user', 500);
+    fetchMock.get('/api/groups/1/grants', 500);
 
     act(() => {
       renderMyGroups(1);
@@ -584,13 +538,9 @@ describe('MyGroups', () => {
   });
 
   it('handles an error fetching users', async () => {
-    fetchMock.get('/api/recipient/user/groupUsers?regionIds=1', 500, { overwriteRoutes: true });
+    fetchMock.get('/api/groups/new/eligibleUsers', 500, { overwriteRoutes: true });
     act(() => {
       renderMyGroups();
-    });
-
-    await act(async () => {
-      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1', 'grant2']);
     });
 
     const userError = await screen.findByText('There was an error fetching co-owners and individuals');
