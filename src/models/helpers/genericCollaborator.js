@@ -29,9 +29,6 @@ const collaboratorDetails = {
     validFor: 'Groups',
     collaborators: 'GroupCollaborator',
     creator: GROUP_COLLABORATORS.CREATOR,
-    // editor: GROUP_COLLABORATORS.EDITOR,
-    // mergeCreator: GROUP_COLLABORATORS.MERGE_CREATOR,
-    // mergeDeprecator: GROUP_COLLABORATORS.MERGE_DEPRECATOR,
   },
 };
 
