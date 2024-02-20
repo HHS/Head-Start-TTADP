@@ -165,6 +165,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       'id',
       'name',
       'isPublic',
+      'updatedAt',
     ],
     where: {
       '$grants.regionId$': { [Op.in]: regions },
@@ -729,6 +730,10 @@ export async function potentialRecipientGrants(
       sequelize.col('"Grant"."id"'),
       sequelize.col('"Grant"."number"'),
       sequelize.col('"Grant"."regionId"'),
+    ],
+    // Order by recipient name.
+    order: [
+      [sequelize.col('"recipient"."name"'), 'ASC'],
     ],
     // Return raw data instead of Sequelize model instances
     raw: true,
