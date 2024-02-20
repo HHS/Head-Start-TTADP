@@ -1,6 +1,7 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { uniq } from 'lodash';
 
 // regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
 const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
@@ -115,6 +116,13 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
 export const grantsToSources = (grants, source = {}, defaultSource = '') => {
   const current = [];
 
+  const values = uniq(Object.values(source));
+
+  let def = defaultSource;
+  if (values.length === 1 && values[0] !== defaultSource) {
+    [def] = values;
+  }
+
   const newSource = grants.reduce((s, grant) => {
     current.push(grant.numberWithProgramTypes);
 
@@ -127,7 +135,7 @@ export const grantsToSources = (grants, source = {}, defaultSource = '') => {
 
     return {
       ...s,
-      [grant.numberWithProgramTypes]: defaultSource,
+      [grant.numberWithProgramTypes]: def || defaultSource,
     };
   }, source);
 
