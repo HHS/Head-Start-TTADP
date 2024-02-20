@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
+import { Link } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../../components/Container';
@@ -93,11 +93,11 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
           <h2 className="margin-0 padding-0">CLASS® review</h2>
-          <Button unstyled className="display-flex flex-align-center">
+          <Link className="display-flex flex-align-center" href="hi">
             HSES CLASS
             {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
-          </Button>
+          </Link>
         </div>
         <div className="margin-top-1">
           <button
