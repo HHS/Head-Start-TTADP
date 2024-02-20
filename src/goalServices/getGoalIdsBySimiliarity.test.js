@@ -94,12 +94,12 @@ describe('getGoalIdsBySimilarity', () => {
       activityRecipients: [{
         grantId: activeGrant.id,
       }],
+      calculatedStatus: REPORT_STATUSES.DRAFT,
     });
 
     await ActivityReportGoal.create({
       activityReportId: draftReport.id,
       goalId: goalOnDraftReport.id,
-      status: REPORT_STATUSES.DRAFT,
     });
 
     const goalOnSubmittedReport = await createGoal({
@@ -113,12 +113,12 @@ describe('getGoalIdsBySimilarity', () => {
       activityRecipients: [{
         grantId: activeGrant.id,
       }],
+      calculatedStatus: REPORT_STATUSES.SUBMITTED,
     });
 
     await ActivityReportGoal.create({
       activityReportId: submittedReport.id,
       goalId: goalOnSubmittedReport.id,
-      status: REPORT_STATUSES.SUBMITTED,
     });
 
     const goalOnNeedsActionReport = await createGoal({
@@ -132,12 +132,12 @@ describe('getGoalIdsBySimilarity', () => {
       activityRecipients: [{
         grantId: activeGrant.id,
       }],
+      calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
     });
 
     await ActivityReportGoal.create({
       activityReportId: needsActionReport.id,
       goalId: goalOnNeedsActionReport.id,
-      status: REPORT_STATUSES.NEEDS_ACTION,
     });
 
     goalGroupOne = [
