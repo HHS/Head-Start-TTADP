@@ -19,7 +19,7 @@ export default function SimilarGoals({
     <div className="ttahub-similar-goals position-absolute shadow-2 z-top">
       <fieldset className="bg-white border-0 margin-0 padding-0">
         <legend className="ttahub-similar-goals--legend usa-prose padding-2">
-          <span className="text-bold" aria-live="polite" aria-label={`There are ${similar.length} goals with similar text to what you entered. Advance focus to read similar goals.`}>
+          <span className="text-bold" aria-live="polite" aria-label={`There are ${similar.length} goals with similar text. Consider using one of those instead.`}>
             Similar goals (
             {similar.length}
             )
