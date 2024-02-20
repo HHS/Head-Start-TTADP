@@ -46,7 +46,7 @@ const SimpleSortableTable = ({ data, columns, className }) => {
   const renderColumnHeader = (column) => {
     const sortClassName = sortConfig.key === column.key ? sortConfig.direction : '';
     return (
-      <th scope="col" className="padding-x-1">
+      <th key={column.key} scope="col" className="padding-x-1">
         <button
           type="button"
           onClick={() => requestSort(column.key)}
