@@ -31,12 +31,3 @@ export async function getSingleFeedData(tag: string) {
     callback,
   );
 }
-
-export async function getClassGuidanceData() {
-  const callback = () => fetchFeed(FEED_URLS.classGuidance);
-
-  return getCachedResponse(
-    FEED_URLS.classGuidance,
-    callback,
-  );
-}
