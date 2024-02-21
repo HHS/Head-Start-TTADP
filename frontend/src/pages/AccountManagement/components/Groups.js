@@ -20,16 +20,25 @@ export default function Groups() {
   const getGroupBuckets = () => {
     // Get creator bucket.
     const creatorGroups = (myGroups || []).filter((group) => group.creator.id === user.id);
+    const creatorGroupIds = creatorGroups.map((group) => group.id);
 
     // Get Co-owned bucket.
     const coOwnedGroups = (myGroups || []).filter((group) => {
-      const found = group.groupCollaborators.filter((collaborator) => collaborator.collaboratorType.name === 'Co-Owner' && collaborator.user.id === user.id);
+      const found = group.groupCollaborators.filter(
+        (collaborator) => collaborator.collaboratorType.name === 'Co-Owner'
+      && collaborator.user.id === user.id
+      && !creatorGroupIds.includes(group.id),
+      );
       return found.length > 0;
     });
 
     // Get shared bucket.
     const sharedGroups = (myGroups || []).filter((group) => {
-      const found = group.groupCollaborators.filter((collaborator) => collaborator.collaboratorType.name === 'SharedWith' && collaborator.user.id === user.id);
+      const found = group.groupCollaborators.filter(
+        (collaborator) => collaborator.collaboratorType.name === 'SharedWith'
+        && collaborator.user.id === user.id
+        && !creatorGroupIds.includes(group.id),
+      );
       return found.length > 0;
     });
 
@@ -38,9 +47,11 @@ export default function Groups() {
     const sharedGroupIds = sharedGroups.map((group) => group.id);
 
     // Get public groups.
-    const publicGroups = (myGroups || []).filter((group) => group.creator.id !== user.id
-    && !cowOwnerGroupIds.includes(group)
-    && !sharedGroupIds.includes(group));
+    const publicGroups = (myGroups || []).filter(
+      (group) => group.creator.id !== user.id
+    && !cowOwnerGroupIds.includes(group.id)
+    && !sharedGroupIds.includes(group.id),
+    );
 
     // Combine and sort shared and public groups.
     const sharedWithMe = sharedGroups.concat(publicGroups).sort(
