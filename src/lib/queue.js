@@ -178,6 +178,6 @@ function setupQueueEventHandlers(queue) {
 
 export default function newQueue(queName) {
   const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
-  setupQueueEventHandlers(queue);
+  // setupQueueEventHandlers(queue); // TODO - currently causing mor errors then fixing
   return queue;
 }
