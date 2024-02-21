@@ -133,10 +133,32 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     return event;
   }
 
-  let owner: undefined | { id: string; name: string; email: string };
+  let { owner } = event.data;
 
-  if (event.ownerId) {
-    owner = await User.findByPk(event.ownerId, { attributes: ['id', 'name', 'email'], raw: true });
+  if (!owner) {
+    if (event.ownerId) {
+      const ownerUser = await User.findOne({
+        where: { id: event.ownerId },
+        attributes: [
+          'name',
+          'email',
+          'id',
+          'nameWithNationalCenters',
+        ],
+        include: [
+          {
+            model: db.NationalCenter,
+            as: 'nationalCenters',
+          },
+        ],
+      });
+
+      if (ownerUser) {
+        owner = ownerUser.toJSON();
+      }
+    } else {
+      owner = null;
+    }
   }
 
   return {
@@ -273,14 +295,29 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
-  // Get current json owner.
-  const { owner } = event.data;
-  // if owner changes update the json owner.
-  if (owner && ownerId !== event.data.owner.id) {
-    // get the new owner.
-    const newOwner = await User.findByPk(ownerId, { attributes: ['id', 'name', 'email'], raw: true });
-    // update the owner in the data.
-    data.owner = newOwner;
+  if (ownerId) {
+    const newOwner = await User.findOne(
+      {
+        where: { id: ownerId },
+        attributes: [
+          'id',
+          'nameWithNationalCenters',
+          'email',
+          'name',
+        ],
+        include: [
+          {
+            model: db.NationalCenter,
+            as: 'nationalCenters',
+          },
+        ],
+      },
+    );
+
+    if (newOwner) {
+      // update the owner in the data.
+      data.owner = newOwner.toJSON();
+    }
   }
 
   await EventReportPilot.update(
@@ -500,6 +537,10 @@ const checkUserExists = async (creator: string) => {
       {
         model: db.Permission,
         as: 'permissions',
+      },
+      {
+        model: db.NationalCenter,
+        as: 'nationalCenters',
       },
     ],
   });

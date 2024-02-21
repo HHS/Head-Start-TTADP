@@ -98,6 +98,8 @@
     "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
+    "updateCompletedEventReportPilots": "node ./build/server/src/tools/updateCompletedEventReportPilotsCLI.js",
+    "updateCompletedEventReportPilots:local": "./node_modules/.bin/babel-node ./src/tools/updateCompletedEventReportPilotsCLI.js",
     "publish:common": "yarn --cwd ./packages/common publish"
   },
   "repository": {
