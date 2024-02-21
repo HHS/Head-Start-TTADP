@@ -17,7 +17,6 @@ import { isEqual, uniqueId } from 'lodash';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
-// import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -93,7 +92,6 @@ export default function GoalForm({
   );
   const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
-  // const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
@@ -243,23 +241,6 @@ export default function GoalForm({
     }
     fetchTopics();
   }, []);
-
-  // useEffect(() => {
-  //   async function fetchGoalTemplatePrompts() {
-  //     if (isCurated && goalTemplateId && ids) {
-  //       const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
-  //       if (gtPrompts) {
-  //         setGoalTemplatePrompts(
-  //           gtPrompts,
-  //         );
-  //       } else {
-  //         setGoalTemplatePrompts(prompts);
-  //       }
-  //     }
-  //   }
-
-  //   fetchGoalTemplatePrompts();
-  // }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
