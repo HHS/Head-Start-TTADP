@@ -237,7 +237,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                 }}
                 onChange={(s) => {
                   controllerOnChange(s.map((option) => option.id));
-                  setValue('collaboratorWithNationalCenter', s.map(({ nameWithNationalCenters }) => nameWithNationalCenters).join(','));
                 }}
                 inputRef={register({ required: 'Select at least one collaborator' })}
                 getOptionLabel={(option) => option.nameWithNationalCenters}
@@ -261,8 +260,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
         </FormItem>
       </div>
-
-      <input type="hidden" name="collaboratorWithNationalCenter" ref={register()} />
 
       <div className="margin-top-2">
         <Label htmlFor="pocIds">
