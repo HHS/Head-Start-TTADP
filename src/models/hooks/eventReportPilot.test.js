@@ -1,11 +1,13 @@
+import { Op } from 'sequelize';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { afterUpdate } from './eventReportPilot';
+import { afterUpdate, afterCreate } from './eventReportPilot';
 import {
   trCollaboratorAdded,
   trPocAdded,
   trPocEventComplete,
   trVisionAndGoalComplete,
 } from '../../lib/mailer';
+import { auditLogger } from '../../logger';
 
 jest.mock('../../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),
@@ -251,5 +253,148 @@ describe('eventReportPilot', () => {
         expect(trVisionAndGoalComplete).not.toHaveBeenCalled();
       });
     });
+  });
+});
+describe('createOrUpdateNationalCenterUserCacheTable', () => {
+  const sequelize = {
+    models: {
+      User: {
+        findAll: jest.fn(),
+      },
+      EventReportPilotNationalCenterUser: {
+        bulkCreate: jest.fn(),
+        destroy: jest.fn(),
+      },
+    },
+  };
+
+  const instance = {
+    id: 1,
+    ownerId: 5,
+    collaboratorIds: [1, 2],
+  };
+
+  const options = {
+    transaction: {},
+  };
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should create or update the national center user cache table', async () => {
+    const users = [
+      {
+        id: 5,
+        name: 'John Doe',
+        nationalCenters: [
+          {
+            id: 10,
+            name: 'National Center 1',
+          },
+          {
+            id: 11,
+            name: 'National Center 2',
+          },
+        ],
+      },
+      {
+        id: 1,
+        name: 'Jane Smith',
+        nationalCenters: [
+          {
+            id: 10,
+            name: 'National Center 1',
+          },
+        ],
+      },
+      {
+        id: 2,
+        name: 'Bob Johnson',
+        nationalCenters: [
+          {
+            id: 11,
+            name: 'National Center 2',
+          },
+        ],
+      },
+    ];
+
+    const bulks = [
+      {
+        userId: 5,
+        userName: 'John Doe',
+        eventReportPilotId: 1,
+        nationalCenterId: 10,
+        nationalCenterName: 'National Center 1',
+      },
+      {
+        userId: 5,
+        userName: 'John Doe',
+        eventReportPilotId: 1,
+        nationalCenterId: 11,
+        nationalCenterName: 'National Center 2',
+      },
+      {
+        userId: 1,
+        userName: 'Jane Smith',
+        eventReportPilotId: 1,
+        nationalCenterId: 10,
+        nationalCenterName: 'National Center 1',
+      },
+      {
+        userId: 2,
+        userName: 'Bob Johnson',
+        eventReportPilotId: 1,
+        nationalCenterId: 11,
+        nationalCenterName: 'National Center 2',
+      },
+    ];
+
+    sequelize.models.User.findAll.mockResolvedValue(users);
+    sequelize.models.EventReportPilotNationalCenterUser.bulkCreate.mockResolvedValue(
+      bulks.map((b, i) => ({ id: i + 1, ...b })),
+    );
+
+    await afterCreate(sequelize, instance, options);
+
+    expect(sequelize.models.User.findAll).toHaveBeenCalledWith({
+      where: {
+        id: [5, 1, 2],
+      },
+      include: [
+        {
+          model: sequelize.models.NationalCenter,
+          as: 'nationalCenters',
+        },
+      ],
+      transaction: options.transaction,
+    });
+
+    expect(sequelize.models.EventReportPilotNationalCenterUser.bulkCreate).toHaveBeenCalledWith(
+      bulks,
+      {
+        updateOnDuplicate: ['updatedAt', 'userName', 'nationalCenterName'],
+        transaction: options.transaction,
+      },
+    );
+
+    expect(sequelize.models.EventReportPilotNationalCenterUser.destroy).toHaveBeenCalledWith({
+      where: {
+        eventReportPilotId: 1,
+        id: {
+          [Op.notIn]: [1, 2, 3, 4],
+        },
+      },
+      transaction: options.transaction,
+    });
+  });
+
+  it('should handle errors', async () => {
+    const error = new Error('Database error');
+    sequelize.models.User.findAll.mockRejectedValue(error);
+    jest.spyOn(auditLogger, 'error');
+    await afterCreate(sequelize, instance, options);
+    expect(auditLogger.error).toHaveBeenCalledWith(JSON.stringify({ err: error }));
   });
 });

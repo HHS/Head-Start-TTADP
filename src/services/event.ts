@@ -21,6 +21,7 @@ const {
   EventReportPilot,
   SessionReportPilot,
   User,
+  EventReportPilotNationalCenterUser,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -102,6 +103,10 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     where,
     include: [
       {
+        model: EventReportPilotNationalCenterUser,
+        as: 'eventReportPilotNationalCenterUsers',
+      },
+      {
         model: SessionReportPilot,
         attributes: [
           'id',
@@ -171,6 +176,7 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     data: event?.data ?? {},
     updatedAt: event?.updatedAt,
     sessionReports: event?.sessionReports ?? [],
+    eventReportPilotNationalCenterUsers: event?.eventReportPilotNationalCenterUsers ?? [],
   };
 }
 

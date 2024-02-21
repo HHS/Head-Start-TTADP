@@ -1,4 +1,4 @@
-const { prepMigration, updateUsersFlagsEnum } = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -32,7 +32,6 @@ module.exports = {
             model: 'NationalCenters',
             key: 'id',
           },
-          onDelete: 'CASCADE',
         },
         userId: {
           type: Sequelize.INTEGER,
@@ -41,7 +40,6 @@ module.exports = {
             model: 'Users',
             key: 'id',
           },
-          onDelete: 'CASCADE',
         },
         userName: {
           type: Sequelize.STRING,
