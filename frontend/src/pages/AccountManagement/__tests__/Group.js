@@ -33,11 +33,17 @@ describe('Group', () => {
       grants: [
         {
           id: 1,
-          name: 'Test Grant',
+          number: 'Test Grant',
+          recipient: {
+            name: 'Test Recipient1',
+          },
         },
         {
           id: 2,
-          name: 'Test Grant 2',
+          number: 'Test Grant 2',
+          recipient: {
+            name: 'Test Recipient2',
+          },
         },
       ],
     });
@@ -50,8 +56,8 @@ describe('Group', () => {
 
     expect(groupName).toBeInTheDocument();
 
-    const grant1 = await screen.findByText('Test Grant');
-    const grant2 = await screen.findByText('Test Grant 2');
+    const grant1 = await screen.findByText('Test Recipient1 - Test Grant');
+    const grant2 = await screen.findByText('Test Recipient2 - Test Grant 2');
 
     expect(grant1).toBeInTheDocument();
     expect(grant2).toBeInTheDocument();

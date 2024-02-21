@@ -231,16 +231,18 @@ export async function getGroup(req: Request, res: Response) {
       // Get the group response by calling the 'group' function with the parsed 'groupId'
       group(groupId),
     ]);
+
+    // Get the user data based on the user ID
+    const user = await userById(userId);
+
     // Create a new GroupPolicy instance with the current user's ID, an empty array of permissions,
     // and the group response
     const policy = new GroupPolicy(
-      {
-        id: userId,
-        permissions: [],
-      },
+      user,
       groupResponse.grants,
       groupResponse,
     );
+
     // Check if the current user can use the group
     if (!policy.canUseGroup()) {
       // If the user does not own the group and the group is not public, send a 'FORBIDDEN'
@@ -495,9 +497,12 @@ export async function deleteGroup(req: Request, res: Response) {
       return;
     }
 
+    // Get the user data based on the user ID
+    const user = await userById(userId);
+
     // Create a new GroupPolicy instance with the user's id, an empty array of permissions, and
     // the groupData
-    const policy = new GroupPolicy({ id: userId, permissions: [] }, [], groupData);
+    const policy = new GroupPolicy(user, [], groupData);
 
     // Check if the user owns the group
     if (!policy.ownsGroup()) {

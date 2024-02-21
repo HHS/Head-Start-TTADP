@@ -50,6 +50,15 @@ describe('Group', () => {
       expect(g.ownsGroup()).toBe(true);
     });
 
+    it('should return true if the user is a CoOwner the group', () => {
+      const user = { id: 1 };
+      const group = { groupCollaborators: [{ user: { id: 1 }, collaboratorType: { name: 'Co-Owner' } }] };
+
+      const g = new Group(user, [], group);
+
+      expect(g.ownsGroup()).toBe(true);
+    });
+
     it('should return false if the user does not own the group', () => {
       const user = { id: 1 };
       const group = { userId: 2 };
