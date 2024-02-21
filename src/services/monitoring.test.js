@@ -36,7 +36,7 @@ describe('monitoring services', () => {
     await Grant.findOrCreate({
       where: { number: GRANT_NUMBER },
       defaults: {
-        id: 1111,
+        id: 665,
         regionId: 9,
         number: GRANT_NUMBER,
         recipientId: 7,
@@ -99,6 +99,15 @@ describe('monitoring services', () => {
   });
 
   afterAll(async () => {
+    await MonitoringReviewGrantee.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    await MonitoringClassSummary.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
+    await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
+    await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+    await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+    await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true });
+
     await sequelize.close();
   });
 
