@@ -6,7 +6,6 @@ import fetchMock from 'fetch-mock';
 
 import ClassReview from '../ClassReview';
 import { GrantDataProvider } from '../../GrantDataContext';
-import { ClassGuidanceProvider } from '../../ClassGuidanceContext';
 
 const grantNumber = '1';
 const regionId = 1;
@@ -15,15 +14,13 @@ const recipientId = 1;
 const apiUrl = `/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`;
 
 const renderClassReview = () => render(
-  <ClassGuidanceProvider>
-    <GrantDataProvider>
-      <ClassReview
-        grantNumber={grantNumber}
-        regionId={regionId}
-        recipientId={recipientId}
-      />
-    </GrantDataProvider>
-  </ClassGuidanceProvider>,
+  <GrantDataProvider>
+    <ClassReview
+      grantNumber={grantNumber}
+      regionId={regionId}
+      recipientId={recipientId}
+    />
+  </GrantDataProvider>,
 );
 
 const testThreshold = async (area, score, expectedText, received = '05/01/2023') => {

@@ -9,7 +9,7 @@ import Drawer from '../../../../components/Drawer';
 import { getClassScores } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
 import { useGrantData } from '../GrantDataContext';
-import { useClassGuidance } from '../ClassGuidanceContext';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 
 const BadgeAbove = () => (
   <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
@@ -31,7 +31,6 @@ const BadgeBelowCompetetive = () => (
 
 const ClassReview = ({ grantNumber, recipientId, regionId }) => {
   const { updateGrantClassData } = useGrantData();
-  const { classGuidanceData } = useClassGuidance();
   const [scores, setScores] = useState({});
   const howMetRef = useRef(null);
 
@@ -82,12 +81,15 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
         stickyFooter
         title="CLASS® review thresholds"
       >
-        <div ref={(node) => {
-          if (node && classGuidanceData) {
-            // eslint-disable-next-line no-param-reassign
-            node.innerHTML = classGuidanceData.innerHTML;
-          }
-        }}
+        <ContentFromFeedByTag
+          tagName="ttahub-class-thresholds"
+          contentSelector="div:nth-child(3)"
+          className="ttahub-class-feed-article"
+        />
+        <ContentFromFeedByTag
+          tagName="ttahub-class-thresholds"
+          contentSelector="div:nth-child(4)"
+          className="ttahub-class-feed-article"
         />
       </Drawer>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">

@@ -19,3 +19,8 @@
   background-color: $error;
   @extend %badge;
 }
+
+.ttahub-class-feed-article .ttahub-feed-article {
+  margin-bottom: 12px;
+  padding-bottom: 0;
+}
