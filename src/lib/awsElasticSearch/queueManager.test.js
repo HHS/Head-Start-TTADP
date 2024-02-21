@@ -105,9 +105,11 @@ describe('queue manager tests', () => {
     jest.spyOn(awsElasticsearchQueue, 'process').mockImplementation(() => {});
     await processAWSElasticsearchQueue();
     expect(awsElasticsearchQueue.on)
-      .toHaveBeenNthCalledWith(1, 'failed', onFailedAWSElasticsearchQueue);
+      .toHaveBeenNthCalledWith(1, 'error', expect.any(Function));
     expect(awsElasticsearchQueue.on)
-      .toHaveBeenNthCalledWith(2, 'completed', onCompletedAWSElasticsearchQueue);
+      .toHaveBeenNthCalledWith(2, 'failed', onFailedAWSElasticsearchQueue);
+    expect(awsElasticsearchQueue.on)
+      .toHaveBeenNthCalledWith(3, 'completed', onCompletedAWSElasticsearchQueue);
     expect(awsElasticsearchQueue.process)
       .toHaveBeenNthCalledWith(
         1,
