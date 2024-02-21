@@ -152,7 +152,7 @@ const processRecords = async (
           },
         );
         recordActions.inserts.push(insert);
-      } else {
+      } else if (fileDate > currentData.sourceUpdatedAt) {
         // If the record already exists, find the delta then update it
         const delta = collectChangedValues(filteredData, currentData);
         const update = model.update(
@@ -183,13 +183,27 @@ const processRecords = async (
       // 3. recordActions.delete.push(promises)
       // 4. pass back recordActions
 
-      // Get all the affected data from inserts and updates
-      const affectedData = await Promise.all([
-        ...recordActions.inserts,
-        ...recordActions.updates,
+      const [
+        affectedDataInserts,
+        affectedDataUpdates,
+      ] = await Promise.all([
+        Promise.all(recordActions.inserts),
+        Promise.all(recordActions.updates),
       ]);
 
-      const affectedDataIds = affectedData?.map(({ id }) => id) || [];
+      // Flatten the affectedDataUpdates array and extract the objects
+      const flattenedUpdates = affectedDataUpdates.flatMap(
+        // Assuming the second element of each sub-array is the array of objects
+        (update) => (Array.isArray(update[1]) ? update[1] : []),
+      );
+
+      // Combine the affected data from inserts and flattened updates
+      const affectedData = [
+        ...affectedDataInserts,
+        ...flattenedUpdates,
+      ];
+
+      const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || [];
       // mark the source date when the records no longer are present in the processed file
       // "Delete" all records that are not in the affectedData array
       if (affectedDataIds.length) {
@@ -457,6 +471,7 @@ const processFilesFromZip = async (
 const processZipFileFromS3 = async (
   importId: number,
 ) => {
+  const startTime = new Date(); // The start time for file collection
   // Get the next file to process based on the importId
   const importFile = await getNextFileToProcess(importId);
   if (!importFile) return Promise.resolve();
@@ -483,7 +498,10 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // These must be let to properly wrap the population in a try/catch
@@ -508,7 +526,10 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // Filter out null file details, and to the ones that streams were requested for
@@ -536,7 +557,7 @@ const processZipFileFromS3 = async (
   try {
     // Process files from the zip archive using the importFileId, zipClient, filteredFileDetails,
     // and processDefinitions
-    results = processFilesFromZip(
+    results = await processFilesFromZip(
       importFileId,
       zipClient,
       filteredFileDetails,
@@ -546,12 +567,24 @@ const processZipFileFromS3 = async (
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
     auditLogger.log('error', `processZipFileFromS3 processFilesFromZip ${err.message}`);
-    return Promise.resolve;
+    return {
+      error: err.message,
+      file: {
+        name: fileDetails.name,
+      },
+      duration: new Date().getTime() - startTime.getTime(),
+    };
   }
 
   // Set the import file status to PROCESSED
   await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSED);
-  return results;
+  return {
+    ...results,
+    file: {
+      name: fileDetails.name,
+    },
+    duration: new Date().getTime() - startTime.getTime(),
+  };
 };
 
 export {

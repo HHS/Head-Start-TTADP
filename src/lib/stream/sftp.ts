@@ -1,5 +1,6 @@
-import { Client, SFTPWrapper } from 'ssh2';
+import { Client } from 'ssh2';
 import { Readable } from 'stream';
+import { auditLogger } from '../../logger';
 
 interface ConnectConfig {
   host: string;
@@ -7,11 +8,14 @@ interface ConnectConfig {
   username: string;
   password?: string;
   privateKey?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  algorithms?: Record<string, any>,
+  hostVerifier?: (hashedKey:string, callback: (response) => void) => boolean,
 }
 
 interface ListFileOptions {
   path: string;
-  fileMask?: RegExp;
+  fileMask?: string;
   priorFile?: string;
   includeStream?: boolean;
 }
@@ -100,10 +104,10 @@ class SftpClient {
   private connected = false; // Add a property to track the connection state
 
   /**
-   * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
-   * @param connectionSettings - The configuration settings used to connect to a service.
+   * Attaches event listeners for handling connection status changes and registering
+   * signal handlers.
    */
-  constructor(private connectionSettings: ConnectConfig) {
+  private attachListeners(): void {
     // Set the connected flag to false when the connection is closed
     this.client.on('end', () => {
       this.connected = false;
@@ -116,6 +120,26 @@ class SftpClient {
     process.on('SIGINT', this.handleSignal.bind(this));
     process.on('SIGTERM', this.handleSignal.bind(this));
     process.on('SIGQUIT', this.handleSignal.bind(this));
+  }
+
+  /**
+   * Detaches event listeners to prevent memory leaks.
+   */
+  private detachListeners(): void {
+    if (this.client && this.client.removeAllListeners) {
+      this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
+    }
+    process.removeListener('SIGINT', this.handleSignal.bind(this));
+    process.removeListener('SIGTERM', this.handleSignal.bind(this));
+    process.removeListener('SIGQUIT', this.handleSignal.bind(this));
+  }
+
+  /**
+   * Constructs an instance and registers signal handlers for SIGINT, SIGTERM, and SIGQUIT.
+   * @param connectionSettings - The configuration settings used to connect to a service.
+   */
+  constructor(private connectionSettings: ConnectConfig) {
+    this.attachListeners();
   }
 
   /**
@@ -137,32 +161,55 @@ class SftpClient {
    */
   public connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (this.connected) {
-        resolve();
-        return;
-      }
-
-      // Create a new Client instance if the previous one is unusable
-      this.client = new Client();
-
-      // Set up event listeners for the new Client instance
-      this.client.on('ready', () => {
-        this.connected = true;
-        resolve();
-      }).on('error', (err) => {
-        this.connected = false; // Ensure the connected flag is set to false on error
-        reject(err);
-      }).on('end', () => {
-        this.connected = false;
-      }).on('close', (hadError) => {
-        this.connected = false;
-        if (hadError) {
-          reject(new Error('Connection closed due to a transmission error'));
+      try {
+        if (this.connected) {
+          resolve();
+          return;
         }
-      });
+        this.detachListeners();
 
-      // Attempt to connect with the new Client instance
-      this.client.connect(this.connectionSettings);
+        // Create a new Client instance if the previous one is unusable
+        this.client = new Client();
+        this.attachListeners();
+
+        // Set up event listeners for the new Client instance
+        this.client
+          .on('ready', () => {
+            this.connected = true;
+            resolve();
+          })
+          .on('error', (err) => {
+            auditLogger.error(JSON.stringify(err));
+            this.connected = false; // Ensure the connected flag is set to false on error
+            reject(err);
+          })
+          .on('end', () => {
+            this.connected = false;
+          })
+          .on('close', (hadError) => {
+            this.connected = false;
+            if (hadError) {
+              auditLogger.error(JSON.stringify(hadError));
+              reject(new Error('Connection closed due to a transmission error'));
+            }
+          });
+
+        const {
+          algorithms = {
+            serverHostKey: ['ssh-dss', 'ssh-rsa'],
+          },
+          hostVerifier = () => true,
+          ...connectionSettings
+        } = this.connectionSettings;
+
+        // Attempt to connect with the new Client instance
+        this.client.connect({
+          ...connectionSettings,
+          algorithms,
+        });
+      } catch (err) {
+        reject(err.message);
+      }
     });
   }
 
@@ -172,11 +219,15 @@ class SftpClient {
    * If the client is already disconnected, calling this method may result in an error.
    */
   public disconnect(): void {
-    if (this.isConnected()) {
-      this.client.end(); // End the current connection
-      this.connected = false;
+    try {
+      if (this.isConnected()) {
+        this.client.end(); // End the current connection
+        this.connected = false;
+      }
+      this.detachListeners();
+    } catch (e) {
+      auditLogger.error(JSON.stringify(e));
     }
-    this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
   }
 
   /**
@@ -267,13 +318,12 @@ class SftpClient {
           // Filter the files based on the provided file mask and whether they come after a
           // specified 'priorFile'
           }).filter((file) => {
-            const matchesMask = fileMask instanceof RegExp
-              ? fileMask.test(file.fileInfo.name)
+            const matchesMask = fileMask && fileMask.length > 0
+              ? (new RegExp(fileMask)).test(file.fileInfo.name)
               : true;
-            const afterPriorFile = priorFile
+            const afterPriorFile = priorFile && priorFile.length > 0
               ? file.fileInfo.name.localeCompare(priorFile) > 0
               : true;
-
             return matchesMask && afterPriorFile;
           });
 
@@ -329,4 +379,8 @@ class SftpClient {
 }
 
 export default SftpClient; // Export the FtpClient class as the default export
-export { FileInfo, ConnectConfig as SFTPSettings }; // Export the FileInfo interface
+export {
+  FileInfo,
+  ConnectConfig as SFTPSettings,
+  FileListing,
+}; // Export the FileInfo interface

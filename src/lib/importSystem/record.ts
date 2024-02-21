@@ -1,10 +1,16 @@
-import { Op } from 'sequelize';
+import {
+  Sequelize,
+  fn,
+  col,
+  literal,
+  Op,
+} from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
-import { FileInfo as FTPFileInfo } from '../stream/sftp';
+import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
 import { FileInfo as ZipFileInfo } from '../stream/zip';
-import db, { Sequelize } from '../../models';
+import db from '../../models';
 import {
   FILE_STATUSES,
   IMPORT_STATUSES,
@@ -16,6 +22,7 @@ const {
   Import,
   ImportFile,
   ImportDataFile,
+  ZALImportFile,
 } = db;
 
 /**
@@ -27,10 +34,10 @@ const {
  */
 const getPriorFile = async (
   importId: number,
-  status: string = IMPORT_STATUSES.COLLECTED,
-) => {
+  status: string | string[] = IMPORT_STATUSES.COLLECTED,
+): Promise<string | null> => {
   // Find the prior file associated with the given importId
-  const importFile = await ImportFile.findOne({
+  const importFile: { name: string } | null = await ImportFile.findOne({
     attributes: [
       // Selecting the 'name' attribute from ftpFileInfo
       // eslint-disable-next-line @typescript-eslint/quotes
@@ -41,8 +48,7 @@ const getPriorFile = async (
       status,
     },
     // Ordering the results by ftpFileInfo.date in descending order
-    // eslint-disable-next-line @typescript-eslint/quotes
-    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'date'`), 'DESC']],
+    order: [['id', 'DESC']],
     raw: true,
   });
 
@@ -52,7 +58,6 @@ const getPriorFile = async (
     return importFile.name;
   }
   // Handle the case where no file was found
-  // You could return null, undefined, or throw an error, depending on your application's needs
   return null; // or throw new Error('No prior file found.');
 };
 
@@ -74,7 +79,7 @@ const importHasMoreToDownload = async (
     },
   });
 
-  return pendingFiles?.length || 0 >= 1;
+  return (pendingFiles?.length || 0) >= 1;
 };
 
 /**
@@ -95,7 +100,7 @@ const importHasMoreToProcess = async (
     },
   });
 
-  return pendingFiles?.length || 0 >= 1;
+  return (pendingFiles?.length || 0) >= 1;
 };
 
 /**
@@ -111,6 +116,71 @@ const getNextFileToProcess = async (
   importId: number,
   maxAttempts = 5,
 ) => {
+  const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60000);
+
+  // Define the PostgresInterval interface
+  interface PostgresInterval {
+    seconds: number;
+    milliseconds: number;
+  }
+
+  // Use the PostgresInterval interface in the destructuring assignment
+  /* eslint-disable @typescript-eslint/quotes */
+  /* eslint-disable prefer-template */
+  const results = await ZALImportFile.findAll({
+    attributes: [
+      // Using Sequelize.fn to calculate the average difference in timestamps
+      [fn('AVG', fn(
+        'AGE',
+        fn('CAST', literal(`new_row_data->>'updatedAt' AS TIMESTAMP`)),
+        fn('CAST', literal(`old_row_data->>'updatedAt' AS TIMESTAMP`)),
+      )),
+      'avg'],
+
+      // Using Sequelize.fn to calculate the standard deviation of the difference in timestamps
+      [literal(`STDDEV(extract ('epoch' from (new_row_data->>'updatedAt')::timestamp - (old_row_data->>'updatedAt')::timestamp)) * interval '1 sec'`),
+        'stddev'],
+    ],
+    where: {
+      [Op.and]: [
+        // Using Sequelize.literal to filter rows based on JSONB content
+        literal(`old_row_data->>'status' = 'PROCESSING'`),
+        literal(`new_row_data->>'status' = 'PROCESSED'`),
+      ],
+    },
+    raw: true, // This will give you raw JSON objects instead of model instances
+  }) as [{ avg: PostgresInterval, stddev: PostgresInterval }];
+  /* eslint-enable @typescript-eslint/quotes */
+  /* eslint-disable prefer-template */
+
+  const [{
+    avg,
+    stddev,
+  }] = results && results.length
+    ? results
+    : [{
+      avg: { seconds: 120, milliseconds: 0 },
+      stddev: { seconds: 0, milliseconds: 0 },
+    }];
+
+  // Calculate the total milliseconds for 3 * stddev
+  const totalStdDevMilliseconds = 3 * stddev.seconds * 1000 + 3 * stddev.milliseconds;
+
+  // Mark hung jobs as failed
+  await ImportFile.update(
+    {
+      status: IMPORT_STATUSES.PROCESSING_FAILED,
+    },
+    {
+      where: {
+        status: IMPORT_STATUSES.PROCESSING,
+        [Op.and]: [
+          literal(`"updatedAt" + INTERVAL '${avg.seconds + Math.floor(totalStdDevMilliseconds / 1000)} seconds ${totalStdDevMilliseconds % 1000} milliseconds' > NOW()`),
+        ],
+      },
+    },
+  );
+
   // Find the next import file to process
   const importFile = await ImportFile.findOne({
     attributes: [
@@ -138,7 +208,9 @@ const getNextFileToProcess = async (
     where: {
       importId,
       [Op.or]: [
+        // New Work
         { status: IMPORT_STATUSES.COLLECTED }, // Import file is in the "collected" status
+        // Rework
         {
           // Import file is in the "processing_failed" status
           status: IMPORT_STATUSES.PROCESSING_FAILED,
@@ -164,11 +236,7 @@ const getNextFileToProcess = async (
  */
 const recordAvailableFiles = async (
   importId: number,
-  availableFiles: {
-    fullPath: string,
-    fileInfo: FTPFileInfo,
-    stream?: Promise<Readable>,
-  }[],
+  availableFiles: FileListing[],
 ) => {
   // Retrieve current import files from the database
   const currentImportFiles: {
@@ -188,7 +256,7 @@ const recordAvailableFiles = async (
     raw: true,
   });
 
-  const fileMatches = (file, fileSet) => (currentImportFile, availableFile) => (
+  const fileMatches = (currentImportFile, availableFile) => (
     importId === currentImportFile.importId
     && availableFile.fileInfo.path === currentImportFile.fileInfo.path
     && availableFile.fileInfo.name === currentImportFile.fileInfo.name
@@ -232,7 +300,7 @@ const recordAvailableFiles = async (
           where: {
             importId,
             ftpFileInfo: {
-              [Sequelize.Op.contains]: {
+              [Op.contains]: {
                 path: matchedFile.fileInfo.path,
                 name: matchedFile.fileInfo.name,
               },
@@ -256,6 +324,21 @@ const recordAvailableFiles = async (
   ]);
 };
 
+/**
+ * Asynchronously records the state of data files available in a ZIP archive by comparing them
+ * with the entries already stored in the database. It categorizes the files into new, matched,
+ * and removed files, and performs the appropriate database operations for each category:
+ * - New files are added to the database.
+ * - Matched files have their records updated in the database.
+ * - Removed files are deleted from the database.
+ *
+ * @param importFileId - The ID of the import file to which the available files are related.
+ * @param availableFiles - An array of ZipFileInfo objects representing the files available
+ *                         in the ZIP archive.
+ * @returns A Promise that resolves when all database operations are complete. The promise
+ *          resolves with an array of results for the bulk create, update, and destroy operations.
+ * @throws Errors from the database operations will propagate through the returned Promise.
+ */
 const recordAvailableDataFiles = async (
   importFileId: number,
   availableFiles: ZipFileInfo[],
@@ -276,10 +359,10 @@ const recordAvailableDataFiles = async (
     raw: true,
   });
 
-  const fileMatches = (file, fileSet) => (currentImportDataFile, availableFile) => (
+  const fileMatches = (currentImportDataFile, availableFile) => (
     importFileId === currentImportDataFile.importFileId
     && availableFile.path === currentImportDataFile.fileInfo.path
-    && availableFile.fileInfo.name === currentImportDataFile.fileInfo.name
+    && availableFile.name === currentImportDataFile.fileInfo.name
   );
 
   // Separate the available files into new, matched, and removed files
@@ -340,6 +423,19 @@ const recordAvailableDataFiles = async (
   ]);
 };
 
+/**
+ * Asynchronously updates the metadata for an available data file.
+ *
+ * @param importFileId - The ID of the file to update.
+ * @param fileInfo - Information about the file, either a `ZipFileInfo` object or an object
+ * with a `name` property.
+ * @param status - The new status to set for the file.
+ * @param metadata - A record containing the metadata to update. Can include various types
+ * such as string, number,
+ *                   string array, `SchemaNode`, or nested records.
+ * @returns A promise that resolves with the result of the update operation.
+ * @throws Will throw an error if the update operation fails.
+ */
 const updateAvailableDataFileMetadata = async (
   importFileId: number,
   fileInfo: ZipFileInfo | { name: string },
@@ -384,11 +480,7 @@ const updateAvailableDataFileMetadata = async (
  */
 const logFileToBeCollected = async (
   importId: number,
-  availableFile: {
-    fullPath: string,
-    fileInfo: FTPFileInfo,
-    stream?: Promise<Readable>,
-  },
+  availableFile: FileListing,
 ): Promise<{
   importFileId: number,
   key: string,
@@ -406,7 +498,7 @@ const logFileToBeCollected = async (
     where: {
       importId,
       ftpFileInfo: {
-        [Sequelize.Op.contains]: {
+        [Op.contains]: {
           path: availableFile.fileInfo.path,
           name: availableFile.fileInfo.name,
         },
@@ -445,7 +537,7 @@ const logFileToBeCollected = async (
         where: {
           importId,
           ftpFileInfo: {
-            [Sequelize.Op.contains]: {
+            [Op.contains]: {
               path: availableFile.fileInfo.path,
               name: availableFile.fileInfo.name,
             },
@@ -465,7 +557,7 @@ const logFileToBeCollected = async (
         where: {
           importId,
           ftpFileInfo: {
-            [Sequelize.Op.contains]: {
+            [Op.contains]: {
               path: availableFile.fileInfo.path,
               name: availableFile.fileInfo.name,
             },
@@ -566,7 +658,7 @@ const setImportDataFileStatusByPath = async (
     where: {
       importFileId,
       fileInfo: {
-        [Sequelize.Op.contains]: {
+        [Op.contains]: {
           path: fileInfo.path,
           name: fileInfo.name,
         },

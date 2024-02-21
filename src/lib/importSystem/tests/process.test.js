@@ -45,7 +45,7 @@ describe('processRecords', () => {
     },
   };
 
-  const fileDate = new Date();
+  const fileDate = new Date('2024-01-01');
   let recordActions;
 
   beforeEach(() => {
@@ -60,8 +60,8 @@ describe('processRecords', () => {
 
   it('should process a record and add it to inserts if it is new', async () => {
     const mockRecord = {
-      reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
-      findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+      reviewid: '45c95636-bc62-11ee-9813-837372b0ff39',
+      findinghistoryid: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
     };
     mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
@@ -94,14 +94,13 @@ describe('processRecords', () => {
       {
         reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
         findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
-        hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe5c',
-        sourceCreatedAt: expect.any(Date),
-        sourceUpdatedAt: expect.any(Date),
+        hash: '5920dbae679cbf36b114a28714182ef1350aba3f763cf79d1f8a8a7ba83f13e7',
+        sourceCreatedAt: fileDate,
+        sourceUpdatedAt: fileDate,
       },
       {
         individualHooks: true,
         returning: true,
-        plain: true,
       },
     );
     expect(result.inserts).toHaveLength(1);
@@ -120,6 +119,7 @@ describe('processRecords', () => {
         reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
         findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
         hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe51',
+        sourceUpdatedAt: new Date('2023-12-30'),
       });
     }));
 
@@ -147,11 +147,11 @@ describe('processRecords', () => {
       {
         hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe5c',
         sourceUpdatedAt: expect.any(Date),
+        updatedAt: expect.any(Date),
       },
       {
         individualHooks: true,
         returning: true,
-        plain: true,
         where: {
           id: 1,
         },

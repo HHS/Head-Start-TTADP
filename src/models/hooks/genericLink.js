@@ -45,7 +45,7 @@ const syncLink = async (
 
   // Check if there's an existing record for the given entity ID
   const [currentRecord] = await model.findAll({
-    attsributes: [targetEntityName],
+    attributes: [targetEntityName],
     where: { [targetEntityName]: entityId },
     transaction: options.transactions,
   });

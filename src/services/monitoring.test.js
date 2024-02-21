@@ -4,7 +4,7 @@ import { classScore, monitoringData } from './monitoring';
 describe('monitoring services', () => {
   const RECIPIENT_ID = 1;
   const REGION_ID = 14;
-  const GRANT_NUMBER = '09CH033333';
+  const GRANT_NUMBER = '09HP044444';
 
   afterAll(async () => {
     await sequelize.close();
@@ -15,7 +15,7 @@ describe('monitoring services', () => {
       const data = await classScore({
         recipientId: RECIPIENT_ID,
         regionId: REGION_ID,
-        grantNumber: GRANT_NUMBER,
+        grantNumber: '09HP044444',
       });
 
       expect(data).toEqual({
@@ -23,9 +23,10 @@ describe('monitoring services', () => {
         regionId: REGION_ID,
         grantNumber: GRANT_NUMBER,
         received: expect.any(String),
-        ES: expect.any(Number),
-        CO: expect.any(Number),
-        IS: expect.any(Number),
+        // sequelize retrieves numeric fields as strings
+        ES: expect.any(String),
+        CO: expect.any(String),
+        IS: expect.any(String),
       });
     });
   });
@@ -35,7 +36,7 @@ describe('monitoring services', () => {
     it('returns null when nothing is found', async () => {
       const recipientId = 7;
       const regionId = 12;
-      const grantNumber = '09CH033333';
+      const grantNumber = '09CH0333343';
 
       const data = await monitoringData({
         recipientId,
@@ -62,7 +63,7 @@ describe('monitoring services', () => {
         regionId,
         grant: grantNumber,
         reviewStatus: 'Complete',
-        reviewDate: expect.any(Date),
+        reviewDate: '02/22/2023',
         reviewType: 'FA-1',
       });
     });
