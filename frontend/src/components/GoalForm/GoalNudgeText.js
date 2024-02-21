@@ -51,7 +51,7 @@ export default function GoalNudgeText({
           onChange={onChange}
           required
           disabled={isLoading}
-          style={{ height: '160px' }}
+          style={{ height: '80px' }}
         />
         <SimilarGoals
           similar={similar}
