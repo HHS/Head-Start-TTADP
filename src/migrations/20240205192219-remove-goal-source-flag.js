@@ -6,7 +6,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return updateUsersFlagsEnum(queryInterface, transaction, ['goal_source']);
+      // return updateUsersFlagsEnum(queryInterface, transaction, ['goal_source']);
     });
   },
 

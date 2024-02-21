@@ -84,6 +84,13 @@ export default (sequelize, DataTypes) => {
         return generateFullName(this.name, this.roles);
       },
     },
+    nameWithNationalCenters: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const centers = ` ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
+        return `${this.name}${centers}`;
+      },
+    },
     lastLogin: {
       type: DataTypes.DATE,
       allowNull: false,
