@@ -58,9 +58,46 @@ export const ClassGuidanceProvider = ({ children }) => {
         // The contents of summary is a string representation of HTML.
         setClassGuidanceData(newDiv);
       } catch (e) {
-        const errorDiv = document.createElement('div');
-        errorDiv.textContent = 'There was an error fetching this content.';
-        setClassGuidanceData(errorDiv);
+        const fallbackGuidance = /* html */`
+          <div>
+            <h3 class="font-sans-sm">Quality thresholds</h3>
+            <p>
+              Beginning in November 2020, the quality thresholds represent
+              OHS's expectation for all grantees regarding the quality of
+              classroom learning environments. These thresholds do not trigger
+              competition; rather, a grantee with a score below a quality
+              threshold receives support from OHS in improving the quality of
+              teacher-child interactions in the classroom. The quality thresholds
+              are as follows:
+            </p>
+            <ul class="usa-list usa-list--unstyled">
+              <li>6 for the Emotional Support domain.</li>
+              <li>6 for the Classroom Organization domain.</li>
+              <li>3 for the Instructional Support domain.</li>
+            </ul>
+            <h3 class="font-sans-sm">Competitive thresholds</h3>
+            <p>
+              Grantees with average CLASS® scores below the established
+              competitive threshold on any of the three CLASS® domains is
+              required to compete. The competitive thresholds are as follows:
+            </p>
+            <ul class="usa-list usa-list--unstyled">
+              <li>5 for the Emotional Support domain.</li>
+              <li>5 for the Classroom Organization domain.</li>
+              <li>
+                2.3 for the Instructional Support domain for CLASS® reviews
+                conducted through July 31, 2025, and 2.5 for those conducted
+                on or after Aug. 1, 2025.
+              </li>
+            </ul>
+          </div>
+        `;
+
+        const template = document.createElement('template');
+        template.innerHTML = fallbackGuidance.trim();
+        const content = template.content.firstChild;
+
+        setClassGuidanceData(content);
       }
     }
 
