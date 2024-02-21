@@ -183,6 +183,58 @@ const updateGoalText = async (sequelize, instance, options) => {
   );
 };
 
+const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, options) => {
+  try {
+    const { ownerId, collaboratorIds } = instance;
+    const userIds = [ownerId, ...collaboratorIds].filter((f) => f);
+
+    const users = await sequelize.models.User.findAll({
+      where: {
+        id: userIds,
+      },
+      include: [
+        {
+          model: sequelize.models.NationalCenter,
+          as: 'nationalCenters', // despite the relation being singular in the UI, the name is plural
+        },
+      ],
+      transaction: options.transaction,
+    });
+
+    const bulkCreates = [];
+    users.forEach((user) => {
+      user.nationalCenters.forEach((nc) => {
+        bulkCreates.push({
+          userId: user.id,
+          userName: user.name,
+          eventReportPilotId: instance.id,
+          nationalCenterId: nc.id,
+          nationalCenterName: nc.name,
+        });
+      });
+    });
+
+    const records = await sequelize.models.EventReportPilotNationalCenterUser.bulkCreate(bulkCreates, {
+      updateOnDuplicate: ['updatedAt', 'userName', 'nationalCenterName'],
+      transaction: options.transaction,
+    });
+
+    // delete records that are not in the bulkCreates
+    const ids = records.map((r) => r.id);
+    await sequelize.models.EventReportPilotNationalCenterUser.destroy({
+      where: {
+        eventReportPilotId: instance.id,
+        id: {
+          [Op.notIn]: ids,
+        },
+      },
+      transaction: options.transaction,
+    });
+  } catch (err) {
+    auditLogger.error(JSON.stringify({ err }));
+  }
+};
+
 const beforeUpdate = async (sequelize, instance, options) => {
   await updateGoalText(sequelize, instance, options);
 };
@@ -192,9 +244,15 @@ const afterUpdate = async (sequelize, instance, options) => {
   await notifyPocEventComplete(sequelize, instance, options);
   await notifyVisionAndGoalComplete(sequelize, instance, options);
   await notifyNewPoc(sequelize, instance, options);
+  await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
+};
+
+const afterCreate = async (sequelize, instance, options) => {
+  await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };
 
 export {
   afterUpdate,
   beforeUpdate,
+  afterCreate,
 };
