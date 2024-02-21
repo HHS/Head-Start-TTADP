@@ -3,9 +3,9 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class EventReportPilotNationalCenterUser extends Model {
     static associate(models) {
-      EventReportPilotNationalCenterUser.belongsTo(models.NationalCenter, { foreignKey: 'nationalCenterId', as: 'nationalCenter', onDelete: 'CASCADE' });
+      EventReportPilotNationalCenterUser.belongsTo(models.NationalCenter, { foreignKey: 'nationalCenterId', as: 'nationalCenter' });
       EventReportPilotNationalCenterUser.belongsTo(models.EventReportPilot, { foreignKey: 'eventReportPilotId', as: 'event', onDelete: 'CASCADE' });
-      EventReportPilotNationalCenterUser.belongsTo(models.User, { foreignKey: 'userId', as: 'user', onDelete: 'CASCADE' });
+      EventReportPilotNationalCenterUser.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
 
       models.User.hasMany(EventReportPilotNationalCenterUser, { foreignKey: 'userId', as: 'eventReportPilotNationalCenterUsers' });
       models.EventReportPilot.hasMany(EventReportPilotNationalCenterUser, { foreignKey: 'eventReportPilotId', as: 'eventReportPilotNationalCenterUsers' });

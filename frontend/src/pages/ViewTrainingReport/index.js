@@ -68,6 +68,15 @@ export default function ViewTrainingReport({ match }) {
     async function fetchCollaborators() {
       if (event && event.collaboratorIds && event.collaboratorIds.length) {
         try {
+          if (event.eventReportPilotNationalCenterUsers) {
+            const collaborators = event.eventReportPilotNationalCenterUsers.filter((erpnc) => (
+              event.collaboratorIds.includes(erpnc.userId)
+            ));
+            if (collaborators.length > 0) {
+              setEventCollaborators(collaborators.map((c) => `${c.userName} ${c.nationalCenterName}`));
+              return;
+            }
+          }
           const collaborators = await getNamesByIds(event.collaboratorIds);
           setEventCollaborators(collaborators);
         } catch (err) {
@@ -93,7 +102,24 @@ export default function ViewTrainingReport({ match }) {
   }, [event]);
 
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
-  const ownerName = event && event.data && event.data.owner && event.data.owner.name ? event.data.owner.name : '';
+  const ownerName = (() => {
+    if (event && event.data && event.data.owner) {
+      if (event.eventReportPilotNationalCenterUsers) {
+        const user = event.eventReportPilotNationalCenterUsers
+          .find((erpnc) => erpnc.userId === event.data.owner.id);
+
+        if (user) {
+          return `${user.userName} ${user.nationalCenterName}`;
+        }
+      }
+
+      if (event.data.owner.name) {
+        return event.data.owner.name;
+      }
+    }
+
+    return '';
+  })();
 
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
