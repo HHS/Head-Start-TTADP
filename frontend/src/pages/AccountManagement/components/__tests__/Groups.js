@@ -252,4 +252,202 @@ describe('Groups', () => {
     expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
     expect(screen.getByText(/you don't have any shared groups yet/i)).toBeInTheDocument();
   });
+
+  it('displays groups in creator section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: true,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        groupCollaborators: [
+          {
+            id: 1,
+            collaboratorType: {
+              name: 'Co-Owner',
+            },
+            user: {
+              name: 'CoOwner User',
+              id: 2,
+            },
+          },
+          {
+            id: 2,
+            collaboratorType: {
+              name: 'SharedWith',
+            },
+            user: {
+              name: 'SharedWith User',
+              id: 3,
+            },
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 1,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.queryAllByText(/you haven't created any groups yet/i).length).toBe(0);
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Public')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.getByText('Edit group')).toBeInTheDocument();
+      expect(screen.getByText('Delete group')).toBeInTheDocument();
+    });
+  });
+
+  it('displays groups in co-owner section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: false,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        groupCollaborators: [
+          {
+            id: 1,
+            collaboratorType: {
+              name: 'Co-Owner',
+            },
+            user: {
+              name: 'CoOwner User',
+              id: 1,
+            },
+          },
+          {
+            id: 2,
+            collaboratorType: {
+              name: 'SharedWith',
+            },
+            user: {
+              name: 'SharedWith User',
+              id: 3,
+            },
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 4,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+      expect(screen.queryAllByText(/you haven't been added as a co-owner yet/i).length).toBe(0);
+      expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Individuals')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.getByText('Edit group')).toBeInTheDocument();
+      expect(screen.getByText('Delete group')).toBeInTheDocument();
+    });
+  });
+
+  it('displays groups in shared section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 1,
+        name: 'group1',
+        isPublic: false,
+        updatedAt: '2024-01-01T00:00:00.000Z',
+        groupCollaborators: [
+          {
+            id: 1,
+            collaboratorType: {
+              name: 'Co-Owner',
+            },
+            user: {
+              name: 'CoOwner User',
+              id: 2,
+            },
+          },
+          {
+            id: 2,
+            collaboratorType: {
+              name: 'SharedWith',
+            },
+            user: {
+              name: 'SharedWith User',
+              id: 1,
+            },
+          },
+        ],
+        creator: {
+          name: 'Creator User',
+          id: 5,
+        },
+      },
+      {
+        id: 2,
+        name: 'group2',
+        isPublic: true,
+        updatedAt: '2024-01-02T00:00:00.000Z',
+        groupCollaborators: [
+          {
+            id: 1,
+            collaboratorType: {
+              name: 'Co-Owner',
+            },
+            user: {
+              name: 'CoOwner User',
+              id: 10,
+            },
+          },
+          {
+            id: 2,
+            collaboratorType: {
+              name: 'SharedWith',
+            },
+            user: {
+              name: 'SharedWith User',
+              id: 12,
+            },
+          },
+        ],
+        creator: {
+          name: 'Creator User2',
+          id: 14,
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    await waitFor(() => {
+      expect(screen.getByText(/you haven't created any groups yet/i)).toBeInTheDocument();
+      expect(screen.getByText(/you haven't been added as a co-owner yet/i)).toBeInTheDocument();
+      expect(screen.queryAllByText(/You don't have any shared groups yet/i).length).toBe(0);
+
+      // Shared collaborator group.
+      expect(screen.getByText('group1')).toBeInTheDocument();
+      expect(screen.getByText('Creator User')).toBeInTheDocument();
+      expect(screen.getByText('Private')).toBeInTheDocument();
+      expect(screen.getByText('01/01/2024')).toBeInTheDocument();
+      expect(screen.queryAllByText('Edit group').length).toBe(0);
+      expect(screen.queryAllByText('Delete group').length).toBe(0);
+
+      // Is public group.
+      expect(screen.getByText('group2')).toBeInTheDocument();
+      expect(screen.getByText('Creator User2')).toBeInTheDocument();
+      expect(screen.getByText('Public')).toBeInTheDocument();
+      expect(screen.getByText('01/02/2024')).toBeInTheDocument();
+      expect(screen.queryAllByText('Edit group').length).toBe(0);
+      expect(screen.queryAllByText('Delete group').length).toBe(0);
+
+      // One view for each row.
+      expect(screen.queryAllByText('View group').length).toBe(2);
+    });
+  });
 });
