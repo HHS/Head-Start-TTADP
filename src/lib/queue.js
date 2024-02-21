@@ -87,11 +87,11 @@ function removeQueueEventHandlers(
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener);
-  process.removeListener('SIGINT', shutdownListener);
-  process.removeListener('SIGTERM', shutdownListener);
-  process.removeListener('uncaughtException', exceptionListener);
-  process.removeListener('unhandledRejection', rejectionListener);
+  queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
+  process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
+  process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
+  process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
+  process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
 }
 
 // Define the handlers so they can be added and removed
