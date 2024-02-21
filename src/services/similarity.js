@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 /**
  * @async
  * @param {number} recipient_id - The ID of the recipient.
@@ -8,31 +9,7 @@ import { auditLogger } from '../logger';
 
 const namespace = 'SERVICE:SIMILARITY';
 
-// eslint-disable-next-line import/prefer-default-export
-export async function similarGoalsForRecipient(recipient_id, cluster) {
-  /**
-    * response without clustering looks like:
-    * result: [
-      *  {
-        *    goal1: {
-          *      id: 1, name: "Identify strategies", grantId: 1,
-          *    },
-        *    goal2: {
-          *      id: 2, name: "Identify strategies", grantId: 1,
-          *    },
-        *    similarity: 0.921823748234,
-        *  },
-      *  {
-        *    goal1: {
-          *      id: 1, name: "Identify strategies", grantId: 2,
-          *    },
-        *    goal2: {
-          *      id: 2, name: "Identify strategies", grantId: 2,
-          *    },
-        *    similarity: 0.921823748234,
-        *  },
-      * ]
-    */
+async function postToSimilarity(body) {
   try {
     const { SIMILARITY_ENDPOINT, SIMILARITY_API_KEY } = process.env;
     const response = await fetch(
@@ -43,11 +20,7 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
           'Content-Type': 'application/json',
           'X-API-KEY': SIMILARITY_API_KEY,
         },
-        body: JSON.stringify({
-          recipient_id,
-          cluster,
-          alpha: 0.9,
-        }),
+        body: JSON.stringify(body),
       },
     );
     auditLogger.info(`${namespace} Similarity API response status: ${response.status}, body: ${JSON.stringify(response.body)}`);
@@ -60,4 +33,16 @@ export async function similarGoalsForRecipient(recipient_id, cluster) {
     );
     throw new Error(error);
   }
+}
+
+export async function similarGoalsForRecipient(
+  recipient_id,
+  cluster,
+  refinements = { alpha: 0.9 },
+) {
+  return postToSimilarity({
+    recipient_id,
+    cluster,
+    ...refinements,
+  });
 }
