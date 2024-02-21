@@ -15,6 +15,30 @@ export default class LockManager {
 
   private renewalInterval?: NodeJS.Timeout;
 
+  private handleShutdown = async (signalOrError: NodeJS.Signals | Error): Promise<void> => {
+    if (signalOrError instanceof Error) {
+      auditLogger.error(`An error occurred: ${signalOrError}`);
+    } else {
+      auditLogger.info(`Received signal: ${signalOrError}`);
+    }
+    await this.close();
+    const exitCode = signalOrError instanceof Error ? 1 : 0;
+    process.exit(exitCode);
+  };
+
+  private registerEventListeners(): void {
+    process.on('SIGINT', this.handleShutdown);
+    process.on('SIGTERM', this.handleShutdown);
+    process.on('uncaughtException', this.handleShutdown);
+    process.on(
+      'unhandledRejection',
+      this.handleShutdown as unknown as (
+        reason,
+        promise,
+      ) => void,
+    );
+  }
+
   constructor(
     lockKey: string,
     lockTTL = 2 * 1000,
@@ -31,6 +55,27 @@ export default class LockManager {
     this.lockKey = lockKey;
     this.lockValue = uuidv4();
     this.lockTTL = lockTTL;
+
+    this.registerEventListeners();
+  }
+
+  private unregisterEventListeners(): void {
+    process.removeListener('SIGINT', this.handleShutdown);
+    process.removeListener('SIGTERM', this.handleShutdown);
+    process.removeListener('uncaughtException', this.handleShutdown);
+    process.removeListener(
+      'unhandledRejection',
+      this.handleShutdown as unknown as (
+        reason,
+        promise,
+      ) => void,
+    );
+  }
+
+  public async close(): Promise<void> {
+    await this.stopRenewal(false);
+    await this.redis.disconnect();
+    this.unregisterEventListeners();
   }
 
   private async acquireLock(): Promise<boolean> {
@@ -40,10 +85,6 @@ export default class LockManager {
 
   private async releaseLock(): Promise<void> {
     await this.redis.del(this.lockKey);
-    // auditLogger.log(
-    //   'info',
-    //   `(${process.pid}) Lock released for key "${this.lockKey}".`,
-    // );
   }
 
   private async readLock(): Promise<string | null> {
@@ -78,10 +119,6 @@ export default class LockManager {
     await this.startRenewal();
 
     try {
-      // auditLogger.log(
-      //   'info',
-      //   `(${process.pid}) Lock acquired for key "${this.lockKey}". Executing callback...`,
-      // );
       await callback();
     } finally {
       if (holdLock) {
