@@ -78,6 +78,7 @@ export default class Group {
     return this.userIsCollaboratorForType(
       [
         GROUP_COLLABORATORS.CREATOR,
+        GROUP_COLLABORATORS.CO_OWNER, // TODO: Check if co-owner can delete group.
       ],
     );
   }

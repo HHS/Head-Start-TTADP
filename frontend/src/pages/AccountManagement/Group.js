@@ -44,6 +44,18 @@ export default function Group({ match }) {
     return null;
   }
 
+  const getGrantList = () => {
+    // Sort group.grants by grant.recipient.name
+    group.grants.sort((a, b) => a.recipient.name.localeCompare(b.recipient.name));
+
+    // Loop all grants and return a <li> for each grant
+    return group.grants.map((grant) => (
+      <li key={grant.id}>
+        {`${grant.recipient.name} - ${grant.number}`}
+      </li>
+    ));
+  };
+
   return (
     <>
       <Helmet>
@@ -68,11 +80,7 @@ export default function Group({ match }) {
         ) : null}
 
         <ul className="usa-list usa-list--unstyled">
-          {group.grants.map((grant) => (
-            <li key={grant.id}>
-              {grant.name}
-            </li>
-          ))}
+          {getGrantList()}
         </ul>
       </WidgetCard>
     </>
