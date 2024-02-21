@@ -52,11 +52,6 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     deleted: Joi.any().allow(null)
   });
 
-  // const promptsSchema = Joi.object({
-  //   title: Joi.string(),
-  //   response: Joi.array().items(Joi.string()),
-  // });
-
   const schema = Joi.array().items(Joi.object({
     endDate: Joi.string().allow(null).allow(''),
     status: Joi.string(),

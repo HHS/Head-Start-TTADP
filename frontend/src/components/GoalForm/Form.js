@@ -16,7 +16,6 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-// import ConditionalFields from '../ConditionalFields';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';

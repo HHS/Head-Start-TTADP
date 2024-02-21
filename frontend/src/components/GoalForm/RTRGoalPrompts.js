@@ -125,9 +125,12 @@ export default function RTRGoalPrompts({
 
   const singleValue = data[0];
   const fieldData = combinePrompts(singleValue, goalTemplatePrompts);
-  const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
 
-  // console.log(fieldData[0].title, allResponses);
+  if (!fieldData || !fieldData.length) {
+    return null;
+  }
+
+  const allResponses = uniq(Object.values(data || {}).flat().map(({ response }) => response).flat()).join(', ');
 
   return (
     <FormFieldThatIsSometimesReadOnly
