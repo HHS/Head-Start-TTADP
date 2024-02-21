@@ -109,20 +109,18 @@ module.exports = {
       }, {
         transaction,
       });
-
       await queryInterface.sequelize.query(`
-          CREATE UNIQUE INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_idx"
+          CREATE UNIQUE INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_idx"
           ON "GroupCollaborators"
-          ("groupId", "userId", "collaboratorTypeId");
+          ("groupId", "userId", "collaboratorTypeId", "deletedAt");
       `, { transaction });
 
       // https://github.com/sequelize/sequelize/issues/9934
       await queryInterface.sequelize.query(`
           ALTER TABLE "GroupCollaborators"
-          ADD CONSTRAINT "GroupCollaborators_groupId_userId_collaboratorTypeId_unique"
-          UNIQUE USING INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_idx";
+          ADD CONSTRAINT "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_idx"
+          UNIQUE USING INDEX "GroupCollaborators_groupId_userId_collaboratorTypeId_deletedAt_idx";
       `, { transaction });
-
       //---------------------------------------------------------------------------------
 
       const collectGroupCollaborators = (source, typeName) => /* sql */`
@@ -161,7 +159,8 @@ module.exports = {
       (
         "groupId",
         "userId",
-        "collaboratorTypeId"
+        "collaboratorTypeId",
+        "deletedAt"
       )
       DO UPDATE SET
         "updatedAt" = EXCLUDED."updatedAt",
