@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
+import { uniqueId, uniq } from 'lodash';
 import ContextMenu from '../ContextMenu';
 import ReadOnlyObjective from './ReadOnlyObjective';
 import './ReadOnly.scss';
@@ -29,7 +29,7 @@ export const parseObjectValuesOrString = (d) => {
     // this gets arrays and numbers
     // (although numbers are not expected
     // and will be converted to empty arrays by Object.values)
-    return Object.values(d).join(', ');
+    return uniq(Object.values(d)).join(', ');
   } catch (e) {
     return ''; // honestly, try breaking this function now, you can't
   }
