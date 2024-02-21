@@ -65,15 +65,17 @@ export { generateRedisConfig };
 export async function increaseListeners(queue, num = 1) {
   const MAX_LISTENERS = 20;
   const redisClient = queue.client;
-  const maxListeners = redisClient.getMaxListeners();
-  const currentCounts = queue.eventNames().reduce((counts, eventName) => ({
-    ...counts,
-    [eventName]: queue.listenerCount(eventName),
-  }), {});
-  const totalCount = Object.values(currentCounts).reduce((acc, count) => acc + count, 0);
-  const newListenerCount = Math.min(totalCount + num, MAX_LISTENERS);
-  if (newListenerCount > maxListeners) {
-    redisClient.setMaxListeners(newListenerCount);
+  if (redisClient) {
+    const maxListeners = redisClient.getMaxListeners();
+    const currentCounts = queue.eventNames().reduce((counts, eventName) => ({
+      ...counts,
+      [eventName]: queue.listenerCount(eventName),
+    }), {});
+    const totalCount = Object.values(currentCounts).reduce((acc, count) => acc + count, 0);
+    const newListenerCount = Math.min(totalCount + num, MAX_LISTENERS);
+    if (newListenerCount > maxListeners) {
+      redisClient.setMaxListeners(newListenerCount);
+    }
   }
 }
 
