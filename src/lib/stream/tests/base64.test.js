@@ -80,5 +80,40 @@ describe('Base64Stream', () => {
 
       expect(err).toBeInstanceOf(Error);
     });
+
+    it('should handle errors in _transform method', async () => {
+      const base64Stream = new Base64Stream('decode');
+      const invalidBase64Chunk = Buffer.from('invalid base64');
+
+      // Wrap the _transform call in a promise to use async/await
+      await expect(new Promise((resolve, reject) => {
+        // eslint-disable-next-line no-underscore-dangle
+        base64Stream._transform(invalidBase64Chunk, 'utf8', (error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      })).resolves.toEqual(undefined);
+    });
+
+    it('should handle errors in _flush method', async () => {
+      const base64Stream = new Base64Stream('decode');
+      // Set leftover to an invalid base64 string length (not a multiple of 4)
+      base64Stream.leftover = 'abc'; // Bypass private access for testing
+
+      // Wrap the _flush call in a promise to use async/await
+      await expect(new Promise((resolve, reject) => {
+        // eslint-disable-next-line no-underscore-dangle
+        base64Stream._flush((error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve();
+          }
+        });
+      })).resolves.toEqual(undefined);
+    });
   });
 });

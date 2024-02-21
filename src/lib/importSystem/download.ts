@@ -1,5 +1,5 @@
 import { Readable } from 'stream';
-import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings } from '../stream/sftp';
+import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings, FileListing } from '../stream/sftp';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
 import db from '../../models';
@@ -32,11 +32,7 @@ const {
  */
 const collectNextFile = async (
   importId: number,
-  availableFiles: {
-    fullPath: string,
-    fileInfo: SFTPFileInfo,
-    stream?: Promise<Readable>,
-  }[],
+  availableFiles: FileListing[],
   times: {
     start: Date,
     limit: Date,
@@ -64,7 +60,7 @@ const collectNextFile = async (
   if (availableFile === undefined || availableFile === null) {
     return {
       collectedFiles: importedFiles,
-      hasImportedFiles: !!importedFiles,
+      hasImportedFiles: importedFiles && importedFiles.length > 0,
       hasRemainingFiles: false,
     };
   }
@@ -73,7 +69,7 @@ const collectNextFile = async (
   if (currentStart > limit) {
     return {
       collectedFiles: importedFiles,
-      hasImportedFiles: !!importedFiles,
+      hasImportedFiles: importedFiles && importedFiles.length > 0,
       hasRemainingFiles: !!availableFile,
     };
   }
@@ -84,7 +80,7 @@ const collectNextFile = async (
     if (new Date(currentStart.getTime() + avg) > limit) {
       return {
         collectedFiles: importedFiles,
-        hasImportedFiles: !!importedFiles,
+        hasImportedFiles: importedFiles && importedFiles.length > 0,
         hasRemainingFiles: !!availableFile,
       };
     }
@@ -149,11 +145,12 @@ const collectNextFile = async (
   await Promise.all([
     // Scan file
     // Note: file will be queued for processing without waiting on status of scanning
-    addToScanQueue({ key: importFileData.key }),
-    updateStatusByKey(
-      importFileData.key,
-      FILE_STATUSES.QUEUED,
-    ),
+    // TODO: Files too big for current scanner, all will fail
+    // addToScanQueue({ key: importFileData.key }),
+    // updateStatusByKey(
+    //   importFileData.key,
+    //   FILE_STATUSES.QUEUED,
+    // ),
     setImportFileStatus(
       importFileData.importFileId,
       IMPORT_STATUSES.COLLECTED,
@@ -221,6 +218,16 @@ const collectServerSettings = (
 };
 
 /**
+ * Sorts an array of `FileListing` objects in place by their `fullPath` property using
+ * locale-sensitive string comparison.
+ *
+ * @param files - An array of `FileListing` objects to be sorted.
+ */
+function sortFilesByFullPath(files: FileListing[]): void {
+  files.sort((a, b) => a.fullPath.localeCompare(b.fullPath));
+}
+
+/**
  * Collects files from an FTP server based on the provided parameters.
  *
  * @param importId - The unique identifier for the import.
@@ -249,7 +256,13 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
-  const priorFile = await getPriorFile(importId); // Get the prior file for the import
+  const priorFile = await getPriorFile(
+    importId,
+    [
+      IMPORT_STATUSES.COLLECTED,
+      IMPORT_STATUSES.PROCESSED,
+    ],
+  ); // Get the prior file for the import
 
   try {
     await ftpClient.connect();
@@ -257,11 +270,7 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to connect to FTP: ${err.message}`);
   }
 
-  let availableFiles: {
-    fullPath: string,
-    fileInfo: SFTPFileInfo,
-    stream?: Promise<Readable>,
-  }[];
+  let availableFiles: FileListing[];
   try {
     availableFiles = await ftpClient.listFiles({
       path, // The path on the FTP server to search for files
@@ -275,6 +284,7 @@ const collectFilesFromSource = async (
 
   // only files with a stream populated will work
   const fetchableAvailableFiles = availableFiles.filter(({ stream }) => stream);
+  sortFilesByFullPath(fetchableAvailableFiles);
 
   // Record the available files for the import
   await recordAvailableFiles(importId, fetchableAvailableFiles);
@@ -343,5 +353,7 @@ const downloadFilesFromSource = async (
 export {
   collectNextFile,
   collectFilesFromSource,
+  collectServerSettings,
   downloadFilesFromSource,
+  sortFilesByFullPath,
 };

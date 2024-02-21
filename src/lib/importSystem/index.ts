@@ -9,16 +9,19 @@ import {
 /**
  * Initiates the download of files associated with the given import ID.
  * @param importId - The ID of the import operation to download files for.
+ * @param timeBox - Optional time limit for the download process in milliseconds.
  * @returns A Promise resolved with the result of the download operation.
  * @throws Will throw an error if the download operation fails.
  */
 const download = async (
   importId: number,
-) => downloadFilesFromSource(importId);
+  timeBox?: number,
+) => downloadFilesFromSource(importId, timeBox);
 
 /**
  * Processes the ZIP file from S3 for the given import ID.
  * @param importId - The ID of the import operation whose ZIP file should be processed.
+ * @param timeBox - Optional time limit for the download process in milliseconds.
  * @returns A Promise resolved with the result of the processing operation.
  * @throws Will throw an error if the processing operation fails.
  */

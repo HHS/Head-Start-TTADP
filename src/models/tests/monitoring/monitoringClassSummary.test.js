@@ -56,12 +56,12 @@ describe('MonitoringClassSummary', () => {
         // eslint-disable-next-line @typescript-eslint/quotes
         [Sequelize.literal(`"grantNumberLink->grant"."status"`), 'grantStatus'],
       ],
-      where: { grantNumber: '14CH00002' },
+      where: { grantNumber: '09HP044444' },
     });
     expect(nestedRawish(data)).toMatchObject([{
       classroomOrganization: '5.2303',
       emotionalSupport: '6.2303',
-      grantNumber: '14CH00002',
+      grantNumber: '09HP044444',
       grantStatus: 'Active',
       instructionalSupport: '3.2303',
       monitoringReviewOutcome: 'Deficient',

@@ -6,7 +6,7 @@
 # `cf target -s SPACE_NAME)
 
 # Define SFTP server details
-SFTP_SERVER="sftp.ams20.gov"
+SFTP_SERVER="sftp.ams20.com"
 SFTP_USERNAME="tta_ro"
 SFTP_REMOTE_DIR="/ProdTTAHome/"
 LOCAL_DIR="../monitoring"

@@ -1,4 +1,7 @@
-require('newrelic');
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  require('newrelic');
+}
 
 /* eslint-disable import/first */
 import { WebSocketServer } from 'ws';
