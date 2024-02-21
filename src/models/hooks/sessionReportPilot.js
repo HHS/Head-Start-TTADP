@@ -207,16 +207,13 @@ const updateCreatorCollaborator = async (sequelize, eventRecord, existingCollabo
     .map((u) => ({ id: u.id, name: u.name }))
     .sort((a, b) => a.name.localeCompare(b.name))[0];
 
-  if (!firstPoc) {
-    // No POCs defined on the event, so we use ourself as the creator.
-    const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
-    if (creatorCollaborator.userId !== currentUserId) {
-      await creatorCollaborator.update({ userId: currentUserId }, { transaction: options.transaction });
-    }
-  }
-
-  if (firstPoc && creatorCollaborator.userId !== firstPoc.id) {
+  // Update the creator collaborator if the first POC is different from the current one.
+  if (firstPoc && creatorCollaborator && creatorCollaborator.userId !== firstPoc.id) {
     await creatorCollaborator.update({ userId: firstPoc.id }, { transaction: options.transaction });
+  } else if (!firstPoc) {
+    // If there is no POC (event report pocIds was empty), use the current user as the new creator.
+    const contextUser = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+    await creatorCollaborator.update({ userId: contextUser }, { transaction: options.transaction });
   }
 };
 
@@ -242,7 +239,7 @@ const createCreatorCollaborator = async (sequelize, eventRecord, goalId, session
   }
 };
 
-const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sessionReport, options) => {
+export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sessionReport, options) => {
   const currentUserId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
 
   const [creatorType, linkerType] = await Promise.all([
@@ -402,7 +399,6 @@ const makeGoalsInProgressIfThisIsTheFirstCompletedSession = async (sequelize, in
 
   // Are any of them complete?
   const anyComplete = otherSessions.some((s) => {
-    // console.log('other session', s);
     const { status } = s.dataValues.data;
     if (!status) return false;
     return status === TRAINING_REPORT_STATUSES.COMPLETE;
