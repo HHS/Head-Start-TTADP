@@ -1263,6 +1263,7 @@ export async function createOrUpdateGoals(goals) {
       prompts,
       isCurated,
       source,
+      goalTemplateId,
       ...options
     } = goalData;
 
@@ -1303,6 +1304,10 @@ export async function createOrUpdateGoals(goals) {
 
     if (isCurated) {
       await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
+    }
+
+    if (isCurated && !newGoal.goalTemplateId && goalTemplateId) {
+      newGoal.set({ goalTemplateId });
     }
 
     // we can't update this stuff if the goal is on an approved AR
@@ -2210,7 +2215,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
     [GOAL_STATUS.DRAFT]: [GOAL_STATUS.CLOSED],
     [GOAL_STATUS.NOT_STARTED]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
     [GOAL_STATUS.IN_PROGRESS]: [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED],
-    [GOAL_STATUS.SUSPENDED]: [GOAL_STATUS.CLOSED],
+    [GOAL_STATUS.SUSPENDED]: [GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.CLOSED],
     [GOAL_STATUS.CLOSED]: [],
   };
 
