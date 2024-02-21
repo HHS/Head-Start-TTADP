@@ -93,7 +93,11 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
           <h2 className="margin-0 padding-0">CLASS® review</h2>
-          <Link className="display-flex flex-align-center" href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grantNumber}`}>
+          <Link
+            className="display-flex flex-align-center"
+            href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grantNumber}`}
+            arial-label={`HSES CLASS scores for grant ${grantNumber}`}
+          >
             HSES CLASS
             {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />

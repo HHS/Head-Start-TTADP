@@ -48,7 +48,11 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
           <h2 className="margin-0 padding-0">Monitoring review</h2>
-          <Link className="display-flex flex-align-center" href={`https://hses.ohs.acf.hhs.gov/monitoring/grant?grant=${grantNumber}`}>
+          <Link
+            className="display-flex flex-align-center"
+            href={`https://hses.ohs.acf.hhs.gov/monitoring/grant?grant=${grantNumber}`}
+            aria-label={`HSES monitoring for grant ${grantNumber}`}
+          >
             HSES monitoring
             {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
