@@ -28,9 +28,8 @@ export default function MyGroup({
 
   const determineGroupAccess = () => {
     let access = group.isPublic ? 'Public' : 'Private';
-    if (isCoOwner) {
-      const hasIndividuals = group.groupCollaborators.some((collaborator) => collaborator.collaboratorType.name === 'SharedWith');
-      if (hasIndividuals) {
+    if (isCoOwner && group.sharedWith.length) {
+      if (group.sharedWith.length) {
         access = 'Individuals';
       }
     }
@@ -114,10 +113,8 @@ MyGroup.propTypes = {
     editor: PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired,
-    groupCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      collaboratorType: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }).isRequired,
+    sharedWith: PropTypes.arrayOf(PropTypes.shape({
+      name: PropTypes.string.isRequired,
     }).isRequired),
   }).isRequired,
   setMyGroups: PropTypes.func.isRequired,

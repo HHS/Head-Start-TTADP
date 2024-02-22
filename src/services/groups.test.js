@@ -197,6 +197,18 @@ describe('Groups service', () => {
     await GroupCollaborator.create({
       userId: mockUserFour.id,
       groupId: existingGroupToEdit.id,
+      collaboratorTypeId: coOwnerCollaboratorType.id, // Coowner.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserFour.id,
+      groupId: existingGroupToEdit.id,
+      collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: existingGroupToEdit.id,
       collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
     });
 
@@ -368,6 +380,17 @@ describe('Groups service', () => {
       expect(groupOne.creator.name).toBe(mockUser.name);
       expect(groupOne.editor.id).toBe(mockUserTwo.id);
 
+      // Assert groupOne coOwners and sharedWith.
+      expect(groupOne.coOwners).toHaveLength(2);
+      const coOwnersIds = groupOne.coOwners.map((co) => co.id);
+      expect(coOwnersIds).toContain(mockUserThree.id);
+      expect(coOwnersIds).toContain(mockUserFour.id);
+
+      expect(groupOne.sharedWith).toHaveLength(2);
+      const sharedWithIds = groupOne.sharedWith.map((sw) => sw.id);
+      expect(sharedWithIds).toContain(mockUserFour.id);
+      expect(sharedWithIds).toContain(mockUserTwo.id);
+
       // Assert the creator is mockUser.
       const groupTwo = result.find((g) => g.name === 'Group 2');
       expect(groupTwo).toBeDefined();
@@ -414,11 +437,17 @@ describe('Groups service', () => {
       expect(result.editor.name).toBe(mockUserTwo.name);
       expect(result.grants).toHaveLength(1);
 
-      // Assert CoOwners and SharedWith.
-      expect(result.coOwners).toHaveLength(1);
-      expect(result.coOwners[0].id).toBe(mockUserThree.id);
-      expect(result.sharedWith).toHaveLength(1);
-      expect(result.sharedWith[0].id).toBe(mockUserFour.id);
+      // Co-owners.
+      expect(result.coOwners).toHaveLength(2);
+      const coOwnerIds = result.coOwners.map((co) => co.id);
+      expect(coOwnerIds.includes(mockUserThree.id)).toBe(true);
+      expect(coOwnerIds.includes(mockUserFour.id)).toBe(true);
+
+      // Shared with.
+      expect(result.sharedWith).toHaveLength(2);
+      const sharedWithIds = result.sharedWith.map((co) => co.id);
+      expect(sharedWithIds.includes(mockUserTwo.id)).toBe(true);
+      expect(sharedWithIds.includes(mockUserFour.id)).toBe(true);
     });
   });
 

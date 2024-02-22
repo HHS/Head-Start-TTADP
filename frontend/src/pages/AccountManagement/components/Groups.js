@@ -22,33 +22,31 @@ export default function Groups() {
     const creatorGroups = (myGroups || []).filter((group) => group.creator.id === user.id);
     const creatorGroupIds = creatorGroups.map((group) => group.id);
 
-    // Get Co-owned bucket.
-    const coOwnedGroups = (myGroups || []).filter((group) => {
-      const found = group.groupCollaborators.filter(
-        (collaborator) => collaborator.collaboratorType.name === 'Co-Owner'
-      && collaborator.user.id === user.id
-      && !creatorGroupIds.includes(group.id),
-      );
-      return found.length > 0;
-    });
+    // Get Co-owned and shared with bucket.
+    let coOwnedGroups = [];
+    let cowOwnerGroupIds = [];
+    let sharedGroups = [];
+    let sharedGroupIds = [];
 
-    // Get shared bucket.
-    const sharedGroups = (myGroups || []).filter((group) => {
-      const found = group.groupCollaborators.filter(
-        (collaborator) => collaborator.collaboratorType.name === 'SharedWith'
-        && collaborator.user.id === user.id
-        && !creatorGroupIds.includes(group.id),
-      );
-      return found.length > 0;
-    });
+    if (myGroups) {
+      // Co-owned.
+      coOwnedGroups = myGroups.filter((group) => (group.coOwners || []).some(
+        (coOwner) => coOwner.id === user.id,
+      ));
+      cowOwnerGroupIds = coOwnedGroups.map((group) => group.id);
 
-    // Get group ids for co-owned and shared groups.
-    const cowOwnerGroupIds = coOwnedGroups.map((group) => group.id);
-    const sharedGroupIds = sharedGroups.map((group) => group.id);
+      // Shared with.
+      sharedGroups = myGroups.filter((group) => (group.sharedWith || []).some(
+        (Individual) => Individual.id === user.id,
+      ));
+      sharedGroupIds = sharedGroups.map((group) => group.id);
+    }
 
     // Get public groups.
     const publicGroups = (myGroups || []).filter(
       (group) => group.creator.id !== user.id
+    && group.isPublic
+    && !creatorGroupIds.includes(group.id)
     && !cowOwnerGroupIds.includes(group.id)
     && !sharedGroupIds.includes(group.id),
     );

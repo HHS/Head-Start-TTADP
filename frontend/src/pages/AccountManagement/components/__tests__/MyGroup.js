@@ -56,16 +56,13 @@ describe('MyGroup', () => {
   it('displays the correct accesss for co-owners', () => {
     const groupWithIndividuals = {
       ...defaultGroup,
-      groupCollaborators: [
+      coOwners: [],
+      sharedWith: [
         {
-          collaboratorType: {
-            name: 'SharedWith',
-          },
-          user: {
-            id: 1,
-          },
+          id: 1,
         },
       ],
+      groupCollaborators: [],
     };
     renderMyGroup(groupWithIndividuals, false, true);
     expect(screen.getByText('group1')).toBeInTheDocument();
@@ -79,16 +76,13 @@ describe('MyGroup', () => {
   it('displays the correct updated at with user', () => {
     const groupWithIndividuals = {
       ...defaultGroup,
-      groupCollaborators: [
+      sharedWith: [
         {
-          collaboratorType: {
-            name: 'SharedWith',
-          },
-          user: {
-            id: 1,
-          },
+          id: 1,
         },
       ],
+      coOwners: [],
+      groupCollaborators: [],
       editor: {
         id: 2,
         name: 'Jane Doe',
