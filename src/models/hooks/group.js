@@ -16,11 +16,27 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
   );
 };
 
+const autoPopulateEditor = async (sequelize, instance, options) => {
+  const { id: groupId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    'group',
+    sequelize,
+    options.transaction,
+    groupId,
+    GROUP_COLLABORATORS.EDITOR,
+  );
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await autoPopulateCreator(sequelize, instance, options);
+  await autoPopulateEditor(sequelize, instance, options);
+};
+
+const afterUpdate = async (sequelize, instance, options) => {
+  await autoPopulateEditor(sequelize, instance, options);
 };
 
 export {
-  // eslint-disable-next-line  import/prefer-default-export
   afterCreate,
+  afterUpdate,
 };

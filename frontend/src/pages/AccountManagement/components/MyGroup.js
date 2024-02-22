@@ -14,7 +14,6 @@ export default function MyGroup({
   group, setMyGroups, setError, isViewOnly, isCoOwner,
 }) {
   const modalRef = useRef();
-
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
   const onDelete = async (groupId) => {
@@ -39,6 +38,14 @@ export default function MyGroup({
     return access;
   };
 
+  const getLastUpdated = () => {
+    let updatedAt = moment(group.updatedAt, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    if (group.editor) {
+      updatedAt = `${updatedAt} by ${group.editor.name}`;
+    }
+    return updatedAt;
+  };
+
   return (
     <tr key={group.id}>
       <td data-label="Group name">
@@ -51,7 +58,7 @@ export default function MyGroup({
         {determineGroupAccess()}
       </td>
       <td data-label="Last update">
-        {moment(group.updatedAt, 'YYYY/MM/DD').format('MM/DD/YYYY')}
+        {getLastUpdated()}
       </td>
       <td align="right">
         {
@@ -102,6 +109,9 @@ MyGroup.propTypes = {
     isPublic: PropTypes.bool.isRequired,
     updatedAt: PropTypes.string.isRequired,
     creator: PropTypes.shape({
+      name: PropTypes.string.isRequired,
+    }).isRequired,
+    editor: PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired,
     groupCollaborators: PropTypes.arrayOf(PropTypes.shape({

@@ -75,4 +75,31 @@ describe('MyGroup', () => {
     expect(screen.getByText('Edit group')).toBeInTheDocument();
     expect(screen.getByText('Delete group')).toBeInTheDocument();
   });
+
+  it('displays the correct updated at with user', () => {
+    const groupWithIndividuals = {
+      ...defaultGroup,
+      groupCollaborators: [
+        {
+          collaboratorType: {
+            name: 'SharedWith',
+          },
+          user: {
+            id: 1,
+          },
+        },
+      ],
+      editor: {
+        id: 2,
+        name: 'Jane Doe',
+      },
+    };
+    renderMyGroup(groupWithIndividuals, false, true);
+    expect(screen.getByText('group1')).toBeInTheDocument();
+    expect(screen.getByText('Tom Jones')).toBeInTheDocument();
+    expect(screen.getByText('Individuals')).toBeInTheDocument();
+    expect(screen.getByText('07/19/2021 by Jane Doe')).toBeInTheDocument();
+    expect(screen.getByText('Edit group')).toBeInTheDocument();
+    expect(screen.getByText('Delete group')).toBeInTheDocument();
+  });
 });

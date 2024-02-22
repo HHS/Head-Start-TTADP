@@ -116,23 +116,8 @@ describe('MyGroups', () => {
     fetchMock.get('/api/groups/1', {
       id: 1,
       name: 'group1',
-      isPublic: false,
-      groupCollaborators: [
-        {
-          id: 1,
-          userId: 1,
-          groupId: 1,
-          collaboratorType: {
-            id: 1,
-            name: 'Creator',
-            mapsToCollaboratorType: null,
-          },
-          user: {
-            id: 352,
-            name: 'Creator User',
-          },
-        },
-      ],
+      isPublic: true,
+      groupCollaborators: [],
       grants: [
         {
           recipientInfo: 'Grant 1 - 11111111 - HS',
@@ -152,6 +137,26 @@ describe('MyGroups', () => {
           },
         },
       ],
+      coOwners: [
+        {
+          id: 1,
+          name: 'co-owner1',
+        },
+        {
+          id: 2,
+          name: 'co-owner2',
+        },
+      ],
+      sharedWith: [
+        {
+          id: 3,
+          name: 'individual1',
+        },
+        {
+          id: 4,
+          name: 'individual2',
+        },
+      ],
       creator: {
         id: 1,
         name: 'Creator User',
@@ -164,9 +169,25 @@ describe('MyGroups', () => {
 
     const input = screen.getByLabelText(/Group name/i);
     expect(input).toBeInTheDocument();
-    await waitFor(() => {
-      expect(input.value).toBe('group1');
-      expect(screen.getByText(/grant 1 - 11111111 - hs/i)).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        expect(input.value).toBe('group1');
+        expect(screen.getByText(/grant 1 - 11111111 - hs/i)).toBeInTheDocument();
+
+        expect(screen.getByText(/co-owner1/i)).toBeInTheDocument();
+        expect(screen.getByText(/co-owner2/i)).toBeInTheDocument();
+        expect(screen.getByText(/individual1/i)).toBeInTheDocument();
+        expect(screen.getByText(/individual2/i)).toBeInTheDocument();
+
+        // Expect check box 'Keep this group private.' to not be checked.
+        const isPrivate = screen.getByRole('checkbox', { name: /keep this group private\./i });
+        expect(isPrivate).not.toBeNull();
+        expect(isPrivate).not.toBeChecked();
+
+        // Assert radio button 'Individuals in my region' is checked.
+        const radio = screen.getByLabelText(/Individuals in my region/i);
+        expect(radio).toBeChecked();
+      });
     });
   });
 
@@ -442,22 +463,7 @@ describe('MyGroups', () => {
           },
         },
       ],
-      groupCollaborators: [
-        {
-          id: 1,
-          userId: 1,
-          groupId: 1,
-          collaboratorType: {
-            id: 1,
-            name: 'Creator',
-            mapsToCollaboratorType: null,
-          },
-          user: {
-            id: 1,
-            name: 'User1',
-          },
-        },
-      ],
+      groupCollaborators: [],
       creator: {
         id: 1,
         name: 'Creator User',

@@ -3,6 +3,7 @@ const {
 } = require('sequelize');
 const {
   afterCreate,
+  afterUpdate,
 } = require('./hooks/group');
 
 export default (sequelize, DataTypes) => {
@@ -37,6 +38,7 @@ export default (sequelize, DataTypes) => {
     modelName: 'Group',
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
+      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return Group;
