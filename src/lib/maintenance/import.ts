@@ -291,9 +291,7 @@ const importMaintenance = async (job) => {
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
 // TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
 // needs to be addressed
-// if (process.env.WORKER_THRONG_ID === '1') {
-//   enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, true, true);
-// }
+enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, true, true);
 
 export {
   enqueueImportMaintenanceJob,
