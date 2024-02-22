@@ -229,7 +229,6 @@ export default function MyGroups({ match }) {
 
         setMyGroups(myGroups.map((group) => {
           if (group.id === g.id) {
-            console.log('group', g);
             return g;
           }
           return group;
