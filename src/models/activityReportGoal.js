@@ -6,6 +6,8 @@ const {
   beforeDestroy,
   afterDestroy,
   afterUpdate,
+  beforeValidate,
+  beforeUpdate,
 } = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
@@ -20,6 +22,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportGoalId',
         otherKey: 'resourceId',
         as: 'resources',
+      });
+      ActivityReportGoal.belongsTo(models.Goal, {
+        foreignKey: 'originalGoalId',
+        as: 'originalGoal',
       });
     }
   }
@@ -64,10 +70,23 @@ export default (sequelize, DataTypes) => {
       defaultValue: false,
       allowNull: true,
     },
+    originalGoalId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Goals',
+        },
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'ActivityReportGoal',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
+      beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),

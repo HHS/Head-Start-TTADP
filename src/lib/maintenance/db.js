@@ -224,6 +224,7 @@ const nextBlock = async (type, percent = null) => {
   const newOffset = offset + limit < numOfModels
     ? offset + limit
     : 0;
+
   // Calculate the new limit based on the percentage of total models requested.
   // If no percentage is provided, use the default limit.
   const newLimit = percent === null
@@ -335,6 +336,7 @@ addCronJob(
 );
 
 module.exports = {
+  nextBlock,
   maintenanceCommand: maintenanceDBCommand,
   tableMaintenanceCommand,
   vacuumTable,

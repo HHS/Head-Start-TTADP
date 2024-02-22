@@ -16,8 +16,8 @@ const router = express.Router();
 export async function updateNationalCenter(req: Request, res: Response) {
   try {
     const { nationalCenterId } = req.params;
-    const { name } = req.body;
-    const center = await updateById(parseInt(nationalCenterId, DECIMAL_BASE), { name });
+    const { name, userId } = req.body;
+    const center = await updateById(parseInt(nationalCenterId, DECIMAL_BASE), { name, userId });
     return res.status(httpCodes.OK).json(center);
   } catch (err) {
     return handleError(req, res, err, logContext);
@@ -36,8 +36,8 @@ export async function deleteNationalCenter(req: Request, res: Response) {
 
 export async function createNationalCenter(req: Request, res: Response) {
   try {
-    const { name } = req.body;
-    const center = await create({ name });
+    const { name, userId } = req.body;
+    const center = await create({ name }, userId);
     return res.status(httpCodes.CREATED).json(center);
   } catch (err) {
     return handleError(req, res, err, logContext);

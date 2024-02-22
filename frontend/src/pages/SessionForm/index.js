@@ -10,6 +10,7 @@ import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
@@ -34,7 +35,7 @@ const INTERVAL_DELAY = 10000; // TEN SECONDS
    * @param {*} event - not an HTML event, but the event object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-const resetFormData = (reset, updatedSession, prevData = {}) => {
+const resetFormData = (reset, updatedSession) => {
   const {
     data,
     updatedAt,
@@ -43,7 +44,6 @@ const resetFormData = (reset, updatedSession, prevData = {}) => {
 
   const form = {
     ...defaultValues,
-    ...prevData,
     ...data,
     ...fields,
   };
@@ -96,7 +96,7 @@ export default function SessionForm({ match }) {
   const formData = hookForm.getValues();
 
   const { user } = useContext(UserContext);
-  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const {
     socket,
@@ -123,7 +123,7 @@ export default function SessionForm({ match }) {
   useEffect(() => {
     // create a new session
     async function createNewSession() {
-      if (!trainingReportId || !currentPage || sessionId !== 'new') {
+      if (!trainingReportId || !currentPage || sessionId !== 'new' || reportFetched) {
         return;
       }
 
@@ -137,11 +137,16 @@ export default function SessionForm({ match }) {
         history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
         setError('Error creating session');
+      } finally {
+        // in case an error is thrown, we don't want to be stuck in the loading screen
+        if (!reportFetched) {
+          setReportFetched(true);
+        }
       }
     }
 
     createNewSession();
-  }, [currentPage, history, hookForm.reset, sessionId, trainingReportId]);
+  }, [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
@@ -161,10 +166,7 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-    // isAppLoading is a little out of place but by including it, we
-    // ensure that the correct form data is loading
-    // TODO: Dig into why it's needed and remove it if possible
-  }, [currentPage, isAppLoading, hookForm.reset, reportFetched, sessionId]);
+  }, [currentPage, hookForm.reset, reportFetched, sessionId]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
@@ -262,6 +264,16 @@ export default function SessionForm({ match }) {
   // retrieve the last time the data was saved to local storage
   const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
+  if (!reportFetched) {
+    return null;
+  }
+
+  if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
+    return (
+      <Redirect to={`/training-report/view/${trainingReportId}`} />
+    );
+  }
+
   return (
     <div className="smart-hub-training-report--session">
       { error
@@ -270,7 +282,7 @@ export default function SessionForm({ match }) {
           {error}
         </Alert>
         )}
-      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="Session | TTA Hub" />
+      <Helmet titleTemplate="%s - Training Report | TTA Hub" defaultTitle="Session - Training Report | TTA Hub" />
       <BackLink to="/training-reports/in-progress">
         Back to Training Reports
       </BackLink>

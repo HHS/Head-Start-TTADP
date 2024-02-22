@@ -40,6 +40,11 @@ const RecipientReviewSection = () => {
                 {goal.goalNumber && ` (${goal.goalNumber})`}
               </div>
               <div className="margin-top-1">
+                <span className="text-bold">Anticipated close date:</span>
+                {' '}
+                {goal.endDate}
+              </div>
+              <div className="margin-top-1">
                 <>
                   {objectives.map((objective) => (
                     <div key={objective.id} className="desktop:flex-align-end display-flex flex-column flex-justify-center margin-top-1">
@@ -66,12 +71,27 @@ const RecipientReviewSection = () => {
                           ))}
                         </ul>
                       </div>
+                      <div className="margin-top-1">
+                        <span className="text-bold">iPD courses:</span>
+                        {' '}
+                        {
+                          objective.courses.map((c) => c.name).join(', ')
+                        }
+                      </div>
                       <AttachmentReviewSection attachments={objective.files} />
                       <div className="margin-top-1">
                         <span className="text-bold">Objective status:</span>
                         {' '}
                         {objective.status}
                       </div>
+                      { objective.status === 'Suspended' && objective.closeSuspendReason && (
+                        <div className="margin-top-1">
+                          <span className="text-bold">Reason suspended:</span>
+                          {' '}
+                          {objective.closeSuspendReason}
+                          {objective.closeSuspendContext && (` - ${objective.closeSuspendContext}`)}
+                        </div>
+                      )}
                       <div className="margin-top-1">
                         <span className="text-bold">TTA provided:</span>
                         {' '}
@@ -81,6 +101,13 @@ const RecipientReviewSection = () => {
                           defaultEditorState={getEditorState(objective.ttaProvided)}
                         />
                       </div>
+                      {objective.supportType && (
+                        <div className="margin-top-1">
+                          <span className="text-bold">Support type:</span>
+                          {' '}
+                          {objective.supportType}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </>

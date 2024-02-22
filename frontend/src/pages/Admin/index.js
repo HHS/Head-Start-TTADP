@@ -10,35 +10,51 @@ import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
 import NationalCenters from './NationalCenters';
 import Email from './Email';
+import Goals from './Goals';
+import TrainingReports from './TrainingReports';
+import Courses from './Courses';
 
 function Admin() {
   return (
     <>
-      <h1>Admin UI</h1>
+      <h1>Admin</h1>
+      <h2>Support</h2>
       <div className="margin-bottom-2">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
-          Users
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
+          Courses
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
           Diag
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
+          Goals
+        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
           Feature flags
-        </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
-          Site alerts
-        </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
-          Redis info
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/national-centers">
           National centers
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
+          Site alerts
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
+          Training Reports
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
+          Users
+        </NavLink>
+      </div>
+      <h2>Engineer only</h2>
+      <div className="margin-bottom-2">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/email">
           Email
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
+          Redis info
         </NavLink>
       </div>
       <Switch>
@@ -73,6 +89,18 @@ function Admin() {
         <Route
           path="/admin/email/"
           render={({ match }) => <Email match={match} />}
+        />
+        <Route
+          path="/admin/goals/"
+          render={() => <Goals />}
+        />
+        <Route
+          path="/admin/training-reports/"
+          render={({ match }) => <TrainingReports match={match} />}
+        />
+        <Route
+          path="/admin/courses/"
+          render={({ match }) => <Courses match={match} />}
         />
       </Switch>
     </>

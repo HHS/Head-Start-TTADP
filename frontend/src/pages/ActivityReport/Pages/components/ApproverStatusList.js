@@ -6,7 +6,7 @@ import colors from '../../../../colors';
 
 const getStatusIcon = (status) => {
   if (status && status === 'needs_action') {
-    return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.ttahubMagentaLight} icon={faExclamationCircle} />;
+    return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.errorDark} icon={faExclamationCircle} />;
   }
   if (status && status === 'approved') {
     return <FontAwesomeIcon className="margin-right-105" size="1x" color={colors.success} icon={faCheck} />;

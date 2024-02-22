@@ -22,7 +22,9 @@ export type CreateEventRequest = {
   pocIds: number;
   collaboratorIds: number[];
   regionId: number;
-  data: unknown;
+  data: {
+    owner: undefined | { id: string; name: string; email: string }
+  };
 };
 
 export type UpdateEventRequest = CreateEventRequest;

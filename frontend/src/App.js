@@ -55,6 +55,7 @@ import TrainingReportForm from './pages/TrainingReportForm';
 import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import useGaUserData from './hooks/useGaUserData';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -73,6 +74,8 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useGaUserData(user);
 
   useEffect(() => {
     try {
@@ -264,42 +267,36 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReports user={user} match={match} />
-              </FeatureFlag>
+
+              <TrainingReports user={user} match={match} />
+
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9]*)"
+          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <ViewTrainingReport match={match} />
-              </FeatureFlag>
+              <ViewTrainingReport match={match} />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <TrainingReportForm match={match} />
-              </FeatureFlag>
+              <TrainingReportForm match={match} />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="training_reports" renderNotFound>
-                <SessionForm match={match} />
-              </FeatureFlag>
+              <SessionForm match={match} />
             </AppWrapper>
           )}
         />
@@ -412,7 +409,7 @@ function App() {
 
   return (
     <>
-      <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
+      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />

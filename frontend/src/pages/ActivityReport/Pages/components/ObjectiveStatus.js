@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Label, Dropdown } from '@trussworks/react-uswds';
+import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
 
 const statuses = [
   'Not Started',
@@ -14,27 +15,36 @@ export default function ObjectiveStatus({
   onChangeStatus,
   onBlur,
   inputName,
+  closeSuspendContext,
+  closeSuspendReason,
 }) {
   return (
-    <Label>
-      Objective status
-      <Dropdown
-        name={inputName}
-        onChange={onChangeStatus}
-        value={status}
-        aria-label="Status for objective "
-        onBlur={onBlur}
-      >
-        {statuses.map((possibleStatus) => (
-          <option
-            key={possibleStatus}
-            value={possibleStatus}
-          >
-            {possibleStatus}
-          </option>
-        ))}
-      </Dropdown>
-    </Label>
+    <>
+      <Label>
+        Objective status
+        <Dropdown
+          name={inputName}
+          onChange={onChangeStatus}
+          value={status}
+          aria-label="Status for objective "
+          onBlur={onBlur}
+        >
+          {statuses.map((possibleStatus) => (
+            <option
+              key={possibleStatus}
+              value={possibleStatus}
+            >
+              {possibleStatus}
+            </option>
+          ))}
+        </Dropdown>
+      </Label>
+      <ObjectiveStatusSuspendReason
+        status={status}
+        closeSuspendReason={closeSuspendReason}
+        closeSuspendContext={closeSuspendContext}
+      />
+    </>
   );
 }
 
@@ -43,6 +53,8 @@ ObjectiveStatus.propTypes = {
   status: PropTypes.string.isRequired,
   inputName: PropTypes.string,
   onBlur: PropTypes.func.isRequired,
+  closeSuspendReason: PropTypes.string.isRequired,
+  closeSuspendContext: PropTypes.string.isRequired,
 };
 
 ObjectiveStatus.defaultProps = {

@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
 const {
   beforeValidate,
   beforeUpdate,
@@ -26,8 +27,14 @@ export default (sequelize, DataTypes) => {
       Objective.hasMany(models.ActivityReportObjective, {
         foreignKey: 'objectiveId', as: 'activityReportObjectives',
       });
+      Objective.hasMany(models.ActivityReportObjective, {
+        foreignKey: 'originalObjectiveId', as: 'reassignedActivityReportObjectives',
+      });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
+
+      Objective.hasMany(models.ObjectiveCourse, { foreignKey: 'objectiveId', as: 'objectiveCourses' });
+
       Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
       Objective.belongsToMany(models.Resource, {
         through: models.ObjectiveResource,
@@ -49,6 +56,15 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'objectiveId',
         otherKey: 'fileId',
         as: 'files',
+      });
+
+      Objective.belongsTo(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'parentObjective',
+      });
+      Objective.hasMany(models.Objective, {
+        foreignKey: 'mapsToParentObjectiveId',
+        as: 'childObjectives',
       });
     }
   }
@@ -124,6 +140,28 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 1,
+    },
+    closeSuspendReason: {
+      allowNull: true,
+      type: DataTypes.ENUM(CLOSE_SUSPEND_REASONS),
+    },
+    closeSuspendContext: {
+      type: DataTypes.TEXT,
+    },
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
+    mapsToParentObjectiveId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      defaultValue: null,
+      references: {
+        model: {
+          tableName: 'Objectives',
+        },
+        key: 'id',
+      },
     },
   }, {
     sequelize,

@@ -3,7 +3,6 @@ import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
-import { join } from 'path';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(
@@ -178,6 +177,7 @@ test('post /', async ({ request }) => {
                 status: OBJECTIVE_STATUS.DRAFT,
                 ttaProvided: "",
                 isNew: true,
+                supportType: null,
               }
             ],
             goalNumbers: [],

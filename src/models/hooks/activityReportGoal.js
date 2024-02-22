@@ -1,3 +1,10 @@
+const { GOAL_COLLABORATORS } = require('../../constants');
+const {
+  currentUserPopulateCollaboratorForType,
+  removeCollaboratorsForType,
+} = require('../helpers/genericCollaborator');
+const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
+
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
   const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
@@ -42,12 +49,49 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   `, { transaction: options.transaction });
 };
 
+const autoPopulateLinker = async (sequelize, instance, options) => {
+  const { goalId, activityReportId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    'goal',
+    sequelize,
+    options.transaction,
+    goalId,
+    GOAL_COLLABORATORS.LINKER,
+    { activityReportIds: [activityReportId] },
+  );
+};
+
+const autoCleanupLinker = async (sequelize, instance, options) => {
+  const { goalId, activityReportId } = instance;
+  return removeCollaboratorsForType(
+    'goal',
+    sequelize,
+    options.transaction,
+    goalId,
+    GOAL_COLLABORATORS.LINKER,
+    { activityReportIds: [activityReportId] },
+  );
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
+  await autoPopulateLinker(sequelize, instance, options);
+};
+
+const beforeValidate = async (sequelize, instance, options) => {
+  if (!Array.isArray(options.fields)) {
+    options.fields = []; //eslint-disable-line
+  }
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+};
+
+const beforeUpdate = async (sequelize, instance, options) => {
+  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToMetadata(sequelize, instance, options);
+  await autoCleanupLinker(sequelize, instance, options);
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
@@ -59,6 +103,8 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
+  beforeValidate,
+  beforeUpdate,
   processForEmbeddedResources,
   recalculateOnAR,
   propagateDestroyToMetadata,

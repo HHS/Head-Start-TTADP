@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import selectEvent from 'react-select-event';
 import ObjectiveForm from '../ObjectiveForm';
+import UserContext from '../../../UserContext';
 
 import {
   OBJECTIVE_ERROR_MESSAGES,
@@ -20,6 +21,8 @@ describe('ObjectiveForm', () => {
   const defaultObjective = {
     title: 'This is an objective',
     files: [],
+    closeSuspendReason: '',
+    closeSuspendContext: '',
     topics: [
       {
         id: 1,
@@ -43,31 +46,33 @@ describe('ObjectiveForm', () => {
     goalStatus = 'Draft',
   ) => {
     render((
-      <ObjectiveForm
-        index={index}
-        isOnReport={false}
-        removeObjective={removeObjective}
-        setObjectiveError={setObjectiveError}
-        objective={objective}
-        setObjective={setObjective}
-        errors={[<></>, <></>, <></>]}
-        goalStatus={goalStatus}
-        onUploadFiles={jest.fn()}
-        topicOptions={[
-          'Behavioral / Mental Health / Trauma',
-          'Child Screening and Assessment',
-          'CLASS: Classroom Organization',
-          'CLASS: Emotional Support',
-          'CLASS: Instructional Support',
-          'Coaching',
-          'Communication',
-          'Community and Self-Assessment',
-          'Culture & Language',
-          'Curriculum (Instructional or Parenting)',
-          'Data and Evaluation',
-        ].map((name, id) => ({ id, name }))}
-        userCanEdit
-      />
+      <UserContext.Provider value={{ user: { flags: [] } }}>
+        <ObjectiveForm
+          index={index}
+          isOnReport={false}
+          removeObjective={removeObjective}
+          setObjectiveError={setObjectiveError}
+          objective={objective}
+          setObjective={setObjective}
+          errors={[<></>, <></>, <></>, <></>, <></>, <></>]}
+          goalStatus={goalStatus}
+          onUploadFiles={jest.fn()}
+          topicOptions={[
+            'Behavioral / Mental Health / Trauma',
+            'Child Screening and Assessment',
+            'CLASS: Classroom Organization',
+            'CLASS: Emotional Support',
+            'CLASS: Instructional Support',
+            'Coaching',
+            'Communication',
+            'Community and Self-Assessment',
+            'Culture & Language',
+            'Curriculum (Instructional or Parenting)',
+            'Data and Evaluation',
+          ].map((name, id) => ({ id, name }))}
+          userCanEdit
+        />
+      </UserContext.Provider>
     ));
   };
 
@@ -79,7 +84,10 @@ describe('ObjectiveForm', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
+  });
 
   it('validates text and topics', async () => {
     const objective = {
@@ -103,19 +111,22 @@ describe('ObjectiveForm', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>, <></>, <></>, <></>]);
 
     await selectEvent.select(topics, ['Coaching', 'Communication']);
 
     userEvent.click(topics);
     userEvent.click(resourceOne);
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(
+      index, [<></>, <></>, <></>, <></>, <></>, <></>,
+      ],
+    );
 
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.click(objectiveText);
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>, <></>, <></>, <></>]);
   });
 
   it('you can change status', async () => {

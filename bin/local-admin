@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Note: This will make the current user an admin
+export $(grep POSTGRES_PASSWORD   ./.env)
+export $(grep POSTGRES_USERNAME   ./.env)
+export $(grep CURRENT_USER_ID   ./.env)
+export PGPASSWORD=${POSTGRES_PASSWORD}
+psql -U ${POSTGRES_USERNAME} -h localhost -p 5432 -d ttasmarthub -c "INSERT INTO \"Permissions\" (\"userId\", \"regionId\", \"scopeId\") SELECT ${CURRENT_USER_ID}, 14, s.id FROM \"Scopes\" s WHERE s.name = 'ADMIN';"

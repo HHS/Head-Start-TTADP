@@ -10,11 +10,13 @@ test('can fill out and complete a training and session report', async ({ page })
   // event summary
   await page.getByText(/Event collaborators/i).click();
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter'); 
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
 
   await page.getByText(/Event region point of contact/i).click();
   await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter'); 
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
   await page.getByText('Recipients').click();
   await page.getByLabel('Event start date *mm/dd/yyyy').fill('01/02/2023');
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
@@ -49,6 +51,9 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByText(/Who were the trainers for this session/i).click()
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
+  await page.keyboard.press('Escape');
+
+  await page.locator('#ttaProvided').fill('TTA');
 
   await page.getByTestId('dropdown').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
@@ -66,10 +71,18 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.keyboard.press('Enter');
   await blur(page);
 
+  await page.getByText(/Language used/i).click();
+  await page.keyboard.press('ArrowDown');
+  await page.keyboard.press('Enter');
+  await blur(page);
+
   await page.getByText('Hybrid').click();
   await page.getByLabel('Number of participants attending in person *').fill('5');
   await page.getByLabel('Number of participants attending virtually *').fill('5');
-  await page.getByTestId('textarea').fill('TTA');
+
+  await page.getByRole('button', { name: 'Save and continue' }).click();
+
+  // supporting attachments.
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   // next steps
@@ -79,16 +92,20 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('07/03/2023');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
-  // complete session
-  await page.getByTestId('dropdown').selectOption('Complete');
+  await page.goto('http://localhost:3000/');
+  await page.getByRole('link', { name: 'Training Reports' }).click();
+  await page.getByRole('link', { name: 'In progress' }).click();
 
   // edit session and save changes
-  await page.getByRole('button', { name: 'Submit session' }).click();
   await page.getByRole('button', { name: 'View sessions for event R01-PD-23-1037' }).click();
   await page.getByRole('link', { name: 'Edit session' }).click();
   await page.getByLabel('Session name *').fill('First session revised');
-  await page.getByRole('button', { name: 'Save and continue' }).click();
-  await page.getByRole('link', { name: 'Back to Training Reports' }).click();
+
+  await page.getByRole('button', { name: 'Complete session Not Started' }).click();
+
+  // complete session 
+  await page.getByTestId('dropdown').selectOption('Complete');
+  await page.getByRole('button', { name: 'Submit session' }).click();
 
   // complete event
   await page.getByTestId('ellipsis-button').click();

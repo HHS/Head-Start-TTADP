@@ -307,9 +307,6 @@ describe('maintenance', () => {
         },
       });
 
-      const type = MAINTENANCE_TYPE.REINDEX;
-      const command = 'REINDEX TABLE';
-
       const logs = await MaintenanceLog.findAll({
         where: { id: { [Op.gt]: (preLog?.id || 0) } },
         order: [['id', 'DESC']],

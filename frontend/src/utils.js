@@ -171,8 +171,8 @@ export function filtersToQueryString(filters, region) {
     const q = String(filter.query).trim();
     return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
   });
-  if (region && (parseInt(region, DECIMAL_BASE) !== -1)) {
-    queryFragments.push(`region.in[]=${parseInt(region, DECIMAL_BASE)}`);
+  if (region && !Number.isNaN(parseInt(region, DECIMAL_BASE))) {
+    queryFragments.push(`region.in[]=${region}`);
   }
 
   return queryFragments.join('&');
@@ -205,6 +205,8 @@ export function formatDateRange(format = {
   yearToDate: false,
   withSpaces: false,
   forDateTime: false,
+  lastThreeMonths: false,
+  lastSixMonths: false,
   sep: '-',
   string: '',
 }) {
@@ -222,6 +224,16 @@ export function formatDateRange(format = {
   if (format.lastThirtyDays) {
     secondDay = moment();
     firstDay = moment().subtract(30, 'days');
+  }
+
+  if (format.lastThreeMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(3, 'months');
+  }
+
+  if (format.lastSixMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(6, 'months');
   }
 
   if (format.yearToDate) {
