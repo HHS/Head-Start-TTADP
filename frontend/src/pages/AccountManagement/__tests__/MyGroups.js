@@ -80,6 +80,18 @@ describe('MyGroups', () => {
       {
         id: 3,
         userId: 3,
+        name: 'co-owner3',
+        regionId: 1,
+      },
+      {
+        id: 4,
+        userId: 4,
+        name: 'co-owner4',
+        regionId: 1,
+      },
+      {
+        id: 3,
+        userId: 3,
         name: 'individual1',
         regionId: 1,
       },
@@ -551,5 +563,60 @@ describe('MyGroups', () => {
 
     const userError = await screen.findByText('There was an error fetching co-owners and individuals');
     expect(userError).toBeInTheDocument();
+  });
+
+  it('you cannot select more than three co-owners', async () => {
+    act(() => {
+      renderMyGroups();
+    });
+    const input = screen.getByLabelText(/Group name/i);
+    await act(async () => {
+      userEvent.type(input, 'group3');
+      await selectEvent.select(screen.getByLabelText(/Recipients/i), ['grant1 - 111111 - EHS, HS', 'grant2 - 222222 - EHS']);
+    });
+
+    // Check the 'Keep this group private.' is NOT checkbox.
+    const isPrivate = screen.getByRole('checkbox', { name: /keep this group private\./i });
+    expect(isPrivate).not.toBeNull();
+    expect(isPrivate).not.toBeChecked();
+
+    // Add co-owner1 and co-owner2.
+    const coOwnerSelect = screen.getByLabelText(/Add co-owner/i);
+    expect(coOwnerSelect).not.toBeNull();
+
+    await act(async () => {
+      // Select 'co-owner1' and 'co-owner2'.
+      await waitFor(() => {
+        selectEvent.select(coOwnerSelect, ['co-owner1', 'co-owner2', 'co-owner3', 'co-owner4']);
+      });
+    });
+
+    // Expect co-owner1 and co-owner2 to be selected.
+    expect(screen.getByText(/co-owner1/i)).toBeInTheDocument();
+    expect(screen.getByText(/co-owner2/i)).toBeInTheDocument();
+    expect(screen.getByText(/co-owner3/i)).toBeInTheDocument();
+    expect(screen.getByText(/co-owner4/i)).toBeInTheDocument();
+
+    // Attempt to save.
+    fetchMock.post('/api/groups', {});
+    const save = screen.getByText(/Save group/i);
+    act(() => {
+      userEvent.click(save);
+    });
+
+    // Expect an error message to be displayed.
+    const coOwnerMessge = await screen.findByText(/you can only choose up to three co-owners./i);
+    expect(coOwnerMessge).toBeInTheDocument();
+
+    // Remove co-owner4.
+    const removeCoOwner = await screen.findByRole('button', { name: /remove co-owner4/i });
+    expect(removeCoOwner).not.toBeNull();
+
+    await act(async () => {
+      userEvent.click(removeCoOwner);
+      await waitFor(() => {
+        expect(screen.queryByText(/you can only choose up to three co-owners./i)).not.toBeInTheDocument();
+      });
+    });
   });
 });
