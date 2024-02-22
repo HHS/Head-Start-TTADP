@@ -103,22 +103,19 @@ export default function MyGroups({ match }) {
 
           // Set recipients.
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapSelectedRecipients(fetchedGroup.grants));
-
           // Set is private.
           setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !fetchedGroup.isPublic);
-
           // Set group co-owners.
-          const coOwners = fetchedGroup.groupCollaborators.filter((uc) => uc.collaboratorType.name === 'Co-Owner');
-          setValue(GROUP_FIELD_NAMES.CO_OWNERS, coOwners.map((coOwner) => (
-            { value: coOwner.userId, label: coOwner.user.name }
+          setValue(GROUP_FIELD_NAMES.CO_OWNERS, fetchedGroup.coOwners.map((coOwner) => (
+            { value: coOwner.id, label: coOwner.name }
+          )));
+          // Set group individuals.
+          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, fetchedGroup.sharedWith.map((s) => (
+            { value: s.id, label: s.name }
           )));
 
-          // Set group individuals.
-          const individualsUsers = fetchedGroup.groupCollaborators.filter((ui) => ui.collaboratorType.name === 'SharedWith');
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, individualsUsers.map((i) => (
-            { value: i.userId, label: i.user.name }
-          )));
-          if (individualsUsers.length === 0) {
+          // Set share with everyone.
+          if (fetchedGroup.sharedWith.length === 0) {
             setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'everyone');
           }
         }
@@ -232,6 +229,7 @@ export default function MyGroups({ match }) {
 
         setMyGroups(myGroups.map((group) => {
           if (group.id === g.id) {
+            console.log('group', g);
             return g;
           }
           return group;

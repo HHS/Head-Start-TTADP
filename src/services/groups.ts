@@ -201,7 +201,13 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
               as: 'permissions',
               attributes: [],
               required: true,
-              // where: { scopeId: SCOPES.READ_REPORTS },
+              where: {
+                scopeId: [
+                  SCOPES.READ_REPORTS,
+                  SCOPES.READ_WRITE_REPORTS,
+                  SCOPES.APPROVE_REPORTS,
+                ],
+              },
             }],
           },
         ],
@@ -231,41 +237,61 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
     ],
   });
 
-  // Get  distinct list of groupIds
-  const groupIds = returnGroups.map((g) => g.id);
-
-  // Get all the users that have the creator role for the groups.
-  const creatorUsers = await GroupCollaborator.findAll({
-    attributes: ['id', 'groupId', 'userId'],
+  // We need to get all the collaborators after we have the group ids.
+  const allGroupCollaborators = await GroupCollaborator.findAll({
+    attributes: [
+      'id',
+      'groupId',
+      'userId',
+      'updatedAt',
+    ],
     where: {
-      groupId: groupIds,
+      groupId: returnGroups.map((g) => g.id),
     },
-    include: [{
-      model: CollaboratorType,
-      as: 'collaboratorType',
-      required: true,
-      where: {
-        name: GROUP_COLLABORATORS.CREATOR,
+    include: [
+      {
+        model: CollaboratorType,
+        as: 'collaboratorType',
+        required: true,
+        attributes: ['id', 'name'],
+        where: {
+          name: [
+            GROUP_COLLABORATORS.CREATOR,
+            GROUP_COLLABORATORS.EDITOR,
+          ],
+        },
       },
-    },
-    {
-      model: User,
-      as: 'user',
-      attributes: ['id', 'name'],
-      required: true,
-    }],
+      {
+        model: User,
+        as: 'user',
+        attributes: ['id', 'name'],
+      },
+    ],
   });
 
-  // Match each creator to its group and create a property for each group.
-  const groupsWithCreators = returnGroups.map((g) => {
-    const creator = creatorUsers.find((cu) => cu.groupId === g.id);
+  // Get the creator of the group.
+  const finalGroups = returnGroups.map((g) => {
+    const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id);
+    const creator = groupCollaborators.find(
+      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
+    );
+    const mostRecentEditor = (groupCollaborators.filter(
+      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR,
+    ).sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    ) || [creator])[0];
+
     return {
       ...g.dataValues,
+      editor: mostRecentEditor ? {
+        id: mostRecentEditor.user.id,
+        name: mostRecentEditor.user.name,
+      } : null,
       creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
     };
   });
 
-  return groupsWithCreators;
+  return finalGroups;
 }
 
 /**
@@ -282,6 +308,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
       'id',
       'name',
       'isPublic',
+      'updatedAt',
     ],
     where: {
       id: groupId,
@@ -291,7 +318,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
         model: GroupCollaborator,
         as: 'groupCollaborators',
         required: true,
-        attributes: ['id', 'userId', 'groupId'],
+        attributes: ['id', 'userId', 'groupId', 'updatedAt'],
         include: [
           {
             model: CollaboratorType,
@@ -309,7 +336,6 @@ export async function group(groupId: number): Promise<GroupResponse> {
               as: 'permissions',
               attributes: [],
               required: true,
-              // where: { regionId: region },
               // through: { attributes: [] },
             }],
           },
@@ -345,9 +371,34 @@ export async function group(groupId: number): Promise<GroupResponse> {
     (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
   );
 
+  // Get the editor.
+  const mostRecentEditor = (returnGroup.groupCollaborators.filter(
+    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR,
+  ).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  ) || [creator])[0];
+
+  const coOwners = (returnGroup.groupCollaborators.filter(
+    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER,
+  ).sort(
+    (a, b) => a.user.name.localeCompare(b.user.name),
+  ) || []);
+
+  const sharedWith = (returnGroup.groupCollaborators.filter(
+    (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
+  ).sort(
+    (a, b) => a.user.name.localeCompare(b.user.name),
+  ) || []);
+
   // Return the group with the creator.
   return {
     ...returnGroup.dataValues,
+    editor: mostRecentEditor ? {
+      id: mostRecentEditor.user.id,
+      name: mostRecentEditor.user.name,
+    } : null,
+    coOwners: coOwners.map((co) => ({ id: co.user.id, name: co.user.name })),
+    sharedWith: sharedWith.map((sw) => ({ id: sw.user.id, name: sw.user.name })),
     creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
   };
 }
@@ -938,6 +989,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
       where: {
         id: groupId,
       },
+      individualHooks: true,
       returning: true,
     }),
   ]);

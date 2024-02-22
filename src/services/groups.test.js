@@ -45,6 +45,7 @@ describe('Groups service', () => {
   let creatorCollaboratorType;
   let coOwnerCollaboratorType;
   let sharedWithCollaboratorType;
+  let editorCollaboratorType;
 
   beforeAll(async () => {
     // Get group collaborator types.
@@ -57,6 +58,13 @@ describe('Groups service', () => {
     creatorCollaboratorType = await CollaboratorType.findOne({
       where: {
         name: GROUP_COLLABORATORS.CREATOR,
+        validForId: groupValidFor.id,
+      },
+    });
+
+    editorCollaboratorType = await CollaboratorType.findOne({
+      where: {
+        name: GROUP_COLLABORATORS.EDITOR,
         validForId: groupValidFor.id,
       },
     });
@@ -165,6 +173,38 @@ describe('Groups service', () => {
       name: 'Group 1',
       // userId: mockUser.id,
       isPublic: false,
+    });
+
+    // Create editors for existingGroupToEdit.
+    await GroupCollaborator.create({
+      userId: mockUser.id,
+      groupId: existingGroupToEdit.id,
+      collaboratorTypeId: editorCollaboratorType.id, // Editor.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: existingGroupToEdit.id,
+      collaboratorTypeId: editorCollaboratorType.id, // Editor.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserThree.id,
+      groupId: existingGroupToEdit.id,
+      collaboratorTypeId: coOwnerCollaboratorType.id, // Coowner.
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserFour.id,
+      groupId: existingGroupToEdit.id,
+      collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
+    });
+
+    // Get all group collaborators for existingGroupToEdit id.
+    const groupCollaborators = await GroupCollaborator.findAll({
+      where: {
+        groupId: existingGroupToEdit.id,
+      },
     });
 
     // Create GroupCollaborator.
@@ -321,11 +361,32 @@ describe('Groups service', () => {
       const result = await groups(mockUser.id, [1]);
       expect(result).toHaveLength(4);
 
-      const groupNames = result.map((gr) => gr.name);
-      expect(groupNames).toContain('Group 1');
-      expect(groupNames).toContain('Group 2');
-      expect(groupNames).toContain('Public Group');
-      expect(groupNames).toContain('Group 1 with collaborators');
+      // Get 'Group 1' from result.
+      const groupOne = result.find((g) => g.name === 'Group 1');
+      expect(groupOne).toBeDefined();
+      expect(groupOne.creator.id).toBe(mockUser.id);
+      expect(groupOne.creator.name).toBe(mockUser.name);
+      expect(groupOne.editor.id).toBe(mockUserTwo.id);
+
+      // Assert the creator is mockUser.
+      const groupTwo = result.find((g) => g.name === 'Group 2');
+      expect(groupTwo).toBeDefined();
+      expect(groupTwo.creator.id).toBe(mockUser.id);
+      expect(groupTwo.creator.name).toBe(mockUser.name);
+
+      // Get Public Group from result.
+      const groupPublic = result.find((g) => g.name === 'Public Group');
+      expect(groupPublic).toBeDefined();
+      expect(groupPublic.creator.id).toBe(mockUserTwo.id);
+      expect(groupPublic.creator.name).toBe(mockUserTwo.name);
+      expect(groupPublic.isPublic).toBe(true);
+
+      // Get 'Group 1 with collaborators' from result.
+      const groupOneWithCollabs = result.find((g) => g.name === 'Group 1 with collaborators');
+      expect(groupOneWithCollabs).toBeDefined();
+      expect(groupOneWithCollabs.creator.id).toBe(mockUser.id);
+      expect(groupOneWithCollabs.creator.name).toBe(mockUser.name);
+      expect(groupOneWithCollabs.editor).toBeNull();
     });
 
     it('returns a list of groups by region', async () => {
@@ -346,7 +407,18 @@ describe('Groups service', () => {
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('name');
       expect(result).toHaveProperty('grants');
+
+      expect(result.creator.id).toBe(mockUser.id);
+      expect(result.creator.name).toBe(mockUser.name);
+      expect(result.editor.id).toBe(mockUserTwo.id);
+      expect(result.editor.name).toBe(mockUserTwo.name);
       expect(result.grants).toHaveLength(1);
+
+      // Assert CoOwners and SharedWith.
+      expect(result.coOwners).toHaveLength(1);
+      expect(result.coOwners[0].id).toBe(mockUserThree.id);
+      expect(result.sharedWith).toHaveLength(1);
+      expect(result.sharedWith[0].id).toBe(mockUserFour.id);
     });
   });
 
@@ -391,14 +463,6 @@ describe('Groups service', () => {
       expect(result.grants).toHaveLength(2);
 
       expect(result.groupCollaborators).toHaveLength(3);
-      // Creator is created by group hook.
-      /*
-      // eslint-disable-next-line max-len
-      const creatorCollab = result.groupCollaborators.find(
-        (gc) => gc.collaboratorType.name === 'Creator');
-      expect(creatorCollab).toBeDefined();
-      expect(creatorCollab.userId).toBe(mockUser.id);
-      */
 
       const sharedWithCollab = result.groupCollaborators.filter(
         (gc) => gc.collaboratorType.name === 'SharedWith',
@@ -414,12 +478,6 @@ describe('Groups service', () => {
       expect(coOwnersCollab).toHaveLength(1);
       const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
       expect(coOwnersCollabIds).toContain(mockUserFour.id);
-
-      // Assert result.creator is mockUser.
-      /*
-      expect(result.creator.id).toBe(mockUser.id);
-      expect(result.creator.name).toBe(mockUser.name);
-      */
     });
   });
 

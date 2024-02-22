@@ -80,6 +80,7 @@ const GROUP_COLLABORATORS = {
   CREATOR: 'Creator',
   CO_OWNER: 'Co-Owner',
   SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
 };
 
 /**
