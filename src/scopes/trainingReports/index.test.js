@@ -14,8 +14,8 @@ const mockUser = {
   id: faker.datatype.number(),
   homeRegionId: 1,
   name: 'John Smith',
-  hsesUsername: 'user13705748',
-  hsesUserId: 'user13705748',
+  hsesUsername: faker.datatype.string(10),
+  hsesUserId: faker.datatype.string(10),
   lastLogin: new Date(),
 };
 
