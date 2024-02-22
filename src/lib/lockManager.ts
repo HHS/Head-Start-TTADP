@@ -56,6 +56,8 @@ export default class LockManager {
     this.lockValue = uuidv4();
     this.lockTTL = lockTTL;
 
+    this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}`);
+
     this.registerEventListeners();
   }
 

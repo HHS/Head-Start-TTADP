@@ -176,8 +176,18 @@ function setupQueueEventHandlers(queue) {
   process.on('unhandledRejection', rejectionListener);
 }
 
+function setRedisConnectionName(queue, connectionName) {
+  const { client } = queue;
+  if (client && client.call) {
+    client.call('client', 'setname', connectionName).catch((err) => {
+      auditLogger.error('Failed to set Redis connection name:', err);
+    });
+  }
+}
+
 export default function newQueue(queName) {
   const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  setRedisConnectionName(queue, `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${queName}-${process.pid}`);
   // setupQueueEventHandlers(queue); // TODO - currently causing mor errors then fixing
   return queue;
 }
