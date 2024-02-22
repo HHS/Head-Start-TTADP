@@ -1,5 +1,5 @@
-import { Sequelize } from 'sequelize';
 import Semaphore from '../../lib/semaphore';
+
 import {
   syncLink,
   syncGrantNumberLink,
@@ -7,90 +7,76 @@ import {
   syncMonitoringReviewStatusLink,
 } from './genericLink';
 
-// Mock the Semaphore and Sequelize models
-jest.mock('../../lib/semaphore', () => jest.fn().mockImplementation(() => ({
-  acquire: jest.fn().mockResolvedValue(true),
-  release: jest.fn().mockResolvedValue(true),
-})));
-
-const mockFindOne = jest.fn();
-const mockCreate = jest.fn();
-const mockUpdate = jest.fn();
-
-jest.mock('sequelize', () => {
-  const actualSequelize = jest.requireActual('sequelize');
-  return {
-    ...actualSequelize,
-    Model: {
-      findOne: mockFindOne,
-      create: mockCreate,
-      update: mockUpdate,
-    },
-  };
-});
-
 describe('syncLink', () => {
-  const sequelize = new Sequelize();
+  const sequelize = {};
   const instance = {};
+  instance.changed = jest.fn().mockReturnValue(['sourceEntity']);
   const options = { transactions: {} };
-  const model = sequelize.define('Model', {});
-  const entityName = 'entityName';
+  const model = {};
+  const sourceEntityName = 'sourceEntity';
+  const targetEntityName = 'targetEntity';
+
   const entityId = 'entityId';
   const onCreateCallbackWhileHoldingLock = jest.fn().mockResolvedValue(true);
+  const acquireMock = jest.spyOn(Semaphore.prototype, 'acquire');
+  const releaseMock = jest.spyOn(Semaphore.prototype, 'release');
+  acquireMock.mockImplementation(() => {});
+  releaseMock.mockImplementation(() => {});
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
   it('should acquire and release a semaphore lock', async () => {
-    const semaphore = new Semaphore(1);
-    mockFindOne.mockResolvedValueOnce(null);
-    mockCreate.mockResolvedValueOnce({});
+    model.findAll = jest.fn().mockResolvedValueOnce([{}]);
 
     await syncLink(
       sequelize,
       instance,
       options,
       model,
-      entityName,
+      sourceEntityName,
+      targetEntityName,
       entityId,
       onCreateCallbackWhileHoldingLock,
     );
 
-    expect(semaphore.acquire).toHaveBeenCalledWith(`${model.modelName}_${entityId}`);
-    expect(semaphore.release).toHaveBeenCalledWith(`${model.modelName}_${entityId}`);
+    expect(acquireMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
+    expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
   });
 
   it('should create a new record if one does not exist', async () => {
-    mockFindOne.mockResolvedValueOnce(null);
-    mockCreate.mockResolvedValueOnce({});
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockResolvedValueOnce([{}]);
 
     await syncLink(
       sequelize,
       instance,
       options,
       model,
-      entityName,
+      sourceEntityName,
+      targetEntityName,
       entityId,
       onCreateCallbackWhileHoldingLock,
     );
 
-    expect(mockCreate).toHaveBeenCalledWith(
-      { [entityName]: entityId },
+    expect(model.create).toHaveBeenCalledWith(
+      { [targetEntityName]: entityId },
       { transaction: options.transactions },
     );
   });
 
   it('should call onCreateCallbackWhileHoldingLock if a new record is created', async () => {
-    mockFindOne.mockResolvedValueOnce(null);
-    mockCreate.mockResolvedValueOnce({});
+    model.findAll = jest.fn().mockResolvedValueOnce([null]);
+    model.create = jest.fn().mockResolvedValueOnce([{}]);
 
     await syncLink(
       sequelize,
       instance,
       options,
       model,
-      entityName,
+      sourceEntityName,
+      targetEntityName,
       entityId,
       onCreateCallbackWhileHoldingLock,
     );
@@ -100,25 +86,27 @@ describe('syncLink', () => {
       instance,
       options,
       model,
-      entityName,
+      targetEntityName,
       entityId,
     );
   });
 
   it('should not create a new record if one exists', async () => {
-    mockFindOne.mockResolvedValueOnce({});
+    model.findAll = jest.fn().mockResolvedValueOnce([{}]);
+    model.create = jest.fn().mockResolvedValueOnce([{}]);
 
     await syncLink(
       sequelize,
       instance,
       options,
       model,
-      entityName,
+      sourceEntityName,
+      targetEntityName,
       entityId,
       onCreateCallbackWhileHoldingLock,
     );
 
-    expect(mockCreate).not.toHaveBeenCalled();
+    expect(model.create).not.toHaveBeenCalled();
   });
 
   // Add more tests to cover error handling, different scenarios, etc.
