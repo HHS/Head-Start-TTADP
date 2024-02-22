@@ -13,6 +13,18 @@ const lockManagers = {};
 
 const maintenanceCronJobs = {};
 
+// Function to remove a specific job by ID
+async function removeCompletedJob(job) {
+  try {
+    if (job && job.isCompleted()) {
+      await job.remove();
+      auditLogger.log('info', `Removed completed job with ID ${job.id}`);
+    }
+  } catch (error) {
+    auditLogger.error(`Error removing job: ${job.id}`, error);
+  }
+}
+
 /**
  * Logs an error message to the audit logger when a maintenance job fails.
  *
@@ -22,6 +34,8 @@ const maintenanceCronJobs = {};
 const onFailedMaintenance = (job, error) => {
   // Log an error message with details about the failed job and error.
   auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
+  // Intentionally not awaited
+  removeCompletedJob(job);
 };
 
 /**
@@ -38,6 +52,8 @@ const onCompletedMaintenance = (job, result) => {
     // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
   }
+  // Intentionally not awaited
+  removeCompletedJob(job);
 };
 
 /**
