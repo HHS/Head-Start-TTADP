@@ -85,6 +85,7 @@ export default class LockManager {
 
   private async releaseLock(): Promise<void> {
     await this.redis.del(this.lockKey);
+    await this.close();
   }
 
   private async readLock(): Promise<string | null> {
@@ -112,6 +113,7 @@ export default class LockManager {
           'info',
           `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`,
         );
+        await this.close();
         return;
       }
     }
@@ -122,7 +124,7 @@ export default class LockManager {
       await callback();
     } finally {
       if (holdLock) {
-        await this.startRenewal(this.lockTTL * 2);
+        await this.startRenewal(this.lockTTL);
       } else {
         await this.stopRenewal();
       }
