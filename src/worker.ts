@@ -33,7 +33,6 @@ process.env.IS_WORKER = 'true';
 
 // Pull jobs off the redis queue and process them.
 async function start(context: { id: number }) {
-  process.env.WORKER_THRONG_ID = `${context.id}`;
   // File Scanning Queue
   processScanQueue();
 
