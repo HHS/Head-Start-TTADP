@@ -139,6 +139,7 @@ const reportObject = {
   ECLKCResourcesUsed: ['test'],
   activityRecipients: [{ activityRecipientId: RECIPIENT_ID }],
   version: 2,
+  language: ['English', 'Spanish'],
 };
 
 const submittedReport = {
@@ -437,6 +438,7 @@ describe('Activity report service', () => {
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
+        expect(report.language).toStrictEqual(['English', 'Spanish']);
         expect(report.id).toEqual(3334);
       });
 
@@ -798,6 +800,17 @@ describe('Activity report service', () => {
         expect(reportTwo.approvers[0].user.id).toEqual(mockUserTwo.id);
         expect(reportTwo.regionId).toEqual(3);
       });
+
+      it('works when no collaborator user roles (branch coverage)', async () => {
+        const report = await createOrUpdate({
+          ...reportObject,
+          activityReportCollaborators: [
+            { user: { id: mockUser.id } },
+          ],
+        });
+        expect(report.activityReportCollaborators.length).toBe(1);
+        expect(report.activityReportCollaborators[0].user.id).toBe(mockUser.id);
+      });
     });
 
     describe('activityReportByLegacyId', () => {
@@ -976,6 +989,13 @@ describe('Activity report service', () => {
         });
       });
 
+      it('retrieves reports when directly provided with IDS', async () => {
+        const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude }, false, 0, [latestReport.id]);
+        expect(rows.length).toBe(1);
+        expect(count).toBeDefined();
+        expect(rows[0].id).toBe(latestReport.id);
+      });
+
       it('retrieves reports with default sort by updatedAt', async () => {
         const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude });
         expect(rows.length).toBe(5);
@@ -1134,6 +1154,18 @@ describe('Activity report service', () => {
         );
         expect(foundApprovedReports.length).toBe(1);
         expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695  - DWN');
+      });
+
+      it('returns all approved reports when provided with IDs', async () => {
+        const rows = await getAllDownloadableActivityReports(
+          [14],
+          {},
+          0,
+          [approvedReport.id],
+        );
+        const ids = rows.map((row) => row.id);
+        expect(ids.length).toEqual(1);
+        expect(ids).toContain(approvedReport.id);
       });
 
       it('will return legacy reports', async () => {

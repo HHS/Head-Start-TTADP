@@ -98,7 +98,7 @@ export default function HorizontalTableWidget(
                   {
                     r.isUrl
                       ? (
-                        <a href={r.heading} target="_blank" rel="noreferrer" title={r.heading}>
+                        <a href={r.link} target="_blank" rel="noreferrer">
                           {r.heading}
                         </a>
                       )

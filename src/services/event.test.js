@@ -1,17 +1,20 @@
 import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import faker from '@faker-js/faker';
 
 import { Op } from 'sequelize';
+import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import {
   createEvent,
   updateEvent,
   destroyEvent,
-  findEventById,
+  findEventByDbId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByCollaboratorId,
   findEventsByRegionId,
   findEventsByStatus,
+  csvImport,
 } from './event';
 
 describe('event service', () => {
@@ -25,6 +28,11 @@ describe('event service', () => {
     collaboratorIds: [num],
     data: {
       status: 'active',
+      owner: {
+        id: num,
+        name: 'test',
+        email: 'test@test.com',
+      },
     },
   });
 
@@ -72,8 +80,35 @@ describe('event service', () => {
       await destroyEvent(created.id);
     });
 
+    it('update owner json', async () => {
+      const created = await createAnEvent(99_927);
+      const newOwner = await db.User.create({
+        homeRegionId: 1,
+        name: 'New Owner',
+        hsesUsername: 'DF431423',
+        hsesUserId: 'DF431423',
+        email: 'newowner@test.com',
+        role: [],
+        lastLogin: new Date(),
+      });
+
+      const updated = await updateEvent(created.id, {
+        ownerId: newOwner.id,
+        pocIds: [123],
+        regionId: 123,
+        collaboratorIds: [123],
+        data: {},
+      });
+
+      expect(updated.data.owner).toHaveProperty('id', newOwner.id);
+      expect(updated.data.owner).toHaveProperty('name', 'New Owner');
+      expect(updated.data.owner).toHaveProperty('email', 'newowner@test.com');
+
+      await destroyEvent(created.id);
+      await db.User.destroy({ where: { id: newOwner.id } });
+    });
     it('creates a new event when the id cannot be found', async () => {
-      const found = await findEventById(99_999);
+      const found = await findEventByDbId(99_999);
       expect(found).toBeNull();
 
       const updated = await updateEvent(99_999, {
@@ -92,11 +127,54 @@ describe('event service', () => {
   });
 
   describe('finders', () => {
-    it('findEventById', async () => {
+    it('findEventByDbId', async () => {
       const created = await createAnEvent(98_989);
-      const found = await findEventById(created.id);
+      const found = await findEventByDbId(created.id);
       expect(found).toHaveProperty('id');
       expect(found).toHaveProperty('ownerId', 98_989);
+      await destroyEvent(created.id);
+    });
+
+    it('findEventHelper session sort order', async () => {
+      const created = await createAnEvent(98_989);
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventByDbId(created.id);
+      expect(found).toHaveProperty('id');
+      expect(found).toHaveProperty('ownerId', 98_989);
+
+      expect(found.sessionReports.length).toBe(3);
+      expect(found.sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found.sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found.sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
       await destroyEvent(created.id);
     });
 
@@ -194,6 +272,58 @@ describe('event service', () => {
 
       // await destroyEvent(created3.id);
       await destroyEvent(created4.id);
+    });
+
+    it('findEventHelperBlob session sort order', async () => {
+      const created = await createAnEventWithStatus(98_989, TRS.IN_PROGRESS);
+
+      const sessionReport1 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          sessionName: 'Session Name 2',
+        },
+      });
+
+      const sessionReport2 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+        },
+      });
+
+      const sessionReport3 = await db.SessionReportPilot.create({
+        eventId: created.id,
+        data: {
+          startDate: '01/01/2023',
+          sessionName: 'Session Name 1',
+        },
+      });
+
+      const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
+
+      const found = await findEventsByStatus(
+        TRS.IN_PROGRESS,
+        [],
+        98_989,
+        null,
+        false,
+        { ownerId: 98_989 },
+      );
+
+      expect(found.length).toBe(1);
+      expect(found[0].data).toHaveProperty('status', TRS.IN_PROGRESS);
+
+      expect(found[0].sessionReports.length).toBe(3);
+      expect(found[0].sessionReports[0].id).toBe(sessionReport3.id);
+      expect(found[0].sessionReports[1].id).toBe(sessionReport1.id);
+      expect(found[0].sessionReports[2].id).toBe(sessionReport2.id);
+
+      await db.SessionReportPilot.destroy({
+        where: {
+          id: sessionIds,
+        },
+      });
+
+      await destroyEvent(created.id);
     });
 
     it('shows all if user is admin', async () => {
@@ -310,6 +440,234 @@ describe('event service', () => {
       await destroyEvent(event1.id);
       await destroyEvent(event2.id);
       await destroyEvent(event3.id);
+    });
+  });
+
+  describe('tr import', () => {
+    let user;
+    let data;
+    let buffer;
+    let created;
+    const eventIdsToDestroy = [];
+
+    const userId = faker.datatype.number();
+
+    const eventId = 'R01-TR-02-3333';
+    const regionId = 1;
+    const editTitle = 'Hogwarts Academy';
+    const istName = 'Harry Potter';
+    const email = 'smartsheetevents@ss.com';
+    const audience = 'Recipients';
+    const vision = 'To learn';
+    const duration = 'Series';
+    const targetPopulation = `"Program Staff
+    Affected by Disaster"`;
+    const reasons = `"Complaint
+    Planning/Coordination"`;
+    const organizer = 'Dumbledore';
+
+    const headings = ['Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
+
+    beforeAll(async () => {
+      await db.User.create({
+        id: userId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email,
+        lastLogin: new Date(),
+      });
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+      user = await db.User.findOne({ where: { id: userId } });
+      data = `${headings.join(',')}
+${eventId},${editTitle},${istName},${email},${organizer},${duration},${reasons},${targetPopulation},${audience},${vision}
+R01-TR-4234,bad_title,bad_istname,bad_email,bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
+
+      buffer = Buffer.from(data);
+    });
+
+    afterAll(async () => {
+      await db.User.destroy({ where: { id: userId } });
+      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      // await db.EventReportPilot.destroy({ where: { id: created.id } });
+      await db.Permission.destroy({ where: { userId } });
+    });
+
+    it('imports good data correctly', async () => {
+      const result = await csvImport(buffer);
+
+      // eventId is now a field in the jsonb body of the "data" column on
+      // db.EventReportPilot.
+      // Let's make sure it exists.
+      created = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': eventId },
+        raw: true,
+      });
+
+      expect(created).toHaveProperty('ownerId', userId);
+      expect(created).toHaveProperty('regionId', regionId);
+      expect(created.data.reasons).toEqual(['Complaint', 'Planning/Coordination']);
+      expect(created.data.vision).toEqual(vision);
+      expect(created.data.audience).toEqual(audience);
+      expect(created.data.targetPopulations).toEqual(['Program Staff', 'Affected by Disaster']);
+      expect(created.data.eventOrganizer).toEqual(organizer);
+      expect(created.data.creator).toEqual(email);
+      expect(created.data.istName).toEqual(istName);
+      expect(created.data.eventName).toEqual(editTitle);
+      expect(created.data.eventDuration).toEqual(duration);
+
+      expect(result.count).toEqual(1);
+      expect(result.errors).toEqual(['User bad_email does not exist']);
+
+      const secondImport = `${headings.join(',')}
+${eventId},bad_title,bad_istname,${email},bad_organizer,bad_duration,bad_reasons,bad_target,${audience},bad_vision`;
+
+      // Subsequent import with event ID that already exists in the database
+      // should skip importing this TR.
+      const resultSkip = await csvImport(Buffer.from(secondImport));
+      expect(resultSkip.count).toEqual(0);
+      expect(resultSkip.skipped).toEqual([eventId]);
+    });
+
+    it('gives an error if the user can\'t write in the region', async () => {
+      await db.Permission.destroy({ where: { userId } });
+      const result = await csvImport(buffer);
+      expect(result.count).toEqual(0);
+      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`, 'User bad_email does not exist']);
+      await db.Permission.create({
+        userId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+    });
+
+    it('skips rows that don\'t start with the correct prefix', async () => {
+      const reportId = 'R01-TR-5842';
+      const dataToTest = `${headings.join(',')}
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
+01-TR-4256,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision
+R-TR-3426,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision`;
+
+      eventIdsToDestroy.push(reportId);
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(2);
+      expect(result.skipped).toEqual(
+        ['Invalid "Event ID" format expected R##-TR-#### received 01-TR-4256', 'Invalid "Event ID" format expected R##-TR-#### received R-TR-3426'],
+      );
+    });
+
+    it('only imports valid columns ignores others', async () => {
+      const mixedColumns = `${headings.join(',')},Extra Column`;
+      const reportId = 'R01-TR-3478';
+      const dataToTest = `${mixedColumns}
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,${audience},tr_vision,extra_data`;
+
+      eventIdsToDestroy.push(reportId);
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+
+      // Assert 11 core fields, plus goal and goals[].
+      expect(Object.keys(importedEvent.data).length).toEqual(12);
+      // Assert data does not contain the extra column.
+      expect(importedEvent.data).not.toHaveProperty('Extra Column');
+    });
+
+    it('only imports valid reasons ignores others', async () => {
+      const reportId = 'R01-TR-9528';
+      const reasonsToTest = `"New Director or Management
+      Complaint
+      Planning/Coordination
+      Invalid Reason"`;
+      const dataToTest = `${headings.join(',')}
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,${reasonsToTest},tr_target,${audience},tr_vision`;
+
+      eventIdsToDestroy.push(reportId);
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+
+      // Assert data.reasons contains only valid reasons.
+      expect(importedEvent.data.reasons).toEqual(['New Director or Management', 'Complaint', 'Planning/Coordination']);
+    });
+
+    it('only imports valid target populations ignores others', async () => {
+      const reportId = 'R01-TR-6578';
+      const tgtPopToTest = `"Program Staff
+      Pregnant Women / Pregnant Persons
+      Invalid Pop"`;
+      const dataToTest = `${headings.join(',')}
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,Complaint,${tgtPopToTest},${audience},tr_vision`;
+
+      eventIdsToDestroy.push(reportId);
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+
+      // Assert data.reasons contains only valid reasons.
+      expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Pregnant Women / Pregnant Persons']);
+    });
+
+    it('skips rows that have an invalid audience', async () => {
+      const reportId = 'R01-TR-5725';
+      const dataToTest = `${headings.join(',')}
+${reportId},tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Regional office/TTA",tr_vision
+R01-TR-4658,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_target,"Invalid Audience",tr_vision`;
+
+      eventIdsToDestroy.push(reportId);
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(1);
+      expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-4658']);
+
+      // Retrieve the imported event.
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+
+      // Assert the imported event is not null.
+      expect(importedEvent).not.toBeNull();
+
+      // Assert the imported event has the correct audience.
+      expect(importedEvent.data.audience).toEqual('Regional office/TTA');
     });
   });
 });

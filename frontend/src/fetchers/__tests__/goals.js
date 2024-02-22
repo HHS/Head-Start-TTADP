@@ -1,8 +1,16 @@
 import fetchMock from 'fetch-mock';
-import { updateGoalStatus } from '../goals';
+import { updateGoalStatus, mergeGoals, similarity } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
+
+  it('merges goals', async () => {
+    fetchMock.post('/api/goals/recipient/1/region/2/merge', { res: 'ok' });
+
+    const res = await mergeGoals([1, 2, 3], 4, 1, 2, 1);
+
+    expect(res).toEqual({ res: 'ok' });
+  });
 
   it('test updates goals status', async () => {
     fetchMock.put('/api/goals/changeStatus', [{
@@ -16,6 +24,12 @@ describe('goals fetcher', () => {
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     }]);
     await updateGoalStatus([4598], 'In Progress');
+    expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('retrieves similarity', async () => {
+    fetchMock.get('/api/goals/similar/region/123/recipient/123?cluster=true', { res: 'ok' });
+    await similarity(123, 123);
     expect(fetchMock.called()).toBeTruthy();
   });
 });

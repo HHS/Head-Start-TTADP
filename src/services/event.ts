@@ -1,14 +1,21 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import parse from 'csv-parse/lib/sync';
 import _ from 'lodash';
-import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import {
+  TRAINING_REPORT_STATUSES as TRS,
+  REASONS,
+  TARGET_POPULATIONS,
+  EVENT_AUDIENCE,
+} from '@ttahub/common';
 import { auditLogger } from '../logger';
-import db from '../models';
+import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
   UpdateEventRequest,
 } from './types/event';
+import EventReport from '../policies/event';
 
 const {
   EventReportPilot,
@@ -96,8 +103,18 @@ async function findEventHelper(where, plural = false): Promise<EventShape | Even
     include: [
       {
         model: SessionReportPilot,
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+        ],
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
   };
@@ -189,7 +206,17 @@ async function findEventHelperBlob({
       {
         model: SessionReportPilot,
         as: 'sessionReports',
-        order: [['data.startDate', 'ASC'], ['data.title', 'ASC']],
+        separate: true, // This is required to order the joined table results.
+        attributes: [
+          'id',
+          'eventId',
+          'data',
+          'createdAt',
+          'updatedAt',
+          // eslint-disable-next-line @typescript-eslint/quotes
+          [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+        ],
+        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
       },
     ],
     where,
@@ -246,6 +273,16 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
+  // Get current json owner.
+  const { owner } = event.data;
+  // if owner changes update the json owner.
+  if (owner && ownerId !== event.data.owner.id) {
+    // get the new owner.
+    const newOwner = await User.findByPk(ownerId, { attributes: ['id', 'name', 'email'], raw: true });
+    // update the owner in the data.
+    data.owner = newOwner;
+  }
+
   await EventReportPilot.update(
     {
       ownerId,
@@ -254,16 +291,32 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id } },
+    { where: { id }, individualHooks: true },
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventById(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       { id },
+      ...scopes,
+    ],
+  };
+  return findEventHelper(where) as Promise<EventShape>;
+}
+
+export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+  const where = {
+    [Op.and]: [
+      {
+        data: {
+          eventId: {
+            [Op.endsWith]: `-${eventId}`,
+          },
+        },
+      },
       ...scopes,
     ],
   };
@@ -395,4 +448,158 @@ export async function findAllEvents(): Promise<EventShape[]> {
     ],
     raw: true,
   });
+}
+
+const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(Boolean);
+
+const mappings: Record<string, string> = {
+  Audience: 'audience',
+  Creator: 'creator',
+  'Edit Title': 'eventName',
+  'Event Title': 'eventName',
+  'Event Duration/#NC Days of Support': 'eventDuration',
+  'Event Duration/# NC Days of Support': 'eventDuration',
+  'Event ID': 'eventId',
+  'Overall Vision/Goal for the PD Event': 'vision',
+  'Reason for Activity': 'reasons',
+  'Target Population(s)': 'targetPopulations',
+  'Event Organizer - Type of Event': 'eventOrganizer',
+  'IST Name:': 'istName',
+  'IST Name': 'istName',
+};
+
+const toSplit = ['targetPopulations', 'reasons'];
+
+const replacements: Record<string, string> = {
+  'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
+  'Pregnant Women/Pregnant People': 'Pregnant Women / Pregnant Persons',
+  'Pregnant Women': 'Pregnant Women / Pregnant Persons',
+};
+
+const applyReplacements = (value: string) => replacements[value] || value;
+
+const mapLineToData = (line: Record<string, string>) => {
+  const data: Record<string, unknown> = {};
+
+  Object.keys(line).forEach((key) => {
+    // Only process the key if it exists in the mappings.
+    if (Object.keys(mappings).includes(key)) {
+      const mappedKey = mappings[key] || key;
+      data[mappedKey] = toSplit.includes(mappedKey)
+        ? splitPipe(line[key]).map(applyReplacements) : line[key];
+    }
+  });
+
+  return data;
+};
+
+const checkUserExists = async (creator: string) => {
+  const user = await db.User.findOne({
+    where: { email: creator },
+    include: [
+      {
+        model: db.Permission,
+        as: 'permissions',
+      },
+    ],
+  });
+  if (!user) throw new Error(`User ${creator} does not exist`);
+  return user;
+};
+
+const checkEventExists = async (eventId: string) => {
+  const event = await db.EventReportPilot.findOne({
+    where: {
+      id: {
+        [Op.in]: sequelize.literal(
+          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
+        ),
+      },
+    },
+  });
+  if (event) throw new Error(`Event ${eventId} already exists`);
+};
+
+export async function csvImport(buffer: Buffer) {
+  const skipped: string[] = [];
+  const errors: string[] = [];
+
+  const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
+  const results = parsed.map(async (line: Record<string, string>) => {
+    try {
+      const cleanLine = Object.fromEntries(
+        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()]),
+      );
+
+      const eventId = cleanLine['Event ID'];
+
+      // If the eventId doesn't start with the prefix R and two numbers, it's invalid.
+      if (!eventId.match(/^R\d{2}/i)) {
+        skipped.push(`Invalid "Event ID" format expected R##-TR-#### received ${eventId}`);
+        return false;
+      }
+
+      // Validate audience else skip.
+      if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
+        skipped.push(`Value "${cleanLine.Audience}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        return false;
+      }
+
+      const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
+
+      const creator = cleanLine.Creator;
+      let owner;
+      if (creator) {
+        owner = await checkUserExists(creator);
+        const policy = new EventReport(owner, {
+          regionId,
+        });
+
+        if (!policy.canWriteInRegion()) {
+          errors.push(`User ${creator} does not have permission to write in region ${regionId}`);
+          return false;
+        }
+      }
+
+      await checkEventExists(eventId);
+
+      const data = mapLineToData(cleanLine);
+
+      data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
+      data.goal = '';
+
+      // Reasons, remove duplicates and invalid values.
+      data.reasons = [...new Set(data.reasons as string[])];
+      data.reasons = (data.reasons as string[]).filter((reason) => REASONS.includes(reason));
+
+      // Target Populations, remove duplicates and invalid values.
+      data.targetPopulations = [...new Set(data.targetPopulations as string[])];
+      data.targetPopulations = (data.targetPopulations as string[]).filter((target) => TARGET_POPULATIONS.includes(target));
+
+      await db.EventReportPilot.create({
+        collaboratorIds: [],
+        ownerId: owner.id,
+        regionId,
+        data: sequelize.cast(JSON.stringify(data), 'jsonb'),
+        imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
+      });
+
+      return true;
+    } catch (error) {
+      if (error.message.startsWith('User')) {
+        errors.push(error.message);
+      } else if (error.message.startsWith('Event')) {
+        skipped.push(line['Event ID']);
+      }
+      return false;
+    }
+  });
+
+  const count = (await Promise.all(results)).filter(Boolean).length;
+
+  return {
+    count,
+    skipped,
+    errors,
+  };
 }

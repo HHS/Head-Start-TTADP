@@ -1,5 +1,7 @@
+import React from 'react';
 import { NOT_STARTED } from '../../components/Navigator/constants';
 
+export const NO_ERROR = <></>;
 export const sessionSummaryFields = {
   // not including start date or end date
   // because when I do, it seems to befuddle the
@@ -14,18 +16,21 @@ export const sessionSummaryFields = {
   objectiveSupportType: '',
   files: [],
   regionId: '',
+  ttaProvided: '',
+  courses: [],
 };
 
 export const participantsFields = {
   participants: [],
   deliveryMethod: '',
   numberOfParticipants: '',
-  ttaProvided: '',
+  language: [],
 };
 
 export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
+  pocComplete: false,
 };
 
 export const defaultFormValues = {

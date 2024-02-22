@@ -18,10 +18,40 @@ import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
 
+// TTAHUB-2126 TTAHUB-2334
+// Update the specific attribute (e.g., state code) for each grant,
+// identified by its grant number, in the map below.
+// This patch sets the new value for the grant to ensure data accuracy.
+const grantPatches = new Map([
+  [12128, { stateCode: 'OH' }],
+  [10291, { stateCode: 'PW' }],
+  [14869, { stateCode: 'PW' }],
+]);
+
 function valueFromXML(value) {
   const isObject = typeof value === 'object';
   const isUndefined = value === undefined;
   return isObject || isUndefined ? null : value;
+}
+
+/**
+ * Retrieves the correct state code for a given grant.
+ *
+ * This function checks if there is a patched state code available for the specified grantId.
+ * If a patch exists, it returns the patched state code. Otherwise, it defaults to the
+ * original state code provided, processed through valueFromXML.
+ *
+ * @param {number} grantId - The unique identifier for the grant.
+ * @param {string} stateCode - The original state code from the XML data.
+ * @return {string} The corrected state code, either from the patch or the original XML.
+ */
+function getStateCode(grantId, stateCode) {
+  if (grantPatches.has(grantId)) {
+    const patch = grantPatches.get(grantId);
+    // Apply the patch
+    return patch.stateCode ? patch.stateCode : valueFromXML(stateCode);
+  }
+  return valueFromXML(stateCode);
 }
 
 function combineNames(firstName, lastName) {
@@ -71,8 +101,10 @@ async function getProgramPersonnel(grantId, programId, program) {
         lastName,
         suffix: getPersonnelField(currentRole, 'suffix', program),
         title: getPersonnelField(currentRole, 'title', program),
-        email,
-
+        email: getPersonnelField(currentRole, 'email', program),
+        effectiveDate: null,
+        active: true,
+        originalPersonnelId: null,
       };
 
       // If the personnel exists with a different email.
@@ -134,6 +166,27 @@ async function getProgramPersonnel(grantId, programId, program) {
   }
   return programPersonnelArray;
 }
+
+export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
+  try {
+    const updatePromises = grantsToUpdate.map(async (grant) => {
+      if (grant.oldGrantId) {
+        const oldGrant = await Grant.findByPk(grant.oldGrantId);
+        if (oldGrant) {
+          return grant.update({
+            recipientId: oldGrant.recipientId,
+            regionId: oldGrant.regionId,
+          });
+        }
+      }
+      return null;
+    });
+
+    await Promise.all(updatePromises);
+  } catch (error) {
+    logger.error('updateGrantsRecipients: Error updating grants:', error);
+  }
+};
 
 /**
  * Reads HSES data files that were previously extracted to the "temp" directory.
@@ -236,13 +289,15 @@ export async function processFiles(hashSumHex) {
 
         const regionId = parseInt(g.region_id, 10);
         const cdi = regionId === 13;
+        const id = parseInt(g.grant_award_id, 10);
         // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
         return {
-          id: parseInt(g.grant_award_id, 10),
+          id,
           number: g.grant_number,
           recipientId: g.agency_id === '5' ? 7782 : parseInt(g.agency_id, 10),
           status: g.grant_status,
-          stateCode: valueFromXML(g.grantee_state),
+          // stateCode: patches.grants[id][stateCode] || valueFromXML(g.grantee_state),
+          stateCode: getStateCode(id, g.grantee_state),
           startDate,
           endDate,
           inactivationDate,
@@ -336,6 +391,14 @@ export async function processFiles(hashSumHex) {
       ));
 
       await Promise.all(grantUpdatePromises);
+
+      // Automate CDI linking to preceding recipients
+      const cdiGrantsToLink = await Grant.unscoped().findAll({
+        where: { regionId: 13, endDate: { [Op.gte]: '2021-03-17' } },
+        attributes: ['id', 'endDate', 'oldGrantId'],
+      });
+
+      await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
 
       await Program.bulkCreate(
         programsForDb,

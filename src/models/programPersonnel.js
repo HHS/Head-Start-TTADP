@@ -82,6 +82,53 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    fullName: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${(this.firstName || '')} ${(this.lastName || '')}`;
+      },
+    },
+    fullRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { role, program } = this;
+        if (!role || !program) return role;
+
+        const { programType } = program;
+
+        if (role.toLowerCase() === 'cfo') {
+          if (programType && programType.toLowerCase() === 'ehs') {
+            return 'Chief Financial Officer for Early Head Start';
+          }
+
+          if (programType && programType.toLowerCase() === 'hs') {
+            return 'Chief Financial Officer for Head Start';
+          }
+
+          return 'Chief Financial Officer';
+        }
+
+        if (role.toLowerCase() === 'director') {
+          if (programType && programType.toLowerCase() === 'ehs') {
+            return 'Director for Early Head Start';
+          }
+
+          if (programType && programType.toLowerCase() === 'hs') {
+            return 'Director for Head Start';
+          }
+
+          return 'Director';
+        }
+
+        return role;
+      },
+    },
+    nameAndRole: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return `${this.fullName} - ${this.fullRole}`;
+      },
+    },
   }, {
     sequelize,
     modelName: 'ProgramPersonnel',

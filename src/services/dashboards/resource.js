@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Sequelize, Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
@@ -6,12 +7,12 @@ import {
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  NextStep,
+  // NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  Topic,
+  // Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -331,20 +332,22 @@ const switchToTopicCentric = (input) => {
 
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    viaReport: null,
-    viaSpecialistNextSteps: null,
-    viaRecipientNextSteps: null,
+    // viaReport: null,
+    // viaSpecialistNextSteps: null,
+    // viaRecipientNextSteps: null,
     viaObjectives: null,
     viaGoals: null,
   };
   [
     dbData.allReports,
-    dbData.viaReport,
-    dbData.viaSpecialistNextSteps,
-    dbData.viaRecipientNextSteps,
+    // dbData.viaReport,
+    // dbData.viaSpecialistNextSteps,
+    // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
@@ -383,6 +386,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -404,6 +408,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -496,6 +501,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -558,6 +565,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -656,6 +664,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -692,6 +701,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -763,6 +773,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
@@ -814,14 +825,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   required: false,
                 },
               ],
-            },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
             },
           ],
           required: true,
@@ -900,6 +903,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
@@ -962,14 +966,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               attributes: [],
               required: true,
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -979,13 +975,19 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   ]);
 
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
+  const reportIds = Array.from(reportsMap.keys());
+
   delete dbData.allReports;
-  reportsMap = mergeInResources(reportsMap, dbData.viaReport);
+  /*
+  let reportsMap = mergeInResources(new Map(), dbData.viaReport);
   delete dbData.viaReport;
+  */
+  /*
   reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
   delete dbData.viaSpecialistNextSteps;
   reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
   delete dbData.viaRecipientNextSteps;
+  */
   reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
   reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
@@ -1000,7 +1002,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     ? []
     : switchToTopicCentric(reports);
 
-  return { resources, reports, topics };
+  return {
+    resources,
+    reports,
+    topics,
+    reportIds,
+  };
 }
 
 const generateResourceList = (
@@ -1454,6 +1461,106 @@ const generateResourceUse = (allData) => {
     resources: clusteredResources,
   };
 };
+/*
+WidgetID: resourceUse
+Expected JSON:
+- We add a property for all headers.
+- There is a TOTAL entry for each resource.
+- Be sure to include 0 entries for every month in range.
+{
+  headers: ['Jan-22', 'Feb-22'],
+  resources: [
+    {
+      heading: 'https://resource1.gov',
+      isUrl: 'true',
+      data: [
+          {
+            title: 'Jan-22',
+             value: '17',
+          },
+          {
+            title: 'Feb-22',
+            value: '18',
+          },
+          {
+            title: 'total',
+            value: '100',
+          },
+        ],
+    },
+    {
+      heading: 'https://resource2.gov',
+      isUrl: 'true',
+      data: [
+          {
+            title: 'Jan-22',
+             value: '14',
+          },
+          {
+            title: 'Feb-22',
+            value: '20',
+          },
+          {
+            title: 'total',
+            value: '88',
+          },
+        ],
+    },
+  ],
+},
+*/
+
+const generateResourceTopicUse = (allData) => {
+  const { topics } = allData;
+  const minMax = getMinMax(topics);
+  const dateList = spanDates(minMax.min, minMax.max);
+
+  topics.sort((a, b) => {
+    const aTotal = a.startDates.length;
+    const bTotal = b.startDates.length;
+    if (aTotal > bTotal) return -1;
+    if (aTotal < bTotal) return 1;
+    if (a.topic < b.topic) return -1;
+    if (a.topic > b.topic) return 1;
+    return 0;
+  });
+
+  const clusteredTopics = topics
+    .map((topic) => ({
+      heading: topic.topic,
+      isUrl: false,
+      data: [
+        ...topic.startDates.reduce((data, startDate) => {
+          const total = data.find((sd) => sd.title === 'Total');
+          total.cnt += 1;
+
+          const currentMonthYear = getMonthYear(startDate);
+          const exists = data.find((sd) => sd.title === currentMonthYear);
+          if (exists) {
+            exists.cnt += 1;
+            return data;
+          }
+          return [
+            ...data,
+            {
+              title: currentMonthYear,
+              cnt: 1,
+            },
+          ];
+        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
+      ]
+        .map(({ title, cnt }) => ({
+          title,
+          value: formatNumber(cnt),
+        })),
+    }));
+
+  return {
+    headers: [...dateList.map(({ title }) => title)],
+    topics: clusteredTopics,
+  };
+};
+
 export async function resourceList(scopes) {
   const data = await resourceData(scopes, false, true);
   return generateResourceList(data, true, true);
@@ -1473,11 +1580,18 @@ export async function resourceUse(scopes) {
   return generateResourceUse(data);
 }
 
+export async function resourceTopicUse(scopes) {
+  const data = await resourceData(scopes, true, false);
+  return generateResourceTopicUse(data);
+}
+
 export async function resourceDashboardPhase1(scopes) {
   const data = await resourceData(scopes);
   return {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
+    topicUse: generateResourceTopicUse(data),
+    reportIds: data.reportIds,
   };
 }
 
@@ -1486,6 +1600,7 @@ export async function resourceDashboard(scopes) {
   return {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
+    topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
   };
 }

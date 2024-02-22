@@ -57,12 +57,16 @@ specified region.
 @param grantIds - An array of grant IDs to filter by. If null, all grants will be included.
 @returns A Promise that resolves to an array of GoalTemplate objects.
 */
-export async function getCuratedTemplates(grantIds: number[] | null): Promise<GoalTemplate[]> {
+export async function getCuratedTemplates(
+  grantIds: number[] | null,
+): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
+
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
+      'source',
       ['templateName', 'label'],
       ['id', 'value'],
       ['templateName', 'name'],
@@ -76,19 +80,36 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
       [Sequelize.literal('FALSE'), 'isNew'],
     ],
-    include: [{
-      model: Region,
-      as: 'region',
-      attributes: [],
-      required: false,
-      include: [{
-        model: Grant,
-        as: 'grants',
+    include: [
+      {
+        model: Region,
+        as: 'region',
         attributes: [],
         required: false,
-        where: { id: grantIds },
-      }],
-    }],
+        include: [{
+          model: Grant.unscoped(), // remove recipient from response
+          as: 'grants',
+          attributes: [],
+          required: false,
+          where: { id: grantIds },
+          include: [],
+        }],
+      },
+      {
+        model: GoalModel,
+        as: 'goals',
+        attributes: [
+          'id',
+          'name',
+          'source',
+          'status',
+          'grantId',
+          'goalTemplateId',
+        ],
+        required: false,
+        where: { grantId: grantIds },
+      },
+    ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
       [Op.or]: [
@@ -97,7 +118,6 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       ],
     },
     ORDER: [['name', 'ASC']],
-    raw: true,
   });
 }
 
@@ -311,9 +331,11 @@ export async function setFieldPromptForCuratedTemplate(
         { response },
         {
           where: {
+            // GoalFieldResponses should always be updated regardless of on approved ar.
             goalTemplateFieldPromptId: promptId,
             goalId: goalIdsToUpdate,
           },
+          individualHooks: true,
         },
       ),
       ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
@@ -342,4 +364,18 @@ export async function setFieldPromptsForCuratedTemplate(
         response,
       }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
   );
+}
+
+/**
+Retrieves field prompts for template name.
+@param name - Name of the goal field template prompt to retrieve templates.
+@returns An array of Field Prompts for the named goal template prompt.
+*/
+export async function getOptionsByGoalTemplateFieldPromptName(
+  name: string,
+): Promise<FieldPrompts[]> {
+  return GoalTemplateFieldPromptModel.findOne({
+    attributes: ['options'],
+    where: { title: name },
+  });
 }

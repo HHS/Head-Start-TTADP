@@ -5,26 +5,36 @@ import {
   sessionsByEventId,
   updateEvent,
   getEventsByStatus,
+  deleteEvent,
 } from '../event';
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
 
 describe('eventById', () => {
-  beforeEach(() => {
-    fetchMock.get('/api/events/id/1', {
-      id: 1,
-      name: 'test event',
-    });
-  });
-
   afterEach(() => {
     fetchMock.reset();
   });
 
   it('fetches data from the server with the given id', async () => {
+    fetchMock.get('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+    });
     const event = await eventById(1);
 
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
+    expect(event).toEqual({ id: 1, name: 'test event' });
+  });
+
+  it('fetches data from the server with the given id and accepts query param', async () => {
+    fetchMock.get('/api/events/id/1?readOnly=true', {
+      id: 1,
+      name: 'test event',
+    });
+    const event = await eventById(1, true);
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1?readOnly=true');
     expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });
@@ -81,6 +91,24 @@ describe('getEventsByStatus', () => {
     const eventUrl2 = join('/', 'api', 'events', EVENT_STATUS.NOT_STARTED);
     fetchMock.get(eventUrl2, []);
     await getEventsByStatus(EVENT_STATUS.NOT_STARTED, '');
+    expect(fetchMock.called()).toBeTruthy();
+  });
+});
+
+describe('deleteEvent', () => {
+  beforeEach(() => {
+    const status = { status: 200 };
+    fetchMock.delete('/api/events/id/1', status);
+  });
+
+  afterEach(() => {
+    fetchMock.reset();
+  });
+
+  it('delete the event with the given id', async () => {
+    await deleteEvent(1);
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
     expect(fetchMock.called()).toBeTruthy();
   });
 });

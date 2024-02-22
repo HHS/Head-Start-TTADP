@@ -1,15 +1,24 @@
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
 import {
   Recipient,
   Grant,
+  ActivityReport,
   Program,
   User,
   Group,
   GroupGrant,
+  ActivityRecipient,
   sequelize,
 } from '../../models';
+
+const draftReport = {
+  submissionStatus: REPORT_STATUSES.DRAFT,
+  regionId: 1,
+  version: 1,
+};
 
 const recipientOneName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
 const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
@@ -57,8 +66,27 @@ describe('grant filtersToScopes', () => {
   let grantGroupOne;
   let grantGroupTwo;
   let grants;
+  let activityReports;
+  let activityRecipients;
+  let programs;
 
   beforeAll(async () => {
+    mockUser = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
+    });
+
+    mockUserTwo = await User.create({
+      id: faker.datatype.number(),
+      homeRegionId: 1,
+      hsesUsername: faker.datatype.string(),
+      hsesUserId: faker.datatype.string(),
+      lastLogin: new Date(),
+    });
+
     await Promise.all(recipients.map((g) => Recipient.create(g)));
     grants = await Promise.all([
       Grant.create({
@@ -129,9 +157,107 @@ describe('grant filtersToScopes', () => {
         stateCode: 'AK',
         inactivationDate: new Date('07/26/2022'),
       }),
+      // Use same recipient as above (both should be excluded).
+      Grant.create({
+        // Set id to a faker value to ensure it is not used.
+        id: faker.datatype.number(),
+        number: String(faker.datatype.number({ min: 2800 })),
+        regionId: 1,
+        recipientId: recipients[1].id,
+        status: 'Active',
+        startDate: new Date('08/03/2022'),
+        endDate: new Date('08/03/2022'),
+        programSpecialistName: 'Joe Bob',
+        stateCode: 'AR',
+      }),
     ]);
 
-    await Program.bulkCreate([
+    // Create Activity Reports.
+    activityReports = await Promise.all([
+      // Before range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2022'),
+        endDate: new Date('01/15/2022'),
+      }),
+      // After range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('04/01/2022'),
+        endDate: new Date('05/20/2022'),
+      }),
+      // Within range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('03/02/2022'),
+        endDate: new Date('03/15/2022'),
+      }),
+      // Within range starts before ends after.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2022'),
+        endDate: new Date('04/02/2022'),
+      }),
+      // Within range starts on last day of range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('03/31/2022'),
+        endDate: new Date('05/20/2022'),
+      }),
+      // Within range ends on first day of range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('02/01/2022'),
+        endDate: new Date('03/01/2022'),
+      }),
+      // Report outside of range, but grant is used by another activity report that is in range.
+      ActivityReport.create({
+        ...draftReport,
+        userId: mockUser.id,
+        startDate: new Date('01/01/2021'),
+        endDate: new Date('03/01/2021'),
+      }),
+    ]);
+
+    // Create Activity Report Goals.
+    activityRecipients = await Promise.all([
+      ActivityRecipient.create({
+        activityReportId: activityReports[0].id,
+        grantId: grants[0].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[1].id,
+        grantId: grants[1].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[2].id,
+        grantId: grants[2].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[3].id,
+        grantId: grants[3].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[4].id,
+        grantId: grants[4].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[5].id,
+        grantId: grants[5].id,
+      }),
+      ActivityRecipient.create({
+        activityReportId: activityReports[6].id,
+        grantId: grants[6].id,
+      }),
+    ]);
+
+    programs = await Program.bulkCreate([
       {
         id: recipients[0].id,
         grantId: recipients[0].id,
@@ -170,22 +296,6 @@ describe('grant filtersToScopes', () => {
       },
     ], { validate: true, individualHooks: true });
 
-    mockUser = await User.create({
-      id: faker.datatype.number(),
-      homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
-      lastLogin: new Date(),
-    });
-
-    mockUserTwo = await User.create({
-      id: faker.datatype.number(),
-      homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
-      lastLogin: new Date(),
-    });
-
     group = await Group.create({
       name: groupName,
       userId: mockUser.id,
@@ -220,6 +330,18 @@ describe('grant filtersToScopes', () => {
   });
 
   afterAll(async () => {
+    await ActivityRecipient.destroy({
+      where: {
+        id: activityRecipients.map((ar) => ar.id),
+      },
+    });
+
+    await ActivityReport.destroy({
+      where: {
+        id: activityReports.map((ar) => ar.id),
+      },
+    });
+
     await GroupGrant.destroy({
       where: {
         groupId: [group.id, publicGroup.id],
@@ -240,13 +362,13 @@ describe('grant filtersToScopes', () => {
 
     await Program.destroy({
       where: {
-        id: possibleIds,
+        id: programs.map((p) => p.id),
       },
     });
 
     await Grant.destroy({
       where: {
-        id: possibleIds,
+        id: grants.map((g) => g.id),
       },
     });
 
@@ -318,6 +440,21 @@ describe('grant filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([recipients[4].id, recipients[5].id]));
+    });
+  });
+
+  describe('recipientsWithoutTTA', () => {
+    it('within plus inactivation date', async () => {
+      const filters = { 'recipientsWithoutTTA.win': '2022/03/01-2022/03/31' };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: grants.map((g) => g.id) }],
+        },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([recipients[0].id, recipients[3].id]));
     });
   });
 

@@ -13,6 +13,8 @@ import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
+import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
+import './index.css';
 
 const formatNextSteps = (nextSteps, heading, striped) => {
   const data = nextSteps.reduce((acc, step, index) => ({
@@ -28,6 +30,8 @@ const formatNextSteps = (nextSteps, heading, striped) => {
   };
 };
 
+const FORBIDDEN = 403;
+
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
@@ -40,11 +44,17 @@ export default function ViewTrainingReport({ match }) {
     async function fetchEvent() {
       try {
         setIsAppLoading(true);
-        const e = await eventById(match.params.trainingReportId);
+        const e = await eventById(match.params.trainingReportId, true);
         setEvent(e);
       } catch (err) {
+        let message = 'Sorry, something went wrong';
         setEvent({});
-        setError('Sorry, something went wrong');
+
+        if (err && err.status === FORBIDDEN) {
+          message = 'You do not have permission to view this page';
+        }
+
+        setError(message);
       } finally {
         setIsAppLoading(false);
       }
@@ -131,6 +141,7 @@ export default function ViewTrainingReport({ match }) {
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
           'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
+          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
           'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
           'Support type': session.data.objectiveSupportType,
         },
@@ -140,7 +151,6 @@ export default function ViewTrainingReport({ match }) {
         data: {
           Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
           'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
-          'Delivery method': capitalize(session.data.deliveryMethod || ''),
           'Number of participants': String((
             session.data.numberOfParticipants || 0
           ) + (
@@ -148,6 +158,8 @@ export default function ViewTrainingReport({ match }) {
           ) + (
             session.data.numberOfParticipantsInPerson || 0
           )),
+          'Delivery method': capitalize(session.data.deliveryMethod || ''),
+          'Language used': session.data.language ? session.data.language.join(', ') : [],
           'TTA provided': session.data.ttaProvided,
         },
       },
@@ -169,29 +181,27 @@ export default function ViewTrainingReport({ match }) {
     <>
       <Helmet>
         <title>
-          {pageTitle}
+          Training Event Report
           {' '}
-          | TTA Hub
+          {(event && event.data) ? event.data.eventId : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>
-      <Container className="margin-top-2 maxw-tablet-lg">
+      <ApprovedReportSpecialButtons />
+      <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
         { error && (
         <Alert type="error">
           {error}
         </Alert>
         )}
         <h1 className="landing">{pageTitle}</h1>
-
         <ReadOnlyContent
           title="Event"
           sections={eventSummary}
         />
-
         { sessions }
-
       </Container>
     </>
   );

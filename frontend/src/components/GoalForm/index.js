@@ -42,6 +42,7 @@ const [
   objectiveTextError,
   objectiveTopicsError,
   objectiveResourcesError,
+  objectiveSupportTypeError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -76,6 +77,7 @@ export default function GoalForm({
     prompts: [],
     isCurated: false,
     source: '',
+    createdVia: '',
     goalTemplateId: null,
   }), [possibleGrants]);
 
@@ -92,6 +94,7 @@ export default function GoalForm({
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(goalDefaults.prompts);
   const [source, setSource] = useState('');
+  const [createdVia, setCreatedVia] = useState('');
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
@@ -151,6 +154,7 @@ export default function GoalForm({
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
         setSource(goal.source || '');
+        setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -382,11 +386,7 @@ export default function GoalForm({
     const newObjectiveErrors = objectives.map((objective) => {
       if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
         return [
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-          <></>,
+          ...OBJECTIVE_DEFAULT_ERRORS,
         ];
       }
 
@@ -394,6 +394,7 @@ export default function GoalForm({
         isValid = false;
         return [
           <span className="usa-error-message">{objectiveTextError}</span>,
+          <></>,
           <></>,
           <></>,
           <></>,
@@ -409,6 +410,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -418,6 +420,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
+          <></>,
           <></>,
           <></>,
         ];
@@ -431,15 +434,24 @@ export default function GoalForm({
           <></>,
           <span className="usa-error-message">{objectiveStatusError}</span>,
           <></>,
+          <></>,
+        ];
+      }
+
+      if (!objective.supportType) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveSupportTypeError}</span>,
         ];
       }
 
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 
@@ -466,14 +478,11 @@ export default function GoalForm({
           <span className="usa-error-message">{objectiveResourcesError}</span>,
           <></>,
           <></>,
+          <></>,
         ];
       }
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 
@@ -517,7 +526,7 @@ export default function GoalForm({
   };
 
   const redirectToGoalsPage = (goals) => {
-    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals-objectives`, {
+    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/rttapa`, {
       ids: goals.map((g) => g.id),
     });
   };
@@ -733,6 +742,7 @@ export default function GoalForm({
     setIsCurated(goalDefaults.isCurated);
     setPrompts(goalDefaults.prompts);
     setSource(goalDefaults.source);
+    setCreatedVia(goalDefaults.createdVia);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -832,6 +842,7 @@ export default function GoalForm({
     setIsCurated(goal.isCurated);
     setPrompts(goal.prompts);
     setSource(goal.source);
+    setCreatedVia(goal.createdVia);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -888,7 +899,7 @@ export default function GoalForm({
       { showRTRnavigation ? (
         <Link
           className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
         >
           <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
           <span>Back to RTTAPA</span>
@@ -959,6 +970,7 @@ export default function GoalForm({
               source={source}
               setSource={setSource}
               validateGoalSource={validateGoalSource}
+              createdVia={createdVia}
             />
           )}
 
@@ -969,7 +981,7 @@ export default function GoalForm({
             { showForm ? <Button type="button" outline onClick={onSaveDraft}>Save draft</Button> : null }
             { showForm && !createdGoals.length ? (
               <Link
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
                 className=" usa-button usa-button--outline"
               >
                 Cancel
@@ -994,7 +1006,7 @@ export default function GoalForm({
               </Button>
               <Link
                 className="usa-button usa-button--outline"
-                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/goals-objectives/`}
+                to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
               >
                 Cancel
               </Link>

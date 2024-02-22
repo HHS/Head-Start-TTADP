@@ -1,4 +1,4 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { logger, auditLogger } from '../logger';
 import processFile from '../workers/files';
 
@@ -34,6 +34,7 @@ const processScanQueue = () => {
   // File Scanning
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
+  increaseListeners(scanQueue);
   scanQueue.process((job) => processFile(job.data.key));
 };
 

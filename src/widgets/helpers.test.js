@@ -1,4 +1,4 @@
-import { formatNumber } from './helpers';
+import { countBySingleKey, formatNumber } from './helpers';
 
 describe('Format Number', () => {
   it('renders with correct decimal places and separator', async () => {
@@ -22,5 +22,15 @@ describe('Format Number', () => {
     expect(formatNumber('sdfgdfg', 3)).toBe('0');
 
     expect(formatNumber()).toBe('0');
+  });
+});
+
+describe('countBySingleKey', () => {
+  it('doesn\'t throw when null data (TTAHUB-2172)', async () => {
+    const data = null;
+    const key = 'someKey';
+    const results = [];
+
+    expect(() => countBySingleKey(data, key, results)).not.toThrow();
   });
 });

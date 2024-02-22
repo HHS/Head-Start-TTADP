@@ -1,6 +1,6 @@
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
-import { findEventById } from '../../services/event';
+import { findEventBySmartsheetIdSuffix } from '../../services/event';
 import {
   createSession,
   findSessionsByEventId,
@@ -36,15 +36,18 @@ export const getHandler = async (req, res) => {
       sessionEventId = session.eventId;
     } else if (eventId) {
       sessionEventId = eventId;
-      session = await findSessionsByEventId(eventId);
     }
 
     // Event auth.
-    const event = await findEventById(sessionEventId);
+    const event = await findEventBySmartsheetIdSuffix(sessionEventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) {
       return res.sendStatus(403);
+    }
+
+    if (!session && eventId) {
+      session = await findSessionsByEventId(event.id);
     }
 
     if (!session) {
@@ -78,13 +81,13 @@ export const createHandler = async (req, res) => {
     }
 
     // Get associated event to use for authorization for region write
-    const event = await findEventById(eventId);
+    const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const auth = await getEventAuthorization(req, res, event);
     if (!auth.canCreateSession()) { return res.sendStatus(403); }
 
     const session = await createSession({
-      eventId,
+      eventId: event.id,
       data: {
         ...data,
         eventName: event.data.eventName,
@@ -117,7 +120,7 @@ export const updateHandler = async (req, res) => {
     }
 
     // Authorization is through the associated event
-    const event = await findEventById(eventId);
+    const event = await findEventBySmartsheetIdSuffix(eventId);
     if (!event) { return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' }); }
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canEditSession()) { return res.sendStatus(403); }
@@ -142,7 +145,7 @@ export const deleteHandler = async (req, res) => {
 
     // Authorization is through the associated event
     // so we need to get the event first
-    const event = await findEventById(session.eventId);
+    const event = await findEventBySmartsheetIdSuffix(session.eventId);
     const eventAuth = await getEventAuthorization(req, res, event);
     if (!eventAuth.canDeleteSession()) { return res.sendStatus(403); }
 
