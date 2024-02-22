@@ -29,7 +29,6 @@ describe('Groups', () => {
   };
 
   afterEach(() => fetchMock.restore());
-
   it('renders without crashing', async () => {
     fetchMock.get('/api/groups', []);
     act(renderGroups);
@@ -44,6 +43,8 @@ describe('Groups', () => {
         userId: 1,
         isPublic: false,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -55,6 +56,8 @@ describe('Groups', () => {
         userId: 1,
         isPublic: true,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -66,6 +69,8 @@ describe('Groups', () => {
         userId: 2,
         isPublic: true,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tim User',
           id: 2,
@@ -111,6 +116,8 @@ describe('Groups', () => {
         userId: 2,
         isPublic: true,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tim User',
         },
@@ -133,6 +140,8 @@ describe('Groups', () => {
         userId: 1,
         isPublic: false,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tim User',
           id: 1,
@@ -165,6 +174,8 @@ describe('Groups', () => {
       userId: 1,
       isPublic: false,
       groupCollaborators: [],
+      coOwners: [],
+      sharedWith: [],
       creator: {
         name: 'Tim User',
         id: 1,
@@ -205,6 +216,8 @@ describe('Groups', () => {
         userId: 1,
         isPublic: false,
         groupCollaborators: [],
+        coOwners: [],
+        sharedWith: [],
         creator: {
           name: 'Tim User',
           id: 1,
@@ -260,26 +273,17 @@ describe('Groups', () => {
         name: 'group1',
         isPublic: true,
         updatedAt: '2024-01-01T00:00:00.000Z',
-        groupCollaborators: [
-          {
-            id: 1,
-            collaboratorType: {
-              name: 'Co-Owner',
-            },
-            user: {
-              name: 'CoOwner User',
-              id: 2,
-            },
-          },
+        groupCollaborators: [],
+        coOwners: [
           {
             id: 2,
-            collaboratorType: {
-              name: 'SharedWith',
-            },
-            user: {
-              name: 'SharedWith User',
-              id: 3,
-            },
+            name: 'CoOwner User',
+          },
+        ],
+        sharedWith: [
+          {
+            id: 3,
+            name: 'SharedWith User',
           },
         ],
         creator: {
@@ -311,26 +315,17 @@ describe('Groups', () => {
         name: 'group1',
         isPublic: false,
         updatedAt: '2024-01-01T00:00:00.000Z',
-        groupCollaborators: [
+        groupCollaborators: [],
+        coOwners: [
           {
             id: 1,
-            collaboratorType: {
-              name: 'Co-Owner',
-            },
-            user: {
-              name: 'CoOwner User',
-              id: 1,
-            },
+            name: 'CoOwner User',
           },
+        ],
+        sharedWith: [
           {
-            id: 2,
-            collaboratorType: {
-              name: 'SharedWith',
-            },
-            user: {
-              name: 'SharedWith User',
-              id: 3,
-            },
+            id: 3,
+            name: 'SharedWith User',
           },
         ],
         creator: {
@@ -362,26 +357,17 @@ describe('Groups', () => {
         name: 'group1',
         isPublic: false,
         updatedAt: '2024-01-01T00:00:00.000Z',
-        groupCollaborators: [
-          {
-            id: 1,
-            collaboratorType: {
-              name: 'Co-Owner',
-            },
-            user: {
-              name: 'CoOwner User',
-              id: 2,
-            },
-          },
+        groupCollaborators: [],
+        coOwners: [
           {
             id: 2,
-            collaboratorType: {
-              name: 'SharedWith',
-            },
-            user: {
-              name: 'SharedWith User',
-              id: 1,
-            },
+            name: 'CoOwner User',
+          },
+        ],
+        sharedWith: [
+          {
+            id: 1,
+            name: 'SharedWith User',
           },
         ],
         creator: {
@@ -394,26 +380,17 @@ describe('Groups', () => {
         name: 'group2',
         isPublic: true,
         updatedAt: '2024-01-02T00:00:00.000Z',
-        groupCollaborators: [
+        groupCollaborators: [],
+        coOwners: [
           {
-            id: 1,
-            collaboratorType: {
-              name: 'Co-Owner',
-            },
-            user: {
-              name: 'CoOwner User',
-              id: 10,
-            },
+            id: 10,
+            name: 'CoOwner User',
           },
+        ],
+        sharedWith: [
           {
-            id: 2,
-            collaboratorType: {
-              name: 'SharedWith',
-            },
-            user: {
-              name: 'SharedWith User',
-              id: 12,
-            },
+            id: 12,
+            name: 'SharedWith User',
           },
         ],
         creator: {

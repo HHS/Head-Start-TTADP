@@ -258,6 +258,8 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
           name: [
             GROUP_COLLABORATORS.CREATOR,
             GROUP_COLLABORATORS.EDITOR,
+            GROUP_COLLABORATORS.CO_OWNER,
+            GROUP_COLLABORATORS.SHARED_WITH,
           ],
         },
       },
@@ -272,14 +274,28 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
   // Get the creator of the group.
   const finalGroups = returnGroups.map((g) => {
     const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id);
+
+    // Creator.
     const creator = groupCollaborators.find(
       (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
     );
+
+    // Editor.
     const mostRecentEditor = (groupCollaborators.filter(
       (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.EDITOR,
     ).sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     ) || [creator])[0];
+
+    // Co-owners.
+    const coOwners = groupCollaborators.filter(
+      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER,
+    );
+
+    // Shared with.
+    const sharedWith = groupCollaborators.filter(
+      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
+    );
 
     return {
       ...g.dataValues,
@@ -288,6 +304,12 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
         name: mostRecentEditor.user.name,
       } : null,
       creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
+      coOwners: coOwners
+        ? coOwners.map((coOwner) => ({ id: coOwner.user.id, name: coOwner.user.name }))
+        : null,
+      sharedWith: sharedWith
+        ? sharedWith.map((individual) => ({ id: individual.user.id, name: individual.user.name }))
+        : null,
     };
   });
 
