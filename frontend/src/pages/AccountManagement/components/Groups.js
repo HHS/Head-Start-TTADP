@@ -72,7 +72,7 @@ export default function Groups() {
         </div>
       )}
     >
-      <div className="margin-bottom-3 maxw-tablet-lg">
+      <div className="margin-bottom-3 maxw-desktop">
         { error ? <Alert type="error" role="alert">{error}</Alert> : null }
         <h3>Created by me</h3>
         {!groups || !groups.creatorGroups.length ? <p className="usa-prose">You haven&apos;t created any groups yet</p> : (
@@ -100,7 +100,7 @@ export default function Groups() {
         )}
       </div>
 
-      <div className="margin-bottom-3 maxw-tablet-lg">
+      <div className="margin-bottom-3 maxw-desktop">
         <h3>Co-owned by me</h3>
         {!groups || !groups.coOwnedGroups.length ? <p className="usa-prose">You haven&apos;t been added as a co-owner yet</p> : (
           <Table fullWidth stackedStyle="default">
@@ -128,7 +128,7 @@ export default function Groups() {
         )}
       </div>
 
-      <div className="margin-bottom-3 maxw-tablet-lg">
+      <div className="margin-bottom-3 maxw-desktop">
         <h3>Shared with me</h3>
         {!groups || !groups.sharedWithMe.length ? <p className="usa-prose">You don&apos;t have any shared groups yet</p> : (
           <Table fullWidth stackedStyle="default">

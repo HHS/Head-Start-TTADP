@@ -247,6 +247,15 @@ export default function MyGroups({ match }) {
   const individualsError = formErrors[GROUP_FIELD_NAMES.INDIVIDUALS];
   const coOwnerError = formErrors[GROUP_FIELD_NAMES.CO_OWNERS];
 
+  const maxCoOwnerRule = {
+    validate: (value) => {
+      if (value && value.length > 3) {
+        return 'You can only choose up to three co-owners.';
+      }
+      return true;
+    },
+  };
+
   return (
     <>
       <Helmet>
@@ -336,7 +345,7 @@ export default function MyGroups({ match }) {
                   {' '}
                   <Req />
 
-                  {nameError && <span className="usa-error-message">{coOwnerError.message}</span>}
+                  {coOwnerError && <span className="usa-error-message">{coOwnerError.message}</span>}
                   <div>
                     <span className="usa-hint">
                       Choose up to 3 co-owners who can change permissions and edit the group.
@@ -349,6 +358,7 @@ export default function MyGroups({ match }) {
                     simple={false}
                     required="Select at least one"
                     disabled={isAppLoading}
+                    rules={maxCoOwnerRule}
                   />
                 </label>
                 <div className="margin-top-4">

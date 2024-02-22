@@ -9,7 +9,6 @@ import {
 import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
-import './MyGroup.scss';
 
 export default function MyGroup({
   group, setMyGroups, setError, isViewOnly, isCoOwner,
@@ -48,7 +47,7 @@ export default function MyGroup({
 
   return (
     <tr key={group.id}>
-      <td data-label="Group name" className="my-group--group-name">
+      <td data-label="Group name">
         {group.name}
       </td>
       <td data-label="Owner">
