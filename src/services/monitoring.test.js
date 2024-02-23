@@ -20,19 +20,6 @@ describe('monitoring services', () => {
   const GRANT_ID = 18;
 
   beforeAll(async () => {
-    await Grant.findOrCreate({
-      where: { number: GRANT_NUMBER },
-      defaults: {
-        id: GRANT_ID,
-        regionId: REGION_ID,
-        number: GRANT_NUMBER,
-        recipientId: RECIPIENT_ID,
-        status: 'Active',
-        startDate: '2024-02-12 14:31:55.74-08',
-        endDate: '2024-02-12 14:31:55.74-08',
-        cdi: false,
-      },
-    });
     await MonitoringClassSummary.findOrCreate({
       where: { grantNumber: GRANT_NUMBER },
       defaults: {
