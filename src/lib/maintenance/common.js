@@ -137,16 +137,18 @@ const enqueueMaintenanceJob = async (
 
   try {
     const launchScript = process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0] || 'worker';
-    if (requiresWorker && launchScript === 'worker') {
-      if (requiresLock) {
-        let lockManager = lockManagers[`${category}-${data?.type}`];
-        if (!lockManager) {
-          lockManager = new LockManager(`maintenanceLock-${category}-${data?.type}`);
-          lockManagers[`${category}-${data?.type}`] = lockManager;
+    if (requiresWorker) {
+      if (launchScript === 'worker') {
+        if (requiresLock) {
+          let lockManager = lockManagers[`${category}-${data?.type}`];
+          if (!lockManager) {
+            lockManager = new LockManager(`maintenanceLock-${category}-${data?.type}`);
+            lockManagers[`${category}-${data?.type}`] = lockManager;
+          }
+          await lockManager.executeWithLock(action, true);
+        } else {
+          await action();
         }
-        await lockManager.executeWithLock(action, true);
-      } else {
-        await action();
       }
     } else {
       await action();
