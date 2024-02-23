@@ -196,9 +196,22 @@ const syncMonitoringReviewStatusLink = async (
   instance.statusId,
 );
 
+const clearGrantNumberLink = async (
+  sequelize,
+  instance,
+  options,
+) => sequelize.models.GrantNumberLink.update(
+  { grantId: null },
+  {
+    where: { grantId: instance.id },
+    transaction: options.transactions,
+  },
+);
+
 export {
   syncLink,
   syncGrantNumberLink,
   syncMonitoringReviewLink,
   syncMonitoringReviewStatusLink,
+  clearGrantNumberLink,
 };
