@@ -237,6 +237,7 @@ describe('course', () => {
         id: grant.id,
       },
       force: true,
+      individualHooks: true,
     });
 
     // Delete recipient.

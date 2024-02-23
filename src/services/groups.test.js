@@ -140,6 +140,7 @@ describe('Groups service', () => {
       where: {
         id: [grantOne.id, grantTwo.id],
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
@@ -410,6 +411,7 @@ describe('Groups service', () => {
         where: {
           id: grantIds,
         },
+        individualHooks: true,
       });
 
       // Destroy the Recipient records.

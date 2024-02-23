@@ -643,6 +643,7 @@ describe('statisticsByUser', () => {
       where: {
         id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id, grantOutsideRegion.id],
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.

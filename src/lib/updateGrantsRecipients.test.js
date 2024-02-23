@@ -960,7 +960,10 @@ describe('Update grants, program personnel, and recipients', () => {
 
   describe('updateCDIGrantsWithOldGrantData', () => {
     afterAll(async () => {
-      await Grant.destroy({ where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } } });
+      await Grant.destroy({
+        where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     });
 

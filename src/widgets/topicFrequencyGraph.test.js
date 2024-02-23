@@ -394,8 +394,8 @@ describe('Topics and frequency graph widget', () => {
     await UserRole.destroy({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
     await Grant.destroy({
-      where:
-      { id: [GRANT_ID] },
+      where: { id: [GRANT_ID] },
+      individualHooks: true,
     });
     await Recipient.destroy({
       where:
