@@ -190,6 +190,7 @@ describe('activity report model hooks', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.unscoped().destroy({
