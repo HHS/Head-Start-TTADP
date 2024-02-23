@@ -57,7 +57,7 @@ export default class LockManager {
     this.lockTTL = lockTTL;
 
     if (this.redis.client && process.env.NODE_ENV !== 'test') {
-      this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}`);
+      this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`);
     }
 
     this.registerEventListeners();
