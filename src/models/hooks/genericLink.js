@@ -102,6 +102,7 @@ const linkGrant = async (
     attributes: [['id', 'grantId']], // Select only the 'id' column and alias it as 'grantId'.
     where: { number: grantNumber }, // Filter the grants by the provided grant number.
     transaction: options.transactions, // Use the transaction provided in the options if any.
+    raw: true,
   });
 
   // If a grant is found, proceed to update the relevant model.
