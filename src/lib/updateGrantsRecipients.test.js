@@ -85,7 +85,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
@@ -95,7 +98,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
