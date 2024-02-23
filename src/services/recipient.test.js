@@ -666,7 +666,10 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
-      await Grant.destroy({ where: { recipientId: [firstRecipient.id, secondRecipient.id] } });
+      await Grant.destroy({
+        where: { recipientId: [firstRecipient.id, secondRecipient.id] },
+        individualHooks: true,
+      });
       await Recipient.destroy({ where: { id: [firstRecipient.id, secondRecipient.id] } });
       await Permission.destroy({ where: { userId: user.id } });
       await User.destroy({ where: { id: user.id } });
@@ -1214,6 +1217,7 @@ describe('Recipient DB service', () => {
         where: {
           id: [grant.id, grant2.id, irrelevantGrant.id],
         },
+        individualHooks: true,
       });
 
       await db.Recipient.destroy({
@@ -1372,6 +1376,7 @@ describe('Recipient DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({

@@ -370,6 +370,7 @@ describe('grant filtersToScopes', () => {
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
