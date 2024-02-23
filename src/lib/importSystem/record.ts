@@ -167,7 +167,7 @@ const getNextFileToProcess = async (
     }];
 
   // Calculate the total milliseconds for 3 * stddev
-  const totalStdDevMilliseconds = 3 * stddev.seconds * 1000 + 3 * stddev.milliseconds;
+  const totalStdDevMilliseconds = 3 * (stddev.seconds || 0) * 1000 + 3 * (stddev.milliseconds || 0);
 
   // Mark hung jobs as failed
   await ImportFile.update(
@@ -178,7 +178,7 @@ const getNextFileToProcess = async (
       where: {
         status: IMPORT_STATUSES.PROCESSING,
         [Op.and]: [
-          literal(`"updatedAt" + INTERVAL '${avg.seconds + Math.floor(totalStdDevMilliseconds / 1000)} seconds ${totalStdDevMilliseconds % 1000} milliseconds' > NOW()`),
+          literal(`"updatedAt" + INTERVAL '${(avg.seconds || 0) + Math.floor((avg.milliseconds + totalStdDevMilliseconds) / 1000)} seconds ${(avg.milliseconds + totalStdDevMilliseconds) % 1000} milliseconds' > NOW()`),
         ],
       },
     },
