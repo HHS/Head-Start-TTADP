@@ -156,7 +156,10 @@ const getNextFileToProcess = async (
   const [{
     avg,
     stddev,
-  }] = results && results.length
+  }] = results
+    && results.length
+    && results[0]?.avg
+    && results[0]?.stddev
     ? results
     : [{
       avg: { seconds: 120, milliseconds: 0 },
