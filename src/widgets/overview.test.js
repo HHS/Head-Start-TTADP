@@ -154,8 +154,8 @@ describe('Dashboard overview widget', () => {
     await destroyReport(reportWithNewDate);
 
     await Grant.destroy({
-      where:
-      { id: [GRANT_ID_ONE, GRANT_ID_TWO, GRANT_ID_THREE, GRANT_ID_FOUR] },
+      where: { id: [GRANT_ID_ONE, GRANT_ID_TWO, GRANT_ID_THREE, GRANT_ID_FOUR] },
+      individualHooks: true,
     });
     await Recipient.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_TWO_ID] } });
     await Region.destroy({ where: { id: [REGION_ONE_ID, REGION_TWO_ID] } });
