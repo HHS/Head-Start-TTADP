@@ -117,6 +117,7 @@ const enqueueMaintenanceJob = async (
   data = null,
   requiredLaunchScript = null,
   requiresLock = false,
+  holdLock = false,
 ) => {
   const action = async () => {
     // Check if there is a processor defined for the given type
@@ -145,7 +146,7 @@ const enqueueMaintenanceJob = async (
             lockManager = new LockManager(`maintenanceLock-${category}-${data?.type}`);
             lockManagers[`${category}-${data?.type}`] = lockManager;
           }
-          await lockManager.executeWithLock(action, true);
+          await lockManager.executeWithLock(action, holdLock);
         } else {
           await action();
         }
