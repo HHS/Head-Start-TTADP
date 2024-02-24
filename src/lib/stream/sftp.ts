@@ -206,6 +206,8 @@ class SftpClient {
         this.client.connect({
           ...connectionSettings,
           algorithms,
+          // Accept any hashedKey
+          hostVerifier: (_hashedKey, callback) => { callback(true); return true; },
         });
       } catch (err) {
         reject(err.message);
