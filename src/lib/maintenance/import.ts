@@ -31,16 +31,18 @@ import { auditLogger } from '../../logger';
 const enqueueImportMaintenanceJob = async (
   type: typeof MAINTENANCE_TYPE[keyof typeof MAINTENANCE_TYPE],
   id?: number,
-  requiresWorker = false,
+  requiredLaunchScript?: string,
   requiresLock = false,
+  holdLock = false,
 ) => enqueueMaintenanceJob(
   MAINTENANCE_CATEGORY.IMPORT,
   {
     type,
     id,
   },
-  requiresWorker,
+  requiredLaunchScript,
   requiresLock,
+  holdLock,
 );
 
 /**
@@ -291,7 +293,11 @@ const importMaintenance = async (job) => {
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
 // TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
 // needs to be addressed
-enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, true, true);
+if (!process.env.CI
+  && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
+  || process.env.NODE_ENV !== 'production')) {
+  enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', true);
+}
 
 export {
   enqueueImportMaintenanceJob,

@@ -59,6 +59,7 @@ describe('Change Goal Status', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     // Cleanup Recipient.

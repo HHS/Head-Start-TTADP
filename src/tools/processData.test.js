@@ -229,8 +229,8 @@ describe('processData', () => {
         ],
       },
     });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE } });
-    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO } });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
+    await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
     await sequelize.close();
