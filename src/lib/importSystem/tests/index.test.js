@@ -22,7 +22,7 @@ describe('index', () => {
 
       const result = await download(importId);
 
-      expect(downloadModule.downloadFilesFromSource).toHaveBeenCalledWith(importId);
+      expect(downloadModule.downloadFilesFromSource).toHaveBeenCalledWith(importId, undefined);
       expect(result).toEqual(mockDownloadResult);
     });
 
