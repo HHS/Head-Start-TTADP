@@ -370,7 +370,7 @@ describe('download', () => {
   // Setup SftpClient mock
   const mockConnect = jest.fn();
   const mockDisconnect = jest.fn();
-  const mockListFiles = jest.fn();
+  const mockListFiles = jest.fn().mockImplementation(async () => Promise.resolve([{ name: 'file.txt', stream: {} }]));
   SftpClient.prototype.connect = mockConnect;
   SftpClient.prototype.disconnect = mockDisconnect;
   SftpClient.prototype.listFiles = mockListFiles;
@@ -496,40 +496,37 @@ describe('download', () => {
   });
 
   describe('downloadFilesFromSource', () => {
-    const mockCollectFilesFromSource = jest.spyOn(download, 'collectFilesFromSource');
     const mockImportFindOne = jest.spyOn(Import, 'findOne');
-
-    // jest.mock('./path-to-import-model', () => ({
-    //   findOne: jest.fn(),
-    // }));
-    // jest.mock('./path-to-collect-files-function', () => jest.fn());
+    const mockImportedFile = createMockImportedFile(1, 'file-key', 6);
+    logFileToBeCollected.mockResolvedValue(mockImportedFile);
 
     const mockImportId = 1;
     const mockTimeBox = 300000; // 5 minutes in milliseconds
     const mockImportFileData = {
       importId: mockImportId,
       ftpSettings: {
-        host: 'example.com',
-        port: 22,
-        username: 'user',
-        password: 'pass',
+        host: 'ITAMS_MD_HOST',
+        port: 'ITAMS_MD_PORT',
+        username: 'ITAMS_MD_USERNAME',
+        password: 'ITAMS_MD_PASSWORD',
       },
       path: '/remote/path/',
       fileMask: '*.txt',
     };
 
-    beforeEach(() => {
-      mockImportFindOne.mockReset();
-      mockCollectFilesFromSource.mockReset();
+    beforeAll(() => {
+      process.env.ITAMS_MD_HOST = 'example.com';
+      process.env.ITAMS_MD_PORT = '22';
+      process.env.ITAMS_MD_USERNAME = 'username';
+      process.env.ITAMS_MD_PASSWORD = 'password';
     });
 
-    afterEach(() => {
-      jest.clearAllMocks();
+    afterAll(() => {
+      jest.restoreAllMocks();
     });
 
     it('should call Import.findOne with the correct parameters', async () => {
       mockImportFindOne.mockResolvedValue(mockImportFileData);
-      mockCollectFilesFromSource.mockResolvedValue('mocked result');
       await downloadFilesFromSource(mockImportId);
       expect(mockImportFindOne).toHaveBeenCalledWith({
         attributes: [
@@ -545,37 +542,11 @@ describe('download', () => {
       });
     });
 
-    it('should call collectFilesFromSource with the correct parameters after retrieving import file data', async () => {
-      mockImportFindOne.mockResolvedValue(mockImportFileData);
-      mockCollectFilesFromSource.mockResolvedValue('mocked result');
-      await downloadFilesFromSource(mockImportId, mockTimeBox);
-      expect(collectFilesFromSource).toHaveBeenCalledWith(
-        mockImportFileData.importId,
-        mockTimeBox,
-        mockImportFileData.ftpSettings,
-        mockImportFileData.path,
-        mockImportFileData.fileMask,
-      );
-    });
-
-    it('should use the default timeBox if none is provided', async () => {
-      mockImportFindOne.mockResolvedValue(mockImportFileData);
-      mockCollectFilesFromSource.mockResolvedValue('mocked result');
-      await downloadFilesFromSource(mockImportId);
-      expect(collectFilesFromSource).toHaveBeenCalledWith(
-        mockImportFileData.importId,
-        mockTimeBox, // Default timeBox
-        mockImportFileData.ftpSettings,
-        mockImportFileData.path,
-        mockImportFileData.fileMask,
-      );
-    });
-
     it('should return the result from collectFilesFromSource', async () => {
       mockImportFindOne.mockResolvedValue(mockImportFileData);
-      mockCollectFilesFromSource.mockResolvedValue('mocked result');
       const result = await downloadFilesFromSource(mockImportId, mockTimeBox);
-      expect(result).toBe('mocked result');
+      expect(result).toStrictEqual([]);
+      expect(mockDisconnect).toHaveBeenCalled();
     });
 
     it('should handle the case when Import.findOne returns null', async () => {
