@@ -61,6 +61,7 @@ describe('import', () => {
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id },
+        undefined,
         false,
         false,
       );
@@ -72,6 +73,7 @@ describe('import', () => {
       expect(enqueueMaintenanceJob).toHaveBeenCalledWith(
         MAINTENANCE_CATEGORY.IMPORT,
         { type, id: undefined },
+        undefined,
         false,
         false,
       );
@@ -125,6 +127,7 @@ describe('import', () => {
             index + 1,
             MAINTENANCE_CATEGORY.IMPORT,
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+            undefined,
             false,
             false,
           );
@@ -163,6 +166,7 @@ describe('import', () => {
             index + 1,
             MAINTENANCE_CATEGORY.IMPORT,
             { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+            undefined,
             false,
             false,
           );
@@ -261,6 +265,7 @@ describe('import', () => {
           1,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_DOWNLOAD, id },
+          undefined,
           false,
           false,
         );
@@ -269,6 +274,7 @@ describe('import', () => {
           2,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+          undefined,
           false,
           false,
         );
@@ -298,6 +304,7 @@ describe('import', () => {
           2,
           MAINTENANCE_CATEGORY.IMPORT,
           { type: MAINTENANCE_TYPE.IMPORT_PROCESS, id },
+          undefined,
           false,
           false,
         );
@@ -372,6 +379,7 @@ describe('import', () => {
           type: MAINTENANCE_TYPE.IMPORT_PROCESS,
           id,
         },
+        undefined,
         false,
         false,
       );
