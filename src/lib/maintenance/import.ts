@@ -293,7 +293,9 @@ const importMaintenance = async (job) => {
 addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
 // TODO: commented out to prevent scheduled execution, as there is a concurrency issue that still
 // needs to be addressed
-if ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') || process.env.NODE_ENV !== 'production') {
+if (!process.env.CI
+  && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
+  || process.env.NODE_ENV !== 'production')) {
   enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', true);
 }
 
