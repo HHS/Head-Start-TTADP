@@ -115,7 +115,7 @@ const processMaintenanceQueue = () => {
 const enqueueMaintenanceJob = async (
   category,
   data = null,
-  requiresWorker = false,
+  requiredLaunchScript = null,
   requiresLock = false,
 ) => {
   const action = async () => {
@@ -136,9 +136,9 @@ const enqueueMaintenanceJob = async (
   };
 
   try {
-    const launchScript = process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0] || 'worker';
-    if (requiresWorker) {
-      if (launchScript === 'worker') {
+    const launchScript = process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0];
+    if (requiredLaunchScript) {
+      if (launchScript === requiredLaunchScript) {
         if (requiresLock) {
           let lockManager = lockManagers[`${category}-${data?.type}`];
           if (!lockManager) {
