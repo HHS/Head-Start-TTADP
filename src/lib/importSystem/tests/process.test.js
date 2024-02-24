@@ -210,8 +210,8 @@ describe('processRecords', () => {
 
     mockDestroy.mockResolvedValue({ id: 3 });
 
-    recordActions.updates.push({ id: 1 });
-    recordActions.updates.push({ id: 2 });
+    recordActions.updates.push([1, [{ id: 1 }]]);
+    recordActions.updates.push([1, [{ id: 2 }]]);
 
     recordActions.inserts.push({ id: 4 });
     recordActions.inserts.push({ id: 5 });
@@ -226,14 +226,16 @@ describe('processRecords', () => {
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
-    expect(mockDestroy).toHaveBeenCalledWith({
-      individualHooks: true,
-      plain: true,
-      returning: true,
-      where: {
-        id: { [Op.not]: [4, 5, 1, 2] },
+    expect(mockUpdate).toHaveBeenCalledWith(
+      { sourceDeletedAt: expect.any(Date) }, // Correct field name to match implementation
+      {
+        where: {
+          id: { [Op.not]: [4, 5, 1, 2] },
+          sourceDeletedAt: null,
+        },
+        individualHooks: true,
       },
-    });
+    );
     expect(result.deletes).toHaveLength(1);
   });
 });
