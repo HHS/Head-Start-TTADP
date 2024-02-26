@@ -227,12 +227,12 @@ describe('monitoring services', () => {
 
     it('adds a record in GrantNumberLink table', async () => {
       const createdGrant = await Grant.findOne({
-        where: { id: GRANT_ID + 2 }
+        where: { id: GRANT_ID + 2 },
       });
       expect(createdGrant).not.toBeNull();
 
       const createdGrantNumberLink = await GrantNumberLink.findOne({
-        where: { grantNumber: '14CH123' }
+        where: { grantNumber: '14CH123' },
       });
 
       expect(createdGrantNumberLink).not.toBeNull();
