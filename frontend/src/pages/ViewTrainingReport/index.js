@@ -16,6 +16,29 @@ import ReadOnlyContent from '../../components/ReadOnlyContent';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.css';
 
+export const formatOwnerName = (event) => {
+  try {
+    if (event && event.data && event.data.owner) {
+      if (event.eventReportPilotNationalCenterUsers) {
+        const user = event.eventReportPilotNationalCenterUsers
+          .find((erpnc) => erpnc.userId === event.data.owner.id);
+
+        if (user) {
+          return `${user.userName} ${user.nationalCenterName}`;
+        }
+      }
+
+      if (event.data.owner.name) {
+        return event.data.owner.name;
+      }
+    }
+
+    return '';
+  } catch (err) {
+    return '';
+  }
+};
+
 const formatNextSteps = (nextSteps, heading, striped) => {
   const data = nextSteps.reduce((acc, step, index) => ({
     ...acc,
@@ -102,24 +125,7 @@ export default function ViewTrainingReport({ match }) {
   }, [event]);
 
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
-  const ownerName = (() => {
-    if (event && event.data && event.data.owner) {
-      if (event.eventReportPilotNationalCenterUsers) {
-        const user = event.eventReportPilotNationalCenterUsers
-          .find((erpnc) => erpnc.userId === event.data.owner.id);
-
-        if (user) {
-          return `${user.userName} ${user.nationalCenterName}`;
-        }
-      }
-
-      if (event.data.owner.name) {
-        return event.data.owner.name;
-      }
-    }
-
-    return '';
-  })();
+  const ownerName = formatOwnerName();
 
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
