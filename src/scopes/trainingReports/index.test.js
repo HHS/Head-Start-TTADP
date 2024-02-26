@@ -345,7 +345,7 @@ describe('filtersToScopes', () => {
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
         data: { eventId: 'R01-TR-23-1035' },
-      });
+      }, { individualHooks: false });
 
       // Report without event to find.
       reportWithoutEventId = await EventReportPilot.create({
@@ -354,7 +354,7 @@ describe('filtersToScopes', () => {
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
         data: { eventId: 'R01-TR-23-2484' },
-      });
+      }, { individualHooks: false });
 
       // Report with null event.
       reportWithNullEventId = await EventReportPilot.create({
@@ -363,7 +363,7 @@ describe('filtersToScopes', () => {
         collaboratorIds: [mockUser.id],
         regionId: mockUser.homeRegionId,
         data: { },
-      });
+      }, { individualHooks: false });
 
       possibleIds = [
         reportWithEventId.id,
