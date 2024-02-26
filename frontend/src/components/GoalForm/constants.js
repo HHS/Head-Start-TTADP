@@ -113,6 +113,16 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
   }
 };
 
+/**
+ *
+ * converts an array of grants to an object with the grant number
+ * as the key and the default value as the value
+ *
+ * @param {Array} grants - an array of grants
+ * @param {Object} value - the current value of the form { grantNumber: value }
+ * @param {String} defaultValue - the default value for the form
+ * @returns {Object} - the new value of the form
+ */
 export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
   const current = [];
   const values = uniq(Object.values(value));

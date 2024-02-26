@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus,
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
@@ -2100,6 +2100,8 @@ export async function saveGoalsForReport(goals, report) {
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
+    const isMultiRecipientReport = (goal.grantIds.length > 1);
+
     return Promise.all(goal.grantIds.map(async (grantId) => {
       let newOrUpdatedGoal;
 
@@ -2166,7 +2168,7 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal.set({ status });
       }
 
-      if (prompts) {
+      if (prompts && !isMultiRecipientReport) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
 
@@ -2180,6 +2182,7 @@ export async function saveGoalsForReport(goals, report) {
         report.id,
         isActivelyBeingEditing,
         prompts || null,
+        isMultiRecipientReport,
       );
 
       // and pass the goal to the objective creation function

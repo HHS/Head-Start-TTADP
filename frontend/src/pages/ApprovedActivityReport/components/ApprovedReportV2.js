@@ -156,7 +156,9 @@ function calculateGoalsAndObjectives(report) {
       if (prompts && prompts.length) {
         const promptData = {};
         prompts.forEach((prompt) => {
-          promptData[prompt.title] = prompt.reportResponse.join(', ');
+          if (prompt.reportResponse.length > 0) {
+            promptData[prompt.title] = prompt.reportResponse.join(', ');
+          }
         });
         goalSection.data = { ...goalSection.data, ...promptData };
       }
