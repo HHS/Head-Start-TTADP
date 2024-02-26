@@ -387,15 +387,28 @@ describe('Groups', () => {
             name: 'CoOwner User',
           },
         ],
+        sharedWith: [],
+        creator: {
+          name: 'Creator User2',
+          id: 14,
+        },
+      },
+      {
+        id: 3,
+        name: 'group3',
+        isPublic: true,
+        updatedAt: '2024-01-03T00:00:00.000Z',
+        groupCollaborators: [],
+        coOwners: [],
         sharedWith: [
           {
-            id: 12,
+            id: 14,
             name: 'SharedWith User',
           },
         ],
         creator: {
-          name: 'Creator User2',
-          id: 14,
+          name: 'Creator User3',
+          id: 15,
         },
       },
     ]);
@@ -422,6 +435,9 @@ describe('Groups', () => {
       expect(screen.getByText('01/02/2024')).toBeInTheDocument();
       expect(screen.queryAllByText('Edit group').length).toBe(0);
       expect(screen.queryAllByText('Delete group').length).toBe(0);
+
+      // Public Group with a different shared collaborator.
+      expect(screen.queryAllByText('group3').length).toBe(0);
 
       // One view for each row.
       expect(screen.queryAllByText('View group').length).toBe(2);
