@@ -183,12 +183,28 @@ export default function MyGroups({ match }) {
     }
   }, [groupId, setIsAppLoading, usersFetched]);
 
+  const maxCoOwnerRule = {
+    validate: (value) => {
+      console.log('value', value);
+      if (value && value.length > 3) {
+        return 'You can only choose up to three co-owners.';
+      }
+      return true;
+    },
+  };
+
   // you'll notice that "setMyGroups" is called below
   // - since we fetch that data once, way earlier, in App.js, we must update it here
   // if a user creates or updates a group. Given that we are working in SPA, it's
   // very possible that a user will create a group, then navigate to the a page and expect to use
   // it without refreshing, so that data will not be refreshed from the API
   const onSubmit = async (data) => {
+    // Co-owners is not required but limits up to 3.
+    if (watchCoOwners && watchCoOwners.length > 3) {
+      setFormError(GROUP_FIELD_NAMES.CO_OWNERS, { message: 'You can only choose up to three co-owners.', shouldFocus: true });
+      return;
+    }
+
     const post = {
       grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
       name: data[GROUP_FIELD_NAMES.NAME],
@@ -244,15 +260,6 @@ export default function MyGroups({ match }) {
   const nameError = formErrors[GROUP_FIELD_NAMES.NAME];
   const individualsError = formErrors[GROUP_FIELD_NAMES.INDIVIDUALS];
   const coOwnerError = formErrors[GROUP_FIELD_NAMES.CO_OWNERS];
-
-  const maxCoOwnerRule = {
-    validate: (value) => {
-      if (value && value.length > 3) {
-        return 'You can only choose up to three co-owners.';
-      }
-      return true;
-    },
-  };
 
   const filterCoOwnerOptions = () => {
     if (!usersFetched) return [];
@@ -367,8 +374,6 @@ export default function MyGroups({ match }) {
                 <label className="display-block margin-bottom-1">
                   Add co-owner
                   {' '}
-                  <Req />
-
                   {coOwnerError && <span className="usa-error-message">{coOwnerError.message}</span>}
                   <div>
                     <span className="usa-hint">
@@ -380,9 +385,8 @@ export default function MyGroups({ match }) {
                     options={filterCoOwnerOptions()}
                     control={control}
                     simple={false}
-                    required="Select at least one"
+                    required={false}
                     disabled={isAppLoading}
-                    rules={maxCoOwnerRule}
                   />
                 </label>
                 <div className="margin-top-4">
