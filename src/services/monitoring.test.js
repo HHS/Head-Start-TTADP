@@ -18,12 +18,12 @@ const REGION_ID = 1;
 const GRANT_NUMBER = '01HP044446';
 const GRANT_ID = 665;
 
-async function createMonitoringData() {
+async function createMonitoringData(grantNumber) {
   await MonitoringClassSummary.findOrCreate({
-    where: { grantNumber: GRANT_NUMBER },
+    where: { grantNumber },
     defaults: {
       reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-      grantNumber: GRANT_NUMBER,
+      grantNumber,
       emotionalSupport: 6.2303,
       classroomOrganization: 5.2303,
       instructionalSupport: 3.2303,
@@ -35,11 +35,11 @@ async function createMonitoringData() {
   });
 
   await MonitoringReviewGrantee.findOrCreate({
-    where: { grantNumber: GRANT_NUMBER },
+    where: { grantNumber },
     defaults: {
       reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
       granteeId: '14FC5A81-8E27-4B06-A107-9C28762BC2F6',
-      grantNumber: GRANT_NUMBER,
+      grantNumber,
       sourceCreatedAt: '2024-02-12 14:31:55.74-08',
       sourceUpdatedAt: '2024-02-12 14:31:55.74-08',
       createTime: '2023-11-14 21:00:00-08',
@@ -90,6 +90,15 @@ async function createMonitoringData() {
   });
 }
 
+async function destroyMonitoringData(grantNumber) {
+  await MonitoringReviewGrantee.destroy({ where: { grantNumber }, force: true });
+  await MonitoringClassSummary.destroy({ where: { grantNumber }, force: true });
+  await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
+  await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
+  await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
+  await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+}
+
 describe('monitoring services', () => {
   beforeAll(async () => {
     await Grant.findOrCreate({
@@ -114,15 +123,10 @@ describe('monitoring services', () => {
 
   describe('classScore', () => {
     beforeAll(async () => {
-      await createMonitoringData();
+      await createMonitoringData(GRANT_NUMBER);
     });
     afterAll(async () => {
-      await MonitoringReviewGrantee.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-      await MonitoringClassSummary.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-      await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-      await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-      await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-      await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+      await destroyMonitoringData(GRANT_NUMBER);
       await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     });
     it('returns data in the correct format', async () => {
@@ -146,15 +150,10 @@ describe('monitoring services', () => {
   });
   describe('monitoringData', () => {
     beforeAll(async () => {
-      await createMonitoringData();
+      await createMonitoringData(GRANT_NUMBER);
     });
     afterAll(async () => {
-      await MonitoringReviewGrantee.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-      await MonitoringClassSummary.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-      await MonitoringReview.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-      await MonitoringReviewLink.destroy({ where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C808' }, force: true });
-      await MonitoringReviewStatus.destroy({ where: { statusId: 6006 }, force: true });
-      await MonitoringReviewStatusLink.destroy({ where: { statusId: 6006 }, force: true });
+      await destroyMonitoringData(GRANT_NUMBER);
       await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     });
     it('returns null when nothing is found', async () => {
@@ -202,6 +201,43 @@ describe('monitoring services', () => {
         reviewDate: '02/22/2023',
         reviewType: 'FA-1',
       });
+    });
+  });
+  describe('Grant afterCreate', () => {
+    beforeAll(async () => {
+      await Grant.findOrCreate({
+        where: { number: '14CH123' },
+        defaults: {
+          id: GRANT_ID + 2,
+          regionId: REGION_ID,
+          number: '14CH123',
+          recipientId: RECIPIENT_ID,
+          status: 'Active',
+          startDate: '2024-02-12 14:31:55.74-08',
+          endDate: '2024-02-12 14:31:55.74-08',
+          cdi: false,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await GrantNumberLink.destroy({ where: { grantNumber: '14CH123' }, force: true });
+      await Grant.destroy({ where: { number: '14CH123' }, force: true });
+    });
+
+    it('adds a record in GrantNumberLink table', async () => {
+      const createdGrant = await Grant.findOne({
+        where: { id: GRANT_ID + 2 }
+      });
+      expect(createdGrant).not.toBeNull();
+
+      const createdGrantNumberLink = await GrantNumberLink.findOne({
+        where: { grantNumber: '14CH123' }
+      });
+
+      expect(createdGrantNumberLink).not.toBeNull();
+      expect(createdGrantNumberLink.grantNumber).toEqual('14CH123');
+      expect(createdGrantNumberLink.grantId).toEqual(GRANT_ID + 2);
     });
   });
 });

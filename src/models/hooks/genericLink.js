@@ -47,7 +47,7 @@ const syncLink = async (
   const [currentRecord] = await model.findAll({
     attributes: [targetEntityName],
     where: { [targetEntityName]: entityId },
-    transaction: options.transactions,
+    transaction: options.transaction,
   });
 
   // If no current record exists, create a new one
@@ -55,7 +55,7 @@ const syncLink = async (
     const newRecord = await model.create({
       [targetEntityName]: entityId,
     }, {
-      transaction: options.transactions,
+      transaction: options.transaction,
     });
     // If a callback is provided, call it while the lock is still held
     if (onCreateCallbackWhileHoldingLock) {
@@ -101,7 +101,7 @@ const linkGrant = async (
   const grant = await sequelize.models.Grant.findOne({
     attributes: [['id', 'grantId']], // Select only the 'id' column and alias it as 'grantId'.
     where: { number: grantNumber }, // Filter the grants by the provided grant number.
-    transaction: options.transactions, // Use the transaction provided in the options if any.
+    transaction: options.transaction, // Use the transaction provided in the options if any.
     raw: true,
   });
 
@@ -114,7 +114,7 @@ const linkGrant = async (
         where: {
           [entityName]: grantNumber, // Use the entity name as a key to match the grant number.
         },
-        transaction: options.transactions, // Use the transaction provided in the options if any.
+        transaction: options.transaction, // Use the transaction provided in the options if any.
         individualHooks: true, // Enable individual hooks for the update operation.
       },
     );
@@ -204,7 +204,7 @@ const clearGrantNumberLink = async (
   { grantId: null },
   {
     where: { grantId: instance.id },
-    transaction: options.transactions,
+    transaction: options.transaction,
   },
 );
 

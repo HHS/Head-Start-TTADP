@@ -62,7 +62,7 @@ describe('syncLink', () => {
 
     expect(model.create).toHaveBeenCalledWith(
       { [targetEntityName]: entityId },
-      { transaction: options.transactions },
+      { transaction: options.transaction },
     );
   });
 
@@ -114,6 +114,94 @@ describe('syncLink', () => {
 
 describe('syncGrantNumberLink', () => {
   // Add tests for syncGrantNumberLink
+  it('should successfully synchronize a grant number link with the associated GrantNumberLink model', async () => {
+    const sequelize = {
+      models: {
+        GrantNumberLink: {
+          findAll: jest.fn().mockResolvedValue([]),
+          create: jest.fn().mockResolvedValue({}),
+          update: jest.fn().mockResolvedValue({}),
+        },
+        Grant: {
+          findOne: jest.fn().mockResolvedValue({ grantId: 1 }),
+        },
+      },
+    };
+    const instance = {
+      isNewRecord: false,
+      changed: jest.fn().mockReturnValue(['grantNumber']),
+      grantNumber: '12345',
+    };
+    const options = {
+      transaction: {},
+    };
+
+    await syncGrantNumberLink(
+      sequelize,
+      instance,
+      options,
+    );
+
+    expect(sequelize.models.GrantNumberLink.findAll).toHaveBeenCalledWith({
+      attributes: ['grantNumber'],
+      where: { grantNumber: '12345' },
+      transaction: options.transaction,
+    });
+    expect(sequelize.models.GrantNumberLink.create).toHaveBeenCalled();
+    expect(sequelize.models.Grant.findOne).toHaveBeenCalledWith({
+      attributes: [['id', 'grantId']],
+      where: { number: '12345' },
+      transaction: options.transaction,
+      raw: true,
+    });
+    expect(sequelize.models.GrantNumberLink.update).toHaveBeenCalledWith(
+      { grantId: 1 },
+      {
+        where: { grantNumber: '12345' },
+        transaction: options.transaction,
+        individualHooks: true,
+      },
+    );
+  });
+
+  it('should synchronize if instance is a new record', async () => {
+
+    const sequelize = {
+      models: {
+        GrantNumberLink: {
+          findAll: jest.fn().mockResolvedValue([]),
+          create: jest.fn().mockResolvedValue({}),
+          update: jest.fn(),
+        },
+        Grant: {
+          findOne: jest.fn().mockResolvedValue({ id: 1 }),
+        },
+      },
+    };
+    const instance = {
+      isNewRecord: true,
+      changed: jest.fn(),
+      grantNumber: '12345',
+    };
+    const options = {
+      transaction: {},
+    };
+
+    await syncGrantNumberLink(
+      sequelize,
+      instance,
+      options,
+    );
+
+    expect(sequelize.models.GrantNumberLink.create).toHaveBeenCalledTimes(1);
+    expect(sequelize.models.Grant.findOne).toHaveBeenCalledWith({
+      attributes: [['id', 'grantId']],
+      where: { number: '12345' },
+      transaction: options.transaction,
+      raw: true,
+    });
+    expect(sequelize.models.GrantNumberLink.update).toHaveBeenCalled();
+  });
 });
 
 describe('syncMonitoringReviewLink', () => {
