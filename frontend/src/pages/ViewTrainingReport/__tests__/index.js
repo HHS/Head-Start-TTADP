@@ -4,7 +4,7 @@ import { render, screen, act } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
 import AppLoadingContext from '../../../AppLoadingContext';
-import ViewTrainingReport from '..';
+import ViewTrainingReport, { formatOwnerName } from '..';
 
 const mockEvent = (data = {}) => ({
   id: 1,
@@ -325,5 +325,115 @@ describe('ViewTrainingReport', () => {
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
+  });
+
+  it('will not fetch if there are eventReportPilotNationalCenterUsers in the response that match the IDs', async () => {
+    const e = mockEvent();
+    e.eventReportPilotNationalCenterUsers = [{ userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=2')).toBe(false);
+
+    expect(await screen.findByText('USER 2 NC 1')).toBeInTheDocument();
+  });
+
+  it('will fetch if there are eventReportPilotNationalCenterUsers in the response that do not match the IDs', async () => {
+    const e = mockEvent();
+    e.eventReportPilotNationalCenterUsers = [{ userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=2')).toBe(true);
+
+    expect(await screen.findByText('USER 2')).toBeInTheDocument();
+  });
+
+  describe('formatOwnerName', () => {
+    test('handles an error', () => {
+      const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });
+      expect(result).toBe('');
+    });
+    test('Returns the formatted owner name if owner is missing from eventReportPilotNationalCenterUsers', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe');
+    });
+    test('Returns the formatted owner name if event and owner data are provided', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 1,
+            userName: 'John',
+            nationalCenterName: 'Center A',
+          },
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Center A');
+    });
+
+    test('Returns the owner name if event and owner name are provided', () => {
+      const event = {
+        data: {
+          owner: {
+            name: 'John Doe',
+          },
+        },
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe');
+    });
+
+    test('Returns an empty string if event or owner data are missing', () => {
+      const event = {
+        data: {},
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('');
+    });
   });
 });
