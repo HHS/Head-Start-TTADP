@@ -165,7 +165,6 @@ describe('syncGrantNumberLink', () => {
   });
 
   it('should synchronize if instance is a new record', async () => {
-
     const sequelize = {
       models: {
         GrantNumberLink: {
