@@ -20,6 +20,7 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
+  ActivityReportGoalFieldResponse,
   CollaboratorRole,
   Resource,
   Topic,
@@ -124,6 +125,7 @@ describe('cacheCourses', () => {
     await destroyReport(activityReport);
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
+    await db.sequelize.close();
   });
 
   it('should cache courses', async () => {
@@ -222,7 +224,9 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg[0].dataValues).toMatchObject(data);
 
-    await cacheGoalMetadata(goal, activityReport.id, true);
+    jest.spyOn(ActivityReportGoalFieldResponse, 'destroy');
+
+    await cacheGoalMetadata(goal, activityReport.id, true, [], true);
 
     arg = await ActivityReportGoal.findAll({
       where: {
@@ -237,6 +241,8 @@ describe('cacheGoalMetadata', () => {
     };
     expect(arg).toHaveLength(1);
     expect(arg[0].dataValues).toMatchObject(updatedData);
+
+    expect(ActivityReportGoalFieldResponse.destroy).toHaveBeenCalled();
   });
 });
 
