@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.scss';
 import FilterErrorContext from './FilterErrorContext';
+import useGaDataLayerFilterItem from '../../hooks/useGaDataLayerFilterItem';
 import { filterProp } from './props';
 import colors from '../../colors';
 
@@ -30,6 +31,14 @@ export default function FilterItem({
   } = filter;
 
   const { error, setError } = useContext(FilterErrorContext);
+
+  /**
+   * changing the condition should clear the query
+   * Having to do this, I set the default values to be empty where possible
+   * since that creates the least complicated and confusing logic in the
+   * function below
+   */
+  const onUpdate = useGaDataLayerFilterItem(id, onUpdateFilter);
 
   const validate = () => {
     if (!topic) {
@@ -74,16 +83,6 @@ export default function FilterItem({
         setError(message);
       }
     }
-  };
-
-  /**
-   * changing the condition should clear the query
-   * Having to do this, I set the default values to be empty where possible
-   * since that creates the least complicated and confusing logic in the
-   * function below
-   */
-  const onUpdate = (name, value) => {
-    onUpdateFilter(id, name, value);
   };
 
   const DummySelect = () => (
