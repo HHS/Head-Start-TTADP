@@ -73,13 +73,12 @@ export default function MyGroups({ match }) {
 
   const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
-  // const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
-  // const watchIndividuals = watch(GROUP_FIELD_NAMES.INDIVIDUALS);
+  const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
+  const watchIndividuals = watch(GROUP_FIELD_NAMES.INDIVIDUALS);
 
   const { groupId } = match.params;
   const [recipientOptions, setRecipientOptions] = useState([]);
-  const [coOwnerOptions, setCoOwnerOptions] = useState([]);
-  const [individualOptions, setIndividualOptions] = useState([]);
+  const [userOptions, setUserOptions] = useState([]);
   const [error, setError] = useState(null);
   const history = useHistory();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
@@ -168,8 +167,7 @@ export default function MyGroups({ match }) {
           value: user.userId, label: user.name,
         }));
 
-        setCoOwnerOptions(mappedUsers);
-        setIndividualOptions(mappedUsers);
+        setUserOptions(mappedUsers);
 
         // Set users fetched.
         setUsersFetched(true);
@@ -254,6 +252,32 @@ export default function MyGroups({ match }) {
       }
       return true;
     },
+  };
+
+  const filterCoOwnerOptions = () => {
+    if (!usersFetched) return [];
+    let updatedCoOwnerOptions = [...userOptions];
+
+    if (usersFetched && watchIndividuals && watchIndividuals.length) {
+      const selectedIndividuals = watchIndividuals.map((i) => i.value);
+      updatedCoOwnerOptions = updatedCoOwnerOptions.filter(
+        (user) => !selectedIndividuals.includes(user.value),
+      );
+    }
+    return updatedCoOwnerOptions;
+  };
+
+  const filterIndividualOptions = () => {
+    if (!usersFetched) return [];
+    let updatedIndividualOptions = [...userOptions];
+
+    if (watchCoOwners && watchCoOwners.length) {
+      const selectedCoOwners = watchCoOwners.map((i) => i.value);
+      updatedIndividualOptions = updatedIndividualOptions.filter(
+        (user) => !selectedCoOwners.includes(user.value),
+      );
+    }
+    return updatedIndividualOptions;
   };
 
   return (
@@ -353,7 +377,7 @@ export default function MyGroups({ match }) {
                   </div>
                   <MultiSelect
                     name={GROUP_FIELD_NAMES.CO_OWNERS}
-                    options={coOwnerOptions}
+                    options={filterCoOwnerOptions()}
                     control={control}
                     simple={false}
                     required="Select at least one"
@@ -398,10 +422,10 @@ export default function MyGroups({ match }) {
                         Invite individuals
                         {' '}
                         <Req />
-                        {nameError && <span className="usa-error-message">{individualsError.message}</span>}
+                        {individualsError && <span className="usa-error-message">{individualsError.message}</span>}
                         <MultiSelect
                           name={GROUP_FIELD_NAMES.INDIVIDUALS}
-                          options={individualOptions}
+                          options={filterIndividualOptions()}
                           control={control}
                           simple={false}
                           required="Select at least one"

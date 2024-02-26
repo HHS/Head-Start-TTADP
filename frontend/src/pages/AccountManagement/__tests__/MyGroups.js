@@ -260,8 +260,8 @@ describe('MyGroups', () => {
     });
 
     // Expect individual1 and individual2 to be selected.
-    expect(screen.queryAllByText(/individual1/i).length).toBe(2);
-    expect(screen.queryAllByText(/individual2/i).length).toBe(2);
+    expect(screen.getByText(/individual1/i)).toBeInTheDocument();
+    expect(screen.getByText(/individual2/i)).toBeInTheDocument();
 
     // Prepare save mock.
     fetchMock.post('/api/groups', {});
