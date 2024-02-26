@@ -125,7 +125,6 @@ describe('cacheCourses', () => {
     await destroyReport(activityReport);
     await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
-    await db.sequelize.close();
   });
 
   it('should cache courses', async () => {
