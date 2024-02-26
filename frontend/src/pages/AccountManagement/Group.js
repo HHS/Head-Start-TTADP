@@ -9,6 +9,7 @@ import colors from '../../colors';
 import { fetchGroup } from '../../fetchers/groups';
 import AppLoadingContext from '../../AppLoadingContext';
 import WidgetCard from '../../components/WidgetCard';
+import ReadOnlyField from '../../components/ReadOnlyField';
 
 export default function Group({ match }) {
   const { groupId } = match.params;
@@ -51,7 +52,18 @@ export default function Group({ match }) {
     // Loop all grants and return a <li> for each grant
     return group.grants.map((grant) => (
       <li key={grant.id}>
-        {`${grant.recipient.name} - ${grant.number}`}
+        {grant.recipientNameWithPrograms}
+      </li>
+    ));
+  };
+
+  const mapUsers = (usersToMap) => {
+    if (!usersToMap || !usersToMap.length) {
+      return null;
+    }
+    return usersToMap.map((user) => (
+      <li key={user.id}>
+        {user.name}
       </li>
     ));
   };
@@ -78,10 +90,24 @@ export default function Group({ match }) {
             {error}
           </Alert>
         ) : null}
-
-        <ul className="usa-list usa-list--unstyled">
-          {getGrantList()}
-        </ul>
+        <ReadOnlyField label="Group owner">
+          {group && group.creator ? group.creator.name : ''}
+        </ReadOnlyField>
+        <ReadOnlyField label="Recipients">
+          <ul className="usa-list usa-list--unstyled">
+            {getGrantList()}
+          </ul>
+        </ReadOnlyField>
+        <ReadOnlyField label="Co-owners">
+          <ul className="usa-list usa-list--unstyled">
+            {mapUsers(group.coOwners)}
+          </ul>
+        </ReadOnlyField>
+        <ReadOnlyField label="Shared with">
+          <ul className="usa-list usa-list--unstyled">
+            {mapUsers(group.sharedWith)}
+          </ul>
+        </ReadOnlyField>
       </WidgetCard>
     </>
   );

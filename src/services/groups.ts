@@ -373,6 +373,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
           'id',
           'granteeName',
           'recipientInfo',
+          'recipientNameWithPrograms',
         ],
         include: [
           {
@@ -382,6 +383,11 @@ export async function group(groupId: number): Promise<GroupResponse> {
               'name',
               'id',
             ],
+          },
+          {
+            model: Program,
+            as: 'programs',
+            attributes: ['id', 'programType', 'grantId'],
           },
         ],
       },
