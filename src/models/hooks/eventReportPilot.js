@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
-
 import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
 
 /* eslint-disable import/prefer-default-export */
@@ -187,7 +186,6 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
   try {
     const { ownerId, collaboratorIds } = instance;
     const userIds = [ownerId, ...collaboratorIds].filter((f) => f);
-
     const users = await sequelize.models.User.findAll({
       where: {
         id: userIds,
@@ -201,18 +199,43 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
       transaction: options.transaction,
     });
 
+    const idsToKeep = [];
+
+    const existing = await sequelize.models.EventReportPilotNationalCenterUser.findAll({
+      where: {
+        eventReportPilotId: instance.id,
+      },
+      transaction: options.transaction,
+    });
+
     const bulkCreates = [];
+    const updates = [];
     users.forEach((user) => {
       user.nationalCenters.forEach((nc) => {
-        bulkCreates.push({
-          userId: user.id,
-          userName: user.name,
-          eventReportPilotId: instance.id,
-          nationalCenterId: nc.id,
-          nationalCenterName: nc.name,
-        });
+        const exists = existing.find((e) => e.userId === user.id && e.nationalCenterId === nc.id && e.eventReportPilotId === instance.id);
+
+        if (exists) {
+          updates.push(sequelize.models.EventReportPilotNationalCenterUser.update({
+            userName: user.name,
+            nationalCenterName: nc.name,
+          }, { where: { id: exists.id } }));
+
+          idsToKeep.push(exists.id);
+        }
+
+        if (!exists) {
+          bulkCreates.push({
+            userId: user.id,
+            userName: user.name,
+            eventReportPilotId: instance.id,
+            nationalCenterId: nc.id,
+            nationalCenterName: nc.name,
+          });
+        }
       });
     });
+
+    await Promise.all(updates);
 
     const records = await sequelize.models.EventReportPilotNationalCenterUser.bulkCreate(bulkCreates, {
       updateOnDuplicate: ['updatedAt', 'userName', 'nationalCenterName'],
@@ -225,7 +248,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
       where: {
         eventReportPilotId: instance.id,
         id: {
-          [Op.notIn]: ids,
+          [Op.notIn]: [...ids, ...idsToKeep],
         },
       },
       transaction: options.transaction,

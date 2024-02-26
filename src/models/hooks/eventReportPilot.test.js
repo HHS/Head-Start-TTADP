@@ -264,6 +264,8 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
       EventReportPilotNationalCenterUser: {
         bulkCreate: jest.fn(),
         destroy: jest.fn(),
+        findAll: jest.fn(),
+        update: jest.fn(),
       },
     },
   };
@@ -336,13 +338,6 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
         nationalCenterName: 'National Center 2',
       },
       {
-        userId: 1,
-        userName: 'Jane Smith',
-        eventReportPilotId: 1,
-        nationalCenterId: 10,
-        nationalCenterName: 'National Center 1',
-      },
-      {
         userId: 2,
         userName: 'Bob Johnson',
         eventReportPilotId: 1,
@@ -355,6 +350,17 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     sequelize.models.EventReportPilotNationalCenterUser.bulkCreate.mockResolvedValue(
       bulks.map((b, i) => ({ id: i + 1, ...b })),
     );
+
+    sequelize.models.EventReportPilotNationalCenterUser.findAll.mockResolvedValue([
+      {
+        userId: 1,
+        userName: 'Jane Smith',
+        eventReportPilotId: 1,
+        nationalCenterId: 10,
+        nationalCenterName: 'National Center 1',
+        id: 4,
+      },
+    ]);
 
     await afterCreate(sequelize, instance, options);
 
