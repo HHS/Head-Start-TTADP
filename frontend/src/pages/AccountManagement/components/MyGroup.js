@@ -9,6 +9,7 @@ import {
 import { deleteGroup, fetchGroups } from '../../../fetchers/groups';
 import VanillaModal from '../../../components/VanillaModal';
 import AppLoadingContext from '../../../AppLoadingContext';
+import './MyGroup.scss';
 
 export default function MyGroup({
   group, setMyGroups, setError, isViewOnly, isCoOwner,
@@ -59,7 +60,7 @@ export default function MyGroup({
       <td data-label="Last update">
         {getLastUpdated()}
       </td>
-      <td align="right">
+      <td className={isViewOnly ? 'smart-hub--groups-view' : 'smart-hub--groups-edit-delete'} align="right">
         {
           isViewOnly
             ? <Link to={`/account/group/${group.id}`} aria-label={`view ${group.name}`} className="usa-button usa-button--unstyled">View group</Link>
