@@ -46,6 +46,7 @@ export default function Groups() {
     const publicGroups = (myGroups || []).filter(
       (group) => group.creator.id !== user.id
     && group.isPublic
+    && group.sharedWith.length === 0 // Only show if it's public with no shared users.
     && !creatorGroupIds.includes(group.id)
     && !cowOwnerGroupIds.includes(group.id)
     && !sharedGroupIds.includes(group.id),
