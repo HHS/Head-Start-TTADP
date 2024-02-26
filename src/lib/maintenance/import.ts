@@ -296,7 +296,7 @@ addQueueProcessor(MAINTENANCE_CATEGORY.IMPORT, importMaintenance);
 if (!process.env.CI
   && ((process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production')
   || process.env.NODE_ENV !== 'production')) {
-  enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', true);
+  enqueueImportMaintenanceJob(MAINTENANCE_TYPE.IMPORT_SCHEDULE, undefined, 'index', false);
 }
 
 export {
