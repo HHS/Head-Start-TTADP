@@ -784,26 +784,26 @@ export async function getGoalsByActivityRecipient(
   });
 
   async function getUserDetails(userId) {
-    const userRole = await UserRole.findOne({
+    const userRoles = await UserRole.findAll({
       where: { userId },
-      include: [{ model: Role, as: 'role' }, { model: User, as: 'user' }],
+      include: [{ model: Role, as: 'role' }, { model: User, attributes: ['name'], as: 'user' }],
     });
     return {
-      role: userRole?.role?.name,
-      name: userRole?.user?.name,
+      roles: userRoles.map((ur) => ur.role.name).join(', '),
+      name: userRoles[0]?.user.name || '',
     };
   }
 
   // eslint-disable-next-line no-restricted-syntax
   for await (const goal of r.goalRows) {
     if (goal.goalCreator) {
-      const { role, name } = await getUserDetails(goal.goalCreator.userId);
-      goal.creatorRole = role;
+      const { roles, name } = await getUserDetails(goal.goalCreator.userId);
+      goal.creatorRoles = roles;
       goal.creatorName = name;
     }
     if (goal.goalLinker) {
-      const { role, name } = await getUserDetails(goal.goalLinker.userId);
-      goal.linkerRole = role;
+      const { roles, name } = await getUserDetails(goal.goalLinker.userId);
+      goal.linkerRoles = roles;
       goal.linkerName = name;
     }
   }
