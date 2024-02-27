@@ -40,6 +40,7 @@ describe('Groups service', () => {
   let existingGroupToEditWithCollabs;
   let groupToDelete;
   let publicGroup;
+  let publicGroupNotShared;
   let groupsToCleanup = [];
 
   let creatorCollaboratorType;
@@ -304,11 +305,32 @@ describe('Groups service', () => {
       collaboratorTypeId: creatorCollaboratorType.id,
     });
 
+    // create a public group NOT shared with the user.
+    publicGroupNotShared = await Group.create({
+      name: 'Public Group NOT Shared',
+      isPublic: true,
+    });
+
+    // Create GroupCollaborator Creator.
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: publicGroupNotShared.id,
+      collaboratorTypeId: creatorCollaboratorType.id,
+    });
+
+    // Create Shared with Individual.
+    await GroupCollaborator.create({
+      userId: mockUserThree.id,
+      groupId: publicGroupNotShared.id,
+      collaboratorTypeId: sharedWithCollaboratorType.id,
+    });
+
     groupsToCleanup = [
       existingGroupToEdit,
       groupToDelete,
       publicGroup,
       existingGroupToEditWithCollabs,
+      publicGroupNotShared,
     ];
 
     await GroupGrant.create({
@@ -370,6 +392,53 @@ describe('Groups service', () => {
 
   describe('groups', () => {
     it('returns a list of groups', async () => {
+      const result = await groups(mockUser.id, [1]);
+      expect(result).toHaveLength(4);
+
+      // Get 'Group 1' from result.
+      const groupOne = result.find((g) => g.name === 'Group 1');
+      expect(groupOne).toBeDefined();
+      expect(groupOne.creator.id).toBe(mockUser.id);
+      expect(groupOne.creator.name).toBe(mockUser.name);
+      expect(groupOne.editor.id).toBe(mockUserTwo.id);
+
+      // Assert groupOne coOwners and sharedWith.
+      expect(groupOne.coOwners).toHaveLength(2);
+      const coOwnersIds = groupOne.coOwners.map((co) => co.id);
+      expect(coOwnersIds).toContain(mockUserThree.id);
+      expect(coOwnersIds).toContain(mockUserFour.id);
+
+      expect(groupOne.sharedWith).toHaveLength(2);
+      const sharedWithIds = groupOne.sharedWith.map((sw) => sw.id);
+      expect(sharedWithIds).toContain(mockUserFour.id);
+      expect(sharedWithIds).toContain(mockUserTwo.id);
+
+      // Assert the creator is mockUser.
+      const groupTwo = result.find((g) => g.name === 'Group 2');
+      expect(groupTwo).toBeDefined();
+      expect(groupTwo.creator.id).toBe(mockUser.id);
+      expect(groupTwo.creator.name).toBe(mockUser.name);
+
+      // Get Public Group from result.
+      const groupPublic = result.find((g) => g.name === 'Public Group');
+      expect(groupPublic).toBeDefined();
+      expect(groupPublic.creator.id).toBe(mockUserTwo.id);
+      expect(groupPublic.creator.name).toBe(mockUserTwo.name);
+      expect(groupPublic.isPublic).toBe(true);
+
+      // Get 'Group 1 with collaborators' from result.
+      const groupOneWithCollabs = result.find((g) => g.name === 'Group 1 with collaborators');
+      expect(groupOneWithCollabs).toBeDefined();
+      expect(groupOneWithCollabs.creator.id).toBe(mockUser.id);
+      expect(groupOneWithCollabs.creator.name).toBe(mockUser.name);
+      expect(groupOneWithCollabs.editor).toBeNull();
+
+      // Get 'Public Group NOT Shared' from result.
+      const groupPublicNotShared = result.find((g) => g.name === publicGroupNotShared.name);
+      expect(groupPublicNotShared).not.toBeDefined();
+    });
+
+    it('returns a list of public', async () => {
       const result = await groups(mockUser.id, [1]);
       expect(result).toHaveLength(4);
 
