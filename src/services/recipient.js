@@ -570,6 +570,7 @@ export async function getGoalsByActivityRecipient(
         model: GoalCollaborator,
         as: 'goalCollaborators',
         attributes: ['id'],
+        required: false,
         include: [
           {
             model: CollaboratorType,
