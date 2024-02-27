@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './FilterItem.scss';
 import FilterErrorContext from './FilterErrorContext';
-import useGaDataLayerFilterItem from '../../hooks/useGaDataLayerFilterItem';
+import useGaFilterItem from '../../hooks/useGaFilterItem';
 import { filterProp } from './props';
 import colors from '../../colors';
 
@@ -38,7 +38,7 @@ export default function FilterItem({
    * since that creates the least complicated and confusing logic in the
    * function below
    */
-  const onUpdate = useGaDataLayerFilterItem(id, onUpdateFilter);
+  const onUpdate = useGaFilterItem(filter, onUpdateFilter);
 
   const validate = () => {
     if (!topic) {
