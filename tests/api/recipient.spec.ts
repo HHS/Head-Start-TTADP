@@ -110,7 +110,7 @@ test.describe('get /recipient', () => {
       deleted: Joi.boolean().allow(null),
       grants: Joi.array().items(grantSchema),
     });
-    
+
     const schema = Joi.array().items(recipientSchema).min(1);
 
     await validateSchema(response, schema, expect);
@@ -191,9 +191,9 @@ test.describe('get /recipient', () => {
             response: Joi.array().items(
               Joi.string()
             ),
-            prompt: Joi.string(),     
+            prompt: Joi.string(),
            }),
-          ),                  
+          ),
         name: Joi.string(),
         source: Joi.string().allow(null),
         goalTemplateId: Joi.number().allow(null),
@@ -245,6 +245,7 @@ test.describe('get /recipient', () => {
         grantIds: Joi.array().items(Joi.number()),
         isNew: Joi.boolean(),
         endDate: Joi.string().allow(null).allow(''),
+        goalCollaborators: Joi.array().items(Joi.any().allow(null)),
       })
     ).min(1);
 
