@@ -99,6 +99,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
       model: GoalCollaborator,
       as: 'goalCollaborators',
       attributes: ['id'],
+      required: false,
       include: [
         {
           model: CollaboratorType,
