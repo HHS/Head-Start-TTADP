@@ -122,6 +122,10 @@ const updateGoalText = async (sequelize, instance, options) => {
     return;
   }
 
+  if (current.goal === previous.goal) {
+    return;
+  }
+
   // Get all SessionReportPilot instances for this event.
   const sessions = await sequelize.models.SessionReportPilot.findAll({
     where: {
