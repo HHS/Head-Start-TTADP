@@ -761,7 +761,7 @@ export async function getGoalsByActivityRecipient(
           ...getGoalCollaboratorDetails('Creator', current),
           ...getGoalCollaboratorDetails('Linker', current),
         },
-      ].filter((c) => c.goalCreatorName && c.goalCreatorRoles);
+      ];
 
       return {
         goalRows: previous.goalRows,
