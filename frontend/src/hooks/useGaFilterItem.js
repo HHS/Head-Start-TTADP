@@ -17,7 +17,6 @@ export default function useGaFilterItem(filter, onUpdateFilter) {
     try {
       const event = {
         event: 'filterSelection',
-        value,
         topic,
         condition,
         query,

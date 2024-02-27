@@ -47,7 +47,6 @@ describe('useGaFilterItem', () => {
 
     expect(mockDataLayerPush).toHaveBeenCalledWith({
       event: 'filterSelection',
-      value: 'value1',
       topic: 'topic1',
       condition: 'condition1',
       query: 'query1',
@@ -77,5 +76,26 @@ describe('useGaFilterItem', () => {
       'Error sending filter data to Google Analytics',
       expect.any(Error),
     );
+  });
+
+  it('should harmlessly swallow missing data layer', () => {
+    const filter = {
+      id: 1,
+      topic: 'topic1',
+      condition: 'condition1',
+      query: 'query1',
+    };
+
+    const { result } = renderHook(() => useGaFilterItem(filter, onUpdateFilter));
+
+    const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    global.window.dataLayer = undefined;
+
+    act(() => {
+      result.current('name1', 'value1');
+    });
+
+    expect(mockConsoleError).not.toHaveBeenCalled();
   });
 });
