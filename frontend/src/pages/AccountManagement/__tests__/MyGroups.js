@@ -260,8 +260,8 @@ describe('MyGroups', () => {
     });
 
     // Expect individual1 and individual2 to be selected.
-    expect(screen.getByText(/individual1/i)).toBeInTheDocument();
-    expect(screen.getByText(/individual2/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/individual1/i).length).toBe(2);
+    expect(screen.queryAllByText(/individual2/i).length).toBe(2);
 
     // Prepare save mock.
     fetchMock.post('/api/groups', {});
@@ -421,6 +421,12 @@ describe('MyGroups', () => {
 
     // Select the co-owner "co-owner1".
     await selectEvent.select(screen.getByLabelText(/Add co-owner/i), ['co-owner1']);
+
+    // Check the radio button 'Everyone with access to my region'.
+    const radio = screen.getByLabelText(/Everyone with access to my region/i);
+    await act(async () => {
+      userEvent.click(radio);
+    });
 
     // Click the "Save group" button.
     fetchMock.post('/api/groups', 500);
@@ -596,6 +602,12 @@ describe('MyGroups', () => {
     expect(screen.getByText(/co-owner2/i)).toBeInTheDocument();
     expect(screen.getByText(/co-owner3/i)).toBeInTheDocument();
     expect(screen.getByText(/co-owner4/i)).toBeInTheDocument();
+
+    // Check the radio button 'Everyone with access to my region'.
+    const radio = screen.getByLabelText(/Everyone with access to my region/i);
+    await act(async () => {
+      userEvent.click(radio);
+    });
 
     // Attempt to save.
     fetchMock.post('/api/groups', {});
