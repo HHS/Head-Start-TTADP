@@ -59,6 +59,7 @@ describe('RTTAPA', () => {
           grantNumbers: ['123sdfsdf'],
           topics: ['goo'],
         }],
+        collaborators: [],
       },
       {
         id: 2,
@@ -82,6 +83,7 @@ describe('RTTAPA', () => {
           grantNumbers: ['asdfsdf'],
           topics: ['skullduggery', 'goo'],
         }],
+        collaborators: [],
       },
     ],
   };
