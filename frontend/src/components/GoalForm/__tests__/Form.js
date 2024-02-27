@@ -15,6 +15,13 @@ const DEFAULT_GOAL = {
   isOnReport: false,
   prompts: [],
   source: null,
+  collaborators: [
+    {
+      goalNumber: 'G-1',
+      goalCreatorRoles: 'ECS',
+      goalCreatorName: 'Test User',
+    },
+  ],
 };
 
 const DEFAULT_USER = {
@@ -76,6 +83,7 @@ describe('Goal Form > Form component', () => {
           userCanEdit
           source={goal.source}
           createdVia={goal.createdVia}
+          collaborators={goal.collaborators}
         />
       </UserContext.Provider>,
     );
