@@ -813,7 +813,7 @@ function reduceGoals(goals, forReport = false) {
             ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
-        ].filter((c) => c.goalCreatorName && c.goalCreatorRoles);
+        ];
 
         return previousValues;
       }
