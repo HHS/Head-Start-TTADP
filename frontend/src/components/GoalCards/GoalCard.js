@@ -15,6 +15,7 @@ import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
 import SessionObjectiveCard from './SessionObjectiveCard';
+import Tooltip from '../Tooltip';
 
 const SESSION_TYPE = 'session';
 
@@ -180,11 +181,13 @@ function GoalCard({
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
           <p className="usa-prose margin-y-0">
-            {creatorRole}
-            &nbsp;
-            (
-            {creatorName}
-            )
+            <Tooltip
+              displayText={creatorRole}
+              screenReadDisplayText={false}
+              buttonLabel={`Click to reveal the full name of the creator of this goal: ${creatorName}`}
+              tooltipText={creatorName}
+              hideUnderline
+            />
           </p>
         </div>
       </div>
