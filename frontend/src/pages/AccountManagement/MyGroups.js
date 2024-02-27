@@ -74,7 +74,6 @@ export default function MyGroups({ match }) {
   const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
   const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
-  const watchIndividuals = watch(GROUP_FIELD_NAMES.INDIVIDUALS);
 
   const { groupId } = match.params;
   const [recipientOptions, setRecipientOptions] = useState([]);
@@ -250,32 +249,7 @@ export default function MyGroups({ match }) {
   const nameError = formErrors[GROUP_FIELD_NAMES.NAME];
   const individualsError = formErrors[GROUP_FIELD_NAMES.INDIVIDUALS];
   const coOwnerError = formErrors[GROUP_FIELD_NAMES.CO_OWNERS];
-
-  const filterCoOwnerOptions = () => {
-    if (!usersFetched) return [];
-    let updatedCoOwnerOptions = [...userOptions];
-
-    if (usersFetched && watchIndividuals && watchIndividuals.length) {
-      const selectedIndividuals = watchIndividuals.map((i) => i.value);
-      updatedCoOwnerOptions = updatedCoOwnerOptions.filter(
-        (user) => !selectedIndividuals.includes(user.value),
-      );
-    }
-    return updatedCoOwnerOptions;
-  };
-
-  const filterIndividualOptions = () => {
-    if (!usersFetched) return [];
-    let updatedIndividualOptions = [...userOptions];
-
-    if (watchCoOwners && watchCoOwners.length) {
-      const selectedCoOwners = watchCoOwners.map((i) => i.value);
-      updatedIndividualOptions = updatedIndividualOptions.filter(
-        (user) => !selectedCoOwners.includes(user.value),
-      );
-    }
-    return updatedIndividualOptions;
-  };
+  const sharedRadioError = formErrors[GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE];
 
   return (
     <>
@@ -372,7 +346,7 @@ export default function MyGroups({ match }) {
                   </div>
                   <MultiSelect
                     name={GROUP_FIELD_NAMES.CO_OWNERS}
-                    options={filterCoOwnerOptions()}
+                    options={userOptions}
                     control={control}
                     simple={false}
                     required={false}
@@ -382,17 +356,21 @@ export default function MyGroups({ match }) {
                 <div className="margin-top-4">
                   <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
                     Who do you want to share this group with?
+                    {' '}
+                    <Req />
                     <QuestionTooltip text="Shared groups can be seen and used by others but only you and co-owners can edit the group." />
+                    {sharedRadioError && <span className="usa-error-message">{sharedRadioError.me}</span>}
                   </label>
                   <Controller
                     control={control}
                     name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
+                    rules={{ required: 'Select one' }}
                     render={({ onChange: controllerOnChange, value }) => (
                       <>
                         <Radio
                           label="Everyone with access to my region"
                           id="everyone-with-access"
-                          name="everyone-with-access"
+                          name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
                           checked={value === 'everyone'}
                           onChange={() => controllerOnChange('everyone')}
                           disabled={isAppLoading}
@@ -400,7 +378,7 @@ export default function MyGroups({ match }) {
                         <Radio
                           label="Individuals in my region"
                           id="individuals-in-my-region"
-                          name="individuals-in-my-region"
+                          name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
                           checked={value === 'individuals'}
                           onChange={() => controllerOnChange('individuals')}
                           disabled={isAppLoading}
@@ -419,7 +397,7 @@ export default function MyGroups({ match }) {
                         {individualsError && <span className="usa-error-message">{individualsError.message}</span>}
                         <MultiSelect
                           name={GROUP_FIELD_NAMES.INDIVIDUALS}
-                          options={filterIndividualOptions()}
+                          options={userOptions}
                           control={control}
                           simple={false}
                           required="Select at least one"
