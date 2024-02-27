@@ -751,9 +751,15 @@ export async function getGoalsByActivityRecipient(
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
+      existingGoal.collaborators = existingGoal.collaborators || [];
 
-      Object.assign(existingGoal, getGoalCollaboratorDetails('Creator', current));
-      Object.assign(existingGoal, getGoalCollaboratorDetails('Linker', current));
+      existingGoal.collaborators.push(
+        {
+          goalNumber: current.goalNumber,
+          ...getGoalCollaboratorDetails('Creator', current),
+          ...getGoalCollaboratorDetails('Linker', current),
+        },
+      );
 
       return {
         goalRows: previous.goalRows,
@@ -778,11 +784,16 @@ export async function getGoalsByActivityRecipient(
       responsesForComparison: responsesForComparison(current),
       isCurated,
       createdVia: current.createdVia,
-      goalCollaborators: current.goalCollaborators,
+      collaborators: [],
     };
 
-    Object.assign(goalToAdd, getGoalCollaboratorDetails('Creator', current));
-    Object.assign(goalToAdd, getGoalCollaboratorDetails('Linker', current));
+    goalToAdd.collaborators.push(
+      {
+        goalNumber: current.goalNumber,
+        ...getGoalCollaboratorDetails('Creator', current),
+        ...getGoalCollaboratorDetails('Linker', current),
+      },
+    );
 
     const sessionObjectives = current.eventReportPilots
       // shape the session objective, mold it into a form that

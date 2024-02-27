@@ -55,8 +55,7 @@ export default function Form({
   setSource,
   validateGoalSource,
   createdVia,
-  creatorName,
-  creatorRoles,
+  collaborators,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -129,23 +128,39 @@ export default function Form({
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
-      {creatorName && (
-        <FormGroup>
-          <Label htmlFor="enterd-by" className="text-bold">
-            Entered by
-          </Label>
-          <p className="usa-prose margin-top-0">
-            {creatorName}
-            {creatorRoles && (
-              <>
-                ,
-                {' '}
-                {creatorRoles}
-              </>
-            )}
-          </p>
-        </FormGroup>
-      )}
+      {collaborators.length && collaborators.map((collaborator) => {
+        const {
+          goalCreatorName,
+          goalCreatorRoles,
+          goalNumber,
+        } = collaborator;
+        if (!goalCreatorName) return null;
+        return (
+          <FormGroup key={goalNumber}>
+            <Label htmlFor="entered-by" className="text-bold">
+              Entered by
+              {collaborators.length > 1 && (
+                <>
+                  {' '}
+                  (
+                  {goalNumber}
+                  )
+                </>
+              )}
+            </Label>
+            <p className="usa-prose margin-top-0">
+              {goalCreatorName}
+              {goalCreatorRoles && (
+                <>
+                  ,
+                  {' '}
+                  {goalCreatorRoles}
+                </>
+              )}
+            </p>
+          </FormGroup>
+        );
+      })}
 
       <GrantSelect
         selectedGrants={selectedGrants}
@@ -307,8 +322,12 @@ Form.propTypes = {
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
-  creatorName: PropTypes.string.isRequired,
-  creatorRoles: PropTypes.string.isRequired,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    goalNumber: PropTypes.string,
+    goalCreator: PropTypes.shape({}),
+    goalCreatorName: PropTypes.string,
+    goalCreatorRoles: PropTypes.string,
+  })).isRequired,
 };
 
 Form.defaultProps = {

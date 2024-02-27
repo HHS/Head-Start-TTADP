@@ -69,8 +69,7 @@ function GoalCard({
     objectives,
     previousStatus,
     createdVia,
-    goalCreatorRoles,
-    goalCreatorName,
+    collaborators,
   } = goal;
 
   const isMerged = createdVia === 'merge';
@@ -180,17 +179,27 @@ function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          {goalCreatorRoles && (
-            <p className="usa-prose display-inline-block margin-y-0 bg-base-lighter padding-x-1">
-              <Tooltip
-                displayText={goalCreatorRoles}
-                screenReadDisplayText={false}
-                buttonLabel={`Click to reveal the full name of the creator of this goal: ${goalCreatorName}`}
-                tooltipText={goalCreatorName}
-                hideUnderline={false}
-              />
-            </p>
-          )}
+          {collaborators.map((c) => {
+            if (!c.goalCreatorName) return null;
+
+            return (
+              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lighter padding-x-1 display-inline-flex flex-align-center flex-justify-between">
+                {collaborators.length > 1 && (
+                  <>
+                    <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
+                    {' '}
+                  </>
+                )}
+                <Tooltip
+                  displayText={c.goalCreatorRoles}
+                  screenReadDisplayText={false}
+                  buttonLabel={`Click to reveal the full name of the creator of this goal: ${c.goalNumber}`}
+                  tooltipText={c.goalCreatorName}
+                  hideUnderline={false}
+                />
+              </p>
+            );
+          })}
         </div>
       </div>
 

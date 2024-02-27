@@ -803,8 +803,15 @@ function reduceGoals(goals, forReport = false) {
           existingGoal.prompts || [],
         );
 
-        Object.assign(existingGoal, getGoalCollaboratorDetails('Creator', currentValue.dataValues));
-        Object.assign(existingGoal, getGoalCollaboratorDetails('Linker', currentValue.dataValues));
+        existingGoal.collaborators = existingGoal.collaborators || [];
+
+        existingGoal.collaborators.push(
+          {
+            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+          },
+        );
 
         return previousValues;
       }
@@ -846,8 +853,13 @@ function reduceGoals(goals, forReport = false) {
         source: currentValue.dataValues.source,
       };
 
-      Object.assign(goal, getGoalCollaboratorDetails('Creator', currentValue.dataValues));
-      Object.assign(goal, getGoalCollaboratorDetails('Linker', currentValue.dataValues));
+      goal.collaborators = [
+        {
+          goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+          ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+          ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+        },
+      ];
 
       return [...previousValues, goal];
     } catch (err) {
