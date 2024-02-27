@@ -113,40 +113,48 @@ export const dismissOnNoMatch = (event, selector, dismiss) => {
   }
 };
 
-export const grantsToSources = (grants, source = {}, defaultSource = '') => {
+/**
+ *
+ * converts an array of grants to an object with the grant number
+ * as the key and the default value as the value
+ *
+ * @param {Array} grants - an array of grants
+ * @param {Object} value - the current value of the form { grantNumber: value }
+ * @param {String} defaultValue - the default value for the form
+ * @returns {Object} - the new value of the form
+ */
+export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
   const current = [];
-
-  const values = uniq(Object.values(source));
-
-  let def = defaultSource;
-  if (values.length === 1 && values[0] !== defaultSource) {
+  const values = uniq(Object.values(value));
+  let def = defaultValue;
+  if (values.length === 1 && values[0] !== defaultValue) {
     [def] = values;
   }
 
-  const newSource = grants.reduce((s, grant) => {
+  const newValue = grants.reduce((s, grant) => {
     current.push(grant.numberWithProgramTypes);
 
-    if (source[grant.numberWithProgramTypes]) {
+    if (value[grant.numberWithProgramTypes]) {
       return {
         ...s,
-        [grant.numberWithProgramTypes]: source[grant.numberWithProgramTypes],
+        [grant.numberWithProgramTypes]: value[grant.numberWithProgramTypes],
       };
     }
 
     return {
       ...s,
-      [grant.numberWithProgramTypes]: def || defaultSource,
+      [grant.numberWithProgramTypes]: def || defaultValue,
     };
-  }, source);
+  }, value);
 
-  const keys = Object.keys(newSource);
+  const keys = Object.keys(newValue);
   const removedKeys = keys.filter((k) => !current.includes(k));
 
   removedKeys.forEach((k) => {
-    delete newSource[k];
+    delete newValue[k];
   });
 
-  return newSource;
+  return newValue;
 };
 
 export const grantsToGoals = ({
@@ -163,6 +171,7 @@ export const grantsToGoals = ({
   prompts,
 }) => selectedGrants.map((g) => {
   const goalSource = source ? source[g.numberWithProgramTypes] : '';
+  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
   return {
     grantId: g.id,
     name,
@@ -174,6 +183,6 @@ export const grantsToGoals = ({
     recipientId: recipient.id,
     objectives: objectivesWithValidResourcesOnly(objectives),
     ids,
-    prompts,
+    prompts: goalPrompts,
   };
 });

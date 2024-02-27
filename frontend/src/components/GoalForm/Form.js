@@ -16,10 +16,10 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import ConditionalFields from '../ConditionalFields';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import RTRGoalPrompts from './RTRGoalPrompts';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -61,6 +61,7 @@ export default function Form({
   createdVia,
   recipient,
   regionId,
+  goalTemplateId,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -151,7 +152,7 @@ export default function Form({
         isAppLoading={isAppLoading}
         recipient={recipient}
         regionId={regionId}
-        selectedGrants={selectedGrants}
+        selectedGrants={selectedGrants || []}
         onSelectNudgedGoal={onSelectNudgedGoal}
         status={status}
         isOnReport={isOnReport}
@@ -160,12 +161,15 @@ export default function Form({
         isCurated={isCurated}
       />
 
-      <ConditionalFields
-        prompts={prompts}
-        setPrompts={setPrompts}
-        validatePrompts={validatePrompts}
+      <RTRGoalPrompts
+        isCurated={isCurated || false}
+        value={prompts}
+        onChange={setPrompts}
+        validate={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
         userCanEdit={notClosedWithEditPermission}
+        selectedGrants={selectedGrants || []}
+        goalTemplateId={goalTemplateId}
       />
 
       <FormFieldThatIsSometimesReadOnly
@@ -186,7 +190,6 @@ export default function Form({
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
           isCurated={isCurated}
-          createdViaTr={createdVia === 'tr'}
           selectedGrants={selectedGrants}
         />
       </FormFieldThatIsSometimesReadOnly>
@@ -305,10 +308,14 @@ Form.propTypes = {
   onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
-  prompts: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    response: PropTypes.arrayOf(PropTypes.string).isRequired,
-  })).isRequired,
+  prompts: PropTypes.shape({
+    [PropTypes.string]: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string.isRequired,
+        response: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }),
+    ),
+  }).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
   source: PropTypes.shape({
@@ -318,10 +325,12 @@ Form.propTypes = {
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
   isNew: PropTypes.bool.isRequired,
+  goalTemplateId: PropTypes.number,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
   isCurated: false,
+  goalTemplateId: null,
 };

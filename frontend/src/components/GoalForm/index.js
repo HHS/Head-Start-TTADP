@@ -17,7 +17,6 @@ import { isEqual, uniqueId } from 'lodash';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
-import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -31,7 +30,7 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  grantsToSources,
+  grantsToMultiValue,
   grantsToGoals,
 } from './constants';
 import ReadOnly from './ReadOnly';
@@ -40,7 +39,6 @@ import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
-import { combinePrompts } from '../condtionalFieldConstants';
 import VanillaModal from '../VanillaModal';
 
 const [
@@ -71,7 +69,7 @@ export default function GoalForm({
     id: 'new',
     onApprovedAR: false,
     onAnyReport: false,
-    prompts: [],
+    prompts: {},
     isCurated: false,
     source: {},
     createdVia: '',
@@ -89,20 +87,27 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
-  const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [source, setSource] = useState(grantsToSources(goalDefaults.grants));
+  const [prompts, setPrompts] = useState(
+    grantsToMultiValue(goalDefaults.grants, goalDefaults.prompts, []),
+  );
+  const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
   const [createdVia, setCreatedVia] = useState('');
-  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
-
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
 
   useDeepCompareEffect(() => {
-    const newSource = grantsToSources(selectedGrants, { ...source });
+    const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
+    if ((!isEqual(newPrompts, prompts))) {
+      setSource(newPrompts);
+    }
+  }, [prompts, selectedGrants]);
+
+  useDeepCompareEffect(() => {
+    const newSource = grantsToMultiValue(selectedGrants, { ...source });
     if ((!isEqual(newSource, source))) {
       setSource(newSource);
     }
@@ -155,14 +160,14 @@ export default function GoalForm({
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setPrompts(goal.prompts);
+        setPrompts(grantsToMultiValue(selectedGoalGrants, goal.prompts, []));
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(grantsToSources(selectedGoalGrants, goal.source, ''));
+        setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
 
         // this is a lot of work to avoid two loops through the goal.objectives
@@ -236,23 +241,6 @@ export default function GoalForm({
     }
     fetchTopics();
   }, []);
-
-  useEffect(() => {
-    async function fetchGoalTemplatePrompts() {
-      if (isCurated && goalTemplateId && ids) {
-        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
-        if (gtPrompts) {
-          setGoalTemplatePrompts(
-            combinePrompts(gtPrompts, prompts),
-          );
-        } else {
-          setGoalTemplatePrompts(prompts);
-        }
-      }
-    }
-
-    fetchGoalTemplatePrompts();
-  }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -611,7 +599,7 @@ export default function GoalForm({
           recipient,
           objectives,
           ids,
-          prompts: goalTemplatePrompts,
+          prompts,
         });
 
         // so we save them, as before creating one for each grant
@@ -694,7 +682,7 @@ export default function GoalForm({
           recipient,
           objectives,
           ids,
-          prompts: goalTemplatePrompts,
+          prompts,
         });
       }
 
@@ -787,7 +775,7 @@ export default function GoalForm({
         recipient,
         objectives,
         ids,
-        prompts: goalTemplatePrompts,
+        prompts,
       });
 
       const goals = [
@@ -799,6 +787,7 @@ export default function GoalForm({
             source: goal.source,
             isCurated: goal.isCurated,
             endDate: goal.endDate,
+            prompts: goal.prompts,
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipient,
             objectives,
@@ -1076,8 +1065,8 @@ export default function GoalForm({
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
-              prompts={goalTemplatePrompts}
-              setPrompts={setGoalTemplatePrompts}
+              prompts={prompts}
+              setPrompts={setPrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}
@@ -1106,6 +1095,7 @@ export default function GoalForm({
               setSource={setSource}
               validateGoalSource={validateGoalSource}
               createdVia={createdVia}
+              goalTemplateId={goalTemplateId}
             />
           )}
 
