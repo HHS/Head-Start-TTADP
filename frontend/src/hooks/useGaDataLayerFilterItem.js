@@ -7,11 +7,13 @@ import { useCallback } from 'react';
  */
 export default function useGaDataLayerFilterItem(id, onUpdateFilter) {
   return useCallback((name, value) => {
-    window.dataLayer.push({
-      event: 'filterSelection',
-      filterValue: value,
-      filterName: name,
-    });
+    if (window.dataLayer) {
+      window.dataLayer.push({
+        event: 'filterSelection',
+        filterValue: value,
+        filterName: name,
+      });
+    }
 
     onUpdateFilter(id, name, value);
   }, [id, onUpdateFilter]);
