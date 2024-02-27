@@ -85,7 +85,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
@@ -95,7 +98,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
@@ -960,7 +966,10 @@ describe('Update grants, program personnel, and recipients', () => {
 
   describe('updateCDIGrantsWithOldGrantData', () => {
     afterAll(async () => {
-      await Grant.destroy({ where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } } });
+      await Grant.destroy({
+        where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     });
 

@@ -178,7 +178,7 @@ describe('File Upload', () => {
       },
     );
     await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env

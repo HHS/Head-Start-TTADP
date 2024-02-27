@@ -35,7 +35,7 @@ describe('Goals', () => {
     afterAll(async () => {
       await Goal.destroy({ where: { grantId: grant.id }, force: true });
       await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id } });
       await db.sequelize.close();
     });

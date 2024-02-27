@@ -1,5 +1,6 @@
 import {
   syncGrantNumberLink,
+  clearGrantNumberLink,
 } from './genericLink';
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -14,7 +15,14 @@ const afterUpdate = async (sequelize, instance, options) => {
   ]);
 };
 
+const beforeDestroy = async (sequelize, instance, options) => {
+  await Promise.all([
+    clearGrantNumberLink(sequelize, instance, options),
+  ]);
+};
+
 export {
   afterCreate,
   afterUpdate,
+  beforeDestroy,
 };

@@ -122,7 +122,7 @@ describe('cacheCourses', () => {
     await Objective.destroy({ where: { id: objective.id }, force: true });
     await Goal.destroy({ where: { id: goal.id }, force: true });
     await destroyReport(activityReport);
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
   });
 
@@ -448,7 +448,7 @@ describe('cacheObjectiveMetadata', () => {
     await ActivityReport.destroy({ where: { id: report.id } });
     await Objective.destroy({ where: { id: objective.id }, force: true });
     await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
