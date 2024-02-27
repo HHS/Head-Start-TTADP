@@ -198,7 +198,7 @@ describe('Goals DB service', () => {
       });
       expect(response).toEqual({
         isError: true,
-        message: `Goal name already exists for grants ${grant.id}`,
+        message: `Goal name already exists for grants ${grant.number}`,
         grantsForWhomGoalAlreadyExists: [grant.id],
       });
     });

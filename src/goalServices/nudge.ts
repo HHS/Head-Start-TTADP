@@ -107,6 +107,7 @@ export default async function nudge(
       '"Goal"."goalTemplateId"',
     ],
     order: [['name', 'ASC']],
+    limit: 5 - goalTemplates.length, // limit to 5 goals
     having: sequelize.where(sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('grant.number'))), grantNumbers.length),
   })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
 
