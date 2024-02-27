@@ -69,6 +69,7 @@ function GoalCard({
     previousStatus,
     createdVia,
     creatorRole,
+    creatorName,
   } = goal;
 
   const isMerged = createdVia === 'merge';
@@ -178,7 +179,13 @@ function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          <p className="usa-prose margin-y-0">{creatorRole}</p>
+          <p className="usa-prose margin-y-0">
+            {creatorRole}
+            &nbsp;
+            (
+            {creatorName}
+            )
+          </p>
         </div>
       </div>
 
