@@ -46,7 +46,7 @@ export async function topicFrequencyGraph(scopes) {
               SELECT aro.topic
               FROM UNNEST(ARRAY_AGG("activityReportObjectives->topics".name)) aro(topic)
             ) x(topic)
-            GROUP BY TRUE
+            GROUP BY 1=1
           )`),
           'topics',
         ],
@@ -151,7 +151,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
               'reportIds', x."reportIds"
             )), null)
             FROM "all_topics_with_report_array" x(topic, "reportIds")
-            GROUP BY TRUE
+            GROUP BY 1=1
           )`),
           'topics',
         ],
