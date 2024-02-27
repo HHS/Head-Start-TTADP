@@ -749,6 +749,7 @@ describe('Goals by Recipient Test', () => {
         ],
       },
       force: true,
+      individualHooks: true,
     });
     await Recipient.destroy({ where: { id: [recipient.id, recipient2.id, recipient3.id] } });
     await User.destroy({ where: { id: mockGoalUser.id } });

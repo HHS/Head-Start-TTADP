@@ -56,6 +56,10 @@ export default class LockManager {
     this.lockValue = uuidv4();
     this.lockTTL = lockTTL;
 
+    if (this.redis.client && process.env.NODE_ENV !== 'test') {
+      this.redis.client('SETNAME', `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${this.lockKey}-${this.lockValue}-${process.pid}`);
+    }
+
     this.registerEventListeners();
   }
 
@@ -85,6 +89,7 @@ export default class LockManager {
 
   private async releaseLock(): Promise<void> {
     await this.redis.del(this.lockKey);
+    await this.close();
   }
 
   private async readLock(): Promise<string | null> {
@@ -112,6 +117,7 @@ export default class LockManager {
           'info',
           `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`,
         );
+        await this.close();
         return;
       }
     }
@@ -122,7 +128,7 @@ export default class LockManager {
       await callback();
     } finally {
       if (holdLock) {
-        await this.startRenewal(this.lockTTL * 2);
+        await this.startRenewal(this.lockTTL);
       } else {
         await this.stopRenewal();
       }

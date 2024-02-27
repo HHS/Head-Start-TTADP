@@ -176,6 +176,7 @@ describe('Goals DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({
@@ -405,6 +406,7 @@ describe('Goals DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       // Recipient.

@@ -1,5 +1,10 @@
-const { IMPORT_STATUSES, IMPORT_DATA_STATUSES } = require('../constants');
-const { prepMigration, removeTables } = require('../lib/migration');
+const {
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
+  MAINTENANCE_CATEGORY,
+  MAINTENANCE_TYPE,
+} = require('../constants');
+const { prepMigration, removeTables, addValuesToEnumIfTheyDontExist } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -7,6 +12,20 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+
+      await addValuesToEnumIfTheyDontExist(
+        queryInterface,
+        transaction,
+        'enum_MaintenanceLogs_category',
+        Object.values(MAINTENANCE_CATEGORY),
+      );
+
+      await addValuesToEnumIfTheyDontExist(
+        queryInterface,
+        transaction,
+        'enum_MaintenanceLogs_type',
+        Object.values(MAINTENANCE_TYPE),
+      );
 
       await queryInterface.createTable('Imports', {
         id: {
@@ -186,6 +205,21 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+
+      await addValuesToEnumIfTheyDontExist(
+        queryInterface,
+        transaction,
+        'enum_MaintenanceLogs_category',
+        Object.values(MAINTENANCE_CATEGORY).filter((mc) => mc !== MAINTENANCE_CATEGORY.IMPORT),
+      );
+
+      await addValuesToEnumIfTheyDontExist(
+        queryInterface,
+        transaction,
+        'enum_MaintenanceLogs_type',
+        Object.values(MAINTENANCE_TYPE).filter((mt) => !mt.includes('IMPORT')),
+      );
+
       await removeTables(queryInterface, transaction, [
         'Imports',
         'ImportFiles',

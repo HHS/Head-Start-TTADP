@@ -1,9 +1,20 @@
 import manuallyTriggerImportSystem from './importSystem';
 import * as importSystem from '../lib/importSystem';
+import * as maintenanceLib from '../lib/maintenance/import';
+import { MAINTENANCE_TYPE } from '../constants';
+import { auditLogger } from '../logger';
 
 jest.mock('../lib/importSystem', () => ({
   download: jest.fn(),
   process: jest.fn(),
+}));
+jest.mock('../lib/maintenance/import', () => ({
+  enqueueImportMaintenanceJob: jest.fn(),
+}));
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
 }));
 
 describe('manuallyTriggerImportSystem', () => {
@@ -25,6 +36,32 @@ describe('manuallyTriggerImportSystem', () => {
     await manuallyTriggerImportSystem(action, importIdStr);
     expect(importSystem.process).toHaveBeenCalledWith(1);
     expect(importSystem.download).not.toHaveBeenCalled();
+  });
+
+  it('should call the enqueueImportMaintenanceJob when action is queueDownload', async () => {
+    const action = 'queueDownload';
+    const importIdStr = '123';
+    const timeBoxStr = '456';
+
+    await manuallyTriggerImportSystem(action, importIdStr, timeBoxStr);
+
+    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith(
+      MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+      123,
+    );
+  });
+
+  it('should call the enqueueImportMaintenanceJob when action is queueProcess', async () => {
+    const action = 'queueProcess';
+    const importIdStr = '12';
+    const timeBoxStr = '456';
+
+    await manuallyTriggerImportSystem(action, importIdStr, timeBoxStr);
+
+    expect(maintenanceLib.enqueueImportMaintenanceJob).toHaveBeenCalledWith(
+      MAINTENANCE_TYPE.IMPORT_PROCESS,
+      12,
+    );
   });
 
   it('should throw an error for an unknown action', async () => {

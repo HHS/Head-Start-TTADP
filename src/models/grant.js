@@ -4,6 +4,7 @@ const {
 const {
   afterCreate,
   afterUpdate,
+  beforeDestroy,
 } = require('./hooks/grant');
 
 const { GRANT_INACTIVATION_REASONS } = require('../constants');
@@ -143,6 +144,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
     },
   });
   return Grant;
