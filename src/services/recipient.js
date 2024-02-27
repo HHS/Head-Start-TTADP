@@ -4,9 +4,11 @@ import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
   Recipient,
+  CollaboratorType,
   Program,
   sequelize,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
@@ -18,6 +20,8 @@ import {
   Permission,
   ProgramPersonnel,
   User,
+  UserRole,
+  Role,
   ActivityReportCollaborator,
   ActivityReportApprover,
 } from '../models';
@@ -563,6 +567,14 @@ export async function getGoalsByActivityRecipient(
     where: goalWhere,
     include: [
       {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        include: [{
+          model: CollaboratorType,
+          as: 'collaboratorType',
+        }],
+      },
+      {
         model: EventReportPilot,
         as: 'eventReportPilots',
         required: false,
@@ -725,6 +737,9 @@ export async function getGoalsByActivityRecipient(
       responsesForComparison: responsesForComparison(current),
       isCurated,
       createdVia: current.createdVia,
+      goalCollaborators: current.goalCollaborators,
+      goalCreator: current?.goalCollaborators?.find((gc) => gc.collaboratorType.name === 'Creator'),
+      goalLinker: current?.goalCollaborators?.find((gc) => gc.collaboratorType.name === 'Linker'),
     };
 
     const sessionObjectives = current.eventReportPilots
@@ -767,6 +782,24 @@ export async function getGoalsByActivityRecipient(
       id: allGoalIds,
     },
   });
+
+  async function getRoleName(userId) {
+    const userRole = await UserRole.findOne({
+      where: { userId },
+      include: [{ model: Role, as: 'role' }],
+    });
+    return userRole?.role?.name;
+  }
+
+  // eslint-disable-next-line no-restricted-syntax
+  for await (const goal of r.goalRows) {
+    if (goal.goalCreator) {
+      goal.creatorRole = await getRoleName(goal.goalCreator.userId);
+    }
+    if (goal.goalLinker) {
+      goal.linkerRole = await getRoleName(goal.goalLinker.userId);
+    }
+  }
 
   if (limitNum) {
     return {
