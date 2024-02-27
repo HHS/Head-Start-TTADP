@@ -806,13 +806,14 @@ function reduceGoals(goals, forReport = false) {
 
         existingGoal.collaborators = existingGoal.collaborators || [];
 
-        existingGoal.collaborators.push(
+        existingGoal.collaborators = [
+          ...existingGoal.collaborators,
           {
             goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
             ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
-        );
+        ].filter((c) => c.goalCreatorName && c.goalCreatorRoles);
 
         return previousValues;
       }
@@ -861,6 +862,10 @@ function reduceGoals(goals, forReport = false) {
           ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
         },
       ];
+
+      goal.collaborators = goal.collaborators.filter(
+        (c) => c.goalCreatorName !== null,
+      );
 
       return [...previousValues, goal];
     } catch (err) {

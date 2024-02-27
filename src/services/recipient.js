@@ -754,13 +754,14 @@ export async function getGoalsByActivityRecipient(
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
       existingGoal.collaborators = existingGoal.collaborators || [];
 
-      existingGoal.collaborators.push(
+      existingGoal.collaborators = [
+        ...existingGoal.collaborators,
         {
           goalNumber: current.goalNumber,
           ...getGoalCollaboratorDetails('Creator', current),
           ...getGoalCollaboratorDetails('Linker', current),
         },
-      );
+      ].filter((c) => c.goalCreatorName && c.goalCreatorRoles);
 
       return {
         goalRows: previous.goalRows,
