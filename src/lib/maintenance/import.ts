@@ -65,25 +65,35 @@ const scheduleImportCrons = async () => {
       id,
       name,
       schedule: importSchedule,
-    }) => addCronJob(
-      // Add a new cron job for each import schedule
-      MAINTENANCE_CATEGORY.IMPORT,
-      MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-      // Define the function that creates a new CronJob instance
-      (category, type, timezone, schedule) => new CronJob(
-        schedule,
-        // Define the task to be executed by the cron job, which enqueues a maintenance job
-        async () => enqueueImportMaintenanceJob(
-          type,
-          id,
-        ),
-        null,
-        true,
-        timezone,
-      ),
-      importSchedule,
-      name,
-    ));
+    }) => {
+      auditLogger.log('debug', `addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
+      addCronJob(
+        // Add a new cron job for each import schedule
+        MAINTENANCE_CATEGORY.IMPORT,
+        MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
+        // Define the function that creates a new CronJob instance
+        (category, type, timezone, schedule) => {
+          auditLogger.log('debug', `new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
+          return new CronJob(
+            schedule,
+            // Define the task to be executed by the cron job, which enqueues a maintenance job
+            async () => {
+              auditLogger.log('debug', `enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
+              return enqueueImportMaintenanceJob(
+                type,
+                id,
+              );
+            },
+            null,
+            true,
+            timezone,
+          );
+        },
+        importSchedule,
+        name,
+      );
+    });
+    auditLogger.log('debug', 'runMaintenanceCronJobs');
     await runMaintenanceCronJobs();
   } catch (err) {
     return { imports, isSuccessful: false, error: err.message };
