@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert,
+  Alert, FormGroup, Label,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
@@ -55,6 +55,8 @@ export default function Form({
   setSource,
   validateGoalSource,
   createdVia,
+  creatorName,
+  creatorRoles,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -126,6 +128,24 @@ export default function Form({
       }
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
+
+      {creatorName && (
+        <FormGroup>
+          <Label htmlFor="enterd-by" className="text-bold">
+            Entered by
+          </Label>
+          <p className="usa-prose margin-top-0">
+            {creatorName}
+            {creatorRoles && (
+              <>
+                ,
+                {' '}
+                {creatorRoles}
+              </>
+            )}
+          </p>
+        </FormGroup>
+      )}
 
       <GrantSelect
         selectedGrants={selectedGrants}
@@ -287,6 +307,8 @@ Form.propTypes = {
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
+  creatorName: PropTypes.string.isRequired,
+  creatorRoles: PropTypes.string.isRequired,
 };
 
 Form.defaultProps = {

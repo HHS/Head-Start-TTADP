@@ -569,10 +569,37 @@ export async function getGoalsByActivityRecipient(
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
-        include: [{
-          model: CollaboratorType,
-          as: 'collaboratorType',
-        }],
+        attributes: ['id'],
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorType',
+            where: {
+              name: 'Creator',
+            },
+            attributes: ['name'],
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name'],
+            required: true,
+            include: [
+              {
+                model: UserRole,
+                as: 'userRoles',
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                    attributes: ['name'],
+                  },
+                ],
+                attributes: ['id'],
+              },
+            ],
+          },
+        ],
       },
       {
         model: EventReportPilot,
@@ -695,6 +722,16 @@ export async function getGoalsByActivityRecipient(
 
   const allGoalIds = [];
 
+  function getGoalCollaboratorDetails(collabType, dataValues) {
+    // eslint-disable-next-line max-len
+    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    return {
+      [`goal${collabType}`]: collaborator,
+      [`goal${collabType}Name`]: collaborator?.user?.name,
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+    };
+  }
+
   const r = sorted.reduce((previous, current) => {
     const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
@@ -714,6 +751,10 @@ export async function getGoalsByActivityRecipient(
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
+
+      Object.assign(existingGoal, getGoalCollaboratorDetails('Creator', current));
+      Object.assign(existingGoal, getGoalCollaboratorDetails('Linker', current));
+
       return {
         goalRows: previous.goalRows,
       };
@@ -738,9 +779,10 @@ export async function getGoalsByActivityRecipient(
       isCurated,
       createdVia: current.createdVia,
       goalCollaborators: current.goalCollaborators,
-      goalCreator: current?.goalCollaborators?.find((gc) => gc.collaboratorType.name === 'Creator'),
-      goalLinker: current?.goalCollaborators?.find((gc) => gc.collaboratorType.name === 'Linker'),
     };
+
+    Object.assign(goalToAdd, getGoalCollaboratorDetails('Creator', current));
+    Object.assign(goalToAdd, getGoalCollaboratorDetails('Linker', current));
 
     const sessionObjectives = current.eventReportPilots
       // shape the session objective, mold it into a form that
@@ -782,31 +824,6 @@ export async function getGoalsByActivityRecipient(
       id: allGoalIds,
     },
   });
-
-  async function getUserDetails(userId) {
-    const userRoles = await UserRole.findAll({
-      where: { userId },
-      include: [{ model: Role, as: 'role' }, { model: User, attributes: ['name'], as: 'user' }],
-    });
-    return {
-      roles: userRoles.map((ur) => ur.role.name).join(', '),
-      name: userRoles[0]?.user.name || '',
-    };
-  }
-
-  // eslint-disable-next-line no-restricted-syntax
-  for await (const goal of r.goalRows) {
-    if (goal.goalCreator) {
-      const { roles, name } = await getUserDetails(goal.goalCreator.userId);
-      goal.creatorRoles = roles;
-      goal.creatorName = name;
-    }
-    if (goal.goalLinker) {
-      const { roles, name } = await getUserDetails(goal.goalLinker.userId);
-      goal.linkerRoles = roles;
-      goal.linkerName = name;
-    }
-  }
 
   if (limitNum) {
     return {

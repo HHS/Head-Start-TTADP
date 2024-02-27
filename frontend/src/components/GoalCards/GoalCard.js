@@ -69,8 +69,8 @@ function GoalCard({
     objectives,
     previousStatus,
     createdVia,
-    creatorRoles,
-    creatorName,
+    goalCreatorRoles,
+    goalCreatorName,
   } = goal;
 
   const isMerged = createdVia === 'merge';
@@ -180,13 +180,13 @@ function GoalCard({
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Entered by</p>
-          {creatorRoles && (
+          {goalCreatorRoles && (
             <p className="usa-prose display-inline-block margin-y-0 bg-base-lighter padding-x-1">
               <Tooltip
-                displayText={creatorRoles}
+                displayText={goalCreatorRoles}
                 screenReadDisplayText={false}
-                buttonLabel={`Click to reveal the full name of the creator of this goal: ${creatorName}`}
-                tooltipText={creatorName}
+                buttonLabel={`Click to reveal the full name of the creator of this goal: ${goalCreatorName}`}
+                tooltipText={goalCreatorName}
                 hideUnderline={false}
               />
             </p>
