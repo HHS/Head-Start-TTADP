@@ -245,7 +245,7 @@ test.describe('get /recipient', () => {
         grantIds: Joi.array().items(Joi.number()),
         isNew: Joi.boolean(),
         endDate: Joi.string().allow(null).allow(''),
-        goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+        collaborators: Joi.array().items(Joi.any().allow(null)),
       })
     ).min(1);
 
