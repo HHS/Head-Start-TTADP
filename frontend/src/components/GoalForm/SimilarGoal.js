@@ -25,7 +25,7 @@ const SimilarGoal = ({
     }
 
     if (e.key === 'Enter') {
-      await onClick();
+      onClick();
     }
   };
 
