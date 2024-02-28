@@ -195,7 +195,7 @@ function GoalCard({
                   screenReadDisplayText={false}
                   buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
                   tooltipText={c.goalCreatorName}
-                  hideUnderline={false}
+                  underlineStyle="solid"
                 />
               </p>
             );
