@@ -37,7 +37,7 @@ export default function Groups() {
 
       // Shared with.
       sharedGroups = myGroups.filter((group) => (group.individuals || []).some(
-        (Individual) => Individual.id === user.id,
+        (Individual) => Individual.id === user.id && !coOwnedIds.includes(group.id),
       ));
       sharedIds = sharedGroups.map((group) => group.id);
     }
