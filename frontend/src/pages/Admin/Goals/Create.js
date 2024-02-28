@@ -174,15 +174,20 @@ export default function Create() {
         </Helmet>
         <Container>
           <h2>Create goals</h2>
-          <p>
+          <p className="usa-prose">
             Successfully created
             {' '}
             {response.goals.length}
             {' '}
             goals.
           </p>
+          {response.message && (
+            <p className="usa-prose">
+              {response.message}
+            </p>
+          )}
           {response.activityReport && (
-            <p>
+            <p className="usa-prose">
               Successfully created activity report
               {' '}
               <Link to={`/activity-reports/${response.activityReport.id}`}>
@@ -356,45 +361,25 @@ export default function Create() {
               userCanEdit
             />
 
+            <FormGroup>
+              <Checkbox
+                label="Skip creating goals for recipients who already have them"
+                name="createMissingGoals"
+                id="createMissingGoals"
+                inputRef={register()}
+              />
+
+              <div className="usa-hint">
+                Checking this box means instead of showing an error,
+                existing goals will be skipped.
+                (Existing goals will not be updated)
+              </div>
+            </FormGroup>
+
             {(response && response.isError) && (
-              <Alert type="error">
-                {response.message}
-
-                {(response.grantsForWhichGoalWillBeCreated
-                  && response.grantsForWhichGoalWillBeCreated.length > 0) && (
-                  <>
-                    <br />
-                    <span style={{ display: 'inline-block' }} className="margin-top-1">
-                      Create goals just for grants
-                      {' '}
-                      {response.grantsForWhichGoalWillBeCreated.join(', ')}
-                      {' '}
-                      instead?
-                    </span>
-                    <br />
-                    <Button
-                      className="margin-top-0"
-                      onClick={async () => {
-                        const values = hookForm.getValues();
-
-                        const newValues = {
-                          ...values,
-                          selectedGrants: JSON.stringify(response
-                            .grantsForWhichGoalWillBeCreated
-                            .map((g) => ({ id: g }))),
-                        };
-
-                        await onSubmit(newValues);
-                      }}
-                      type="button"
-                      unstyled
-                    >
-                      Create goals for missing grants
-                    </Button>
-                  </>
-                )}
-
-              </Alert>
+            <Alert type="error">
+              {response.message}
+            </Alert>
             )}
 
             <Button type="submit">Submit</Button>
