@@ -43,20 +43,16 @@
 }
 
 .smart-hub-tooltip:hover .usa-tooltip__body,
-.smart-hub-tooltip.show-tooltip .usa-tooltip__body{        
-    animation: fadein;
-    /* This ensures the tool tips stays while the user is hovering.  */
-    animation-fill-mode: forwards;
-    animation-duration: 500ms;
-    animation-fill-mode: forwards;
-    animation-iteration-count: 1;
+.smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+    animation: fadein 500ms forwards;
     display: inline-block;
-    left: -25%;
-    line-height: 1; 
+    line-height: 1;
     position: absolute;
+    transform: translateX(-50%);
+    left: 50%;
     white-space: normal;
 
-    &.usa-tooltip__body--top {  
+    &.usa-tooltip__body--top {
         bottom: 1.5rem;
         top: auto;
     }
@@ -65,7 +61,6 @@
         top: 100%;
         bottom: auto;
     }
-
 }
 
 @keyframes fadein {
