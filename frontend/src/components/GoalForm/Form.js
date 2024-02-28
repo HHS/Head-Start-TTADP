@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import {
-  Alert, FormGroup, Label,
+  Alert, FormGroup,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
@@ -18,6 +18,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
 import ConditionalFields from '../ConditionalFields';
 import GoalSource from './GoalSource';
+import ReadOnlyField from '../ReadOnlyField';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -128,7 +129,7 @@ export default function Form({
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
-      {collaborators.length && collaborators.map((collaborator) => {
+      {collaborators.length > 0 ? collaborators.map((collaborator) => {
         const {
           goalCreatorName,
           goalCreatorRoles,
@@ -137,30 +138,13 @@ export default function Form({
         if (!goalCreatorName) return null;
         return (
           <FormGroup key={goalNumber}>
-            <Label htmlFor="entered-by" className="text-bold">
-              Entered by
-              {collaborators.length > 1 && (
-                <>
-                  {' '}
-                  (
-                  {goalNumber}
-                  )
-                </>
-              )}
-            </Label>
-            <p className="usa-prose margin-top-0">
+            <ReadOnlyField label={`Entered by${collaborators.length > 1 ? ` (${goalNumber})` : ''}`}>
               {goalCreatorName}
-              {goalCreatorRoles && (
-                <>
-                  ,
-                  {' '}
-                  {goalCreatorRoles}
-                </>
-              )}
-            </p>
+              {goalCreatorRoles ? `, ${goalCreatorRoles}` : ''}
+            </ReadOnlyField>
           </FormGroup>
         );
-      })}
+      }) : null}
 
       <GrantSelect
         selectedGrants={selectedGrants}
