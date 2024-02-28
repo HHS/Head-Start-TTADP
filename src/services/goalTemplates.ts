@@ -107,7 +107,15 @@ export async function getCuratedTemplates(
           'goalTemplateId',
         ],
         required: false,
-        where: { grantId: grantIds },
+        where: {
+          grantId: grantIds,
+          status: {
+            [Op.notIn]: [
+              GOAL_STATUS.SUSPENDED,
+              GOAL_STATUS.CLOSED,
+            ],
+          },
+        },
       },
     ],
     where: {
