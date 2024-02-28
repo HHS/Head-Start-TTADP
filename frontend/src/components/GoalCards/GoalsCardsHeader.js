@@ -294,11 +294,13 @@ GoalCardsHeader.propTypes = {
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   perPageChange: PropTypes.func.isRequired,
-  pageGoalIds: PropTypes.number.isRequired,
+  pageGoalIds: PropTypes.oneOfType(
+    [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
+  ).isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
@@ -313,4 +315,5 @@ GoalCardsHeader.defaultProps = {
   selectAllGoalCheckboxSelect: () => { },
   selectAllGoals: () => { },
   numberOfSelectedGoals: 0,
+  shouldDisplayMergeSuccess: false,
 };
