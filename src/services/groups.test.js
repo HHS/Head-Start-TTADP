@@ -173,7 +173,6 @@ describe('Groups service', () => {
     // create a group to edit
     existingGroupToEdit = await Group.create({
       name: 'Group 1',
-      // userId: mockUser.id,
       isPublic: false,
     });
 
@@ -237,7 +236,6 @@ describe('Groups service', () => {
     // create a group to edit with collaborators.
     existingGroupToEditWithCollabs = await Group.create({
       name: 'Group 1 with collaborators',
-      // userId: mockUser.id,
       isPublic: false,
     });
 
@@ -275,7 +273,6 @@ describe('Groups service', () => {
     // create a group to delete
     groupToDelete = await Group.create({
       name: 'Group 2',
-      // userId: mockUser.id,
       isPublic: false,
     });
 
@@ -295,8 +292,8 @@ describe('Groups service', () => {
     // create a public group
     publicGroup = await Group.create({
       name: 'Public Group',
-      // userId: mockUserTwo.id,
       isPublic: true,
+      sharedWith: GROUP_SHARED_WITH.EVERYONE,
     });
 
     // Create GroupCollaborator.
@@ -804,11 +801,11 @@ describe('Groups service', () => {
       // Create a public group for the user.
       const publicGroupRegion1 = await Group.create({
         name: 'Public Group Region 1',
-        // userId: groupUser.id,
         isPublic: true,
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
       });
 
-      const publicGroupRegion1Collaborator = await GroupCollaborator.create({
+      await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: publicGroupRegion1.id,
         collaboratorTypeId: creatorCollaboratorType.id,
@@ -817,12 +814,11 @@ describe('Groups service', () => {
       // Create a private group for the user.
       const privateGroupRegion1 = await Group.create({
         name: 'Private Group Region 1',
-        // userId: groupUser.id,
         isPublic: false,
       });
 
       // Create a private CollaboratorGroup for the user.
-      const privateGroupRegion1Collaborator = await GroupCollaborator.create({
+      await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: privateGroupRegion1.id,
         collaboratorTypeId: creatorCollaboratorType.id,
@@ -831,12 +827,11 @@ describe('Groups service', () => {
       // Create a public group for region 2.
       const publicGroupRegion2 = await Group.create({
         name: 'Public Group Region 2',
-        // userId: groupUser.id,
         isPublic: true,
       });
 
       // Create a public CollaboratorGroup for the user.
-      const publicGroupRegion2Collaborator = await GroupCollaborator.create({
+      await GroupCollaborator.create({
         userId: groupUser.id,
         groupId: publicGroupRegion2.id,
         collaboratorTypeId: creatorCollaboratorType.id,

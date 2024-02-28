@@ -2,6 +2,7 @@ import React, {
   useState,
   useContext,
 } from 'react';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import {
   Alert,
@@ -20,36 +21,27 @@ export default function Groups() {
   const getGroupBuckets = () => {
     // Get creator bucket.
     const creatorGroups = (myGroups || []).filter((group) => group.creator.id === user.id);
-    const creatorGroupIds = creatorGroups.map((group) => group.id);
 
     // Get Co-owned and shared with bucket.
     let coOwnedGroups = [];
-    let cowOwnerGroupIds = [];
     let sharedGroups = [];
-    let sharedGroupIds = [];
 
     if (myGroups) {
       // Co-owned.
       coOwnedGroups = myGroups.filter((group) => (group.coOwners || []).some(
         (coOwner) => coOwner.id === user.id,
       ));
-      cowOwnerGroupIds = coOwnedGroups.map((group) => group.id);
 
       // Shared with.
       sharedGroups = myGroups.filter((group) => (group.individuals || []).some(
         (Individual) => Individual.id === user.id,
       ));
-      sharedGroupIds = sharedGroups.map((group) => group.id);
     }
 
     // Get public groups.
     const publicGroups = (myGroups || []).filter(
       (group) => group.creator.id !== user.id
-    && group.isPublic
-    && group.individuals.length === 0 // Only show if it's public with no shared users.
-    && !creatorGroupIds.includes(group.id)
-    && !cowOwnerGroupIds.includes(group.id)
-    && !sharedGroupIds.includes(group.id),
+    && group.isPublic && group.sharedWith === GROUP_SHARED_WITH.EVERYONE,
     );
 
     // Combine and sort shared and public groups.
