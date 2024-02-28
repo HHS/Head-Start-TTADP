@@ -100,6 +100,7 @@ export async function groupsByRegion(region: number, userId: number): Promise<Gr
       [Op.or]: [
         {
           isPublic: true,
+          sharedWith: GROUP_SHARED_WITH.EVERYONE,
         },
         {
           '$groupCollaborators.id$': { [Op.not]: null },
@@ -175,6 +176,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       [Op.or]: [
         {
           isPublic: true,
+          sharedWith: GROUP_SHARED_WITH.EVERYONE,
         },
         {
           '$groupCollaborators.userId$': userId,
@@ -277,23 +279,6 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
   // Get the creator of the group.
   const finalGroups = returnGroups.map((g) => {
     const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id);
-
-    // Shared with.
-    const individuals = groupCollaborators.filter(
-      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
-    );
-
-    // Check if this user is a collaborator or the group was just public.
-    const userIsCollaborator = groupCollaborators.find(
-      (gc) => gc.userId === userId,
-    );
-
-    // Skip public groups that is shared with other individual's (not us).
-    if (g.isPublic && !userIsCollaborator && individuals.length) {
-      // skip
-      return null;
-    }
-
     // Creator.
     const creator = groupCollaborators.find(
       (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CREATOR,
@@ -309,6 +294,11 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
     // Co-owners.
     const coOwners = groupCollaborators.filter(
       (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.CO_OWNER,
+    );
+
+    // Shared with.
+    const individuals = groupCollaborators.filter(
+      (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
     );
 
     return {
