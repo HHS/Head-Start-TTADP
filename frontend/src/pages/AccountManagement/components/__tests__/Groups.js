@@ -136,6 +136,58 @@ describe('Groups', () => {
     expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
   });
 
+  it('if a user is both coowner and shared only show the group in the coowners section', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 3,
+        name: 'I am a coowner and individual, but mostly a coowner',
+        userId: 2,
+        isPublic: true,
+        groupCollaborators: [],
+        coOwners: [{ id: 1, name: 'Tom Jones' }],
+        individuals: [{ id: 1, name: 'Tom Jones' }],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        creator: {
+          name: 'Tim User',
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    const group3 = await screen.findByText(/I am a coowner and individual, but mostly a coowner/i);
+    expect(group3).toBeInTheDocument();
+
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+  });
+
+  it('if a I am a coowner on a group that is public and shared with everyone only display it once', async () => {
+    fetchMock.get('/api/groups', [
+      {
+        id: 3,
+        name: 'This is public but I am a coowner',
+        userId: 2,
+        isPublic: true,
+        groupCollaborators: [],
+        coOwners: [{ id: 1, name: 'Tom Jones' }],
+        individuals: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        creator: {
+          name: 'Tim User',
+        },
+      },
+    ]);
+
+    act(renderGroups);
+
+    const group3 = await screen.findByText(/This is public but I am a coowner/i);
+    expect(group3).toBeInTheDocument();
+
+    expect(screen.getByText(/you haven't created any groups/i)).toBeInTheDocument();
+    expect(screen.getByText(/You don't have any shared groups yet/i)).toBeInTheDocument();
+  });
+
   it('renders only user created groups when there are no public groups', async () => {
     fetchMock.get('/api/groups', [
       {
