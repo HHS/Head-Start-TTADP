@@ -1,4 +1,5 @@
 import { Op, WhereOptions } from 'sequelize';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import { GROUP_COLLABORATORS } from '../constants';
 import { getCollaboratorTypeMapping } from './collaboratorType';
@@ -26,7 +27,8 @@ interface GroupData {
   isPublic: boolean;
   creator: { userId: number },
   coOwners?: number[];
-  sharedWith?: number[];
+  individuals?: number[];
+  sharedWith?: GROUP_SHARED_WITH;
 }
 
 interface GroupGrantData {
@@ -166,6 +168,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       'name',
       'isPublic',
       'updatedAt',
+      'sharedWith',
     ],
     where: {
       '$grants.regionId$': { [Op.in]: regions },
@@ -276,7 +279,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
     const groupCollaborators = allGroupCollaborators.filter((gc) => gc.groupId === g.id);
 
     // Shared with.
-    const sharedWith = groupCollaborators.filter(
+    const individuals = groupCollaborators.filter(
       (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
     );
 
@@ -286,7 +289,7 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
     );
 
     // Skip public groups that is shared with other individual's (not us).
-    if (g.isPublic && !userIsCollaborator && sharedWith.length) {
+    if (g.isPublic && !userIsCollaborator && individuals.length) {
       // skip
       return null;
     }
@@ -318,8 +321,8 @@ export async function groups(userId: number, regions: number[] = []): Promise<Gr
       coOwners: coOwners
         ? coOwners.map((coOwner) => ({ id: coOwner.user.id, name: coOwner.user.name }))
         : null,
-      sharedWith: sharedWith
-        ? sharedWith.map((individual) => ({ id: individual.user.id, name: individual.user.name }))
+      individuals: individuals
+        ? individuals.map((individual) => ({ id: individual.user.id, name: individual.user.name }))
         : null,
     };
   });
@@ -342,6 +345,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
       'name',
       'isPublic',
       'updatedAt',
+      'sharedWith',
     ],
     where: {
       id: groupId,
@@ -423,7 +427,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
     (a, b) => a.user.name.localeCompare(b.user.name),
   ) || []);
 
-  const sharedWith = (returnGroup.groupCollaborators.filter(
+  const individuals = (returnGroup.groupCollaborators.filter(
     (gc) => gc.collaboratorType.name === GROUP_COLLABORATORS.SHARED_WITH,
   ).sort(
     (a, b) => a.user.name.localeCompare(b.user.name),
@@ -437,7 +441,7 @@ export async function group(groupId: number): Promise<GroupResponse> {
       name: mostRecentEditor.user.name,
     } : null,
     coOwners: coOwners.map((co) => ({ id: co.user.id, name: co.user.name })),
-    sharedWith: sharedWith.map((sw) => ({ id: sw.user.id, name: sw.user.name })),
+    individuals: individuals.map((sw) => ({ id: sw.user.id, name: sw.user.name })),
     creator: creator ? { id: creator.user.id, name: creator.user.name } : null,
   };
 }
@@ -841,14 +845,19 @@ export async function potentialRecipientGrants(
  * @throws {Error} If there is an error performing the database operations.
  */
 export async function editGroup(groupId: number, data: GroupData): Promise<GroupResponse> {
-  const { grants, coOwners = [], sharedWith = [] } = data;
+  const {
+    grants,
+    coOwners = [],
+    individuals = [],
+    sharedWith,
+  } = data;
 
   // Get all existing group grants, current group co-owners, current group shareWiths,
   // and collaborator types
   const [
     existingGroupGrants,
     currentGroupCoOwners,
-    currentGroupShareWiths,
+    currentGroupIndividuals,
     collaboratorTypeMapping,
   ] = await Promise.all([
     // Find all group grants with matching groupId and grantId
@@ -934,16 +943,16 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
         dataValues: { userId: number },
       }) => userId),
     // Find shareWiths that are not already current group shareWiths
-    sharedWith
-      .filter((id) => !currentGroupShareWiths
+    individuals
+      .filter((id) => !currentGroupIndividuals
         .find((cgc) => cgc.dataValues.userId === id)),
     // Find current group shareWiths that are not in the shareWiths list
-    currentGroupShareWiths
+    currentGroupIndividuals
       .filter(({
         dataValues: { userId },
       }: {
         dataValues: { userId: number },
-      }) => !sharedWith.find((id) => id === userId))
+      }) => !individuals.find((id) => id === userId))
       .map(({
         dataValues: { userId },
       }: {
@@ -1024,6 +1033,7 @@ export async function editGroup(groupId: number, data: GroupData): Promise<Group
     Group.update({
       name: data.name.trim(),
       isPublic: data.isPublic,
+      sharedWith,
     }, {
       where: {
         id: groupId,
@@ -1048,8 +1058,8 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     name,
     isPublic,
     grants,
-    userId,
     coOwners,
+    individuals,
     sharedWith,
   } = data;
 
@@ -1060,6 +1070,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     // Create a new group with the given name and isPublic flag
     await Group.create({
       name: name.trim(),
+      sharedWith,
       isPublic,
     }),
     // Retrieve the collaborator type mapping for groups
@@ -1086,9 +1097,9 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
       )
       : Promise.resolve(),
     // If there are shareWiths, create group collaborators with shareWith role
-    sharedWith && sharedWith.length > 0
+    individuals && individuals.length > 0
       ? GroupCollaborator.bulkCreate(
-        sharedWith.map((sharedWithUserId) => ({
+        individuals.map((sharedWithUserId) => ({
           groupId: newGroup.id,
           userId: sharedWithUserId,
           collaboratorTypeId: collaboratorTypeMapping[GROUP_COLLABORATORS.SHARED_WITH],

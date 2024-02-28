@@ -1,6 +1,7 @@
 const {
   Model,
 } = require('sequelize');
+const { GROUP_SHARED_WITH } = require('@ttahub/common');
 const {
   afterCreate,
   afterUpdate,
@@ -32,6 +33,9 @@ export default (sequelize, DataTypes) => {
     isPublic: {
       type: DataTypes.BOOLEAN,
       default: false,
+    },
+    sharedWith: {
+      type: DataTypes.ENUM(Object.values(GROUP_SHARED_WITH)),
     },
   }, {
     sequelize,

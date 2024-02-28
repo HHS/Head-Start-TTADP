@@ -255,7 +255,7 @@ describe('Groups Handlers', () => {
         body: {
           name: 'Group 1',
           coOwners: [],
-          sharedWith: [],
+          individuals: [],
         },
       };
       res = {

@@ -9,6 +9,7 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
+import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -130,6 +131,7 @@ describe('MyGroups', () => {
       name: 'group1',
       isPublic: true,
       groupCollaborators: [],
+      sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
       grants: [
         {
           recipientInfo: 'Grant 1 - 11111111 - HS',
@@ -159,7 +161,7 @@ describe('MyGroups', () => {
           name: 'co-owner2',
         },
       ],
-      sharedWith: [
+      individuals: [
         {
           id: 3,
           name: 'individual1',

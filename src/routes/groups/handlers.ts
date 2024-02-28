@@ -276,7 +276,7 @@ export async function createGroup(req: Request, res: Response) {
       name,
       grants: grantIds = [],
       coOwners: coOwnerIds = [],
-      sharedWith: sharedWithIds = [],
+      individuals: individualIds = [],
       isPublic: isPublicRaw = false,
     } = req.body;
     // cast isPublic to boolean
@@ -285,14 +285,14 @@ export async function createGroup(req: Request, res: Response) {
     const [
       userId,
       coOwners,
-      sharedWith,
+      individuals,
     ] = await Promise.all([
       currentUserId(req, res),
       coOwnerIds.length
         ? Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId)))
         : Promise.resolve([]),
-      sharedWithIds.length
-        ? Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId)))
+      individualIds.length
+        ? Promise.all(individualIds.map(async (sharedWithId) => userById(sharedWithId)))
         : Promise.resolve([]),
     ]);
 
@@ -327,7 +327,7 @@ export async function createGroup(req: Request, res: Response) {
     }
 
     // Check if the sharedWith have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', sharedWith, grantsWithId, { id: -1, isPublic })) {
+    if (!checkBulkPermissions('canUseGroup', individuals, grantsWithId, { id: -1, isPublic })) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'shared-with-permissions',
         message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
@@ -382,7 +382,7 @@ export async function updateGroup(req: Request, res: Response) {
       name,
       grants: grantIds,
       coOwners: coOwnerIds = [],
-      sharedWith: sharedWithIds = [],
+      individuals: individualIds = [],
       isPublic: isPublicRaw,
     } = req.body;
 
@@ -395,7 +395,7 @@ export async function updateGroup(req: Request, res: Response) {
       groupData, // Store the result of the group function
       grants, // Store the result of the Grant.findAll function
       coOwners, // Store the result of the Promise.all function
-      sharedWith, // Store the result of the Promise.all function
+      individuals, // Store the result of the Promise.all function
     ] = await Promise.all([
       // Call the currentUserId function with req and res parameters and await its result
       currentUserId(req, res),
@@ -416,7 +416,7 @@ export async function updateGroup(req: Request, res: Response) {
       // Map each coOwnerId to a Promise returned by the userById function and await all promises
       Promise.all(coOwnerIds.map(async (coOwnerId) => userById(coOwnerId))),
       // Map each sharedWithId to a Promise returned by the userById function and await all promises
-      Promise.all(sharedWithIds.map(async (sharedWithId) => userById(sharedWithId))),
+      Promise.all(individualIds.map(async (sharedWithId) => userById(sharedWithId))),
     ]);
 
     // Create a new GroupPolicy instance and check if the user has permission to edit the group
@@ -436,7 +436,7 @@ export async function updateGroup(req: Request, res: Response) {
     }
 
     // Check if the sharedWith have the necessary permissions
-    if (!checkBulkPermissions('canUseGroup', sharedWith, grants, { ...groupData, isPublic })) {
+    if (!checkBulkPermissions('canUseGroup', individuals, grants, { ...groupData, isPublic })) {
       res.status(httpCodes.ACCEPTED).json({
         error: 'shared-with-permissions',
         message: GROUP_ERRORS.SHARED_WITH_PERMISSIONS,
