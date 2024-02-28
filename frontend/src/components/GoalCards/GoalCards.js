@@ -238,7 +238,7 @@ GoalCards.propTypes = {
   goals: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
   })).isRequired,
-  error: PropTypes.string.isRequired,
+  error: PropTypes.string,
   goalsCount: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
@@ -254,12 +254,14 @@ GoalCards.propTypes = {
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
+  shouldDisplayMergeSuccess: false,
   perPage: 10,
+  error: '',
 };
 export default GoalCards;
