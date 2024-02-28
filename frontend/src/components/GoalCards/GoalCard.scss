@@ -83,3 +83,8 @@ $max-width-date-column: 50%;
     flex-basis: clamp($min-width-date-column, 10%, $max-width-date-column);
   }
 }
+
+.ttahub-goal-card__entered-by-tooltip > .usa-tooltip__body,
+.ttahub-goal-card__entered-by-tooltip .smart-hub-tooltip:hover .usa-tooltip__body, .smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+  white-space: nowrap !important;
+}
