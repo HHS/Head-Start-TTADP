@@ -935,7 +935,6 @@ export default function GoalForm({
           </>
         ) : null }
 
-        {/* <!-- here --> */}
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
