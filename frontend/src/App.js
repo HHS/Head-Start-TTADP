@@ -14,6 +14,7 @@ import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
 import Admin from './pages/Admin';
+import APIDocs from './pages/APIDocs';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
@@ -235,6 +236,15 @@ function App() {
           render={({ match, location }) => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ActivityReport location={location} match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/api-docs"
+          render={() => (
+            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+              <APIDocs />
             </AppWrapper>
           )}
         />
