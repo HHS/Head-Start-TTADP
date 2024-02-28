@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState, useContext } from 'react';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
@@ -97,7 +98,7 @@ export default function MyGroups({ match }) {
           setValue(GROUP_FIELD_NAMES.NAME, fetchedGroup.name);
 
           // Set share with everyone (we need to make sure this is initially on the form).
-          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'individuals');
+          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, GROUP_SHARED_WITH.INDIVIDUALS);
 
           // Set recipients.
           setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapSelectedRecipients(fetchedGroup.grants));
@@ -108,14 +109,12 @@ export default function MyGroups({ match }) {
             { value: coOwner.id, label: coOwner.name }
           )));
           // Set group individuals.
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, fetchedGroup.sharedWith.map((s) => (
+          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, fetchedGroup.individuals.map((s) => (
             { value: s.id, label: s.name }
           )));
 
           // Set share with everyone.
-          if (fetchedGroup.sharedWith.length === 0) {
-            setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, 'everyone');
-          }
+          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, fetchedGroup.sharedWith);
         }
       } catch (err) {
         setError('There was an error fetching your group');
@@ -194,17 +193,19 @@ export default function MyGroups({ match }) {
       return;
     }
 
+    const isPublic = !data[GROUP_FIELD_NAMES.IS_PRIVATE];
     const post = {
       grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
       name: data[GROUP_FIELD_NAMES.NAME],
-      isPublic: !data[GROUP_FIELD_NAMES.IS_PRIVATE],
+      isPublic,
       // Co-owners and Shared with Individuals might not be on the form.
       coOwners: data[GROUP_FIELD_NAMES.CO_OWNERS]
         ? data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => (value))
         : [],
-      sharedWith: data[GROUP_FIELD_NAMES.INDIVIDUALS]
+      individuals: data[GROUP_FIELD_NAMES.INDIVIDUALS]
         ? data[GROUP_FIELD_NAMES.INDIVIDUALS].map(({ value }) => (value))
         : [],
+      sharedWith: !isPublic ? null : data[GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE],
     };
     setIsAppLoading(true);
 
@@ -371,16 +372,16 @@ export default function MyGroups({ match }) {
                           label="Everyone with access to my region"
                           id="everyone-with-access"
                           name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
-                          checked={value === 'everyone'}
-                          onChange={() => controllerOnChange('everyone')}
+                          checked={value === GROUP_SHARED_WITH.EVERYONE}
+                          onChange={() => controllerOnChange(GROUP_SHARED_WITH.EVERYONE)}
                           disabled={isAppLoading}
                         />
                         <Radio
                           label="Individuals in my region"
                           id="individuals-in-my-region"
                           name={GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE}
-                          checked={value === 'individuals'}
-                          onChange={() => controllerOnChange('individuals')}
+                          checked={value === GROUP_SHARED_WITH.INDIVIDUALS}
+                          onChange={() => controllerOnChange(GROUP_SHARED_WITH.INDIVIDUALS)}
                           disabled={isAppLoading}
                         />
                       </>
@@ -388,7 +389,7 @@ export default function MyGroups({ match }) {
                   />
                 </div>
                 {
-                  watchShareWithEveryone === 'individuals' && (
+                  watchShareWithEveryone === GROUP_SHARED_WITH.INDIVIDUALS && (
                     <div className="margin-top-4">
                       <label className="display-block margin-bottom-1">
                         Invite individuals

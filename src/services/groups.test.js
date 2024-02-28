@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import { GROUP_COLLABORATORS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
@@ -408,8 +409,8 @@ describe('Groups service', () => {
       expect(coOwnersIds).toContain(mockUserThree.id);
       expect(coOwnersIds).toContain(mockUserFour.id);
 
-      expect(groupOne.sharedWith).toHaveLength(2);
-      const sharedWithIds = groupOne.sharedWith.map((sw) => sw.id);
+      expect(groupOne.individuals).toHaveLength(2);
+      const sharedWithIds = groupOne.individuals.map((sw) => sw.id);
       expect(sharedWithIds).toContain(mockUserFour.id);
       expect(sharedWithIds).toContain(mockUserTwo.id);
 
@@ -455,8 +456,8 @@ describe('Groups service', () => {
       expect(coOwnersIds).toContain(mockUserThree.id);
       expect(coOwnersIds).toContain(mockUserFour.id);
 
-      expect(groupOne.sharedWith).toHaveLength(2);
-      const sharedWithIds = groupOne.sharedWith.map((sw) => sw.id);
+      expect(groupOne.individuals).toHaveLength(2);
+      const sharedWithIds = groupOne.individuals.map((sw) => sw.id);
       expect(sharedWithIds).toContain(mockUserFour.id);
       expect(sharedWithIds).toContain(mockUserTwo.id);
 
@@ -513,8 +514,8 @@ describe('Groups service', () => {
       expect(coOwnerIds.includes(mockUserFour.id)).toBe(true);
 
       // Shared with.
-      expect(result.sharedWith).toHaveLength(2);
-      const sharedWithIds = result.sharedWith.map((co) => co.id);
+      expect(result.individuals).toHaveLength(2);
+      const sharedWithIds = result.individuals.map((co) => co.id);
       expect(sharedWithIds.includes(mockUserTwo.id)).toBe(true);
       expect(sharedWithIds.includes(mockUserFour.id)).toBe(true);
     });
@@ -527,18 +528,29 @@ describe('Groups service', () => {
         grants: [grantOne.id, grantTwo.id],
         userId: mockUser.id,
         coOwners: [mockUserTwo.id],
-        sharedWith: [mockUserThree.id],
+        individuals: [mockUserThree.id],
         isPublic: false,
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
       });
 
       groupsToCleanup.push(result);
-
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('name');
       expect(result.name).toBe('Group 3');
       expect(result.isPublic).toBe(false);
       expect(result).toHaveProperty('grants');
       expect(result.grants).toHaveLength(2);
+      expect(result.sharedWith).toBe(GROUP_SHARED_WITH.INDIVIDUALS);
+
+      // Assert the coOwners.
+      expect(result.coOwners.length).toBe(1);
+      const coOwnersIds = result.coOwners.map((co) => co.id);
+      expect(coOwnersIds).toContain(mockUserTwo.id);
+
+      // Assert the individuals.
+      expect(result.individuals.length).toBe(1);
+      const individualsIds = result.individuals.map((ind) => ind.id);
+      expect(individualsIds).toContain(mockUserThree.id);
     });
 
     it('creates a new group with shared users and co owners', async () => {
@@ -547,8 +559,9 @@ describe('Groups service', () => {
         grants: [grantOne.id, grantTwo.id],
         userId: mockUser.id,
         isPublic: false,
-        sharedWith: [mockUserTwo.id, mockUserThree.id],
+        individuals: [mockUserTwo.id, mockUserThree.id],
         coOwners: [mockUserFour.id],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
       });
 
       groupsToCleanup.push(result);
@@ -559,6 +572,8 @@ describe('Groups service', () => {
       expect(result.isPublic).toBe(false);
       expect(result).toHaveProperty('grants');
       expect(result.grants).toHaveLength(2);
+
+      expect(result.sharedWith).toBe(GROUP_SHARED_WITH.INDIVIDUALS);
 
       expect(result.groupCollaborators).toHaveLength(3);
 
@@ -610,7 +625,8 @@ describe('Groups service', () => {
         userId: mockUser.id,
         isPublic: false,
         coOwners: [mockUserThree.id, mockUserFour.id], // Switch co-owners (opposite).
-        sharedWith: [mockUserTwo.id], // Switch sharedWith (opposite).
+        individuals: [mockUserTwo.id], // Switch sharedWith (opposite).
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
       });
 
       expect(result).toHaveProperty('id');
@@ -659,8 +675,9 @@ describe('Groups service', () => {
         grants: [grantTwo.id],
         userId: mockUser.id,
         isPublic: false,
-        sharedWith: [],
+        individuals: [],
         coOwners: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
       });
 
       // Assert result.groupCollaborators.
@@ -668,6 +685,7 @@ describe('Groups service', () => {
       const creatorCollabAfterEdit = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
       expect(creatorCollabAfterEdit).toBeDefined();
       expect(creatorCollabAfterEdit.userId).toBe(mockUser.id);
+      expect(result.sharedWith).toBe(GROUP_SHARED_WITH.EVERYONE);
     });
   });
 

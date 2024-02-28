@@ -32,7 +32,7 @@ describe('Group', () => {
       name: 'Test Group',
       creator: { id: 1, name: 'Test Creator' },
       coOwners: [{ id: 2, name: 'Test CoOwner' }, { id: 3, name: 'Test CoOwner2' }],
-      sharedWith: [{ id: 4, name: 'Test SharedWith' }, { id: 5, name: 'Test SharedWith2' }],
+      individuals: [{ id: 4, name: 'Test SharedWith' }, { id: 5, name: 'Test SharedWith2' }],
       grants: [
         {
           id: 1,

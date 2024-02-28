@@ -1,3 +1,4 @@
+const { GROUP_SHARED_WITH } = require('@ttahub/common');
 const {
   prepMigration,
   removeTables,
@@ -10,6 +11,17 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+
+      // Add column sharedWith to table Groups of ENUM type GROUP_SHARED_WITH
+      await queryInterface.addColumn(
+        'Groups',
+        'sharedWith',
+        {
+          type: Sequelize.ENUM(Object.values(GROUP_SHARED_WITH)),
+          allowNull: true,
+        },
+        { transaction },
+      );
 
       //---------------------------------------------------------------------------------
       await queryInterface.sequelize.query(/* sql */`
@@ -268,6 +280,8 @@ module.exports = {
       await removeTables(queryInterface, transaction, [
         'GroupCollaborators',
       ]);
+
+      await queryInterface.removeColumn('Groups', 'sharedWith', { transaction });
     });
   },
 };

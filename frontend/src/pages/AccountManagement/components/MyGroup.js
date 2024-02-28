@@ -29,8 +29,8 @@ export default function MyGroup({
 
   const determineGroupAccess = () => {
     let access = group.isPublic ? 'Public' : 'Private';
-    if (isCoOwner && group.sharedWith.length) {
-      if (group.sharedWith.length) {
+    if (isCoOwner && group.individuals.length) {
+      if (group.individuals.length) {
         access = 'Individuals';
       }
     }
@@ -114,7 +114,7 @@ MyGroup.propTypes = {
     editor: PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired,
-    sharedWith: PropTypes.arrayOf(PropTypes.shape({
+    individuals: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
     }).isRequired),
   }).isRequired,

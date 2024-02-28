@@ -57,7 +57,7 @@ describe('MyGroup', () => {
     const groupWithIndividuals = {
       ...defaultGroup,
       coOwners: [],
-      sharedWith: [
+      individuals: [
         {
           id: 1,
         },
@@ -76,11 +76,7 @@ describe('MyGroup', () => {
   it('displays the correct updated at with user', () => {
     const groupWithIndividuals = {
       ...defaultGroup,
-      sharedWith: [
-        {
-          id: 1,
-        },
-      ],
+      individuals: [],
       coOwners: [],
       groupCollaborators: [],
       editor: {
@@ -91,7 +87,6 @@ describe('MyGroup', () => {
     renderMyGroup(groupWithIndividuals, false, true);
     expect(screen.getByText('group1')).toBeInTheDocument();
     expect(screen.getByText('Tom Jones')).toBeInTheDocument();
-    expect(screen.getByText('Individuals')).toBeInTheDocument();
     expect(screen.getByText('07/19/2021 by Jane Doe')).toBeInTheDocument();
     expect(screen.getByText('Edit group')).toBeInTheDocument();
     expect(screen.getByText('Delete group')).toBeInTheDocument();

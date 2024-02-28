@@ -5,6 +5,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
+import { GROUP_SHARED_WITH } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
@@ -43,8 +44,8 @@ describe('Groups', () => {
         userId: 1,
         isPublic: false,
         groupCollaborators: [],
+        sharedWith: null,
         coOwners: [],
-        sharedWith: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -57,7 +58,8 @@ describe('Groups', () => {
         isPublic: true,
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        individuals: [],
         creator: {
           name: 'Tom Jones',
           id: 1,
@@ -70,7 +72,8 @@ describe('Groups', () => {
         isPublic: true,
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
+        individuals: [],
         creator: {
           name: 'Tim User',
           id: 2,
@@ -117,7 +120,8 @@ describe('Groups', () => {
         isPublic: true,
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [],
+        individuals: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
         creator: {
           name: 'Tim User',
         },
@@ -141,7 +145,8 @@ describe('Groups', () => {
         isPublic: false,
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [],
+        individuals: [],
+        sharedWith: null,
         creator: {
           name: 'Tim User',
           id: 1,
@@ -175,7 +180,8 @@ describe('Groups', () => {
       isPublic: false,
       groupCollaborators: [],
       coOwners: [],
-      sharedWith: [],
+      individuals: [],
+      sharedWith: null,
       creator: {
         name: 'Tim User',
         id: 1,
@@ -217,7 +223,8 @@ describe('Groups', () => {
         isPublic: false,
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [],
+        individuals: [],
+        sharedWith: null,
         creator: {
           name: 'Tim User',
           id: 1,
@@ -273,6 +280,7 @@ describe('Groups', () => {
         name: 'group1',
         isPublic: true,
         updatedAt: '2024-01-01T00:00:00.000Z',
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
         groupCollaborators: [],
         coOwners: [
           {
@@ -280,7 +288,7 @@ describe('Groups', () => {
             name: 'CoOwner User',
           },
         ],
-        sharedWith: [
+        individuals: [
           {
             id: 3,
             name: 'SharedWith User',
@@ -316,13 +324,14 @@ describe('Groups', () => {
         isPublic: false,
         updatedAt: '2024-01-01T00:00:00.000Z',
         groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
         coOwners: [
           {
             id: 1,
             name: 'CoOwner User',
           },
         ],
-        sharedWith: [
+        individuals: [
           {
             id: 3,
             name: 'SharedWith User',
@@ -358,13 +367,14 @@ describe('Groups', () => {
         isPublic: false,
         updatedAt: '2024-01-01T00:00:00.000Z',
         groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
         coOwners: [
           {
             id: 2,
             name: 'CoOwner User',
           },
         ],
-        sharedWith: [
+        individuals: [
           {
             id: 1,
             name: 'SharedWith User',
@@ -381,13 +391,14 @@ describe('Groups', () => {
         isPublic: true,
         updatedAt: '2024-01-02T00:00:00.000Z',
         groupCollaborators: [],
+        sharedWith: GROUP_SHARED_WITH.EVERYONE,
         coOwners: [
           {
             id: 10,
             name: 'CoOwner User',
           },
         ],
-        sharedWith: [],
+        individuals: [],
         creator: {
           name: 'Creator User2',
           id: 14,
@@ -400,7 +411,8 @@ describe('Groups', () => {
         updatedAt: '2024-01-03T00:00:00.000Z',
         groupCollaborators: [],
         coOwners: [],
-        sharedWith: [
+        sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+        individuals: [
           {
             id: 14,
             name: 'SharedWith User',

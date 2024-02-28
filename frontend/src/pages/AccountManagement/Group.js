@@ -105,7 +105,7 @@ export default function Group({ match }) {
         </ReadOnlyField>
         <ReadOnlyField label="Shared with">
           <ul className="usa-list usa-list--unstyled">
-            {mapUsers(group.sharedWith)}
+            {mapUsers(group.individuals)}
           </ul>
         </ReadOnlyField>
       </WidgetCard>
