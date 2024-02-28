@@ -83,3 +83,26 @@ export async function similarity(regionId, recipientId) {
   const response = await get(url);
   return response.json();
 }
+
+export async function similiarGoalsByText(
+  regionId,
+  recipientId,
+  name,
+  grantNumbers,
+) {
+  const parameterizedGrantNumbers = grantNumbers.map((grantNumber) => `grantNumbers=${encodeURIComponent(grantNumber)}`).join('&');
+  const parameterizedGoalName = `name=${encodeURIComponent(name)}`;
+
+  const url = join(
+    goalsUrl,
+    'recipient',
+    String(recipientId),
+    'region',
+    String(regionId),
+    'nudge',
+    `?${parameterizedGoalName}&${parameterizedGrantNumbers}`,
+  );
+
+  const response = await get(url);
+  return response.json();
+}

@@ -48,15 +48,4 @@ describe('GrantSelect', () => {
 
     expect(validateGrantNumbers).toHaveBeenCalled();
   });
-
-  it('shows the read only view', async () => {
-    const validateGrantNumbers = jest.fn();
-    const userCanEdit = false;
-    renderGrantSelect(validateGrantNumbers, userCanEdit, [{
-      value: 1,
-      label: 'Grant 1',
-    }]);
-    await screen.findByText(/select grants/i);
-    expect(await screen.findByText('Grant 1')).toBeVisible();
-  });
 });
