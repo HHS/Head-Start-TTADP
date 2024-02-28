@@ -469,6 +469,7 @@ class Groups{
  * name : text
  * updatedAt : timestamp with time zone
  isPublic : boolean
+ sharedWith : enum
 }
 
 class MailerLogs{
