@@ -17,9 +17,6 @@ import GoalForm from '../../components/GoalForm';
 import PrintGoals from './pages/PrintGoals';
 import FilterContext from '../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from './pages/constants';
-import RTTAPA from './pages/RTTAPA';
-import RTTAPAHistory from './pages/RTTAPAHistory';
-import FeatureFlag from '../../components/FeatureFlag';
 import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
@@ -291,39 +288,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
               recipient={recipientData}
               showRTRnavigation
             />
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/new"
-          render={({ location }) => (
-            <FeatureFlag renderNotFound flag="rttapa_form">
-              <RTTAPA
-                regionId={regionId}
-                recipientId={recipientId}
-                recipientNameWithRegion={recipientNameWithRegion}
-                location={location}
-              />
-            </FeatureFlag>
-          )}
-        />
-        <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa-history"
-          render={() => (
-            <FeatureFlag renderNotFound flag="rttapa_form">
-              <PageWithHeading
-                regionId={regionId}
-                recipientId={recipientId}
-                error={error}
-                recipientNameWithRegion={recipientNameWithRegion}
-                slug="rttapa-history"
-              >
-                <RTTAPAHistory
-                  regionId={regionId}
-                  recipientId={recipientId}
-                  recipientNameWithRegion={recipientNameWithRegion}
-                />
-              </PageWithHeading>
-            </FeatureFlag>
           )}
         />
         <Route
