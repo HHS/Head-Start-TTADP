@@ -4,6 +4,7 @@ import isAdmin, {
   allRegionsUserHasPermissionTo,
   getRegionWithReadWrite,
   hasApproveActivityReport,
+  hasApproveActivityReportInRegion,
 } from '../permissions';
 
 describe('permissions', () => {
@@ -130,6 +131,44 @@ describe('permissions', () => {
         ],
       };
       expect(hasApproveActivityReport(user)).toBeFalsy();
+    });
+  });
+
+  describe('hasApproveActivityReportInRegion', () => {
+    it('returns true if the user has the appropriate permission', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 5,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasApproveActivityReportInRegion(user, 1)).toBeTruthy();
+    });
+
+    it('returns false if the user does not have the appropriate permission', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 2,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasApproveActivityReportInRegion(user, 1)).toBeFalsy();
+    });
+
+    it('returns false if the user does not have the appropriate region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: 5,
+            regionId: 2,
+          },
+        ],
+      };
+      expect(hasApproveActivityReportInRegion(user, 1)).toBeFalsy();
     });
   });
 
