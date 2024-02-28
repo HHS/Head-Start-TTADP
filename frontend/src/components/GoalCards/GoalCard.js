@@ -183,7 +183,7 @@ function GoalCard({
             if (!c.goalCreatorName) return null;
 
             return (
-              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lighter padding-x-1 display-inline-flex flex-align-center flex-justify-between">
+              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
                 {collaborators.length > 1 && (
                   <>
                     <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
