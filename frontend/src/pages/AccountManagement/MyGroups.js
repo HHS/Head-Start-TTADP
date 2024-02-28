@@ -360,7 +360,7 @@ export default function MyGroups({ match }) {
                     {' '}
                     <Req />
                     <QuestionTooltip text="Shared groups can be seen and used by others but only you and co-owners can edit the group." />
-                    {sharedRadioError && <span className="usa-error-message">{sharedRadioError.me}</span>}
+                    {sharedRadioError && <span className="usa-error-message">{sharedRadioError.message}</span>}
                   </label>
                   <Controller
                     control={control}
