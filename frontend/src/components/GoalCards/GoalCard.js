@@ -193,7 +193,7 @@ function GoalCard({
                 <Tooltip
                   displayText={c.goalCreatorRoles}
                   screenReadDisplayText={false}
-                  buttonLabel={`Click to reveal the full name of the creator of this goal: ${c.goalNumber}`}
+                  buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
                   tooltipText={c.goalCreatorName}
                   hideUnderline={false}
                 />
