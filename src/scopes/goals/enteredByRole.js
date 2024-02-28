@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
 const enteredByRole = (roles, options) => {
-  const roleConditions = `r."name" IS NOT NULL AND r."name" IN (${roles.map((r) => sequelize.escape(r)).join(',')})`;
+  const roleConditions = `r."name" <> '' AND r."name" IN (${roles.map((r) => sequelize.escape(r)).join(',')})`;
 
   return `(
           SELECT DISTINCT "Goal".id FROM "Goals" "Goal"
