@@ -25,23 +25,28 @@ export default function Groups() {
     // Get Co-owned and shared with bucket.
     let coOwnedGroups = [];
     let sharedGroups = [];
+    let coOwnedIds = [];
+    let sharedIds = [];
 
     if (myGroups) {
       // Co-owned.
       coOwnedGroups = myGroups.filter((group) => (group.coOwners || []).some(
         (coOwner) => coOwner.id === user.id,
       ));
+      coOwnedIds = coOwnedGroups.map((group) => group.id);
 
       // Shared with.
       sharedGroups = myGroups.filter((group) => (group.individuals || []).some(
         (Individual) => Individual.id === user.id,
       ));
+      sharedIds = sharedGroups.map((group) => group.id);
     }
 
     // Get public groups.
     const publicGroups = (myGroups || []).filter(
       (group) => group.creator.id !== user.id
-    && group.isPublic && group.sharedWith === GROUP_SHARED_WITH.EVERYONE,
+    && group.isPublic && group.sharedWith === GROUP_SHARED_WITH.EVERYONE
+    && !coOwnedIds.includes(group.id) && !sharedIds.includes(group.id),
     );
 
     // Combine and sort shared and public groups.
