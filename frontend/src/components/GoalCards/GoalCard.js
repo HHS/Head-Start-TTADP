@@ -196,6 +196,7 @@ function GoalCard({
                   buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
                   tooltipText={c.goalCreatorName}
                   underlineStyle="solid"
+                  className="ttahub-goal-card__entered-by-tooltip"
                 />
               </p>
             );
