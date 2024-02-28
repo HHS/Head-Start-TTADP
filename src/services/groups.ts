@@ -1058,7 +1058,7 @@ export async function createNewGroup(data: GroupData): Promise<GroupResponse> {
     collaboratorTypeMapping,
   ] = await Promise.all([
     // Create a new group with the given name and isPublic flag
-    await Group.create({
+    Group.create({
       name: name.trim(),
       sharedWith,
       isPublic,
