@@ -919,8 +919,8 @@ describe('record', () => {
         where: {
           importFileId: mockImportFileId,
           [Op.and]: [
-            where(cast(col('fileInfo.path'), 'text'), mockFileInfo.path),
-            where(cast(col('fileInfo.name'), 'text'), mockFileInfo.name),
+            where(cast(col('fileInfo->path'), 'text'), { [Op.eq]: mockFileInfo.path }),
+            where(cast(col('fileInfo->name'), 'text'), { [Op.eq]: mockFileInfo.name }),
           ],
         },
       });
@@ -946,8 +946,8 @@ describe('record', () => {
         where: {
           importFileId: mockImportFileId,
           [Op.and]: [
-            where(cast(col('fileInfo.path'), 'text'), mockFileInfo.path),
-            where(cast(col('fileInfo.name'), 'text'), mockFileInfo.name),
+            where(cast(col('fileInfo->path'), 'text'), { [Op.eq]: mockFileInfo.path }),
+            where(cast(col('fileInfo->name'), 'text'), { [Op.eq]: mockFileInfo.name }),
           ],
         },
       });
