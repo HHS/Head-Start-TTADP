@@ -3,8 +3,8 @@ import { SAXStream } from 'sax';
 import { simplifyObject, detectAndCast } from '../dataObjectUtils';
 
 interface SchemaNode {
-  name: string;
-  attributes: Record<string, boolean>; // Map attribute names to their optionality
+  name?: string;
+  attributes?: Record<string, boolean>; // Map attribute names to their optionality
   children?: Record<string, SchemaNode>; // Map child element names to their schema nodes
   optional: boolean; // Is the element optional?
   occurrences: number; // Number of occurrences of the element
@@ -21,15 +21,25 @@ interface SchemaNode {
  * if a child node should be marked as optional. If null, the current node is treated as
  * a root node.
  */
-const processSchema = (schema: SchemaNode, parentOccurrences = null): void => {
+const processSchema = (schema: SchemaNode, parentOccurrences: number | null = null): void => {
   // check if the current object has children
   if (schema?.children && typeof schema.children === 'object') {
     // Iterate over each child
     Object.keys(schema.children).forEach((key) => {
-      if (schema.children?.[key]) {
-        const child = schema.children[key];
+      const child = schema.children[key];
+      if (child) {
+        // Remove the name attribute if it matches the key
+        if (child.name === key) {
+          delete child.name;
+        }
+        // Remove the attributes object if it's empty
+        if (child.attributes && Object.keys(child.attributes).length === 0) {
+          delete child.attributes;
+        }
         // Compare occurrences and set optional if needed
-        if (parentOccurrences !== null && child.occurrences < parentOccurrences) {
+        if (parentOccurrences !== null
+          && child.occurrences !== undefined
+          && child.occurrences < parentOccurrences) {
           child.optional = true;
         }
         // Process the child object

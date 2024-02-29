@@ -132,7 +132,7 @@ const collectNextFile = async (
       ),
     ]);
 
-    auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`);
+    auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`, err);
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(
       importId,

@@ -1,0 +1,18 @@
+@use '../../colors.scss' as colors;
+
+.ttahub-similar-goal--input {
+  appearance: none;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
+.ttahub-similar-goal--label,
+.ttahub-similar-goals--close-button {
+  cursor: pointer;
+}
+
+.ttahub-similar-goal--label:hover {
+  background: colors.$base-lightest;
+}

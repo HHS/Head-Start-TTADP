@@ -20,6 +20,7 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
+  ActivityReportGoalFieldResponse,
   CollaboratorRole,
   Resource,
   Topic,
@@ -222,7 +223,9 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg[0].dataValues).toMatchObject(data);
 
-    await cacheGoalMetadata(goal, activityReport.id, true);
+    jest.spyOn(ActivityReportGoalFieldResponse, 'destroy');
+
+    await cacheGoalMetadata(goal, activityReport.id, true, [], true);
 
     arg = await ActivityReportGoal.findAll({
       where: {
@@ -237,6 +240,8 @@ describe('cacheGoalMetadata', () => {
     };
     expect(arg).toHaveLength(1);
     expect(arg[0].dataValues).toMatchObject(updatedData);
+
+    expect(ActivityReportGoalFieldResponse.destroy).toHaveBeenCalled();
   });
 });
 

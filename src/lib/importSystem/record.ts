@@ -1,9 +1,11 @@
 import {
   Sequelize,
   fn,
+  cast,
   col,
   literal,
   Op,
+  where,
 } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
@@ -404,10 +406,12 @@ const recordAvailableDataFiles = async (
         {
           where: {
             importFileId,
-            [Op.and]: [
-              Sequelize.literal(`"fileInfo" -> 'path' = '${matchedFile.path}'`),
-              Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
-            ],
+            fileInfo: {
+              [Op.contains]: {
+                path: matchedFile.path,
+                name: matchedFile.name,
+              },
+            },
           },
           individualHooks: true,
         },
