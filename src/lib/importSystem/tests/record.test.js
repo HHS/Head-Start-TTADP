@@ -493,8 +493,8 @@ describe('record', () => {
           where: {
             importFileId,
             [Op.and]: [
-              Sequelize.literal(`"fileInfo" -> 'path' = '${matchedFile.path}'`),
-              Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
+              Sequelize.literal(`"fileInfo" ->> 'path'= '${matchedFile.path}'`),
+              Sequelize.literal(`"fileInfo" ->> 'name'= '${matchedFile.name}'`),
             ],
           },
           individualHooks: true,
@@ -919,8 +919,8 @@ describe('record', () => {
         where: {
           importFileId: mockImportFileId,
           [Op.and]: [
-            where(cast(col('fileInfo->path'), 'text'), { [Op.eq]: mockFileInfo.path }),
-            where(cast(col('fileInfo->name'), 'text'), { [Op.eq]: mockFileInfo.name }),
+            where(cast(col('fileInfo->>path'), 'text'), { [Op.eq]: mockFileInfo.path }),
+            where(cast(col('fileInfo->>name'), 'text'), { [Op.eq]: mockFileInfo.name }),
           ],
         },
       });
@@ -946,8 +946,8 @@ describe('record', () => {
         where: {
           importFileId: mockImportFileId,
           [Op.and]: [
-            where(cast(col('fileInfo->path'), 'text'), { [Op.eq]: mockFileInfo.path }),
-            where(cast(col('fileInfo->name'), 'text'), { [Op.eq]: mockFileInfo.name }),
+            where(cast(col('fileInfo->>path'), 'text'), { [Op.eq]: mockFileInfo.path }),
+            where(cast(col('fileInfo->>name'), 'text'), { [Op.eq]: mockFileInfo.name }),
           ],
         },
       });
