@@ -57,10 +57,10 @@ export default function MyGroups({ match }) {
   const {
     control,
     handleSubmit,
-    setValue,
     setError: setFormError,
     errors: formErrors,
     watch,
+    reset,
   } = useForm({
     defaultValues: {
       [GROUP_FIELD_NAMES.NAME]: '',
@@ -92,29 +92,20 @@ export default function MyGroups({ match }) {
       setIsAppLoading(true);
       try {
         const fetchedGroup = await fetchGroup(groupId);
-
         if (fetchedGroup) {
-          // Set name.
-          setValue(GROUP_FIELD_NAMES.NAME, fetchedGroup.name);
-
-          // Set share with everyone (we need to make sure this is initially on the form).
-          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, GROUP_SHARED_WITH.INDIVIDUALS);
-
-          // Set recipients.
-          setValue(GROUP_FIELD_NAMES.RECIPIENTS, mapSelectedRecipients(fetchedGroup.grants));
-          // Set is private.
-          setValue(GROUP_FIELD_NAMES.IS_PRIVATE, !fetchedGroup.isPublic);
-          // Set group co-owners.
-          setValue(GROUP_FIELD_NAMES.CO_OWNERS, fetchedGroup.coOwners.map((coOwner) => (
-            { value: coOwner.id, label: coOwner.name }
-          )));
-          // Set group individuals.
-          setValue(GROUP_FIELD_NAMES.INDIVIDUALS, fetchedGroup.individuals.map((s) => (
-            { value: s.id, label: s.name }
-          )));
-
-          // Set share with everyone.
-          setValue(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE, fetchedGroup.sharedWith);
+          // Reset form values.
+          reset({
+            [GROUP_FIELD_NAMES.NAME]: fetchedGroup.name,
+            [GROUP_FIELD_NAMES.RECIPIENTS]: mapSelectedRecipients(fetchedGroup.grants),
+            [GROUP_FIELD_NAMES.IS_PRIVATE]: !fetchedGroup.isPublic,
+            [GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE]: fetchedGroup.sharedWith,
+            [GROUP_FIELD_NAMES.CO_OWNERS]: fetchedGroup.coOwners.map((coOwner) => (
+              { value: coOwner.id, label: coOwner.name }
+            )),
+            [GROUP_FIELD_NAMES.INDIVIDUALS]: fetchedGroup.individuals.map((s) => (
+              { value: s.id, label: s.name }
+            )),
+          });
         }
       } catch (err) {
         setError('There was an error fetching your group');
@@ -127,7 +118,7 @@ export default function MyGroups({ match }) {
     if (groupId && usersFetched && recipientsFetched) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading, setValue, usersFetched, recipientsFetched]);
+  }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched]);
 
   useEffect(() => {
     // get grants/recipients for user
