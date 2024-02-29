@@ -566,7 +566,7 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', `processZipFileFromS3 processFilesFromZip ${err.message}`);
+    auditLogger.log('error', `processZipFileFromS3 processFilesFromZip ${err.message}`, err);
     return {
       error: err.message,
       file: {
