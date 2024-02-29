@@ -1,4 +1,10 @@
-import { Sequelize, Op } from 'sequelize';
+import {
+  Sequelize,
+  Op,
+  where,
+  cast,
+  col,
+} from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ImportFile,
@@ -486,10 +492,12 @@ describe('record', () => {
         {
           where: {
             importFileId,
-            [Op.and]: [
-              Sequelize.literal(`"fileInfo" -> 'path' = '${matchedFile.path}'`),
-              Sequelize.literal(`"fileInfo" -> 'name' = '${matchedFile.name}'`),
-            ],
+            fileInfo: {
+              [Op.contains]: {
+                path: matchedFile.path,
+                name: matchedFile.name,
+              },
+            },
           },
           individualHooks: true,
         },
@@ -942,7 +950,7 @@ describe('record', () => {
         where: {
           importFileId: mockImportFileId,
           fileInfo: {
-            [Sequelize.Op.contains]: {
+            [Op.contains]: {
               path: mockFileInfo.path,
               name: mockFileInfo.name,
             },

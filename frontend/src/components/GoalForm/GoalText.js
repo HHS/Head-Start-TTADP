@@ -8,53 +8,43 @@ import Req from '../Req';
 
 export default function GoalText({
   error,
-  isOnReport,
   goalName,
   validateGoalName,
   onUpdateText,
   inputName,
   isLoading,
-  goalStatus,
-  userCanEdit,
 }) {
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor={inputName} className={isOnReport || goalStatus === 'Closed' ? 'text-bold' : ''}>
+      <Label htmlFor={inputName}>
         Recipient&apos;s goal
         {' '}
-        {!isOnReport ? <Req /> : null }
+        <Req />
       </Label>
-      { isOnReport || goalStatus === 'Closed' || !userCanEdit ? (
-        <p className="usa-prose margin-top-0">{goalName}</p>
-      ) : (
-        <>
-          {error}
-          <AutomaticResizingTextarea
-            onUpdateText={onUpdateText}
-            onBlur={() => {
-              validateGoalName();
-            }}
-            inputName={inputName}
-            disabled={isLoading}
-            value={goalName}
-            required
-          />
-        </>
-      )}
+      <>
+        {error}
+        <AutomaticResizingTextarea
+          onUpdateText={onUpdateText}
+          onBlur={() => {
+            validateGoalName();
+          }}
+          inputName={inputName}
+          disabled={isLoading}
+          value={goalName}
+          required
+        />
+      </>
     </FormGroup>
   );
 }
 
 GoalText.propTypes = {
   error: PropTypes.node.isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   goalName: PropTypes.string.isRequired,
   validateGoalName: PropTypes.func.isRequired,
   onUpdateText: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
-  goalStatus: PropTypes.string.isRequired,
-  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GoalText.defaultProps = {
