@@ -762,18 +762,6 @@ class Roles{
  mapsTo : integer
 }
 
-class RttapaPilots{
- * id : integer : <generated>
- * recipientId : integer : REFERENCES "Recipients".id
- * regionId : integer : REFERENCES "Regions".id
- * userId : integer : REFERENCES "Users".id
- * createdAt : timestamp with time zone
- * reviewDate : timestamp with time zone
- * updatedAt : timestamp with time zone
- goals : jsonb
- notes : text
-}
-
 class Scopes{
  * id : integer : <generated>
  * createdAt : timestamp with time zone : now()
@@ -897,7 +885,6 @@ enum enum_Users_flags {
  monitoring
  regional_goal_dashboard
  resources_dashboard
- rttapa_form
 }
 
 enum_Users_flags <|-- Users
@@ -1776,20 +1763,6 @@ class ZALRoles{
  session_sig : text
 }
 
-class ZALRttapaPilots{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
 class ZALScopes{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2083,14 +2056,12 @@ Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, p
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : recipient, goalSimilarityGroups
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, recipient
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplates : region, objectiveTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Permissions : region, permissions
-Regions "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : rttapaPilots, region
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Users : users, homeRegion
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : resource, activityReportGoalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveResources : resource, activityReportObjectiveResources
@@ -2121,7 +2092,6 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" Groups : user, groups
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
-Users "1" --[#black,dashed,thickness=2]--{  "n" RttapaPilots : user, rttapaPilots
 Users "1" --[#black,dashed,thickness=2]--{  "n" SiteAlerts : creator, siteAlerts
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : user, userRoles
 Users "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : user, userSettingOverrides

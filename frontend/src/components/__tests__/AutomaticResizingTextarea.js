@@ -53,7 +53,12 @@ describe('AutomaticResizingTextarea', () => {
   };
 
   beforeAll(() => {
+    jest.useFakeTimers();
     Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, value: 500 });
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
   });
 
   it('resizes', async () => {
@@ -65,6 +70,7 @@ describe('AutomaticResizingTextarea', () => {
     expect(textarea.style.height).toBe('160px');
     userEvent.clear(textarea);
     userEvent.paste(textarea, poem);
+    jest.advanceTimersByTime(1000);
     expect(textarea).toHaveValue(poem);
     expect(textarea.style.height).toBe('500px');
   });

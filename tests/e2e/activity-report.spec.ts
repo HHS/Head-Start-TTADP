@@ -450,7 +450,7 @@ test.describe('Activity Report', () => {
     const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
     expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
 
     let objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
 
@@ -480,7 +480,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
     objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
     expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
 
@@ -623,7 +623,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // confirm goal is in RTR
-    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
+    await expect(page.getByText('This is a goal for multiple grants').first()).toBeVisible();
 
     // check second recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -633,7 +633,7 @@ test.describe('Activity Report', () => {
     // check page title is updated (formerly TTAHUB-1322.spec.ts)
     expect(await page.title()).toBe('RTTAPA - Agency 2 in region 1, Inc. | TTA Hub');
 
-    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
+    await expect(page.getByText('This is a goal for multiple grants').first()).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
     await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();

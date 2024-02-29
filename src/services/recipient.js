@@ -549,6 +549,7 @@ export async function getGoalsByActivityRecipient(
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
+      'onAR',
       'isRttapa',
       'source',
       'goalTemplateId',
@@ -763,6 +764,7 @@ export async function getGoalsByActivityRecipient(
         },
       ];
 
+      existingGoal.onAR = existingGoal.onAR || current.onAR;
       return {
         goalRows: previous.goalRows,
       };
@@ -787,6 +789,7 @@ export async function getGoalsByActivityRecipient(
       isCurated,
       createdVia: current.createdVia,
       collaborators: [],
+      onAR: current.onAR,
     };
 
     goalToAdd.collaborators.push(
