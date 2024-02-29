@@ -199,10 +199,10 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
       transaction: options.transaction,
     });
 
-    const bulkCreates = [];
+    const records = [];
     users.forEach((user) => {
       user.nationalCenters.forEach((nc) => {
-        bulkCreates.push({
+        records.push({
           userId: user.id,
           userName: user.name,
           eventReportPilotId: instance.id,
@@ -212,14 +212,41 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
       });
     });
 
-    const records = await sequelize.models.EventReportPilotNationalCenterUser.bulkCreate(bulkCreates, {
-      updateOnDuplicate: ['updatedAt', 'userName', 'nationalCenterName'],
-      ignoreDuplicates: true,
-      transaction: options.transaction,
-    });
+    const promises = [];
 
-    // delete records that are not in the bulkCreates
-    const ids = records.map((r) => r.id);
+    // create or update records
+    for (let i = 0; i < records.length; i += 1) {
+      const record = records[i];
+
+      // eslint-disable-next-line no-await-in-loop
+      const cachedData = await sequelize.models.EventReportPilotNationalCenterUser.findOne({
+        where: {
+          eventReportPilotId: instance.id,
+          userId: record.userId,
+          nationalCenterId: record.nationalCenterId,
+        },
+        transaction: options.transaction,
+      });
+
+      if (cachedData) {
+        promises.push(
+          cachedData.update(record, {
+            transaction: options.transaction,
+          }),
+        );
+      } else {
+        promises.push(
+          sequelize.models.EventReportPilotNationalCenterUser.create(record, {
+            transaction: options.transaction,
+          }),
+        );
+      }
+    }
+
+    const eventReportNationalCenterUsers = await Promise.all(promises);
+
+    // delete records that are not present in the new list
+    const ids = eventReportNationalCenterUsers.map((r) => r.id);
     await sequelize.models.EventReportPilotNationalCenterUser.destroy({
       where: {
         eventReportPilotId: instance.id,
@@ -254,4 +281,5 @@ export {
   afterUpdate,
   beforeUpdate,
   afterCreate,
+  createOrUpdateNationalCenterUserCacheTable,
 };

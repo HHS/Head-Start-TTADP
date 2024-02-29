@@ -8,6 +8,8 @@ import {
   trVisionAndGoalComplete,
 } from '../../lib/mailer';
 import { auditLogger } from '../../logger';
+import db from '..';
+import { createUser } from '../../testUtils';
 
 jest.mock('../../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),
@@ -399,5 +401,111 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     jest.spyOn(auditLogger, 'error');
     await afterCreate(sequelize, instance, options);
     expect(auditLogger.error).toHaveBeenCalledWith(JSON.stringify({ err: error }));
+  });
+
+  describe('real data test', () => {
+    let owner;
+    let collaborator;
+    let collaborator2;
+    let nc;
+    let nt;
+    let n3;
+    let newEvent;
+    beforeAll(async () => {
+      owner = await createUser();
+      collaborator = await createUser();
+      collaborator2 = await createUser();
+      nc = await db.NationalCenter.create({
+        name: 'Test National Center (Owner)',
+      }, { individualHooks: true });
+      await db.NationalCenterUser.create({
+        userId: owner.id,
+        nationalCenterId: nc.id,
+      }, { individualHooks: true });
+      nt = await db.NationalCenter.create({
+        name: 'Test National Center (Collaborator)',
+      }, { individualHooks: true });
+      n3 = await db.NationalCenter.create({
+        name: 'Test National Center (Collaborator 2)',
+      }, { individualHooks: true });
+      await db.NationalCenterUser.create({
+        userId: collaborator.id,
+        nationalCenterId: nt.id,
+      }, { individualHooks: true });
+      await db.NationalCenterUser.create({
+        userId: collaborator2.id,
+        nationalCenterId: n3.id,
+      }, { individualHooks: true });
+      newEvent = await db.EventReportPilot.create({
+        regionId: 1,
+        data: {},
+        ownerId: owner.id,
+        collaboratorIds: [collaborator.id, collaborator2.id],
+      }, { individualHooks: true });
+    });
+
+    afterAll(async () => {
+      await db.EventReportPilotNationalCenterUser.destroy({
+        where: {
+          userId: [owner.id, collaborator.id, collaborator2.id],
+        },
+      }, { individualHooks: true });
+
+      await newEvent.destroy({ individualHooks: true });
+
+      await db.NationalCenterUser.destroy({
+        where: {
+          userId: [owner.id, collaborator.id, collaborator2.id],
+        },
+      }, { individualHooks: true });
+
+      await nc.destroy({ individualHooks: true });
+      await nt.destroy({ individualHooks: true });
+
+      await owner.destroy({ individualHooks: true });
+      await collaborator.destroy({ individualHooks: true });
+      await collaborator2.destroy({ individualHooks: true });
+      await db.sequelize.close();
+    });
+
+    afterEach(() => jest.clearAllMocks());
+
+    it('should create the national center user cache table', async () => {
+      const e = await db.EventReportPilotNationalCenterUser.findAll({
+        where: {
+          eventReportPilotId: newEvent.id,
+        },
+      });
+
+      expect(e.length).toBe(3);
+    });
+
+    it('should update the national center user cache table', async () => {
+      await db.NationalCenter.update({
+        name: 'Test National Center (Owner) Updated',
+      }, {
+        where: {
+          id: nc.id,
+        },
+        individualHooks: true,
+      });
+      await db.EventReportPilot.update({
+        data: { status: 'complete' },
+        collaboratorIds: [collaborator.id],
+      }, {
+        where: {
+          id: newEvent.id,
+        },
+        individualHooks: true,
+      });
+
+      const e = await db.EventReportPilotNationalCenterUser.findAll({
+        where: {
+          eventReportPilotId: newEvent.id,
+        },
+      });
+
+      expect(e.length).toBe(2);
+    });
   });
 });
