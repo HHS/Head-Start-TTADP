@@ -230,7 +230,12 @@ describe('processRecords', () => {
       { sourceDeletedAt: expect.any(Date) }, // Correct field name to match implementation
       {
         where: {
-          id: { [Op.not]: [4, 5, 1, 2] },
+          id: {
+            [Op.not]: [
+              { [Op.between]: [1, 2] },
+              { [Op.between]: [4, 5] },
+            ],
+          },
           sourceDeletedAt: null,
         },
         individualHooks: true,

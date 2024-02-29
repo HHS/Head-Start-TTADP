@@ -1,6 +1,11 @@
 import { Model, Op } from 'sequelize';
 import { Readable } from 'stream';
-import { remap, collectChangedValues, lowercaseKeys } from '../dataObjectUtils';
+import {
+  remap,
+  collectChangedValues,
+  lowercaseKeys,
+  createRanges,
+} from '../dataObjectUtils';
 import { filterDataToModel, modelForTable } from '../modelUtils';
 import EncodingConverter from '../stream/encoding';
 import Hasher, { getHash } from '../stream/hasher';
@@ -204,6 +209,8 @@ const processRecords = async (
       ];
 
       const affectedDataIds = affectedData?.map(({ id }) => id).filter((id) => id) || [];
+      const affectedRanges = createRanges(affectedDataIds);
+
       // mark the source date when the records no longer are present in the processed file
       // "Delete" all records that are not in the affectedData array
       if (affectedDataIds.length) {
@@ -213,7 +220,11 @@ const processRecords = async (
           },
           {
             where: {
-              id: { [Op.not]: affectedDataIds },
+              id: {
+                [Op.not]: affectedRanges.map((range) => ({
+                  [Op.between]: range,
+                })),
+              },
               sourceDeletedAt: null,
             },
             individualHooks: true,

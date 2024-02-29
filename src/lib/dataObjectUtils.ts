@@ -564,6 +564,41 @@ function lowercaseKeys<T extends Record<string, any>>(obj: T): Record<string, an
   return result;
 }
 
+/**
+ * Creates an array of ranges from a list of numbers. Each range represents a sequence of
+ * consecutive numbers.
+ *
+ * @param numbers - An array of numbers from which to create ranges.
+ * @returns An array of tuples, where each tuple contains two numbers representing the start
+ * and end of a consecutive range.
+ */
+function createRanges(numbers: number[]): [number, number][] {
+  // Remove duplicates by converting to a Set and back to an array
+  const uniqueNumbers = Array.from(new Set(numbers));
+  // Sort the array first
+  const sortedNumbers = uniqueNumbers.slice().sort((a, b) => a - b);
+
+  // Use reduce to iterate over the numbers and accumulate them into ranges
+  const ranges = sortedNumbers.reduce<[number, number][]>((acc, current) => {
+    if (acc.length === 0) {
+      // If the accumulator is empty, start the first range
+      acc.push([current, current]);
+    } else {
+      const lastRange = acc[acc.length - 1];
+      if (current === lastRange[1] + 1) {
+        // If the current number is consecutive, extend the end of the last range
+        lastRange[1] = current;
+      } else {
+        // If it's not consecutive, start a new range
+        acc.push([current, current]);
+      }
+    }
+    return acc;
+  }, []);
+
+  return ranges;
+}
+
 export {
   isObject,
   removeUndefined,
@@ -579,4 +614,5 @@ export {
   detectAndCast,
   lowercaseFirstLetterOfKeys,
   lowercaseKeys,
+  createRanges,
 };

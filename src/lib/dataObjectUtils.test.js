@@ -12,6 +12,7 @@ import {
   detectAndCast,
   lowercaseFirstLetterOfKeys,
   lowercaseKeys,
+  createRanges,
 } from './dataObjectUtils';
 
 describe('dataObjectUtils', () => {
@@ -1214,6 +1215,58 @@ describe('dataObjectUtils', () => {
       const result = lowercaseKeys(input);
       expect(Object.keys(result)).toHaveLength(1);
       expect(result.name).toBe('Bob'); // The last key-value pair should overwrite the first
+    });
+  });
+
+  describe('createRanges', () => {
+    test('should return an empty array when input is empty', () => {
+      expect(createRanges([])).toEqual([]);
+    });
+
+    test('should handle a single number', () => {
+      expect(createRanges([1])).toEqual([[1, 1]]);
+    });
+
+    test('should handle multiple numbers with no consecutive sequences', () => {
+      expect(createRanges([3, 1, 5])).toEqual([[1, 1], [3, 3], [5, 5]]);
+    });
+
+    test('should handle a sequence of consecutive numbers', () => {
+      expect(createRanges([1, 2, 3])).toEqual([[1, 3]]);
+    });
+
+    test('should handle multiple ranges of consecutive numbers', () => {
+      expect(createRanges([1, 2, 4, 5, 7])).toEqual([[1, 2], [4, 5], [7, 7]]);
+    });
+
+    test('should handle unsorted numbers with consecutive sequences', () => {
+      expect(createRanges([5, 1, 3, 2, 4])).toEqual([[1, 5]]);
+    });
+
+    test('should handle negative numbers and zero', () => {
+      expect(createRanges([-2, 0, -1, 1])).toEqual([[-2, 1]]);
+    });
+
+    test('should handle non-consecutive negative numbers', () => {
+      expect(createRanges([-5, -3, -1])).toEqual([[-5, -5], [-3, -3], [-1, -1]]);
+    });
+
+    test('should handle a mix of positive and negative numbers', () => {
+      expect(createRanges([-1, 1, -2, 2])).toEqual([[-2, -1], [1, 2]]);
+    });
+
+    test('should handle duplicate numbers by treating them as part of the same range', () => {
+      expect(createRanges([1, 1, 2, 3, 3])).toEqual([[1, 3]]);
+    });
+
+    test('should handle large ranges', () => {
+      const largeRange = Array.from({ length: 1000 }, (_, i) => i + 1);
+      expect(createRanges(largeRange)).toEqual([[1, 1000]]);
+    });
+
+    test('should handle large non-consecutive numbers', () => {
+      const largeNonConsecutive = [1000, 2000, 3000];
+      expect(createRanges(largeNonConsecutive)).toEqual([[1000, 1000], [2000, 2000], [3000, 3000]]);
     });
   });
 });
