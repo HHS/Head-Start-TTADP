@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
+import { Link } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../../components/Container';
@@ -9,6 +9,7 @@ import Drawer from '../../../../components/Drawer';
 import { getClassScores } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
 import { useGrantData } from '../GrantDataContext';
+import ContentFromFeedByTag from '../../../../components/ContentFromFeedByTag';
 
 const BadgeAbove = () => (
   <span className="ttahub-badge--success font-sans-2xs text-white text-bold">
@@ -40,8 +41,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       updateGrantClassData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchScores();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grantNumber, recipientId, regionId]);
+  }, [grantNumber, recipientId, regionId, updateGrantClassData]);
 
   const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {
@@ -81,42 +81,29 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
         stickyFooter
         title="CLASS® review thresholds"
       >
-        <h3>Quality thresholds</h3>
-        <p>
-          Beginning in Novembr 2020, the quality thresholds represent OHS&apos;s
-          expectation for all grantees regarding the quality of classroom learning environments.
-          These thresholds do not trigger competition; rather, a grantee with a score below a
-          quality threshold receives support from OHS in improving the quality of teacher-child
-          interactions in the classroom. The quality thresholds are as follows:
-        </p>
-        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
-          <li>6 for the Emotional Support domain.</li>
-          <li>6 for the Classroom Organization domain.</li>
-          <li>3 for the Instructional Support domain.</li>
-        </ul>
-        <h3>Competetive thresholds</h3>
-        <p>
-          Grantees with average CLASS® scores below the established competitive threshold
-          on any of the three CLASS® domains is required to compete.
-          The competitive thresholds are as follows:
-        </p>
-        <ul style={{ listStyleType: 'none', paddingLeft: 0 }}>
-          <li>5 for the Emotional Support domain.</li>
-          <li>5 for the Classroom Organization domain.</li>
-          <li>
-            2.3 for the Instructional Support domain for CLASS® reviews conducted through
-            July 31, 2025, and 2.5 for those conducted on or after Aug. 1, 2025.
-          </li>
-        </ul>
+        <ContentFromFeedByTag
+          tagName="ttahub-class-thresholds"
+          contentSelector="div:nth-child(3)"
+          className="ttahub-class-feed-article"
+        />
+        <ContentFromFeedByTag
+          tagName="ttahub-class-thresholds"
+          contentSelector="div:nth-child(4)"
+          className="ttahub-class-feed-article"
+        />
       </Drawer>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
           <h2 className="margin-0 padding-0">CLASS® review</h2>
-          <Button unstyled className="display-flex flex-align-center">
+          <Link
+            className="display-flex flex-align-center"
+            href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grantNumber}`}
+            arial-label={`HSES CLASS scores for grant ${grantNumber}`}
+          >
             HSES CLASS
             {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
-          </Button>
+          </Link>
         </div>
         <div className="margin-top-1">
           <button

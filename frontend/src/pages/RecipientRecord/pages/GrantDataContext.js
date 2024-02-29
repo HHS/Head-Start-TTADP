@@ -1,4 +1,9 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 
 const GrantDataContext = createContext();
@@ -6,19 +11,19 @@ const GrantDataContext = createContext();
 export const GrantDataProvider = ({ children }) => {
   const [grantData, setGrantData] = useState({});
 
-  const updateGrantMonitoringData = (grantNumber, hasMonitoringData) => {
+  const updateGrantMonitoringData = useCallback((grantNumber, hasMonitoringData) => {
     setGrantData((currentGrantData) => ({
       ...currentGrantData,
       [grantNumber]: { ...currentGrantData[grantNumber], hasMonitoringData },
     }));
-  };
+  }, []);
 
-  const updateGrantClassData = (grantNumber, hasClassData) => {
+  const updateGrantClassData = useCallback((grantNumber, hasClassData) => {
     setGrantData((currentGrantData) => ({
       ...currentGrantData,
       [grantNumber]: { ...currentGrantData[grantNumber], hasClassData },
     }));
-  };
+  }, []);
 
   const safeCheck = (grantNumber, key) => {
     if (typeof grantNumber !== 'string' || !grantData || !grantData[grantNumber]) {
