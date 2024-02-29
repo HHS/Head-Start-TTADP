@@ -33,7 +33,7 @@ export default function GrantSelect({
         {!isOnReport ? <Req /> : null }
       </Label>
       {cannotEdit ? (
-        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.label).join(', ')}</p>
+        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
       ) : (
         <>
           {error}
@@ -52,6 +52,8 @@ export default function GrantSelect({
             isMulti
             onBlur={() => validateGrantNumbers(SELECT_GRANTS_ERROR)}
             isDisabled={isLoading}
+            getOptionLabel={(option) => option.numberWithProgramTypes}
+            getOptionValue={(option) => option.id}
           />
         </>
       )}

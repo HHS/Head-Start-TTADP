@@ -220,7 +220,7 @@ describe('createOrUpdateGoals', () => {
     const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
-    expect(updatedGoal.source).toBe(GOAL_SOURCES[0]);
+    expect(Object.values(updatedGoal.source)).toStrictEqual([GOAL_SOURCES[0]]);
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
