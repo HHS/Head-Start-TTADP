@@ -16,7 +16,6 @@ const {
   Objective,
   ObjectiveFile,
   ObjectiveResource,
-  ObjectiveCourse,
   ObjectiveTopic,
 } = require('../models');
 
@@ -394,6 +393,7 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
+  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -441,12 +441,27 @@ const cacheGoalMetadata = async (
     });
   }
 
-  return Promise.all([
+  const finalPromises = [
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    prompts && prompts.length
-      ? cachePrompts(goal.id, arg.id, prompts)
-      : Promise.resolve(),
-  ]);
+  ];
+
+  if (!isMultiRecipientReport && prompts && prompts.length) {
+    finalPromises.push(
+      cachePrompts(goal.id, arg.id, prompts),
+    );
+  }
+
+  if (isMultiRecipientReport) {
+    finalPromises.push(
+      ActivityReportGoalFieldResponse.destroy({
+        where: { activityReportGoalId: arg.id },
+        individualHooks: true,
+        hookMetadata: { goalId: goal.id },
+      }),
+    );
+  }
+
+  return Promise.all(finalPromises);
 };
 
 async function destroyActivityReportObjectiveMetadata(
