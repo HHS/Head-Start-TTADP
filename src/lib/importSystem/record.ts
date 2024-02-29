@@ -406,10 +406,12 @@ const recordAvailableDataFiles = async (
         {
           where: {
             importFileId,
-            [Op.and]: [
-              Sequelize.literal(`"fileInfo" ->> 'path'= '${matchedFile.path}'`),
-              Sequelize.literal(`"fileInfo" ->> 'name'= '${matchedFile.name}'`),
-            ],
+            fileInfo: {
+              [Op.contains]: {
+                path: matchedFile.path,
+                name: matchedFile.name,
+              },
+            },
           },
           individualHooks: true,
         },
@@ -662,10 +664,12 @@ const setImportDataFileStatusByPath = async (
   const importDataFile = await ImportDataFile.findOne({
     where: {
       importFileId,
-      [Op.and]: [
-        Sequelize.literal(`"fileInfo" ->> 'path'= '${fileInfo.path}'`),
-        Sequelize.literal(`"fileInfo" ->> 'name'= '${fileInfo.name}'`),
-      ],
+      fileInfo: {
+        [Op.contains]: {
+          path: fileInfo.path,
+          name: fileInfo.name,
+        },
+      },
     },
   });
   return importDataFile

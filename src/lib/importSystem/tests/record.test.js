@@ -492,10 +492,12 @@ describe('record', () => {
         {
           where: {
             importFileId,
-            [Op.and]: [
-              Sequelize.literal(`"fileInfo" ->> 'path'= '${matchedFile.path}'`),
-              Sequelize.literal(`"fileInfo" ->> 'name'= '${matchedFile.name}'`),
-            ],
+            fileInfo: {
+              [Op.contains]: {
+                path: matchedFile.path,
+                name: matchedFile.name,
+              },
+            },
           },
           individualHooks: true,
         },
@@ -918,10 +920,12 @@ describe('record', () => {
       expect(ImportDataFile.findOne).toHaveBeenCalledWith({
         where: {
           importFileId: mockImportFileId,
-          [Op.and]: [
-            Sequelize.literal(`"fileInfo" ->> 'path'= '${mockFileInfo.path}'`),
-            Sequelize.literal(`"fileInfo" ->> 'name'= '${mockFileInfo.name}'`),
-          ],
+          fileInfo: {
+            [Op.contains]: {
+              path: mockFileInfo.path,
+              name: mockFileInfo.name,
+            },
+          },
         },
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
@@ -945,10 +949,12 @@ describe('record', () => {
       expect(ImportDataFile.findOne).toHaveBeenCalledWith({
         where: {
           importFileId: mockImportFileId,
-          [Op.and]: [
-            Sequelize.literal(`"fileInfo" ->> 'path'= '${mockFileInfo.path}'`),
-            Sequelize.literal(`"fileInfo" ->> 'name'= '${mockFileInfo.name}'`),
-          ],
+          fileInfo: {
+            [Op.contains]: {
+              path: mockFileInfo.path,
+              name: mockFileInfo.name,
+            },
+          },
         },
       });
       expect(ImportDataFile.update).not.toHaveBeenCalled();
