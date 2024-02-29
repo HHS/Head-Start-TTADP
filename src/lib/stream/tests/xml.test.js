@@ -67,14 +67,10 @@ describe('XMLStream', () => {
         attributes: {},
         children: {
           name: {
-            attributes: {},
-            name: 'name',
             optional: false,
             type: 'string',
           },
           roleid: {
-            attributes: {},
-            name: 'roleid',
             optional: false,
             type: 'number',
           },
