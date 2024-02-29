@@ -393,6 +393,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          onAR: true,
         }),
         // 8
         Goal.create({
@@ -859,6 +860,11 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[4].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[4].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[4].objectives.length).toBe(1);
+
+      goalRowsx.forEach((g) => {
+        expect(g.onAR).toBeDefined();
+        expect(g.onAR).not.toBeNull();
+      });
     });
 
     it('Retrieves All Goals by Recipient', async () => {
