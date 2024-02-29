@@ -58,7 +58,7 @@ module.exports = {
         SELECT DISTINCT
           (new_row_data->>'programId')::int pid,
           (new_row_data->>'grantId')::int grid,
-          new_row_data->>'role' role,
+          new_row_data->>'role' prole,
           new_row_data->>'email' email,
           data_id
         FROM "ZALProgramPersonnel"
