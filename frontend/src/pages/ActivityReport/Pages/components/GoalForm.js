@@ -19,6 +19,7 @@ import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
 import GoalSource from '../../../../components/GoalForm/GoalSource';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function GoalForm({
   goal,
@@ -152,17 +153,26 @@ export default function GoalForm({
 
   return (
     <>
-      <GoalText
-        error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
-        goalName={goalText}
-        validateGoalName={onBlurGoalText}
-        onUpdateText={onUpdateText}
-        inputName={goalTextInputName}
-        isOnReport={goal.onApprovedAR || false}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit={!isCurated}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !(goal.onApprovedAR),
+          !isCurated,
+          status !== 'Closed',
+        ]}
+        label="Recipient's goal"
+        value={goalText}
+      >
+        <GoalText
+          error={errors.goalName ? ERROR_FORMAT(errors.goalName.message) : NO_ERROR}
+          goalName={goalText}
+          validateGoalName={onBlurGoalText}
+          onUpdateText={onUpdateText}
+          inputName={goalTextInputName}
+          isOnReport={goal.onApprovedAR || false}
+          goalStatus={status}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <ConditionalFields
         prompts={prompts}
@@ -170,19 +180,29 @@ export default function GoalForm({
         userCanEdit
       />
 
-      <GoalSource
-        error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-        source={goalSource}
-        validateGoalSource={onBlurGoalSource}
-        onChangeGoalSource={onUpdateGoalSource}
-        inputName={goalSourceInputName}
-        goalStatus={status}
-        isLoading={isAppLoading}
-        userCanEdit={!isCurated}
-        isOnReport={false}
-        isMultiRecipientGoal={isMultiRecipientReport}
-        createdViaTr={goal.createdVia === 'tr'}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !isCurated,
+          status !== 'Closed',
+          goal.createdVia !== 'tr',
+        ]}
+        label="Goal source"
+        value={goalSource}
+      >
+        <GoalSource
+          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
+          source={goalSource}
+          validateGoalSource={onBlurGoalSource}
+          onChangeGoalSource={onUpdateGoalSource}
+          inputName={goalSourceInputName}
+          goalStatus={status}
+          isLoading={isAppLoading}
+          userCanEdit={!isCurated}
+          isOnReport={false}
+          isMultiRecipientGoal={isMultiRecipientReport}
+          createdViaTr={goal.createdVia === 'tr'}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}

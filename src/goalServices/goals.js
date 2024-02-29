@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus,
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
@@ -747,11 +747,26 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
-        existingGoal.prompts = reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          existingGoal.prompts || [],
-        );
+        if (forReport) {
+          existingGoal.prompts = reducePrompts(
+            forReport,
+            currentValue.dataValues.prompts || [],
+            existingGoal.prompts || [],
+          );
+        } else {
+          existingGoal.prompts = {
+            ...existingGoal.prompts,
+            [currentValue.grant.numberWithProgramTypes]: reducePrompts(
+              forReport,
+              currentValue.dataValues.prompts || [],
+              [], // we don't want to combine existing prompts if reducing for the RTR
+            ),
+          };
+          existingGoal.source = {
+            ...existingGoal.source,
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+          };
+        }
         return previousValues;
       }
 
@@ -764,6 +779,22 @@ function reduceGoals(goals, forReport = false) {
 
         return date;
       })();
+
+      let { source } = currentValue.dataValues;
+      let prompts = reducePrompts(
+        forReport,
+        currentValue.dataValues.prompts || [],
+        [],
+      );
+
+      if (!forReport) {
+        source = {
+          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+        };
+        prompts = {
+          [currentValue.grant.numberWithProgramTypes]: prompts,
+        };
+      }
 
       const goal = {
         ...currentValue.dataValues,
@@ -782,14 +813,10 @@ function reduceGoals(goals, forReport = false) {
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
-        prompts: reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          [],
-        ),
+        prompts,
         isNew: false,
         endDate,
-        source: currentValue.dataValues.source,
+        source,
       };
 
       return [...previousValues, goal];
@@ -1282,27 +1309,16 @@ export async function createOrUpdateGoals(goals) {
     }
 
     if (!newGoal) {
-      newGoal = await Goal.findOne({
-        where: {
-          grantId,
-          status: {
-            [Op.not]: 'Closed',
-          },
-          name: options.name.trim(),
-        },
+      newGoal = await Goal.create({
+        grantId,
+        name: options.name.trim(),
+        status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+        isFromSmartsheetTtaPlan: false,
+        rtrOrder: rtrOrder + 1,
       });
-      if (!newGoal) {
-        newGoal = await Goal.create({
-          grantId,
-          name: options.name.trim(),
-          status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
-          isFromSmartsheetTtaPlan: false,
-          rtrOrder: rtrOrder + 1,
-        });
-      }
     }
 
-    if (isCurated) {
+    if (isCurated && prompts) {
       await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
     }
 
@@ -2084,6 +2100,8 @@ export async function saveGoalsForReport(goals, report) {
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
 
+    const isMultiRecipientReport = (goal.grantIds.length > 1);
+
     return Promise.all(goal.grantIds.map(async (grantId) => {
       let newOrUpdatedGoal;
 
@@ -2150,7 +2168,7 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal.set({ status });
       }
 
-      if (prompts) {
+      if (prompts && !isMultiRecipientReport) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
 
@@ -2164,6 +2182,7 @@ export async function saveGoalsForReport(goals, report) {
         report.id,
         isActivelyBeingEditing,
         prompts || null,
+        isMultiRecipientReport,
       );
 
       // and pass the goal to the objective creation function
@@ -2579,10 +2598,6 @@ const fieldMappingForDeduplication = {
 // eslint-disable-next-line max-len
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
-
-function goalGroupContainsClosedCuratedGoal(goalGroup) {
-  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
-}
 
 /**
 * @param {Number} recipientId
@@ -3224,8 +3239,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   }
 
   if (goalsForNameCheck.length) {
+    message = `A goal with that name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+  }
+
+  if (goalsForNameCheck.length && !data.createMissingGoals) {
     isError = true;
-    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
   }
 
   if (isError) {
@@ -3242,7 +3260,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     endDate = data.goalDate;
   }
 
-  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+  const grantsToCreateGoalsFor = grantIds.filter(
+    (g) => !grantsForWhomGoalAlreadyExists.includes(g),
+  );
+
+  const goals = await Goal.bulkCreate(grantsToCreateGoalsFor.map((grantId) => ({
     name,
     grantId,
     source: data.goalSource || null,
@@ -3303,7 +3325,10 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport = await ActivityReport.create(reportData);
 
     await Promise.all([
-      ActivityReportGoal.bulkCreate(goalIds.map((goalId) => ({
+      ActivityReportGoal.bulkCreate([
+        ...goalIds,
+        ...goalsForNameCheck.map((g) => g.id),
+      ].map((goalId) => ({
         activityReportId: activityReport.id,
         goalId,
         isActivelyEdited: true,
@@ -3324,8 +3349,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport,
     isError,
     message,
-    grantsForWhomGoalAlreadyExists: [],
-    grantsForWhichGoalWillBeCreated: [],
+    grantsForWhomGoalAlreadyExists,
   };
 }
 
