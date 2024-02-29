@@ -34,7 +34,6 @@ export default function GoalCardsHeader({
   selectedGoalIds,
   perPageChange,
   pageGoalIds,
-  createRttapa,
   showRttapaValidation,
   draftSelectedRttapa,
   canMergeGoals,
@@ -198,16 +197,6 @@ export default function GoalCardsHeader({
                 </Button>
               </span>
             )}
-        <FeatureFlag flag="rttapa_form">
-          <Button
-            unstyled
-            className="display-flex flex-align-center margin-left-3 margin-y-0"
-            onClick={createRttapa}
-            type="button"
-          >
-            Create RTTAPA
-          </Button>
-        </FeatureFlag>
         <Button
           unstyled
           className="display-flex flex-align-center margin-left-3 margin-y-0"
@@ -305,12 +294,13 @@ GoalCardsHeader.propTypes = {
   selectAllGoals: PropTypes.func,
   selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
   perPageChange: PropTypes.func.isRequired,
-  pageGoalIds: PropTypes.number.isRequired,
-  createRttapa: PropTypes.func.isRequired,
+  pageGoalIds: PropTypes.oneOfType(
+    [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
+  ).isRequired,
   showRttapaValidation: PropTypes.bool.isRequired,
   draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
@@ -325,4 +315,5 @@ GoalCardsHeader.defaultProps = {
   selectAllGoalCheckboxSelect: () => { },
   selectAllGoals: () => { },
   numberOfSelectedGoals: 0,
+  shouldDisplayMergeSuccess: false,
 };
