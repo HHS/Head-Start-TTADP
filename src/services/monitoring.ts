@@ -89,6 +89,7 @@ export async function monitoringData({
                       'reviewType',
                       'reviewId',
                       'statusId',
+                      'outcome',
                     ],
                     required: true,
                     include: [
@@ -122,6 +123,7 @@ export async function monitoringData({
 
   if (!grant) {
     // not an error, it's valid for there to be no findings for a grant
+    // @ts-ignore
     return null;
   }
 
@@ -156,7 +158,7 @@ export async function monitoringData({
   return {
     recipientId: grant.recipientId,
     regionId: grant.regionId,
-    reviewStatus: status.name,
+    reviewStatus: monitoringReview.outcome,
     reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
     reviewType: monitoringReview.reviewType,
     grant: grant.number,
@@ -186,13 +188,30 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     return {};
   }
 
-  const formatted = moment(score.reportDeliveryDate).format('MM/DD/YYYY');
+  const received = moment(score.reportDeliveryDate);
+
+  // Do not show scores that are before Nov 9, 2020.
+  if (received.isBefore('2020-11-09')) {
+    return {};
+  }
+
+  // Do not show scores for CDI grants.
+  const isCDIGrant = await Grant.findOne({
+    where: {
+      number: grantNumber,
+      cdi: true,
+    },
+  });
+
+  if (isCDIGrant) {
+    return {};
+  }
 
   return {
     recipientId,
     regionId,
     grantNumber,
-    received: formatted,
+    received: received.format('MM/DD/YYYY'),
     ES: score.emotionalSupport,
     CO: score.classroomOrganization,
     IS: score.instructionalSupport,

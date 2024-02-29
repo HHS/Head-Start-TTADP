@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
+import { Link } from '@trussworks/react-uswds';
 import Container from '../../../../components/Container';
 import { getMonitoringData } from '../../../../fetchers/monitoring';
 import './ClassReview.scss';
@@ -31,13 +31,13 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
       updateGrantMonitoringData(grantNumber, Boolean(data && Object.keys(data).length));
     };
     fetchReview();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [grantNumber, regionId, recipientId]);
+  }, [grantNumber, regionId, recipientId, updateGrantMonitoringData]);
 
   const getComplianceBadge = (key) => {
-    if (key === 'Compliant') return BadgeCompliant();
-    if (key === 'Noncompliant') return BadgeNoncompliant();
-    if (key === 'Deficient') return BadgeNoncompliant('Deficient');
+    const lowerKey = key.toLowerCase();
+    if (lowerKey === 'compliant') return BadgeCompliant();
+    if (lowerKey === 'noncompliant' || lowerKey === 'non compliant') return BadgeNoncompliant();
+    if (lowerKey === 'deficient') return BadgeNoncompliant('Deficient');
     return null;
   };
 
@@ -48,11 +48,15 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <div className="display-flex flex-row flex-justify">
           <h2 className="margin-0 padding-0">Monitoring review</h2>
-          <Button unstyled className="display-flex flex-align-center">
+          <Link
+            className="display-flex flex-align-center"
+            href={`https://hses.ohs.acf.hhs.gov/monitoring/grant?grant=${grantNumber}`}
+            aria-label={`HSES monitoring for grant ${grantNumber}`}
+          >
             HSES monitoring
             {' '}
             <FontAwesomeIcon icon={faExternalLinkAlt} size="sm" className="margin-left-1" />
-          </Button>
+          </Link>
         </div>
       </div>
       <div className="padding-x-3 padding-bottom-2">
