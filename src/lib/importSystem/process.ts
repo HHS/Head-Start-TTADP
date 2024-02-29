@@ -64,7 +64,7 @@ const processRecords = async (
     // record the error into the recordActions and continue on successfully as
     // other entries may be process successfully
     recordActions.errors.push(err.message);
-    auditLogger.log('error', ` processRecords getNextObject ${err.message}`);
+    auditLogger.log('error', ` processRecords getNextObject ${err.message}`, err);
   }
 
   // @ts-ignore
@@ -74,7 +74,7 @@ const processRecords = async (
   } catch (err) {
     // record the error into the recordActions
     recordActions.errors.push(err.message);
-    auditLogger.log('error', ` processRecords modelForTable ${err.message}`);
+    auditLogger.log('error', ` processRecords modelForTable ${err.message}`, err);
 
     // Unable to continue as a model is required to record any information
     return Promise.reject(recordActions);
@@ -174,7 +174,7 @@ const processRecords = async (
       // record the error into the recordActions and continue on successfully as
       // other entries may be process successfully
       recordActions.errors.push(err.message);
-      auditLogger.log('error', ` processRecords create/update ${err.message}`);
+      auditLogger.log('error', ` processRecords create/update ${err.message}`, err);
     }
   } else {
     try {
@@ -225,7 +225,7 @@ const processRecords = async (
     } catch (err) {
       // record the error into the recordActions
       recordActions.deletes.push(err.message);
-      auditLogger.log('error', ` processRecords destroy ${err.message}, ${JSON.stringify(err)}`);
+      auditLogger.log('error', ` processRecords destroy ${err.message}`, err);
     }
 
     return Promise.resolve(recordActions);
@@ -322,7 +322,7 @@ const processFile = async (
     };
   } catch (err) {
     result.errors.push(err.message);
-    auditLogger.log('error', ` processFile ${err.message}`);
+    auditLogger.log('error', ` processFile ${err.message}`, err);
   }
 
   return result;
@@ -449,7 +449,7 @@ const processFilesFromZip = async (
         },
       },
     );
-    auditLogger.log('error', ` processFilesFromZip ${err.message}`);
+    auditLogger.log('error', ` processFilesFromZip ${err.message}`, err);
   }
 
   // Recursively call the processFilesFromZip function to process the remaining files
@@ -497,7 +497,7 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`);
+    auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`, err);
     return {
       error: err.message,
       duration: new Date().getTime() - startTime.getTime(),
@@ -525,7 +525,7 @@ const processZipFileFromS3 = async (
   } catch (err) {
     // If an error occurs, set the import file status to PROCESSING_FAILED
     await setImportFileStatus(importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}, status: ${err.status}`, err);
+    auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}`, err);
     return {
       error: err.message,
       duration: new Date().getTime() - startTime.getTime(),
