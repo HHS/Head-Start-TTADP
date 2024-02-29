@@ -1,9 +1,11 @@
 import {
   Sequelize,
   fn,
+  cast,
   col,
   literal,
   Op,
+  where,
 } from 'sequelize';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
@@ -660,12 +662,10 @@ const setImportDataFileStatusByPath = async (
   const importDataFile = await ImportDataFile.findOne({
     where: {
       importFileId,
-      fileInfo: {
-        [Op.contains]: {
-          path: fileInfo.path,
-          name: fileInfo.name,
-        },
-      },
+      [Op.and]: [
+        where(cast(col('fileInfo.path'), 'text'), fileInfo.path),
+        where(cast(col('fileInfo.name'), 'text'), fileInfo.name),
+      ],
     },
   });
   return importDataFile

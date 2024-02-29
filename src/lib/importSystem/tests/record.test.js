@@ -1,4 +1,10 @@
-import { Sequelize, Op } from 'sequelize';
+import {
+  Sequelize,
+  Op,
+  where,
+  cast,
+  col,
+} from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import {
   ImportFile,
@@ -912,12 +918,10 @@ describe('record', () => {
       expect(ImportDataFile.findOne).toHaveBeenCalledWith({
         where: {
           importFileId: mockImportFileId,
-          fileInfo: {
-            [Op.contains]: {
-              path: mockFileInfo.path,
-              name: mockFileInfo.name,
-            },
-          },
+          [Op.and]: [
+            where(cast(col('fileInfo.path'), 'text'), mockFileInfo.path),
+            where(cast(col('fileInfo.name'), 'text'), mockFileInfo.name),
+          ],
         },
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
@@ -941,12 +945,10 @@ describe('record', () => {
       expect(ImportDataFile.findOne).toHaveBeenCalledWith({
         where: {
           importFileId: mockImportFileId,
-          fileInfo: {
-            [Sequelize.Op.contains]: {
-              path: mockFileInfo.path,
-              name: mockFileInfo.name,
-            },
-          },
+          [Op.and]: [
+            where(cast(col('fileInfo.path'), 'text'), mockFileInfo.path),
+            where(cast(col('fileInfo.name'), 'text'), mockFileInfo.name),
+          ],
         },
       });
       expect(ImportDataFile.update).not.toHaveBeenCalled();
