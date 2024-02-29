@@ -447,6 +447,7 @@ describe('MyGroups', () => {
       id: 1,
       name: 'group1',
       isPublic: false,
+      sharedWith: null,
       grants: [
         {
           recipientInfo: 'Grant 1 - 11111111 - HS',
@@ -484,6 +485,8 @@ describe('MyGroups', () => {
         },
       ],
       groupCollaborators: [],
+      individuals: [],
+      coOwners: [],
       creator: {
         id: 1,
         name: 'Creator User',
@@ -507,17 +510,19 @@ describe('MyGroups', () => {
     expect(isPrivate).not.toBeNull();
     expect(isPrivate).toBeChecked();
 
+    let coOwnerSelect;
     // verify the state of the check box is checked.
     await act(async () => {
       // Uncheck the is private checkbox.
       userEvent.click(isPrivate);
+      await waitFor(() => {
+        // Is private should no longer be checked.
+        expect(isPrivate).not.toBeChecked();
+        // Add co-owner2.
+        coOwnerSelect = screen.getByLabelText(/Add co-owner/i);
+        expect(coOwnerSelect).not.toBeNull();
+      });
     });
-    // Is private should no longer be checked.
-    expect(isPrivate).not.toBeChecked();
-
-    // Add co-owner2.
-    const coOwnerSelect = screen.getByLabelText(/Add co-owner/i);
-    expect(coOwnerSelect).not.toBeNull();
 
     await act(async () => {
       // Select 'co-owner2'.
