@@ -1038,7 +1038,7 @@ export default function GoalForm({
         <VanillaModal
           forceAction
           id="switch-to-existing-goal"
-          heading="You are selected an existing goal."
+          heading="You are selecting an existing goal."
           modalRef={openExistingGoalModalRef}
         >
           <p className="usa-prose">Do you want to edit this goal?</p>
