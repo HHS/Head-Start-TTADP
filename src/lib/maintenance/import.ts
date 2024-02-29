@@ -225,6 +225,7 @@ const importProcess = async (id) => maintenanceCommand(
   // Wrap the import logic within a maintenance command that provides logging and benchmarking
   // utilities.
   async (_logMessages, _logBenchmarks, _triggeredById) => {
+    auditLogger.log('debug', 'import: importProcess->maintenanceCommand:');
     try {
       const lockManager = new LockManager(`${MAINTENANCE_TYPE.IMPORT_PROCESS}-${id}`);
       auditLogger.info(`Processing import ${id}`);
@@ -233,8 +234,10 @@ const importProcess = async (id) => maintenanceCommand(
       await lockManager.executeWithLock(async () => {
         // Process the import and await the results.
         const processResults = await processImport(id);
+        auditLogger.log('debug', `import: importProcess->maintenanceCommand: ${JSON.stringify({ processResults })}`);
         // Check if there are more items to process after the current import.
         const more = await moreToProcess(id);
+        auditLogger.log('debug', `import: importProcess->maintenanceCommand: ${JSON.stringify({ more })}`);
         if (more) {
           // If more items need processing, enqueue a new import maintenance job.
           await enqueueImportMaintenanceJob(
@@ -253,7 +256,7 @@ const importProcess = async (id) => maintenanceCommand(
     } catch (err) {
       // In case of an error, return an object indicating the process was not successful and
       // include the error.
-      auditLogger.error(`Error processing import ${id}: ${err}`);
+      auditLogger.error(`Error processing import ${id}: ${err}`, err);
       return { isSuccessful: false, error: err };
     }
   },
