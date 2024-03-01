@@ -282,6 +282,7 @@ const createCategory = (category, typeJobs, timezone) => {
       .reduce((typeAcc, [name, { jobCommand, schedule, started }]) => {
         // Only add the job if it hasn't started
         if (!started) {
+          auditLogger.log('info', `Maintenance: createCategory: category: ${category}, type: ${type}, name: ${name}, schedule: ${schedule}`);
           return {
             ...typeAcc,
             ...createJob(category, type, name, timezone, schedule, jobCommand),
