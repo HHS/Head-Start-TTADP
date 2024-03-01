@@ -10,6 +10,8 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
+  EventReportPilot,
+  SessionReportPilot,
   Objective,
   ActivityRecipient,
   Topic,
@@ -333,9 +335,16 @@ function reduceTopicsOfDifferingType(topics) {
  * a goal, either an pre built one or one we are building on the fly as we reduce goals
  * @param {String[]} grantNumbers
  * passed into here to avoid having to refigure anything else, they come from the goal
+ * @param {Object[]} sessionObjectives
+ * a bespoke data collection from the goal->eventReportPilots->sessionReports
  * @returns {Object[]} sorted objectives
  */
-export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
+export function reduceObjectivesForRecipientRecord(
+  currentModel,
+  goal,
+  grantNumbers,
+  sessionObjectives = [],
+) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
@@ -347,6 +356,10 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
     ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
+      // we grab the support types from the activity report objectives,
+      // filtering out empty strings
+      const { supportType } = objective;
+
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
       const {
@@ -368,7 +381,9 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
       const objectiveTopics = (objective.topics || []);
 
       const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle && o.status === objectiveStatus
+        o.title === objectiveTitle
+        && o.status === objectiveStatus
+        && o.supportType === supportType
       ));
 
       if (existing) {
@@ -397,6 +412,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
+        supportType: supportType || null,
       };
 
       formattedObjective.topics.sort();
@@ -420,7 +436,7 @@ export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumb
   current.reasons = uniq([...goal.reasons, ...reasons]);
   current.reasons.sort();
 
-  return objectives.map((obj) => {
+  return [...sessionObjectives, ...objectives].map((obj) => {
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
@@ -479,6 +495,12 @@ export async function getGoalsByActivityRecipient(
       { isFromSmartsheetTtaPlan: true },
       { createdVia: ['rtr', 'admin', 'merge'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
+      {
+        createdVia: ['tr'],
+        status: {
+          [Op.not]: 'Draft',
+        },
+      },
     ],
     [Op.and]: scopes,
   };
@@ -523,6 +545,7 @@ export async function getGoalsByActivityRecipient(
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
+      'onAR',
       'isRttapa',
       'source',
       'goalTemplateId',
@@ -540,6 +563,20 @@ export async function getGoalsByActivityRecipient(
     ],
     where: goalWhere,
     include: [
+      {
+        model: EventReportPilot,
+        as: 'eventReportPilots',
+        required: false,
+        attributes: ['id'],
+        include: [
+          {
+            model: SessionReportPilot,
+            as: 'sessionReports',
+            attributes: ['id', 'data'],
+            required: false,
+          },
+        ],
+      },
       {
         model: GoalFieldResponse,
         as: 'responses',
@@ -570,6 +607,7 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -665,6 +703,7 @@ export async function getGoalsByActivityRecipient(
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
+      existingGoal.onAR = existingGoal.onAR || current.onAR;
       return {
         goalRows: previous.goalRows,
       };
@@ -688,12 +727,34 @@ export async function getGoalsByActivityRecipient(
       responsesForComparison: responsesForComparison(current),
       isCurated,
       createdVia: current.createdVia,
+      onAR: current.onAR,
     };
+
+    const sessionObjectives = current.eventReportPilots
+      // shape the session objective, mold it into a form that
+      // satisfies the frontend's needs
+      .map((erp) => erp.sessionReports.map((sr) => {
+        if (!sr.data.objective) {
+          return null;
+        }
+
+        return {
+          type: 'session',
+          title: sr.data.objective,
+          topics: sr.data.objectiveTopics || [],
+          grantNumbers: [current.grant.number],
+          endDate: sr.data.endDate,
+          sessionName: sr.data.sessionName,
+          trainingReportId: sr.data.eventDisplayId,
+        };
+      // filter out nulls, and flatten the array
+      }).filter((sr) => sr)).flat();
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
       current,
       goalToAdd,
       [current.grant.number],
+      sessionObjectives,
     );
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 

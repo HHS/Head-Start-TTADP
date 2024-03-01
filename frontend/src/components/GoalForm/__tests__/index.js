@@ -100,6 +100,7 @@ describe('create goal', () => {
           value: 'https://search.marginalia.nu/',
         },
       ],
+      supportType: 'Implementing',
       id: 1,
     }],
   }];
@@ -141,6 +142,9 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20a%20goal%20name&grantNumbers=1', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -176,6 +180,8 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('path:/nudge', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
@@ -207,6 +213,11 @@ describe('create goal', () => {
     const resourceOne = document.querySelector('#resource-1');
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     userEvent.click(save);
 
     expect(fetchMock.called('/api/goals')).toBeTruthy();
@@ -219,12 +230,15 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('path:/nudge?', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastOptions('/api/goals').body).toContain('ids');
   });
 
   it('goals are validated', async () => {
@@ -309,6 +323,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -330,6 +345,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', postResponse);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -344,6 +360,11 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     expect(fetchMock.called('/api/goals')).toBe(false);
     userEvent.click(save);
 
@@ -357,6 +378,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', 500);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
@@ -404,6 +426,11 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     const save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
@@ -445,6 +472,8 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
 
     let goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -464,6 +493,11 @@ describe('create goal', () => {
 
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
+    let supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     let resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
@@ -471,7 +505,8 @@ describe('create goal', () => {
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
 
     // restore our fetch mock
     fetchMock.restore();
@@ -481,6 +516,8 @@ describe('create goal', () => {
   <subtitle>Confluence Syndication Feed</subtitle>
   <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
     expect(fetchMock.called('/api/goals')).toBe(false);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
@@ -505,6 +542,11 @@ describe('create goal', () => {
 
     topics = document.querySelector('#topics');
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
+
+    supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
@@ -556,6 +598,11 @@ describe('create goal', () => {
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['CLASS: Instructional Support']);
 
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
+
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
@@ -599,6 +646,7 @@ describe('create goal', () => {
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
   <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', postResponse);
     expect(fetchMock.called('/api/goals')).toBe(false);
 
@@ -627,6 +675,11 @@ describe('create goal', () => {
 
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     userEvent.click(save);
 
@@ -661,6 +714,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -676,6 +730,11 @@ describe('create goal', () => {
 
     const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     await selectEvent.select(topics, ['Coaching']);
+
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    act(() => {
+      userEvent.selectOptions(supportType, 'Implementing');
+    });
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'garrgeler');
@@ -755,6 +814,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');

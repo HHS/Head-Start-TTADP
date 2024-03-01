@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { MemoryRouter } from 'react-router-dom';
 import join from 'url-join';
 import {
@@ -314,7 +315,7 @@ describe('sessionSummary', () => {
 
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
       act(() => {
-        userEvent.selectOptions(supportType, 'Planning');
+        userEvent.selectOptions(supportType, SUPPORT_TYPES[1]);
       });
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });

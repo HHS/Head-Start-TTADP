@@ -3,7 +3,6 @@ import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../src/constants';
-import { join } from 'path';
 
 test('get /goals?goalIds[]=&reportId', async ({ request }) => {
   const response = await request.get(
@@ -53,11 +52,6 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     deleted: Joi.any().allow(null)
   });
 
-  const promptsSchema = Joi.object({
-    title: Joi.string(),
-    response: Joi.array().items(Joi.string()),
-  });
-
   const schema = Joi.array().items(Joi.object({
     endDate: Joi.string().allow(null).allow(''),
     status: Joi.string(),
@@ -72,7 +66,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     grants: Joi.array().items(grantSchema),
     grantIds: Joi.array().items(Joi.number()),
     isNew: Joi.boolean(),
-    prompts: Joi.array().items(promptsSchema),
+    prompts: Joi.object(),
+    source: Joi.any()
   }));
   await validateSchema(response, schema, expect);
 
@@ -178,6 +173,7 @@ test('post /', async ({ request }) => {
                 status: OBJECTIVE_STATUS.DRAFT,
                 ttaProvided: "",
                 isNew: true,
+                supportType: null,
               }
             ],
             goalNumbers: [],

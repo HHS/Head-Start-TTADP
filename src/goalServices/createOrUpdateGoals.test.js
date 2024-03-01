@@ -64,12 +64,14 @@ describe('createOrUpdateGoals', () => {
       goalId: goal.id,
       title: 'This is some serious goal text',
       status: 'Not Started',
+      supportType: 'Maintaining',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
       status: 'Not Started',
+      supportType: 'Maintaining',
     });
 
     await processObjectiveForResourcesById(objective.id, [fakeUrl]);
@@ -163,6 +165,7 @@ describe('createOrUpdateGoals', () => {
             id: objective.id,
             status: 'Not Started',
             title: 'This is an objective',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -179,6 +182,7 @@ describe('createOrUpdateGoals', () => {
             isNew: true,
             status: 'Not Started',
             title: 'This is another objective',
+            supportType: 'Maintaining',
             resources: [],
             topics: [
               {
@@ -216,7 +220,7 @@ describe('createOrUpdateGoals', () => {
     const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
-    expect(updatedGoal.source).toBe(GOAL_SOURCES[0]);
+    expect(Object.values(updatedGoal.source)).toStrictEqual([GOAL_SOURCES[0]]);
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
@@ -242,7 +246,7 @@ describe('createOrUpdateGoals', () => {
     expect(order).toStrictEqual([1, 2]);
 
     const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
-      attributes: ['id', 'createdVia'],
+      attributes: ['id', 'createdVia', 'supportType'],
       where: {
         id: objectivesOnUpdatedGoal.map((obj) => obj.id),
       },
@@ -250,6 +254,9 @@ describe('createOrUpdateGoals', () => {
     });
     const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
     expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
+
+    const objectiveSupportTypes = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.supportType);
+    expect(objectiveSupportTypes).toStrictEqual(['Maintaining', 'Maintaining']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
@@ -305,6 +312,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is an objective',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -337,6 +345,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'Complete',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -377,6 +386,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is a different objective ',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -413,6 +423,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'In Progress',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -451,6 +462,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: 'Complete',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -491,6 +503,7 @@ describe('createOrUpdateGoals', () => {
             id: 'new-0',
             status: 'Not Started',
             title: 'This is a different objective ',
+            supportType: 'Maintaining',
             resources: [
               {
                 value: fakeUrl,
@@ -523,6 +536,7 @@ describe('createOrUpdateGoals', () => {
             title: updatedObjective.title,
             id: [updatedObjective.id],
             status: OBJECTIVE_STATUS.SUSPENDED,
+            supportType: 'Maintaining',
             closeSuspendReason: 'Recipient request',
             closeSuspendContext: 'Yeah, they just asked',
             resources: [
