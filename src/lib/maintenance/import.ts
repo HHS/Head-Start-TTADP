@@ -55,13 +55,13 @@ const enqueueImportMaintenanceJob = async (
  */
 const scheduleImportCrons = async () => {
   let imports;
-  auditLogger.log('debug', 'import: scheduleImportCrons');
+  auditLogger.log('info', 'import: scheduleImportCrons');
 
   try {
     // Retrieve a list of import schedules from a data source
-    auditLogger.log('debug', 'import: scheduleImportCrons: pre - getImportSchedules');
+    auditLogger.log('info', 'import: scheduleImportCrons: pre - getImportSchedules');
     imports = await getImportSchedules();
-    auditLogger.log('debug', `import: scheduleImportCrons: post - getImportSchedules: imports: ${JSON.stringify(imports)}`);
+    auditLogger.log('info', `import: scheduleImportCrons: post - getImportSchedules: imports: ${JSON.stringify(imports)}`);
 
     // Iterate over each import schedule to setup cron jobs
     imports.forEach(({
@@ -69,19 +69,19 @@ const scheduleImportCrons = async () => {
       name,
       schedule: importSchedule,
     }) => {
-      auditLogger.log('debug', `import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
+      auditLogger.log('info', `import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
       addCronJob(
         // Add a new cron job for each import schedule
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
         // Define the function that creates a new CronJob instance
         (category, type, timezone, schedule) => {
-          auditLogger.log('debug', `import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
+          auditLogger.log('info', `import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
           return new CronJob(
             schedule,
             // Define the task to be executed by the cron job, which enqueues a maintenance job
             async () => {
-              auditLogger.log('debug', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
+              auditLogger.log('info', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
               return enqueueImportMaintenanceJob(
                 type,
                 id,
@@ -96,7 +96,7 @@ const scheduleImportCrons = async () => {
         name,
       );
     });
-    auditLogger.log('debug', 'runMaintenanceCronJobs');
+    auditLogger.log('info', 'runMaintenanceCronJobs');
     await runMaintenanceCronJobs();
   } catch (err) {
     return { imports, isSuccessful: false, error: err.message };
@@ -124,11 +124,11 @@ const scheduleImportCrons = async () => {
 const importSchedule = async () => maintenanceCommand(
   // The callback provided to the maintenance command takes log functions and an ID.
   async (logMessages, logBenchmarks, triggeredById) => {
-    auditLogger.log('debug', `import: importSchedule->maintenanceCommand: logMessages: ${logMessages}, logBenchmarks: ${logBenchmarks}, triggeredById: ${triggeredById}`);
+    auditLogger.log('info', `import: importSchedule->maintenanceCommand: logMessages: ${logMessages}, logBenchmarks: ${logBenchmarks}, triggeredById: ${triggeredById}`);
     try {
       // Attempt to import cron schedules and store the results.
       const scheduleResults = await scheduleImportCrons();
-      auditLogger.log('debug', `import: importSchedule->maintenanceCommand: scheduleResults: ${JSON.stringify(scheduleResults)}`);
+      auditLogger.log('info', `import: importSchedule->maintenanceCommand: scheduleResults: ${JSON.stringify(scheduleResults)}`);
       // Return an object indicating success and include the schedule results.
       // The operation is successful if the 'error' key is not present in the results.
       return {
@@ -225,7 +225,7 @@ const importProcess = async (id) => maintenanceCommand(
   // Wrap the import logic within a maintenance command that provides logging and benchmarking
   // utilities.
   async (_logMessages, _logBenchmarks, _triggeredById) => {
-    auditLogger.log('debug', 'import: importProcess->maintenanceCommand:');
+    auditLogger.log('info', 'import: importProcess->maintenanceCommand:');
     try {
       const lockManager = new LockManager(`${MAINTENANCE_TYPE.IMPORT_PROCESS}-${id}`);
       auditLogger.info(`Processing import ${id}`);
@@ -234,10 +234,10 @@ const importProcess = async (id) => maintenanceCommand(
       await lockManager.executeWithLock(async () => {
         // Process the import and await the results.
         const processResults = await processImport(id);
-        auditLogger.log('debug', `import: importProcess->maintenanceCommand: ${JSON.stringify({ processResults })}`);
+        auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ processResults })}`);
         // Check if there are more items to process after the current import.
         const more = await moreToProcess(id);
-        auditLogger.log('debug', `import: importProcess->maintenanceCommand: ${JSON.stringify({ more })}`);
+        auditLogger.log('info', `import: importProcess->maintenanceCommand: ${JSON.stringify({ more })}`);
         if (more) {
           // If more items need processing, enqueue a new import maintenance job.
           await enqueueImportMaintenanceJob(
