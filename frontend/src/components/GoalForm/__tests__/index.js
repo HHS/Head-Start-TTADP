@@ -237,7 +237,8 @@ describe('create goal', () => {
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastOptions('/api/goals').body).toContain('ids');
   });
 
   it('goals are validated', async () => {
@@ -504,7 +505,8 @@ describe('create goal', () => {
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
 
     // restore our fetch mock
     fetchMock.restore();
