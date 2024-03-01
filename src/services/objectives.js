@@ -61,9 +61,14 @@ export async function saveObjectivesForReport(objectives, report) {
       } else {
         // To prevent validation error exclude id.
         // In this case the user might have changed the title for objective.
-        const { id, ...ObjPros } = objective;
+        const {
+          id,
+          ttaProvided,
+          supportType,
+          ...objProps
+        } = objective;
         savedObjective = await Objective.create({
-          ...ObjPros,
+          ...objProps,
           otherEntityId,
           createdVia: 'activityReport',
         });
@@ -83,6 +88,7 @@ export async function saveObjectivesForReport(objectives, report) {
       await cacheObjectiveMetadata(savedObjective, report.id, {
         ...metadata,
         ttaProvided: objective.ttaProvided,
+        supportType: objective.supportType,
         order: index,
       });
 
@@ -172,6 +178,11 @@ function reduceOtherEntityObjectives(newObjectives) {
       && objective.activityReportObjectives[0].ttaProvided
       ? objective.activityReportObjectives[0].ttaProvided : null;
 
+    const supportType = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].supportType
+      ? objective.activityReportObjectives[0].supportType : null;
+
     const arOrder = objective.activityReportObjectives
       && objective.activityReportObjectives[0]
       && objective.activityReportObjectives[0].arOrder
@@ -184,6 +195,7 @@ function reduceOtherEntityObjectives(newObjectives) {
       value: id,
       ids: [id],
       ttaProvided,
+      supportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
       isNew: false,
       arOrder,

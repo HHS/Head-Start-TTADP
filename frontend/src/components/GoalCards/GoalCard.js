@@ -1,8 +1,9 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
 import StatusDropdown from './components/StatusDropdown';
@@ -14,6 +15,39 @@ import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
+import SessionObjectiveCard from './SessionObjectiveCard';
+import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
+import UserContext from '../../UserContext';
+import { deleteGoal } from '../../fetchers/goals';
+import AppLoadingContext from '../../AppLoadingContext';
+
+const SESSION_TYPE = 'session';
+
+export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
+  if (objective.type === SESSION_TYPE) {
+    return (
+      <SessionObjectiveCard
+        objective={objective}
+        objectivesExpanded={objectivesExpanded}
+      />
+    );
+  }
+
+  return (
+    <ObjectiveCard
+      objective={objective}
+      objectivesExpanded={objectivesExpanded}
+    />
+  );
+};
+
+ObjectiveSwitch.propTypes = {
+  objective: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    type: PropTypes.string,
+  }).isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+};
 
 function GoalCard({
   goal,
@@ -39,14 +73,19 @@ function GoalCard({
     objectives,
     previousStatus,
     createdVia,
+    onAR,
   } = goal;
 
+  const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
+
+  const { user } = useContext(UserContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
@@ -73,9 +112,35 @@ function GoalCard({
     },
   ];
 
-  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
+  const canDeleteQualifiedGoals = (() => {
+    if (isAdmin(user)) {
+      return true;
+    }
 
-  const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+  })();
+
+  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(goalStatus)) {
+    menuItems.push({
+      label: 'Delete',
+      onClick: async () => {
+        try {
+          setDeleteError(false);
+          setIsAppLoading(true);
+          await deleteGoal(ids, regionId);
+          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+        } catch (e) {
+          setDeleteError(true);
+        } finally {
+          setIsAppLoading(false);
+        }
+      },
+    });
+  }
+
+  const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
+
+  const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
   return (
     <article
@@ -161,7 +226,7 @@ function GoalCard({
         />
       </div>
       {objectives.map((obj) => (
-        <ObjectiveCard
+        <ObjectiveSwitch
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
