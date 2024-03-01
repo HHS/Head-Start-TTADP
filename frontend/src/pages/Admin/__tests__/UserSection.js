@@ -129,4 +129,10 @@ describe('UserSection', () => {
     userEvent.click(save);
     expect(onSave).toHaveBeenCalled();
   });
+
+  it('impersonate user', async () => {
+    const impersonate = screen.getByRole('button', { name: 'Impersonate user' });
+    userEvent.click(impersonate);
+    expect(window.location.pathname).toEqual('/');
+  });
 });
