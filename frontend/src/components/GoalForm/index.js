@@ -542,6 +542,7 @@ export default function GoalForm({
       const gs = createdGoals.reduce((acc, goal) => {
         const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
         const newGoals = grantsToGoals({
+          ids: goal.ids,
           selectedGrants: goal.grants,
           name: goal.name,
           status: statusToSave,
@@ -797,6 +798,7 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
+        ids: goal.goalIds,
         grants: goal.grants,
         objectives: goal.objectives.map((objective) => ({
           ...objective,
