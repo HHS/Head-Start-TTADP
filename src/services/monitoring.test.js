@@ -222,7 +222,7 @@ describe('monitoring services', () => {
 
     afterAll(async () => {
       await GrantNumberLink.destroy({ where: { grantNumber: '14CH123' }, force: true });
-      await Grant.destroy({ where: { number: '14CH123' }, force: true });
+      await Grant.destroy({ where: { number: '14CH123' }, force: true, individualHooks: true });
     });
 
     it('adds a record in GrantNumberLink table', async () => {
