@@ -117,7 +117,7 @@ describe('monitoring services', () => {
   });
 
   afterAll(async () => {
-    await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true });
+    await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
     await sequelize.close();
   });
 
