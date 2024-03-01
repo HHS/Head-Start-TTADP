@@ -90,7 +90,7 @@ const scheduleImportCrons = async () => {
           return new CronJob(
             schedule,
             // Define the task to be executed by the cron job, which enqueues a maintenance job
-            async () => {
+            () => {
               auditLogger.log('info', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
               // eslint-disable-next-line no-console
               console.log(`import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
@@ -111,7 +111,7 @@ const scheduleImportCrons = async () => {
     auditLogger.log('info', 'runMaintenanceCronJobs');
     // eslint-disable-next-line no-console
     console.log('infoimport:runMaintenanceCronJobs');
-    await runMaintenanceCronJobs();
+    runMaintenanceCronJobs();
   } catch (err) {
     auditLogger.error(`Error: scheduleImportCrons: ${err.message}`, err);
     // eslint-disable-next-line no-console
