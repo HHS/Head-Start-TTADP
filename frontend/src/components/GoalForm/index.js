@@ -719,13 +719,8 @@ export default function GoalForm({
         type: 'success',
       });
 
-      // if we are not creating a new goal, we want to update the goal ids
-      // for the case of adding a grant to an existing goal. If we are creating a new goal,
-      // we don't keep track of the ids, so we don't need to update them
-      if (!isNew) {
-        const newIds = updatedGoals.flatMap((g) => g.goalIds);
-        setIds(newIds);
-      }
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
