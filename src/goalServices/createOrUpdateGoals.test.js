@@ -220,7 +220,7 @@ describe('createOrUpdateGoals', () => {
     const updatedGoal = newGoals.find((g) => g.goalIds.includes(goal.id));
     expect(updatedGoal.name).toBe('This is some serious goal text');
     expect(updatedGoal.grantIds.length).toBe(1);
-    expect(updatedGoal.source).toBe(GOAL_SOURCES[0]);
+    expect(Object.values(updatedGoal.source)).toStrictEqual([GOAL_SOURCES[0]]);
 
     const grantIds = newGoals.map((g) => g.grantIds).flat();
     expect(grantIds.length).toBe(2);
@@ -246,7 +246,7 @@ describe('createOrUpdateGoals', () => {
     expect(order).toStrictEqual([1, 2]);
 
     const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
-      attributes: ['id', 'createdVia'],
+      attributes: ['id', 'createdVia', 'supportType'],
       where: {
         id: objectivesOnUpdatedGoal.map((obj) => obj.id),
       },
@@ -254,6 +254,9 @@ describe('createOrUpdateGoals', () => {
     });
     const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
     expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
+
+    const objectiveSupportTypes = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.supportType);
+    expect(objectiveSupportTypes).toStrictEqual(['Maintaining', 'Maintaining']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
