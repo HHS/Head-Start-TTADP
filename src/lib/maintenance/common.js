@@ -311,6 +311,7 @@ const createCategory = (category, typeJobs, timezone) => {
 const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
   const categories = Object.entries(maintenanceCronJobs)
     .reduce((acc, [category, typeJobs]) => {
+      auditLogger.log('info', `Maintenance: runMaintenanceCronJobs: category: ${category}`);
       const categoryObj = createCategory(category, typeJobs, timezone);
       acc[categoryObj.name] = categoryObj.jobs;
       return acc;

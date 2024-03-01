@@ -56,12 +56,18 @@ const enqueueImportMaintenanceJob = async (
 const scheduleImportCrons = async () => {
   let imports;
   auditLogger.log('info', 'import: scheduleImportCrons');
+  // eslint-disable-next-line no-console
+  console.log('import: scheduleImportCrons');
 
   try {
     // Retrieve a list of import schedules from a data source
     auditLogger.log('info', 'import: scheduleImportCrons: pre - getImportSchedules');
+    // eslint-disable-next-line no-console
+    console.log('import: scheduleImportCrons: pre - getImportSchedules');
     imports = await getImportSchedules();
-    auditLogger.log('info', `import: scheduleImportCrons: post - getImportSchedules: imports: ${JSON.stringify(imports)}`);
+    auditLogger.log('info', `import: scheduleImportCrons: post - getImportSchedules: imports: ${imports?.length}`);
+    // eslint-disable-next-line no-console
+    console.log(`import: scheduleImportCrons: post - getImportSchedules: imports: ${imports?.length}`);
 
     // Iterate over each import schedule to setup cron jobs
     imports.forEach(({
@@ -70,6 +76,8 @@ const scheduleImportCrons = async () => {
       schedule: importSchedule,
     }) => {
       auditLogger.log('info', `import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
+      // eslint-disable-next-line no-console
+      console.log(`import: addCronJob: Name: ${name}, Category: ${MAINTENANCE_CATEGORY.IMPORT}, Type: ${MAINTENANCE_TYPE.IMPORT_DOWNLOAD}, Schedule: ${importSchedule}`);
       addCronJob(
         // Add a new cron job for each import schedule
         MAINTENANCE_CATEGORY.IMPORT,
@@ -77,11 +85,15 @@ const scheduleImportCrons = async () => {
         // Define the function that creates a new CronJob instance
         (category, type, timezone, schedule) => {
           auditLogger.log('info', `import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
+          // eslint-disable-next-line no-console
+          console.log(`import: new CronJob: Name: ${name}, Category: ${category}, Type: ${type}, Schedule: ${schedule}`);
           return new CronJob(
             schedule,
             // Define the task to be executed by the cron job, which enqueues a maintenance job
             async () => {
               auditLogger.log('info', `import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
+              // eslint-disable-next-line no-console
+              console.log(`import: enqueueImportMaintenanceJob: Type: ${type}, id: ${id}`);
               return enqueueImportMaintenanceJob(
                 type,
                 id,
@@ -97,8 +109,13 @@ const scheduleImportCrons = async () => {
       );
     });
     auditLogger.log('info', 'runMaintenanceCronJobs');
+    // eslint-disable-next-line no-console
+    console.log('infoimport:runMaintenanceCronJobs');
     await runMaintenanceCronJobs();
   } catch (err) {
+    auditLogger.error(`Error: scheduleImportCrons: ${err.message}`, err);
+    // eslint-disable-next-line no-console
+    console.error(`Error: scheduleImportCrons: ${err.message}`, err);
     return { imports, isSuccessful: false, error: err.message };
   }
 
