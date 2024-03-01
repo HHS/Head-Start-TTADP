@@ -265,9 +265,11 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
       },
       EventReportPilotNationalCenterUser: {
         bulkCreate: jest.fn(),
+        create: jest.fn(),
         destroy: jest.fn(),
         findAll: jest.fn(),
         update: jest.fn(),
+        findOne: jest.fn(() => null),
       },
     },
   };
@@ -356,9 +358,11 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
     ];
 
     sequelize.models.User.findAll.mockResolvedValue(users);
-    sequelize.models.EventReportPilotNationalCenterUser.bulkCreate.mockResolvedValue(
-      bulks.map((b, i) => ({ id: i + 1, ...b })),
-    );
+    bulks.forEach((b, i) => {
+      sequelize.models.EventReportPilotNationalCenterUser.create.mockResolvedValueOnce(
+        { ...b, id: i + 1 },
+      );
+    });
 
     await afterCreate(sequelize, instance, options);
 
@@ -375,14 +379,12 @@ describe('createOrUpdateNationalCenterUserCacheTable', () => {
       transaction: options.transaction,
     });
 
-    expect(sequelize.models.EventReportPilotNationalCenterUser.bulkCreate).toHaveBeenCalledWith(
-      bulks,
-      {
-        updateOnDuplicate: ['updatedAt', 'userName', 'nationalCenterName'],
-        transaction: options.transaction,
-        ignoreDuplicates: true,
-      },
-    );
+    bulks.forEach((bulk) => {
+      expect(sequelize.models.EventReportPilotNationalCenterUser.create).toHaveBeenCalledWith(
+        bulk,
+        { transaction: options.transaction },
+      );
+    });
 
     expect(sequelize.models.EventReportPilotNationalCenterUser.destroy).toHaveBeenCalledWith({
       where: {
