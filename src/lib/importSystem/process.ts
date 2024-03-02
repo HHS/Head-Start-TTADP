@@ -220,11 +220,9 @@ const processRecords = async (
           },
           {
             where: {
-              id: {
-                [Op.not]: affectedRanges.map((range) => ({
-                  [Op.between]: range,
-                })),
-              },
+              [Op.and]: affectedRanges.map((range) => ({
+                id: { [Op.notBetween]: range },
+              })),
               sourceDeletedAt: null,
             },
             individualHooks: true,
