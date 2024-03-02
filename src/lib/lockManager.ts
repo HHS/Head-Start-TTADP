@@ -77,9 +77,12 @@ export default class LockManager {
   }
 
   public async close(): Promise<void> {
-    await this.stopRenewal(false);
-    await this.redis.disconnect();
-    this.unregisterEventListeners();
+    try {
+      await this.stopRenewal(false);
+      await this.redis.disconnect();
+    } finally {
+      this.unregisterEventListeners();
+    }
   }
 
   private async acquireLock(): Promise<boolean> {
@@ -109,28 +112,38 @@ export default class LockManager {
   }
 
   public async executeWithLock(callback: () => Promise<void>, holdLock = false): Promise<void> {
-    let hasLock = await this.acquireLock();
-    if (!hasLock) {
-      hasLock = await this.isCurrentLock();
-      if (!hasLock) {
-        auditLogger.log(
-          'info',
-          `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`,
-        );
-        await this.close();
-        return;
-      }
-    }
-
-    await this.startRenewal();
-
     try {
-      await callback();
-    } finally {
-      if (holdLock) {
-        await this.startRenewal(this.lockTTL);
-      } else {
-        await this.stopRenewal();
+      let hasLock = await this.acquireLock();
+      if (!hasLock) {
+        hasLock = await this.isCurrentLock();
+        if (!hasLock) {
+          auditLogger.log(
+            'info',
+            `(${process.pid}) Lock for key "${this.lockKey}" is already acquired by another instance. Skipping...`,
+          );
+          await this.close();
+          return;
+        }
+      }
+
+      await this.startRenewal();
+
+      try {
+        auditLogger.log('info', 'LockManager.executeWithLock: before callback');
+        await callback();
+        auditLogger.log('info', 'LockManager.executeWithLock: after callback');
+      } finally {
+        if (holdLock) {
+          await this.startRenewal(this.lockTTL);
+        } else {
+          await this.stopRenewal();
+        }
+      }
+    } catch (err) {
+      if (err.message !== 'Connection is closed.') {
+        auditLogger.error(`LockManager.close: ${err.message}`, err);
+        // eslint-disable-next-line no-unsafe-finally
+        throw err;
       }
     }
   }
