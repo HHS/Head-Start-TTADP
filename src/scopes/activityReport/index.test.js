@@ -274,6 +274,7 @@ describe('filtersToScopes', () => {
       });
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
     });
 
@@ -621,6 +622,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
@@ -824,6 +826,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: grantIds },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: recipientIds },
@@ -904,6 +907,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded.id, recipientExcluded.id] },
@@ -1272,6 +1276,7 @@ describe('filtersToScopes', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       // Delete recipient.
@@ -1558,6 +1563,7 @@ describe('filtersToScopes', () => {
       // Destroy Grant.
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
 
       // Destroy Recipient.
@@ -2163,6 +2169,7 @@ describe('filtersToScopes', () => {
       });
       await Grant.destroy({
         where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+        individualHooks: true,
       });
       await Recipient.destroy({
         where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },

@@ -221,7 +221,10 @@ describe('Activity report service', () => {
       await User.destroy({ where: { id: userIds } });
       await Permission.destroy({ where: { userId: userIds } });
       await OtherEntity.destroy({ where: { id: ALERT_RECIPIENT_ID } });
-      await Grant.unscoped().destroy({ where: { recipientId: [ALERT_RECIPIENT_ID] } });
+      await Grant.unscoped().destroy({
+        where: { recipientId: [ALERT_RECIPIENT_ID] },
+        individualHooks: true,
+      });
       await Recipient.unscoped().destroy({ where: { id: [ALERT_RECIPIENT_ID] } });
       await Region.destroy({ where: { id: 22 } });
     });
@@ -417,6 +420,7 @@ describe('Activity report service', () => {
             DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           ],
         },
+        individualHooks: true,
       });
       await Recipient.unscoped().destroy({
         where: {

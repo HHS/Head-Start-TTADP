@@ -219,7 +219,7 @@ export default function ObjectiveForm({
 
       <ObjectiveSupportType
         onBlurSupportType={validateSupportType}
-        supportType={supportType}
+        supportType={supportType || ''}
         onChangeSupportType={onChangeSupportType}
         inputName={`objective-support-type-${index}`}
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}

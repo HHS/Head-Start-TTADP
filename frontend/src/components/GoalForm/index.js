@@ -542,6 +542,7 @@ export default function GoalForm({
       const gs = createdGoals.reduce((acc, goal) => {
         const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
         const newGoals = grantsToGoals({
+          ids: goal.ids,
           selectedGrants: goal.grants,
           name: goal.name,
           status: statusToSave,
@@ -719,13 +720,8 @@ export default function GoalForm({
         type: 'success',
       });
 
-      // if we are not creating a new goal, we want to update the goal ids
-      // for the case of adding a grant to an existing goal. If we are creating a new goal,
-      // we don't keep track of the ids, so we don't need to update them
-      if (!isNew) {
-        const newIds = updatedGoals.flatMap((g) => g.goalIds);
-        setIds(newIds);
-      }
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -802,6 +798,7 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
+        ids: goal.goalIds,
         grants: goal.grants,
         objectives: goal.objectives.map((objective) => ({
           ...objective,

@@ -4,11 +4,26 @@ const { default: newQueue, increaseListeners } = require('../queue');
 const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
+const { default: LockManager } = require('../lockManager');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
 
+const lockManagers = {};
+
 const maintenanceCronJobs = {};
+
+// Function to remove a specific job by ID
+async function removeCompletedJob(job) {
+  try {
+    if (job && job.isCompleted()) {
+      await job.remove();
+      auditLogger.log('info', `Removed completed job with ID ${job.id}`);
+    }
+  } catch (error) {
+    auditLogger.error(`Error removing job: ${job.id}`, error);
+  }
+}
 
 /**
  * Logs an error message to the audit logger when a maintenance job fails.
@@ -19,6 +34,8 @@ const maintenanceCronJobs = {};
 const onFailedMaintenance = (job, error) => {
   // Log an error message with details about the failed job and error.
   auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
+  // Intentionally not awaited
+  removeCompletedJob(job);
 };
 
 /**
@@ -35,6 +52,8 @@ const onCompletedMaintenance = (job, result) => {
     // Log failed maintenance with job name, category and type
     logger.error(`Failed to perform ${job.name} maintenance for ${job.data?.type}`);
   }
+  // Intentionally not awaited
+  removeCompletedJob(job);
 };
 
 /**
@@ -45,7 +64,9 @@ const onCompletedMaintenance = (job, result) => {
  */
 const addQueueProcessor = (category, processor) => {
   // Assigns the processor function to the specified category in the queueProcessors object.
-  maintenanceQueueProcessors[category] = processor;
+  if (!maintenanceQueueProcessors[category]) {
+    maintenanceQueueProcessors[category] = processor;
+  }
 };
 
 /**
@@ -91,23 +112,51 @@ const processMaintenanceQueue = () => {
  * @param {string} category - The type of maintenance job to add to the queue.
  * @param {*} [data=null] - Optional data to include with the maintenance job.
  */
-const enqueueMaintenanceJob = (
+const enqueueMaintenanceJob = async (
   category,
   data = null,
+  requiredLaunchScript = null,
+  requiresLock = false,
+  holdLock = false,
 ) => {
-  // Check if there is a processor defined for the given type
-  if (category in maintenanceQueueProcessors) {
-    try {
-      // Add the job to the maintenance queue
-      maintenanceQueue.add(category, data);
-    } catch (err) {
-      // Log any errors that occur when adding the job to the queue
+  const action = async () => {
+    // Check if there is a processor defined for the given type
+    if (category in maintenanceQueueProcessors) {
+      try {
+        // Add the job to the maintenance queue
+        maintenanceQueue.add(category, data);
+      } catch (err) {
+        // Log any errors that occur when adding the job to the queue
+        auditLogger.error(err);
+      }
+    } else {
+      // If no processor is defined for the given type, log an error
+      const err = new Error(`Maintenance Queue Error: no processor defined for ${category}`);
       auditLogger.error(err);
     }
-  } else {
-    // If no processor is defined for the given type, log an error
-    const error = new Error(`Maintenance Queue Error: no processor defined for ${category}`);
-    auditLogger.error(error);
+  };
+
+  try {
+    const launchScript = process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0];
+    if (requiredLaunchScript) {
+      if (launchScript === requiredLaunchScript) {
+        if (requiresLock) {
+          let lockManager = lockManagers[`${category}-${data?.type}`];
+          if (!lockManager) {
+            lockManager = new LockManager(`maintenanceLock-${category}-${data?.type}`);
+            lockManagers[`${category}-${data?.type}`] = lockManager;
+          }
+          await lockManager.executeWithLock(action, holdLock);
+        } else {
+          await action();
+        }
+      }
+    } else {
+      await action();
+    }
+  } catch (err) {
+    auditLogger.error(err);
+    throw err;
   }
 };
 
@@ -118,14 +167,17 @@ const enqueueMaintenanceJob = (
  * @param {string} type - The type of the cron job.
  * @param {function} job - The function to be executed as the cron job.
  */
-const addCronJob = (category, type, jobCommand, schedule) => {
+const addCronJob = (category, type, jobCommand, schedule, name = '') => {
   // Check if the category exists, if not create a new object for it
   if (!maintenanceCronJobs[category]) {
     maintenanceCronJobs[category] = {};
   }
+  if (!maintenanceCronJobs[category][type]) {
+    maintenanceCronJobs[category][type] = {};
+  }
   // Accesses the maintenanceCronJobs object and sets the value of the specified category
   // and type to the provided job function.
-  maintenanceCronJobs[category][type] = { jobCommand, schedule };
+  maintenanceCronJobs[category][type][name] = { jobCommand, schedule, started: false };
 };
 
 /**
@@ -133,17 +185,26 @@ const addCronJob = (category, type, jobCommand, schedule) => {
  *
  * @param {string} category - The category of the maintenance cron job.
  * @param {string} type - The type of the maintenance cron job.
+ * @param {string} name - The name of the maintenance cron job.
  * @returns {boolean} - Returns true if a maintenance cron job exists for the given category
  * and type, otherwise returns false.
  */
-const hasCronJob = (category, type) => {
-  // Check if there are any maintenance cron jobs for the given category
-  if (!maintenanceCronJobs[category]) {
-    return false; // If not, return false
-  }
-  // Return true if a maintenance cron job exists for the given category and type, else return false
-  return !!maintenanceCronJobs[category][type];
-};
+const hasCronJob = (category, type, name = '') => !!maintenanceCronJobs?.[category]?.[type]?.[name];
+
+/**
+ * Checks if a specific cron job has been started based on the given category and type.
+ *
+ * @param {string} category - The category of the maintenance cron jobs.
+ * @param {string} type - The specific type of cron job within the category.
+ * @param {string} name - The name of the maintenance cron job.
+ * @returns {boolean} - Returns true if the cron job has been marked as started, otherwise false.
+ */
+// Define a function to check if a cron job has been started for a given category and type
+const hasCronJobBeenStarted = (
+  category,
+  type,
+  name,
+) => !!maintenanceCronJobs?.[category]?.[type]?.[name]?.started;
 
 /**
  * Sets the schedule for a cron job of a given category and type.
@@ -151,11 +212,11 @@ const hasCronJob = (category, type) => {
  * @param {string} type - The type of the cron job.
  * @param {string} schedule - The new schedule for the cron job.
  */
-const setCronJobSchedule = (category, type, schedule) => {
+const setCronJobSchedule = (category, type, name, schedule) => {
   // Check if the cron job exists before setting its schedule
-  if (hasCronJob(category, type)) {
+  if (hasCronJob(category, type, name)) {
     // Set the new schedule for the cron job
-    maintenanceCronJobs[category][type].schedule = schedule;
+    maintenanceCronJobs[category][type][name].schedule = schedule;
   }
 };
 
@@ -164,15 +225,18 @@ const setCronJobSchedule = (category, type, schedule) => {
  * @param {string} category - The category of the cron job to be removed.
  * @param {string} type - The type of the cron job to be removed.
  */
-const removeCronJob = (category, type) => {
+const removeCronJob = (category, type, name) => {
   // Check if the key exists in the maintenanceCronJobs object.
-  if (hasCronJob(category, type)) {
-    // If the key exists, delete the corresponding cron job from the maintenanceCronJobs object.
-    if (Object.keys(maintenanceCronJobs[category]).length === 1) {
-      delete maintenanceCronJobs[category]; // delete the entire category if it only has one job
-    } else {
-    // delete the specific job if there are multiple jobs in the category
+  if (hasCronJob(category, type, name)) {
+    delete maintenanceCronJobs[category][type][name];
+
+    if (Object.keys(maintenanceCronJobs[category][type]).length === 0) {
       delete maintenanceCronJobs[category][type];
+    }
+
+    // If the key exists, delete the corresponding cron job from the maintenanceCronJobs object.
+    if (Object.keys(maintenanceCronJobs[category]).length === 0) {
+      delete maintenanceCronJobs[category]; // delete the entire category if it only has one job
     }
   }
 };
@@ -186,11 +250,18 @@ const removeCronJob = (category, type) => {
  * @param {function} jobCommand - The function to create the job.
  * @returns {Object} - An object containing the job with its type as the key.
  */
-const createJob = (category, type, timezone, schedule, jobCommand) => {
+const createJob = (category, type, name, timezone, schedule, jobCommand) => {
   // Create the job using the jobCommand function and the given parameters.
   const job = jobCommand(category, type, timezone, schedule);
   // Start the job.
-  job.start();
+  try {
+    if (!job.running) {
+      job.start();
+    }
+  } catch (err) {
+    auditLogger.error(err);
+  }
+  maintenanceCronJobs[category][type][name].started = true;
   // Return an object containing the job with its type as the key.
   return { [type]: job };
 };
@@ -205,16 +276,28 @@ const createJob = (category, type, timezone, schedule, jobCommand) => {
  */
 const createCategory = (category, typeJobs, timezone) => {
   // Create an object containing jobs for each type of job in the category.
-  const jobs = Object.entries(typeJobs).reduce(
-    (
-      acc,
-      [type, { jobCommand, schedule }],
-    ) => ({
+  const jobs = Object.entries(typeJobs).reduce((acc, [type, names]) => {
+    // Iterate over the nested structure
+    const namedJobs = Object.entries(names)
+      .reduce((typeAcc, [name, { jobCommand, schedule, started }]) => {
+        // Only add the job if it hasn't started
+        if (!started) {
+          auditLogger.log('info', `Maintenance: createCategory: category: ${category}, type: ${type}, name: ${name}, schedule: ${schedule}`);
+          return {
+            ...typeAcc,
+            ...createJob(category, type, name, timezone, schedule, jobCommand),
+          };
+        }
+        return typeAcc;
+      }, {});
+
+    // Combine the jobs for each type
+    return {
       ...acc,
-      ...createJob(category, type, timezone, schedule, jobCommand),
-    }),
-    {},
-  );
+      ...namedJobs,
+    };
+  }, {});
+
   // Return the category object with the jobs for each type of job.
   return { [category]: jobs };
 };
@@ -226,14 +309,17 @@ const createCategory = (category, typeJobs, timezone) => {
  * @returns {Array} - An array of categories containing their respective cron jobs.
  */
 const runMaintenanceCronJobs = (timezone = 'America/New_York') => {
-  const categories = Object.entries(maintenanceCronJobs).reduce((acc, [category, typeJobs]) => {
-    const categoryObj = createCategory(category, typeJobs, timezone);
-    acc[categoryObj.name] = categoryObj.jobs;
-    return acc;
-  }, {});
+  const categories = Object.entries(maintenanceCronJobs)
+    .reduce((acc, [category, typeJobs]) => {
+      auditLogger.log('info', `Maintenance: runMaintenanceCronJobs: category: ${category}`);
+      const categoryObj = createCategory(category, typeJobs, timezone);
+      acc[categoryObj.name] = categoryObj.jobs;
+      return acc;
+    }, {});
 
   return categories;
 };
+
 /**
  * Asynchronous function that creates a maintenance log with the given category, type, and data.
  * @param {string} category - The category of the maintenance log.
