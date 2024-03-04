@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class EventReport {
@@ -84,6 +85,10 @@ export default class EventReport {
   }
 
   canDelete() {
+    if (this.eventReport.data.status !== TRAINING_REPORT_STATUSES.NOT_STARTED) {
+      return false;
+    }
+
     return this.isAdmin() || this.isAuthor();
   }
 
