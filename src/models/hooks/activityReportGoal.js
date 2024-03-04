@@ -75,12 +75,24 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
 };
 
 const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
-  const { goalId, status } = instance;
+  // calculatedStatus is passed in when this is called
+  // in /src/models/hooks/activityReport.js
+  // it is always REPORT_STATUSES.DELETED there, so we don't need to check it
+  // otherwise, on a normal AR goal instance, this will be undefined
+  const { goalId, calculatedStatus } = instance;
 
-  // if the report is in any other status than approved,
-  // we want to recalculate the similarity groups
-  if (status === REPORT_STATUSES.APPROVED) {
-    return;
+  if (!calculatedStatus) {
+    const report = await sequelize.models.ActivityReport.findOne({
+      attributes: ['calculatedStatus'],
+      where: {
+        id: instance.activityReportId,
+      },
+      transaction: options.transaction,
+    });
+
+    if (!report || report.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      return;
+    }
   }
 
   /*
