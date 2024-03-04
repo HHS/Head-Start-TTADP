@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import httpCodes from 'http-codes';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
@@ -75,6 +75,13 @@ const hasReportAuthorization = async (user, reportId) => {
     return false;
   }
   return true;
+};
+
+const reportIsInAnEditableState = async (user, reportId) => {
+  const [report] = await activityReportAndRecipientsById(reportId);
+  const authorization = new ActivityReportPolicy(user, report);
+  console.log('authorization', authorization);
+  return authorization.reportHasEditableStatus();
 };
 
 const deleteOnlyFile = async (req, res) => {
@@ -296,9 +303,17 @@ const uploadHandler = async (req, res) => {
 
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
-      if (!(await hasReportAuthorization(user, reportId))) {
+      const isAdmin = await validateUserAuthForAdmin(userId);
+      const editable = await reportIsInAnEditableState(user, reportId);
+
+      if (isAdmin && !editable) {
         return res.sendStatus(403);
       }
+
+      if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
+        return res.sendStatus(403);
+      }
+
       metadata = await createActivityReportFileMetaData(
         originalFilename,
         fileName,
