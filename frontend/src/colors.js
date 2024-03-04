@@ -29,6 +29,7 @@ const colors = {
   success: '#00a91c',
   successLighter: '#ecf3ec',
   successDarker: '#00a91c',
+  successDarkest: '#008817',
   error: '#d54309',
   errorLighter: '#f4e3db',
 

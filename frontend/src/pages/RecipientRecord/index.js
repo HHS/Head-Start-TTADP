@@ -21,6 +21,7 @@ import MergeGoals from './pages/MergeGoals';
 import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
+import { GrantDataProvider } from './pages/GrantDataContext';
 
 export function PageWithHeading({
   children,
@@ -183,12 +184,14 @@ export default function RecipientRecord({ match, hasAlerts }) {
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
-              <Profile
-                recipientName={recipientName}
-                regionId={regionId}
-                recipientId={recipientId}
-                recipientSummary={recipientData}
-              />
+              <GrantDataProvider>
+                <Profile
+                  recipientName={recipientName}
+                  regionId={regionId}
+                  recipientId={recipientId}
+                  recipientSummary={recipientData}
+                />
+              </GrantDataProvider>
             </PageWithHeading>
           )}
         />

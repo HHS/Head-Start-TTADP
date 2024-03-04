@@ -98,6 +98,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       where: {
         id: [firstGrant.id],
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
