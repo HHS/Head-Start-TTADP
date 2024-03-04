@@ -586,7 +586,7 @@ module.exports = {
        *  * - The month when the job will run (in this case, any month)
        *  * - The day of the week when the job will run (in this case, any day of the week)
        * */
-      const schedule = '0 21 * * *';
+      const schedule = '0 7 * * *';
 
       const definitions = [];
       definitions.push({
