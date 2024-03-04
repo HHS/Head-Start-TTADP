@@ -341,7 +341,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -379,7 +379,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Syft SBOM
           environment:
@@ -451,7 +451,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -492,7 +492,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -533,7 +533,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
