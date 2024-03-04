@@ -14,7 +14,8 @@ tests/e2e/report
 /doc
 
 # Build related
-build/
+build/**
+dist/**
 frontend/build
 node_modules
 

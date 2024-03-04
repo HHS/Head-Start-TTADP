@@ -1,3 +1,17 @@
 .dockerignore
+Dockerfile
+Dockerfile.*
+docker-compose.*
 node_modules
 docker-compose.yaml
+similarity_api/
+docs/
+bin/
+deployment_config/
+terraform/
+**/node_modules
+**/.next
+**/dist
+*.md
+reports
+.env
