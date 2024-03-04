@@ -95,9 +95,7 @@ const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
     }
   }
 
-  /*
   // we need to find the recipient that has the goal
-  */
   const recipient = await sequelize.models.Recipient.findOne({
     attributes: ['id'],
     include: [
