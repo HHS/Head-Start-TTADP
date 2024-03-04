@@ -1,5 +1,7 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { DECIMAL_BASE } from '@ttahub/common';
+import { uniq } from 'lodash';
 
 // regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
 const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
@@ -104,3 +106,83 @@ export const validateListOfResources = (resources = []) => {
 
   return true;
 };
+
+export const dismissOnNoMatch = (event, selector, dismiss) => {
+  if (!event.relatedTarget || !event.relatedTarget.matches(selector)) {
+    dismiss(true);
+  }
+};
+
+/**
+ *
+ * converts an array of grants to an object with the grant number
+ * as the key and the default value as the value
+ *
+ * @param {Array} grants - an array of grants
+ * @param {Object} value - the current value of the form { grantNumber: value }
+ * @param {String} defaultValue - the default value for the form
+ * @returns {Object} - the new value of the form
+ */
+export const grantsToMultiValue = (grants, value = {}, defaultValue = '') => {
+  const current = [];
+  const values = uniq(Object.values(value));
+  let def = defaultValue;
+  if (values.length === 1 && values[0] !== defaultValue) {
+    [def] = values;
+  }
+
+  const newValue = grants.reduce((s, grant) => {
+    current.push(grant.numberWithProgramTypes);
+
+    if (value[grant.numberWithProgramTypes]) {
+      return {
+        ...s,
+        [grant.numberWithProgramTypes]: value[grant.numberWithProgramTypes],
+      };
+    }
+
+    return {
+      ...s,
+      [grant.numberWithProgramTypes]: def || defaultValue,
+    };
+  }, value);
+
+  const keys = Object.keys(newValue);
+  const removedKeys = keys.filter((k) => !current.includes(k));
+
+  removedKeys.forEach((k) => {
+    delete newValue[k];
+  });
+
+  return newValue;
+};
+
+export const grantsToGoals = ({
+  selectedGrants,
+  name,
+  status,
+  source,
+  isCurated,
+  endDate,
+  regionId,
+  recipient,
+  objectives,
+  ids,
+  prompts,
+}) => selectedGrants.map((g) => {
+  const goalSource = source ? source[g.numberWithProgramTypes] : '';
+  const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
+  return {
+    grantId: g.id,
+    name,
+    status,
+    source: goalSource || null,
+    isCurated,
+    endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
+    regionId: parseInt(regionId, DECIMAL_BASE),
+    recipientId: recipient.id,
+    objectives: objectivesWithValidResourcesOnly(objectives),
+    ids,
+    prompts: goalPrompts,
+  };
+});

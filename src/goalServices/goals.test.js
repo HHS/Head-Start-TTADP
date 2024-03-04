@@ -18,6 +18,8 @@ const mockActivityReportGoalId = 10000005;
 const mockActivityReportObjectiveId = 10000006;
 const mockActivityReportId = 10000007;
 
+jest.mock('../services/reportCache');
+
 describe('Goals DB service', () => {
   afterEach(() => {
     jest.clearAllMocks();
@@ -298,6 +300,7 @@ describe('Goals DB service', () => {
     it('can use existing goals', async () => {
       ActivityReportGoal.findOne.mockResolvedValue({
         goalId: mockGoalId,
+        activityReportId: mockActivityReportId,
       });
       const existingGoal = {
         id: mockGoalId,

@@ -57,9 +57,12 @@ specified region.
 @param grantIds - An array of grant IDs to filter by. If null, all grants will be included.
 @returns A Promise that resolves to an array of GoalTemplate objects.
 */
-export async function getCuratedTemplates(grantIds: number[] | null): Promise<GoalTemplate[]> {
+export async function getCuratedTemplates(
+  grantIds: number[] | null,
+): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
+
   return GoalTemplateModel.findAll({
     attributes: [
       'id',
@@ -77,19 +80,44 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       [Sequelize.literal('TRUE'), 'isCurated'], // setting this tells the frontnd to check for conditional prompts
       [Sequelize.literal('FALSE'), 'isNew'],
     ],
-    include: [{
-      model: Region,
-      as: 'region',
-      attributes: [],
-      required: false,
-      include: [{
-        model: Grant,
-        as: 'grants',
+    include: [
+      {
+        model: Region,
+        as: 'region',
         attributes: [],
         required: false,
-        where: { id: grantIds },
-      }],
-    }],
+        include: [{
+          model: Grant.unscoped(), // remove recipient from response
+          as: 'grants',
+          attributes: [],
+          required: false,
+          where: { id: grantIds },
+          include: [],
+        }],
+      },
+      {
+        model: GoalModel,
+        as: 'goals',
+        attributes: [
+          'id',
+          'name',
+          'source',
+          'status',
+          'grantId',
+          'goalTemplateId',
+        ],
+        required: false,
+        where: {
+          grantId: grantIds,
+          status: {
+            [Op.notIn]: [
+              GOAL_STATUS.SUSPENDED,
+              GOAL_STATUS.CLOSED,
+            ],
+          },
+        },
+      },
+    ],
     where: {
       creationMethod: CREATION_METHOD.CURATED,
       [Op.or]: [
@@ -98,7 +126,6 @@ export async function getCuratedTemplates(grantIds: number[] | null): Promise<Go
       ],
     },
     ORDER: [['name', 'ASC']],
-    raw: true,
   });
 }
 
