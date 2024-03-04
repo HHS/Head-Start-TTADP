@@ -8,6 +8,9 @@ describe('destroyLinkedSimilarityGroups', () => {
 
   const sequelize = {
     models: {
+      ActivityReport: {
+        findOne: jest.fn(),
+      },
       Recipient: {
         findOne: jest.fn(),
       },
@@ -25,7 +28,6 @@ describe('destroyLinkedSimilarityGroups', () => {
   it('should destroy similarity groups and associated goals', async () => {
     const instance = {
       goalId: 1,
-      status: REPORT_STATUSES.DRAFT,
     };
 
     const options = {
@@ -47,6 +49,9 @@ describe('destroyLinkedSimilarityGroups', () => {
     sequelize.models.GoalSimilarityGroup.findAll.mockResolvedValue(similarityGroups);
     sequelize.models.GoalSimilarityGroupGoal.destroy.mockResolvedValue(true);
     sequelize.models.GoalSimilarityGroup.destroy.mockResolvedValue(true);
+    sequelize.models.ActivityReport.findOne.mockResolvedValue({
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    });
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
 
@@ -114,10 +119,11 @@ describe('destroyLinkedSimilarityGroups', () => {
     const recipient = {
       id: 1,
     };
-
     // Mock the necessary Sequelize methods
     sequelize.models.Recipient.findOne.mockResolvedValue(recipient);
-
+    sequelize.models.ActivityReport.findOne.mockResolvedValue({
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    });
     sequelize.models.GoalSimilarityGroup.findAll.mockResolvedValue([]);
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
@@ -163,12 +169,33 @@ describe('destroyLinkedSimilarityGroups', () => {
   it('should not destroy similarity groups and associated goals if status is approved', async () => {
     const instance = {
       goalId: 1,
-      status: REPORT_STATUSES.APPROVED,
     };
 
     const options = {
       transaction: 'mockTransaction',
     };
+
+    sequelize.models.ActivityReport.findOne.mockResolvedValue({
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    });
+
+    await destroyLinkedSimilarityGroups(sequelize, instance, options);
+
+    expect(sequelize.models.Recipient.findOne).not.toHaveBeenCalled();
+    expect(sequelize.models.GoalSimilarityGroup.findAll).not.toHaveBeenCalled();
+    expect(sequelize.models.GoalSimilarityGroupGoal.destroy).not.toHaveBeenCalled();
+    expect(sequelize.models.GoalSimilarityGroup.destroy).not.toHaveBeenCalled();
+  });
+  it('should not destroy similarity groups and associated goals if report is not found', async () => {
+    const instance = {
+      goalId: 1,
+    };
+
+    const options = {
+      transaction: 'mockTransaction',
+    };
+
+    sequelize.models.ActivityReport.findOne.mockResolvedValue(null);
 
     await destroyLinkedSimilarityGroups(sequelize, instance, options);
 
