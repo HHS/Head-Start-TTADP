@@ -240,6 +240,7 @@ describe('goalFieldResponseHooks', () => {
       // Delete grant.
       await Grant.destroy({
         where: { id: [grant.id, grantNotToUpdate.id] },
+        individualHooks: true,
       });
 
       // Delete recipient.

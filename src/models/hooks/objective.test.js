@@ -61,6 +61,7 @@ describe('objective model hooks', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
