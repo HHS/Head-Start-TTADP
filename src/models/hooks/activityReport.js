@@ -1049,6 +1049,7 @@ const afterDestroy = async (sequelize, instance, options) => {
   //   const arGoals = await sequelize.models.ActivityReportGoal.findAll({
   //     attributes: ['goalId'],
   //     where: { activityReportId },
+  //     transaction: options.transaction,
   //   });
 
   //   await Promise.all((arGoals.map(async (arGoal) => {
