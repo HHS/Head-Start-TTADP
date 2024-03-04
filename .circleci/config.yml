@@ -888,7 +888,7 @@ workflows:
             - build_and_lint
       - deploy:
           requires:
-            # - test_backend
+            - test_backend
             - test_frontend
             - test_e2e
             - test_api
