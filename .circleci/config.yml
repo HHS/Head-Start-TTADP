@@ -888,7 +888,7 @@ workflows:
             - build_and_lint
       - deploy:
           requires:
-            # - test_backend
+            - test_backend
             - test_frontend
             - test_e2e
             - test_api
@@ -916,9 +916,9 @@ workflows:
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
-      # - test_backend:
-      #     requires:
-      #       - build_and_lint
+      - test_backend:
+          requires:
+            - build_and_lint
       - test_frontend:
           requires:
             - build_and_lint
