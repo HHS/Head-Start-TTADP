@@ -217,7 +217,6 @@ const MAINTENANCE_TYPE = {
 
 const FEATURE_FLAGS = [
   'resources_dashboard',
-  'rttapa_form',
   'anv_statistics',
   'regional_goal_dashboard',
   'merge_goals',

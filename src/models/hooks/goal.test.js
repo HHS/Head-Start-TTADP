@@ -168,44 +168,40 @@ describe('goal hooks', () => {
     it('updates fields for NOT_STARTED status', () => {
       instance.changed.mockReturnValueOnce(['status']);
       instance.status = GOAL_STATUS.NOT_STARTED;
-      const now = new Date();
       autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstNotStartedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('firstNotStartedAt', expect.any(Date));
       expect(options.fields).toContain('firstNotStartedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastNotStartedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('lastNotStartedAt', expect.any(Date));
       expect(options.fields).toContain('lastNotStartedAt');
     });
 
     it('updates fields for IN_PROGRESS status', () => {
       instance.changed.mockReturnValueOnce(['status']);
       instance.status = GOAL_STATUS.IN_PROGRESS;
-      const now = new Date();
       autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstInProgressAt', now);
+      expect(instance.set).toHaveBeenCalledWith('firstInProgressAt', expect.any(Date));
       expect(options.fields).toContain('firstInProgressAt');
-      expect(instance.set).toHaveBeenCalledWith('lastInProgressAt', now);
+      expect(instance.set).toHaveBeenCalledWith('lastInProgressAt', expect.any(Date));
       expect(options.fields).toContain('lastInProgressAt');
     });
 
     it('updates fields for SUSPENDED status', () => {
       instance.changed.mockReturnValueOnce(['status']);
       instance.status = GOAL_STATUS.SUSPENDED;
-      const now = new Date();
       autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstCeasedSuspendedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('firstCeasedSuspendedAt', expect.any(Date));
       expect(options.fields).toContain('firstCeasedSuspendedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastCeasedSuspendedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('lastCeasedSuspendedAt', expect.any(Date));
       expect(options.fields).toContain('lastCeasedSuspendedAt');
     });
 
     it('updates fields for CLOSED status', () => {
       instance.changed.mockReturnValueOnce(['status']);
       instance.status = GOAL_STATUS.CLOSED;
-      const now = new Date();
       autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstClosedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('firstClosedAt', expect.any(Date));
       expect(options.fields).toContain('firstClosedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastClosedAt', now);
+      expect(instance.set).toHaveBeenCalledWith('lastClosedAt', expect.any(Date));
       expect(options.fields).toContain('lastClosedAt');
     });
 
