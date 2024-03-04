@@ -917,7 +917,7 @@ workflows:
       - build_and_lint
       - build_and_lint_similarity_api
       - test_backend:
-      #     requires:
+          requires:
       #       - build_and_lint
       - test_frontend:
           requires:
