@@ -1,3 +1,4 @@
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
   Recipient,
   Goal,
@@ -19,6 +20,7 @@ import {
   setSimilarityGroupAsUserMerged,
   createSimilarityGroup,
   deleteSimilarityGroup,
+  flattenSimilarityGroupGoals,
 } from './goalSimilarityGroup';
 
 describe('goalSimilarityGroup services', () => {
@@ -59,7 +61,7 @@ describe('goalSimilarityGroup services', () => {
     await GoalSimilarityGroupGoal.destroy({ where: { goalSimilarityGroupId: groupIds } });
     await GoalSimilarityGroup.destroy({ where: { recipientId: recipient.id } });
     await Goal.destroy({ where: { grantId: grant.id }, force: true });
-    await Grant.destroy({ where: { recipientId: recipient.id } });
+    await Grant.destroy({ where: { recipientId: recipient.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });
@@ -117,5 +119,59 @@ describe('goalSimilarityGroup services', () => {
     await deleteSimilarityGroup(newGroup.id);
     const updatedGroups = await getSimilarityGroupsByRecipientId(recipient.id);
     expect(updatedGroups.length).toBe(1);
+  });
+
+  describe('flattenSimilarityGroupGoals', () => {
+    it('should flatten similarity group goals', () => {
+      const group = {
+        toJSON: jest.fn().mockReturnValue({ id: 'group-id' }),
+        goals: [
+          { id: 'goal-1', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.IN_PROGRESS },
+          { id: 'goal-2', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.CLOSED },
+          { id: 'goal-3', goalTemplate: { creationMethod: CREATION_METHOD.AUTOMATIC }, status: GOAL_STATUS.IN_PROGRESS },
+        ],
+      };
+
+      const result = flattenSimilarityGroupGoals(group, true);
+
+      expect(result).toEqual({
+        id: 'group-id',
+        goals: ['goal-1', 'goal-2', 'goal-3'],
+      });
+    });
+
+    it('should filter closed curated goals if allowClosedCuratedGoal is false', () => {
+      const group = {
+        toJSON: jest.fn().mockReturnValue({ id: 'group-id' }),
+        goals: [
+          { id: 'goal-1', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.IN_PROGRESS },
+          { id: 'goal-2', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.CLOSED },
+        ],
+      };
+
+      const result = flattenSimilarityGroupGoals(group, false);
+
+      expect(result).toEqual({
+        id: 'group-id',
+        goals: ['goal-1'],
+      });
+    });
+
+    it('should include closed curated goals if allowClosedCuratedGoal is true', () => {
+      const group = {
+        toJSON: jest.fn().mockReturnValue({ id: 'group-id' }),
+        goals: [
+          { id: 'goal-1', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.IN_PROGRESS },
+          { id: 'goal-2', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.CLOSED },
+        ],
+      };
+
+      const result = flattenSimilarityGroupGoals(group, true);
+
+      expect(result).toEqual({
+        id: 'group-id',
+        goals: ['goal-1', 'goal-2'],
+      });
+    });
   });
 });

@@ -26,7 +26,7 @@ export const createAndStoreVerificationToken = async (userId, type) => {
     // If we're creating a new verification token, we likely also
     // want to ensure that the current validation status is null.
     row.set('validatedAt', null);
-    row.save();
+    await row.save();
 
     return token;
   }

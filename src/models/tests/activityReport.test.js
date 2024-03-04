@@ -234,7 +234,7 @@ describe('Activity Reports model', () => {
       await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
       await Objective.destroy({ where: { id: objectives.map((o) => o.id) }, force: true });
       await Goal.destroy({ where: { id: goals.map((g) => g.id) }, force: true });
-      await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+      await Grant.destroy({ where: { id: grants.map((g) => g.id) }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });
