@@ -55,9 +55,9 @@ export default function Groups() {
     );
 
     return {
-      creatorGroups,
-      coOwnedGroups,
-      sharedWithMe,
+      creatorGroups: creatorGroups.sort((a, b) => a.name.localeCompare(b.name)),
+      coOwnedGroups: coOwnedGroups.sort((a, b) => a.name.localeCompare(b.name)),
+      sharedWithMe: sharedWithMe.sort((a, b) => a.name.localeCompare(b.name)),
     };
   };
   const groups = getGroupBuckets();
