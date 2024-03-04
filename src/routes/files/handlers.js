@@ -296,8 +296,7 @@ const uploadHandler = async (req, res) => {
 
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
-      if (!(await hasReportAuthorization(user, reportId)
-        || (await validateUserAuthForAdmin(userId)))) {
+      if (!(await hasReportAuthorization(user, reportId))) {
         return res.sendStatus(403);
       }
       metadata = await createActivityReportFileMetaData(
