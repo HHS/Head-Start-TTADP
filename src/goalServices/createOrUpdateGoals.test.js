@@ -246,7 +246,7 @@ describe('createOrUpdateGoals', () => {
     expect(order).toStrictEqual([1, 2]);
 
     const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
-      attributes: ['id', 'createdVia'],
+      attributes: ['id', 'createdVia', 'supportType'],
       where: {
         id: objectivesOnUpdatedGoal.map((obj) => obj.id),
       },
@@ -254,6 +254,9 @@ describe('createOrUpdateGoals', () => {
     });
     const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
     expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
+
+    const objectiveSupportTypes = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.supportType);
+    expect(objectiveSupportTypes).toStrictEqual(['Maintaining', 'Maintaining']);
 
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
