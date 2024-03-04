@@ -1039,13 +1039,12 @@ const beforeUpdate = async (sequelize, instance, options) => {
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
-  if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
-    return;
-  }
-
   try {
+    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
+      return;
+    }
     auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
-    const { id: activityReportId, status } = instance;
+    const { id: activityReportId, calculatedStatus } = instance;
 
     const arGoals = await sequelize.models.ActivityReportGoal.findAll({
       attributes: ['goalId'],
@@ -1054,7 +1053,7 @@ const afterDestroy = async (sequelize, instance, options) => {
 
     await Promise.all((arGoals.map(async (arGoal) => {
       const i = {
-        status,
+        calculatedStatus,
         goalId: arGoal.goalId,
       };
       // regen similarity groups
