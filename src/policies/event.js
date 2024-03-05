@@ -85,7 +85,12 @@ export default class EventReport {
   }
 
   canDelete() {
-    if (this.eventReport.data.status !== TRAINING_REPORT_STATUSES.NOT_STARTED) {
+    const ALLOWED_DELETED_STATUS = [
+      TRAINING_REPORT_STATUSES.NOT_STARTED,
+      TRAINING_REPORT_STATUSES.SUSPENDED,
+    ];
+
+    if (!ALLOWED_DELETED_STATUS.includes(this.eventReport.data.status)) {
       return false;
     }
 

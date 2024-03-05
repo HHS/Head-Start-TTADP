@@ -104,14 +104,14 @@ describe('Event Report policies', () => {
       expect(policy.canDelete()).toBe(false);
     });
 
-    it('is false if the event is suspended', () => {
+    it('is true if the event is suspended', () => {
       const eventRegion1 = createEvent({
         ownerId: authorRegion1.id,
         regionId: 1,
         data: { status: TRAINING_REPORT_STATUSES.SUSPENDED },
       });
       const policy = new EventReport(authorRegion1, eventRegion1);
-      expect(policy.canDelete()).toBe(false);
+      expect(policy.canDelete()).toBe(true);
     });
 
     it('is false if the user is not an admin or the author', () => {
