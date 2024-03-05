@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -21,7 +21,7 @@ executors:
       - image: cimg/python:3.9.18
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -173,6 +173,18 @@ commands:
       suppress_error_logging:
         description: "Stop logging of non-sequelize errors to the db"
         type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -204,7 +216,11 @@ commands:
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
-              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -247,7 +263,7 @@ parameters:
     default: "TTAHUB-2139/shared-groups"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "TTAHUB-1974/monitoring-data"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -337,11 +353,12 @@ jobs:
         AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
         AWS_ELASTICSEARCH_ACCESS_KEY: admin
         AWS_ELASTICSEARCH_SECRET_KEY: admin
+        SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -379,7 +396,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Syft SBOM
           environment:
@@ -451,7 +468,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -492,7 +509,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -533,7 +550,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -668,8 +685,12 @@ jobs:
                 smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                smtp_password: SMTP_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -719,6 +740,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -768,6 +793,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -815,6 +844,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |

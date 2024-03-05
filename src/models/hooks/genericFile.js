@@ -32,6 +32,11 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
         as: 'communicationLogFiles',
         required: false,
       },
+      {
+        model: sequelize.models.ImportFile,
+        as: 'importFile',
+        required: false,
+      },
     ],
     transaction: options.transaction,
   });
@@ -40,7 +45,8 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
     && file.objectiveFiles.length === 0
     && file.objectiveTemplateFiles.length === 0
     && file.sessionFiles.length === 0
-    && file.communicationLogFiles.length === 0) {
+    && file.communicationLogFiles.length === 0
+    && file.importFile === null) {
     await sequelize.models.File.destroy({
       where: { id: file.id },
       individualHooks: true,
