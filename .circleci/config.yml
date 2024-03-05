@@ -260,7 +260,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "filter-GA-example"
+    default: "TTAHUB-2139/shared-groups"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "TTAHUB-1974/monitoring-data"
