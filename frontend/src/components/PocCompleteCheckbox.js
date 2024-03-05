@@ -32,7 +32,7 @@ export default function PocCompleteCheckbox({ userId, isPoc }) {
     }
   };
 
-  const validEmailRoles = ['IST', 'ECM', 'GSM', 'TTAC'];
+  const validEmailRoles = ['ECM', 'GSM', 'TTAC'];
 
   const hasValidEmailRole = () => {
     const userRoles = user.roles.map((r) => r.name);

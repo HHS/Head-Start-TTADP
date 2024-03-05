@@ -63,13 +63,13 @@ const recipientsAvailable = [
   'GMS',
 ];
 
-const emailTypesMap = [
-  {
+const emailTypesMap = {
+  submitsForApprovalRoles: [{
     name: '',
     description: 'Someone submits an activity report for my approval.',
     keyName: 'emailWhenReportSubmittedForReview',
-  },
-  {
+  }],
+  managerAndCollaboratorRoles: [{
     name: '',
     description: 'A manager requests changes to an activity report that I created or collaborated on.',
     keyName: 'emailWhenChangeRequested',
@@ -83,36 +83,33 @@ const emailTypesMap = [
     name: '',
     description: 'I\'m added as a collaborator on an activity report.',
     keyName: 'emailWhenAppointedCollaborator',
-  },
-  {
+  }],
+  recipientsAvailable: [{
     name: 'Program Specialists only',
     description: 'One of my recipients\' activity reports is available.',
     keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
-  },
-];
-
+  }],
+};
 const getEmailOptionsByUserRoles = (roles) => {
   const userRoles = roles.map((role) => role.name);
-  const userEmailOptions = [];
+  let userEmailOptions = [];
 
   if (userRoles.length) {
   // If role names contains any of the roles in allEmailRoles, add ar for approval.
     if (userRoles.some((role) => submitsForApprovalRoles.includes(role))) {
-      userEmailOptions.push(emailTypesMap[0]);
+      // Add emailTypesMap.submitsForApprovalRoles to userEmailOptions.
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.submitsForApprovalRoles);
     }
 
     // If role names contains any of the roles in allEmailRoles, add ar for change request.
     if (userRoles.some((role) => managerAndCollaboratorRoles.includes(role))) {
-      userEmailOptions.push(emailTypesMap[1]);
-      userEmailOptions.push(emailTypesMap[2]);
-      userEmailOptions.push(emailTypesMap[3]);
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.managerAndCollaboratorRoles);
     }
 
     if (userRoles.some((role) => recipientsAvailable.includes(role))) {
-      userEmailOptions.push(emailTypesMap[4]);
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.recipientsAvailable);
     }
   }
-
   // return returnEmailOptions;
   return userEmailOptions;
 };
@@ -199,8 +196,11 @@ function EmailPreferencesForm({ disabled, onSave, roles }) {
 
   const onSubmit = async (formData) => {
     onSave();
-    const newSettings = emailTypesMap.reduce((acc, { keyName }) => {
-      acc.push({ key: keyName, value: formData[keyName] });
+    const newSettings = Object.entries(emailTypesMap).reduce((acc, entry) => {
+      const options = entry[1];
+      options.forEach((option) => {
+        acc.push({ key: option.keyName, value: formData[option.keyName] });
+      });
       return acc;
     }, []);
 
@@ -362,9 +362,10 @@ function AccountManagement({ updateUser }) {
 
   const userHasEmailRoles = () => {
     const userRoles = user.roles.map((role) => role.name);
-    return userRoles.some((role) => submitsForApprovalRoles.includes(role))
-      || userRoles.some((role) => managerAndCollaboratorRoles.includes(role))
-      || userRoles.some((role) => recipientsAvailable.includes(role));
+    return userRoles.some((role) => [
+      ...submitsForApprovalRoles,
+      ...managerAndCollaboratorRoles,
+      ...recipientsAvailable].includes(role));
   };
 
   return (
