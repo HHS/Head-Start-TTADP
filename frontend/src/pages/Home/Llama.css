@@ -1,9 +1,26 @@
-.statistics-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.5rem;
-    padding-bottom: 4rem;
+@media screen and (min-width: 64em) {
+    .statistics-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.5rem;
+        padding-bottom: 4rem;
+    }
+
+    .statistics-content--loaded h2 span {
+        animation: rotatin cubic-bezier(0.39, 0.575, 0.565, 1) 1.33s forwards;
+    }
+    
+    .statistics-content-heart-logo {
+        grid-row: span 3;
+        padding: 0.5rem
+    }
 }
+
+.statistics-content.statistics-content .smart-hub--dashboard-overview-field{
+    width: 100%;
+}
+
+
 .statistics-content p,
 .statistics-content h2 {
     grid-column: span 3;
@@ -13,15 +30,6 @@
 .statistics-content h2 span {
     display: inline-block;
     margin: 0 0.25rem;
-}
-
-.statistics-content--loaded h2 span {
-    animation: rotatin cubic-bezier(0.39, 0.575, 0.565, 1) 1.33s forwards;
-}
-
-.statistics-content-heart-logo {
-    grid-row: span 3;
-    padding: 0.5rem
 }
 
 
