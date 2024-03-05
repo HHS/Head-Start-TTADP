@@ -66,7 +66,7 @@ module.exports = {
         WHERE NOT (uwr."roles"::text[] &&  ARRAY['ECM', 'GSM', 'TTAC'])
       )
       DELETE FROM "UserSettingOverrides"
-      WHERE id IN (SELECT id FROM "toCleanUp");
+      WHERE id IN (SELECT "overrideId" FROM "toCleanUp");
 
       -- 2.) Cleanup for 'emailWhenChangeRequested', 'emailWhenReportApproval', 'emailWhenAppointedCollaborator' settings.
       WITH "overrides" AS (
@@ -106,7 +106,7 @@ module.exports = {
         WHERE NOT (uwr."roles"::text[] &&  ARRAY['ECM', 'ECS', 'FES', 'GS', 'GSM', 'HS', 'SS', 'TTAC'])
       )
       DELETE FROM "UserSettingOverrides"
-      WHERE id IN (SELECT id FROM "toCleanUp");
+      WHERE id IN (SELECT "overrideId" FROM "toCleanUp");
 
       -- 3.) Cleanup for 'emailWhenRecipientReportApprovedProgramSpecialist' setting.
       WITH "overrides" AS (
@@ -146,7 +146,7 @@ module.exports = {
         WHERE NOT (uwr."roles"::text[] &&  ARRAY['PS', 'SPS', 'GMS'])
       )
       DELETE FROM "UserSettingOverrides"
-      WHERE id IN (SELECT id FROM "toCleanUp");
+      WHERE id IN (SELECT "overrideId" FROM "toCleanUp");
       `, { transaction });
     });
   },
