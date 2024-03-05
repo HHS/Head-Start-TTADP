@@ -4,7 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform\r =============================================",
   "main": "index.js",
   "engines": {
-    "node": "18.18.2"
+    "node": "18.19.1"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -297,7 +297,7 @@
     "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "2.0.16",
+    "@ttahub/common": "2.0.17",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",

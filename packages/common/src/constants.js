@@ -326,3 +326,10 @@ const EVENT_AUDIENCE = [
 ];
 
 exports.EVENT_AUDIENCE = EVENT_AUDIENCE;
+
+const GROUP_SHARED_WITH = {
+  EVERYONE: 'Everyone',
+  INDIVIDUALS: 'Individuals',
+};
+
+exports.GROUP_SHARED_WITH = GROUP_SHARED_WITH;

@@ -13,10 +13,15 @@ test('my groups', async ({ page }) => {
   await page.getByRole('link', { name: 'Create a group' }).click();
   await page.getByTestId('textInput').fill('A new group for me');
 
-  await page.locator('[class$="-ValueContainer"]').click();
+  await page.locator('[class$="-ValueContainer"]').first().click();
   await page.keyboard.press('Enter');
 
   await blur(page);
+
+  // Check 'Keep this group private.' checkbox for now.
+  await page.getByText('Keep this group private.').click();
+  await blur(page);
+
   await page.getByRole('button', { name: 'Save group' }).click();
 
   // navigate to the recipient search page
