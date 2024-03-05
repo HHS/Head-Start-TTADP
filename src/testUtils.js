@@ -188,6 +188,7 @@ export async function destroyReport(report) {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
     }
 

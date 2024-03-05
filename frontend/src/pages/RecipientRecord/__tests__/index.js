@@ -12,6 +12,7 @@ import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 
 import AppLoadingContext from '../../../AppLoadingContext';
+import { GrantDataProvider } from '../pages/GrantDataContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -101,16 +102,18 @@ describe('recipient record page', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={
-          {
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+          <GrantDataProvider>
+            <AppLoadingContext.Provider value={
+            {
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }
           }
-        }
-          >
-            <RecipientRecord match={match} />
-          </AppLoadingContext.Provider>
+            >
+              <RecipientRecord match={match} />
+            </AppLoadingContext.Provider>
+          </GrantDataProvider>
         </UserContext.Provider>
       </Router>,
     );
@@ -145,6 +148,10 @@ describe('recipient record page', () => {
     fetchMock.get('/api/widgets/goalStatusGraph?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
+    fetchMock.get('/api/monitoring/class/1/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/1/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/undefined/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/class/undefined/region/45/grant/RECIPIENT_NUMBER', {});
   });
   afterEach(() => {
     fetchMock.restore();

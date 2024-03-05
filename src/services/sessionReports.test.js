@@ -197,6 +197,7 @@ describe('session reports service', () => {
         where: {
           recipientId: recipient.id,
         },
+        individualHooks: true,
       });
 
       await db.Recipient.destroy({ where: { id: recipient.id } });

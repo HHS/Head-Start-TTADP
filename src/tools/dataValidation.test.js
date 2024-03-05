@@ -1,6 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
-import { sequelize } from '../models';
+import { sequelize, SiteAlert } from '../models';
 import { auditLogger } from '../logger';
 
 jest.mock('../logger');
@@ -8,6 +8,23 @@ jest.mock('../logger');
 describe('dataValidation', () => {
   afterAll(async () => {
     await sequelize.close();
+  });
+
+  describe('countAndLastUpdated', () => {
+    it('should return the count and last updated value for the given table', async () => {
+      const tableName = 'Grants';
+      const { updatedAt, count } = await countAndLastUpdated(tableName);
+      expect(updatedAt).toBeInstanceOf(Date);
+      expect(Number.isNaN(parseInt(count, DECIMAL_BASE))).toBe(false);
+    });
+    it('handles no results', async () => {
+      // I hope this never bites us
+      await SiteAlert.destroy({ where: {} });
+      const tableName = 'SiteAlerts';
+      const { updatedAt, count } = await countAndLastUpdated(tableName);
+      expect(updatedAt).toEqual('');
+      expect(Number.isNaN(parseInt(count, DECIMAL_BASE))).toBe(false);
+    });
   });
 
   describe('run basic query', () => {

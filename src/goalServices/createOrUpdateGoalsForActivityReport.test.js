@@ -172,6 +172,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.

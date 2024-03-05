@@ -45,7 +45,7 @@ interface SimilarityGroup {
   toJSON: () => SimilarityGroup;
 }
 
-const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
+export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
   ...group.toJSON(),
   goals: group.goals.filter((goal) => {
     if (goal.goalTemplate && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {

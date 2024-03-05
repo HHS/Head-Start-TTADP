@@ -2,9 +2,10 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import GrantsList from '../GrantsList';
+import { GrantDataProvider } from '../../pages/GrantDataContext';
 
 const renderGrantsList = (summary) => {
-  render(<GrantsList summary={summary} skipLoading />);
+  render(<GrantDataProvider><GrantsList summary={summary} skipLoading /></GrantDataProvider>);
 };
 
 describe('Grants List Widget', () => {
