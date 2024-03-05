@@ -801,14 +801,14 @@ function reduceGoals(goals, forReport = false) {
 
         existingGoal.collaborators = existingGoal.collaborators || [];
 
-        existingGoal.collaborators = [
+        existingGoal.collaborators = uniqBy([
           ...existingGoal.collaborators,
           {
             goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
             ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
-        ];
+        ], 'goalCreatorName');
 
         if (forReport) {
           existingGoal.prompts = reducePrompts(

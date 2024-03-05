@@ -8,12 +8,23 @@ const goalFieldTransate = {
   responsesForComparison: 'responsesForComparison',
 };
 
-const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate) => haystack.find(
-  (g) => g[translate.status] === needle.status
-      && g[translate.name].trim() === needle.name.trim()
-      && g[translate.source] === needle.source
-      && g[translate.responsesForComparison] === responsesForComparison(needle),
-);
+const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate) => {
+  const needleCollaborators = needle?.collaborators?.map(
+    (c) => c.goalCreatorName,
+  ).filter(Boolean) ?? [];
+
+  const haystackCollaborators = haystack.flatMap(
+    (g) => g.collaborators.map((c) => c.goalCreatorName).filter(Boolean),
+  );
+
+  return haystack.find((g) => (
+    g[translate.status] === needle.status
+    && g[translate.name].trim() === needle.name.trim()
+    && g[translate.source] === needle.source
+    && g[translate.responsesForComparison] === responsesForComparison(needle)
+    && haystackCollaborators.some((c) => needleCollaborators.includes(c))
+  ));
+};
 
 export {
   findOrFailExistingGoal,

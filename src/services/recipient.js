@@ -734,6 +734,25 @@ export async function getGoalsByActivityRecipient(
     };
   }
 
+  function createCollaborators(goal) {
+    return [
+      {
+        goalNumber: goal.goalNumber,
+        ...getGoalCollaboratorDetails('Creator', goal),
+        ...getGoalCollaboratorDetails('Linker', goal),
+      },
+    ];
+  }
+
+  sorted = sorted.map((goal) => {
+    if (goal.goalCollaborators.length === 0) return goal;
+
+    // eslint-disable-next-line no-param-reassign
+    goal.collaborators = createCollaborators(goal);
+
+    return goal;
+  });
+
   const r = sorted.reduce((previous, current) => {
     const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
@@ -755,14 +774,10 @@ export async function getGoalsByActivityRecipient(
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
       existingGoal.collaborators = existingGoal.collaborators || [];
 
-      existingGoal.collaborators = [
+      existingGoal.collaborators = uniqBy([
         ...existingGoal.collaborators,
-        {
-          goalNumber: current.goalNumber,
-          ...getGoalCollaboratorDetails('Creator', current),
-          ...getGoalCollaboratorDetails('Linker', current),
-        },
-      ];
+        ...createCollaborators(current),
+      ], 'goalCreatorName');
 
       existingGoal.onAR = existingGoal.onAR || current.onAR;
       return {
@@ -792,13 +807,7 @@ export async function getGoalsByActivityRecipient(
       onAR: current.onAR,
     };
 
-    goalToAdd.collaborators.push(
-      {
-        goalNumber: current.goalNumber,
-        ...getGoalCollaboratorDetails('Creator', current),
-        ...getGoalCollaboratorDetails('Linker', current),
-      },
-    );
+    goalToAdd.collaborators.push(...createCollaborators(current));
 
     const sessionObjectives = current.eventReportPilots
       // shape the session objective, mold it into a form that
