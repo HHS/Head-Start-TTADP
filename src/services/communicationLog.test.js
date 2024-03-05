@@ -8,10 +8,13 @@ import {
   deleteLog,
   updateLog,
   createLog,
+  orderLogsBy,
 } from './communicationLog';
 import { createRecipient, createUser } from '../testUtils';
 
 jest.mock('csv-stringify/lib/sync');
+
+const { sequelize } = db;
 
 describe('communicationLog services', () => {
   let user;
@@ -85,5 +88,60 @@ describe('communicationLog services', () => {
   it('deletes logs', async () => {
     const result = await deleteLog(log.id);
     expect(result).toEqual(1);
+  });
+
+  describe('orderLogsBy', () => {
+    it('should return the correct result when sortBy is authorName', () => {
+      const sortBy = 'authorName';
+      const sortDir = 'asc';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([
+        [sequelize.literal('author.name asc')],
+        ['data.communicationDate', 'asc'],
+      ]);
+    });
+
+    it('should return the correct result when sortBy is purpose', () => {
+      const sortBy = 'purpose';
+      const sortDir = 'desc';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([
+        ['data.purpose', 'desc'],
+        ['data.communicationDate', 'desc'],
+      ]);
+    });
+
+    it('should return the correct result when sortBy is result', () => {
+      const sortBy = 'result';
+      const sortDir = 'asc';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([
+        ['data.result', 'asc'],
+        ['data.communicationDate', 'asc'],
+      ]);
+    });
+
+    it('should return the correct result when sortBy is communicationDate', () => {
+      const sortBy = 'communicationDate';
+      const sortDir = 'desc';
+
+      const result = orderLogsBy(sortBy, sortDir);
+
+      expect(result).toEqual([['data.communicationDate', 'desc']]);
+    });
+
+    it('should return the correct result when sortBy is not provided', () => {
+      const sortDir = 'asc';
+
+      const result = orderLogsBy(undefined, sortDir);
+
+      expect(result).toEqual([['data.communicationDate', 'asc']]);
+    });
   });
 });

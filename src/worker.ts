@@ -1,5 +1,8 @@
 /* eslint-disable import/first */
-require('newrelic');
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  require('newrelic');
+}
 
 import {} from 'dotenv/config';
 import throng from 'throng';
@@ -26,7 +29,7 @@ import {
 const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Pull jobs off the redis queue and process them.
-async function start() {
+async function start(context: { id: number }) {
   // File Scanning Queue
   processScanQueue();
 

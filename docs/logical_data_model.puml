@@ -420,6 +420,15 @@ class Goals{
  timeframe : text
 }
 
+class GrantNumberLinks{
+ * id : integer : <generated>
+ grantId : integer : REFERENCES "Grants".id
+ * createdAt : timestamp with time zone
+ * grantNumber : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
 class Grants{
  * id : integer
  oldGrantId : integer : REFERENCES "Grants".id
@@ -461,6 +470,44 @@ class Groups{
  isPublic : boolean
 }
 
+class ImportDataFiles{
+ * id : integer : <generated>
+ * importFileId : integer : REFERENCES "ImportFiles".id
+ * createdAt : timestamp with time zone
+ * status : enum : 'IDENTIFIED'::"enum_ImportDataFiles_status"
+ * updatedAt : timestamp with time zone
+ fileInfo : jsonb
+ hash : text
+ recordCounts : jsonb
+ schema : jsonb
+}
+
+class ImportFiles{
+ * id : integer : <generated>
+ fileId : integer : REFERENCES "Files".id
+ * importId : integer : REFERENCES "Imports".id
+ * createdAt : timestamp with time zone
+ * downloadAttempts : integer : 0
+ * processAttempts : integer : 0
+ * status : enum : 'IDENTIFIED'::"enum_ImportFiles_status"
+ * updatedAt : timestamp with time zone
+ ftpFileInfo : jsonb
+ hash : text
+}
+
+class Imports{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * definitions : jsonb
+ * enabled : boolean : false
+ * ftpSettings : jsonb
+ * name : text
+ * schedule : text
+ * updatedAt : timestamp with time zone
+ fileMask : text
+ path : text
+}
+
 class MailerLogs{
  * id : bigint : <generated>
  * action : enum
@@ -483,6 +530,99 @@ class MaintenanceLogs{
  * type : enum
  * updatedAt : timestamp with time zone
  isSuccessful : boolean
+}
+
+class MonitoringClassSummaries{
+ * id : integer : <generated>
+ * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ classroomOrganization : decimal(5,4)
+ deletedAt : timestamp with time zone
+ emotionalSupport : decimal(5,4)
+ hash : text
+ instructionalSupport : decimal(5,4)
+ reportDeliveryDate : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistories{
+ * id : integer : <generated>
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * findingHistoryId : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ hash : text
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringReviewGrantees{
+ * id : integer : <generated>
+ * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * createdAt : timestamp with time zone
+ * createTime : timestamp with time zone
+ * granteeId : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updateBy : text
+ * updatedAt : timestamp with time zone
+ * updateTime : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringReviewLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * reviewId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringReviewStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringReviews{
+ * id : integer : <generated>
+ * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
+ * statusId : integer : REFERENCES "MonitoringReviewStatusLinks"."statusId"
+ * contentId : text
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ endDate : date
+ hash : text
+ outcome : text
+ reportDeliveryDate : timestamp with time zone
+ reviewType : text
+ sourceDeletedAt : timestamp with time zone
+ startDate : date
 }
 
 class NationalCenterUsers{
@@ -1371,6 +1511,20 @@ class ZALGoals{
  session_sig : text
 }
 
+class ZALGrantNumberLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1413,6 +1567,48 @@ class ZALGroups{
  session_sig : text
 }
 
+class ZALImportDataFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALImportFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALImports{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALMailerLogs{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1428,6 +1624,104 @@ class ZALMailerLogs{
 }
 
 class ZALMaintenanceLogs{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringClassSummaries{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewGrantees{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewStatusLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviewStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringReviews{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1977,6 +2271,9 @@ class ZALZAFilter{
 ' Associations
 
 
+Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
+Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalResources : activityReportGoal, activityReportGoalResources
@@ -2025,6 +2322,8 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : finalGoal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
+GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
+GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grantNumberLink
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : grant, eventReportPilotGoals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
@@ -2033,7 +2332,15 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
+ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
+Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFiles
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewLink, monitoringReviewGrantees
+MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
+MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
