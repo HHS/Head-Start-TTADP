@@ -210,7 +210,7 @@ const findOrCreateCollaborator = async (
       {
         where: { id: collaborator.dataValues.id },
         ...(transaction && { transaction }),
-        independentHooks: true,
+        individualHooks: true,
         returning: true,
       },
     );
@@ -363,7 +363,7 @@ const removeCollaboratorsForType = async (
         { linkBack: update.linkBack },
         {
           where: { id: update.id },
-          independentHooks: true,
+          individualHooks: true,
           ...(transaction && { transaction }),
         },
       ))
@@ -373,7 +373,7 @@ const removeCollaboratorsForType = async (
         collaboratorDetails[genericCollaboratorType].collaborators
       ].destroy({
         where: { id: deletes },
-        independentHooks: true,
+        individualHooks: true,
         ...(transaction && { transaction }),
       })
       : Promise.resolve());

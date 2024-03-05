@@ -355,6 +355,7 @@ describe('getGoalIdsBySimilarity', () => {
         id: grants.map((g) => g.id),
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalSimilarityGroup.destroy({

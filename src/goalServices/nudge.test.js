@@ -27,7 +27,7 @@ describe('nudge', () => {
 
   afterAll(async () => {
     await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await db.sequelize.close();
   });

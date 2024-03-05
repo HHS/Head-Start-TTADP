@@ -343,7 +343,7 @@ describe('Objectives DB service', () => {
 
     await Objective.destroy({ where: { id: objectiveInfo.id }, force: true });
     await Goal.destroy({ where: { id: goalInfo.id }, force: true });
-    await Grant.destroy({ where: { id: grantInfo.id } });
+    await Grant.destroy({ where: { id: grantInfo.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientInfo.id } });
     await OtherEntity.destroy({ where: { id: otherEntity.id } });
     await User.destroy({ where: { id: mockUser.id } });
