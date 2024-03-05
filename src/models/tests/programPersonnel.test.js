@@ -125,6 +125,7 @@ describe('ProgramPersonnel', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.

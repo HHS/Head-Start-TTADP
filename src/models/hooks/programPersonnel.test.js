@@ -103,6 +103,7 @@ describe('ProgramPersonnel hooks', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await db.Recipient.destroy({

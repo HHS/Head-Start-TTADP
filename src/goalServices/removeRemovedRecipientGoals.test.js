@@ -238,7 +238,7 @@ describe('removeRemovedRecipientsGoals', () => {
     });
 
     await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
+      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
     );
 
     await Promise.all(

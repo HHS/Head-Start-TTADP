@@ -1439,7 +1439,7 @@ export async function createOrUpdateGoals(goals) {
           rtrOrder: index + 1,
         });
 
-        if (objective.supportType && objective.supportType !== supportType) {
+        if (supportType && objective.supportType !== supportType) {
           objective.set({ supportType });
         }
 
