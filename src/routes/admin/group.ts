@@ -4,6 +4,7 @@ import httpCodes from 'http-codes';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { groupsByRegion } from '../../services/groups';
+import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'ADMIN:GROUPS';
 const logContext = { namespace };
@@ -20,8 +21,8 @@ export async function getGroupsByRegion(req: Request, res: Response) {
     if (!regionId) {
       res.status(httpCodes.BAD_REQUEST).json({ error: 'regionId is required' });
     }
-
-    const groups = await groupsByRegion(Number(regionId));
+    const userId = await currentUserId(req, res);
+    const groups = await groupsByRegion(Number(regionId), userId);
     res.status(httpCodes.OK).json(groups);
   } catch (err) {
     await handleError(req, res, err, logContext);
