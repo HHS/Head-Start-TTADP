@@ -7,7 +7,7 @@
 
 ## Issue(s)
 
-* https://ocio-jira.acf.hhs.gov/browse/TTAHUB-0
+* https://jira.acf.gov/browse/TTAHUB-0
 
 
 ## Checklists
