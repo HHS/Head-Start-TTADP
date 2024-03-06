@@ -26,7 +26,7 @@ exports.config = {
      *
      * @env NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
      */
-    enabled: true,
+    enabled: false,
   },
   logging: {
     /**
@@ -36,6 +36,7 @@ exports.config = {
      */
     level: 'info',
     filepath: 'stdout',
+    enabled: false,
   },
   /**
    * [Audit logging](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#audit_log)
@@ -120,6 +121,11 @@ exports.config = {
     record_sql: process.env.NEW_RELIC_RECORD_SQL
       ? process.env.NEW_RELIC_RECORD_SQL
       : 'raw',
+  },
+  worker_threads: {
+    enabled: process.env.NEW_RELIC_WORKER_THREADS_ENABLED
+      ? process.env.NEW_RELIC_WORKER_THREADS_ENABLED
+      : false,
   },
   /**
    * [Slow queries variables](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#slow-queries)
