@@ -285,16 +285,15 @@ const recordAvailableFiles = async (
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newFiles.length > 0
-      ? ImportFile.bulkCreate(
-        newFiles.map((newFile) => ({
+    ...(newFiles.length > 0
+      ? newFiles.map((newFile) => ImportFile.create(
+        {
           importId,
           ftpFileInfo: newFile.fileInfo,
           status: IMPORT_STATUSES.IDENTIFIED,
-        })),
-        { individualHooks: true },
-      )
-      : Promise.resolve()),
+        },
+      ))
+      : []),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
       ? matchedFiles.map(async (matchedFile) => ImportFile.update(
@@ -386,16 +385,13 @@ const recordAvailableDataFiles = async (
 
   return Promise.all([
     // Create new files in the database if there are any
-    (newFiles.length > 0
-      ? ImportDataFile.bulkCreate(
-        newFiles.map((newFile) => ({
-          importFileId,
-          fileInfo: newFile,
-          status: IMPORT_DATA_STATUSES.IDENTIFIED,
-        })),
-        { individualHooks: true },
-      )
-      : Promise.resolve()),
+    ...(newFiles.length > 0
+      ? newFiles.map((newFile) => ImportDataFile.create({
+        importFileId,
+        fileInfo: newFile,
+        status: IMPORT_DATA_STATUSES.IDENTIFIED,
+      }))
+      : []),
     // Update matched files in the database if there are any
     ...(matchedFiles.length > 0
       ? matchedFiles.map(async (matchedFile) => ImportDataFile.update(
