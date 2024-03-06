@@ -116,7 +116,7 @@ export function checkObjectiveTemplateIdParam(req, res, next) {
  * @param {*} next - next middleware
  */
 export function checkGroupIdParam(req, res, next) {
-  if (req.params && req.params.groupId && canBeInt(req.params.groupId)) {
+  if (req.params && req.params.groupId && (req.params.groupId === 'new' || canBeInt(req.params.groupId))) {
     return next();
   }
 

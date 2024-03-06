@@ -131,6 +131,15 @@ export default (sequelize, DataTypes) => {
           : `${this.number} - ${this.recipientId}`;
       },
     },
+    recipientNameWithPrograms: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const programsList = this.programTypes.length > 0 ? `${this.programTypes.join(', ')}` : '';
+        return this.recipient
+          ? `${this.recipient.name} - ${this.number} - ${programsList}`
+          : `${this.number} - ${this.recipientId}`;
+      },
+    },
   }, {
   //   defaultScope: {
   //     where: {
