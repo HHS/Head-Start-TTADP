@@ -33,21 +33,21 @@ jest.mock('../../../models', () => ({
   Import: {
     findOne: jest.fn(),
     findAll: jest.fn(),
-    bulkCreate: jest.fn(),
+    create: jest.fn(),
     update: jest.fn(),
     destroy: jest.fn(),
   },
   ImportFile: {
     findOne: jest.fn(),
     findAll: jest.fn(),
-    bulkCreate: jest.fn(),
+    create: jest.fn(),
     update: jest.fn(),
     destroy: jest.fn(),
   },
   ImportDataFile: {
     findOne: jest.fn(),
     findAll: jest.fn(),
-    bulkCreate: jest.fn(),
+    create: jest.fn(),
     update: jest.fn(),
     destroy: jest.fn(),
   },
@@ -343,15 +343,12 @@ describe('record', () => {
       ImportFile.findAll.mockResolvedValueOnce([]);
       await recordAvailableFiles(importId, availableFiles);
 
-      expect(ImportFile.bulkCreate).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({
-            importId,
-            ftpFileInfo: expect.any(Object),
-            status: IMPORT_STATUSES.IDENTIFIED,
-          }),
-        ]),
-        { individualHooks: true },
+      expect(ImportFile.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          importId: expect.anything(),
+          ftpFileInfo: expect.any(Object),
+          status: IMPORT_STATUSES.IDENTIFIED,
+        }),
       );
     });
 
@@ -406,7 +403,7 @@ describe('record', () => {
       })));
       await recordAvailableFiles(importId, availableFiles);
 
-      expect(ImportFile.bulkCreate).not.toHaveBeenCalled();
+      expect(ImportFile.create).not.toHaveBeenCalled();
       expect(ImportFile.update).toHaveBeenCalled();
       expect(ImportFile.destroy).not.toHaveBeenCalled();
     });
@@ -418,7 +415,7 @@ describe('record', () => {
 
       expect(result).toBeInstanceOf(Array);
       // Assuming there are three types of operations: create, update, delete
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(3);
     });
   });
 
@@ -451,7 +448,7 @@ describe('record', () => {
         .filter((af) => !currentImportDataFiles
           .some((cif) => cif.fileInfo.path === af.path && cif.fileInfo.name === af.name));
 
-      // Mock the database response for bulkCreate
+      // Mock the database response for create
       const mockNewFilesResponse = newFiles
         .map((file) => ({
           ...file,
@@ -459,19 +456,19 @@ describe('record', () => {
           importFileId,
           status: IMPORT_DATA_STATUSES.IDENTIFIED,
         }));
-      ImportDataFile.bulkCreate.mockResolvedValue(mockNewFilesResponse);
+      ImportDataFile.create.mockResolvedValue(mockNewFilesResponse[0]);
 
       await recordAvailableDataFiles(importFileId, availableFiles);
 
-      // Expected argument for bulkCreate should be the new files with additional properties
+      // Expected argument for create should be the new files with additional properties
       const expectedBulkCreateArgument = newFiles.map((newFile) => ({
         importFileId,
         fileInfo: newFile,
         status: IMPORT_DATA_STATUSES.IDENTIFIED,
       }));
 
-      expect(ImportDataFile.bulkCreate)
-        .toHaveBeenCalledWith(expectedBulkCreateArgument, { individualHooks: true });
+      expect(ImportDataFile.create)
+        .toHaveBeenCalledWith(expectedBulkCreateArgument[0]);
     });
 
     it('should update matched files in the database when there are matched files', async () => {
@@ -519,7 +516,7 @@ describe('record', () => {
 
       await recordAvailableDataFiles(importFileId, [availableFiles[0], availableFiles[1]]);
 
-      expect(ImportDataFile.bulkCreate).not.toHaveBeenCalled();
+      expect(ImportDataFile.create).not.toHaveBeenCalled();
       expect(ImportDataFile.update).toHaveBeenCalled();
       expect(ImportDataFile.destroy).not.toHaveBeenCalled();
     });
