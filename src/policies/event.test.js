@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import EventReport from './event';
 
@@ -6,12 +7,13 @@ const createEvent = ({
   pocIds = [1],
   collaboratorIds = [],
   regionId = 1,
+  data = {},
 }) => ({
   ownerId,
   pocIds,
   collaboratorIds,
   regionId,
-  data: {},
+  data,
 });
 
 let nextUserId = 0;
@@ -63,19 +65,61 @@ describe('Event Report policies', () => {
 
   describe('canDelete', () => {
     it('is true if the user is an admin', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
       const policy = new EventReport(admin, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('is false if the event is in progress', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(false);
+    });
+
+    it('is false if the event is complete', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(false);
+    });
+
+    it('is true if the event is suspended', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.SUSPENDED },
+      });
       const policy = new EventReport(authorRegion1, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is false if the user is not an admin or the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canDelete()).toBe(false);
     });
