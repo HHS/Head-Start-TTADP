@@ -9,12 +9,12 @@ const goalFieldTransate = {
 };
 
 const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate) => {
-  const needleCollaborators = needle?.collaborators?.map(
+  const needleCollaborators = (needle.collaborators || []).map(
     (c) => c.goalCreatorName,
   ).filter(Boolean) ?? [];
 
   const haystackCollaborators = haystack.flatMap(
-    (g) => g.collaborators.map((c) => c.goalCreatorName).filter(Boolean),
+    (g) => (g.collaborators || []).map((c) => c.goalCreatorName).filter(Boolean),
   );
 
   return haystack.find((g) => (
