@@ -69,7 +69,7 @@ export default function Llama({ user }) {
         <div className={statisticsContentClasses.join(' ')}>
           <h2 className="margin-0">
             <span aria-hidden="true">🎉</span>
-            The TTA hub is three years old!
+            The TTA Hub is three years old!
             <span aria-hidden="true">🎉</span>
           </h2>
           <p className="usa-prose">{bannerMessage}</p>
