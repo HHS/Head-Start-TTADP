@@ -3039,6 +3039,12 @@ export async function mergeGoals(
     grantId,
   }));
 
+  // record the merge as complete
+  await setSimilarityGroupAsUserMerged(
+    goalSimiliarityGroupId,
+    finalGoalId,
+  );
+
   const newGoals = await Goal.bulkCreate(
     goalsToBulkCreate,
     {
@@ -3167,12 +3173,6 @@ export async function mergeGoals(
     }, { individualHooks: true });
     return u;
   }));
-
-  // record the merge as complete
-  await setSimilarityGroupAsUserMerged(
-    goalSimiliarityGroupId,
-    finalGoalId,
-  );
 
   return newGoals;
 }
