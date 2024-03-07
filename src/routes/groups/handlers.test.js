@@ -6,11 +6,22 @@ import {
   createGroup,
   updateGroup,
   deleteGroup,
+  getEligibleUsersForGroup,
+  getEligibleRecipientGrantsForGroup,
 } from './handlers';
 import { currentUserId } from '../../services/currentUser';
 import {
-  groups, group, createNewGroup, editGroup, destroyGroup,
+  groups,
+  group,
+  createNewGroup,
+  editGroup,
+  destroyGroup,
+  checkGroupNameAvailable,
+  potentialRecipientGrants,
+  potentialGroupUsers,
 } from '../../services/groups';
+import { GROUP_COLLABORATORS } from '../../constants';
+import GroupPolicy from '../../policies/group';
 
 jest.mock('../../models', () => ({
   Group: {
@@ -25,8 +36,11 @@ jest.mock('../../models', () => ({
   },
 }));
 
+jest.mock('../../policies/group');
+
 jest.mock('../../services/users', () => ({
-  userById: jest.fn(() => ({
+  userById: jest.fn((id) => ({
+    id,
     permissions: [
       {
         regionId: 1,
@@ -45,149 +59,160 @@ jest.mock('../../services/groups', () => ({
   createNewGroup: jest.fn(),
   editGroup: jest.fn(),
   destroyGroup: jest.fn(),
+  checkGroupNameAvailable: jest.fn(),
+  potentialRecipientGrants: jest.fn(),
+  potentialGroupUsers: jest.fn(),
 }));
 
 describe('Groups Handlers', () => {
   describe('getGroups', () => {
-    it('should return 200 and the groups', async () => {
-      const req = {
+    let req;
+    let res;
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         params: {},
       };
-      const res = {
+      res = {
         json: jest.fn(),
         status: jest.fn(),
         sendStatus: jest.fn(),
       };
-      const userId = 1;
-      const usersGroups = [{ id: 1, name: 'Group 1' }];
       currentUserId.mockReturnValueOnce(userId);
-      groups.mockReturnValueOnce(usersGroups);
+    });
+    it('should return 200 and the groups', async () => {
+      const groupsResponse = [{ id: 1, name: 'Group 1' }];
+      groups.mockReturnValueOnce(groupsResponse);
       await getGroups(req, res);
-      expect(res.json).toHaveBeenCalledWith(usersGroups);
+      expect(res.json).toHaveBeenCalledWith(groupsResponse);
     });
     it('should return 500 if there is an error', async () => {
-      const req = {
-        params: {},
-      };
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(),
-      };
-      const userId = 1;
-      currentUserId.mockReturnValueOnce(userId);
-      groups.mockRejectedValue(new Error('Error'));
+      groups.mockRejectedValueOnce(new Error('Error'));
       await getGroups(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });
 
   describe('getGroup', () => {
-    it('should return 200 and the group', async () => {
-      const req = {
+    let req;
+    let res;
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         params: {
           groupId: 1,
         },
       };
-      const res = {
+      res = {
         json: jest.fn(),
-        status: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: jest.fn() })),
       };
-      const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1', userId };
       currentUserId.mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the group', async () => {
+      const groupResponse = {
+        id: 1,
+        name: 'Group 1',
+        groupCollaborators: [{
+          id: 1,
+          user: { id: userId, name: '' },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+      }));
       group.mockReturnValueOnce(groupResponse);
       await getGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
     it('should return 403 if the user does not own the group', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
+      const groupResponse = {
+        id: 1,
+        name: 'Group 1',
+        groupCollaborators: [{
+          id: 1,
+          user: { id: 2, name: '' },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
       };
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
-      currentUserId.mockReturnValueOnce(userId);
       group.mockReturnValueOnce(groupResponse);
       await getGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return 500 if there is an error', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
       currentUserId.mockReturnValueOnce(userId);
-      group.mockRejectedValue(new Error('Error'));
+      group.mockRejectedValueOnce(new Error('Error'));
       await getGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });
 
   describe('createGroup', () => {
-    it('should return 200 and the group', async () => {
-      const req = {
+    let req;
+    let res;
+    const statusJson = jest.fn();
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         body: {
           name: 'Group 1',
+          coOwners: [2],
         },
       };
-
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(() => ({
-          json: jest.fn(),
-        })),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1' };
-      Grant.findAll.mockReturnValueOnce([
-        { regionId: 1 },
-      ]);
-      currentUserId.mockReturnValueOnce(userId);
-      createNewGroup.mockReturnValueOnce(groupResponse);
-      await createGroup(req, res);
-      expect(res.json).toHaveBeenCalledWith(groupResponse);
-    });
-
-    it('should return 200 with an error if the group already exists', async () => {
-      const req = {
-        body: {
-          name: 'Group 1',
-        },
-      };
-
-      const statusJson = jest.fn();
-      const res = {
+      res = {
         json: jest.fn(),
         status: jest.fn(() => ({
           json: statusJson,
         })),
         sendStatus: jest.fn(),
       };
-
-      const userId = 1;
+      currentUserId
+        .mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the group', async () => {
       const groupResponse = { id: 1, name: 'Group 1' };
-      Grant.findAll.mockReturnValueOnce([
-        { regionId: 1 },
-      ]);
-      Group.findOne.mockReturnValueOnce(groupResponse);
-      currentUserId.mockReturnValueOnce(userId);
-      createNewGroup.mockReturnValue(groupResponse);
+      Grant.findAll.mockReturnValueOnce([{
+        id: 1,
+        regionId: 1,
+        recipientId: 1,
+        status: 'Active',
+      }]);
+
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
+      createNewGroup.mockReturnValueOnce(groupResponse);
+      await createGroup(req, res);
+      expect(checkGroupNameAvailable).toHaveBeenCalled();
+      expect(res.json).toHaveBeenCalledWith(groupResponse);
+    });
+
+    it('should return 200 with an error if the group already exists', async () => {
+      Grant.findAll.mockReturnValueOnce([{
+        id: 1,
+        regionId: 1,
+        recipientId: 1,
+        status: 'Active',
+      }]);
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(false));
       await createGroup(req, res);
       expect(statusJson).toHaveBeenCalledWith({
         message: 'This group name already exists, please use a different name',
@@ -196,25 +221,21 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 500 if there is an error', async () => {
-      const req = {
-        body: {
-          name: 'Group 1',
-        },
-      };
-      const statusJson = jest.fn();
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(() => ({
-          json: statusJson,
-        })),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
-      Grant.findAll.mockReturnValueOnce([
-        { regionId: 1 },
-      ]);
-      Group.findOne.mockReturnValueOnce(null);
-      currentUserId.mockReturnValueOnce(userId);
+      Grant.findAll.mockReturnValueOnce([{
+        id: 1,
+        regionId: 1,
+        recipientId: 1,
+        status: 'Active',
+      }]);
+      // The below mock is called twice.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      GroupPolicy.mockImplementationOnce(() => ({
+        canAddToGroup: () => true,
+      }));
+      potentialRecipientGrants.mockReturnValueOnce([{ grantId: 1 }]);
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
       createNewGroup.mockRejectedValue(new Error('Error'));
       await createGroup(req, res);
       expect(statusJson).toHaveBeenCalledWith({ message: 'There was an error saving your group' });
@@ -222,54 +243,53 @@ describe('Groups Handlers', () => {
   });
 
   describe('updateGroup', () => {
-    it('should return 200 and the group', async () => {
-      const req = {
+    let req;
+    let res;
+    const statusJson = jest.fn();
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         params: {
           groupId: 1,
         },
         body: {
           name: 'Group 1',
+          coOwners: [],
+          individuals: [],
         },
       };
-      const res = {
+      res = {
         json: jest.fn(),
-        status: jest.fn(() => ({
-          json: jest.fn(),
-        })),
         sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: statusJson })),
       };
-
-      Group.findAll.mockReturnValueOnce([{ id: 1, name: 'Group 1', userId: 1 }]);
-      const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1' };
       currentUserId.mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the group', async () => {
+      Group.findAll.mockReturnValueOnce([{ id: 1, name: 'Group 1', userId: 1 }]);
+      const groupResponse = { id: 1, name: 'Group 1' };
       editGroup.mockReturnValue(groupResponse);
+
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
+      const groupsResponse = [{ id: 1, name: 'Group 1' }];
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      groups.mockReturnValueOnce(groupsResponse);
       await updateGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
     it('should return 200 with an error message if the group already exists', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-        body: {
-          name: 'Group 1',
-        },
-      };
-      const statusJson = jest.fn();
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(() => ({
-          json: statusJson,
-        })),
-        sendStatus: jest.fn(),
-      };
-
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
       Group.findAll.mockReturnValue([{ id: 1, name: 'Group Old', userId: 1 }, { id: 2, name: 'Group 1', userId: 1 }]);
-      const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1' };
-      currentUserId.mockReturnValueOnce(userId);
       editGroup.mockReturnValue(groupResponse);
       await updateGroup(req, res);
       expect(statusJson).toHaveBeenCalledWith({
@@ -279,52 +299,26 @@ describe('Groups Handlers', () => {
     });
 
     it('should return 403 if the user does not own the group', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-        body: {
-          name: 'Group 1',
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(() => ({
-          json: jest.fn(),
-        })),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
       const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
       Group.findAll.mockReturnValue([{ id: 1, name: 'Group 1', userId: 2 }]);
-      currentUserId.mockReturnValueOnce(userId);
       editGroup.mockReturnValue(groupResponse);
       await updateGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return 500 if there is an error', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-        body: {
-          name: 'Group 1',
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        status: jest.fn(() => ({
-          json: jest.fn(),
-        })),
-        sendStatus: jest.fn(),
-      };
-      const userId = 1;
+      GroupPolicy.mockImplementationOnce(() => ({
+        canUseGroup: () => true,
+        canEditGroup: () => true,
+        canAddToGroup: () => true,
+      }));
+      const groupsResponse = [{ id: 1, name: 'Group 1' }];
+      checkGroupNameAvailable.mockReturnValueOnce(Promise.resolve(true));
+      groups.mockReturnValueOnce(groupsResponse);
       Group.findAll.mockReturnValue([{ id: 1, name: 'Group 1', userId: 1 }]);
       Grant.findAll.mockReturnValueOnce([
         { regionId: 1 },
       ]);
-      currentUserId.mockReturnValueOnce(userId);
       editGroup.mockRejectedValue(new Error('Error'));
       await updateGroup(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
@@ -332,79 +326,286 @@ describe('Groups Handlers', () => {
   });
 
   describe('deleteGroup', () => {
-    it('should return 200 and the group', async () => {
-      const req = {
+    let req;
+    let res;
+    const userId = 1;
+    beforeEach(() => {
+      req = {
         params: {
           groupId: 1,
         },
       };
-      const res = {
+      res = {
         json: jest.fn(),
-        status: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: jest.fn() })),
       };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
-      const userId = 1;
-      const groupResponse = 1;
       currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+    });
+    it('should return 200 and the group', async () => {
+      GroupPolicy.mockImplementationOnce(() => ({
+        ownsGroup: () => true,
+      }));
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 1, name: '' },
+        }],
+        isPublic: false,
+      });
+      const groupResponse = 1;
+      destroyGroup.mockReturnValueOnce(groupResponse);
       await deleteGroup(req, res);
       expect(res.json).toHaveBeenCalledWith(groupResponse);
     });
 
     it('should return 200 if the group no longer exists', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-        status: jest.fn(() => ({ json: jest.fn() })),
-      };
-      Group.findOne.mockReturnValue(null);
-      const userId = 1;
-      const groupResponse = 1;
-      currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+      group.mockReturnValueOnce(null);
       await deleteGroup(req, res);
       expect(res.status).toHaveBeenCalledWith(httpCodes.OK);
     });
 
     it('should return 403 if the user does not own the group', async () => {
-      const req = {
-        params: {
-          groupId: 1,
-        },
-      };
-      const res = {
-        json: jest.fn(),
-        sendStatus: jest.fn(),
-      };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 2 });
-      const userId = 1;
-      const groupResponse = { id: 1, name: 'Group 1', userId: 2 };
-      currentUserId.mockReturnValueOnce(userId);
-      destroyGroup.mockReturnValue(groupResponse);
+      // Group.findOne.mockReturnValueOnce({ id: 1, name: 'Group 1', userId: 2 });
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 2, name: '' },
+        }],
+        isPublic: false,
+      });
       await deleteGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
 
     it('should return 500 if there is an error', async () => {
-      const req = {
+      GroupPolicy.mockImplementationOnce(() => ({
+        ownsGroup: () => true,
+      }));
+      group.mockReturnValueOnce({
+        id: 1,
+        name: '',
+        grants: [],
+        groupCollaborators: [{
+          id: 1,
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+          user: { id: 1, name: '' },
+        }],
+        isPublic: false,
+      });
+      destroyGroup.mockRejectedValue(new Error('Error'));
+      await deleteGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('getEligibleUsersForGroup', () => {
+    let req;
+    let res;
+    const statusJson = jest.fn();
+    const userId = 1;
+    beforeEach(() => {
+      res = {
+        json: jest.fn(),
+        sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: statusJson })),
+      };
+      currentUserId.mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the users', async () => {
+      req = {
         params: {
           groupId: 1,
         },
+        body: {
+        },
       };
-      const res = {
+
+      // Mock return value once for potentialCoOwners().
+      const potentialCoOwnersResponse = [{ id: 1, name: 'User 1' }];
+      potentialGroupUsers.mockReturnValueOnce(potentialCoOwnersResponse);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => true,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleUsersForGroup(req, res);
+      expect(res.json).toHaveBeenCalledWith(potentialCoOwnersResponse);
+    });
+
+    it('should return 403 forbidden', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return value once for potentialCoOwners().
+      const potentialCoOwnersResponse = [{ id: 1, name: 'User 1' }];
+      potentialGroupUsers.mockReturnValueOnce(potentialCoOwnersResponse);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => false,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleUsersForGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('should return handle 500 error', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+      group.mockReturnValueOnce(mockGroup);
+
+      // Mock return error for potentialCoOwners().
+      potentialGroupUsers.mockRejectedValue(new Error('Error'));
+
+      destroyGroup.mockRejectedValue(new Error('Error'));
+      await getEligibleUsersForGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
+    });
+  });
+
+  describe('getEligibleRecipientGrantsForGroup', () => {
+    let req;
+    let res;
+    const statusJson = jest.fn();
+    const userId = 1;
+    beforeEach(() => {
+      res = {
         json: jest.fn(),
         sendStatus: jest.fn(),
+        status: jest.fn(() => ({ json: statusJson })),
       };
-      Group.findOne.mockReturnValue({ id: 1, name: 'Group 1', userId: 1 });
-      const userId = 1;
       currentUserId.mockReturnValueOnce(userId);
+    });
+    it('should return 200 and the recipients', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      const resGrants = [{ id: 1, name: 'Grant 1' }];
+      potentialRecipientGrants.mockReturnValueOnce(resGrants);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => true,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleRecipientGrantsForGroup(req, res);
+      expect(res.json).toHaveBeenCalledWith(resGrants);
+    });
+
+    it('should return 403 forbidden', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return value once for potentialCoOwners().
+      const resGrants = [{ id: 1, name: 'Grant 1' }];
+      potentialGroupUsers.mockReturnValueOnce(resGrants);
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+
+      // Mock group policy.
+      GroupPolicy.mockImplementationOnce(() => ({
+        canEditGroup: () => false,
+      }));
+
+      group.mockReturnValueOnce(mockGroup);
+      await getEligibleRecipientGrantsForGroup(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
+    });
+
+    it('should return handle 500 error', async () => {
+      req = {
+        params: {
+          groupId: 1,
+        },
+        body: {
+        },
+      };
+
+      // Mock return group.
+      const mockGroup = {
+        groupCollaborators: [{
+          user: { id: userId },
+          collaboratorType: { name: GROUP_COLLABORATORS.CREATOR },
+        }],
+      };
+      group.mockReturnValueOnce(mockGroup);
+
+      // Mock return error for potentialCoOwners().
+      potentialRecipientGrants.mockRejectedValue(new Error('Error'));
+
       destroyGroup.mockRejectedValue(new Error('Error'));
-      await deleteGroup(req, res);
+      await getEligibleRecipientGrantsForGroup(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });
   });

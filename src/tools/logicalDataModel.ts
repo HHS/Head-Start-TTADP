@@ -164,8 +164,8 @@ function processClassDefinition(schema, key) {
         issues.push(`!issue='column reference missing'`); //eslint-disable-line
       } else {
         const tableFieldReference = field.reference.replace('(', '.').replace(')', '');
-
-        const modelFieldReference = `"${modelField?.references?.model?.tableName || modelField?.references?.model}".${modelField?.references?.key}`;
+        const wrapIfCapital = (s: string): string => (/[A-Z]/.test(s) ? `"${s}"` : s);
+        const modelFieldReference = `"${modelField?.references?.model?.tableName || modelField?.references?.model}".${wrapIfCapital(modelField?.references?.key)}`;
         if (tableFieldReference !== modelFieldReference) {
           issues.push(`!issue='column reference does not match model: ${tableFieldReference} !== ${modelFieldReference}'`); //eslint-disable-line
         }

@@ -15,6 +15,7 @@ import {
   findEventsByRegionId,
   findEventsByStatus,
   csvImport,
+  validateFields,
 } from './event';
 
 describe('event service', () => {
@@ -668,6 +669,12 @@ R01-TR-4658,tr_title,tr_istname,${email},tr_organizer,tr_duration,tr_reasons,tr_
 
       // Assert the imported event has the correct audience.
       expect(importedEvent.data.audience).toEqual('Regional office/TTA');
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when fields are invalid', async () => {
+      expect(() => validateFields({ pig: 1 }, ['man'])).toThrow();
     });
   });
 });

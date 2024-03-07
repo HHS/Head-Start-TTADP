@@ -754,6 +754,7 @@ describe('mergeGoals', () => {
         id: [grantOne.id, grantTwo.id, grantThree.id],
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalSimilarityGroup.destroy({

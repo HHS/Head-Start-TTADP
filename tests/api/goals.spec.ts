@@ -49,7 +49,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     recipient: recipientSchema,
     inactivationDate: Joi.any().allow(null),
     inactivationReason: Joi.any().allow(null),
-    deleted: Joi.any().allow(null)
+    deleted: Joi.any().allow(null),
+    recipientNameWithPrograms: Joi.string()
   });
 
   const schema = Joi.array().items(Joi.object({
