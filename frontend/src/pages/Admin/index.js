@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
-
 import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
@@ -9,7 +8,6 @@ import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
 import NationalCenters from './NationalCenters';
-import Email from './Email';
 import Goals from './Goals';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
@@ -50,9 +48,6 @@ function Admin() {
       </div>
       <h2>Engineer only</h2>
       <div className="margin-bottom-2">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/email">
-          Email
-        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
         </NavLink>
@@ -85,10 +80,6 @@ function Admin() {
         <Route
           path="/admin/national-centers/:nationalCenterId?"
           render={({ match }) => <NationalCenters match={match} />}
-        />
-        <Route
-          path="/admin/email/"
-          render={({ match }) => <Email match={match} />}
         />
         <Route
           path="/admin/goals/"
