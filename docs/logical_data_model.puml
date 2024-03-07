@@ -323,6 +323,7 @@ class GoalSimilarityGroupGoals{
  * goalSimilarityGroupId : integer : REFERENCES "GoalSimilarityGroups".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
+ excludedIfNotAdmin : boolean : false
 }
 
 class GoalSimilarityGroups{
@@ -332,6 +333,7 @@ class GoalSimilarityGroups{
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  * userHasInvalidated : boolean : false
+ version : integer
 }
 
 class GoalTemplateFieldPrompts{
