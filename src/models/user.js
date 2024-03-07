@@ -23,7 +23,6 @@ export default (sequelize, DataTypes) => {
       User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
       User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
-      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
       User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
       User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
 

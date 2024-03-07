@@ -248,7 +248,9 @@ MultiSelect.propTypes = {
     hideSelectedOptions: PropTypes.bool,
   }),
   disabled: PropTypes.bool,
-  rules: PropTypes.shape({}),
+  rules: PropTypes.shape({
+    validate: PropTypes.func,
+  }),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   placeholderText: PropTypes.string,
 };
