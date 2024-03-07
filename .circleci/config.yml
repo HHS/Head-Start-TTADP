@@ -500,6 +500,8 @@ jobs:
           path: playwright/test-results
       - store_artifacts:
           path: test/e2e/report
+      - store_artifacts:
+          path: test/e2e/test-results
     resource_class: large
   test_api:
     executor: docker-postgres-elasticsearch-executor
@@ -543,6 +545,8 @@ jobs:
           path: playwright/test-results
       - store_artifacts:
           path: test/api/report
+      - store_artifacts:
+          path: test/api/test-results
     resource_class: large
   test_utils:
     executor: docker-postgres-elasticsearch-executor
@@ -581,6 +585,8 @@ jobs:
           path: playwright/test-results
       - store_artifacts:
           path: test/utilsTests/report
+      - store_artifacts:
+          path: test/utilsTests/test-results
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
