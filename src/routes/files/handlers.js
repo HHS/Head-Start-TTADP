@@ -24,7 +24,7 @@ import {
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
-import { ActivityReportObjective } from '../../models';
+import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
 import EventPolicy from '../../policies/event';
@@ -78,9 +78,8 @@ const hasReportAuthorization = async (user, reportId) => {
 };
 
 const reportIsInAnEditableState = async (user, reportId) => {
-  const [report] = await activityReportAndRecipientsById(reportId);
+  const report = await ActivityReport.findOne({ where: { id: reportId } });
   const authorization = new ActivityReportPolicy(user, report);
-  console.log('authorization', authorization);
   return authorization.reportHasEditableStatus();
 };
 
