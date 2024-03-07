@@ -1,73 +1,110 @@
-import db, {
-  User, UserValidationStatus,
-} from '../models';
-import { createAndStoreVerificationToken, validateVerificationToken } from './token';
-import { userEmailIsVerifiedByUserId } from './users';
+import jwt from 'jsonwebtoken';
+import { UserValidationStatus } from '../models';
+import { createAndStoreVerificationToken, validateVerificationToken } from './token'; // Adjust the import path as necessary
 
-describe('token service', () => {
-  beforeEach(async () => {
-    await User.create({
-      id: 1000,
-      name: 'user 1000',
-      hsesUsername: 'user.1000',
-      hsesUserId: '1000',
-      lastLogin: new Date(),
-    });
+jest.mock('jsonwebtoken', () => ({
+  sign: jest.fn(),
+  verify: jest.fn(),
+}));
+
+jest.mock('../models', () => ({
+  UserValidationStatus: {
+    findOne: jest.fn(),
+    create: jest.fn(),
+  },
+}));
+
+describe('Verification Token', () => {
+  const userId = 1;
+  const type = 'email';
+  const token = 'token';
+  const secret = process.env.JWT_SECRET;
+  const payload = { userId, type };
+
+  beforeEach(() => {
+    jwt.sign.mockReturnValue(token);
   });
 
-  afterEach(async () => {
-    await UserValidationStatus.destroy({ where: { userId: 1000 } });
-    await User.destroy({ where: { id: 1000 } });
-  });
-
-  afterAll(async () => {
-    await db.sequelize.close();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('createAndStoreVerificationToken', () => {
-    it('creates a token', async () => {
-      const token = await createAndStoreVerificationToken(1000, 'email');
-      expect(token).toBeTruthy();
+    it('creates and stores a new verification token', async () => {
+      UserValidationStatus.findOne.mockResolvedValue(null);
+      UserValidationStatus.create.mockResolvedValue({});
 
-      const pair = await UserValidationStatus.findOne({
-        where: {
-          userId: 1000,
-          type: 'email',
-          token,
-        },
-      });
+      const result = await createAndStoreVerificationToken(userId, type);
+      expect(result).toBe(token);
+      expect(jwt.sign).toHaveBeenCalledWith(payload, secret, { expiresIn: '7d' });
+      expect(UserValidationStatus.create).toHaveBeenCalledWith({ userId, token, type });
+    });
 
-      expect(pair).toBeTruthy();
-      expect(pair.dataValues.validatedAt).toBeNull();
+    it('updates an existing verification token', async () => {
+      const mockRow = {
+        set: jest.fn(),
+        save: jest.fn(),
+      };
+      UserValidationStatus.findOne.mockResolvedValue(mockRow);
+
+      const result = await createAndStoreVerificationToken(userId, type);
+      expect(result).toBe(token);
+      expect(mockRow.set).toHaveBeenCalledWith('token', token);
+      expect(mockRow.set).toHaveBeenCalledWith('validatedAt', null);
+      expect(mockRow.save).toHaveBeenCalled();
     });
   });
 
   describe('validateVerificationToken', () => {
-    it('validates a token', async () => {
-      const token = await createAndStoreVerificationToken(1000, 'email');
-      const payload = await validateVerificationToken(1000, token, 'email');
-      expect(payload.userId).toBe(1000);
-      expect(payload.type).toBe('email');
+    it('validates a verification token successfully', async () => {
+      const mockPair = {
+        validatedAt: null,
+        set: jest.fn(),
+        save: jest.fn(),
+      };
+      UserValidationStatus.findOne.mockResolvedValue(mockPair);
+      jwt.verify.mockReturnValue(payload);
 
-      const pair = await UserValidationStatus.findOne({
-        where: {
-          userId: 1000,
-          type: 'email',
-          token,
-        },
-      });
-
-      expect(pair).toBeTruthy();
-      expect(pair.dataValues.validatedAt).not.toBeNull();
+      const result = await validateVerificationToken(userId, token, type);
+      expect(result).toEqual(payload);
+      expect(jwt.verify).toHaveBeenCalledWith(token, secret);
+      expect(mockPair.set).toHaveBeenCalledWith('validatedAt', expect.any(Date));
+      expect(mockPair.save).toHaveBeenCalled();
     });
-  });
 
-  describe('validationStatus', () => {
-    it('userEmailIsVerifiedByUserId', async () => {
-      const token = await createAndStoreVerificationToken(1000, 'email');
-      await validateVerificationToken(1000, token, 'email');
-      const verified = await userEmailIsVerifiedByUserId(1000);
-      expect(verified).toBe(true);
+    it('throws an error for invalid token pair', async () => {
+      UserValidationStatus.findOne.mockResolvedValue(null);
+
+      await expect(validateVerificationToken(userId, token, type)).rejects.toThrow('Invalid token pair');
+    });
+
+    it('throws an error for invalid userId', async () => {
+      UserValidationStatus.findOne.mockResolvedValue({});
+      jwt.verify.mockReturnValue({ userId: 'wrong', type });
+
+      await expect(validateVerificationToken(userId, token, type)).rejects.toThrow('Invalid userId');
+    });
+
+    it('throws an error for invalid type', async () => {
+      UserValidationStatus.findOne.mockResolvedValue({});
+      jwt.verify.mockReturnValue({ userId, type: 'wrong' });
+
+      await expect(validateVerificationToken(userId, token, type)).rejects.toThrow('Invalid type');
+    });
+
+    it('returns payload without updating if token pair is already validated', async () => {
+      const mockPair = {
+        validatedAt: new Date(),
+        set: jest.fn(),
+        save: jest.fn(),
+      };
+      UserValidationStatus.findOne.mockResolvedValue(mockPair);
+      jwt.verify.mockReturnValue(payload);
+
+      const result = await validateVerificationToken(userId, token, type);
+      expect(result).toEqual(payload);
+      expect(mockPair.set).not.toHaveBeenCalled();
+      expect(mockPair.save).not.toHaveBeenCalled();
     });
   });
 });
