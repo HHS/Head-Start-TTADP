@@ -497,7 +497,9 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: test-results
+          path: playwright/test-results
+      - store_artifacts:
+          path: test/e2e/report
     resource_class: large
   test_api:
     executor: docker-postgres-elasticsearch-executor
@@ -538,7 +540,9 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:api
       - store_artifacts:
-          path: test-results
+          path: playwright/test-results
+      - store_artifacts:
+          path: test/api/report
     resource_class: large
   test_utils:
     executor: docker-postgres-elasticsearch-executor
@@ -574,7 +578,9 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:utils
       - store_artifacts:
-          path: test-results
+          path: playwright/test-results
+      - store_artifacts:
+          path: test/utilsTests/report
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
