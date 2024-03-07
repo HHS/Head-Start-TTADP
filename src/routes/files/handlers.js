@@ -78,7 +78,12 @@ const hasReportAuthorization = async (user, reportId) => {
 };
 
 const reportIsInAnEditableState = async (user, reportId) => {
-  const report = await ActivityReport.findOne({ where: { id: reportId } });
+  const report = await ActivityReport.findOne(
+    {
+      where: { id: reportId },
+      attributes: ['calculatedStatus', 'submissionStatus'],
+    },
+  );
   const authorization = new ActivityReportPolicy(user, report);
   return authorization.reportHasEditableStatus();
 };
