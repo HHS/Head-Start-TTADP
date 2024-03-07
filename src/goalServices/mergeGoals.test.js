@@ -21,6 +21,7 @@ import db, {
   File,
   CollaboratorType,
   GoalSimilarityGroup,
+  GoalSimilarityGroupGoal,
 } from '../models';
 import {
   mergeGoals,
@@ -348,6 +349,17 @@ describe('mergeGoals', () => {
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
   });
 
+  it('goalSimilarityGroup is updated', async () => {
+    const updatedSimilarityGroup = await GoalSimilarityGroup.findOne({
+      where: {
+        id: similarityGroup.id,
+      },
+    });
+
+    expect(updatedSimilarityGroup).not.toBeNull();
+    expect(updatedSimilarityGroup.finalGoalId).not.toBeNull();
+  });
+
   it('old goals are merged away', async () => {
     expect(mergedGoals.length).toBe(2);
 
@@ -661,6 +673,18 @@ describe('mergeGoals', () => {
     const allObjectives = allGoals.map((g) => g.objectives).flat();
     const allObjectiveIds = allObjectives.map((objective) => objective.id);
 
+    await GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalId: allGoalIds,
+      },
+    });
+
+    await GoalSimilarityGroup.destroy({
+      where: {
+        id: similarityGroup.id,
+      },
+    });
+
     await ActivityReportObjective.destroy({
       where: {
         objectiveId: allObjectiveIds,
@@ -755,12 +779,6 @@ describe('mergeGoals', () => {
       },
       force: true,
       individualHooks: true,
-    });
-
-    await GoalSimilarityGroup.destroy({
-      where: {
-        id: similarityGroup.id,
-      },
     });
 
     await Recipient.destroy({
