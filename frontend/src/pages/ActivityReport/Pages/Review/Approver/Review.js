@@ -66,8 +66,6 @@ const Review = ({
 
   const showReset = (calculatedStatus !== REPORT_STATUSES.DRAFT && creatorIsApprover);
 
-  console.log({ showReset, calculatedStatus, creatorIsApprover });
-
   return (
     <>
       <h2>{pendingOtherApprovals ? 'Pending other approvals' : 'Review and approve report'}</h2>
