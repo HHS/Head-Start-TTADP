@@ -86,7 +86,7 @@ const emailTypesMap = {
     keyName: 'emailWhenAppointedCollaborator',
   }],
   recipientsAvailable: [{
-    name: 'Program Specialists only',
+    name: '',
     description: 'One of my recipients\' activity reports is available.',
     keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
   }],
