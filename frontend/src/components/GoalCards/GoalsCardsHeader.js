@@ -11,7 +11,6 @@ import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
-import FeatureFlag from '../FeatureFlag';
 import { similarity } from '../../fetchers/goals';
 
 export default function GoalCardsHeader({
@@ -142,30 +141,28 @@ export default function GoalCardsHeader({
         )}
       </div>
       {(canMergeGoals && goalMergeGroups.length > 0) && (
-        <FeatureFlag flag="merge_goals">
-          <div className="usa-alert usa-alert--info" data-testid="alert">
-            <div className="usa-alert__body">
-              <div className="usa-alert__text">
-                <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
-                <ul className="usa-list">
-                  {goalMergeGroups.map((group) => (
-                    <li key={`mergeGroup${group.id}`}>
-                      <Link
-                        to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge/${group.id}`}
-                      >
-                        Review
-                        {' '}
-                        {group.goals.length}
-                        {' '}
-                        similar goals
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+      <div className="usa-alert usa-alert--info" data-testid="alert">
+        <div className="usa-alert__body">
+          <div className="usa-alert__text">
+            <p className="usa-prose margin-top-0">We found groups of similar goals that might be duplicates. To view and manage these goals, select a goal group:</p>
+            <ul className="usa-list">
+              {goalMergeGroups.map((group) => (
+                <li key={`mergeGroup${group.id}`}>
+                  <Link
+                    to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals/merge/${group.id}`}
+                  >
+                    Review
+                    {' '}
+                    {group.goals.length}
+                    {' '}
+                    similar goals
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
-        </FeatureFlag>
+        </div>
+      </div>
       )}
       <hr className="border-1px border-base-lighter  bg-base-lighter margin-y-3" />
       <div className="margin-left-3 display-flex flex-row flex-align-center position-sticky top-0 bg-white" style={{ zIndex: 2 }}>
@@ -243,25 +240,23 @@ export default function GoalCardsHeader({
         {
           (shouldDisplayMergeSuccess && mergedGoals)
             ? (
-              <FeatureFlag flag="merge_goals">
-                <Alert className="margin-top-3" type="success">
-                  Goal
-                  {mergedGoals.length === 1 ? ' ' : 's '}
-                  {' '}
-                  {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
-                  {' '}
-                  {mergedGoals.length === 1 ? 'has' : 'have'}
-                  {' '}
-                  been merged.
-                  <button
-                    type="button"
-                    className="usa-button usa-button--unstyled margin-left-1"
-                    onClick={() => dismissMergeSuccess()}
-                  >
-                    Reset goal sort order
-                  </button>
-                </Alert>
-              </FeatureFlag>
+              <Alert className="margin-top-3" type="success">
+                Goal
+                {mergedGoals.length === 1 ? ' ' : 's '}
+                {' '}
+                {mergedGoals.map((g) => (`G-${g}`)).join(', ')}
+                {' '}
+                {mergedGoals.length === 1 ? 'has' : 'have'}
+                {' '}
+                been merged.
+                <button
+                  type="button"
+                  className="usa-button usa-button--unstyled margin-left-1"
+                  onClick={() => dismissMergeSuccess()}
+                >
+                  Reset goal sort order
+                </button>
+              </Alert>
             )
             : null
             }
