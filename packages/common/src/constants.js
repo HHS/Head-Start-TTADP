@@ -183,6 +183,9 @@ const USER_ROLES = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
+  'Interim Management Team',
+  'Integrated Service Team',
+  'Grants Management Specialist',
 ];
 exports.USER_ROLES = USER_ROLES;
 

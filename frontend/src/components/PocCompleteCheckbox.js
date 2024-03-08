@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { useController, useFormContext } from 'react-hook-form';
 import moment from 'moment';
+import UserContext from '../UserContext';
 
 export default function PocCompleteCheckbox({ userId, isPoc }) {
+  const { user } = useContext(UserContext);
   const { register, setValue } = useFormContext();
   const {
     field: {
@@ -29,9 +31,17 @@ export default function PocCompleteCheckbox({ userId, isPoc }) {
       setValue('pocCompleteDate', null);
     }
   };
+
+  const validEmailRoles = ['ECM', 'GSM', 'TTAC'];
+
+  const hasValidEmailRole = () => {
+    const userRoles = user.roles.map((r) => r.name);
+    return userRoles.some((role) => validEmailRoles.includes(role));
+  };
+
   return (
     <>
-      {isPoc ? (
+      {isPoc && hasValidEmailRole() ? (
         <>
           <Checkbox
             id={namePocComplete}

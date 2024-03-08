@@ -88,10 +88,16 @@ describe('record', () => {
         ],
         where: {
           importId,
-          status,
+          [Op.or]: [
+            { status },
+            {
+              status: IMPORT_STATUSES.COLLECTION_FAILED,
+              downloadAttempts: { [Op.gt]: 5 },
+            },
+          ],
         },
         // eslint-disable-next-line @typescript-eslint/quotes
-        order: [['id', 'DESC']],
+        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
       });
       expect(result).toBe(mockName);
@@ -111,10 +117,16 @@ describe('record', () => {
         ],
         where: {
           importId,
-          status,
+          [Op.or]: [
+            { status },
+            {
+              status: IMPORT_STATUSES.COLLECTION_FAILED,
+              downloadAttempts: { [Op.gt]: 5 },
+            },
+          ],
         },
         // eslint-disable-next-line @typescript-eslint/quotes
-        order: [['id', 'DESC']],
+        order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
       });
       expect(result).toBeNull();
