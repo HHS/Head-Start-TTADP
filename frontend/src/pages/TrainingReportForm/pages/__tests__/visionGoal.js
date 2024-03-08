@@ -42,8 +42,10 @@ describe('visionGoal', () => {
       eventId: 'R01-TR-23-1111',
     };
 
+    const defaultUser = { user: { id: userId, roles: [] } };
+
     // eslint-disable-next-line react/prop-types
-    const RenderVisionGoal = ({ formValues = defaultFormValues }) => {
+    const RenderVisionGoal = ({ formValues = defaultFormValues, user = defaultUser }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -51,7 +53,7 @@ describe('visionGoal', () => {
 
       return (
         <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-          <UserContext.Provider value={{ user: { id: userId } }}>
+          <UserContext.Provider value={user}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {visionGoal.render(
@@ -115,7 +117,7 @@ describe('visionGoal', () => {
         pocComplete: false,
       };
       act(() => {
-        render(<RenderVisionGoal formValues={updatedValues} />);
+        render(<RenderVisionGoal formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }, { name: 'GSM' }, { name: 'ECM' }] } }} />);
       });
 
       const visionInput = await screen.findByLabelText(/vision/i);
@@ -126,7 +128,6 @@ describe('visionGoal', () => {
 
       userEvent.clear(visionInput);
       userEvent.type(visionInput, 'new vision');
-
       const checkbox = await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i);
       expect(checkbox).not.toBeChecked();
 
@@ -142,6 +143,35 @@ describe('visionGoal', () => {
       const hiddenInputValues = Array.from(hiddenInputs).map((input) => input.value);
       expect(hiddenInputValues.includes(todaysDate)).toBe(true);
       expect(hiddenInputValues.includes(userId.toString())).toBe(true);
+
+      const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
+      userEvent.click(saveDraftButton);
+      expect(onSaveDraft).toHaveBeenCalled();
+    });
+
+    it('hides checkbox for POC with incorrect roles', async () => {
+      fetchMock.get('/api/session-reports/eventId/1111', []);
+      const updatedValues = {
+        ...defaultFormValues,
+        pocIds: [userId],
+        pocComplete: false,
+      };
+      act(() => {
+        render(<RenderVisionGoal formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }] } }} />);
+      });
+
+      const visionInput = await screen.findByLabelText(/vision/i);
+      expect(visionInput).toHaveValue('test vision');
+
+      const goalInput = await screen.findByLabelText(/goal/i);
+      expect(goalInput).toHaveValue('test goal');
+
+      userEvent.clear(visionInput);
+      userEvent.type(visionInput, 'new vision');
+      expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
+
+      const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
+      expect(hiddenInputs.length).toBe(3);
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
