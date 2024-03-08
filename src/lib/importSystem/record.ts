@@ -256,7 +256,6 @@ const recordAvailableFiles = async (
     ],
     where: {
       importId,
-      status: { [Op.not]: IMPORT_STATUSES.PROCESSED },
     },
     raw: true,
   });
