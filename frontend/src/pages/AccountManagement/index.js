@@ -54,6 +54,7 @@ const managerAndCollaboratorRoles = [
   'GS',
   'GSM',
   'HS',
+  'SS',
   'TTAC',
 ];
 
