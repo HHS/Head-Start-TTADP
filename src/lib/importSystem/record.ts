@@ -47,10 +47,17 @@ const getPriorFile = async (
     ],
     where: {
       importId,
-      status,
+      [Op.or]: [
+        { status },
+        {
+          status: IMPORT_STATUSES.COLLECTION_FAILED,
+          downloadAttempts: { [Op.gt]: 5 },
+        },
+      ],
     },
     // Ordering the results by ftpFileInfo.date in descending order
-    order: [['id', 'DESC']],
+    // eslint-disable-next-line @typescript-eslint/quotes
+    order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
     raw: true,
   });
 
