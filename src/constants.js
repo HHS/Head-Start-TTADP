@@ -94,6 +94,13 @@ const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
 };
 
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  CO_OWNER: 'Co-Owner',
+  SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
+};
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
@@ -253,7 +260,10 @@ const MAINTENANCE_CATEGORY = {
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
 
+const CURRENT_GOAL_SIMILARITY_VERSION = 2;
+
 module.exports = {
+  CURRENT_GOAL_SIMILARITY_VERSION,
   FILE_STATUSES,
   IMPORT_STATUSES,
   IMPORT_DATA_STATUSES,
@@ -271,6 +281,7 @@ module.exports = {
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
   OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
