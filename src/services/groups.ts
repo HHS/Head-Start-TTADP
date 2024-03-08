@@ -802,7 +802,7 @@ export async function potentialRecipientGrants(
         attributes: [],
         required: false,
         where: {
-          ...(groupId && { groupId }),
+          groupId,
         },
       },
     ],
