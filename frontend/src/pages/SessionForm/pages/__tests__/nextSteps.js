@@ -132,8 +132,9 @@ describe('nextSteps', () => {
       ...nextStepsFields,
     };
 
+    const defaultUser = { user: { id: userId, roles: [{ name: 'GSM' }] } };
     // eslint-disable-next-line react/prop-types
-    const RenderNextSteps = ({ formValues = defaultFormValues }) => {
+    const RenderNextSteps = ({ formValues = defaultFormValues, user = defaultUser }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -144,7 +145,7 @@ describe('nextSteps', () => {
           setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
         }}
         >
-          <UserContext.Provider value={{ user: { id: userId } }}>
+          <UserContext.Provider value={user}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {nextSteps.render(
@@ -193,6 +194,22 @@ describe('nextSteps', () => {
       });
 
       expect(await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i)).toBeVisible();
+    });
+
+    it('hides checkbox for poc if roles are invalid', async () => {
+      act(() => {
+        const updatedValues = {
+          ...defaultFormValues,
+          event: { pocIds: [userId] },
+        };
+
+        render(<RenderNextSteps
+          formValues={updatedValues}
+          user={{ user: { id: userId, roles: [{ name: 'BBB' }] } }}
+        />);
+      });
+
+      expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
     });
 
     it('allows selection of checkbox and sets alternate values', async () => {
