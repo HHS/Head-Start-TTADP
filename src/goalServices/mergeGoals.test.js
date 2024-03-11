@@ -21,6 +21,7 @@ import db, {
   File,
   CollaboratorType,
   GoalSimilarityGroup,
+  GoalSimilarityGroupGoal,
 } from '../models';
 import {
   mergeGoals,
@@ -337,7 +338,7 @@ describe('mergeGoals', () => {
 
     similarityGroup = await createSimilarityGroup(
       recipient.id,
-      [goalOne.id, goalTwo.id, goalThree.id],
+      [{ ids: [goalOne.id, goalTwo.id, goalThree.id], excludedIfNotAdmin: false }],
     );
 
     mergedGoals = await mergeGoals(
@@ -346,6 +347,17 @@ describe('mergeGoals', () => {
       similarityGroup.id,
     );
     mergedGoalIds = mergedGoals.map((goal) => goal.id);
+  });
+
+  it('goalSimilarityGroup is updated', async () => {
+    const updatedSimilarityGroup = await GoalSimilarityGroup.findOne({
+      where: {
+        id: similarityGroup.id,
+      },
+    });
+
+    expect(updatedSimilarityGroup).not.toBeNull();
+    expect(updatedSimilarityGroup.finalGoalId).not.toBeNull();
   });
 
   it('old goals are merged away', async () => {
@@ -661,6 +673,18 @@ describe('mergeGoals', () => {
     const allObjectives = allGoals.map((g) => g.objectives).flat();
     const allObjectiveIds = allObjectives.map((objective) => objective.id);
 
+    await GoalSimilarityGroupGoal.destroy({
+      where: {
+        goalId: allGoalIds,
+      },
+    });
+
+    await GoalSimilarityGroup.destroy({
+      where: {
+        id: similarityGroup.id,
+      },
+    });
+
     await ActivityReportObjective.destroy({
       where: {
         objectiveId: allObjectiveIds,
@@ -754,12 +778,7 @@ describe('mergeGoals', () => {
         id: [grantOne.id, grantTwo.id, grantThree.id],
       },
       force: true,
-    });
-
-    await GoalSimilarityGroup.destroy({
-      where: {
-        id: similarityGroup.id,
-      },
+      individualHooks: true,
     });
 
     await Recipient.destroy({

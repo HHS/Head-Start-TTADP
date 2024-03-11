@@ -1,4 +1,9 @@
 import {
+  CURRENT_GOAL_SIMILARITY_VERSION,
+  CREATION_METHOD,
+  GOAL_STATUS,
+} from '../constants';
+import {
   Recipient,
   Goal,
   GoalSimilarityGroup,
@@ -13,12 +18,12 @@ import {
 } from '../testUtils';
 import {
   getSimilarityGroupsByRecipientId,
-  getSimilarityGroupsContainingGoalId,
   getSimilarityGroupByContainingGoalIds,
   setSimilarityGroupAsUserInvalidated,
   setSimilarityGroupAsUserMerged,
   createSimilarityGroup,
   deleteSimilarityGroup,
+  flattenSimilarityGroupGoals,
 } from './goalSimilarityGroup';
 
 describe('goalSimilarityGroup services', () => {
@@ -43,6 +48,7 @@ describe('goalSimilarityGroup services', () => {
 
     const group = await GoalSimilarityGroup.create({
       recipientId: recipient.id,
+      version: CURRENT_GOAL_SIMILARITY_VERSION,
     });
 
     await GoalSimilarityGroupGoal.bulkCreate([
@@ -59,15 +65,9 @@ describe('goalSimilarityGroup services', () => {
     await GoalSimilarityGroupGoal.destroy({ where: { goalSimilarityGroupId: groupIds } });
     await GoalSimilarityGroup.destroy({ where: { recipientId: recipient.id } });
     await Goal.destroy({ where: { grantId: grant.id }, force: true });
-    await Grant.destroy({ where: { recipientId: recipient.id } });
+    await Grant.destroy({ where: { recipientId: recipient.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
-  });
-
-  test('getSimilarityGroupsContainingGoalId', async () => {
-    const groups = await getSimilarityGroupsContainingGoalId(goal2.id);
-    expect(groups.length).toBe(1);
-    expect(groups[0].goals.sort()).toEqual([goal1.id, goal2.id, goal3.id].sort());
   });
 
   test('getSimilarityGroupByContainingGoalIds', async () => {
@@ -109,7 +109,13 @@ describe('goalSimilarityGroup services', () => {
   });
 
   test('createSimilarityGroup & deleteSimilarityGroup', async () => {
-    const newGroup = await createSimilarityGroup(recipient.id, [goal4.id, goal5.id, goal6.id]);
+    const goals = [
+      {
+        excludedIfNotAdmin: false,
+        ids: [goal4.id, goal5.id, goal6.id],
+      },
+    ];
+    const newGroup = await createSimilarityGroup(recipient.id, goals);
     const groups = await getSimilarityGroupsByRecipientId(recipient.id);
 
     expect(groups.length).toBe(2);
@@ -117,5 +123,26 @@ describe('goalSimilarityGroup services', () => {
     await deleteSimilarityGroup(newGroup.id);
     const updatedGroups = await getSimilarityGroupsByRecipientId(recipient.id);
     expect(updatedGroups.length).toBe(1);
+  });
+
+  describe('flattenSimilarityGroupGoals', () => {
+    it('should flatten similarity group goals', () => {
+      const group = {
+        toJSON: jest.fn().mockReturnValue({ id: 'group-id' }),
+        goals: [
+          { id: 'goal-1', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.IN_PROGRESS },
+          { id: 'goal-2', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.CLOSED },
+          { id: 'goal-3', goalTemplate: { creationMethod: CREATION_METHOD.AUTOMATIC }, status: GOAL_STATUS.IN_PROGRESS },
+          { id: 'goal-4', status: GOAL_STATUS.IN_PROGRESS },
+        ],
+      };
+
+      const result = flattenSimilarityGroupGoals(group);
+
+      expect(result).toEqual({
+        id: 'group-id',
+        goals: ['goal-1', 'goal-3', 'goal-4'],
+      });
+    });
   });
 });

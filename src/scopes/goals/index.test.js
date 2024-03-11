@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, col } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
   createReport, destroyReport, createGoal, createGrant,
@@ -24,6 +24,7 @@ import db, {
   NextStepResource,
   ActivityReportFile,
   ActivityReportObjectiveFile,
+  GroupCollaborator,
   File,
 } from '../../models';
 
@@ -325,6 +326,12 @@ describe('goal filtersToScopes', () => {
         isPublic: false,
       });
 
+      await GroupCollaborator.create({
+        groupId: group.id,
+        userId: mockUser.id,
+        collaboratorTypeId: 1,
+      });
+
       await GroupGrant.create({
         groupId: group.id,
         grantId: grantForGroups.id,
@@ -346,6 +353,13 @@ describe('goal filtersToScopes', () => {
       });
 
       await GroupGrant.destroy({
+        where: {
+          groupId: group.id,
+        },
+        individualHooks: true,
+      });
+
+      await GroupCollaborator.destroy({
         where: {
           groupId: group.id,
         },

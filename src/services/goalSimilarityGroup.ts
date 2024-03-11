@@ -1,8 +1,10 @@
 import { Op, WhereOptions } from 'sequelize';
+import { uniq } from 'lodash';
 import db from '../models';
 import {
   GOAL_STATUS,
   CREATION_METHOD,
+  CURRENT_GOAL_SIMILARITY_VERSION,
 } from '../constants';
 
 const {
@@ -19,6 +21,15 @@ const similarityGroupAttributes = [
   'finalGoalId',
 ];
 
+interface IGoalShape {
+  name: string;
+  source: string;
+  status: string;
+  responsesForComparison: string;
+  ids: number[];
+  excludedIfNotAdmin: boolean;
+}
+
 interface SimilarityGroup {
   id: number;
   recipientId: number;
@@ -34,11 +45,11 @@ interface SimilarityGroup {
   toJSON: () => SimilarityGroup;
 }
 
-const flattenSimilarityGroupGoals = (group: SimilarityGroup, allowClosedCuratedGoal = false) => ({
+export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
   ...group.toJSON(),
   goals: group.goals.filter((goal) => {
     if (goal.goalTemplate && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-      return allowClosedCuratedGoal || goal.status !== GOAL_STATUS.CLOSED;
+      return goal.status !== GOAL_STATUS.CLOSED;
     }
     return true;
   }).map((goal) => goal.id),
@@ -52,6 +63,7 @@ export async function getSimilarityGroupById(
     where: {
       ...where,
       id: similarityGroupId,
+      version: CURRENT_GOAL_SIMILARITY_VERSION,
     },
     include: [
       {
@@ -70,32 +82,6 @@ export async function getSimilarityGroupById(
   return flattenSimilarityGroupGoals(group);
 }
 
-export async function getSimilarityGroupsContainingGoalId(goalId: number) {
-  const groups = await GoalSimilarityGroup.findAll({
-    attributes: similarityGroupAttributes,
-    include: [
-      {
-        model: GoalSimilarityGroupGoal,
-        as: 'goalSimilarityGroups',
-        where: {
-          goalId,
-        },
-        required: true,
-      },
-      {
-        through: {
-          attributes: [],
-        },
-        model: Goal,
-        as: 'goals',
-        attributes: ['id'],
-      },
-    ],
-  });
-
-  return groups.map(flattenSimilarityGroupGoals);
-}
-
 export async function getSimilarityGroupByContainingGoalIds(
   goalIds: number[],
   where: WhereOptions = {},
@@ -111,6 +97,7 @@ export async function getSimilarityGroupByContainingGoalIds(
     ],
     where: {
       ...where,
+      version: CURRENT_GOAL_SIMILARITY_VERSION,
       id: {
         [Op.in]: db.sequelize.literal(
           `(
@@ -135,13 +122,18 @@ export async function getSimilarityGroupByContainingGoalIds(
 export async function getSimilarityGroupsByRecipientId(
   recipientId: number,
   where: WhereOptions = {},
-  allowClosedCuratedGoal = false,
+  userHasFeatureFlag = false,
 ) {
+  const gsggWhere = userHasFeatureFlag ? {} : {
+    excludedIfNotAdmin: false,
+  };
+
   const groups = await GoalSimilarityGroup.findAll({
     attributes: similarityGroupAttributes,
     where: {
       ...where,
       recipientId,
+      version: CURRENT_GOAL_SIMILARITY_VERSION,
     },
     include: [{
       model: Goal,
@@ -153,12 +145,18 @@ export async function getSimilarityGroupsByRecipientId(
         as: 'goalTemplate',
         attributes: ['creationMethod', 'id'],
         required: false,
+      }, {
+        model: GoalSimilarityGroupGoal,
+        as: 'goalSimilarityGroupGoals',
+        attributes: [],
+        required: true,
+        where: gsggWhere,
       }],
     }],
   });
 
   return groups.map(
-    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg, allowClosedCuratedGoal),
+    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg),
   );
 }
 
@@ -211,14 +209,14 @@ export async function deleteSimilarityGroup(similarityGroupId: number) {
 
 export async function createSimilarityGroup(
   recipientId: number,
-  goals: number[],
+  goals: IGoalShape[],
 ) {
   // check for existing similarity group
   let group;
 
   if (goals && goals.length) {
     group = await getSimilarityGroupByContainingGoalIds(
-      goals,
+      uniq(goals.map((goal) => goal.ids).flat()),
       { recipientId },
     );
   } else {
@@ -234,13 +232,23 @@ export async function createSimilarityGroup(
 
   const newGroup = await GoalSimilarityGroup.create({
     recipientId,
+    version: CURRENT_GOAL_SIMILARITY_VERSION,
   }, { individualHooks: true });
 
+  const bulkCreates = [];
+
+  goals.forEach((goal) => {
+    goal.ids.forEach((goalId) => {
+      bulkCreates.push({
+        goalId,
+        goalSimilarityGroupId: newGroup.id,
+        excludedIfNotAdmin: goal.excludedIfNotAdmin,
+      });
+    });
+  });
+
   await GoalSimilarityGroupGoal.bulkCreate(
-    goals.map((goalId) => ({
-      goalId,
-      goalSimilarityGroupId: newGroup.id,
-    })),
+    bulkCreates,
     { individualHooks: true },
   );
 
