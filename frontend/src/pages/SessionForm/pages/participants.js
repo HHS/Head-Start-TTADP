@@ -69,7 +69,6 @@ const Participants = ({ formData }) => {
   const [fetchedGroups, setFetchedGroups] = useState(false);
   useEffect(() => {
     async function fetchGroups() {
-      console.log('Fire Fetch Group Effect');
       if (regionId && !fetchedGroups) {
         const retrievedGroups = await getGroupsForSession(regionId);
 
@@ -88,7 +87,6 @@ const Participants = ({ formData }) => {
 
   useDeepCompareEffect(() => {
     if (useGroups) {
-      console.log('Fire Use Deep Compare Effect');
       // Determine if there are any recipients that are not in the group.
       const usedRecipientIds = (watchFormRecipients || []).map((r) => r.value);
       const selectedRecipientsNotInGroup = usedRecipientIds.filter(
