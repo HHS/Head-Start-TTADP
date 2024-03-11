@@ -18,19 +18,11 @@ import {
   type GroupResponse,
 } from '../../services/groups';
 import GroupPolicy from '../../policies/group';
-import groupCollaborator from '../../models/groupCollaborator';
 
 const NAMESPACE = 'GROUPS';
 const {
   Grant,
-  Region,
-  User,
 } = db;
-
-interface GQuery {
-  id: number;
-  name: string;
-}
 
 const GROUP_ERRORS = {
   ALREADY_EXISTS: 'This group name already exists, please use a different name',
