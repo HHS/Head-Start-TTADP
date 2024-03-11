@@ -3,84 +3,80 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 import Container from '../../../components/Container';
 import { getDistinctSortedArray } from '../../../utils';
+import { useGrantData } from '../pages/GrantDataContext';
+import SimpleSortableTable from '../../../components/SimpleSortableTable';
 
 export default function GrantsList({ summary }) {
-  const renderGrantsList = () => {
-    if (summary && summary.grants) {
-      return summary.grants.map((grant) => (
-        <tr key={grant.id}>
-          <td>
-            <a aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
-              {grant.number}
-            </a>
-          </td>
-          <td>
-            {grant.status}
-          </td>
-          <td>
-            {grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : ''}
-          </td>
-          <td>{grant.programSpecialistName}</td>
-          <td>{grant.grantSpecialistName}</td>
-          <td>
-            {grant.startDate ? moment(grant.startDate).format('MM/DD/yyyy') : null}
-          </td>
-          <td>
-            {grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null}
-          </td>
-          <td>
-            {grant.annualFundingMonth}
-          </td>
-        </tr>
-      ));
-    }
-    return null;
-  };
+  const { hasMonitoringData, hasClassData } = useGrantData();
+
+  const columns = [
+    { key: 'number', name: 'Grant number' },
+    { key: 'status', name: 'Status' },
+    { key: 'programs', name: 'Programs' },
+    { key: 'programSpecialistName', name: 'Program specialist' },
+    { key: 'grantSpecialistName', name: 'Grant specialist' },
+    { key: 'startDate', name: 'Project start date' },
+    { key: 'endDate', name: 'Project end date' },
+    { key: 'annualFundingMonth', name: 'Annual funding month' },
+  ];
+
+  const grants = summary && summary.grants ? summary.grants : [];
+
+  const grantsData = grants.map((grant) => ({
+    ...grant,
+    number: (
+      <>
+        <a aria-label={`Links to Grant ${grant.number} on HSES`} href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grant.number}`} target="_blank" rel="noreferrer">
+          {grant.number}
+          {(hasMonitoringData(grant.number) && hasClassData(grant.number)) || (
+            <span>*</span>
+          )}
+        </a>
+      </>
+    ),
+    programs: grant.programs ? getDistinctSortedArray(grant.programs.map((program) => program.programType)).join(', ') : '',
+    startDate: grant.startDate ? moment(grant.startDate).format('MM/DD/yyyy') : null,
+    endDate: grant.endDate ? moment(grant.endDate).format('MM/DD/yyyy') : null,
+  }));
 
   return (
     <Container className="ttahub-recipient-record--grants-list ttahub-recipient-record--profile-table" paddingX={0} paddingY={0}>
       <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
         <h2 className="margin-0 padding-0">Grants</h2>
       </div>
-      <div className="usa-table-container--scrollable margin-0 ttahub-recipient-record-table-container">
-        <table className="usa-table usa-table--striped ttahub-recipient-record--table ttahub--recipient-summary-table usa-table--borderless width-full margin-y-1">
-          <caption className="sr-only">
-            Grants summary table data
-          </caption>
-          <thead>
-            <tr>
-              <th scope="col">Grant number</th>
-              <th scope="col">Status</th>
-              <th scope="col">Programs</th>
-              <th scope="col">Program specialist</th>
-              <th scope="col">Grant specialist</th>
-              <th scope="col">Project start date</th>
-              <th scope="col">Project end date</th>
-              <th scope="col">Annual funding month</th>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              renderGrantsList()
-            }
-          </tbody>
-        </table>
-      </div>
+      <SimpleSortableTable
+        data={grantsData}
+        columns={columns}
+        className="ttahub-recipient-record--table ttahub--recipient-summary-table"
+      />
+      {grants.some((grant) => !hasMonitoringData(grant.number)
+      || !hasClassData(grant.number)) && (
+        <p className="usa-hint padding-2 border-top smart-hub-border-base-lighter">
+          * CLASS and/or monitoring scores are not available
+        </p>
+      )}
     </Container>
   );
 }
 
 GrantsList.propTypes = {
-  summary:
-    PropTypes.shape({
-      grants: PropTypes.arrayOf(
-        PropTypes.shape({
-          number: PropTypes.string,
-          status: PropTypes.string,
-          endDate: PropTypes.string,
-          programSpecialistName: PropTypes.string,
-          grantSpecialistName: PropTypes.string,
-        }),
-      ),
-    }).isRequired,
+  summary: PropTypes.shape({
+    grants: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        number: PropTypes.string,
+        status: PropTypes.string,
+        programs: PropTypes.arrayOf(
+          PropTypes.shape({
+            programType: PropTypes.string,
+          }),
+        ),
+        programSpecialistName: PropTypes.string,
+        grantSpecialistName: PropTypes.string,
+        startDate: PropTypes.string,
+        endDate: PropTypes.string,
+        annualFundingMonth: PropTypes.string,
+      }),
+    ),
+  }).isRequired,
 };

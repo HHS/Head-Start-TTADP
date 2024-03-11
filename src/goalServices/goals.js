@@ -2,7 +2,9 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus,
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  determineMergeGoalStatus,
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
@@ -2616,7 +2618,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
-  const allowClosedCuratedGoal = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
+  const hasClosedMergeGoalOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
   const similiarityWhere = {
     userHasInvalidated: false,
@@ -2627,7 +2629,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
     recipientId,
     similiarityWhere,
-    allowClosedCuratedGoal,
+    hasClosedMergeGoalOverride,
   );
 
   if (existingRecipientGroups.length) {
@@ -2648,6 +2650,12 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     return uniq([id, ...matches.map((match) => match.id)]);
   });
 
+  const invalidStatusesForReportGoals = [
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ];
+
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
@@ -2660,6 +2668,15 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         as: 'activityReportGoals',
         attributes: ['goalId', 'activityReportId'],
         required: false,
+        include: [{
+          model: ActivityReport,
+          as: 'activityReport',
+          required: false,
+          attributes: ['id', 'calculatedStatus'],
+          where: {
+            calculatedStatus: invalidStatusesForReportGoals,
+          },
+        }],
       },
       {
         model: Grant,
@@ -2703,18 +2720,22 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     }
   });
 
-  // filter out goal groups that include multiple goals on the same report
-  const filteredGoalGroups = goalGroups.filter((group) => {
+  const filteredGoalGroups = goalGroups
+    .filter((group) => {
+    // filter out goals with weird FEI responses
     // eslint-disable-next-line max-len
-    const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
+      const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
 
-    if (uniqueFieldResponses.length > 2) {
-      return false;
-    }
-    const reportCount = getReportCountForGoals(group);
+      if (uniqueFieldResponses.length > 2) {
+        return false;
+      }
 
-    return !hasMultipleGoalsOnSameActivityReport(reportCount);
-  });
+      // filter out goal groups that include multiple goals on the same report
+      const reportCount = getReportCountForGoals(group);
+      const goalsNotOnTheSameReport = !hasMultipleGoalsOnSameActivityReport(reportCount);
+
+      return goalsNotOnTheSameReport;
+    });
 
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
@@ -2722,11 +2743,26 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         return previous;
       }
 
+      let closedCurated = false;
+      if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+      }
+
+      // goal on an active report
+      let isOnActiveReport = false;
+      if (current.activityReportGoals.length) {
+        isOnActiveReport = current.activityReportGoals
+          .some((arg) => arg.activityReport);
+      }
+
+      const excludedIfNotAdmin = isOnActiveReport || closedCurated;
+
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
       // we'll add the current goal's ID to the existing goal's ID array
-      if (existingGoal) {
+
+      if (existingGoal && existingGoal.excludedIfNotAdmin === excludedIfNotAdmin) {
         existingGoal.ids.push(current.id);
         return previous;
       }
@@ -2739,6 +2775,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           status: current.status,
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
+          excludedIfNotAdmin,
         },
       ];
     }, []));
@@ -2755,11 +2792,15 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
-          uniq(gg.map((g) => g.ids).flat()),
+          gg,
         ))),
   );
 
-  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere, allowClosedCuratedGoal);
+  return getSimilarityGroupsByRecipientId(
+    recipientId,
+    similiarityWhere,
+    hasClosedMergeGoalOverride,
+  );
 }
 
 /**
@@ -2998,6 +3039,12 @@ export async function mergeGoals(
     grantId,
   }));
 
+  // record the merge as complete
+  await setSimilarityGroupAsUserMerged(
+    goalSimiliarityGroupId,
+    finalGoalId,
+  );
+
   const newGoals = await Goal.bulkCreate(
     goalsToBulkCreate,
     {
@@ -3126,12 +3173,6 @@ export async function mergeGoals(
     }, { individualHooks: true });
     return u;
   }));
-
-  // record the merge as complete
-  await setSimilarityGroupAsUserMerged(
-    goalSimiliarityGroupId,
-    finalGoalId,
-  );
 
   return newGoals;
 }

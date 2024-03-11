@@ -42,7 +42,7 @@ describe('LegacyReports, admin routes', () => {
         },
       });
       await destroyReport(report);
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await User.destroy({ where: { id: [user.id, userTwo.id] } });
       await db.sequelize.close();
     });
