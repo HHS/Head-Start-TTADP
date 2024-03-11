@@ -10,6 +10,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import {
   Alert, Button, Checkbox, FormGroup, TextInput, Radio,
 } from '@trussworks/react-uswds';
+import UserContext from '../../UserContext';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
@@ -71,10 +72,12 @@ export default function MyGroups({ match }) {
       [GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE]: null,
     },
   });
-
+  const { user } = useContext(UserContext);
   const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
   const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
+
+  const isCoOwner = watchCoOwners.some((coOwner) => coOwner.value === user.id);
 
   const { groupId } = match.params;
   const [recipientOptions, setRecipientOptions] = useState([]);
@@ -152,8 +155,8 @@ export default function MyGroups({ match }) {
         const groupUsers = await getGroupUsers(groupId || 'new');
 
         // Set available.
-        const mappedUsers = groupUsers.map((user) => ({
-          value: user.userId, label: user.name,
+        const mappedUsers = groupUsers.map((mUser) => ({
+          value: mUser.userId, label: mUser.name,
         }));
 
         setUserOptions(mappedUsers);
@@ -305,6 +308,7 @@ export default function MyGroups({ match }) {
           </div>
           <div className="margin-top-4">
             <h2 className="margin-bottom-2">Group permissions</h2>
+            {!isCoOwner && (
             <div className="margin-top-3 display-flex flex-align-end flex-align-center">
               <Controller
                 control={control}
@@ -325,6 +329,7 @@ export default function MyGroups({ match }) {
                 )}
               />
             </div>
+            )}
             {!watchIsPrivate && (
               <div className="margin-top-4">
                 <label className="display-block margin-bottom-1">
