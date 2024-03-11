@@ -199,7 +199,7 @@ describe('participants', () => {
       act(() => {
         render(<RenderParticipants formValues={readOnlyFormValues} />);
       });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
 
       // confirm alert
       const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
@@ -236,7 +236,7 @@ describe('participants', () => {
       act(() => {
         render(<RenderParticipants formValues={readOnlyFormValues} />);
       });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
 
       // confirm alert
       const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
