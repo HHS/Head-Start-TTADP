@@ -524,7 +524,7 @@ describe('saveGoalsForReport (more tests)', () => {
       force: true,
     });
 
-    await Grant.destroy({ where: { regionId: region.id }, force: true });
+    await Grant.destroy({ where: { regionId: region.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientIds }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
     await Region.destroy({ where: { id: region.id } });

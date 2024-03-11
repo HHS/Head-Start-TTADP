@@ -1312,7 +1312,7 @@ describe('resource', () => {
       beforeAll(async () => {
         [activityReport, deleteReport] = await ActivityReport.findOrCreate({
           where: {
-            id: 99999,
+            id: 1999991,
           },
           defaults: {
             context: 'Resource Report test. http://google.com',

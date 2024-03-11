@@ -183,6 +183,9 @@ const USER_ROLES = [
   'Grantee Specialist',
   'Health Specialist',
   'System Specialist',
+  'Interim Management Team',
+  'Integrated Service Team',
+  'Grants Management Specialist',
 ];
 exports.USER_ROLES = USER_ROLES;
 
@@ -323,3 +326,10 @@ const EVENT_AUDIENCE = [
 ];
 
 exports.EVENT_AUDIENCE = EVENT_AUDIENCE;
+
+const GROUP_SHARED_WITH = {
+  EVERYONE: 'Everyone',
+  INDIVIDUALS: 'Individuals',
+};
+
+exports.GROUP_SHARED_WITH = GROUP_SHARED_WITH;
