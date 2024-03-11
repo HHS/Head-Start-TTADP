@@ -26,7 +26,9 @@ exports.config = {
      *
      * @env NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
      */
-    enabled: false,
+    enabled: process.env.NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+      ? process.env.NEW_RELIC_DISTRIBUTED_TRACING_ENABLED
+      : false,    
   },
   logging: {
     /**
@@ -36,8 +38,10 @@ exports.config = {
      */
     level: 'info',
     filepath: 'stdout',
-    enabled: false,
-  },
+    enabled: process.env.NEW_RELIC_LOGGING_ENABLED
+      ? process.env.NEW_RELIC_LOGGING_ENABLED
+      : false,
+    },
   /**
    * [Audit logging](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#audit_log)
    * This section defines the Node.js agent variables in the order they typically appear
