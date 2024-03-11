@@ -69,6 +69,7 @@ const Participants = ({ formData }) => {
   const [fetchedGroups, setFetchedGroups] = useState(false);
   useEffect(() => {
     async function fetchGroups() {
+      console.log('Fire Fetch Group Effect');
       if (regionId && !fetchedGroups) {
         const retrievedGroups = await getGroupsForSession(regionId);
 
@@ -86,22 +87,23 @@ const Participants = ({ formData }) => {
   }, [regionId, groups, fetchedGroups]);
 
   useDeepCompareEffect(() => {
-    // Get all selected recipients that are NOT in the watchGroup.recipients array.
-    const usedRecipientIds = (watchFormRecipients || []).map((r) => r.value);
-    // const usedRecipientIds = watchFormRecipients.map((r) => r.value);
-    const selectedRecipientsNotInGroup = usedRecipientIds.filter(
-      (option) => !groupRecipientIds.includes(option),
-    );
+    if (useGroups) {
+      console.log('Fire Use Deep Compare Effect');
+      // Determine if there are any recipients that are not in the group.
+      const usedRecipientIds = (watchFormRecipients || []).map((r) => r.value);
+      const selectedRecipientsNotInGroup = usedRecipientIds.filter(
+        (option) => !groupRecipientIds.includes(option),
+      );
 
-    // If the user changes recipients manually while using groups.
-    if (useGroups
-      && watchGroup
+      // If the user changes recipients manually while using groups.
+      if (watchGroup
       && (groupRecipientIds.length !== watchFormRecipients.length
         || selectedRecipientsNotInGroup.length > 0)) {
-      setShowGroupInfo(true);
-      setUseGroups(false);
-      setValue('recipientGroup', null, { shouldValidate: false });
-      setGroupRecipientIds([]);
+        setShowGroupInfo(true);
+        setUseGroups(false);
+        setValue('recipientGroup', null, { shouldValidate: false });
+        setGroupRecipientIds([]);
+      }
     }
   }, [groupRecipientIds, setValue, useGroups, watchFormRecipients, watchGroup]);
 
