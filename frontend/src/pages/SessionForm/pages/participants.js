@@ -70,6 +70,8 @@ const Participants = ({ formData }) => {
   useEffect(() => {
     async function fetchGroups() {
       if (regionId && !fetchedGroups) {
+        setFetchedGroups(true);
+        console.log('Fetch Groups');
         const retrievedGroups = await getGroupsForSession(regionId);
 
         // Add recipientIds to groups.
@@ -79,7 +81,6 @@ const Participants = ({ formData }) => {
           recipients: group.grants.map((g) => g.id),
         }));
         setGroups(groupsWithRecipientIds);
-        setFetchedGroups(true);
       }
     }
     fetchGroups();
