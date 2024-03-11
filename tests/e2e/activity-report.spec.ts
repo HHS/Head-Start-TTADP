@@ -360,7 +360,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('dropdown').selectOption('approved');
 
     // submit approval
-    await page.getByTestId('form').getByTestId('button').click();
+    await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
 
     // this is in the 'approved activity reports' table
     await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
@@ -615,7 +615,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('dropdown').selectOption('approved');
 
     // submit approval
-    await page.getByTestId('form').getByTestId('button').click();
+    await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
 
     // check first recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
