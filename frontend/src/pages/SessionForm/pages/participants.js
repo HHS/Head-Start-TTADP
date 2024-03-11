@@ -71,7 +71,6 @@ const Participants = ({ formData }) => {
     async function fetchGroups() {
       if (regionId && !fetchedGroups) {
         setFetchedGroups(true);
-        console.log('Fetch Groups');
         const retrievedGroups = await getGroupsForSession(regionId);
 
         // Add recipientIds to groups.
@@ -218,8 +217,8 @@ const Participants = ({ formData }) => {
       {
         showGroupInfo && (
         <USWDSAlert type="info">
-          You&apos;ve successfully modified the Group&apos;s recipients for this
-          report. Changes here do not affect the Group itself.
+          You&apos;ve successfully modified the group&apos;s recipients for this
+          report. Changes here do not affect the group itself.
           <button type="button" className="smart-hub-activity-summary-group-info usa-button usa-button--unstyled" onClick={resetGroup}>
             Reset or select a different group.
           </button>
