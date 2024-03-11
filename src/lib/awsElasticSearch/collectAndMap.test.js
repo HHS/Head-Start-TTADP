@@ -214,7 +214,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
       await ActivityReport.destroy({ where: { id: reportOne.id } });
 
       // Delete Grant.
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
 
       // Delete Recipient.
       await Recipient.destroy({ where: { id: recipient.id } });

@@ -1,4 +1,7 @@
-require('newrelic');
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  require('newrelic');
+}
 
 /* eslint-disable import/first */
 import { WebSocketServer } from 'ws';
@@ -41,6 +44,13 @@ if (!bypassSockets) {
         const subscriber = redisClient.duplicate();
         await subscriber.connect();
 
+        // Set the connection name using the CLIENT SETNAME command
+        const connectionName = `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-subscriber-${process.pid}`;
+        try {
+          await subscriber.sendCommand(['CLIENT', 'SETNAME', connectionName]);
+        } catch (err) {
+          auditLogger.error('Failed to set Redis connection name:', err);
+        }
         const channelName = req.url;
         // subscribe to the channel, the function is a callback for what to
         // do when a message is received via redis pub/sub
