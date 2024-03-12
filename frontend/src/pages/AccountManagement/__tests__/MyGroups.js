@@ -13,18 +13,25 @@ import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 
 const error = 'This group name already exists, please use a different name';
+
+const user = {
+  id: 23,
+};
 
 describe('MyGroups', () => {
   const renderMyGroups = (groupId = null) => {
     render(
       <MemoryRouter>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <MyGroupsProvider>
-            <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-          </MyGroupsProvider>
-        </AppLoadingContext.Provider>
+        <UserContext.Provider value={{ user }}>
+          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+            <MyGroupsProvider>
+              <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+            </MyGroupsProvider>
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
       </MemoryRouter>,
     );
   };
@@ -172,7 +179,7 @@ describe('MyGroups', () => {
         },
       ],
       creator: {
-        id: 1,
+        id: 23,
         name: 'Creator User',
       },
     });
@@ -488,7 +495,7 @@ describe('MyGroups', () => {
       individuals: [],
       coOwners: [],
       creator: {
-        id: 1,
+        id: 23,
         name: 'Creator User',
       },
     });
@@ -635,6 +642,74 @@ describe('MyGroups', () => {
       userEvent.click(removeCoOwner);
       await waitFor(() => {
         expect(screen.queryByText(/you can only choose up to three co-owners./i)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  it('coOwners cant change the is public check box', async () => {
+    fetchMock.get('/api/groups/1', {
+      id: 1,
+      name: 'group1',
+      isPublic: true,
+      groupCollaborators: [],
+      sharedWith: GROUP_SHARED_WITH.INDIVIDUALS,
+      grants: [
+        {
+          recipientInfo: 'Grant 1 - 11111111 - HS',
+          regionId: 1,
+          recipientId: 1,
+          number: '11111111',
+          id: 1,
+          granteeName: 'Grant Name 1',
+          recipient: {
+            name: 'Recipient Name 1',
+            id: 1,
+          },
+          GroupGrant: {
+            id: 1,
+            grantId: 1,
+            groupId: 1,
+          },
+        },
+      ],
+      coOwners: [
+        {
+          id: 23, // Active co-owner.
+          name: 'co-owner1',
+        },
+      ],
+      individuals: [
+        {
+          id: 3,
+          name: 'individual1',
+        },
+      ],
+      creator: {
+        id: 1,
+        name: 'Creator User',
+      },
+    });
+
+    act(() => {
+      renderMyGroups(1);
+    });
+
+    const input = screen.getByLabelText(/Group name/i);
+    expect(input).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        expect(input.value).toBe('group1');
+        expect(screen.getByText(/grant 1 - 11111111 - hs/i)).toBeInTheDocument();
+
+        expect(screen.getByText(/co-owner1/i)).toBeInTheDocument();
+        expect(screen.getByText(/individual1/i)).toBeInTheDocument();
+
+        // Expect check box 'Keep this group private.' to not be checked.
+        expect(screen.queryAllByRole('checkbox', { name: /keep this group private\./i }).length).toBe(0);
+
+        // Assert radio button 'Individuals in my region' is checked.
+        const radio = screen.getByLabelText(/Individuals in my region/i);
+        expect(radio).toBeChecked();
       });
     });
   });
