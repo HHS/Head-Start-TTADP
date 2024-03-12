@@ -179,7 +179,7 @@ describe('MyGroups', () => {
         },
       ],
       creator: {
-        id: 1,
+        id: 23,
         name: 'Creator User',
       },
     });
@@ -495,7 +495,7 @@ describe('MyGroups', () => {
       individuals: [],
       coOwners: [],
       creator: {
-        id: 1,
+        id: 23,
         name: 'Creator User',
       },
     });
