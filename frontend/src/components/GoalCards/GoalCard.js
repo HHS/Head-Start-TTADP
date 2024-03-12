@@ -16,6 +16,7 @@ import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
 import SessionObjectiveCard from './SessionObjectiveCard';
+import Tooltip from '../Tooltip';
 import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
@@ -73,6 +74,7 @@ function GoalCard({
     objectives,
     previousStatus,
     createdVia,
+    collaborators,
     onAR,
   } = goal;
 
@@ -211,8 +213,30 @@ function GoalCard({
           <p className="usa-prose text-bold margin-y-0">Last TTA</p>
           <p className="usa-prose margin-y-0">{lastTTA}</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Last reviewed</p>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Entered by</p>
+          {collaborators.map((c) => {
+            if (!c.goalCreatorName) return null;
+
+            return (
+              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+                {collaborators.length > 1 && (
+                  <>
+                    <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
+                    {' '}
+                  </>
+                )}
+                <Tooltip
+                  displayText={c.goalCreatorRoles}
+                  screenReadDisplayText={false}
+                  buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
+                  tooltipText={c.goalCreatorName}
+                  underlineStyle="solid"
+                  className="ttahub-goal-card__entered-by-tooltip"
+                />
+              </p>
+            );
+          })}
         </div>
       </div>
 

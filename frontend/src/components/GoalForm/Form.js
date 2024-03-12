@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { uniq } from 'lodash';
 import {
-  Alert,
+  Alert, FormGroup,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
@@ -16,6 +16,7 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
+import ReadOnlyField from '../ReadOnlyField';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
@@ -59,6 +60,7 @@ export default function Form({
   setSource,
   validateGoalSource,
   createdVia,
+  collaborators,
   recipient,
   regionId,
   goalTemplateId,
@@ -131,6 +133,23 @@ export default function Form({
       }
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
+
+      {collaborators.length > 0 ? collaborators.map((collaborator) => {
+        const {
+          goalCreatorName,
+          goalCreatorRoles,
+          goalNumber,
+        } = collaborator;
+        if (!goalCreatorName) return null;
+        return (
+          <FormGroup key={goalNumber}>
+            <ReadOnlyField label={`Entered by${collaborators.length > 1 ? ` (${goalNumber})` : ''}`}>
+              {goalCreatorName}
+              {goalCreatorRoles ? `, ${goalCreatorRoles}` : ''}
+            </ReadOnlyField>
+          </FormGroup>
+        );
+      }) : null}
 
       <GrantSelect
         selectedGrants={selectedGrants}
@@ -324,6 +343,12 @@ Form.propTypes = {
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
   createdVia: PropTypes.string.isRequired,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    goalNumber: PropTypes.string,
+    goalCreator: PropTypes.shape({}),
+    goalCreatorName: PropTypes.string,
+    goalCreatorRoles: PropTypes.string,
+  })).isRequired,
   isNew: PropTypes.bool.isRequired,
   goalTemplateId: PropTypes.number,
 };

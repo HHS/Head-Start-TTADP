@@ -122,6 +122,8 @@ export default function GoalForm({
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalNumbers, setGoalNumbers] = useState('');
 
+  const [goalCollaborators, setGoalCollaborators] = useState([]);
+
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -169,6 +171,7 @@ export default function GoalForm({
         setGoalTemplateId(goal.goalTemplateId);
         setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
+        setGoalCollaborators(goal.collaborators || []);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -1092,6 +1095,7 @@ export default function GoalForm({
               setSource={setSource}
               validateGoalSource={validateGoalSource}
               createdVia={createdVia}
+              collaborators={goalCollaborators}
               goalTemplateId={goalTemplateId}
             />
           )}

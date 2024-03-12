@@ -25,6 +25,7 @@ import { withGoalType, withoutGoalType } from './goalType';
 import { withGroup, withoutGroup } from './group';
 import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
+import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
 
 export const topicToQuery = {
   createDate: {
@@ -60,6 +61,10 @@ export const topicToQuery = {
   reason: {
     in: (query, options) => withReasons(query, options),
     nin: (query, options) => withoutReasons(query, options),
+  },
+  enteredByRole: {
+    in: (query, options) => withEnteredByRole(query, options),
+    nin: (query, options) => withoutEnteredByRole(query, options),
   },
   recipientId: {
     ctn: (query) => withRecipientId(query),

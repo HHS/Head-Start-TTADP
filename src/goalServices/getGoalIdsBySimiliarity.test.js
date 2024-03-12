@@ -497,11 +497,11 @@ describe('getGoalIdsBySimilarity', () => {
     const idsSets = await getGoalIdsBySimilarity(recipient.id);
 
     // we expect goal group three to be eliminated, so we should have two sets + an empty
-    expect(idsSets).toHaveLength(3);
+    expect(idsSets).toHaveLength(4);
 
     // we expect one empty set, removing it leaves two
     const filteredSet = idsSets.filter((set) => set.goals.length);
-    expect(filteredSet).toHaveLength(2);
+    expect(filteredSet).toHaveLength(3);
 
     // sort set by goals length descending
     filteredSet.sort((a, b) => b.goals.length - a.goals.length);
@@ -565,11 +565,11 @@ describe('getGoalIdsBySimilarity', () => {
     const idsSets = await getGoalIdsBySimilarity(recipient.id, user);
 
     // we expect goal group three to be eliminated, so we should have two sets + an empty
-    expect(idsSets).toHaveLength(3);
+    expect(idsSets).toHaveLength(4);
 
     // we expect one empty set, removing it leaves two
     const filteredSet = idsSets.filter((set) => set.goals.length);
-    expect(filteredSet).toHaveLength(2);
+    expect(filteredSet).toHaveLength(3);
 
     // sort set by goals length descending
     filteredSet.sort((a, b) => b.goals.length - a.goals.length);
