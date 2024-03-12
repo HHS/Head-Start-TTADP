@@ -77,8 +77,6 @@ export default function MyGroups({ match }) {
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
   const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
 
-  const isCoOwner = watchCoOwners.some((coOwner) => coOwner.value === user.id);
-
   const { groupId } = match.params;
   const [recipientOptions, setRecipientOptions] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
@@ -90,11 +88,14 @@ export default function MyGroups({ match }) {
   const { myGroups, setMyGroups } = useContext(MyGroupsContext);
   const { isAppLoading, setIsAppLoading } = useContext(AppLoadingContext);
 
+  const [groupCreator, setGroupCreator] = useState(null);
+
   useEffect(() => {
     async function getGroup() {
       setIsAppLoading(true);
       try {
         const fetchedGroup = await fetchGroup(groupId);
+        setGroupCreator(fetchedGroup.creator);
         if (fetchedGroup) {
           // Reset form values.
           reset({
@@ -122,6 +123,8 @@ export default function MyGroups({ match }) {
       getGroup();
     }
   }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched]);
+
+  const isCreator = !groupId || (groupCreator && user.id === groupCreator.id);
 
   useEffect(() => {
     // get grants/recipients for user
@@ -308,7 +311,7 @@ export default function MyGroups({ match }) {
           </div>
           <div className="margin-top-4">
             <h2 className="margin-bottom-2">Group permissions</h2>
-            {!isCoOwner && (
+            {isCreator && (
             <div className="margin-top-3 display-flex flex-align-end flex-align-center">
               <Controller
                 control={control}
