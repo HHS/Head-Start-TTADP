@@ -3,17 +3,16 @@ import React, {
   useEffect,
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-// import PropTypes from 'prop-types';
 import {
   Dropdown,
   Checkbox,
-  Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
 import { getPossibleSessionParticipants, getGroupsForSession } from '../fetchers/session';
 import FormItem from './FormItem';
 import MultiSelect from './MultiSelect';
+import GroupAlert from './GroupAlert';
 
 const placeholderText = '- Select -';
 
@@ -154,13 +153,7 @@ const RecipientsWithGroups = () => {
     <>
       {
         showGroupInfo && (
-        <USWDSAlert type="info">
-          You&apos;ve successfully modified the group&apos;s recipients for this
-          report. Changes here do not affect the group itself.
-          <button type="button" className="smart-hub-activity-summary-group-info usa-button usa-button--unstyled" onClick={resetGroup}>
-            Reset or select a different group.
-          </button>
-        </USWDSAlert>
+          <GroupAlert resetGroup={resetGroup} />
         )
         }
       {
@@ -211,17 +204,5 @@ const RecipientsWithGroups = () => {
     </>
   );
 };
-
-/*
-RecipientsWithGroups.propTypes = {
-  regionId: PropTypes.number.isRequired,
-};
-*/
-
-/*
-RecipientsWithGroups.defaultProps = {
-  value: '',
-};
-*/
 
 export default RecipientsWithGroups;
