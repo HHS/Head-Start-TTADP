@@ -192,11 +192,11 @@ const RecipientsWithGroups = () => {
       {
           groups.length > 0
            && (
-           <div className="smart-hub-activity-summary-use-group margin-top-1">
+           <div className="smart-hub-activity-summary-use-group margin-top-0">
              <Checkbox
                id="use-group"
                label="Use group"
-               className="smart-hub--report-checkbox"
+               className="margin-top-1"
                onChange={toggleUseGroup}
                checked={useGroups}
              />
