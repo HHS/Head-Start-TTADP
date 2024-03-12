@@ -291,7 +291,7 @@ export default function MyGroups({ match }) {
 
             </div>
           </FormGroup>
-          <div className="margin-top-4">
+          <div className="margin-top-3">
             <label className="display-block margin-bottom-1">
               Recipients
               {' '}
@@ -331,7 +331,7 @@ export default function MyGroups({ match }) {
             </div>
             )}
             {!watchIsPrivate && (
-              <div className="margin-top-4">
+              <div className="margin-top-3">
                 <label className="display-block margin-bottom-1">
                   Add co-owner
                   {' '}
@@ -350,7 +350,7 @@ export default function MyGroups({ match }) {
                     disabled={isAppLoading}
                   />
                 </label>
-                <div className="margin-top-4">
+                <div className="margin-top-3">
                   <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
                     Who do you want to share this group with?
                     {' '}
@@ -386,7 +386,7 @@ export default function MyGroups({ match }) {
                 </div>
                 {
                   watchShareWithEveryone === GROUP_SHARED_WITH.INDIVIDUALS && (
-                    <div className="margin-top-4">
+                    <div className="margin-top-3">
                       <label className="display-block margin-bottom-1">
                         Invite individuals
                         {' '}
