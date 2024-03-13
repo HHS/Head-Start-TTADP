@@ -7,6 +7,7 @@ import {
 } from 'http-codes';
 import { userById } from '../../services/users';
 import { similarGoalsForRecipient } from '../../services/similarity';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
@@ -30,7 +31,6 @@ import {
   goalsByIdsAndActivityReport,
   mergeGoals,
   getGoalIdsBySimilarity,
-  getGoalsMissingDataForActivityReportSubmission,
 } from '../../goalServices/goals';
 import nudge from '../../goalServices/nudge';
 import { currentUserId } from '../../services/currentUser';
@@ -61,6 +61,8 @@ jest.mock('../../goalServices/goals', () => ({
   getGoalIdsBySimilarity: jest.fn(),
   getGoalsMissingDataForActivityReportSubmission: jest.fn(),
 }));
+
+jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
 
 jest.mock('../../goalServices/nudge', () => jest.fn());
 
