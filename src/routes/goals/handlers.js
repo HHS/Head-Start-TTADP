@@ -10,8 +10,8 @@ import {
   destroyGoal,
   mergeGoals,
   getGoalIdsBySimilarity,
-  getGoalsMissingDataForActivityReportSubmission,
 } from '../../goalServices/goals';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import nudge from '../../goalServices/nudge';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';

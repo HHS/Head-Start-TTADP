@@ -2241,10 +2241,6 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal.set({ endDate });
       }
 
-      if (status && status !== newOrUpdatedGoal.status) {
-        newOrUpdatedGoal.set({ status });
-      }
-
       if (prompts && !isMultiRecipientReport) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
