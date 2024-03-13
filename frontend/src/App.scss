@@ -15,6 +15,10 @@ a:visited {
   color: $text-visited
 }
 
+summary {
+  cursor: pointer;
+}
+
 /*|||||| Table resets |||||||*/
 
 .usa-table thead th a {
