@@ -20,13 +20,13 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
       {
         model: Grant,
         as: 'grant',
-        attributes: ['regionId', 'id'],
+        attributes: ['regionId', 'id', 'number'],
         required: true,
         include: [{
           model: Recipient,
           required: true,
           as: 'recipient',
-          attributes: ['id'],
+          attributes: ['id', 'name'],
         }],
       },
     ],
@@ -38,8 +38,10 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
     }>;
     grant: {
       regionId: number;
+      number: string;
       recipient: {
         id: number;
+        name: string;
       };
       id: number;
     };
@@ -49,5 +51,7 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
     id: goal.id,
     recipientId: goal.grant.recipient.id,
     regionId: goal.grant.regionId,
+    grantNumber: goal.grant.number,
+    recipientName: goal.grant.recipient.name,
   }));
 }
