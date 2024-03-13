@@ -361,13 +361,14 @@ module.exports = {
       ) SELECT * FROM updater
       ;
 
-      -- Delete donor goals
+      -- Soft delete donor goals
       DROP TABLE IF EXISTS deleted_goals;
       CREATE TEMP TABLE deleted_goals
       AS
       WITH updater AS (
-        DELETE FROM "Goals"
-        USING goal_merges
+        UPDATE "Goals"
+        SET "deletedAt" = NOW()
+        FROM goal_merges
         WHERE id = donor_gid
           AND donor_gid != target_gid
         RETURNING
