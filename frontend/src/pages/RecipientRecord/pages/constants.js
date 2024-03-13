@@ -6,7 +6,7 @@ import {
   activityReportGoalResponseFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
-  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter,
+  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter, userRolesFilter,
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
@@ -15,6 +15,7 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
   reasonsFilter,
   statusFilter,
   topicsFilter,
+  userRolesFilter,
 ];
 
 const TTAHISTORY_FILTER_CONFIG = [

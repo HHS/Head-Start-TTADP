@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { findEventBySmartsheetIdSuffix } from '../../services/event';
 import {
@@ -9,7 +10,12 @@ import {
   destroySession,
   getPossibleSessionParticipants,
 } from '../../services/sessionReports';
+import EventReport from '../../policies/event';
+import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
+import { currentUserId } from '../../services/currentUser';
+import { groupsByRegion } from '../../services/groups';
+import SCOPES from '../../middleware/scopeConstants';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
@@ -166,3 +172,23 @@ export const getParticipants = async (req, res) => {
     return handleErrors(req, res, error, logContext);
   }
 };
+
+export async function getGroups(req, res) {
+  const { region } = req.query;
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const regionNumber = parseInt(region, DECIMAL_BASE);
+  const eventPolicy = new EventReport(user, { regionNumber });
+  // Has correct TR permissions.
+  if (!eventPolicy.canWriteInRegion(regionNumber)) {
+    res.sendStatus(403);
+    return;
+  }
+  try {
+    // Get groups for shared users and region.
+    const groups = await groupsByRegion(regionNumber, userId);
+    res.json(groups);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}

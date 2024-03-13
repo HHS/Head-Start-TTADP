@@ -23,6 +23,7 @@ describe('GoalDataController', () => {
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
+    collaborators: [],
   }];
 
   const baseStatusResponse = {

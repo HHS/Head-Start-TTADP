@@ -122,10 +122,6 @@ const updateGoalText = async (sequelize, instance, options) => {
     return;
   }
 
-  if (current.goal === previous.goal) {
-    return;
-  }
-
   // Get all SessionReportPilot instances for this event.
   const sessions = await sequelize.models.SessionReportPilot.findAll({
     where: {
@@ -138,7 +134,12 @@ const updateGoalText = async (sequelize, instance, options) => {
     sequelize,
     session,
     options,
+    instance,
   )));
+
+  if (current.goal === previous.goal) {
+    return;
+  }
 
   // Disallow goal name propagation if any session on this event has been completed,
   // effectively locking down this goal text.

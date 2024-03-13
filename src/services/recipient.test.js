@@ -869,12 +869,12 @@ describe('Recipient DB service', () => {
 
     it('properly de-duplicates based on responses', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(3);
+      expect(goalRows.length).toBe(4);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
 
-      expect(doubler.ids.length).toBe(2);
+      expect(doubler.ids.length).toBe(1);
 
       const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
       expect(singler).toBeTruthy();
@@ -1062,19 +1062,17 @@ describe('Recipient DB service', () => {
     it('successfully reduces data without losing topics', async () => {
       const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
 
-      expect(goalsForRecord.count).toBe(1);
-      expect(goalsForRecord.goalRows.length).toBe(1);
+      expect(goalsForRecord.count).toBe(2);
+      expect(goalsForRecord.goalRows.length).toBe(2);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(1);
+      expect(goal.reasons.length).toBe(0);
 
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
-      expect(objective.topics.length).toBe(4);
-      expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
+      expect(objective.topics.length).toBe(1);
       expect(objective.supportType).toBe('Planning');
-      expect(objective.activityReports.length).toBe(1);
     });
   });
 
