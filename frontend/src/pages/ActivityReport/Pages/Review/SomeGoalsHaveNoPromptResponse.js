@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { Alert } from '@trussworks/react-uswds';
+import { Alert, Button } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import { missingDataForActivityReport } from '../../../../fetchers/goals';
 
@@ -12,16 +12,17 @@ const SomeGoalsHaveNoPromptResponse = ({
 }) => {
   const [missingGoalData, setMissingGoalData] = useState([]);
 
-  useDeepCompareEffect(() => {
-    async function fetchMissingData(goalIds) {
-      try {
-        const data = await missingDataForActivityReport(regionId, goalIds);
-        setMissingGoalData(data);
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error fetching missing data', error);
-      }
+  async function fetchMissingData(goalIds) {
+    try {
+      const data = await missingDataForActivityReport(regionId, goalIds);
+      setMissingGoalData(data);
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error fetching missing data', error);
     }
+  }
+
+  useDeepCompareEffect(() => {
     const ids = goalsMissingResponses.map((goal) => goal.goalIds).flat();
     if (!ids.length) return;
     if (!regionId) return;
@@ -53,11 +54,23 @@ const SomeGoalsHaveNoPromptResponse = ({
                 to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
                 target="_blank"
               >
+                {goal.recipientName}
+                {' '}
+                {goal.grantNumber}
+                {' '}
                 {goal.id}
               </Link>
             </li>
           ))}
         </ul>
+        <Button
+          unstyled
+          onClick={() => {
+            fetchMissingData(goalsMissingResponses.map((goal) => goal.goalIds).flat());
+          }}
+        >
+          Refresh list of goals
+        </Button>
       </details>
       )}
 
