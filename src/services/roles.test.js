@@ -1,22 +1,39 @@
-import db, { Role } from '../models';
-import { getAllRoles } from './roles';
+import { Op } from 'sequelize';
+import { Role } from '../models';
+import { getAllRoles } from './roles'; // Adjust the import path as necessary
+
+jest.mock('../models', () => ({
+  Role: {
+    findAll: jest.fn(),
+  },
+}));
 
 describe('getAllRoles', () => {
-  afterAll(async () => {
-    await db.sequelize.close();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  it('gets all roles', async () => {
-    const rolesRaw = await Role.findAll(
-      {
-        attributes: ['id', 'isSpecialist'],
-      },
-    );
+  it('should fetch all roles when onlySpecialistRoles is false', async () => {
+    const roles = [{ id: 1, name: 'Admin', isSpecialist: false }];
+    Role.findAll.mockResolvedValue(roles);
 
-    const rolesFromFunc = await getAllRoles();
-    const specialists = await getAllRoles(true);
+    const result = await getAllRoles();
+    expect(result).toEqual(roles);
+    expect(Role.findAll).toHaveBeenCalledWith({
+      raw: true,
+      where: { deletedAt: { [Op.eq]: null } },
+    });
+  });
 
-    expect(rolesRaw.length).toBe(rolesFromFunc.length);
-    expect(specialists.length).toEqual(rolesRaw.filter((r) => r.isSpecialist).length);
+  it('should fetch only specialist roles when onlySpecialistRoles is true', async () => {
+    const roles = [{ id: 2, name: 'Specialist', isSpecialist: true }];
+    Role.findAll.mockResolvedValue(roles);
+
+    const result = await getAllRoles(true);
+    expect(result).toEqual(roles);
+    expect(Role.findAll).toHaveBeenCalledWith({
+      raw: true,
+      where: { deletedAt: { [Op.eq]: null }, isSpecialist: true },
+    });
   });
 });

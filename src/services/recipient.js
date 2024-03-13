@@ -4,9 +4,11 @@ import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
   Recipient,
+  CollaboratorType,
   Program,
   sequelize,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   ActivityReport,
@@ -18,6 +20,8 @@ import {
   Permission,
   ProgramPersonnel,
   User,
+  UserRole,
+  Role,
   ActivityReportCollaborator,
   ActivityReportApprover,
 } from '../models';
@@ -564,6 +568,42 @@ export async function getGoalsByActivityRecipient(
     where: goalWhere,
     include: [
       {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        attributes: ['id'],
+        required: false,
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorType',
+            where: {
+              name: 'Creator',
+            },
+            attributes: ['name'],
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name'],
+            required: true,
+            include: [
+              {
+                model: UserRole,
+                as: 'userRoles',
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                    attributes: ['name'],
+                  },
+                ],
+                attributes: ['id'],
+              },
+            ],
+          },
+        ],
+      },
+      {
         model: EventReportPilot,
         as: 'eventReportPilots',
         required: false,
@@ -684,6 +724,35 @@ export async function getGoalsByActivityRecipient(
 
   const allGoalIds = [];
 
+  function getGoalCollaboratorDetails(collabType, dataValues) {
+    // eslint-disable-next-line max-len
+    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    return {
+      [`goal${collabType}`]: collaborator,
+      [`goal${collabType}Name`]: collaborator?.user?.name,
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+    };
+  }
+
+  function createCollaborators(goal) {
+    return [
+      {
+        goalNumber: goal.goalNumber,
+        ...getGoalCollaboratorDetails('Creator', goal),
+        ...getGoalCollaboratorDetails('Linker', goal),
+      },
+    ];
+  }
+
+  sorted = sorted.map((goal) => {
+    if (goal.goalCollaborators.length === 0) return goal;
+
+    // eslint-disable-next-line no-param-reassign
+    goal.collaborators = createCollaborators(goal);
+
+    return goal;
+  });
+
   const r = sorted.reduce((previous, current) => {
     const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
@@ -703,6 +772,13 @@ export async function getGoalsByActivityRecipient(
       );
       existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
+      existingGoal.collaborators = existingGoal.collaborators || [];
+
+      existingGoal.collaborators = uniqBy([
+        ...existingGoal.collaborators,
+        ...createCollaborators(current),
+      ], 'goalCreatorName');
+
       existingGoal.onAR = existingGoal.onAR || current.onAR;
       return {
         goalRows: previous.goalRows,
@@ -727,8 +803,11 @@ export async function getGoalsByActivityRecipient(
       responsesForComparison: responsesForComparison(current),
       isCurated,
       createdVia: current.createdVia,
+      collaborators: [],
       onAR: current.onAR,
     };
+
+    goalToAdd.collaborators.push(...createCollaborators(current));
 
     const sessionObjectives = current.eventReportPilots
       // shape the session objective, mold it into a form that
