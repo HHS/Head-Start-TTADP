@@ -37,7 +37,8 @@ export async function currentUserId(req, res) {
 
     // bypass authorization, used for cucumber UAT and axe accessibility testing
     if (process.env.NODE_ENV !== 'production' && process.env.BYPASS_AUTH === 'true') {
-      const userId = process.env.CURRENT_USER_ID;
+      // const userId = process.env.CURRENT_USER_ID;
+      const userId = 112;
       auditLogger.warn(`Bypassing authentication in authMiddleware - using User ${userId}`);
       if (req.session) {
         req.session.userId = userId;
