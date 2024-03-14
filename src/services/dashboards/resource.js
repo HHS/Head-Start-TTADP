@@ -240,7 +240,6 @@ const switchToResourceCentric = (input) => {
 // restructure the input from report centric to resource centric
 const switchToTopicCentric = (input) => {
   const output = {};
-  const resourceMap = new Map();
   input.forEach(({
     id,
     numberOfParticipants,
@@ -264,20 +263,54 @@ const switchToTopicCentric = (input) => {
           numberOfParticipants,
           startDate,
         });
-
-        if (resourceObjects) {
-          resourceObjects.forEach((resource) => {
-            if (!resourceMap.has(resource.resourceId)) {
-              resourceMap.set(resource.resourceId, resource);
-              output[topic].resources.push(resource);
-            }
-          });
-        }
+        output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+          const exists = resources.find((r) => r.resourceId === resource.resourceId);
+          if (exists) {
+            return resources;
+          }
+          return [...resources, resource];
+        }, output[topic].resources);
         output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
       });
     }
+    if (resourceObjects) {
+      resourceObjects.forEach(({
+        topics: resourceTopics,
+      }) => {
+        if (resourceTopics) {
+          resourceTopics.forEach((topic) => {
+            if (!output[topic]) {
+              output[topic] = {
+                topic,
+                reports: [],
+                resources: [],
+                recipients: [],
+              };
+            }
+            output[topic].reports = [{
+              id,
+              numberOfParticipants,
+              startDate,
+            }].reduce((reports, report) => {
+              const exists = reports.find((r) => r.id === report.id);
+              if (exists) {
+                return reports;
+              }
+              return [...reports, report];
+            }, output[topic].reports);
+            output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+              const exists = resources.find((r) => r.resourceId === resource.resourceId);
+              if (exists) {
+                return resources;
+              }
+              return [...resources, resource];
+            }, output[topic].resources);
+            output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+          });
+        }
+      });
+    }
   });
-
   return Object.values(output)
     .map((data) => {
       const participants = data.reports
