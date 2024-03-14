@@ -166,7 +166,7 @@ const mergeInResources = (currentData, additionalData) => additionalData
  * @returns {ResourceData[]}
  */
 const switchToResourceCentric = (input) => {
-  const output = {};
+  const output = new Map();
   input.forEach(({
     id,
     numberOfParticipants,
@@ -185,8 +185,9 @@ const switchToResourceCentric = (input) => {
         sourceFields,
         topics: resourceTopics,
       }) => {
-        if (!output[resourceId]) {
-          output[resourceId] = {
+        let resourceCentricData = output.get(resourceId);
+        if (!resourceCentricData) {
+          resourceCentricData = {
             resourceId,
             url,
             domain,
@@ -195,8 +196,9 @@ const switchToResourceCentric = (input) => {
             reports: [],
             topics: resourceTopics,
           };
+          output.set(resourceId, resourceCentricData);
         }
-        output[resourceId].reports.push({
+        resourceCentricData.reports.push({
           id,
           numberOfParticipants,
           topics,
@@ -206,45 +208,39 @@ const switchToResourceCentric = (input) => {
       });
     }
   });
-  return Object.values(output)
-    .map((data) => {
-      const participants = data.reports
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-      const startDates = data.reports
-        .map((r) => r.startDate);
-      const recipients = data.reports
-        .flatMap((r) => r.recipients)
-        .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
-          const exists = currentRecipient.find((cr) => (
-            cr.recipientId === recipientId
-            || cr.otherEntityId === otherEntityId));
-          if (exists) {
-            exists.grantIds = grantId
-              ? [...new Set([...exists.grantIds, grantId])]
-              : exists.grantId;
-            return currentRecipient;
-          }
-          return [
-            ...currentRecipient,
-            {
-              recipientId,
-              grantIds: [grantId].filter((g) => g),
-              otherEntityId,
-            },
-          ];
-        }, []);
-      return {
-        ...data,
-        participants,
-        startDates,
-        recipients,
-      };
-    });
+  return Array.from(output.values()).map((data) => {
+    const participants = data.reports.reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+    const startDates = data.reports.map((r) => r.startDate);
+    const recipients = data.reports.flatMap((r) => r.recipients).reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
+      const exists = currentRecipient.find((cr) => (
+        cr.recipientId === recipientId
+        || cr.otherEntityId === otherEntityId));
+      if (exists) {
+        exists.grantIds = grantId ? [...new Set([...exists.grantIds, grantId])] : exists.grantId;
+        return currentRecipient;
+      }
+      return [
+        ...currentRecipient,
+        {
+          recipientId,
+          grantIds: [grantId].filter((g) => g),
+          otherEntityId,
+        },
+      ];
+    }, []);
+    return {
+      ...data,
+      participants,
+      startDates,
+      recipients,
+    };
+  });
 };
 
 // restructure the input from report centric to resource centric
 const switchToTopicCentric = (input) => {
   const output = {};
+  const resourceMap = new Map();
   input.forEach(({
     id,
     numberOfParticipants,
@@ -268,54 +264,20 @@ const switchToTopicCentric = (input) => {
           numberOfParticipants,
           startDate,
         });
-        output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
-          const exists = resources.find((r) => r.resourceId === resource.resourceId);
-          if (exists) {
-            return resources;
-          }
-          return [...resources, resource];
-        }, output[topic].resources);
+
+        if (resourceObjects) {
+          resourceObjects.forEach((resource) => {
+            if (!resourceMap.has(resource.resourceId)) {
+              resourceMap.set(resource.resourceId, resource);
+              output[topic].resources.push(resource);
+            }
+          });
+        }
         output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
       });
     }
-    if (resourceObjects) {
-      resourceObjects.forEach(({
-        topics: resourceTopics,
-      }) => {
-        if (resourceTopics) {
-          resourceTopics.forEach((topic) => {
-            if (!output[topic]) {
-              output[topic] = {
-                topic,
-                reports: [],
-                resources: [],
-                recipients: [],
-              };
-            }
-            output[topic].reports = [{
-              id,
-              numberOfParticipants,
-              startDate,
-            }].reduce((reports, report) => {
-              const exists = reports.find((r) => r.id === report.id);
-              if (exists) {
-                return reports;
-              }
-              return [...reports, report];
-            }, output[topic].reports);
-            output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
-              const exists = resources.find((r) => r.resourceId === resource.resourceId);
-              if (exists) {
-                return resources;
-              }
-              return [...resources, resource];
-            }, output[topic].resources);
-            output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
-          });
-        }
-      });
-    }
   });
+
   return Object.values(output)
     .map((data) => {
       const participants = data.reports
@@ -1525,35 +1487,37 @@ const generateResourceTopicUse = (allData) => {
     return 0;
   });
 
-  const clusteredTopics = topics
-    .map((topic) => ({
+  const clusteredTopics = topics.map((topic) => {
+    const dataMap = new Map();
+    const total = { title: 'Total', cnt: 0 };
+    dataMap.set('Total', total);
+
+    topic.startDates.forEach((startDate) => {
+      const currentMonthYear = getMonthYear(startDate);
+      if (dataMap.has(currentMonthYear)) {
+        const existingData = dataMap.get(currentMonthYear);
+        existingData.cnt += 1;
+      } else {
+        const newData = { title: currentMonthYear, cnt: 1 };
+        dataMap.set(currentMonthYear, newData);
+      }
+      total.cnt += 1;
+    });
+
+    const data = [...dataMap.values()].map(({ title, cnt }) => ({
+      title,
+      value: formatNumber(cnt),
+    }));
+
+    return {
       heading: topic.topic,
       isUrl: false,
-      data: [
-        ...topic.startDates.reduce((data, startDate) => {
-          const total = data.find((sd) => sd.title === 'Total');
-          total.cnt += 1;
-
-          const currentMonthYear = getMonthYear(startDate);
-          const exists = data.find((sd) => sd.title === currentMonthYear);
-          if (exists) {
-            exists.cnt += 1;
-            return data;
-          }
-          return [
-            ...data,
-            {
-              title: currentMonthYear,
-              cnt: 1,
-            },
-          ];
-        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
-      ]
-        .map(({ title, cnt }) => ({
-          title,
-          value: formatNumber(cnt),
-        })),
-    }));
+      data: [...dateList.map(({ title }) => title), 'Total'].map((title) => {
+        const entry = data.find((d) => d.title === title);
+        return entry || { title, value: formatNumber(0) };
+      }),
+    };
+  });
 
   return {
     headers: [...dateList.map(({ title }) => title)],

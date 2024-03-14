@@ -17,7 +17,7 @@
     "start:testingonly": "tsx watch ./src/testingOnly.js",
     "server": "tsx watch src/index.ts",
     "worker": "tsx watch src/worker.ts",
-    "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.js --exec babel-node",
+    "server:debug": "nodemon --inspect=0.0.0.0:9229 src/index.ts --exec tsx",
     "client": "yarn --cwd frontend start",
     "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
