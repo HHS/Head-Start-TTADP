@@ -121,6 +121,8 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
     const [goal] = goals;
     expect(goal.id).toBe(goalTwo.id);
     expect(goal.recipientId).toBe(recipient.id);
+    expect(goal.recipientName).toBe(recipient.name);
+    expect(goal.grantNumber).toBe(activeGrant.number);
     expect(goal.regionId).toBe(activeGrant.regionId);
   });
 });
