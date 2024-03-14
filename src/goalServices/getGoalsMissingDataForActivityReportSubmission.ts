@@ -1,32 +1,45 @@
 import db from '../models';
 
 const {
-  Goal, Grant, GoalFieldResponse, Recipient,
+  sequelize,
+  Goal,
+  Grant,
+  GoalFieldResponse,
+  Recipient,
 } = db;
 
 export default async function getGoalsMissingDataForActivityReportSubmission(goalIds: number[]) {
-  const goals = await Goal.findAll({
-    attributes: ['id'],
+  return Goal.findAll({
+    raw: true,
+    attributes: [
+      'id',
+      [sequelize.col('grant."regionId"'), 'regionId'],
+      [sequelize.col('grant."number"'), 'grantNumber'],
+      [sequelize.col('grant.recipient.id'), 'recipientId'],
+      [sequelize.col('grant.recipient.name'), 'recipientName'],
+    ],
     where: {
       id: goalIds,
     },
+    having: sequelize.literal('COUNT(responses.id) = 0'),
+    group: ['Goal.id', 'grant.id', 'grant.recipient.id', 'grant.recipient.name', 'grant.regionId', 'grant.number'],
     include: [
       {
         model: GoalFieldResponse,
         as: 'responses',
         required: false,
-        attributes: ['response', 'goalId'],
+        attributes: [],
       },
       {
         model: Grant,
         as: 'grant',
-        attributes: ['regionId', 'id', 'number'],
+        attributes: [],
         required: true,
         include: [{
           model: Recipient,
           required: true,
           as: 'recipient',
-          attributes: ['id', 'name'],
+          attributes: [],
         }],
       },
     ],
@@ -46,12 +59,4 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
       id: number;
     };
   }>;
-
-  return goals.filter((goal) => !goal.responses.length).map((goal) => ({
-    id: goal.id,
-    recipientId: goal.grant.recipient.id,
-    regionId: goal.grant.regionId,
-    grantNumber: goal.grant.number,
-    recipientName: goal.grant.recipient.name,
-  }));
 }

@@ -70,8 +70,6 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, _option
       },
     );
 
-    console.log('Updated ActivityReportGoalFieldResponses:', activityReportGoalIds, 'with response:', instance.response); // eslint-disable-line no-console
-
     // We need to update the AR createdAt so we don't pull from outdated local storage.
     if (activityReportIds.length > 0) {
       await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id IN (${activityReportIds.join(',')})`);
