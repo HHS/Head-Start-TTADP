@@ -4,10 +4,9 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES, GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
-
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -35,7 +34,13 @@ import db, {
   ActivityReportGoalFieldResponse,
   GroupCollaborator,
 } from '../../models';
-import { createReport, destroyReport, createGrant } from '../../testUtils';
+import {
+  createReport,
+  destroyReport,
+  createGrant,
+  createRecipient,
+  createGoal,
+} from '../../testUtils';
 import {
   deleteIndex,
 } from '../../lib/awsElasticSearch/index';
@@ -3415,6 +3420,127 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('goalName', () => {
+    let includedReport;
+    let excludedReport;
+    let possibleIds;
+
+    let recipient;
+    let grant;
+
+    let goalOne;
+    let goalTwo;
+
+    const includedGoalName = `${faker.lorem.sentence(10)}chowder`;
+    const excludedGoalName = `${faker.lorem.sentence(10)}hams`;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+
+      goalOne = await createGoal({
+        grantId: grant.id, name: includedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+      goalTwo = await createGoal({
+        grantId: grant.id, name: excludedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+
+      // Create reports.
+      includedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: includedUser1.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: includedReport.id,
+        goalId: goalOne.id,
+        name: goalOne.name,
+        status: goalOne.status,
+      });
+
+      excludedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: excludedUser.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goalTwo.id,
+        name: goalTwo.name,
+        status: goalTwo.status,
+      });
+
+      possibleIds = [
+        includedReport.id,
+        excludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [includedReport.id, excludedReport.id],
+        },
+      });
+
+      // Delete reports.
+      await ActivityReport.destroy({
+        where: { id: [includedReport.id, excludedReport.id] },
+      });
+
+      await Goal.destroy({
+        where: { id: [goalOne.id, goalTwo.id] },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: { id: grant.id },
+      });
+
+      await Recipient.destroy({
+        where: { id: recipient.id },
+      });
+    });
+
+    it('return correct goal name filter search results', async () => {
+      const filters = { 'goalName.ctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport.id]));
+    });
+
+    it('excludes correct goal name filter search results', async () => {
+      const filters = { 'goalName.nctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          excludedReport.id,
+        ]));
     });
   });
 });
