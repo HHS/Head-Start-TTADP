@@ -1,4 +1,3 @@
-import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
