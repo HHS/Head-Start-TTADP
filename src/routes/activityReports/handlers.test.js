@@ -639,6 +639,7 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
+        isApproverAndCreator: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -656,6 +657,7 @@ describe('Activity Report handlers', () => {
     it('handles unauthorized', async () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => false,
+        isApproverAndCreator: () => false,
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
