@@ -26,6 +26,7 @@ import { withGroup, withoutGroup } from './group';
 import { withResourceUrl, withoutResourceUrl } from './resouceUrl';
 import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   createDate: {
@@ -134,6 +135,10 @@ export const topicToQuery = {
   stateCode: {
     ctn: (query) => withStateCode(query),
   },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
+  }
 };
 
 export function goalsFiltersToScopes(filters, options, userId) {
