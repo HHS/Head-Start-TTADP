@@ -106,3 +106,18 @@ export async function similiarGoalsByText(
   const response = await get(url);
   return response.json();
 }
+
+export async function missingDataForActivityReport(regionId, goalIds) {
+  const parameterizedGoalIds = goalIds.map((goalId) => `goalIds=${encodeURIComponent(goalId)}`).join('&');
+
+  const url = join(
+    goalsUrl,
+    'region',
+    String(regionId),
+    'incomplete',
+    `?${parameterizedGoalIds}`,
+  );
+
+  const response = await get(url);
+  return response.json();
+}
