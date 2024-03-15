@@ -16,6 +16,10 @@ export default class ActivityReport {
     this.activityReport = activityReport;
   }
 
+  isApproverAndCreator() {
+    return this.isApprovingManager() && this.isAuthor();
+  }
+
   canReview() {
     // Ability to review is meant to be independent of report status per acceptance criteria
     return this.isApprovingManager() && this.canApproveInRegion();
@@ -39,7 +43,7 @@ export default class ActivityReport {
 
   canReset() {
     return (this.isAuthor() || this.isCollaborator())
-      && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
   }
 
   canDelete() {
