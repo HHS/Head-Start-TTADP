@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
 
 export function withGoalName(searchText: string[]) {
-  const [search] = [`%${searchText.map((st) => st.toLowerCase())}%`];
+  const search = `%${searchText}%`;
 
   return {
     [Op.and]: {
@@ -13,7 +13,7 @@ export function withGoalName(searchText: string[]) {
 }
 
 export function withoutGoalName(searchText: string[]) {
-  const [search] = [`%${searchText.map((st) => st.toLowerCase())}%`];
+  const search = `%${searchText}%`;
 
   return {
     [Op.and]: {
