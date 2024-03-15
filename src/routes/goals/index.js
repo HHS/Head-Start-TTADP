@@ -8,6 +8,7 @@ import {
   mergeGoalHandler,
   getSimilarGoalsForRecipient,
   getSimilarGoalsByText,
+  getMissingDataForActivityReport,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -35,6 +36,12 @@ router.get(
   checkRegionIdParam,
   checkRecipientIdParam,
   transactionWrapper(getSimilarGoalsForRecipient),
+);
+
+router.get(
+  '/region/:regionId/incomplete',
+  checkRegionIdParam,
+  transactionWrapper(getMissingDataForActivityReport),
 );
 
 export default router;
