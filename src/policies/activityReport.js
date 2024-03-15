@@ -39,7 +39,7 @@ export default class ActivityReport {
 
   canReset() {
     return (this.isAuthor() || this.isCollaborator())
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+      && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
   }
 
   canDelete() {
