@@ -138,7 +138,7 @@ export const topicToQuery = {
   goalName: {
     ctn: (query) => withGoalName(query),
     nctn: (query) => withoutGoalName(query),
-  }
+  },
 };
 
 export function goalsFiltersToScopes(filters, options, userId) {
