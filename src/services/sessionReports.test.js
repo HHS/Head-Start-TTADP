@@ -1,5 +1,12 @@
 import faker from '@faker-js/faker';
-import db from '../models';
+import db, {
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+  EventReportPilotGoal,
+  Grant,
+  Recipient,
+  SessionReportPilot,
+} from '../models';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -12,15 +19,6 @@ import {
 } from './sessionReports';
 import sessionReportPilot from '../models/sessionReportPilot';
 import { createGrant, createGoal, destroyGoal } from '../testUtils';
-
-import {
-  SessionReportPilotFile,
-  SessionReportPilotSupportingAttachment,
-  EventReportPilotGoal,
-  Grant,
-  Recipient,
-  SessionReportPilot,
-} from '../models';
 
 jest.mock('bull');
 
@@ -101,7 +99,8 @@ describe('session reports service', () => {
   });
 
   describe('destroySession', () => {
-    let eventReportPilotGoal, goal, grant, createdSession;
+    let eventReportPilotGoal; let goal; let grant; let
+      createdSession;
     const grantData = {
       id: 5555555,
       number: '1234',
@@ -132,7 +131,7 @@ describe('session reports service', () => {
       await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
       await destroyGoal(goalData);
       await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
-      await Recipient.destroy({ where: {id: 69514 }, force: true });
+      await Recipient.destroy({ where: { id: 69514 }, force: true });
     });
 
     it('should delete files and attachments associated with the session report pilot', async () => {
@@ -142,14 +141,24 @@ describe('session reports service', () => {
 
       await destroySession(id);
 
-      expect(destroyMock).toHaveBeenCalledWith({ where: { sessionReportPilotId: id } }, { individualHooks: true });
-      expect(destroyAttachmentMock).toHaveBeenCalledWith({ where: { sessionReportPilotId: id } }, { individualHooks: true });
+      expect(destroyMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
+      expect(destroyAttachmentMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
     });
     it('should delete session', async () => {
       // Verify the session and the corresponding EventReportPilotGoal record are present
       expect(createdSession).toBeDefined();
       const evntRPGoal = await EventReportPilotGoal.findOne({
-        where: { sessionId: createdSession.id }
+        where: { sessionId: createdSession.id },
       });
 
       expect(evntRPGoal).toBeDefined();
@@ -162,7 +171,7 @@ describe('session reports service', () => {
       const session = await SessionReportPilot.findByPk(createdSession.id);
       expect(session).toBeNull();
       const evntRPGoalAfterSessionDelete = await EventReportPilotGoal.findOne({
-        where: { eventId: event.id }
+        where: { eventId: event.id },
       });
       expect(evntRPGoalAfterSessionDelete).toBeDefined();
       expect(evntRPGoalAfterSessionDelete.sessionId).toBeNull();

@@ -11,7 +11,7 @@ const { auditLogger } = require('../../logger');
 const safeParse = (data) => {
   if (data?.val) {
     return JSON.parse(data.val);
-  } else if (typeof data === 'object') {
+  } if (typeof data === 'object') {
     return data;
   }
   return null;
@@ -108,7 +108,7 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
       }
     }
   } catch (err) {
-      auditLogger.error(`Error in notifyVisionAndGoalComplete: ${err}`);
+    auditLogger.error(`Error in notifyVisionAndGoalComplete: ${err}`);
   }
 };
 
