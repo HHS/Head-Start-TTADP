@@ -8,7 +8,7 @@ export function grantInSubQuery(
   operator: string,
   comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE',
 ) {
-  return searchTerms.map((term) => sequelize.literal(`"Grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
+  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(String(term).trim())})`));
 }
 
 export function expandArrayContains(key: string, array: string[], exclude: boolean) {
