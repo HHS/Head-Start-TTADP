@@ -1063,10 +1063,9 @@ describe('saveGoalsForReport (more tests)', () => {
       {
         goalIds: [otherExistingGoal.id],
         id: otherExistingGoal.id,
-        name: otherExistingGoal.name,
+        name: otherExistingGoal.name + 1,
         objectives: [],
         grantIds: [grantOne.id],
-        status: 'Closed',
       },
     ];
 
@@ -1094,7 +1093,7 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(goalIds).toContain(otherExistingGoal.id);
 
     const updatedGoal = await Goal.findByPk(otherExistingGoal.id);
-    expect(updatedGoal.status).toBe('Closed');
+    expect(updatedGoal.name).toBe(otherExistingGoal.name + 1);
 
     await cleanupTest(setup);
   });

@@ -703,12 +703,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
             ],
           );
 
-          if (
-            existingPrompt.allGoalsHavePromptResponse
-            && (
-              (currentPrompt.response || []).length || (currentPrompt.reportResponse || []).length
-            )
-          ) {
+          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
             existingPrompt.allGoalsHavePromptResponse = true;
           } else {
             existingPrompt.allGoalsHavePromptResponse = false;
@@ -739,7 +734,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         );
         newPrompt.reportResponse = (currentPrompt.reportResponse || []);
 
-        if (newPrompt.response.length || newPrompt.reportResponse.length) {
+        if (newPrompt.response.length) {
           newPrompt.allGoalsHavePromptResponse = true;
         }
       }
@@ -2239,10 +2234,6 @@ export async function saveGoalsForReport(goals, report) {
 
       if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
         newOrUpdatedGoal.set({ endDate });
-      }
-
-      if (status && status !== newOrUpdatedGoal.status) {
-        newOrUpdatedGoal.set({ status });
       }
 
       if (prompts && !isMultiRecipientReport) {
