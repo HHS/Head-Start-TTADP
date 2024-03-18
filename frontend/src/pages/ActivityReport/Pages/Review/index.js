@@ -106,6 +106,8 @@ const ReviewSubmit = ({
             error={error}
             formData={formData}
             isPendingApprover={isPendingApprover}
+            onResetToDraft={onReset}
+            onFormSubmit={onFormSubmit}
           >
             <>
               <Accordion bordered={false} items={items} />

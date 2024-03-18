@@ -45,6 +45,7 @@ const baseGoals = [{
   goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 8547,
@@ -57,6 +58,7 @@ const baseGoals = [{
   goalNumbers: ['G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65478,
@@ -69,6 +71,7 @@ const baseGoals = [{
   goalNumbers: ['G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65479,
@@ -81,6 +84,7 @@ const baseGoals = [{
   goalNumbers: ['G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65480,
@@ -93,6 +97,7 @@ const baseGoals = [{
   goalNumbers: ['G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65481,
@@ -105,6 +110,7 @@ const baseGoals = [{
   goalNumbers: ['G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
+  collaborators: [],
 },
 ];
 
@@ -199,6 +205,7 @@ const goalWithObjectives = [{
     }],
   },
   ],
+  collaborators: [],
 },
 ];
 

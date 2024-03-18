@@ -38,6 +38,7 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
+    collaborators: [],
   },
   ];
 
@@ -51,6 +52,7 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4599'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
+    collaborators: [],
   },
   {
     id: 4600,
@@ -62,6 +64,7 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4600'],
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
+    collaborators: [],
   },
   ];
 
@@ -76,6 +79,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4601'],
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
+      collaborators: [],
     },
   ];
 
@@ -255,6 +259,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
+      collaborators: [],
     },
     ];
 
@@ -340,6 +345,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
+      collaborators: [],
     };
     const goalCount = 60;
     const goalsToDisplay = [];
