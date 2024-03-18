@@ -1,13 +1,27 @@
 import {} from 'dotenv/config';
 import axios from 'axios';
+import httpCodes from 'http-codes';
 
 import { retrieveUserDetails, currentUserId } from './currentUser';
 import findOrCreateUser from './findOrCreateUser';
 import userInfoClassicLogin from '../mocks/classicLogin';
 import userInfoPivCardLogin from '../mocks/pivCardLogin';
+import { auditLogger } from '../logger';
 
 jest.mock('axios');
 jest.mock('./findOrCreateUser');
+jest.mock('./accessValidation', () => ({
+  validateUserAuthForAdmin: jest.fn(),
+}));
+jest.mock('../logger', () => ({
+  logger: {
+    debug: jest.fn(),
+  },
+  auditLogger: {
+    error: jest.fn(),
+    warn: jest.fn(),
+  },
+}));
 
 describe('currentUser', () => {
   beforeEach(async () => {
@@ -38,6 +52,65 @@ describe('currentUser', () => {
       mockLocals.userId = 10;
 
       expect(await currentUserId(mockRequest, mockResponse)).toEqual(10);
+    });
+
+    test('bypasses auth and retrieves userId from environment variables when not in production and BYPASS_AUTH is true', async () => {
+      process.env.NODE_ENV = 'development';
+      process.env.BYPASS_AUTH = 'true';
+      process.env.CURRENT_USER_ID = '999';
+
+      const mockRequest = { session: {}, headers: {} };
+      const mockResponse = {};
+
+      const userId = await currentUserId(mockRequest, mockResponse);
+
+      expect(userId).toEqual(999);
+      expect(mockRequest.session.userId).toEqual('999');
+      expect(mockRequest.session.uuid).toBeDefined();
+    });
+
+    test('handles impersonation when Auth-Impersonation-Id header is set and user is not an admin', async () => {
+      const { validateUserAuthForAdmin } = await import('./accessValidation');
+
+      const mockRequest = {
+        headers: { 'auth-impersonation-id': JSON.stringify(200) },
+        session: {},
+      };
+      const mockResponse = {
+        sendStatus: jest.fn(),
+        locals: {},
+      };
+      mockResponse.locals.userId = 100; // Non-admin user
+
+      validateUserAuthForAdmin.mockResolvedValueOnce(false); // Non-admin user cannot impersonate
+
+      await currentUserId(mockRequest, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure'));
+    });
+
+    test('handles impersonation when Auth-Impersonation-Id header is set and impersonated user is an admin', async () => {
+      const { validateUserAuthForAdmin } = await import('./accessValidation');
+      const mockRequest = {
+
+        headers: { 'auth-impersonation-id': JSON.stringify(300) },
+        session: {},
+      };
+      const mockResponse = {
+        sendStatus: jest.fn(),
+        locals: {},
+      };
+      mockResponse.locals.userId = 100; // Admin user
+
+      validateUserAuthForAdmin
+        .mockResolvedValueOnce(true) // Current user is an admin
+        .mockResolvedValueOnce(true); // Impersonated user is also an admin
+
+      await currentUserId(mockRequest, mockResponse);
+
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.UNAUTHORIZED);
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Impersonation failure'));
     });
   });
 

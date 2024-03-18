@@ -13,6 +13,7 @@ import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
 import { handleArrayQuery } from './helpers';
+import FilterRoles from './FilterRoles';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -84,6 +85,21 @@ export const topicsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTopicSelect
       inputId={`topic-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const userRolesFilter = {
+  id: 'enteredByRole',
+  display: 'Entered by role',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterRoles
+      inputId={`user-role-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
