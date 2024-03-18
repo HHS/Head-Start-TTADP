@@ -64,8 +64,8 @@ export default async function updateCompletedEventReportPilots() {
       },
     );
 
-    return db.EventReportPilotNationalCenterUser.bulkCreate(bulkCreate, {
-      ignoreDuplicates: true,
-    });
+    return Promise.all(
+      bulkCreate.map((item) => db.EventReportPilotNationalCenterUser.findOrCreate({ where: item })),
+    );
   });
 }
