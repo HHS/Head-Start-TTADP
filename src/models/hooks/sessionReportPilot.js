@@ -373,7 +373,7 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       await processSessionReport(instance);
     }
   } catch (error) {
-    auditLogger.error(`Error in removeGoalsForSessionRecipientsIfNecessary: ${error}`);   
+    auditLogger.error(`Error in removeGoalsForSessionRecipientsIfNecessary: ${error}`);
   }
 };
 
