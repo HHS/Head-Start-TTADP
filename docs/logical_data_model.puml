@@ -246,10 +246,10 @@ class Courses{
 
 class EventReportPilotGoals{
  * id : integer : <generated>
+ sessionId : integer : REFERENCES "SessionReportPilots".id
  * eventId : integer : REFERENCES "EventReportPilots".id
  * goalId : integer : REFERENCES "Goals".id
  * grantId : integer : REFERENCES "Grants".id
- * sessionId : integer : REFERENCES "SessionReportPilots".id
  * createdAt : timestamp with time zone
  * updatedAt : timestamp with time zone
 }

@@ -69,7 +69,7 @@ export default (sequelize, DataTypes) => {
     },
     sessionId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'SessionReportPilots',
