@@ -21,6 +21,7 @@ import {
   resourceUse,
   resourceDashboard,
   resourceTopicUse,
+  resourceFlatData,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -87,7 +88,7 @@ const reportObject = {
   targetPopulations: ['pop'],
   reason: ['reason'],
   participants: ['participants'],
-  topics: ['Coaching'],
+  // topics: ['Coaching'],
   ttaType: ['technical-assistance'],
   version: 2,
 };
@@ -98,7 +99,7 @@ const regionOneReportA = {
   duration: 1,
   startDate: '2021-01-02T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
-  topics: ['Coaching', 'ERSEA'],
+  // topics: ['Coaching', 'ERSEA'],
 };
 
 const regionOneReportB = {
@@ -107,7 +108,7 @@ const regionOneReportB = {
   duration: 2,
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
-  topics: ['Oral Health'],
+  // topics: ['Oral Health'],
 };
 
 const regionOneReportC = {
@@ -116,7 +117,7 @@ const regionOneReportC = {
   duration: 3,
   startDate: '2021-01-20T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
-  topics: ['Nutrition'],
+  // topics: ['Nutrition'],
 };
 
 const regionOneReportD = {
@@ -125,7 +126,7 @@ const regionOneReportD = {
   duration: 3,
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
-  topics: ['Facilities', 'Fiscal / Budget', 'ERSEA'],
+  // topics: ['Facilities', 'Fiscal / Budget', 'ERSEA'],
 };
 
 const regionOneDraftReport = {
@@ -136,15 +137,19 @@ const regionOneDraftReport = {
   endDate: '2021-01-31T12:00:00Z',
   submissionStatus: REPORT_STATUSES.DRAFT,
   calculatedStatus: REPORT_STATUSES.DRAFT,
-  topics: ['Equity', 'ERSEA'],
+  // topics: ['Equity', 'ERSEA'],
 };
 
 let grant;
 let goal;
 let objective;
-let activityReportObjectiveOne;
+let goalTwo;
+let objectiveTwo;
+let activityReportOneObjectiveOne;
+let activityReportOneObjectiveTwo;
 let activityReportObjectiveTwo;
 let activityReportObjectiveThree;
+let arIds;
 
 describe('Resources dashboard', () => {
   beforeAll(async () => {
@@ -156,6 +161,7 @@ describe('Resources dashboard', () => {
       individualHooks: true,
     });
     [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
+    [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
     [objective] = await Objective.findOrCreate({
       where: {
         title: 'Objective 1',
@@ -164,17 +170,76 @@ describe('Resources dashboard', () => {
       },
     });
 
+    [objectiveTwo] = await Objective.findOrCreate({
+      where: {
+        title: 'Objective 2',
+        goalId: goalTwo.dataValues.id,
+        status: 'In Progress',
+      },
+    });
+
+    // Get topic ID's.
+    const { topicId: classOrgTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'CLASS: Classroom Organization' },
+      raw: true,
+    });
+
+    const { topicId: erseaTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'ERSEA' },
+      raw: true,
+    });
+
+    const { topicId: coachingTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Coaching' },
+      raw: true,
+    });
+
+    const { topicId: facilitiesTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Facilities' },
+      raw: true,
+    });
+
+    const { topicId: fiscalBudgetTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Fiscal / Budget' },
+      raw: true,
+    });
+
+    const { topicId: nutritionTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Nutrition' },
+      raw: true,
+    });
+
+    const { topicId: oralHealthTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Oral Health' },
+      raw: true,
+    });
+
+    const { topicId: equityTopicId } = await Topic.findOne({
+      attributes: [['id', 'topicId']],
+      where: { name: 'Equity' },
+      raw: true,
+    });
+
     // Report 1 (Mixed Resources).
     const reportOne = await ActivityReport.create({
       ...regionOneReportA,
     }, {
       individualHooks: true,
     });
+    console.log("\n\n\n------ Report 1");
     await ActivityRecipient.findOrCreate({
       where: { activityReportId: reportOne.id, grantId: mockGrant.id },
     });
 
-    [activityReportObjectiveOne] = await ActivityReportObjective.findOrCreate({
+    // Report 1 - Activity Report Objective 1
+    [activityReportOneObjectiveOne] = await ActivityReportObjective.findOrCreate({
       where: {
         activityReportId: reportOne.id,
         status: 'Complete',
@@ -182,23 +247,52 @@ describe('Resources dashboard', () => {
       },
     });
 
-    const { topicId } = await Topic.findOne({
-      attributes: [['id', 'topicId']],
-      where: { name: 'CLASS: Classroom Organization' },
-      raw: true,
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportOneObjectiveOne.id,
+        topicId: classOrgTopicId,
+      },
     });
 
     await ActivityReportObjectiveTopic.findOrCreate({
       where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
-        topicId,
+        activityReportObjectiveId: activityReportOneObjectiveOne.id,
+        topicId: erseaTopicId,
+      },
+    });
+
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportOneObjectiveOne.id,
+        topicId: coachingTopicId,
       },
     });
 
     // Report 1 ECLKC Resource 1.
     // Report 1 Non-ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveOne.id,
+      activityReportOneObjectiveOne.id,
+      [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
+    );
+
+    // Report 1 - Activity Report Objective 2
+    [activityReportOneObjectiveTwo] = await ActivityReportObjective.findOrCreate({
+      where: {
+        activityReportId: reportOne.id,
+        status: 'Complete',
+        objectiveId: objectiveTwo.id,
+      },
+    });
+
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportOneObjectiveTwo.id,
+        topicId: coachingTopicId,
+      },
+    });
+
+    await processActivityReportObjectiveForResourcesById(
+      activityReportOneObjectiveTwo.id,
       [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
     );
 
@@ -215,8 +309,16 @@ describe('Resources dashboard', () => {
     // Report 2 ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveTwo.id,
-      [ECLKC_RESOURCE_URL],
+      [ECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
     );
+
+    // Report 2 Topic 1.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveTwo.id,
+        topicId: oralHealthTopicId,
+      },
+    });
 
     // Report 3 (Only Non-ECLKC).
     const reportThree = await ActivityReport.create({ ...regionOneReportC });
@@ -234,15 +336,53 @@ describe('Resources dashboard', () => {
       [NONECLKC_RESOURCE_URL, ECLKC_RESOURCE_URL2],
     );
 
+    // Report 3 Topic 1.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveThree.id,
+        topicId: nutritionTopicId,
+      },
+    });
+
     // Report 4 (No Resources).
     const reportFour = await ActivityReport.create({ ...regionOneReportD });
     await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
-    await ActivityReportObjective.create({
+    const activityReportObjectiveForReport4 = await ActivityReportObjective.create({
       activityReportId: reportFour.id,
       status: 'Complete',
       objectiveId: objective.id,
     });
+
+    // Report 4 Topic 1.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveForReport4.id,
+        topicId: facilitiesTopicId,
+      },
+    });
+
+    // Report 4 Topic 2.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveForReport4.id,
+        topicId: fiscalBudgetTopicId,
+      },
+    });
+
+    // Report 4 Topic 3.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveForReport4.id,
+        topicId: erseaTopicId,
+      },
+    });
+
+    // Report 3 Non-ECLKC Resource 1.
+    await processActivityReportObjectiveForResourcesById(
+      activityReportObjectiveForReport4.id,
+      [ECLKC_RESOURCE_URL2],
+    );
 
     // Draft Report (Excluded).
     const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
@@ -260,9 +400,28 @@ describe('Resources dashboard', () => {
       activityReportObjectiveDraft.id,
       [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
     );
+
+    // Draft Report 5 Topic 1.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveDraft.id,
+        topicId: equityTopicId,
+      },
+    });
+
+    // Draft Report 5 Topic 2.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveDraft.id,
+        topicId: erseaTopicId,
+      },
+    });
+
+    arIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportDraft.id];
   });
 
   afterAll(async () => {
+    /*
     const reports = await ActivityReport
       .findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
@@ -271,22 +430,24 @@ describe('Resources dashboard', () => {
 
     await ActivityReportObjectiveResource.destroy({
       where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
+        activityReportObjectiveId: activityReportOneObjectiveOne.id,
       },
     });
     await ActivityReportObjectiveTopic.destroy({
       where: {
-        activityReportObjectiveId: activityReportObjectiveOne.id,
+        activityReportObjectiveId: arIds,
       },
     });
 
-    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+    // eslint-disable-next-line max-len
+    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id] } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: objective.id }, force: true });
-    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id] }, force: true });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] }, force: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+    */
     await db.sequelize.close();
   });
 
@@ -303,6 +464,7 @@ describe('Resources dashboard', () => {
     });
 
     const res = await resourceList(scopes);
+    console.log('\n\n\n---- Resource List: ', res);
     expect(res.length).toBe(4);
 
     expect(res[0].name).toBe(ECLKC_RESOURCE_URL);
@@ -549,5 +711,53 @@ describe('Resources dashboard', () => {
         },
       ],
     });
+  });
+
+  it('flatResources', async () => {
+    const scopes = await filtersToScopes({});
+    const data = await resourceFlatData(scopes);
+    expect(true).toBe(true);
+  });
+
+  it('resourceUseFlat', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const { resourceUseResult } = await resourceFlatData(scopes);
+    expect(resourceUseResult).toBeDefined();
+    expect(resourceUseResult.length).toBe(3);
+    console.log('\n\n\n-----resourceUseResult: ', resourceUseResult);
+
+    expect(resourceUseResult).toStrictEqual([
+      {
+        url: 'https://eclkc.ohs.acf.hhs.gov/test',
+        rollUpDate: 'Jan-21',
+        resourceCount: '2',
+      },
+      {
+        url: 'https://eclkc.ohs.acf.hhs.gov/test2',
+        rollUpDate: 'Jan-21',
+        resourceCount: '3',
+      },
+      {
+        url: 'https://non.test1.gov/a/b/c',
+        rollUpDate: 'Jan-21',
+        resourceCount: '2',
+      },
+    ]);
+  });
+
+  it('resourceTopicUseFlat', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const { topicUseResult } = await resourceFlatData(scopes);
+    expect(topicUseResult).toBeDefined();
+
+    expect(topicUseResult).toStrictEqual([
+      { name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2' },
+      { name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4' },
+      { name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3' },
+      { name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1' },
+      { name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1' },
+      { name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2' },
+      { name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2' },
+    ]);
   });
 });
