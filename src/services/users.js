@@ -94,6 +94,7 @@ export async function userEmailIsVerifiedByUserId(userId) {
 
 /* Get Statistics by User */
 export async function statisticsByUser(user, regions, readonly = false, reportIds = []) {
+  
   // Get days joined.
   const dateJoined = new Date(user.createdAt);
   const todaysDate = new Date();

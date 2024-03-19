@@ -48,7 +48,7 @@ export default async function getCachedResponse(
   let response: string | null = null;
 
   try {
-    if (!ignoreCache) {
+    if (false) {
       redisClient = createClient({
         url: redisUrl,
         socket: {
