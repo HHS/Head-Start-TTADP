@@ -18,7 +18,7 @@ from db.db import (
 
 nlp = spacy.load("en_core_web_sm")
 
-def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
+def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool, regionId: int):
   # NOTE: in the query bellow there are two sections filtering out goals that are created via activity reports, but the report has not yet been approved.
   # These section should be removed once we add support to the backend to allow merging these type of goals while maintaining the associated metadata correctly.
   recipients = query_many(
@@ -37,6 +37,7 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
       ON arg."activityReportId" = ar.id
     -- -------------------------------------------
     WHERE r."id" = :recipient_id
+      AND gr."regionId" = :regionId
       AND NULLIF(TRIM(g."name"), '') IS NOT NULL
     -- -------------------------------------------
     -- Only needed to prevent goals created from non-approved reports from being merged
@@ -47,7 +48,7 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
     -- -------------------------------------------
     ;
     """,
-    { 'recipient_id': recipient_id }
+    { 'recipient_id': recipient_id, 'regionId': regionId }
   )
 
   if recipients is None:
@@ -182,7 +183,7 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], g
 
     return matched_goals
 
-def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates = False):
+def find_similar_goals(recipient_id, goal_name, alpha, regionId, include_curated_templates = False):
     # Fetch goals for the given recipient_id
     recipients = query_many(
         """
@@ -193,10 +194,11 @@ def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates
         JOIN "Recipients" r
           ON gr."recipientId" = r."id"
         WHERE r."id" = :recipient_id
+          AND gr."regionId" = :regionId
           AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
         """,
-        {'recipient_id': recipient_id}
-    )    
+        {'recipient_id': recipient_id, 'regionId': regionId}
+    )
 
     if recipients is None:
         return {"error": "recipient_id not found"}

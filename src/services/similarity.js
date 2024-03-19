@@ -38,11 +38,13 @@ async function postToSimilarity(body) {
 export async function similarGoalsForRecipient(
   recipient_id,
   cluster,
+  regionId,
   refinements = { alpha: 0.9 },
 ) {
   return postToSimilarity({
     recipient_id,
     cluster,
+    regionId,
     ...refinements,
   });
 }

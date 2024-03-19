@@ -2680,7 +2680,7 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(recipientId, user = null) {
+export async function getGoalIdsBySimilarity(recipientId, regionId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
@@ -2704,7 +2704,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
 
   // otherwise, we'll create the groups
   // with a little if just in case the similarity API craps out on us (technical term)
-  const similarity = await similarGoalsForRecipient(recipientId, true);
+  const similarity = await similarGoalsForRecipient(recipientId, true, regionId);
   let result = [];
   if (similarity) {
     result = similarity.result;
