@@ -2,11 +2,16 @@ import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
-function grantInSubQuery(baseQuery, searchTerms, operator, comparator) {
+export function grantInSubQuery(
+  baseQuery: string,
+  searchTerms: string[],
+  operator: string,
+  comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE',
+) {
   return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`));
 }
 
-export function expandArrayContains(key, array, exclude) {
+export function expandArrayContains(key: string, array: string[], exclude: boolean) {
   const comparator = exclude ? Op.notILike : Op.iLike;
   const scopes = array.map((member) => {
     const normalizedMember = `%${member.trim()}%`;
@@ -32,6 +37,6 @@ export function expandArrayContains(key, array, exclude) {
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery, searchTerms, exclude, comparator = 'ILIKE') {
+export function filterAssociation(baseQuery: string, searchTerms: string[], exclude: boolean, comparator = 'LIKE') {
   return filter(baseQuery, searchTerms, exclude, grantInSubQuery, comparator);
 }
