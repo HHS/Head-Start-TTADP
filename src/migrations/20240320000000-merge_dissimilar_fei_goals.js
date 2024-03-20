@@ -108,6 +108,39 @@ module.exports = {
         AND donor_obj.title = target_obj.title
       WHERE donor_obj.id != target_obj.id
       ;
+      
+      -- Merge goal collaborators
+      DROP TABLE IF EXISTS relinked_objective_collaborators;
+      CREATE TEMP TABLE relinked_objective_collaborators
+      AS
+      WITH updater AS (
+        WITH unmatched AS (
+          SELECT
+            donor_oid,
+            "userId" uid
+          FROM objective_merges om
+          JOIN "ObjectiveCollaborators" oc
+            ON om.donor_oid = oc."objectiveId"
+          EXCEPT
+          SELECT
+            donor_oid,
+            "userId"
+          FROM objective_merges om
+          JOIN "ObjectiveCollaborators" oc
+            ON om.target_oid = oc."objectiveId"
+        )
+        UPDATE "ObjectiveCollaborators" AS oc
+        SET "objectiveId" = target_oid
+        FROM objective_merges om
+        JOIN unmatched u
+          ON u.donor_oid = om.donor_oid
+        WHERE oc."userId" = u.uid
+          AND oc."objectiveId" = u.donor_oid
+        RETURNING
+          id ocid,
+          om.donor_oid original_oid
+      ) SELECT * FROM updater
+      ;
 
       -- Update the merge target objectives
       DROP TABLE IF EXISTS updated_target_objectives;
@@ -389,6 +422,19 @@ module.exports = {
           donor_gid
       ) SELECT * FROM updater
       ;
+      -- Delete duplicate objective collaborators
+      DROP TABLE IF EXISTS deleted_objective_collaborators;
+      CREATE TEMP TABLE deleted_objective_collaborators
+      AS
+      WITH updater AS (
+        DELETE FROM "ObjectiveCollaborators"
+        USING objective_merges
+        WHERE "objectiveId" = donor_oid
+        RETURNING
+          id ocid,
+          donor_oid
+      ) SELECT * FROM updater
+      ;
 
       SELECT
         1 op_order,
@@ -409,6 +455,8 @@ module.exports = {
       UNION SELECT 13,'deleted_goals', COUNT(*) FROM deleted_goals
       UNION SELECT 14,'relinked_goal_collaborators', COUNT(*) FROM relinked_goal_collaborators
       UNION SELECT 15,'deleted_goal_collaborators', COUNT(*) FROM deleted_goal_collaborators
+      UNION SELECT 16,'relinked_objective_collaborators', COUNT(*) FROM relinked_objective_collaborators
+      UNION SELECT 17,'deleted_objective_collaborators', COUNT(*) FROM deleted_objective_collaborators
       ORDER BY 1
       ;
       
