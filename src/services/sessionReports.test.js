@@ -1,5 +1,12 @@
 import faker from '@faker-js/faker';
-import db from '../models';
+import db, {
+  SessionReportPilotFile,
+  SessionReportPilotSupportingAttachment,
+  EventReportPilotGoal,
+  Grant,
+  Recipient,
+  SessionReportPilot,
+} from '../models';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
@@ -11,6 +18,7 @@ import {
   findSessionHelper,
 } from './sessionReports';
 import sessionReportPilot from '../models/sessionReportPilot';
+import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
 jest.mock('bull');
 
@@ -24,8 +32,8 @@ describe('session reports service', () => {
     const eventData = {
       ownerId: 99_888,
       regionId: 99_888,
-      pocIds: [99_888],
-      collaboratorIds: [99_888],
+      pocIds: [18],
+      collaboratorIds: [18],
       data: {
         eventId,
       },
@@ -35,13 +43,14 @@ describe('session reports service', () => {
   });
 
   afterAll(async () => {
+    await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
     await destroyEvent(event.id);
     await db.sequelize.close();
   });
 
   describe('createSession', () => {
     it('works', async () => {
-      const created = await createSession({ eventId: event.id, data: {} });
+      const created = await createSession({ eventId: event.id, data: { card: 'ace' } });
 
       expect(created).toMatchObject({
         id: expect.anything(),
@@ -86,6 +95,86 @@ describe('session reports service', () => {
       });
 
       await destroySession(updated.id);
+    });
+  });
+
+  describe('destroySession', () => {
+    let eventReportPilotGoal; let goal; let grant; let
+      createdSession;
+    const grantData = {
+      id: 5555555,
+      number: '1234',
+      regionId: 1,
+      recipientId: 7,
+    };
+    const goalData = {
+      id: 99_111,
+      name: 'Random text goal; Random text',
+      grantId: 5555555,
+      status: 'Draft',
+    };
+    beforeAll(async () => {
+      createdSession = await createSession({ eventId: event.id, data: {} });
+      const eventReportPilotGoalData = {
+        goalId: 99_111,
+        eventId: event.id,
+        sessionId: createdSession.id,
+        grantId: 5555555,
+      };
+      grant = await createGrant(grantData);
+      goal = await createGoal(goalData);
+      eventReportPilotGoal = await EventReportPilotGoal.create(eventReportPilotGoalData);
+    });
+
+    afterAll(async () => {
+      await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
+      await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
+      await destroyGoal(goalData);
+      await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
+      await Recipient.destroy({ where: { id: 69514 }, force: true });
+    });
+
+    it('should delete files and attachments associated with the session report pilot', async () => {
+      const id = 1;
+      const destroyMock = jest.spyOn(SessionReportPilotFile, 'destroy').mockResolvedValue(undefined);
+      const destroyAttachmentMock = jest.spyOn(SessionReportPilotSupportingAttachment, 'destroy').mockResolvedValue(undefined);
+
+      await destroySession(id);
+
+      expect(destroyMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
+      expect(destroyAttachmentMock).toHaveBeenCalledWith(
+        {
+          where: { sessionReportPilotId: id },
+        },
+        { individualHooks: true },
+      );
+    });
+    it('should delete session', async () => {
+      // Verify the session and the corresponding EventReportPilotGoal record are present
+      expect(createdSession).toBeDefined();
+      const evntRPGoal = await EventReportPilotGoal.findOne({
+        where: { sessionId: createdSession.id },
+      });
+
+      expect(evntRPGoal).toBeDefined();
+      expect(evntRPGoal.sessionId).toEqual(createdSession.id);
+
+      // Delete the session
+      await destroySession(createdSession.id);
+
+      // Verify the session was deleted
+      const session = await SessionReportPilot.findByPk(createdSession.id);
+      expect(session).toBeNull();
+      const evntRPGoalAfterSessionDelete = await EventReportPilotGoal.findOne({
+        where: { eventId: event.id },
+      });
+      expect(evntRPGoalAfterSessionDelete).toBeDefined();
+      expect(evntRPGoalAfterSessionDelete.sessionId).toBeNull();
     });
   });
 
@@ -219,8 +308,8 @@ describe('session reports service', () => {
       const eventData = {
         ownerId: 99_989,
         regionId: 99_888,
-        pocIds: [99_888],
-        collaboratorIds: [99_888],
+        pocIds: [18],
+        collaboratorIds: [18],
         data: {
           eventId,
         },

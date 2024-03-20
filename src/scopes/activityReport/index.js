@@ -31,6 +31,7 @@ import { withResourceAttachment, withoutResourceAttachment } from './resourceAtt
 import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
 import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   reportId: {
@@ -127,6 +128,10 @@ export const topicToQuery = {
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDate(query),
     in: (query) => withinEndDate(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
   otherEntities: {
     in: (query) => withOtherEntities(query),

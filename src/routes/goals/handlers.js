@@ -11,6 +11,7 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import nudge from '../../goalServices/nudge';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
@@ -40,6 +41,28 @@ export async function createGoalsForReport(req, res) {
 
     const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
     res.json(newGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
+  }
+}
+
+export async function getMissingDataForActivityReport(req, res) {
+  try {
+    const { regionId } = req.params;
+    const { goalIds } = req.query;
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    // goalIds can be a string or an array of strings
+    const missingData = await getGoalsMissingDataForActivityReportSubmission([goalIds].flat());
+    res.json(missingData);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
   }

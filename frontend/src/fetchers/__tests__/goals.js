@@ -4,6 +4,7 @@ import {
   mergeGoals,
   similarity,
   similiarGoalsByText,
+  missingDataForActivityReport,
 } from '../goals';
 
 describe('goals fetcher', () => {
@@ -51,6 +52,17 @@ describe('goals fetcher', () => {
       ['123', '456'],
     );
 
+    expect(fetchMock.called(url)).toBeTruthy();
+  });
+
+  it('gets missing data', async () => {
+    const url = '/api/goals/region/123/incomplete?goalIds=1&goalIds=2';
+    fetchMock.get(
+      url,
+      { res: 'ok' },
+    );
+
+    await missingDataForActivityReport(123, [1, 2]);
     expect(fetchMock.called(url)).toBeTruthy();
   });
 });

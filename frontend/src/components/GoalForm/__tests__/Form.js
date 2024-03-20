@@ -16,6 +16,13 @@ const DEFAULT_GOAL = {
   isOnApprovedReport: false,
   isOnReport: false,
   prompts: [],
+  collaborators: [
+    {
+      goalNumber: 'G-1',
+      goalCreatorRoles: 'ECS',
+      goalCreatorName: 'Test User',
+    },
+  ],
   source: {},
 };
 
@@ -88,6 +95,7 @@ describe('Goal Form > Form component', () => {
             source={goal.source}
             setSource={jest.fn()}
             createdVia={goal.createdVia || 'activityReport'}
+            collaborators={goal.collaborators}
             onSelectNudgedGoal={jest.fn()}
             goalTemplateId={goal.goalTemplateId}
           />

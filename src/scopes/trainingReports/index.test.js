@@ -406,4 +406,75 @@ describe('filtersToScopes', () => {
       expect(reportIds.includes(reportWithNullEventId.id)).toBe(true);
     });
   });
+
+  describe('goalName', () => {
+    const goalName = `${faker.lorem.sentence(3)}birding`;
+    const secondGoalName = `${faker.lorem.sentence(3)}limping`;
+
+    let reportWithGoalName;
+    let reportWithoutGoalName;
+    let possibleIds;
+
+    beforeAll(async () => {
+      // create user.
+      await User.create(mockUser);
+
+      // Report with event to find.
+      reportWithGoalName = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { goal: goalName },
+      });
+
+      // Report without event to find.
+      reportWithoutGoalName = await EventReportPilot.create({
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { goal: secondGoalName },
+      });
+
+      possibleIds = [
+        reportWithGoalName.id,
+        reportWithoutGoalName.id,
+      ];
+    });
+    afterAll(async () => {
+      // destroy reports.
+      await EventReportPilot.destroy({
+        where: {
+          id: possibleIds,
+        },
+      });
+
+      // destroy user.
+      await User.destroy({ where: { id: [mockUser.id, mockCollaboratorUser.id] } });
+    });
+
+    it('returns event with event id', async () => {
+      const filters = { 'goalName.ctn': 'birding' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found[0].id).toBe(reportWithGoalName.id);
+    });
+
+    it('returns events without event id', async () => {
+      const filters = { 'goalName.nctn': 'birding' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      const reportIds = found.map((report) => report.id);
+
+      // Assert report ids includes the report without event id.
+      expect(reportIds.includes(reportWithoutGoalName.id)).toBe(true);
+    });
+  });
 });

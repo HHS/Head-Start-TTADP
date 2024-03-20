@@ -8,7 +8,9 @@ import {
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
+  CollaboratorType,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
@@ -35,6 +37,9 @@ import {
   Course,
   Program,
   File,
+  User,
+  UserRole,
+  Role,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -92,6 +97,42 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     id,
   },
   include: [
+    {
+      model: GoalCollaborator,
+      as: 'goalCollaborators',
+      attributes: ['id'],
+      required: false,
+      include: [
+        {
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          where: {
+            name: 'Creator',
+          },
+          attributes: ['name'],
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['name'],
+          required: true,
+          include: [
+            {
+              model: UserRole,
+              as: 'userRoles',
+              include: [
+                {
+                  model: Role,
+                  as: 'role',
+                  attributes: ['name'],
+                },
+              ],
+              attributes: ['id'],
+            },
+          ],
+        },
+      ],
+    },
     {
       attributes: [
         'title',
@@ -662,12 +703,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
             ],
           );
 
-          if (
-            existingPrompt.allGoalsHavePromptResponse
-            && (
-              (currentPrompt.response || []).length || (currentPrompt.reportResponse || []).length
-            )
-          ) {
+          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
             existingPrompt.allGoalsHavePromptResponse = true;
           } else {
             existingPrompt.allGoalsHavePromptResponse = false;
@@ -698,7 +734,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         );
         newPrompt.reportResponse = (currentPrompt.reportResponse || []);
 
-        if (newPrompt.response.length || newPrompt.reportResponse.length) {
+        if (newPrompt.response.length) {
           newPrompt.allGoalsHavePromptResponse = true;
         }
       }
@@ -728,6 +764,16 @@ function reduceGoals(goals, forReport = false) {
     : g.name === currentValue.dataValues.name
       && g.status === currentValue.dataValues.status);
 
+  function getGoalCollaboratorDetails(collabType, dataValues) {
+    // eslint-disable-next-line max-len
+    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    return {
+      [`goal${collabType}`]: collaborator,
+      [`goal${collabType}Name`]: collaborator?.user?.name,
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+    };
+  }
+
   const r = goals.reduce((previousValues, currentValue) => {
     try {
       const existingGoal = previousValues.find((g) => where(g, currentValue));
@@ -749,6 +795,18 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
+
+        existingGoal.collaborators = existingGoal.collaborators || [];
+
+        existingGoal.collaborators = uniqBy([
+          ...existingGoal.collaborators,
+          {
+            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+          },
+        ], 'goalCreatorName');
+
         if (forReport) {
           existingGoal.prompts = reducePrompts(
             forReport,
@@ -820,6 +878,18 @@ function reduceGoals(goals, forReport = false) {
         endDate,
         source,
       };
+
+      goal.collaborators = [
+        {
+          goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+          ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+          ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+        },
+      ];
+
+      goal.collaborators = goal.collaborators.filter(
+        (c) => c.goalCreatorName !== null,
+      );
 
       return [...previousValues, goal];
     } catch (err) {
@@ -2164,10 +2234,6 @@ export async function saveGoalsForReport(goals, report) {
 
       if (endDate && endDate !== 'Invalid date' && endDate !== newOrUpdatedGoal.endDate) {
         newOrUpdatedGoal.set({ endDate });
-      }
-
-      if (status && status !== newOrUpdatedGoal.status) {
-        newOrUpdatedGoal.set({ status });
       }
 
       if (prompts && !isMultiRecipientReport) {

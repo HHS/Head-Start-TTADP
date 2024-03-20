@@ -41,6 +41,13 @@ describe('GoalCard', () => {
       },
     ],
     previousStatus: null,
+    collaborators: [
+      {
+        goalNumber: 'G-1',
+        goalCreatorRoles: 'ECS',
+        goalCreatorName: 'Test User',
+      },
+    ],
   };
 
   const DEFAULT_USER = {
@@ -112,6 +119,16 @@ describe('GoalCard', () => {
     renderGoalCard({ ...DEFAULT_PROPS, showReadOnlyStatus: true });
     const status = screen.getByText(/In Progress/i);
     expect(status.tagName).toEqual('DIV');
+  });
+
+  it('shows entered by', () => {
+    renderGoalCard();
+    expect(screen.getByText(/entered by/i)).toBeInTheDocument();
+    expect(screen.getByText(/ECS/i)).toBeInTheDocument();
+
+    const tooltip = screen.getByTestId('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip.textContent).toContain('Test User');
   });
 
   it('shows the goal options by default', () => {

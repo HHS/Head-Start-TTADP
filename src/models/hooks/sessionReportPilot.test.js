@@ -1,4 +1,5 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import httpContext from 'express-http-context';
 import {
   afterCreate,
   afterUpdate,
@@ -7,14 +8,25 @@ import {
   beforeDestroy,
   createGoalsForSessionRecipientsIfNecessary,
   removeGoalsForSessionRecipientsIfNecessary,
+  syncGoalCollaborators,
 } from './sessionReportPilot';
 import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../../lib/mailer';
+import db from '..';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
   trSessionCompleted: jest.fn(),
   trPocSessionComplete: jest.fn(),
 }));
+
+jest.mock('express-http-context', () => {
+  const actual = jest.requireActual('express-http-context');
+  return {
+    ...actual,
+    get: jest.fn(),
+    set: jest.fn(),
+  };
+});
 
 describe('sessionReportPilot hooks', () => {
   const mockOptions = {
@@ -438,6 +450,8 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
         EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
         Goal: { create: jest.fn(() => ({ id: 4 })), findOne: jest.fn(() => null) },
         SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
+        CollaboratorType: { findOne: jest.fn(() => ({ id: 1 })) },
+        GoalCollaborator: { findAll: jest.fn(() => []), create: jest.fn(), update: jest.fn() },
       },
     };
 
@@ -458,6 +472,10 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
       { transaction: {} },
     );
     expect(mockSequelize.models.EventReportPilotGoal.create).toHaveBeenCalled();
+    expect(mockSequelize.models.CollaboratorType.findOne).toHaveBeenCalledTimes(2);
+    expect(mockSequelize.models.GoalCollaborator.findAll).toHaveBeenCalledTimes(1);
+    expect(mockSequelize.models.GoalCollaborator.create).toHaveBeenCalledTimes(0);
+    expect(mockSequelize.models.GoalCollaborator.update).toHaveBeenCalledTimes(0);
   });
 
   it('does not create a new goal if one already exists', async () => {
@@ -557,5 +575,102 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
     await removeGoalsForSessionRecipientsIfNecessary(mockSequelize, { id: '1' }, mockOptions);
     expect(mockSequelize.models.EventReportPilotGoal.destroy).not.toHaveBeenCalled();
     expect(mockSequelize.models.Goal.destroy).not.toHaveBeenCalled();
+  });
+});
+
+describe('syncGoalCollaborators', () => {
+  let user;
+  let newUser;
+  let eventRecord;
+  let goalId;
+  let sessionReport;
+  let transaction;
+
+  beforeAll(async () => {
+    transaction = await db.sequelize.transaction();
+    user = await db.User.create({ name: 'aa bb', email: 'aabb@cc.com', hsesUsername: 'aabbcc' }, { transaction });
+    newUser = await db.User.create({ name: 'cc dd', email: 'ccdd@ee.com', hsesUsername: 'ccdd' }, { transaction });
+    goalId = 1;
+    sessionReport = { id: 1 };
+    eventRecord = { pocIds: [user.id] };
+
+    httpContext.get.mockImplementation((key) => {
+      if (key === 'loggedUser') return user.id;
+      return null;
+    });
+  });
+
+  afterAll(async () => {
+    await db.GoalCollaborator.destroy({ where: { goalId }, transaction });
+    await db.CollaboratorType.destroy({ where: { name: ['Creator', 'Linker'] }, transaction });
+    await db.User.destroy({ where: { id: [user.id, newUser.id] }, transaction });
+    await transaction.rollback();
+    await db.sequelize.close();
+  });
+
+  it('creates a new creator collaborator if one does not exist', async () => {
+    const options = { transaction };
+    await syncGoalCollaborators(db.sequelize, eventRecord, goalId, sessionReport, options);
+
+    const collaborators = await db.GoalCollaborator.findAll({
+      where: {
+        goalId,
+        userId: user.id,
+        collaboratorTypeId: 1, // 1: Creator
+      },
+      transaction,
+    });
+
+    expect(collaborators.length).toBe(1);
+    expect(collaborators[0].userId).toBe(user.id);
+  });
+
+  it('updates an existing creator collaborator if one exists', async () => {
+    const options = { transaction };
+    // Set the new user as the logged user in the mocked context
+    httpContext.get.mockImplementation((key) => {
+      if (key === 'loggedUser') return 9999;
+      return null;
+    });
+
+    // Change the eventRecord to have a different POC
+    eventRecord.pocIds = [newUser.id];
+
+    await syncGoalCollaborators(db.sequelize, eventRecord, goalId, sessionReport, options);
+
+    const updatedCollaborator = await db.GoalCollaborator.findOne({
+      where: {
+        goalId,
+        userId: newUser.id,
+        collaboratorTypeId: 1,
+      },
+      transaction,
+    });
+
+    expect(updatedCollaborator.userId).toBe(newUser.id);
+  });
+
+  it('falls back to loggedUser when pocIds is empty', async () => {
+    const options = { transaction };
+    // Maybe the POC selection was cleared, so the eventRecord has no POC ids.
+    eventRecord.pocIds = [];
+
+    // syncGoalCollaborators falls back to the currently logged-in user's id.
+    httpContext.get.mockImplementation((key) => {
+      if (key === 'loggedUser') return user.id;
+      return null;
+    });
+
+    await syncGoalCollaborators(db.sequelize, eventRecord, goalId, sessionReport, options);
+
+    const collaborators = await db.GoalCollaborator.findAll({
+      where: {
+        goalId, userId: user.id, collaboratorTypeId: 1,
+      },
+      transaction,
+    });
+
+    expect(collaborators.length).toBe(1);
+    expect(collaborators[0].userId).toBe(user.id);
   });
 });

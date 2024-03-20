@@ -1,6 +1,4 @@
 import React, {
-  useState,
-  useEffect,
   useContext,
 } from 'react';
 import { Helmet } from 'react-helmet';
@@ -20,12 +18,12 @@ import {
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import FormItem from '../../../components/FormItem';
-import { getPossibleSessionParticipants } from '../../../fetchers/session';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import UserContext from '../../../UserContext';
 import PocCompleteView from '../../../components/PocCompleteView';
 import ReadOnlyField from '../../../components/ReadOnlyField';
+import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
 
 const placeholderText = '- Select -';
 
@@ -39,29 +37,6 @@ const Participants = ({ formData }) => {
   const { user } = useContext(UserContext);
   const { isPoc } = useTrainingReportRole(formData.event, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
-
-  const regionId = watch('regionId');
-
-  const [recipientOptions, setRecipientOptions] = useState();
-  useEffect(() => {
-    async function fetchRecipients() {
-      if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId);
-        setRecipientOptions(data);
-      }
-    }
-
-    fetchRecipients();
-  }, [recipientOptions, regionId]);
-
-  const options = (recipientOptions || []).map((recipient) => ({
-    label: recipient.name,
-    options: recipient.grants.map((grant) => ({
-      value: grant.id,
-      label: grant.name,
-    })),
-  }));
-
   const isHybrid = watch('deliveryMethod') === 'hybrid';
 
   if (showReadOnlyView) {
@@ -106,22 +81,7 @@ const Participants = ({ formData }) => {
         <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
-      <div className="margin-top-2">
-        <FormItem
-          label="Recipients "
-          name="recipients"
-        >
-          <MultiSelect
-            name="recipients"
-            control={control}
-            simple={false}
-            required="Select at least one recipient"
-            options={options}
-            placeholderText={placeholderText}
-          />
-        </FormItem>
-      </div>
-
+      <RecipientsWithGroups />
       <div className="margin-top-2">
         <FormItem
           label="Recipient participants "

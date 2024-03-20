@@ -522,9 +522,20 @@ export async function resetToDraft(req, res) {
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
-    if (!authorization.canReset()) {
+    const canReset = authorization.canReset();
+    const isApproverAndCreator = authorization.isApproverAndCreator();
+
+    if (!isApproverAndCreator && !canReset) {
       res.sendStatus(403);
       return;
+    }
+
+    if (isApproverAndCreator) {
+      // Reset all Approving Managers to null status.
+      await ActivityReportApprover.update({ status: null }, {
+        where: { activityReportId },
+        individualHooks: true,
+      });
     }
 
     const [
