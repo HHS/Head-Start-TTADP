@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, WhereOptions, Model } from 'sequelize';
 import { uniq } from 'lodash';
 import db from '../models';
 import {
@@ -10,6 +10,7 @@ import {
 const {
   GoalSimilarityGroup,
   GoalSimilarityGroupGoal,
+  Grant,
   Goal,
   GoalTemplate,
 } = db;
@@ -123,10 +124,42 @@ export async function getSimilarityGroupsByRecipientId(
   recipientId: number,
   where: WhereOptions = {},
   userHasFeatureFlag = false,
+  regionId: number = null,
 ) {
   const gsggWhere = userHasFeatureFlag ? {} : {
     excludedIfNotAdmin: false,
   };
+
+  const goalsInclude = [{
+    model: GoalTemplate,
+    as: 'goalTemplate',
+    attributes: ['creationMethod', 'id'],
+    required: false,
+  }, {
+    model: GoalSimilarityGroupGoal,
+    as: 'goalSimilarityGroupGoals',
+    attributes: [],
+    required: true,
+    where: gsggWhere,
+  }] as {
+    model: Model;
+    as: string;
+    attributes: string[];
+    required: boolean;
+    where?: WhereOptions;
+  }[];
+
+  if (regionId) {
+    goalsInclude.push({
+      model: Grant,
+      as: 'grant',
+      attributes: [],
+      required: true,
+      where: {
+        regionId,
+      },
+    });
+  }
 
   const groups = await GoalSimilarityGroup.findAll({
     attributes: similarityGroupAttributes,
@@ -140,18 +173,7 @@ export async function getSimilarityGroupsByRecipientId(
       as: 'goals',
       attributes: ['id', 'goalTemplateId', 'status'],
       required: false,
-      include: [{
-        model: GoalTemplate,
-        as: 'goalTemplate',
-        attributes: ['creationMethod', 'id'],
-        required: false,
-      }, {
-        model: GoalSimilarityGroupGoal,
-        as: 'goalSimilarityGroupGoals',
-        attributes: [],
-        required: true,
-        where: gsggWhere,
-      }],
+      include: goalsInclude,
     }],
   });
 
