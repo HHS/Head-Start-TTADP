@@ -639,6 +639,7 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
+        isApproverAndCreator: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -656,9 +657,30 @@ describe('Activity Report handlers', () => {
     it('handles unauthorized', async () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => false,
+        isApproverAndCreator: () => false,
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('handles approver is creator', async () => {
+      const result = { status: 'draft', displayId: 'mockreport-1', objectivesWithoutGoals: [] };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
+      ActivityReport.mockImplementation(() => ({
+        isApproverAndCreator: () => true,
+        canReset: () => false,
+      }));
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
+      setStatus.mockResolvedValue(setStatusResolvedValue);
+      await resetToDraft(request, mockResponse);
+      const jsonResponse = {
+        ...result,
+        displayId: result.displayId,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+        objectivesWithoutGoals: [],
+      };
+      expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
     });
   });
 

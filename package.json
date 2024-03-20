@@ -111,7 +111,7 @@
     "@axe-core/webdriverjs": "4.6.0",
     "ansi-regex": "^5.0.1",
     "colors": "1.4.0",
-    "follow-redirects": "^1.15.4",
+    "follow-redirects": "^1.15.6",
     "json-pointer": "0.6.2",
     "marked": "^4.0.10",
     "minimist": "^1.2.7",
