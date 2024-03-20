@@ -187,7 +187,7 @@ export async function getSimilarityGroupsByRecipientId(
       model: Goal,
       as: 'goals',
       attributes: ['id', 'goalTemplateId', 'status'],
-      required: true,
+      required: false,
       include: goalsInclude,
     }],
   });
