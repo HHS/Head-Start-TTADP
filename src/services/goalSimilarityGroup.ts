@@ -59,7 +59,21 @@ export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
 export async function getSimilarityGroupById(
   similarityGroupId: number,
   where : WhereOptions = {},
+  regionId: number = null,
 ) {
+  const goalsInclude = [];
+  if (regionId) {
+    goalsInclude.push({
+      model: Grant,
+      as: 'grant',
+      attributes: [],
+      required: true,
+      where: {
+        regionId,
+      },
+    });
+  }
+
   const group = await GoalSimilarityGroup.findOne({
     where: {
       ...where,
@@ -71,6 +85,7 @@ export async function getSimilarityGroupById(
         model: Goal,
         as: 'goals',
         attributes: ['id'],
+        include: goalsInclude,
       },
     ],
     attributes: similarityGroupAttributes,
@@ -172,7 +187,7 @@ export async function getSimilarityGroupsByRecipientId(
       model: Goal,
       as: 'goals',
       attributes: ['id', 'goalTemplateId', 'status'],
-      required: false,
+      required: true,
       include: goalsInclude,
     }],
   });
