@@ -29,6 +29,22 @@ module.exports = {
             { transaction },
           );
 
+          if (existingGoal) {
+            // If we have an existing goal, make sure we have a record in EventReportPilotGoals.
+            const [[existingEventReportPilotGoal]] = await queryInterface.sequelize.query(
+              `SELECT * FROM "EventReportPilotGoals" WHERE "goalId" = ${existingGoal.id} AND "eventId" = '${session.eventId}' AND "sessionId" = ${session.id}`,
+              { transaction },
+            );
+
+            if (!existingEventReportPilotGoal) {
+              await queryInterface.sequelize.query(
+                `INSERT INTO "EventReportPilotGoals" ("goalId", "eventId", "sessionId", "grantId", "createdAt", "updatedAt")
+                VALUES (${existingGoal.id}, '${session.eventId}', ${session.id}, '${recipient.value}', NOW(), NOW());`,
+                { transaction },
+              );
+            }
+          }
+
           // If no existing Goal, create a new Goal and EventReportPilotGoal
           if (!existingGoal) {
             // Get the goal text from the data jsonb property on the EventReportPilot table
