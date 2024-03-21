@@ -20,11 +20,11 @@ module.exports = {
         const { recipients } = session.data;
 
         for await (const recipient of recipients) {
-          // Check if a Goal already exists for this session ID and recipient ID
+          // Check if a Goal was already created for this grantId/eventId pair.
           const [[existingGoal]] = await queryInterface.sequelize.query(
             `SELECT * FROM "EventReportPilotGoals" erpg
               JOIN "Goals" g ON erpg."goalId" = g.id
-              WHERE erpg."sessionId" = ${session.id}
+              WHERE erpg."eventId" = '${session.eventId}'
                 AND g."grantId" = '${recipient.value}'`,
             { transaction },
           );
@@ -47,7 +47,7 @@ module.exports = {
 
             const [[newGoal]] = await queryInterface.sequelize.query(
               `INSERT INTO "Goals" (name, "grantId", "createdAt", "updatedAt", status, "createdVia", source, "onAR", "onApprovedAR")
-              VALUES ('${goal}', '${recipient.value}', NOW(), NOW(), 'In Progress', 'tr', 'Training event', true, true)
+              VALUES ('asdfasdf', '${recipient.value}', NOW(), NOW(), 'In Progress', 'tr', 'Training event', true, true)
               RETURNING id;`,
               { transaction },
             );
