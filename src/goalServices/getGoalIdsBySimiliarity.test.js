@@ -562,7 +562,7 @@ describe('getGoalIdsBySimilarity', () => {
       flags: ['closed_goal_merge_override'],
     };
 
-    const idsSets = await getGoalIdsBySimilarity(recipient.id, user);
+    const idsSets = await getGoalIdsBySimilarity(recipient.id, activeGrant.regionId, user);
 
     // we expect goal group three to be eliminated, so we should have two sets + an empty
     expect(idsSets).toHaveLength(3);
