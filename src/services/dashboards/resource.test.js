@@ -344,7 +344,7 @@ describe('Resources dashboard', () => {
       },
     });
 
-    // Report 4 (No Resources).
+    // Report 4.
     const reportFour = await ActivityReport.create({ ...regionOneReportD });
     await ActivityRecipient.create({ activityReportId: reportFour.id, grantId: mockGrant.id });
 
@@ -384,6 +384,24 @@ describe('Resources dashboard', () => {
       [ECLKC_RESOURCE_URL2],
     );
 
+     // Report 5 (No resources).
+     const reportFive = await ActivityReport.create({ ...regionOneReportD });
+     await ActivityRecipient.create({ activityReportId: reportFive.id, grantId: mockGrant.id });
+
+     const activityReportObjectiveForReport5 = await ActivityReportObjective.create({
+       activityReportId: reportFive.id,
+       status: 'Complete',
+       objectiveId: objective.id,
+     });
+
+     // Report 5 Topic 1.
+     await ActivityReportObjectiveTopic.findOrCreate({
+       where: {
+         activityReportObjectiveId: activityReportObjectiveForReport5.id,
+         topicId: facilitiesTopicId,
+       },
+     });
+
     // Draft Report (Excluded).
     const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
     await ActivityRecipient.create({ activityReportId: reportDraft.id, grantId: mockGrant.id });
@@ -417,7 +435,7 @@ describe('Resources dashboard', () => {
       },
     });
 
-    arIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportDraft.id];
+    arIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id, reportFive.id, reportDraft.id];
   });
 
   afterAll(async () => {
@@ -550,9 +568,11 @@ describe('Resources dashboard', () => {
     const data = await resourcesDashboardOverview(scopes);
     expect(data).toStrictEqual({
       participant: {
+        // Participants.
         numParticipants: '44',
       },
       recipient: {
+        // Recipient's Reached.
         num: '1',
         // numEclkc: '1',
         // numNoResources: '0',
