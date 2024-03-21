@@ -288,11 +288,12 @@ export async function getSimilarGoalsForRecipient(req, res) {
     return;
   }
   const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
+  const regionId = parseInt(req.params.regionId, DECIMAL_BASE);
 
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    res.json(await getGoalIdsBySimilarity(recipientId, user));
+    res.json(await getGoalIdsBySimilarity(recipientId, regionId, user));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
   }
