@@ -47,7 +47,7 @@ module.exports = {
 
             const [[newGoal]] = await queryInterface.sequelize.query(
               `INSERT INTO "Goals" (name, "grantId", "createdAt", "updatedAt", status, "createdVia", source, "onAR", "onApprovedAR")
-              VALUES ('asdfasdf', '${recipient.value}', NOW(), NOW(), 'In Progress', 'tr', 'Training event', true, true)
+              VALUES ('${goal}', '${recipient.value}', NOW(), NOW(), 'In Progress', 'tr', 'Training event', true, true)
               RETURNING id;`,
               { transaction },
             );
