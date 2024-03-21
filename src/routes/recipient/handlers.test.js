@@ -868,6 +868,7 @@ describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
     expect(getGoalsByActivityRecipient)
       .toHaveBeenCalledWith(req.params.recipientId, req.params.regionId, {
         goalIds: goals,
+        limit: 100,
         sortBy: 'goal',
         sortDir: 'asc',
         offset: 0,
