@@ -336,7 +336,7 @@ const switchToTopicCentric = (input) => {
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
 export async function resourceFlatData(scopes) {
-  console.time('flatTime');
+  console.time('OVERALLTIME');
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -362,13 +362,15 @@ export async function resourceFlatData(scopes) {
   console.timeEnd('scopesTime');
   console.log('\n\n\n------ AR IDS from Scopes: ', reportIds);
 
+  // Get total number of reports.
+  const totalReportCount = reportIds.length;
+
   // Write raw sql to generate the flat resource data for the above reportIds.
   const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
   const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
   const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
   const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
   const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroTopicsRolledUpTempTableName = `Z_temp_resource_aro_rolled_up_topics__${uuidv4().replaceAll('-', '_')}`;
   const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
 
   // Create raw sql to get flat table.
@@ -414,6 +416,7 @@ export async function resourceFlatData(scopes) {
       -- 4.) Create ARO Topics temp table.
       SELECT
       ar.id AS "activityReportId",
+      arot."activityReportObjectiveId", -- We need to group by this incase of multiple aro's.
       arot."topicId"
       INTO TEMP ${createdAroTopicsTempTableName}
       FROM ${createdArTempTableName}  ar
@@ -421,7 +424,7 @@ export async function resourceFlatData(scopes) {
         ON ar."id" = aro."activityReportId"
       JOIN "ActivityReportObjectiveTopics" arot
         ON aro.id = arot."activityReportObjectiveId"
-      GROUP BY ar.id, arot."topicId";
+      GROUP BY ar.id, arot."activityReportObjectiveId", arot."topicId";
 
       -- 5.) Create Topics temp table (only what we need).
       SELECT
@@ -434,33 +437,21 @@ export async function resourceFlatData(scopes) {
           FROM ${createdAroTopicsTempTableName}
         );
 
-      -- 6.) Create Rolled Up Topics temp table (maybe delete this later...).
-      SELECT
-      arot."activityReportId",
-      ARRAY_AGG(DISTINCT arott.name) AS topics
-      INTO TEMP ${createdAroTopicsRolledUpTempTableName}
-      FROM ${createdAroTopicsTempTableName} arot
-      JOIN ${createdTopicsTempTableName} arott
-        ON arot."topicId" = arott.id
-      GROUP BY arot."activityReportId";
-
-      -- 7.) Create Flat Resource temp table.
+      -- 6.) Create Flat Resource temp table.
       SELECT
       ar.id,
       ar."startDate",
       ar."rollUpDate",
-      artog.topics,
       arorr.domain,
       arorr.title,
-      arorr.url
+      arorr.url,
+      ar."numberOfParticipants"
       INTO TEMP ${createdFlatResourceTempTableName}
       FROM ${createdArTempTableName} ar
       JOIN ${createdAroResourcesTempTableName} aror
         ON ar.id = aror."activityReportId"
       JOIN ${createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id
-      LEFT JOIN ${createdAroTopicsRolledUpTempTableName} artog
-        ON ar.id = artog."activityReportId";
   `;
   console.log('\n\n\n------- SQL BEFORE: ', flatResourceSql);
   console.time('sqlTime');
@@ -471,24 +462,10 @@ export async function resourceFlatData(scopes) {
   await sequelize.query(
     flatResourceSql,
     {
-      // raw: true,
-      // nest: false,
-      type: QueryTypes.SELECT,
-      // mapToModel: false,
-      transaction,
-    },
-  );
-
-  // Select the Flat table.
-  /*
-  let flatTable = sequelize.query(
-    `SELECT * FROM ${createdFlatResourceTempTableName};`,
-    {
       type: QueryTypes.SELECT,
       transaction,
     },
   );
-  */
 
   // Get resource use result.
   let resourceUseResult = sequelize.query(
@@ -508,7 +485,7 @@ export async function resourceFlatData(scopes) {
     },
   );
 
-  // Get final topic use result.
+  // Get topic use result.
   let topicUseResult = sequelize.query(`
     SELECT
       t.name,
@@ -526,26 +503,82 @@ export async function resourceFlatData(scopes) {
     transaction,
   });
 
-  // [flatTable, resourceUseResult, topicUseResult] = await Promise.all([flatTable, resourceUseResult, topicUseResult]);
-  [resourceUseResult, topicUseResult] = await Promise.all([resourceUseResult, topicUseResult]);
+  /* Overview */
+  // 1.) Participants
+  let numberOfParticipants = sequelize.query(`
+  WITH ar_participants AS (
+    SELECT
+    id,
+    "numberOfParticipants"
+    FROM ${createdFlatResourceTempTableName} f
+    GROUP BY id, "numberOfParticipants"
+  )
+  SELECT
+         SUM("numberOfParticipants") AS participants
+  FROM ar_participants;
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  // 2.) Recipients.
+  let numberOfRecipients = sequelize.query(`
+  WITH ars AS (
+    SELECT
+    DISTINCT id
+    FROM ${createdFlatResourceTempTableName} f
+  ), recipients AS (
+    SELECT
+      DISTINCT r.id
+    FROM ars ar
+    JOIN "ActivityRecipients" arr
+      ON ar.id = arr."activityReportId"
+    JOIN "Grants" g
+      ON arr."grantId" = g.id
+     JOIN "Recipients" r
+      ON g."recipientId" = r.id
+  )
+  SELECT
+         count(r.id)
+  FROM recipients r;
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  // 3.) Reports with Resources.
+  let pctOfReportsWithResources = sequelize.query(`
+  SELECT
+    count(DISTINCT "activityReportId") AS "reportsWithResourcesCount",
+    ${totalReportCount} AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (count(DISTINCT "activityReportId")::int / ${totalReportCount}) * 100
+    END AS "resourcesPct"
+  FROM ${createdAroResourcesTempTableName};
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  [resourceUseResult, topicUseResult, numberOfParticipants, numberOfRecipients, pctOfReportsWithResources] = await Promise.all([resourceUseResult, topicUseResult, numberOfParticipants, numberOfRecipients, pctOfReportsWithResources]);
 
   // Commit is required to run the query.
   transaction.commit();
-  // console.log('\n\n\n------- SQL FLAT: ', flatTable);
+
   console.log('\n\n\n------- SQL RESOURCE USE: ', resourceUseResult);
   console.log('\n\n\n------- SQL TOPIC USE: ', topicUseResult);
-  /*
-  const tables = await sequelize.query(
-    `SELECT "name" FROM "Users" LIMIT 1;
-    SELECT "id" FROM "ActivityReports" LIMIT 2;`,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
-  */
+  console.log('\n\n\n------- SQL NUM OF PARTICIPANTS: ', numberOfParticipants);
+  console.log('\n\n\n------- SQL NUM OF RECIPIENTS: ', numberOfRecipients);
+  console.log('\n\n\n------- SQL PCT OF REPORTS with RESOURCES: ', pctOfReportsWithResources);
+
   console.timeEnd('sqlTime');
-  console.timeEnd('flatTime');
-  return { resourceUseResult, topicUseResult };
+  console.timeEnd('OVERALLTIME');
+  const overView = { numberOfParticipants, numberOfRecipients, pctOfReportsWithResources };
+  return {
+    resourceUseResult, topicUseResult, numberOfParticipants, overView,
+  };
 }
 
 // collect all resource data from the db filtered via the scopes
