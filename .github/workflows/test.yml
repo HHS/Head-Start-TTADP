@@ -1,0 +1,11 @@
+name: Test Workflow
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Notify slack when a push happens
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A test request (#${{ github.event.pull_request.number }}) to *production* is now open! ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}\"}" $SLACK_WEBHOOK_URL
