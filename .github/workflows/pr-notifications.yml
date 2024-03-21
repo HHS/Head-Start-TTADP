@@ -1,0 +1,17 @@
+name: Pull Request Notifications
+
+on:
+  pull_request:
+    types: [review_requested, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  notify_slack:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Notify Slack on PR Open or Review Requested
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data '{"text": "🚀 A pull request is ready for review or a new review has been requested! Check it out: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}"}' $SLACK_WEBHOOK_URL
