@@ -864,10 +864,11 @@ describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
     expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
       finalGoalId: null,
       userHasInvalidated: false,
-    });
+    }, 1);
     expect(getGoalsByActivityRecipient)
       .toHaveBeenCalledWith(req.params.recipientId, req.params.regionId, {
         goalIds: goals,
+        limit: 100,
         sortBy: 'goal',
         sortDir: 'asc',
         offset: 0,
@@ -892,7 +893,7 @@ describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
     expect(getSimilarityGroupById).toHaveBeenCalledWith(req.params.goalGroupId, {
       finalGoalId: null,
       userHasInvalidated: false,
-    });
+    }, 1);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(NOT_FOUND);
   });
 
