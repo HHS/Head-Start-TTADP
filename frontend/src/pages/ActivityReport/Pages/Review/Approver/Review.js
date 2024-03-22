@@ -18,6 +18,7 @@ import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
+import ApproverSelect from '../Submitter/components/ApproverSelect';
 
 const Review = ({
   additionalNotes,
@@ -30,6 +31,7 @@ const Review = ({
   creatorIsApprover,
   onResetToDraft,
   calculatedStatus,
+  availableApprovers,
 }) => {
   const { handleSubmit, register, watch } = useFormContext();
   const watchTextValue = watch('note');
@@ -100,6 +102,7 @@ const Review = ({
             />
           </div>
         </Fieldset>
+
         { !showDraftViewForApproverAndCreator ? (
           <>
             {
@@ -130,8 +133,31 @@ const Review = ({
                 ))}
               </Dropdown>
             </FormItem>
+
           </>
-        ) : <div className="margin-bottom-3" />}
+        ) : (
+          <div className="margin-bottom-3">
+            <Fieldset className="smart-hub--report-legend margin-top-4" legend="Review and submit report">
+              <p className="margin-top-4">
+                Submitting this form for approval means that you will no longer be in draft
+                mode. Please review all information in each section before submitting to your
+                manager(s) for approval.
+              </p>
+              <FormItem
+                label="Approving manager"
+                name="approvers"
+              >
+                <ApproverSelect
+                  name="approvers"
+                  valueProperty="user.id"
+                  labelProperty="user.fullName"
+                  options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
+                />
+              </FormItem>
+            </Fieldset>
+          </div>
+        )}
+
         <ApproverStatusList approverStatus={approverStatusList} />
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         <Button disabled={hasIncompletePages} type="submit">{hasBeenReviewed ? 'Update report' : 'Submit'}</Button>
@@ -159,6 +185,10 @@ Review.propTypes = {
   })).isRequired,
   onResetToDraft: PropTypes.func.isRequired,
   calculatedStatus: PropTypes.string.isRequired,
+  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+  })).isRequired,
 };
 
 Review.defaultProps = {

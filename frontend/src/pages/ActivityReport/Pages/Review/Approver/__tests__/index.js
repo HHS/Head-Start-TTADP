@@ -56,6 +56,7 @@ const RenderApprover = ({
         formData={formData}
         isPendingApprover
         pages={pages}
+        availableApprovers={[{ id: 1, name: 'Approver 1' }]}
       >
         <div>
           test
