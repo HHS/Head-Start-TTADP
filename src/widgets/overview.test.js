@@ -8,141 +8,100 @@ import db, {
 import filtersToScopes from '../scopes';
 import overview from './overview';
 import { formatQuery } from '../routes/widgets/utils';
-import { createReport, destroyReport } from '../testUtils';
-
-const RECIPIENT_ID = 93898;
-const RECIPIENT_TWO_ID = 93899;
-const GRANT_ID_ONE = 93898;
-const GRANT_ID_TWO = 93899;
-const GRANT_ID_THREE = 93900;
-const GRANT_ID_FOUR = 93901;
-const USER_ID = 767876;
-const REGION_ONE_ID = 1717;
-const REGION_TWO_ID = 1818;
-
-const mockUser = {
-  id: USER_ID,
-  homeRegionId: 1,
-  name: 'user11818461',
-  hsesUsername: 'user11818461',
-  hsesUserId: 'user11818461',
-  lastLogin: new Date(),
-};
-
-const reportObject = {
-  activityRecipientType: 'recipient',
-  submissionStatus: REPORT_STATUSES.SUBMITTED,
-  calculatedStatus: REPORT_STATUSES.APPROVED,
-  userId: mockUser.id,
-  lastUpdatedById: mockUser.id,
-  ECLKCResourcesUsed: ['test'],
-  activityRecipients: [
-    { grantId: GRANT_ID_ONE },
-    { grantId: GRANT_ID_TWO },
-  ],
-  approvingManagerId: 1,
-  numberOfParticipants: 11,
-  deliveryMethod: 'in-person',
-  duration: 1,
-  endDate: '2021-01-01T12:00:00Z',
-  startDate: '2021-01-01T12:00:00Z',
-  requester: 'requester',
-  targetPopulations: ['pop'],
-  reason: ['reason'],
-  participants: ['participants'],
-  topics: ['topics'],
-  ttaType: ['technical-assistance'],
-  version: 2,
-};
-
-const regionOneReport = {
-  ...reportObject,
-  regionId: REGION_ONE_ID,
-};
-
-let regionTwoReport = {
-  ...reportObject,
-  numberOfParticipants: 8,
-  regionId: REGION_TWO_ID,
-  activityRecipients: [
-    { grantId: GRANT_ID_TWO },
-  ],
-};
-
-let reportWithNewDate = {
-  ...reportObject,
-  startDate: '2021-06-01T12:00:00Z',
-  endDate: '2021-06-02T12:00:00Z',
-  regionId: REGION_ONE_ID,
-  deliveryMethod: 'method',
-};
-
-let regionOneReportOne;
-let regionOneReportTwo;
-let regionOneReportThree;
-let regionOneReportFour;
+import {
+  createGrant,
+  createRecipient,
+  createReport,
+  createUser,
+  destroyReport,
+  createRegion,
+} from '../testUtils';
 
 describe('Dashboard overview widget', () => {
-  beforeAll(async () => {
-    let results = await User.create(mockUser);
-    results = await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-    results = await Recipient.create({ name: 'recipient 2', id: RECIPIENT_TWO_ID, uei: 'NNA5N2KHMGM2' });
-    results = await Region.create({ name: 'office 1717', id: REGION_ONE_ID });
-    results = await Region.create({ name: 'office 1818', id: REGION_TWO_ID });
-    results = await Promise.all([
-      Grant.create(
-        {
-          id: GRANT_ID_ONE,
-          number: GRANT_ID_ONE,
-          recipientId: RECIPIENT_ID,
-          regionId: REGION_ONE_ID,
-          status: 'Active',
-          startDate: new Date('2021/01/01'),
-          endDate: new Date('2022/01/02'),
-        },
-      ),
-      Grant.create(
-        {
-          id: GRANT_ID_TWO,
-          number: GRANT_ID_TWO,
-          recipientId: RECIPIENT_ID,
-          regionId: REGION_ONE_ID,
-          status: 'Active',
-          startDate: new Date('2021/06/01'),
-          endDate: new Date('2022/06/02'),
-        },
-      ),
-      Grant.create(
-        {
-          id: GRANT_ID_THREE,
-          number: GRANT_ID_THREE,
-          recipientId: RECIPIENT_ID,
-          regionId: REGION_TWO_ID,
-          status: 'Active',
-          startDate: new Date('2021/01/01'),
-          endDate: new Date('2022/01/02'),
-        },
-      ),
-      Grant.create(
-        {
-          id: GRANT_ID_FOUR,
-          number: GRANT_ID_FOUR,
-          recipientId: RECIPIENT_TWO_ID,
-          regionId: REGION_ONE_ID,
-          status: 'Active',
-          startDate: new Date('2021/01/01'),
-          endDate: new Date('2022/01/02'),
-        },
-      )]);
+  let user;
+  let grantOne;
+  let grantTwo;
+  let grantThree;
+  let grantFour;
 
-    if (results.length) {
-      regionOneReportOne = await createReport({ ...regionOneReport, duration: 1 });
-      regionOneReportTwo = await createReport({ ...regionOneReport, duration: 2, deliveryMethod: 'In-person' });
-      regionOneReportThree = await createReport({ ...regionOneReport, duration: 4 });
-      regionOneReportFour = await createReport({ ...regionOneReport, duration: 5 });
-      regionTwoReport = await createReport({ ...regionTwoReport, duration: 1.5 });
-      reportWithNewDate = await createReport({ ...reportWithNewDate, duration: 6 });
-    }
+  let recipientOne;
+  let recipientTwo;
+
+  let regionOneReportOne;
+  let regionOneReportTwo;
+  let regionOneReportThree;
+  let regionOneReportFour;
+  let regionTwoReport;
+  let reportWithNewDate;
+
+  let weirdRegionOne;
+  let weirdRegionTwo;
+
+  beforeAll(async () => {
+    weirdRegionOne = await createRegion();
+    weirdRegionTwo = await createRegion();
+    recipientOne = await createRecipient();
+    recipientTwo = await createRecipient();
+    grantOne = await createGrant({ recipientId: recipientOne.id, regionId: weirdRegionOne.id });
+    grantTwo = await createGrant({ recipientId: recipientOne.id, regionId: weirdRegionOne.id });
+    grantThree = await createGrant({ recipientId: recipientOne.id, regionId: weirdRegionTwo.id });
+    grantFour = await createGrant({ recipientId: recipientTwo.id, regionId: weirdRegionOne.id });
+    user = await createUser();
+
+    const reportObject = {
+      activityRecipientType: 'recipient',
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+      userId: user.id,
+      lastUpdatedById: user.id,
+      ECLKCResourcesUsed: ['test'],
+      activityRecipients: [
+        { grantId: grantOne.id },
+        { grantId: grantTwo.id },
+      ],
+      approvingManagerId: 1,
+      numberOfParticipants: 11,
+      deliveryMethod: 'in-person',
+      duration: 1,
+      endDate: '2021-01-01T12:00:00Z',
+      startDate: '2021-01-01T12:00:00Z',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      reason: ['reason'],
+      participants: ['participants'],
+      topics: ['topics'],
+      ttaType: ['technical-assistance'],
+      version: 2,
+    };
+
+    const regionOneReport = {
+      ...reportObject,
+      regionId: weirdRegionOne.id,
+    };
+
+    regionTwoReport = {
+      ...reportObject,
+      numberOfParticipants: 8,
+      regionId: weirdRegionTwo.id,
+      activityRecipients: [
+        { grantId: grantTwo.id },
+      ],
+    };
+
+    reportWithNewDate = {
+      ...reportObject,
+      startDate: '2021-06-01T12:00:00Z',
+      endDate: '2021-06-02T12:00:00Z',
+      regionId: weirdRegionOne.id,
+      deliveryMethod: 'method',
+    };
+
+    regionOneReportOne = await createReport({ ...regionOneReport, duration: 1 });
+    regionOneReportTwo = await createReport({ ...regionOneReport, duration: 2, deliveryMethod: 'In-person' });
+    regionOneReportThree = await createReport({ ...regionOneReport, duration: 4 });
+    regionOneReportFour = await createReport({ ...regionOneReport, duration: 5 });
+    regionTwoReport = await createReport({ ...regionTwoReport, duration: 1.5 });
+    reportWithNewDate = await createReport({ ...reportWithNewDate, duration: 6 });
   });
 
   afterAll(async () => {
@@ -154,17 +113,24 @@ describe('Dashboard overview widget', () => {
     await destroyReport(reportWithNewDate);
 
     await Grant.destroy({
-      where: { id: [GRANT_ID_ONE, GRANT_ID_TWO, GRANT_ID_THREE, GRANT_ID_FOUR] },
+      where: {
+        id: [
+          grantOne.id,
+          grantTwo.id,
+          grantThree.id,
+          grantFour.id,
+        ],
+      },
       individualHooks: true,
     });
-    await Recipient.destroy({ where: { id: [RECIPIENT_ID, RECIPIENT_TWO_ID] } });
-    await Region.destroy({ where: { id: [REGION_ONE_ID, REGION_TWO_ID] } });
-    await User.destroy({ where: { id: mockUser.id } });
+    await Recipient.destroy({ where: { id: [recipientOne.id, recipientTwo.id] } });
+    await Region.destroy({ where: { id: [weirdRegionOne.id, weirdRegionTwo.id] } });
+    await User.destroy({ where: { id: user.id } });
     await db.sequelize.close();
   });
 
   it('retrieves data', async () => {
-    const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/01/01-2021/01/01' };
+    const query = { 'region.in': [weirdRegionOne.id], 'startDate.win': '2021/01/01-2021/01/01' };
     const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
@@ -179,7 +145,7 @@ describe('Dashboard overview widget', () => {
   });
 
   it('accounts for different date ranges', async () => {
-    const query = { 'region.in': [REGION_ONE_ID], 'startDate.win': '2021/06/01-2021/06/02' };
+    const query = { 'region.in': [weirdRegionOne.id], 'startDate.win': '2021/06/01-2021/06/02' };
     const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
@@ -194,7 +160,7 @@ describe('Dashboard overview widget', () => {
   });
 
   it('accounts for different regions', async () => {
-    const query = { 'region.in': [REGION_TWO_ID] };
+    const query = { 'region.in': [weirdRegionTwo.id] };
     const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
