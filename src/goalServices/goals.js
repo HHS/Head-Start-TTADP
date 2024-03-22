@@ -2680,7 +2680,7 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(recipientId, user = null) {
+export async function getGoalIdsBySimilarity(recipientId, regionId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
@@ -2696,6 +2696,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     recipientId,
     similiarityWhere,
     hasClosedMergeGoalOverride,
+    regionId,
   );
 
   if (existingRecipientGroups.length) {
@@ -2866,6 +2867,7 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     recipientId,
     similiarityWhere,
     hasClosedMergeGoalOverride,
+    regionId,
   );
 }
 
