@@ -19,6 +19,7 @@ const Approver = ({
   pages,
   onResetToDraft,
   onFormSubmit,
+  availableApprovers,
 }) => {
   const {
     additionalNotes,
@@ -130,6 +131,7 @@ const Approver = ({
               creatorIsApprover={author.id === user.id}
               onResetToDraft={onResetToDraft}
               calculatedStatus={calculatedStatus}
+              availableApprovers={availableApprovers}
             />
           )}
         {approved
@@ -145,6 +147,12 @@ const Approver = ({
 };
 
 Approver.propTypes = {
+  availableApprovers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    }),
+  ).isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,

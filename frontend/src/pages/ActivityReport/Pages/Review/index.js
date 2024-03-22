@@ -99,6 +99,7 @@ const ReviewSubmit = ({
       {isApprover
         && (
           <Approver
+            availableApprovers={availableApprovers}
             reviewed={reviewed}
             pages={pages}
             additionalNotes={additionalNotes}
