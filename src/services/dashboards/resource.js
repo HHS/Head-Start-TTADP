@@ -539,7 +539,7 @@ export async function resourceFlatData(scopes) {
       ON g."recipientId" = r.id
   )
   SELECT
-         count(r.id)
+         count(r.id) AS recipients
   FROM recipients r;
   `, {
     type: QueryTypes.SELECT,
@@ -549,12 +549,12 @@ export async function resourceFlatData(scopes) {
   // 3.) Reports with Resources.
   let pctOfReportsWithResources = sequelize.query(`
   SELECT
-    count(DISTINCT "activityReportId") AS "reportsWithResourcesCount",
-    ${totalReportCount} AS "totalReportsCount",
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
     CASE WHEN ${totalReportCount} = 0 THEN
       0
     ELSE
-      (count(DISTINCT "activityReportId")::int / ${totalReportCount}) * 100
+      (round(count(DISTINCT "activityReportId")::decimal / ${totalReportCount}::decimal, 4) * 100)::decimal
     END AS "resourcesPct"
   FROM ${createdAroResourcesTempTableName};
   `, {
