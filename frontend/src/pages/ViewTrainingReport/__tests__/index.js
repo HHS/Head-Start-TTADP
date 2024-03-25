@@ -26,6 +26,7 @@ const mockEvent = (data = {}) => ({
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
   sessionReports: [{
+
     id: 7,
     eventId: 1,
     data: {
@@ -340,7 +341,7 @@ describe('ViewTrainingReport', () => {
     expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
     expect(fetchMock.called('/api/users/names?ids=2')).toBe(false);
 
-    expect(await screen.findByText('USER 2 NC 1')).toBeInTheDocument();
+    expect(await screen.findByText('USER 2, NC 1')).toBeInTheDocument();
   });
 
   it('will fetch if there are eventReportPilotNationalCenterUsers in the response that do not match the IDs', async () => {
@@ -409,7 +410,7 @@ describe('ViewTrainingReport', () => {
 
       const result = formatOwnerName(event);
 
-      expect(result).toBe('John Center A');
+      expect(result).toBe('John, Center A');
     });
 
     test('Returns the owner name if event and owner name are provided', () => {
