@@ -3,6 +3,7 @@ import React, {
   useState,
   useMemo,
   useContext,
+  useRef,
 } from 'react';
 import moment from 'moment';
 import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
@@ -12,9 +13,10 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import { isEqual, uniqueId } from 'lodash';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
-import { getGoalTemplatePrompts } from '../../fetchers/goalTemplates';
+import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import { uploadObjectivesFile } from '../../fetchers/File';
 import { getTopics } from '../../fetchers/topics';
@@ -28,7 +30,8 @@ import {
   GOAL_DATE_ERROR,
   SELECT_GRANTS_ERROR,
   OBJECTIVE_DEFAULT_ERRORS,
-  objectivesWithValidResourcesOnly,
+  grantsToMultiValue,
+  grantsToGoals,
 } from './constants';
 import ReadOnly from './ReadOnly';
 import PlusButton from './PlusButton';
@@ -36,21 +39,15 @@ import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
-import { combinePrompts } from '../condtionalFieldConstants';
+import VanillaModal from '../VanillaModal';
 
 const [
   objectiveTextError,
   objectiveTopicsError,
   objectiveResourcesError,
+  objectiveSupportTypeError,
   objectiveStatusError,
 ] = OBJECTIVE_ERROR_MESSAGES;
-
-const formatGrantsFromApi = (grants) => grants
-  .map((grant) => ({
-    value: grant.id,
-    label: grant.numberWithProgramTypes,
-    id: grant.id,
-  }));
 
 export default function GoalForm({
   recipient,
@@ -58,11 +55,10 @@ export default function GoalForm({
   showRTRnavigation,
   isNew,
 }) {
+  const unsuspendModalRef = useRef(null);
+  const openExistingGoalModalRef = useRef(null);
   const history = useHistory();
-  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active')).map((g) => ({
-    value: g.id,
-    label: g.numberWithProgramTypes,
-  }));
+  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
   const goalDefaults = useMemo(() => ({
     name: '',
@@ -73,9 +69,10 @@ export default function GoalForm({
     id: 'new',
     onApprovedAR: false,
     onAnyReport: false,
-    prompts: [],
+    prompts: {},
     isCurated: false,
-    source: '',
+    source: {},
+    createdVia: '',
     goalTemplateId: null,
   }), [possibleGrants]);
 
@@ -90,14 +87,31 @@ export default function GoalForm({
   const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
-  const [prompts, setPrompts] = useState(goalDefaults.prompts);
-  const [source, setSource] = useState('');
-  const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
+  const [prompts, setPrompts] = useState(
+    grantsToMultiValue(goalDefaults.grants, goalDefaults.prompts, []),
+  );
+  const [source, setSource] = useState(grantsToMultiValue(goalDefaults.grants));
+  const [createdVia, setCreatedVia] = useState('');
   const [isCurated, setIsCurated] = useState(goalDefaults.isCurated);
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
+  const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
+
+  useDeepCompareEffect(() => {
+    const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
+    if ((!isEqual(newPrompts, prompts))) {
+      setSource(newPrompts);
+    }
+  }, [prompts, selectedGrants]);
+
+  useDeepCompareEffect(() => {
+    const newSource = grantsToMultiValue(selectedGrants, { ...source });
+    if ((!isEqual(newSource, source))) {
+      setSource(newSource);
+    }
+  }, [selectedGrants, source]);
 
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -107,6 +121,8 @@ export default function GoalForm({
 
   const [alert, setAlert] = useState({ message: '', type: 'success' });
   const [goalNumbers, setGoalNumbers] = useState('');
+
+  const [goalCollaborators, setGoalCollaborators] = useState([]);
 
   const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
@@ -138,19 +154,24 @@ export default function GoalForm({
         const [goal] = await goalsByIdAndRecipient(
           ids, recipient.id.toString(),
         );
+
+        const selectedGoalGrants = goal.grants ? goal.grants : [goal.grant];
+
         // for these, the API sends us back things in a format we expect
         setGoalName(goal.name);
         setStatus(goal.status);
         setEndDate(goal.endDate);
         setDatePickerKey(goal.endDate ? `DPK-${goal.endDate}` : '00');
-        setPrompts(goal.prompts);
-        setSelectedGrants(formatGrantsFromApi(goal.grants ? goal.grants : [goal.grant]));
+        setPrompts(grantsToMultiValue(selectedGoalGrants, goal.prompts, []));
+        setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
         setGoalOnAnyReport(goal.onAnyReport);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
-        setSource(goal.source || '');
+        setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
+        setCreatedVia(goal.createdVia || '');
+        setGoalCollaborators(goal.collaborators || []);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -196,18 +217,20 @@ export default function GoalForm({
     }
 
     if (!fetchAttempted && !isNew && !isAppLoading) {
-      setAppLoadingText('Loading');
+      setAppLoadingText('Loading goal');
       setIsAppLoading(true);
       fetchGoal();
     }
-  }, [errors,
+  }, [
+    errors,
     fetchAttempted,
     recipient.id,
     isNew,
     isAppLoading,
     ids,
     setAppLoadingText,
-    setIsAppLoading]);
+    setIsAppLoading,
+  ]);
 
   // for fetching topic options from API
   useEffect(() => {
@@ -221,23 +244,6 @@ export default function GoalForm({
     }
     fetchTopics();
   }, []);
-
-  useEffect(() => {
-    async function fetchGoalTemplatePrompts() {
-      if (isCurated && goalTemplateId && ids) {
-        const gtPrompts = await getGoalTemplatePrompts(goalTemplateId, ids);
-        if (gtPrompts) {
-          setGoalTemplatePrompts(
-            combinePrompts(gtPrompts, prompts),
-          );
-        } else {
-          setGoalTemplatePrompts(prompts);
-        }
-      }
-    }
-
-    fetchGoalTemplatePrompts();
-  }, [goalTemplateId, ids, isCurated, prompts]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -302,18 +308,16 @@ export default function GoalForm({
    */
 
   const validateGoalSource = () => {
-    const error = <></>;
+    let error = <></>;
 
-    // const newErrors = [...errors];
+    const newErrors = [...errors];
 
-    // here's where we'd need to validate if we were doing so
-    // i.e. if we were requiring a source
-    // if (!sources.length) {
-    //   error = <span className="usa-error-message">{GOAL_SOURCE_ERROR}</span>;
-    // }
+    if (!source) {
+      error = <span className="usa-error-message">Select a goal source</span>;
+    }
 
-    // newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
-    // setErrors(newErrors);
+    newErrors.splice(FORM_FIELD_INDEXES.GOAL_SOURCES, 1, error);
+    setErrors(newErrors);
 
     return !error.props.children;
   };
@@ -382,11 +386,7 @@ export default function GoalForm({
     const newObjectiveErrors = objectives.map((objective) => {
       if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
         return [
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-          <></>,
+          ...OBJECTIVE_DEFAULT_ERRORS,
         ];
       }
 
@@ -394,6 +394,7 @@ export default function GoalForm({
         isValid = false;
         return [
           <span className="usa-error-message">{objectiveTextError}</span>,
+          <></>,
           <></>,
           <></>,
           <></>,
@@ -409,6 +410,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <></>,
+          <></>,
         ];
       }
 
@@ -418,6 +420,7 @@ export default function GoalForm({
           <></>,
           <></>,
           <span className="usa-error-message">{objectiveResourcesError}</span>,
+          <></>,
           <></>,
           <></>,
         ];
@@ -431,15 +434,24 @@ export default function GoalForm({
           <></>,
           <span className="usa-error-message">{objectiveStatusError}</span>,
           <></>,
+          <></>,
+        ];
+      }
+
+      if (!objective.supportType) {
+        isValid = false;
+        return [
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <></>,
+          <span className="usa-error-message">{objectiveSupportTypeError}</span>,
         ];
       }
 
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 
@@ -466,14 +478,11 @@ export default function GoalForm({
           <span className="usa-error-message">{objectiveResourcesError}</span>,
           <></>,
           <></>,
+          <></>,
         ];
       }
       return [
-        <></>,
-        <></>,
-        <></>,
-        <></>,
-        <></>,
+        ...OBJECTIVE_DEFAULT_ERRORS,
       ];
     });
 
@@ -535,17 +544,19 @@ export default function GoalForm({
       // if the goal is a draft, submission should move it to "not started"
       const gs = createdGoals.reduce((acc, goal) => {
         const statusToSave = goal.status && goal.status === 'Draft' ? 'Not Started' : goal.status;
-        const newGoals = goal.grants.map((grant) => ({
-          grantId: grant.id,
+        const newGoals = grantsToGoals({
+          ids: goal.ids,
+          selectedGrants: goal.grants,
           name: goal.name,
           status: statusToSave,
-          endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
-          isRttapa: goal.isRttapa,
+          source: goal.source,
+          isCurated: goal.isCurated,
+          endDate: goal.endDate,
           regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
+          recipient,
           objectives: goal.objectives,
-          ids,
-        }));
+          prompts: goal.prompts,
+        });
 
         return [...acc, ...newGoals];
       }, []);
@@ -581,15 +592,19 @@ export default function GoalForm({
       // if so, we save the objective to the database first
       try {
         // but to do that, we first need to save the goals
-        const newGoals = selectedGrants.map((g) => ({
-          grantId: g.value,
+        const newGoals = grantsToGoals({
+          selectedGrants,
           name: goalName,
           status,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
+          source,
+          isCurated,
+          endDate,
+          regionId,
+          recipient,
           objectives,
-        }));
+          ids,
+          prompts,
+        });
 
         // so we save them, as before creating one for each grant
         const savedGoals = await createOrUpdateGoals(newGoals);
@@ -660,18 +675,19 @@ export default function GoalForm({
       let newGoals = [];
 
       if (showForm) {
-        newGoals = selectedGrants.map((g) => ({
-          grantId: g.value,
+        newGoals = grantsToGoals({
+          selectedGrants,
           name: goalName,
           status,
           source,
           isCurated,
-          endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
-          regionId: parseInt(regionId, DECIMAL_BASE),
-          recipientId: recipient.id,
-          objectives: objectivesWithValidResourcesOnly(objectives),
+          endDate,
+          regionId,
+          recipient,
+          objectives,
           ids,
-        }));
+          prompts,
+        });
       }
 
       const mappedCreatedGoals = createdGoals.map((goal) => goal.grantIds.map((grantId) => ({
@@ -707,13 +723,8 @@ export default function GoalForm({
         type: 'success',
       });
 
-      // if we are not creating a new goal, we want to update the goal ids
-      // for the case of adding a grant to an existing goal. If we are creating a new goal,
-      // we don't keep track of the ids, so we don't need to update them
-      if (!isNew) {
-        const newIds = updatedGoals.flatMap((g) => g.goalIds);
-        setIds(newIds);
-      }
+      const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      setIds(newIds);
     } catch (error) {
       setAlert({
         message: 'There was an error saving your goal',
@@ -733,6 +744,7 @@ export default function GoalForm({
     setIsCurated(goalDefaults.isCurated);
     setPrompts(goalDefaults.prompts);
     setSource(goalDefaults.source);
+    setCreatedVia(goalDefaults.createdVia);
     setShowForm(false);
     setObjectives([]);
     setDatePickerKey('DPK-00');
@@ -751,35 +763,35 @@ export default function GoalForm({
     setAppLoadingText('Saving');
     setIsAppLoading(true);
     try {
-      const newGoals = selectedGrants.map((g) => ({
-        grantId: g.value,
+      const newGoals = grantsToGoals({
+        selectedGrants,
         name: goalName,
         status,
-        prompts: goalTemplatePrompts,
+        source,
         isCurated,
         endDate,
-        regionId: parseInt(regionId, DECIMAL_BASE),
-        recipientId: recipient.id,
+        regionId,
+        recipient,
         objectives,
-        source,
         ids,
-      }));
+        prompts,
+      });
 
       const goals = [
         ...createdGoals.reduce((acc, goal) => {
-          const g = goal.grants.map((grant) => ({
-            grantId: grant.id,
+          const g = grantsToGoals({
+            selectedGrants: goal.grants,
             name: goal.name,
+            status: goal.status,
+            source: goal.source,
             isCurated: goal.isCurated,
+            endDate: goal.endDate,
             prompts: goal.prompts,
-            status,
-            source,
-            endDate: goal.endDate && goal.endDate !== 'Invalid date' ? goal.endDate : null,
             regionId: parseInt(regionId, DECIMAL_BASE),
-            recipientId: recipient.id,
-            objectives: objectivesWithValidResourcesOnly(goal.objectives),
-            isRttapa: goal.isRttapa,
-          }));
+            recipient,
+            objectives,
+            ids: [],
+          });
           return [...acc, ...g];
         }, []),
         ...newGoals,
@@ -789,7 +801,8 @@ export default function GoalForm({
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
         ...goal,
-        grants: formatGrantsFromApi(goal.grants),
+        ids: goal.goalIds,
+        grants: goal.grants,
         objectives: goal.objectives.map((objective) => ({
           ...objective,
         })),
@@ -832,6 +845,7 @@ export default function GoalForm({
     setIsCurated(goal.isCurated);
     setPrompts(goal.prompts);
     setSource(goal.source);
+    setCreatedVia(goal.createdVia);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -872,6 +886,83 @@ export default function GoalForm({
       });
     } finally {
       setIsAppLoading(false);
+    }
+  };
+
+  const forwardToGoalWithIds = (goalIds) => {
+    const urlFragment = `id[]=${goalIds.join(',')}`;
+    const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
+    history.push(url);
+  };
+
+  const onSelectNudgedGoal = async (goal) => {
+    const onSelectInitiativeGoal = async () => {
+      setIsAppLoading(true);
+      const goals = selectedGrants.map((g) => ({
+        grantId: g.id,
+        name: goal.name,
+        status: goal.status,
+        prompts: [],
+        isCurated: true,
+        endDate: '',
+        regionId: parseInt(regionId, DECIMAL_BASE),
+        recipientId: recipient.id,
+        objectives: [],
+        source: goal.source,
+        goalTemplateId: goal.id,
+      }));
+      const created = await createOrUpdateGoals(goals);
+      forwardToGoalWithIds(created.map((g) => g.goalIds).flat());
+    };
+
+    try {
+      setAppLoadingText('Retrieving existing goal');
+      setNudgedGoalSelection(goal);
+
+      if (goal.status === 'Suspended') {
+        unsuspendModalRef.current.toggleModal();
+        return;
+      }
+
+      if (goal.isCurated) {
+      // we need to do a little magic here to get the goal
+        await onSelectInitiativeGoal();
+        return;
+      }
+
+      openExistingGoalModalRef.current.toggleModal();
+    } catch (err) {
+      setAlert({
+        message: 'There was an error selecting your goal',
+        type: 'error',
+      });
+    } finally {
+      setIsAppLoading(false);
+      setAppLoadingText('Loading');
+    }
+  };
+
+  const unsuspender = async () => {
+    try {
+      setAppLoadingText('Reactivating goal');
+      setIsAppLoading(true);
+      const updatedGoals = await updateGoalStatus(
+        nudgedGoalSelection.ids,
+        'In Progress',
+        'Suspended',
+        null,
+        null,
+      );
+
+      forwardToGoalWithIds(updatedGoals.map((g) => g.id));
+    } catch (err) {
+      setAlert({
+        message: 'There was an error unsuspending your goal',
+        type: 'error',
+      });
+    } finally {
+      setIsAppLoading(false);
+      setAppLoadingText('Loading');
     }
   };
 
@@ -920,18 +1011,62 @@ export default function GoalForm({
             </div>
           </>
         ) : null }
-
+        <VanillaModal
+          forceAction
+          id="reopen-suspended-goal"
+          heading="This goal is currently suspended"
+          modalRef={unsuspendModalRef}
+        >
+          <p className="usa-prose">The reason for suspending the goal was:</p>
+          <ul className="usa-list">
+            {(nudgedGoalSelection.closeSuspendReasons || []).map((reason) => (
+              <li key={uniqueId('nudged-goalclose-suspend-reason-')}>{reason}</li>
+            ))}
+          </ul>
+          <p className="usa-prose">Would you like to reopen this goal and change the status to In progress?</p>
+          <Button
+            type="button"
+            onClick={async () => {
+              await unsuspender();
+              unsuspendModalRef.current.toggleModal();
+            }}
+          >
+            Yes, reopen
+          </Button>
+          <button type="button" id="unsuspend" onClick={() => unsuspendModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
+        </VanillaModal>
+        <VanillaModal
+          forceAction
+          id="switch-to-existing-goal"
+          heading="You are selecting an existing goal."
+          modalRef={openExistingGoalModalRef}
+        >
+          <p className="usa-prose">Do you want to edit this goal?</p>
+          <p className="usa-prose">Information entered here will be lost when choosing an existing goal.</p>
+          <Button
+            type="button"
+            onClick={async () => {
+              forwardToGoalWithIds(nudgedGoalSelection.ids);
+              openExistingGoalModalRef.current.toggleModal();
+            }}
+          >
+            Yes, edit
+          </Button>
+          <button type="button" id="openExisting" onClick={() => openExistingGoalModalRef.current.toggleModal()} className="usa-button usa-button--subtle">No, create a new goal</button>
+        </VanillaModal>
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
+              isNew={isNew}
+              onSelectNudgedGoal={onSelectNudgedGoal}
               fetchError={fetchError}
               onSaveDraft={onSaveDraft}
               possibleGrants={possibleGrants}
               selectedGrants={selectedGrants}
               setSelectedGrants={setSelectedGrants}
               goalName={goalName}
-              prompts={goalTemplatePrompts}
-              setPrompts={setGoalTemplatePrompts}
+              prompts={prompts}
+              setPrompts={setPrompts}
               setGoalName={setGoalName}
               recipient={recipient}
               regionId={regionId}
@@ -959,6 +1094,9 @@ export default function GoalForm({
               source={source}
               setSource={setSource}
               validateGoalSource={validateGoalSource}
+              createdVia={createdVia}
+              collaborators={goalCollaborators}
+              goalTemplateId={goalTemplateId}
             />
           )}
 

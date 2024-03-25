@@ -1,3 +1,4 @@
+const { QueryTypes } = require('sequelize');
 const { FEATURE_FLAGS } = require('../constants');
 
 /**
@@ -165,6 +166,7 @@ const dropAndRecreateEnum = async (
   columnName,
   enumValues = [],
   enumType = 'text',
+  isArray = true, // Only set this to false if you're sure the column is not an array.
 ) => {
   await queryInterface.sequelize.query(`
   -- rename the existing type
@@ -174,11 +176,15 @@ const dropAndRecreateEnum = async (
     ${enumValues.map((enumValue) => `'${enumValue}'`).join(',\n')}
   );`, { transaction });
 
+  const enumNameWithType = isArray ? `"${enumName}"[]` : `"${enumName}"`;
+  const enumTypeForAlter = isArray ? `${enumType}[]` : enumType;
+  const setArrayDefault = isArray ? `ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];` : '';
+
   return queryInterface.sequelize.query(`
   -- update the columns to use the new type
   ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default null;
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE "${enumName}"[] USING "${columnName}"::${enumType}[]::"${enumName}"[];
-  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" set default ARRAY[]::"${enumName}"[];
+  ALTER TABLE "${tableName}" ALTER COLUMN "${columnName}" TYPE ${enumNameWithType} USING "${columnName}"::${enumTypeForAlter}::${enumNameWithType};
+  ${setArrayDefault}
   -- remove the old type
   DROP TYPE "${enumName}_old";
 `, { transaction });
@@ -250,6 +256,64 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
   );
 };
 
+/**
+ * Updates the sequence of a given table to the next value greater than the current maximum value
+ * in the specified column. This function is designed to be used with a PostgreSQL database.
+ *
+ * @param {object} queryInterface - The Sequelize QueryInterface object used to execute queries.
+ * @param {string} tableName - The name of the table whose sequence needs to be updated.
+ * @param {object} [transaction=null] - An optional Sequelize transaction object to ensure the
+ * operation is atomic.
+ * @returns {Promise<void>} A promise that resolves when the sequence has been successfully updated.
+ * @throws {Error} Throws an error if no sequences are found for the table or if an error occurs
+ * during the update process.
+ */
+const updateSequence = async (queryInterface, tableName, transaction = null) => {
+  try {
+    // Query to locate the sequence based on the table name
+    const findSequenceQuery = /* sql */`
+      SELECT
+        c.table_name,
+        c.column_name,
+        s.sequence_name
+      FROM information_schema.columns c
+      JOIN information_schema.sequences s
+      ON substring(c.column_default from '"([^"]*)"' ) = s.sequence_name
+      WHERE c.table_name = :tableName
+      AND c.table_schema = 'public' -- Adjust schema name if different
+    `;
+
+    // Execute the find sequence query
+    const sequences = await queryInterface.sequelize.query(findSequenceQuery, {
+      replacements: { tableName },
+      type: QueryTypes.SELECT,
+      transaction,
+    });
+
+    // Check if sequence information was found
+    if (!sequences.length) {
+      throw new Error(`No sequences found for table ${tableName}`);
+    }
+
+    // Iterate through sequences (if a table has more than one sequence)
+    await Promise.all(sequences.map(async ({ column_name, sequence_name }) => {
+      // Find the maximum value of the ID column in the table
+      const maxValueQuery = /* sql */`SELECT MAX("${column_name}") FROM "${tableName}"`;
+      const maxResult = await queryInterface.sequelize.query(maxValueQuery, {
+        type: QueryTypes.SELECT,
+        transaction,
+      });
+      const maxValue = maxResult[0].max || 0;
+
+      // Update the sequence
+      const setValQuery = /* sql */`SELECT setval('"${sequence_name}"', COALESCE(${maxValue} + 1, 1), false);`;
+      await queryInterface.sequelize.query(setValQuery, { transaction });
+    }));
+  } catch (error) {
+    throw new Error(`Error updating sequence: ${tableName}, ${error.message}`);
+  }
+};
+
 module.exports = {
   prepMigration,
   setAuditLoggingState,
@@ -259,4 +323,5 @@ module.exports = {
   updateUsersFlagsEnum,
   replaceValueInArray,
   replaceValueInJSONBArray,
+  updateSequence,
 };

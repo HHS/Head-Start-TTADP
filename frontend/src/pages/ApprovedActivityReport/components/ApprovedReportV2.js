@@ -85,8 +85,10 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'TTA objective': objective.title,
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
+        'Support type': objective.supportType,
         'Objective status': objective.status,
         ...(objective.status === 'Suspended' ? {
           'Reason suspended': (
@@ -140,6 +142,11 @@ function calculateGoalsAndObjectives(report) {
                 { goal.activityReportGoals[0].endDate}
               </>
             ),
+            Source: (
+              <>
+                { goal.activityReportGoals[0].source}
+              </>
+            ),
           },
           striped: true,
         };
@@ -149,7 +156,9 @@ function calculateGoalsAndObjectives(report) {
       if (prompts && prompts.length) {
         const promptData = {};
         prompts.forEach((prompt) => {
-          promptData[prompt.title] = prompt.reportResponse.join(', ');
+          if (prompt.reportResponse.length > 0) {
+            promptData[prompt.title] = prompt.reportResponse.join(', ');
+          }
         });
         goalSection.data = { ...goalSection.data, ...promptData };
       }
@@ -185,6 +194,7 @@ export default function ApprovedReportV2({ data }) {
   );
 
   const attendees = formatSimpleArray(data.participants);
+  const languages = formatSimpleArray(data.language);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
@@ -300,6 +310,7 @@ export default function ApprovedReportV2({ data }) {
             heading: 'Training or technical assistance',
             data: {
               'TTA provided': formatTtaType(ttaType),
+              'Language used': languages,
               'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
             striped: true,

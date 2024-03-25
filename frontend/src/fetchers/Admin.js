@@ -98,11 +98,6 @@ export const updateNationalCenter = async (id, data) => {
   return result.json();
 };
 
-export const sendEmail = async (data) => {
-  const result = await post((join('/', 'api', 'admin', 'email')), data);
-  return result.json();
-};
-
 export const getGroupsByRegion = async (regionId) => {
   const groups = await get((join('/', 'api', 'admin', 'groups', 'region', String(regionId))));
   return groups.json();

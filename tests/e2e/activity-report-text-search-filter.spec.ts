@@ -76,14 +76,28 @@ test.describe('Activity Report Text Search Filter', () => {
     await page.getByRole('textbox', { name: 'Context' }).locator('div').nth(2).fill('The sky is blue. The ocean is deep.');
     // Type of tta.
     await page.getByRole('group', { name: /What type of TTA was provided/i }).getByText('Training').click();
-    await page.getByText('In Person').click();
-    await page.locator('#participants div').filter({ hasText: '- Select -' }).nth(1).click();
-    await page.locator('#react-select-11-option-0').click();
+
+    // Language.
+    await page.locator('#language div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     await blur(page);
+
+    // How was the activity conducted.
+    await page.getByText('In Person').click();
+
+    // Participants.
+    await page.getByText('Recipient participants *- Select -').click();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await blur(page);
+
     // Number of participants.
     await page.locator('.smart-hub-activity-report > div:nth-child(2) > div').first().click();
     await page.getByLabel('Number of participants involved *').click();
     await page.getByLabel('Number of participants involved *').fill('5');
+
+    // Save and Continue.
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
     await page.waitForNavigation({ waitUntil: 'networkidle' });
@@ -123,7 +137,14 @@ test.describe('Activity Report Text Search Filter', () => {
     // TTA provided.
     await page.getByRole('textbox', { name: 'TTA provided for objective' }).locator('div').nth(2).fill('Basic prep instruction.');
     await page.waitForTimeout(10000);
+
     await blur(page);
+
+    const supportType = page.getByRole('combobox', { name: /Support type/i });
+    await supportType.selectOption('Implementing');
+    
+    await blur(page);  
+        
     await page.getByRole('button', { name: 'Save goal' }).click();
 
     await page.waitForTimeout(10000);

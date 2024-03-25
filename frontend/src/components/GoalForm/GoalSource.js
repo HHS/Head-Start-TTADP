@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useContext } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
@@ -7,34 +7,22 @@ import {
 } from '@trussworks/react-uswds';
 import { GOAL_SOURCES } from '@ttahub/common';
 import Req from '../Req';
+import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometimesReadOnlyContext';
 
 export default function GoalSource({
   error,
   source,
   validateGoalSource,
   onChangeGoalSource,
-  goalStatus,
   inputName,
   isLoading,
-  userCanEdit,
   isMultiRecipientGoal,
   required,
 }) {
-  const readOnly = useMemo(() => goalStatus === 'Closed' || !userCanEdit,
-    [goalStatus, userCanEdit]);
+  const { readOnly } = useContext(FormFieldThatIsSometimesReadOnlyContext);
 
   if ((readOnly && !source) || isMultiRecipientGoal) {
     return null;
-  }
-  if (readOnly && source) {
-    return (
-      <>
-        <p className="usa-prose text-bold margin-bottom-0">
-          Goal source
-        </p>
-        <p className="usa-prose margin-0">{source}</p>
-      </>
-    );
   }
 
   const onChange = (evt) => {
@@ -82,8 +70,6 @@ GoalSource.propTypes = {
   onChangeGoalSource: PropTypes.func.isRequired,
   inputName: PropTypes.string,
   isLoading: PropTypes.bool,
-  goalStatus: PropTypes.string.isRequired,
-  userCanEdit: PropTypes.bool.isRequired,
   isMultiRecipientGoal: PropTypes.bool,
   required: PropTypes.bool,
 };

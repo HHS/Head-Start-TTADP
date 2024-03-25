@@ -15,6 +15,12 @@ a:visited {
   color: $text-visited
 }
 
+summary {
+  cursor: pointer;
+}
+
+/*|||||| Table resets |||||||*/
+
 .usa-table thead th a {
   color: $text-ink;
 }
@@ -96,6 +102,9 @@ body {
   border-color: $error-dark;
 }
 
+.smart-hub-maxw-form-field {
+  max-width: 30rem;
+}
 
 .smart-hub-maxw-placard {
   max-width: 34.25rem;

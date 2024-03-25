@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { GOAL_SOURCES, REPORT_STATUSES } from '@ttahub/common';
+import { GOAL_SOURCES, REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
@@ -524,7 +524,7 @@ describe('saveGoalsForReport (more tests)', () => {
       force: true,
     });
 
-    await Grant.destroy({ where: { regionId: region.id }, force: true });
+    await Grant.destroy({ where: { regionId: region.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientIds }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
     await Region.destroy({ where: { id: region.id } });
@@ -566,6 +566,7 @@ describe('saveGoalsForReport (more tests)', () => {
       topics: [],
       resources: [],
       files: [],
+      supportType: SUPPORT_TYPES[1],
     };
 
     const newGoals = [
@@ -727,8 +728,8 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(afterObjectives.length).toBe(1);
 
     const [afterObjective] = afterObjectives;
-
     expect(afterObjective.ttaProvided).toBe(newObjective.ttaProvided);
+    expect(afterObjective.supportType).toBe(newObjective.supportType);
 
     const savedObjective = await Objective.findByPk(afterObjective.objectiveId);
     expect(savedObjective.title).toBe(newObjective.title);
@@ -1062,10 +1063,9 @@ describe('saveGoalsForReport (more tests)', () => {
       {
         goalIds: [otherExistingGoal.id],
         id: otherExistingGoal.id,
-        name: otherExistingGoal.name,
+        name: otherExistingGoal.name + 1,
         objectives: [],
         grantIds: [grantOne.id],
-        status: 'Closed',
       },
     ];
 
@@ -1093,7 +1093,7 @@ describe('saveGoalsForReport (more tests)', () => {
     expect(goalIds).toContain(otherExistingGoal.id);
 
     const updatedGoal = await Goal.findByPk(otherExistingGoal.id);
-    expect(updatedGoal.status).toBe('Closed');
+    expect(updatedGoal.name).toBe(otherExistingGoal.name + 1);
 
     await cleanupTest(setup);
   });

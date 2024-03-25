@@ -5,6 +5,7 @@ import { withRegion, withoutRegion } from './region';
 import { withCollaborators } from './collaborators';
 import { withCreators } from './creator';
 import { withoutEventId, withEventId } from './eventId';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   startDate: {
@@ -26,6 +27,10 @@ export const topicToQuery = {
   eventId: {
     ctn: (query) => withEventId(query),
     nctn: (query) => withoutEventId(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
 };
 

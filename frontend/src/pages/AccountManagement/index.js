@@ -41,13 +41,36 @@ const frequencyValues = [
   { key: 'this month', label: 'Monthly digest' },
 ];
 
-const emailTypesMap = [
-  {
+const submitsForApprovalRoles = [
+  'ECM',
+  'GSM',
+  'TTAC',
+];
+
+const managerAndCollaboratorRoles = [
+  'ECM',
+  'ECS',
+  'FES',
+  'GS',
+  'GSM',
+  'HS',
+  'SS',
+  'TTAC',
+];
+
+const recipientsAvailable = [
+  'PS',
+  'SPS',
+  'GMS',
+];
+
+const emailTypesMap = {
+  submitsForApprovalRoles: [{
     name: '',
     description: 'Someone submits an activity report for my approval.',
     keyName: 'emailWhenReportSubmittedForReview',
-  },
-  {
+  }],
+  managerAndCollaboratorRoles: [{
     name: '',
     description: 'A manager requests changes to an activity report that I created or collaborated on.',
     keyName: 'emailWhenChangeRequested',
@@ -61,15 +84,38 @@ const emailTypesMap = [
     name: '',
     description: 'I\'m added as a collaborator on an activity report.',
     keyName: 'emailWhenAppointedCollaborator',
-  },
-  {
-    name: 'Program Specialists only',
+  }],
+  recipientsAvailable: [{
+    name: '',
     description: 'One of my recipients\' activity reports is available.',
     keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
-  },
-];
+  }],
+};
+const getEmailOptionsByUserRoles = (roles) => {
+  const userRoles = roles.map((role) => role.name);
+  let userEmailOptions = [];
 
-function CustomizeEmailPreferencesForm({ disabled }) {
+  if (userRoles.length) {
+  // If role names contains any of the roles in allEmailRoles, add ar for approval.
+    if (userRoles.some((role) => submitsForApprovalRoles.includes(role))) {
+      // Add emailTypesMap.submitsForApprovalRoles to userEmailOptions.
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.submitsForApprovalRoles);
+    }
+
+    // If role names contains any of the roles in allEmailRoles, add ar for change request.
+    if (userRoles.some((role) => managerAndCollaboratorRoles.includes(role))) {
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.managerAndCollaboratorRoles);
+    }
+
+    if (userRoles.some((role) => recipientsAvailable.includes(role))) {
+      userEmailOptions = userEmailOptions.concat(emailTypesMap.recipientsAvailable);
+    }
+  }
+  // return returnEmailOptions;
+  return userEmailOptions;
+};
+
+function CustomizeEmailPreferencesForm({ disabled, roles }) {
   const {
     register,
     formState: { errors },
@@ -89,7 +135,7 @@ function CustomizeEmailPreferencesForm({ disabled }) {
           </Grid>
         </Grid>
 
-        {emailTypesMap.map(({ name, description, keyName }) => (
+        {getEmailOptionsByUserRoles(roles).map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
             <Grid tablet={{ col: 12 }} desktop={{ col: 7 }}>
               <div>
@@ -123,9 +169,14 @@ function CustomizeEmailPreferencesForm({ disabled }) {
 
 CustomizeEmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    fullName: PropTypes.string,
+  })).isRequired,
 };
 
-function EmailPreferencesForm({ disabled, onSave }) {
+function EmailPreferencesForm({ disabled, onSave, roles }) {
   const {
     register,
     handleSubmit,
@@ -146,8 +197,11 @@ function EmailPreferencesForm({ disabled, onSave }) {
 
   const onSubmit = async (formData) => {
     onSave();
-    const newSettings = emailTypesMap.reduce((acc, { keyName }) => {
-      acc.push({ key: keyName, value: formData[keyName] });
+    const newSettings = Object.entries(emailTypesMap).reduce((acc, entry) => {
+      const options = entry[1];
+      options.forEach((option) => {
+        acc.push({ key: option.keyName, value: formData[option.keyName] });
+      });
       return acc;
     }, []);
 
@@ -213,7 +267,7 @@ function EmailPreferencesForm({ disabled, onSave }) {
           className="margin-bottom-3"
           style={{ display: emailPreference === 'customized' ? 'block' : 'none' }}
         >
-          <CustomizeEmailPreferencesForm disabled={disabled} />
+          <CustomizeEmailPreferencesForm disabled={disabled} roles={roles} />
         </div>
         <Radio
           id="unsubscribe"
@@ -238,12 +292,16 @@ function EmailPreferencesForm({ disabled, onSave }) {
 EmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
   onSave: PropTypes.func.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    fullName: PropTypes.string,
+  })).isRequired,
 };
 
 function AccountManagement({ updateUser }) {
   const { user } = useContext(UserContext);
   const { token } = useParams();
-
   const {
     register,
     handleSubmit,
@@ -303,6 +361,14 @@ function AccountManagement({ updateUser }) {
     minute: '2-digit',
   }).format(new Date(user.lastLogin));
 
+  const userHasEmailRoles = () => {
+    const userRoles = user.roles.map((role) => role.name);
+    return userRoles.some((role) => [
+      ...submitsForApprovalRoles,
+      ...managerAndCollaboratorRoles,
+      ...recipientsAvailable].includes(role));
+  };
+
   return (
     <>
       <Helmet>
@@ -332,6 +398,8 @@ function AccountManagement({ updateUser }) {
       <Groups />
 
       {/* Email preferences box */}
+      {/* Only show the email section if the user has email roles or isn't validated */}
+      {(!emailValidated || userHasEmailRoles()) && (
       <WidgetCard
         header={<WidgetHeader>Email preferences</WidgetHeader>}
       >
@@ -391,10 +459,12 @@ function AccountManagement({ updateUser }) {
             <EmailPreferencesForm
               disabled={!emailValidated}
               onSave={() => setShowVerifier(false)}
+              roles={user.roles}
             />
           </FormProvider>
         )}
       </WidgetCard>
+      )}
     </>
   );
 }

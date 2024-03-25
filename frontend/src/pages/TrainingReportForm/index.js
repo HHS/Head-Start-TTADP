@@ -234,6 +234,7 @@ export default function TrainingReportForm({ match }) {
         pocIds,
         collaboratorIds,
         regionId,
+        sessionReports,
         ...data
       } = hookForm.getValues();
 

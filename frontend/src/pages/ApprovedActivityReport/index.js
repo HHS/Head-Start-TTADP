@@ -55,6 +55,7 @@ export default function ApprovedActivityReport({ match, user }) {
     startDate: '',
     creatorNotes: '',
     ttaType: ['Training'],
+    language: [],
   });
 
   const modalRef = useRef();
