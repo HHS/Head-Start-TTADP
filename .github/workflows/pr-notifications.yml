@@ -1,0 +1,17 @@
+name: Pull Request Notifications
+
+on:
+  pull_request:
+    branches:
+      - production
+    types: [ready_for_review]
+
+jobs:
+  notify_slack:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Notify slack when a PR to production is opened
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      run: |
+        curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A pull request (#${{ github.event.pull_request.number }}) to *production* is now open! ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}\"}" $SLACK_WEBHOOK_URL
