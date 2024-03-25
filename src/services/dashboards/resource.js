@@ -336,13 +336,12 @@ const switchToTopicCentric = (input) => {
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
 export async function resourceFlatData(scopes) {
-  console.time('OVERALLTIME');
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
   // Get all ActivityReport ID's using SCOPES.
   // We don't want to write custom filters.
-  console.time('scopesTime');
+
   const reportIds = await ActivityReport.findAll({
     attributes: [
       'id',
@@ -359,8 +358,6 @@ export async function resourceFlatData(scopes) {
     },
     raw: true,
   });
-  console.timeEnd('scopesTime');
-  console.log('\n\n\n------ AR IDS from Scopes: ', reportIds);
 
   // Get total number of reports.
   const totalReportCount = reportIds.length;
@@ -453,8 +450,7 @@ export async function resourceFlatData(scopes) {
       JOIN ${createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id
   `;
-  console.log('\n\n\n------- SQL BEFORE: ', flatResourceSql);
-  console.time('sqlTime');
+
   // await sequelize.query('SELECT * FROM projects', { raw: true });
   const transaction = await sequelize.transaction();
 
@@ -562,20 +558,57 @@ export async function resourceFlatData(scopes) {
     transaction,
   });
 
-  [resourceUseResult, topicUseResult, numberOfParticipants, numberOfRecipients, pctOfReportsWithResources] = await Promise.all([resourceUseResult, topicUseResult, numberOfParticipants, numberOfRecipients, pctOfReportsWithResources]);
+  // 4.) ECKLKC resource percentage.
+  let pctOfECKLKCResources = sequelize.query(`
+    WITH eclkc AS (
+      SELECT
+    COUNT(DISTINCT url) AS "eclkcCount"
+    FROM  ${createdFlatResourceTempTableName}
+    WHERE url ilike '%eclkc.ohs.acf.hhs.gov%'
+    ), allres AS (
+    SELECT
+    COUNT(DISTINCT url) AS "allCount"
+    FROM ${createdFlatResourceTempTableName}
+    )
+    SELECT
+      e."eclkcCount",
+    r."allCount",
+      CASE WHEN
+    r."allCount" = 0
+    THEN 0
+    ELSE round(e."eclkcCount" / r."allCount"::decimal * 100,4)
+    END AS "eclkcPct"
+    FROM eclkc e
+    JOIN allres r
+      ON 1=1;
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  [
+    resourceUseResult,
+    topicUseResult,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources] = await Promise.all(
+    [
+      resourceUseResult,
+      topicUseResult,
+      numberOfParticipants,
+      numberOfRecipients,
+      pctOfReportsWithResources,
+      pctOfECKLKCResources,
+    ],
+  );
 
   // Commit is required to run the query.
   transaction.commit();
 
-  console.log('\n\n\n------- SQL RESOURCE USE: ', resourceUseResult);
-  console.log('\n\n\n------- SQL TOPIC USE: ', topicUseResult);
-  console.log('\n\n\n------- SQL NUM OF PARTICIPANTS: ', numberOfParticipants);
-  console.log('\n\n\n------- SQL NUM OF RECIPIENTS: ', numberOfRecipients);
-  console.log('\n\n\n------- SQL PCT OF REPORTS with RESOURCES: ', pctOfReportsWithResources);
-
-  console.timeEnd('sqlTime');
-  console.timeEnd('OVERALLTIME');
-  const overView = { numberOfParticipants, numberOfRecipients, pctOfReportsWithResources };
+  const overView = {
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
+  };
   return {
     resourceUseResult, topicUseResult, numberOfParticipants, overView,
   };
@@ -594,7 +627,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     viaObjectives: null,
     viaGoals: null,
   };
-  console.time('reportsTime2');
   dbData.allReports = await ActivityReport.findAll({
     attributes: [
       'id',
@@ -653,7 +685,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     raw: true,
   });
 
-  console.timeEnd('reportsTime2');
   [
     // dbData.allReports,
     // dbData.viaReport,
@@ -1840,7 +1871,6 @@ export async function resourceTopicUse(scopes) {
 }
 
 export async function resourceDashboardPhase1(scopes) {
-  console.log('\n\n\n------Phase1');
   const data = await resourceData(scopes);
   return {
     overview: generateResourcesDashboardOverview(data),
@@ -1851,7 +1881,6 @@ export async function resourceDashboardPhase1(scopes) {
 }
 
 export async function resourceDashboard(scopes) {
-  console.log('\n\n\n------Old');
   const data = await resourceData(scopes);
   return {
     overview: generateResourcesDashboardOverview(data),
