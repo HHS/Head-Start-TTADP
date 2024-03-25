@@ -50,7 +50,7 @@ module.exports = {
             // Get the goal text from the data jsonb property on the EventReportPilot table
             // Use this goal text to create the new Goal.
             const [[eventReportPilot]] = await queryInterface.sequelize.query(
-              `SELECT data FROM "EventReportPilots" WHERE id = ${session.eventId}`,
+              `SELECT data, "pocIds" FROM "EventReportPilots" WHERE id = ${session.eventId}`,
               { transaction },
             );
 
@@ -71,6 +71,26 @@ module.exports = {
             await queryInterface.sequelize.query(
               `INSERT INTO "EventReportPilotGoals" ("goalId", "eventId", "sessionId", "grantId", "createdAt", "updatedAt")
               VALUES (${newGoal.id}, '${session.eventId}', ${session.id}, '${recipient.value}', NOW(), NOW());`,
+              { transaction },
+            );
+
+            const pocIds = eventReportPilot.pocIds || [];
+
+            const pocUsers = await queryInterface.sequelize.query(
+              `SELECT id FROM "Users" WHERE id = ANY('{${pocIds.join(',')}}')`,
+              { transaction },
+            );
+
+            if (!pocUsers.length) {
+              // eslint-disable-next-line no-continue
+              continue;
+            }
+
+            const [[pocUser]] = pocUsers;
+
+            await queryInterface.sequelize.query(
+              `INSERT INTO "GoalCollaborators" ("collaboratorTypeId", "linkBack", "goalId", "userId", "createdAt", "updatedAt")
+              VALUES (1, '${JSON.stringify({ sessionReportIds: [session.id] })}', ${newGoal.id}, ${pocUser.id}, NOW(), NOW());`,
               { transaction },
             );
           }
