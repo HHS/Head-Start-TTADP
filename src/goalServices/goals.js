@@ -2252,6 +2252,7 @@ export async function saveGoalsForReport(goals, report) {
       closeSuspendReason,
       ttaProvided,
       supportType,
+      courses,
     } = savedObjective;
 
     // this will save all our objective join table data
@@ -2264,6 +2265,7 @@ export async function saveGoalsForReport(goals, report) {
       resources,
       topics,
       files,
+      courses,
       deleteUnusedAssociations,
     );
 
