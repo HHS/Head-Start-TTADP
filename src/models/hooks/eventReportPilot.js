@@ -7,6 +7,23 @@ const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
+const safeParse = (instance) => {
+  // Try to parse instance.data if it exists and has a 'val' property
+  if (instance?.data?.val) {
+    return JSON.parse(instance.data.val);
+  }
+  // Directly return instance.dataValues.data if it exists
+  if (instance?.dataValues?.data) {
+    return instance.dataValues.data;
+  }
+  // Directly return instance.data if it exists
+  if (instance?.data) {
+    return instance.data;
+  }
+
+  return null;
+};
+
 const notifyNewCollaborators = async (_sequelize, instance) => {
   try {
     const changed = instance.changed();
@@ -33,7 +50,7 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
       );
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifyNewCollaborators: ${err}`);
   }
 };
 
@@ -59,7 +76,7 @@ const notifyNewPoc = async (_sequelize, instance) => {
       );
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifyNewPoc: ${err}`);
   }
 };
 
@@ -68,7 +85,7 @@ const notifyPocEventComplete = async (_sequelize, instance) => {
     // first we need to see if the session is newly complete
     if (instance.changed().includes('data')) {
       const previous = instance.previous('data');
-      const current = JSON.parse(instance.data.val);
+      const current = safeParse(instance);
 
       if (
         current.status === TRAINING_REPORT_STATUSES.COMPLETE
@@ -79,7 +96,7 @@ const notifyPocEventComplete = async (_sequelize, instance) => {
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifyPocEventComplete: ${err}`);
   }
 };
 
@@ -88,7 +105,7 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
     // first we need to see if the session is newly complete
     if (instance.changed().includes('data')) {
       const previous = instance.previous('data');
-      const current = JSON.parse(instance.data.val);
+      const current = safeParse(instance);
 
       if (
         current.pocComplete && !previous.pocComplete) {
@@ -98,7 +115,7 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifyVisionAndGoalComplete: ${err}`);
   }
 };
 

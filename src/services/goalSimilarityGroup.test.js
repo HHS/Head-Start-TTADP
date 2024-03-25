@@ -24,29 +24,34 @@ import {
   createSimilarityGroup,
   deleteSimilarityGroup,
   flattenSimilarityGroupGoals,
+  getSimilarityGroupById,
 } from './goalSimilarityGroup';
 
 describe('goalSimilarityGroup services', () => {
   let recipient;
   let grant;
+  let grant2;
   let goal1;
   let goal2;
   let goal3;
   let goal4;
   let goal5;
   let goal6;
+  let group;
 
   beforeAll(async () => {
     recipient = await createRecipient();
     grant = await createGrant({ recipientId: recipient.id });
+    grant2 = await createGrant({ recipientId: recipient.id, regionId: 2 });
     goal1 = await createGoal({ grantId: grant.id, status: 'In Progress' });
     goal2 = await createGoal({ grantId: grant.id, status: 'In Progress' });
     goal3 = await createGoal({ grantId: grant.id, status: 'In Progress' });
     goal4 = await createGoal({ grantId: grant.id, status: 'In Progress' });
     goal5 = await createGoal({ grantId: grant.id, status: 'In Progress' });
     goal6 = await createGoal({ grantId: grant.id, status: 'In Progress' });
+    goal6 = await createGoal({ grantId: grant2.id, status: 'In Progress' });
 
-    const group = await GoalSimilarityGroup.create({
+    group = await GoalSimilarityGroup.create({
       recipientId: recipient.id,
       version: CURRENT_GOAL_SIMILARITY_VERSION,
     });
@@ -55,33 +60,55 @@ describe('goalSimilarityGroup services', () => {
       { goalSimilarityGroupId: group.id, goalId: goal1.id },
       { goalSimilarityGroupId: group.id, goalId: goal2.id },
       { goalSimilarityGroupId: group.id, goalId: goal3.id },
+      { goalSimilarityGroupId: group.id, goalId: goal6.id },
     ]);
   });
 
   afterAll(async () => {
     const groups = await GoalSimilarityGroup.findAll({ where: { recipientId: recipient.id } });
-    const groupIds = groups.map((group) => group.id);
+    const groupIds = groups.map((g) => g.id);
 
     await GoalSimilarityGroupGoal.destroy({ where: { goalSimilarityGroupId: groupIds } });
     await GoalSimilarityGroup.destroy({ where: { recipientId: recipient.id } });
-    await Goal.destroy({ where: { grantId: grant.id }, force: true });
+    await Goal.destroy({ where: { grantId: [grant.id, grant2.id] }, force: true });
     await Grant.destroy({ where: { recipientId: recipient.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });
 
   test('getSimilarityGroupByContainingGoalIds', async () => {
-    const group = await getSimilarityGroupByContainingGoalIds(
-      [goal1.id, goal2.id, goal3.id],
+    const g = await getSimilarityGroupByContainingGoalIds(
+      [goal1.id, goal2.id, goal3.id, goal6.id],
       { recipientId: recipient.id },
     );
-    expect(group.goals.sort()).toEqual([goal1.id, goal2.id, goal3.id].sort());
+    expect(g.goals.sort()).toEqual([goal1.id, goal2.id, goal3.id, goal6.id].sort());
+  });
+
+  test('getSimilarityGroupById', async () => {
+    const groupById = await getSimilarityGroupById(group.id);
+    expect(groupById.goals.sort()).toEqual([goal1.id, goal2.id, goal3.id, goal6.id].sort());
+  });
+
+  test('getSimilarityGroupById with region', async () => {
+    const groupById = await getSimilarityGroupById(group.id, {}, grant.regionId);
+    expect(groupById.goals.sort()).toEqual([goal1.id, goal2.id, goal3.id].sort());
   });
 
   test('getSimilarityGroupsByRecipientId', async () => {
     const groups = await getSimilarityGroupsByRecipientId(recipient.id);
     expect(groups.length).toBe(1);
-    expect(groups[0].goals.sort()).toEqual([goal1.id, goal2.id, goal3.id].sort());
+    expect(groups[0].goals.sort()).toEqual([goal1.id, goal2.id, goal3.id, goal6.id].sort());
+  });
+
+  test('getSimilarityGroupsByRecipientId with region', async () => {
+    const groups = await getSimilarityGroupsByRecipientId(
+      recipient.id,
+      {},
+      false,
+      grant2.regionId,
+    );
+    expect(groups.length).toBe(1);
+    expect(groups[0].goals.sort()).toEqual([goal6.id].sort());
   });
 
   test('setSimilarityGroupAsUserInvalidated', async () => {
@@ -127,7 +154,7 @@ describe('goalSimilarityGroup services', () => {
 
   describe('flattenSimilarityGroupGoals', () => {
     it('should flatten similarity group goals', () => {
-      const group = {
+      const g = {
         toJSON: jest.fn().mockReturnValue({ id: 'group-id' }),
         goals: [
           { id: 'goal-1', goalTemplate: { creationMethod: CREATION_METHOD.CURATED }, status: GOAL_STATUS.IN_PROGRESS },
@@ -137,7 +164,7 @@ describe('goalSimilarityGroup services', () => {
         ],
       };
 
-      const result = flattenSimilarityGroupGoals(group);
+      const result = flattenSimilarityGroupGoals(g);
 
       expect(result).toEqual({
         id: 'group-id',
