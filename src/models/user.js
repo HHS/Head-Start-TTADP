@@ -85,7 +85,7 @@ export default (sequelize, DataTypes) => {
     nameWithNationalCenters: {
       type: DataTypes.VIRTUAL,
       get() {
-        const centers = ` ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
+        const centers = `, ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
         return `${this.name}${centers}`;
       },
     },
