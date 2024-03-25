@@ -1,4 +1,5 @@
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen, act } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
@@ -18,7 +19,6 @@ const mockEvent = (data = {}) => ({
     reasons: ['Ongoing Quality Improvement'],
     audience: 'Recipients',
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-    'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['None'],
@@ -67,7 +67,8 @@ const mockEvent = (data = {}) => ({
       recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
-      objectiveSupportType: 'Implementing',
+      objectiveSupportType: SUPPORT_TYPES[2],
+      courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
     updatedAt: '2023-06-27T13:49:18.579Z',
@@ -101,7 +102,8 @@ const mockEvent = (data = {}) => ({
       recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
+      courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
@@ -182,6 +184,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/14/2026')).toBeInTheDocument();
     expect(screen.getByText('test-file.pdf')).toBeInTheDocument();
     expect(screen.getByText('Implementing')).toBeInTheDocument();
+    expect(screen.getByText('course 1')).toBeInTheDocument();
+    expect(screen.getByText('course 2')).toBeInTheDocument();
 
     // expect 2 of these (1 for each session)
     expect(screen.getAllByText('PFCE')).toHaveLength(2);
@@ -202,7 +206,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/30/2026')).toBeInTheDocument();
     expect(screen.getByText('s1s2')).toBeInTheDocument();
     expect(screen.getByText('06/29/2027')).toBeInTheDocument();
-    expect(screen.getByText('Planning')).toBeInTheDocument();
+    expect(screen.getByText(SUPPORT_TYPES[1])).toBeInTheDocument();
+    expect(screen.getByText('course 3')).toBeInTheDocument();
   });
 
   it('renders the necessary buttons', async () => {

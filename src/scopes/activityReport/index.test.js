@@ -4,10 +4,9 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES, GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
-
 import db, {
   ActivityReport,
   ActivityReportApprover,
@@ -33,8 +32,15 @@ import db, {
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   ActivityReportGoalFieldResponse,
+  GroupCollaborator,
 } from '../../models';
-import { createReport, destroyReport, createGrant } from '../../testUtils';
+import {
+  createReport,
+  destroyReport,
+  createGrant,
+  createRecipient,
+  createGoal,
+} from '../../testUtils';
 import {
   deleteIndex,
 } from '../../lib/awsElasticSearch/index';
@@ -213,14 +219,24 @@ describe('filtersToScopes', () => {
     beforeAll(async () => {
       group = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
-        userId: mockUser.id,
         isPublic: false,
+      });
+
+      await GroupCollaborator.create({
+        groupId: group.id,
+        userId: mockUser.id,
+        collaboratorTypeId: 1,
       });
 
       publicGroup = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
-        userId: mockUserTwo.id,
         isPublic: true,
+      });
+
+      await GroupCollaborator.create({
+        groupId: publicGroup.id,
+        userId: mockUserTwo.id,
+        collaboratorTypeId: 1,
       });
 
       grant = await createGrant({
@@ -269,11 +285,17 @@ describe('filtersToScopes', () => {
       await GroupGrant.destroy({
         where: { groupId: [group.id, publicGroup.id] },
       });
+
+      await GroupCollaborator.destroy({
+        where: { groupId: [group.id, publicGroup.id] },
+      });
+
       await Group.destroy({
         where: { id: [group.id, publicGroup.id] },
       });
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
     });
 
@@ -621,6 +643,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
@@ -824,6 +847,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: grantIds },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: recipientIds },
@@ -904,6 +928,7 @@ describe('filtersToScopes', () => {
         });
         await Grant.destroy({
           where: { id: [grantIncluded.id, grantExcluded.id] },
+          individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded.id, recipientExcluded.id] },
@@ -1272,6 +1297,7 @@ describe('filtersToScopes', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       // Delete recipient.
@@ -1558,6 +1584,7 @@ describe('filtersToScopes', () => {
       // Destroy Grant.
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
 
       // Destroy Recipient.
@@ -2163,6 +2190,7 @@ describe('filtersToScopes', () => {
       });
       await Grant.destroy({
         where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
+        individualHooks: true,
       });
       await Recipient.destroy({
         where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
@@ -3392,6 +3420,127 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([reportExcluded.id, globallyExcludedReport.id]));
+    });
+  });
+
+  describe('goalName', () => {
+    let includedReport;
+    let excludedReport;
+    let possibleIds;
+
+    let recipient;
+    let grant;
+
+    let goalOne;
+    let goalTwo;
+
+    const includedGoalName = `${faker.lorem.sentence(10)}chowder`;
+    const excludedGoalName = `${faker.lorem.sentence(10)}hams`;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+
+      goalOne = await createGoal({
+        grantId: grant.id, name: includedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+      goalTwo = await createGoal({
+        grantId: grant.id, name: excludedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+      });
+
+      // Create reports.
+      includedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: includedUser1.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: includedReport.id,
+        goalId: goalOne.id,
+        name: goalOne.name,
+        status: goalOne.status,
+      });
+
+      excludedReport = await ActivityReport.create(
+        {
+          ...draftReport,
+          userId: excludedUser.id,
+        },
+      );
+
+      await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goalTwo.id,
+        name: goalTwo.name,
+        status: goalTwo.status,
+      });
+
+      possibleIds = [
+        includedReport.id,
+        excludedReport.id,
+      ];
+    });
+
+    afterAll(async () => {
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: [includedReport.id, excludedReport.id],
+        },
+      });
+
+      // Delete reports.
+      await ActivityReport.destroy({
+        where: { id: [includedReport.id, excludedReport.id] },
+      });
+
+      await Goal.destroy({
+        where: { id: [goalOne.id, goalTwo.id] },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: { id: grant.id },
+      });
+
+      await Recipient.destroy({
+        where: { id: recipient.id },
+      });
+    });
+
+    it('return correct goal name filter search results', async () => {
+      const filters = { 'goalName.ctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([includedReport.id]));
+    });
+
+    it('excludes correct goal name filter search results', async () => {
+      const filters = { 'goalName.nctn': ['chowder'] };
+      const { activityReport: scope } = await filtersToScopes(filters);
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            { id: possibleIds },
+          ],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id))
+        .toEqual(expect.arrayContaining([
+          excludedReport.id,
+        ]));
     });
   });
 });

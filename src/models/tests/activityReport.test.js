@@ -94,6 +94,7 @@ const sampleReport = {
   deliveryMethod: 'method',
   activityRecipientType: 'test',
   creatorRole: 'COR',
+  language: ['Spanish'],
   topics: ['topic', 'topic2', 'red', 'blue', 'declination'],
   participants: ['test'],
   duration: 0,
@@ -233,7 +234,7 @@ describe('Activity Reports model', () => {
       await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
       await Objective.destroy({ where: { id: objectives.map((o) => o.id) }, force: true });
       await Goal.destroy({ where: { id: goals.map((g) => g.id) }, force: true });
-      await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+      await Grant.destroy({ where: { id: grants.map((g) => g.id) }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });
@@ -443,5 +444,21 @@ describe('Activity Reports model', () => {
     });
 
     expect(r2.sortedTopics).toStrictEqual([]);
+  });
+
+  it('language', async () => {
+    const r = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r.language).toStrictEqual(['Spanish']);
+
+    await r.update({ language: ['English', 'Spanish'] });
+
+    const r2 = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r2.language).toStrictEqual(['English', 'Spanish']);
   });
 });

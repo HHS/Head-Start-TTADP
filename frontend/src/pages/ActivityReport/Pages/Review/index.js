@@ -99,6 +99,7 @@ const ReviewSubmit = ({
       {isApprover
         && (
           <Approver
+            availableApprovers={availableApprovers}
             reviewed={reviewed}
             pages={pages}
             additionalNotes={additionalNotes}
@@ -106,6 +107,8 @@ const ReviewSubmit = ({
             error={error}
             formData={formData}
             isPendingApprover={isPendingApprover}
+            onResetToDraft={onReset}
+            onFormSubmit={onFormSubmit}
           >
             <>
               <Accordion bordered={false} items={items} />

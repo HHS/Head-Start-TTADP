@@ -167,7 +167,7 @@ describe('Activity report cleanup service', () => {
         },
       });
       await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-      await Grant.destroy({ where: { id: RECIPIENT_ID } });
+      await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
       await Recipient.destroy({ where: { id: RECIPIENT_ID } });
       await User.destroy({
         where: {

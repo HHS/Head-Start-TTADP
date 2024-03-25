@@ -174,6 +174,24 @@ const updateStatus = async (fileId, fileStatus) => {
   }
 };
 
+/**
+ * Updates the status of a file in the database based on its key.
+ * @param {string} key - The key of the file to update.
+ * @param {string} fileStatus - The new status of the file.
+ * @returns {Promise<Object|Error>} - A promise that resolves to the updated file object or
+ * an error object if an error occurs.
+ */
+const updateStatusByKey = async (key, fileStatus) => {
+  // Update the file's status in the database using the File model
+  const results = await File.update({ status: fileStatus }, {
+    where: { key },
+    individualHooks: true,
+  });
+  const [, [file]] = results;
+  // Return the updated file
+  return file?.toJSON();
+};
+
 const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
   const newFile = {
     originalFileName,
@@ -448,6 +466,7 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  updateStatusByKey,
   createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,

@@ -68,7 +68,10 @@ describe('Recipient DB service', () => {
 
   beforeAll(async () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Grant.unscoped().destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Grant.unscoped().destroy({
+      where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
 
     await Promise.all(recipients.map((r) => Recipient.create(r)));
@@ -234,7 +237,10 @@ describe('Recipient DB service', () => {
 
   afterAll(async () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
-    await Grant.unscoped().destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
+    await Grant.unscoped().destroy({
+      where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
     await sequelize.close();
   });
@@ -534,6 +540,7 @@ describe('Recipient DB service', () => {
     afterAll(async () => {
       await Grant.unscoped().destroy({
         where: { recipientId: recipientsToSearch.map((g) => g.id) },
+        individualHooks: true,
       });
       await Recipient.unscoped().destroy({ where: { id: recipientsToSearch.map((g) => g.id) } });
     });
@@ -666,7 +673,10 @@ describe('Recipient DB service', () => {
     });
 
     afterAll(async () => {
-      await Grant.destroy({ where: { recipientId: [firstRecipient.id, secondRecipient.id] } });
+      await Grant.destroy({
+        where: { recipientId: [firstRecipient.id, secondRecipient.id] },
+        individualHooks: true,
+      });
       await Recipient.destroy({ where: { id: [firstRecipient.id, secondRecipient.id] } });
       await Permission.destroy({ where: { userId: user.id } });
       await User.destroy({ where: { id: user.id } });
@@ -859,12 +869,12 @@ describe('Recipient DB service', () => {
 
     it('properly de-duplicates based on responses', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(3);
+      expect(goalRows.length).toBe(4);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
 
-      expect(doubler.ids.length).toBe(2);
+      expect(doubler.ids.length).toBe(1);
 
       const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
       expect(singler).toBeTruthy();
@@ -928,18 +938,21 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
+        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];
@@ -977,6 +990,7 @@ describe('Recipient DB service', () => {
       const aro = await ActivityReportObjective.create({
         activityReportId: report.id,
         objectiveId: objective1.id,
+        supportType: 'Planning',
       });
 
       await ActivityReportObjectiveTopic.create({
@@ -1048,18 +1062,17 @@ describe('Recipient DB service', () => {
     it('successfully reduces data without losing topics', async () => {
       const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
 
-      expect(goalsForRecord.count).toBe(1);
-      expect(goalsForRecord.goalRows.length).toBe(1);
+      expect(goalsForRecord.count).toBe(2);
+      expect(goalsForRecord.goalRows.length).toBe(2);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(1);
+      expect(goal.reasons.length).toBe(0);
 
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
-      expect(objective.topics.length).toBe(4);
-      expect(objective.topics.sort()).toEqual(topics.map((t) => t.name).sort());
-      expect(objective.activityReports.length).toBe(1);
+      expect(objective.topics.length).toBe(1);
+      expect(objective.supportType).toBe('Planning');
     });
   });
 
@@ -1209,6 +1222,7 @@ describe('Recipient DB service', () => {
         where: {
           id: [grant.id, grant2.id, irrelevantGrant.id],
         },
+        individualHooks: true,
       });
 
       await db.Recipient.destroy({
@@ -1367,6 +1381,7 @@ describe('Recipient DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({

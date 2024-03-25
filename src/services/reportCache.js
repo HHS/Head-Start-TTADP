@@ -9,6 +9,7 @@ const {
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
+  ActivityReportObjectiveCourse,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
@@ -167,6 +168,37 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
   ]);
 };
 
+export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
+  const courseIds = courses.map((course) => course.courseId);
+  const courseSet = new Set(courseIds);
+  const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
+    where: { activityReportObjectiveId },
+    raw: true,
+  });
+  const originalCourseIds = originalAroCourses.map((course) => course.courseId)
+    || [];
+  const removedCourseIds = originalCourseIds.filter((id) => !courseSet.has(id));
+  const currentCourseIds = new Set(originalCourseIds.filter((id) => courseSet.has(id)));
+  const newCourseIds = courseIds.filter((id) => !currentCourseIds.has(id));
+
+  return Promise.all([
+    ...newCourseIds.map(async (courseId) => ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId,
+      courseId,
+    })),
+    removedCourseIds.length > 0
+      ? ActivityReportObjectiveCourse.destroy({
+        where: {
+          activityReportObjectiveId,
+          courseId: { [Op.in]: removedCourseIds },
+        },
+        individualHooks: true,
+        hookMetadata: { objectiveId },
+      })
+      : Promise.resolve(),
+  ]);
+};
+
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
   const topicIds = topics.map((topic) => topic.topicId);
   const topicsSet = new Set(topicIds);
@@ -231,10 +263,13 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     topics,
     ttaProvided,
     status,
+    courses,
     order,
+    supportType,
     closeSuspendContext,
     closeSuspendReason,
   } = metadata;
+
   const objectiveId = objective.dataValues
     ? objective.dataValues.id
     : objective.id;
@@ -254,11 +289,12 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
   const { id: activityReportObjectiveId } = aro;
   // Updates take longer then selects to settle in the db, as a result this update needs to be
   // complete prior to calling cacheResources to prevent stale data from being returned. This
-  // results in the following update cannot be in the Promise.all in the return.
+  // means the following update cannot be in the Promise.all in the return.
   await ActivityReportObjective.update({
     title: objective.title,
     status: status || objective.status,
     ttaProvided,
+    supportType: supportType || null,
     arOrder: order + 1,
     closeSuspendContext: closeSuspendContext || null,
     closeSuspendReason: closeSuspendReason || null,
@@ -274,6 +310,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     cacheFiles(objectiveId, activityReportObjectiveId, files),
     cacheResources(objectiveId, activityReportObjectiveId, resources),
     cacheTopics(objectiveId, activityReportObjectiveId, topics),
+    cacheCourses(objectiveId, activityReportObjectiveId, courses),
   ]);
 };
 
@@ -361,6 +398,7 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
+  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -408,12 +446,27 @@ const cacheGoalMetadata = async (
     });
   }
 
-  return Promise.all([
+  const finalPromises = [
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    prompts && prompts.length
-      ? cachePrompts(goal.id, arg.id, prompts)
-      : Promise.resolve(),
-  ]);
+  ];
+
+  if (!isMultiRecipientReport && prompts && prompts.length) {
+    finalPromises.push(
+      cachePrompts(goal.id, arg.id, prompts),
+    );
+  }
+
+  if (isMultiRecipientReport) {
+    finalPromises.push(
+      ActivityReportGoalFieldResponse.destroy({
+        where: { activityReportGoalId: arg.id },
+        individualHooks: true,
+        hookMetadata: { goalId: goal.id },
+      }),
+    );
+  }
+
+  return Promise.all(finalPromises);
 };
 
 async function destroyActivityReportObjectiveMetadata(

@@ -14,6 +14,7 @@ describe('Approved Activity Report V2 component', () => {
       ActivityReportObjective: {
         ttaProvided: 'All of it',
       },
+      courses: [],
       topics: [{ label: 'being fancy' }],
       resources: [{ value: 'http://www.website.com', url: 'http://www.OtherEntity.com' }],
       status: 'Test status',
@@ -62,6 +63,7 @@ describe('Approved Activity Report V2 component', () => {
       completeDate: '2021-01-01',
     }],
     participants: ['Commander of Pants', 'Princess of Castles'],
+    language: [],
     numberOfParticipants: 3,
     reason: ['Needed it'],
     startDate: '1968-08-01',
@@ -136,6 +138,7 @@ describe('Approved Activity Report V2 component', () => {
       resources: [{ value: 'http://www.website.com' }],
       status: 'Test status',
       files: [],
+      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
@@ -155,6 +158,7 @@ describe('Approved Activity Report V2 component', () => {
       resources: [],
       status: 'Test status',
       files: [],
+      courses: [],
     }];
 
     render(<ApprovedReportV2 data={{
@@ -177,7 +181,7 @@ describe('Approved Activity Report V2 component', () => {
     expect(screen.queryAllByText(/anticipated close date/i).length).toBe(0);
   });
 
-  it('shows the goal close anticipation date', async () => {
+  it('shows the goal close date and goal source', async () => {
     render(<ApprovedReportV2 data={{
       ...report,
       goalsAndObjectives: [{
@@ -187,12 +191,58 @@ describe('Approved Activity Report V2 component', () => {
         endDate: '05/02/2023',
         activityReportGoals: [{
           endDate: '05/03/2023',
+          source: null,
         }],
       }],
     }}
     />);
     expect(await screen.findByText(/anticipated close date/i)).toBeInTheDocument();
     expect(await screen.findByText('05/03/2023')).toBeInTheDocument();
+    expect(await screen.findByText('Source')).toBeInTheDocument();
+  });
+
+  it('does not show the goal source label if there are no responses', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+        prompts: [{
+          title: 'FEI goal source',
+          reportResponse: [],
+        }],
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/FEI goal source/i).length).toBe(0);
+  });
+
+  it('shows the goal source label if there are no responses', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report,
+      goalsAndObjectives: [{
+        name: 'Goal without close date',
+        goalNumbers: ['1'],
+        objectives: mockObjectives,
+        endDate: '05/02/2023',
+        activityReportGoals: [{
+          endDate: '05/03/2023',
+          source: null,
+        }],
+        prompts: [{
+          title: 'FEI goal source',
+          reportResponse: ['response'],
+        }],
+      }],
+    }}
+    />);
+    expect(screen.queryAllByText(/FEI goal source/i).length).toBe(1);
   });
 
   it('in person', async () => {
@@ -202,6 +252,15 @@ describe('Approved Activity Report V2 component', () => {
     />);
 
     expect(await screen.findByText(/In Person/i)).toBeInTheDocument();
+  });
+
+  it('language', async () => {
+    render(<ApprovedReportV2 data={{
+      ...report, language: ['Gobbledegook'],
+    }}
+    />);
+
+    expect(await screen.findByText(/Gobbledegook/i)).toBeInTheDocument();
   });
 
   it('virtual', async () => {

@@ -2,7 +2,12 @@
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
 import _ from 'lodash';
-import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
+import {
+  TRAINING_REPORT_STATUSES as TRS,
+  REASONS,
+  TARGET_POPULATIONS,
+  EVENT_AUDIENCE,
+} from '@ttahub/common';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import {
@@ -18,7 +23,7 @@ const {
   User,
 } = db;
 
-const validateFields = (request, requiredFields) => {
+export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
 
   if (missingFields.length) {
@@ -453,6 +458,7 @@ const mappings: Record<string, string> = {
   'Edit Title': 'eventName',
   'Event Title': 'eventName',
   'Event Duration/#NC Days of Support': 'eventDuration',
+  'Event Duration/# NC Days of Support': 'eventDuration',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
@@ -460,11 +466,9 @@ const mappings: Record<string, string> = {
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
   'IST Name': 'istName',
-  'National Center(s) Requested': 'nationalCenters',
-  'Event Duration/# NC Days of Support': 'eventDuration',
 };
 
-const toSplit = ['targetPopulations', 'reasons', 'nationalCenters'];
+const toSplit = ['targetPopulations', 'reasons'];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -478,10 +482,12 @@ const mapLineToData = (line: Record<string, string>) => {
   const data: Record<string, unknown> = {};
 
   Object.keys(line).forEach((key) => {
-    const mappedKey = mappings[key] || key;
-    data[mappedKey] = toSplit.includes(mappedKey)
-      ? splitPipe(line[key]).map(applyReplacements)
-      : line[key];
+    // Only process the key if it exists in the mappings.
+    if (Object.keys(mappings).includes(key)) {
+      const mappedKey = mappings[key] || key;
+      data[mappedKey] = toSplit.includes(mappedKey)
+        ? splitPipe(line[key]).map(applyReplacements) : line[key];
+    }
   });
 
   return data;
@@ -519,13 +525,29 @@ export async function csvImport(buffer: Buffer) {
   const errors: string[] = [];
 
   const parsed = parse(buffer, { skipEmptyLines: true, columns: true });
-
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
-      const eventId = line['Event ID'];
+      const cleanLine = Object.fromEntries(
+        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()]),
+      );
+
+      const eventId = cleanLine['Event ID'];
+
+      // If the eventId doesn't start with the prefix R and two numbers, it's invalid.
+      if (!eventId.match(/^R\d{2}/i)) {
+        skipped.push(`Invalid "Event ID" format expected R##-TR-#### received ${eventId}`);
+        return false;
+      }
+
+      // Validate audience else skip.
+      if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
+        skipped.push(`Value "${cleanLine.Audience}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        return false;
+      }
+
       const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
-      const creator = line.Creator;
+      const creator = cleanLine.Creator;
       let owner;
       if (creator) {
         owner = await checkUserExists(creator);
@@ -541,19 +563,25 @@ export async function csvImport(buffer: Buffer) {
 
       await checkEventExists(eventId);
 
-      const data = mapLineToData(line);
+      const data = mapLineToData(cleanLine);
 
-      // remove duplicates in reasons and targetPopulations
+      data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
+      data.goal = '';
+
+      // Reasons, remove duplicates and invalid values.
       data.reasons = [...new Set(data.reasons as string[])];
+      data.reasons = (data.reasons as string[]).filter((reason) => REASONS.includes(reason));
+
+      // Target Populations, remove duplicates and invalid values.
       data.targetPopulations = [...new Set(data.targetPopulations as string[])];
-      data.nationalCenters = [...new Set(data.nationalCenters as string[])];
+      data.targetPopulations = (data.targetPopulations as string[]).filter((target) => TARGET_POPULATIONS.includes(target));
 
       await db.EventReportPilot.create({
         collaboratorIds: [],
         ownerId: owner.id,
         regionId,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
-        imported: sequelize.cast(JSON.stringify(line), 'jsonb'),
+        imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
       });
 
       return true;

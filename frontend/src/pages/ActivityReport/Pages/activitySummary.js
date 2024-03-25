@@ -13,7 +13,6 @@ import {
   TextInput,
   Checkbox,
   Label,
-  Alert as USWDSAlert,
   Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
@@ -21,6 +20,7 @@ import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
   DECIMAL_BASE,
+  LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -40,6 +40,7 @@ import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
+import GroupAlert from '../../../components/GroupAlert';
 
 const ActivitySummary = ({
   recipients,
@@ -253,13 +254,7 @@ const ActivitySummary = ({
         </div>
         {
         showGroupInfo && (
-        <USWDSAlert type="info">
-          You&apos;ve successfully modified the Group&apos;s recipients for this
-          report. Changes here do not affect the Group itself.
-          <button type="button" className="smart-hub-activity-summary-group-info usa-button usa-button--unstyled" onClick={resetGroup}>
-            Reset or select a different group.
-          </button>
-        </USWDSAlert>
+          <GroupAlert resetGroup={resetGroup} />
         )
         }
         {
@@ -490,6 +485,21 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
+            label="Language used"
+            name="language"
+            required
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
+            />
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
             label="How was the activity conducted?"
             name="deliveryMethod"
             fieldSetWrapper
@@ -675,6 +685,7 @@ const sections = [
     anchor: 'tta',
     items: [
       { label: 'TTA provided', name: 'ttaType' },
+      { label: 'Language used', name: 'language' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],
   },
@@ -734,6 +745,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
 
     // numbers
     duration,
@@ -754,12 +766,18 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
+  // If language is null return false for now.
+  if (!language) {
+    return false;
+  }
+
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
     reason,
     ttaType,
     participants,
+    language,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {

@@ -1,7 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 // disabling prop spreading to use the "register" function from react hook form the same
-// way they did in thier examples
-/* eslint-disable arrow-body-style */
+// way they did in their examples
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
@@ -212,13 +211,11 @@ const GoalsObjectives = ({
   }; // end onEdit
 
   // the read only component expects things a little differently
-  const goalsForReview = selectedGoals.map((goal) => {
-    return {
-      ...goal,
-      goalName: goal.name,
-      grants: [],
-    };
-  });
+  const goalsForReview = selectedGoals.map((goal) => ({
+    ...goal,
+    goalName: goal.name,
+    grants: [],
+  }));
 
   const oeObjectiveEdit = (objectives) => {
     const recipientIds = activityRecipients.map((ar) => ar.activityRecipientId);

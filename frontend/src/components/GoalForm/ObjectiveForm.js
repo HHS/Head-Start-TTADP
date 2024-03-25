@@ -16,11 +16,13 @@ import ObjectiveStatus from './ObjectiveStatus';
 import AppLoadingContext from '../../AppLoadingContext';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
+import ObjectiveSupportType from '../ObjectiveSupportType';
 
 const [
   objectiveTitleError,
   objectiveTopicsError,
   objectiveResourcesError,
+  objectiveSupportTypeError,
 ] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function ObjectiveForm({
@@ -37,7 +39,12 @@ export default function ObjectiveForm({
 }) {
   // the parent objective data from props
   const {
-    title, topics, resources, status, files,
+    title,
+    topics,
+    resources,
+    status,
+    files,
+    supportType,
   } = objective;
 
   const isOnReport = useMemo(() => (
@@ -62,6 +69,12 @@ export default function ObjectiveForm({
     setObjective({ ...objective, files: e });
   };
   const onChangeStatus = (newStatus) => setObjective({ ...objective, status: newStatus });
+  const onChangeSupportType = (newSupportType) => setObjective(
+    {
+      ...objective,
+      supportType: newSupportType,
+    },
+  );
 
   const onUpdateStatus = (newStatus) => {
     if (newStatus === 'Suspended') {
@@ -80,6 +93,18 @@ export default function ObjectiveForm({
     } else {
       const newErrors = [...errors];
       newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.TITLE, 1, <></>);
+      setObjectiveError(index, newErrors);
+    }
+  };
+
+  const validateSupportType = () => {
+    if (!supportType) {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE, 1, <span className="usa-error-message">{objectiveSupportTypeError}</span>);
+      setObjectiveError(index, newErrors);
+    } else {
+      const newErrors = [...errors];
+      newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE, 1, <></>);
       setObjectiveError(index, newErrors);
     }
   };
@@ -192,6 +217,14 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON]}
       />
 
+      <ObjectiveSupportType
+        onBlurSupportType={validateSupportType}
+        supportType={supportType || ''}
+        onChangeSupportType={onChangeSupportType}
+        inputName={`objective-support-type-${index}`}
+        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
+      />
+
       <ObjectiveStatus
         status={status}
         goalStatus={goalStatus}
@@ -222,6 +255,7 @@ ObjectiveForm.propTypes = {
     closeSuspendReason: PropTypes.string,
     closeSuspendContext: PropTypes.string,
     isNew: PropTypes.bool,
+    supportType: PropTypes.string,
     id: PropTypes.oneOfType([
       PropTypes.string,
       PropTypes.number,
@@ -269,5 +303,6 @@ ObjectiveForm.defaultProps = {
     resources: [],
     files: [],
     status: '',
+    supportType: '',
   },
 };

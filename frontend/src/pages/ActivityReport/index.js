@@ -77,6 +77,7 @@ const defaultValues = {
   topics: [],
   approvers: [],
   recipientGroup: null,
+  language: [],
 };
 
 const pagesByPos = keyBy(pages.filter((p) => !p.review), (page) => page.position);
@@ -275,7 +276,6 @@ function ActivityReport({
         ];
 
         const [recipients, collaborators, availableApprovers, groups] = await Promise.all(apiCalls);
-
         const isCollaborator = report.activityReportCollaborators
           && report.activityReportCollaborators.find((u) => u.userId === user.id);
 

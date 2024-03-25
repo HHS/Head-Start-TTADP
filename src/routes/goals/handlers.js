@@ -11,6 +11,8 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
+import nudge from '../../goalServices/nudge';
 import handleErrors from '../../lib/apiErrorHandler';
 import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
@@ -39,6 +41,28 @@ export async function createGoalsForReport(req, res) {
 
     const newGoals = await createOrUpdateGoalsForActivityReport(goals, activityReportId);
     res.json(newGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
+  }
+}
+
+export async function getMissingDataForActivityReport(req, res) {
+  try {
+    const { regionId } = req.params;
+    const { goalIds } = req.query;
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+      return;
+    }
+
+    // goalIds can be a string or an array of strings
+    const missingData = await getGoalsMissingDataForActivityReportSubmission([goalIds].flat());
+    res.json(missingData);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
   }
@@ -264,12 +288,36 @@ export async function getSimilarGoalsForRecipient(req, res) {
     return;
   }
   const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
+  const regionId = parseInt(req.params.regionId, DECIMAL_BASE);
 
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    res.json(await getGoalIdsBySimilarity(recipientId, user));
+    res.json(await getGoalIdsBySimilarity(recipientId, regionId, user));
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_FOR_RECIPIENT`);
+  }
+}
+
+export async function getSimilarGoalsByText(req, res) {
+  try {
+    const { regionId } = req.params;
+    const { name, grantNumbers } = req.query;
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(httpCodes.FORBIDDEN);
+      return;
+    }
+
+    const recipientId = parseInt(req.params.recipientId, DECIMAL_BASE);
+    // grant numbers can be a String or String[], thanks express
+    const similarGoals = await nudge(recipientId, name, [grantNumbers].flat());
+    res.json(similarGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:GET_SIMILAR_GOALS_BY_TEXT`);
   }
 }
