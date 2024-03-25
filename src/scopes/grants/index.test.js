@@ -359,8 +359,8 @@ describe('grant filtersToScopes', () => {
             groupId: publicGroup.id,
             grantId: grants[1].id,
           },
-        ]
-      }
+        ],
+      },
     });
     await GroupCollaborator.destroy({
       where: {
@@ -375,8 +375,8 @@ describe('grant filtersToScopes', () => {
             groupId: group.id,
             collaboratorTypeId: 1,
           },
-        ]
-      }
+        ],
+      },
     });
     await Group.destroy({
       where: {
@@ -389,8 +389,8 @@ describe('grant filtersToScopes', () => {
             name: publicGroupName,
             isPublic: true,
           },
-        ]
-      }
+        ],
+      },
     });
     await Program.destroy({
       where: {
