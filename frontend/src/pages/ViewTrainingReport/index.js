@@ -24,7 +24,7 @@ export const formatOwnerName = (event) => {
           .find((erpnc) => erpnc.userId === event.data.owner.id);
 
         if (user) {
-          return `${user.userName} ${user.nationalCenterName}`;
+          return `${user.userName}, ${user.nationalCenterName}`;
         }
       }
 
@@ -96,7 +96,7 @@ export default function ViewTrainingReport({ match }) {
               event.collaboratorIds.includes(erpnc.userId)
             ));
             if (collaborators.length > 0) {
-              setEventCollaborators(collaborators.map((c) => `${c.userName} ${c.nationalCenterName}`));
+              setEventCollaborators(collaborators.map((c) => `${c.userName}, ${c.nationalCenterName}`));
               return;
             }
           }
