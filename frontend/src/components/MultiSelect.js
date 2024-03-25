@@ -166,7 +166,8 @@ function MultiSelect({
       render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
-          <div onClick={onClick} onKeyDown={() => {}} role="button" tabIndex="0" data-testid={`${name}-click-container`}>
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div onClick={onClick} onKeyDown={() => {}} data-testid={`${name}-click-container`}>
             <Selector
               className="ttahub-multi-select margin-top-1"
               id={name}
