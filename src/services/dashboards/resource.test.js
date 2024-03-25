@@ -233,7 +233,7 @@ describe('Resources dashboard', () => {
     }, {
       individualHooks: true,
     });
-    console.log("\n\n\n------ Report 1");
+    console.log('\n\n\n------ Report 1');
     await ActivityRecipient.findOrCreate({
       where: { activityReportId: reportOne.id, grantId: mockGrant.id },
     });
@@ -384,23 +384,23 @@ describe('Resources dashboard', () => {
       [ECLKC_RESOURCE_URL2],
     );
 
-     // Report 5 (No resources).
-     const reportFive = await ActivityReport.create({ ...regionOneReportD });
-     await ActivityRecipient.create({ activityReportId: reportFive.id, grantId: mockGrant.id });
+    // Report 5 (No resources).
+    const reportFive = await ActivityReport.create({ ...regionOneReportD });
+    await ActivityRecipient.create({ activityReportId: reportFive.id, grantId: mockGrant.id });
 
-     const activityReportObjectiveForReport5 = await ActivityReportObjective.create({
-       activityReportId: reportFive.id,
-       status: 'Complete',
-       objectiveId: objective.id,
-     });
+    const activityReportObjectiveForReport5 = await ActivityReportObjective.create({
+      activityReportId: reportFive.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
 
-     // Report 5 Topic 1.
-     await ActivityReportObjectiveTopic.findOrCreate({
-       where: {
-         activityReportObjectiveId: activityReportObjectiveForReport5.id,
-         topicId: facilitiesTopicId,
-       },
-     });
+    // Report 5 Topic 1.
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportObjectiveForReport5.id,
+        topicId: facilitiesTopicId,
+      },
+    });
 
     // Draft Report (Excluded).
     const reportDraft = await ActivityReport.create({ ...regionOneDraftReport });
@@ -439,7 +439,6 @@ describe('Resources dashboard', () => {
   });
 
   afterAll(async () => {
-    /*
     const reports = await ActivityReport
       .findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
@@ -465,7 +464,6 @@ describe('Resources dashboard', () => {
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
-    */
     await db.sequelize.close();
   });
 
@@ -778,6 +776,32 @@ describe('Resources dashboard', () => {
       { name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1' },
       { name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2' },
       { name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2' },
+    ]);
+  });
+
+  it('overviewFlat', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const { overView } = await resourceFlatData(scopes);
+    expect(overView).toBeDefined();
+    const { numberOfParticipants, numberOfRecipients, pctOfReportsWithResources } = overView;
+
+    // Number of Participants.
+    expect(numberOfParticipants).toStrictEqual([{
+      participants: '44',
+    }]);
+
+    // Number of Recipients.
+    expect(numberOfRecipients).toStrictEqual([{
+      recipients: '1',
+    }]);
+
+    // Percent of Reports with Resources.
+    expect(pctOfReportsWithResources).toStrictEqual([
+      {
+        reportsWithResourcesCount: '4',
+        totalReportsCount: '5',
+        resourcesPct: '80.0000',
+      },
     ]);
   });
 });
