@@ -38,10 +38,11 @@ newrelic_agent.log
 .tmp
 
 # DB files
-.vscode/settings.json
+*.vscode
 
 # Similarity job scheduler DB
 *.sqlite
 
 # Python cache
 __pycache__/
+.vscode/settings.json
