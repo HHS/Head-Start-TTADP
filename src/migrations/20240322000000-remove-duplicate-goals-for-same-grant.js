@@ -8,6 +8,154 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
       await queryInterface.sequelize.query(/* sql */`
       -- 1. Identify the affected reports/grants/goals
+      DROP TABLE IF EXISTS tmp_affected_reports_grants_goals;
+      CREATE TEMP TABLE tmp_affected_reports_grants_goals
+      AS
+      SELECT
+        arg."activityReportId",
+        r.name "Recipeint",
+        gr.id "grantId",
+        gr."number",
+        array_agg(DISTINCT g.id ORDER BY g.id) "goalIds",
+        min(arg."createdAt") "earliest createdAt",
+        g.name
+      FROM "ActivityReportGoals" arg
+      JOIN "Goals" g
+      ON arg."goalId" = g.id
+      JOIN "Grants" gr
+      on g."grantId" = gr.id
+      JOIN "Recipients" r
+      ON gr."recipientId" = r.id
+      GROUP BY 1,2,3,4,7
+      HAVING COUNT(DISTINCT g.id) > 1
+      AND COUNT(DISTINCT g.id) != COUNT(DISTINCT g.name)
+      ORDER BY 1 desc,2,3;
+      -- x. Identify the affected objectives
+      DROP TABLE IF EXISTS tmp_affected_objectives;
+      CREATE TEMP TABLE tmp_affected_objectives
+      AS
+      SELECT
+        x."activityReportId",
+        x."grantId",
+        x."goalIds"[1] "originalGoalId",
+        x."goalIds"[2] "extraGoalId",
+        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = x."goalIds"[1]),null) "originalGoalObjectiveIds",
+        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = x."goalIds"[2]),null) "extraGoalObjectiveIds",
+        aro.title
+      FROM tmp_affected_reports_grants_goals targg
+      LEFT JOIN "Objectives" o
+      ON o."goalId" = any(targg."goalIds")
+      left join "ActivityReportObjectives" aro
+      ON o.id = aro."objectiveId"
+      AND targg."activityReportId" = aro."activityReportId"
+      group by 1,2,3,4,7
+      having aro.title is not null;
+      -- x. create missing objectives on original goals
+      DROP TABLE IF EXISTS tmp_created_missing_objectives;
+      CREATE TEMP TABLE tmp_created_missing_objectives
+      AS
+      WITH created_missing_objectives AS (
+        INSERT INTO "Objectives"
+        (
+          "goalId",
+          title,
+          status,
+          "createdAt",
+          "updatedAt",
+          "objectiveTemplateId",
+          "onApprovedAR",
+          "rtrOrder",
+          "createdVia",
+          "onAR",
+          "closedSuspendReason",
+          "closedSuspendContext",
+          "supportType"
+        )
+        SELECT
+          tao."originalGoalId" "goalId",
+          o.title,
+          (ARRAY_AGG(DISTINCT o.status))[1] "status",
+          MIN(o."createdAt") "createdAt",
+          MAX(o."updatedAt") "updatedAt",
+          o."objectiveTemplateId",
+          bool_or(o."onApprovedAR"),
+          MIN(o."rtrOrder") "rtrOrder",
+          o."createdVia",
+          bool_or(o."onAR"),
+          (ARRAY_AGG(DISTINCT o."closedSuspendReason"))[1] "closedSuspendReason",
+          (ARRAY_AGG(DISTINCT o."closedSuspendContext"))[1] "closedSuspendContext",
+          (ARRAY_AGG(DISTINCT o."supportType"))[1] "supportType"
+        FROM "Objectives" o
+        JOIN tmp_affected_objectives tao
+        ON o.id = ANY(tao."extraGoalObjectiveIds")
+        WHERE "originalGoalObjectiveIds" IS NULL
+        GROUP BY 1,2
+        RETURNING
+          id
+      )
+      SELECT
+          tao."activityReportId",
+          tao."grantId",
+          o."goalId",
+          o.id "objectiveId"
+      FROM created_missing_objectives cmo
+      JOIN "Objectives" o
+      ON cmo.id = o.id
+      JOIN tmp_affected_objectives tao
+      ON o."goalId" = tao."originalGoalId"
+      AND o.title = tao.title;
+      -- x. add new objectives to reports
+      DROP TABLE IF EXISTS tmp_missing_objectives_added_to_reports;
+      CREATE TEMP TABLE tmp_missing_objectives_added_to_reports
+      AS
+      WITH missing_objectives_added_to_reports AS (
+        INSERT INTO "ActivityReportObjectives"
+        (
+          "activityReportId",
+          "objctiveId",
+          "createdAt",
+          "updatedAt",
+          "ttaProvided",
+          "title",
+          "status",
+          "arOrder",
+          "closedSuspendReason",
+          "closedSuspendContext",
+          "originalObjectiveId",
+          "supportType"
+        )
+        SELECT
+          tcmo."activityReportId",
+          tcmo."objectiveId",
+          MIN(aro."createdAt") "createdAt",
+          MAX(aro."updatedAt") "updatedAt",
+          (ARRAY_AGG(DISTINCT aro."ttaProvided"))[1] "ttaProvided",
+          o.title,
+          (ARRAY_AGG(DISTINCT aro.status))[1] "status",
+          MIN(aro."arOrder") "arOrder",
+          (ARRAY_AGG(DISTINCT aro."closedSuspendReason"))[1] "closedSuspendReason",
+          (ARRAY_AGG(DISTINCT aro."closedSuspendContext"))[1] "closedSuspendContext",
+          (ARRAY_AGG(DISTINCT aro."supportType"))[1] "supportType"
+        FROM tmp_created_missing_objectives tcmo
+        JOIN "Objectives" o
+        ON tcmo."objectiveId" = o.id
+        JOIN tmp_affected_objectives tao
+        ON tcmo."activityReportId" = tao."activityReportId"
+        AND tcmo."grantId" = tao."grantId"
+        AND tcmo."goalId" = tao."originalGoalId"
+        JOIN "ActivityReportObjectives" aro
+        ON tcmo."activityReportId" = aro."activityReportId"
+        AND aro."objectiveId" = ANY(tao."extraGoalObjectiveIds")
+        GROUP BY 1,2,6
+        RETURNING
+          id
+      )
+      SELECT
+          aro."activityReportId",
+          aro."objectiveId",
+      FROM missing_objectives_added_to_reports moatr
+      JOIN "ActivityReportObjectives" aro
+      ON moatr.id = aro.id
       -- x. Sets of Grant may/may not have matching objectives
       -- x. When not matching objectives are found, clone objective and aro to first goal
       -- x. Remove second goals objectives from AR
