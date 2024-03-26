@@ -465,6 +465,15 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
+  /*
+  it('testAllReports', async () => {
+    const scopes = await filtersToScopes({});
+    const { resourceUseResult } = await resourceFlatData(scopes);
+    // console.log('\n\n\n-----resourceUseResult:', resourceUseResult, '\n\n\n');
+    expect(true).toBe(true);
+  });
+  */
+
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const { resourceUseResult } = await resourceFlatData(scopes);
@@ -499,13 +508,27 @@ describe('Resources dashboard', () => {
     expect(topicUseResult).toBeDefined();
 
     expect(topicUseResult).toStrictEqual([
-      { name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2' },
-      { name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4' },
-      { name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3' },
-      { name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1' },
-      { name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1' },
-      { name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2' },
-      { name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2' },
+      {
+        name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+      },
+      {
+        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4',
+      },
+      {
+        name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3',
+      },
+      {
+        name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1',
+      },
+      {
+        name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1',
+      },
+      {
+        name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+      },
+      {
+        name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+      },
     ]);
   });
 

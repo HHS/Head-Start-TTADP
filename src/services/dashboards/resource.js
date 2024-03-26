@@ -336,6 +336,7 @@ const switchToTopicCentric = (input) => {
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
 export async function resourceFlatData(scopes) {
+  // console.time('overalltime');
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -358,6 +359,8 @@ export async function resourceFlatData(scopes) {
     },
     raw: true,
   });
+
+  // console.log('\n\n\n----Report Count: ', reportIds.length, '\n\n\n');
 
   // Get total number of reports.
   const totalReportCount = reportIds.length;
@@ -450,8 +453,10 @@ export async function resourceFlatData(scopes) {
       JOIN ${createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id
   `;
+  // console.log('\n\n\n-----sql: ', flatResourceSql, '\n\n\n');
   const transaction = await sequelize.transaction();
 
+  // console.time('maincreate');
   // Create base tables.
   await sequelize.query(
     flatResourceSql,
@@ -460,7 +465,8 @@ export async function resourceFlatData(scopes) {
       transaction,
     },
   );
-
+  // console.timeEnd('maincreate');
+  // console.time('resourceUseTime');
   // Get resource use result.
   let resourceUseResult = sequelize.query(
     `
@@ -514,24 +520,62 @@ export async function resourceFlatData(scopes) {
       transaction,
     },
   );
+  // console.timeEnd('resourceUseTime');
 
+  // console.time('topicUseTime');
   // Get topic use result.
-  let topicUseResult = sequelize.query(`
-    SELECT
-      t.name,
-      f."rollUpDate",
-      count(f.id) AS "resourceCount"
-    FROM ${createdTopicsTempTableName} t
-      JOIN ${createdAroTopicsTempTableName} arot
+  let topicUseResult = sequelize.query(
+    `
+  WITH topics AS (
+      SELECT
+        t.name,
+        f."rollUpDate",
+        count(f.id) AS "resourceCount"
+      FROM ${createdTopicsTempTableName}  t
+        JOIN ${createdAroTopicsTempTableName} arot
         ON t.id = arot."topicId"
-      JOIN ${createdFlatResourceTempTableName} f
+        JOIN ${createdFlatResourceTempTableName} f
         ON arot."activityReportId" = f.id
-      GROUP BY t.name, f."rollUpDate"
-      ORDER BY t.name, f."rollUpDate" ASC;
-    `, {
-    type: QueryTypes.SELECT,
-    transaction,
-  });
+        GROUP BY t.name, f."rollUpDate"
+        ORDER BY t.name, f."rollUpDate" ASC
+    ),
+    totals AS
+    (
+      SELECT
+        name,
+        SUM("resourceCount") AS "totalCount"
+      FROM topics
+      GROUP BY name
+      ORDER BY SUM("resourceCount") DESC
+    ),
+    series AS
+    (
+      SELECT
+      generate_series(
+        date_trunc('month',  (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
+        date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
+        interval '1 month'
+      )::date AS "date"
+    )
+    SELECT
+      d.name,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      coalesce(t."resourceCount", 0) AS "resourceCount",
+      tt."totalCount"
+    FROM ${createdTopicsTempTableName} d
+    JOIN series s
+      ON 1=1
+    JOIN totals tt
+      ON d.name = tt.name
+    LEFT JOIN topics t
+      ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
+    ORDER BY 1,2;`,
+    {
+      type: QueryTypes.SELECT,
+      transaction,
+    },
+  );
+  // console.timeEnd('topicUseTime');
 
   /* Overview */
   // 1.) Participants
@@ -644,6 +688,7 @@ export async function resourceFlatData(scopes) {
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
   };
+  // console.timeEnd('overalltime');
   return {
     resourceUseResult, topicUseResult, numberOfParticipants, overView,
   };
