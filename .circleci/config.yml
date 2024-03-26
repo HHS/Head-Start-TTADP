@@ -91,6 +91,20 @@ commands:
                 \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
+  notify_slack:
+    description: "Notify slack of a deploy to production"
+    parameters:
+      slack_webhook_url:
+        description: "Slack webhook url"
+        type: string
+    steps:
+    - run:
+        name: Notify Slack of Deployment
+        command: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data '{"text":"🚀 Deployment to production was successful!"}' \
+          << parameters.slack_webhook_url >>
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -263,7 +277,7 @@ parameters:
     default: "jp/2128/display-goal-creator-name"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2128/display-goal-creator-name"
+    default: "kw-fix-fkey-error"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -856,6 +870,8 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack:
+                slack_webhook_url: $SLACK_WEBHOOK_URL
     resource_class: large
 workflows:
   build_test_deploy:

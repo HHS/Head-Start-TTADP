@@ -74,7 +74,7 @@ function defaultRegion() {
   };
 }
 
-async function createRegion(region) {
+export async function createRegion(region) {
   return Region.create({ ...defaultRegion(), ...region });
 }
 

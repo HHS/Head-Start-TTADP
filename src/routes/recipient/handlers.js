@@ -143,7 +143,7 @@ export async function getGoalsFromRecipientGoalSimilarityGroup(req, res) {
     const response = await getSimilarityGroupById(goalGroupId, {
       finalGoalId: null,
       userHasInvalidated: false,
-    });
+    }, regionId);
 
     if (!response) {
       res.sendStatus(httpCodes.NOT_FOUND);
@@ -161,6 +161,7 @@ export async function getGoalsFromRecipientGoalSimilarityGroup(req, res) {
         sortBy: 'goal',
         sortDir: 'asc',
         offset: 0,
+        limit: 100,
       },
     );
     res.json(recipientGoals);
