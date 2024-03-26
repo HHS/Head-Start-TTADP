@@ -371,6 +371,7 @@ export async function resourceFlatData(scopes) {
   const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
   const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
   const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_flat_resources_headers__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
   const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
 
   // Create raw sql to get flat table.
@@ -451,11 +452,20 @@ export async function resourceFlatData(scopes) {
       JOIN ${createdAroResourcesTempTableName} aror
         ON ar.id = aror."activityReportId"
       JOIN ${createdResourcesTempTableName} arorr
-        ON aror."resourceId" = arorr.id
+        ON aror."resourceId" = arorr.id;
+
+      -- 7.) Create date headers.
+      SELECT
+          generate_series(
+            date_trunc('month', (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
+            interval '1 month'
+          )::date AS "date"
+        INTO TEMP ${createdFlatResourceHeadersTempTableName};
   `;
   // console.log('\n\n\n-----sql: ', flatResourceSql, '\n\n\n');
   const transaction = await sequelize.transaction();
-
+  // console.log('\n\n\n------AFter run sql');
   // console.time('maincreate');
   // Create base tables.
   await sequelize.query(
@@ -473,10 +483,11 @@ export async function resourceFlatData(scopes) {
     WITH urlvals AS (
       SELECT
           url,
+          title,
           "rollUpDate",
           count(id) AS "resourceCount"
         FROM ${createdFlatResourceTempTableName} tf
-        GROUP BY url, "rollUpDate"
+        GROUP BY url, title, "rollUpDate"
         ORDER BY "url", tf."rollUpDate" ASC),
       distincturls AS (
       SELECT DISTINCT url AS url
@@ -494,15 +505,11 @@ export async function resourceFlatData(scopes) {
       ),
       series AS
       (
-      SELECT
-        generate_series(
-          date_trunc('month',  (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
-          date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
-          interval '1 month'
-        )::date AS "date"
+        SELECT * FROM ${createdFlatResourceHeadersTempTableName}
       )
         SELECT
         d.url,
+        u.title,
         to_char(s."date", 'Mon-YY') AS "rollUpDate",
         coalesce(u."resourceCount", 0) AS "resourceCount",
         t."totalCount"
@@ -550,12 +557,7 @@ export async function resourceFlatData(scopes) {
     ),
     series AS
     (
-      SELECT
-      generate_series(
-        date_trunc('month',  (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
-        date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
-        interval '1 month'
-      )::date AS "date"
+      SELECT * FROM ${createdFlatResourceHeadersTempTableName}
     )
     SELECT
       d.name,
@@ -664,6 +666,16 @@ export async function resourceFlatData(scopes) {
     transaction,
   });
 
+  // 5.) Date Headers table.
+  let dateHeaders = sequelize.query(`
+   SELECT
+    to_char("date", 'Mon-YY') AS "rollUpDate"
+   FROM ${createdFlatResourceHeadersTempTableName};
+ `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
   [
     resourceUseResult,
     topicUseResult,
@@ -671,6 +683,7 @@ export async function resourceFlatData(scopes) {
     numberOfRecipients,
     pctOfReportsWithResources,
     pctOfECKLKCResources,
+    dateHeaders,
   ] = await Promise.all(
     [
       resourceUseResult,
@@ -679,6 +692,7 @@ export async function resourceFlatData(scopes) {
       numberOfRecipients,
       pctOfReportsWithResources,
       pctOfECKLKCResources,
+      dateHeaders,
     ],
   );
 
@@ -690,7 +704,7 @@ export async function resourceFlatData(scopes) {
   };
   // console.timeEnd('overalltime');
   return {
-    resourceUseResult, topicUseResult, numberOfParticipants, overView,
+    resourceUseResult, topicUseResult, numberOfParticipants, overView, dateHeaders,
   };
 }
 

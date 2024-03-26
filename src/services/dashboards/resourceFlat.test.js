@@ -484,18 +484,21 @@ describe('Resources dashboard', () => {
       {
         url: 'https://eclkc.ohs.acf.hhs.gov/test',
         rollUpDate: 'Jan-21',
+        title: null,
         resourceCount: '2',
         totalCount: '2',
       },
       {
         url: 'https://eclkc.ohs.acf.hhs.gov/test2',
         rollUpDate: 'Jan-21',
+        title: null,
         resourceCount: '3',
         totalCount: '3',
       },
       {
         url: 'https://non.test1.gov/a/b/c',
         rollUpDate: 'Jan-21',
+        title: null,
         resourceCount: '2',
         totalCount: '2',
       },
@@ -568,6 +571,18 @@ describe('Resources dashboard', () => {
         eclkcCount: '2',
         allCount: '3',
         eclkcPct: '66.6667',
+      },
+    ]);
+  });
+
+  it('resourceDateHeadersFlat', async () => {
+    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const { dateHeaders } = await resourceFlatData(scopes);
+    expect(dateHeaders).toBeDefined();
+    expect(dateHeaders.length).toBe(1);
+    expect(dateHeaders).toStrictEqual([
+      {
+        rollUpDate: 'Jan-21',
       },
     ]);
   });
