@@ -11,6 +11,7 @@ import {
   sequelize,
   UserValidationStatus,
   EventReportPilot,
+  NationalCenter,
 } from '../models';
 
 const { SITE_ACCESS } = SCOPES;
@@ -453,6 +454,10 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
       },
     },
     include: [
+      {
+        model: NationalCenter,
+        as: 'nationalCenters',
+      },
       {
         attributes: [
           'id',
