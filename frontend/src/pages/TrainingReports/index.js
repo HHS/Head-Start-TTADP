@@ -20,7 +20,7 @@ import EventCards from './components/EventCards';
 import { getEventsByStatus, deleteEvent } from '../../fetchers/event';
 import { deleteSession } from '../../fetchers/session';
 import AppLoadingContext from '../../AppLoadingContext';
-import { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS } from './constants';
+import { TRAINING_REPORT_FILTER_CONFIG } from './constants';
 import { filtersToQueryString, expandFilters } from '../../utils';
 import useFilters from '../../hooks/useFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
@@ -100,8 +100,7 @@ export default function TrainingReports({ match }) {
     );
   }
 
-  const filterConfig = hasMultipleRegions
-    ? TRAINING_REPORT_CONFIG_WITH_REGIONS : TRAINING_REPORT_BASE_FILTER_CONFIG;
+  const filterConfig = TRAINING_REPORT_FILTER_CONFIG(hasMultipleRegions);
 
   const onRemoveSession = async (session) => {
     try {
