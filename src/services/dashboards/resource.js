@@ -450,8 +450,6 @@ export async function resourceFlatData(scopes) {
       JOIN ${createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id
   `;
-
-  // await sequelize.query('SELECT * FROM projects', { raw: true });
   const transaction = await sequelize.transaction();
 
   // Create base tables.
@@ -466,14 +464,50 @@ export async function resourceFlatData(scopes) {
   // Get resource use result.
   let resourceUseResult = sequelize.query(
     `
-    SELECT
-      url,
-      "rollUpDate",
-      count(id) AS "resourceCount"
-    FROM ${createdFlatResourceTempTableName} tf
-    GROUP BY url, "rollUpDate"
-    ORDER BY "url", tf."rollUpDate" ASC
-    LIMIT 10;
+    WITH urlvals AS (
+      SELECT
+          url,
+          "rollUpDate",
+          count(id) AS "resourceCount"
+        FROM ${createdFlatResourceTempTableName} tf
+        GROUP BY url, "rollUpDate"
+        ORDER BY "url", tf."rollUpDate" ASC),
+      distincturls AS (
+      SELECT DISTINCT url AS url
+      FROM ${createdFlatResourceTempTableName}
+      ),
+      totals AS
+      (
+        SELECT
+        url,
+        SUM("resourceCount") AS "totalCount"
+        FROM urlvals
+        GROUP BY url
+        ORDER BY SUM("resourceCount") DESC
+        LIMIT 10
+      ),
+      series AS
+      (
+      SELECT
+        generate_series(
+          date_trunc('month',  (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
+          date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
+          interval '1 month'
+        )::date AS "date"
+      )
+        SELECT
+        d.url,
+        to_char(s."date", 'Mon-YY') AS "rollUpDate",
+        coalesce(u."resourceCount", 0) AS "resourceCount",
+        t."totalCount"
+        FROM distincturls d
+        JOIN series s
+          ON 1=1
+        JOIN totals t
+          ON d.url = t.url
+        LEFT JOIN urlvals u
+          ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
+        ORDER BY 1,2;
     `,
     {
       type: QueryTypes.SELECT,
@@ -592,7 +626,8 @@ export async function resourceFlatData(scopes) {
     numberOfParticipants,
     numberOfRecipients,
     pctOfReportsWithResources,
-    pctOfECKLKCResources] = await Promise.all(
+    pctOfECKLKCResources,
+  ] = await Promise.all(
     [
       resourceUseResult,
       topicUseResult,
@@ -1888,4 +1923,10 @@ export async function resourceDashboard(scopes) {
     topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
   };
+}
+
+export async function resourceDashboardFlat(scopes) {
+  // Get resources from SQL.
+  const data = await resourceFlatData(scopes);
+  return data;
 }

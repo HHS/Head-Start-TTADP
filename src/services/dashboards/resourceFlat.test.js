@@ -476,16 +476,19 @@ describe('Resources dashboard', () => {
         url: 'https://eclkc.ohs.acf.hhs.gov/test',
         rollUpDate: 'Jan-21',
         resourceCount: '2',
+        totalCount: '2',
       },
       {
         url: 'https://eclkc.ohs.acf.hhs.gov/test2',
         rollUpDate: 'Jan-21',
         resourceCount: '3',
+        totalCount: '3',
       },
       {
         url: 'https://non.test1.gov/a/b/c',
         rollUpDate: 'Jan-21',
         resourceCount: '2',
+        totalCount: '2',
       },
     ]);
   });
