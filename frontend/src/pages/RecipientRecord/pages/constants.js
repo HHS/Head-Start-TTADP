@@ -6,17 +6,24 @@ import {
   activityReportGoalResponseFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
-  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter, userRolesFilter,
+  statusFilter,
+  createDateFilter,
+  topicsFilter,
+  reasonsFilter,
+  grantNumberFilter,
+  userRolesFilter,
+  goalNameFilter,
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
   createDateFilter,
+  goalNameFilter,
   grantNumberFilter(grantNumberParams),
   reasonsFilter,
   statusFilter,
   topicsFilter,
   userRolesFilter,
-];
+].sort((a, b) => a.display.localeCompare(b.display));
 
 const TTAHISTORY_FILTER_CONFIG = [
   startDateFilter,

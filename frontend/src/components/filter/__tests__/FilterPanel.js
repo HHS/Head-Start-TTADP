@@ -9,9 +9,10 @@ import userEvent from '@testing-library/user-event';
 import FilterPanel from '../FilterPanel';
 import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
-import { LANDING_FILTER_CONFIG_WITH_REGIONS } from '../../../pages/Landing/constants';
+import { LANDING_FILTER_CONFIG } from '../../../pages/Landing/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
+const LANDING_FILTER_CONFIG_WITH_REGIONS = LANDING_FILTER_CONFIG(true);
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
