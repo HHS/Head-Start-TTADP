@@ -336,7 +336,7 @@ const switchToTopicCentric = (input) => {
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
 export async function resourceFlatData(scopes) {
-  // console.time('overalltime');
+  console.time('overalltime');
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -698,11 +698,11 @@ export async function resourceFlatData(scopes) {
 
   // Commit is required to run the query.
   transaction.commit();
-
+  console.timeEnd('overalltime');
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
   };
-  // console.timeEnd('overalltime');
+
   return {
     resourceUseResult, topicUseResult, numberOfParticipants, overView, dateHeaders,
   };
@@ -1984,8 +1984,55 @@ export async function resourceDashboard(scopes) {
   };
 }
 
+export async function rollUpResourceUse(data) {
+  return data.resourceUseResults.reduce((accumulator, resource) => {
+    const exists = accumulator.find((r) => r.url === resource.url);
+    if (!exists) {
+      // Add a property with the resource's URL.
+      return [
+        ...accumulator,
+        {
+          url: resource.url,
+          resources: [{ ...resource }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.resources.push(resource);
+    return accumulator;
+  }, []);
+}
+
+export async function rollUpTopicUse(data) {
+  return data.topicUseResult.reduce((accumulator, topic) => {
+    const exists = accumulator.find((r) => r.name === topic.name);
+    if (!exists) {
+      // Add a property with the resource's name.
+      return [
+        ...accumulator,
+        {
+          name: topic.name,
+          topics: [{ ...topic }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.topics.push(topic);
+    return accumulator;
+  }, []);
+}
+
 export async function resourceDashboardFlat(scopes) {
   // Get resources from SQL.
   const data = await resourceFlatData(scopes);
+
+  // Roll up resource use data to each distinct url.
+  const rolledUpResourceUse = await rollUpResourceUse(data);
+
+  // Roll up resource use data to each distinct url.
+  const rolledUpTopicUse = await rollUpTopicUse(data);
+
   return data;
 }

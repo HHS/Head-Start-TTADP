@@ -16,6 +16,8 @@ import db, {
 import filtersToScopes from '../../scopes';
 import {
   resourceFlatData,
+  rollUpResourceUse,
+  rollUpTopicUse,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -465,14 +467,11 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
-  /*
   it('testAllReports', async () => {
     const scopes = await filtersToScopes({});
     const { resourceUseResult } = await resourceFlatData(scopes);
-    // console.log('\n\n\n-----resourceUseResult:', resourceUseResult, '\n\n\n');
     expect(true).toBe(true);
   });
-  */
 
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
@@ -583,6 +582,103 @@ describe('Resources dashboard', () => {
     expect(dateHeaders).toStrictEqual([
       {
         rollUpDate: 'Jan-21',
+      },
+    ]);
+  });
+
+  it('should roll up resource use results correctly', async () => {
+    const data = {
+      resourceUseResults: [
+        { url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21' },
+        { url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21' },
+        { url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21' },
+        { url: 'http://google.com', resourceCount: 4, rollUpDate: 'Apr-21' },
+        { url: 'http://github.com', resourceCount: 1, rollUpDate: 'Jan-21' },
+        { url: 'http://github.com', resourceCount: 2, rollUpDate: 'Feb-21' },
+        { url: 'http://github.com', resourceCount: 3, rollUpDate: 'Mar-21' },
+        { url: 'http://github.com', resourceCount: 4, rollUpDate: 'Apr-21' },
+        { url: 'http://yahoo.com', resourceCount: 1, rollUpDate: 'Jan-21' },
+        { url: 'http://yahoo.com', resourceCount: 2, rollUpDate: 'Feb-21' },
+        { url: 'http://yahoo.com', resourceCount: 3, rollUpDate: 'Mar-21' },
+        { url: 'http://yahoo.com', resourceCount: 4, rollUpDate: 'Apr-21' },
+      ],
+    };
+
+    const result = await rollUpResourceUse(data);
+
+    expect(result).toEqual([
+      {
+        url: 'http://google.com',
+        resources: [
+          { url: 'http://google.com', rollUpDate: 'Jan-21', resourceCount: 1 },
+          { url: 'http://google.com', rollUpDate: 'Feb-21', resourceCount: 2 },
+          { url: 'http://google.com', rollUpDate: 'Mar-21', resourceCount: 3 },
+          { url: 'http://google.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+        ],
+      },
+      {
+        url: 'http://github.com',
+        resources: [
+          { url: 'http://github.com', rollUpDate: 'Jan-21', resourceCount: 1 },
+          { url: 'http://github.com', rollUpDate: 'Feb-21', resourceCount: 2 },
+          { url: 'http://github.com', rollUpDate: 'Mar-21', resourceCount: 3 },
+          { url: 'http://github.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+        ],
+      },
+      {
+        url: 'http://yahoo.com',
+        resources: [
+          { url: 'http://yahoo.com', rollUpDate: 'Jan-21', resourceCount: 1 },
+          { url: 'http://yahoo.com', rollUpDate: 'Feb-21', resourceCount: 2 },
+          { url: 'http://yahoo.com', rollUpDate: 'Mar-21', resourceCount: 3 },
+          { url: 'http://yahoo.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+        ],
+      },
+    ]);
+  });
+
+  it('should roll up topic use results correctly', async () => {
+    const data = {
+      topicUseResult: [
+        {
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1',
+        },
+        {
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2',
+        },
+        {
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3',
+        },
+        {
+          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1',
+        },
+        {
+          name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2',
+        },
+        {
+          name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3',
+        },
+      ],
+    };
+
+    const result = await rollUpTopicUse(data);
+
+    expect(result).toEqual([
+      {
+        name: 'CLASS: Classroom Organization',
+        topics: [
+          { name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1' },
+          { name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2' },
+          { name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3' },
+        ],
+      },
+      {
+        name: 'ERSEA',
+        topics: [
+          { name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1' },
+          { name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2' },
+          { name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3' },
+        ],
       },
     ]);
   });
