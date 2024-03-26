@@ -511,6 +511,7 @@ export async function resourceFlatData(scopes) {
         d.url,
         u.title,
         to_char(s."date", 'Mon-YY') AS "rollUpDate",
+        s."date",
         coalesce(u."resourceCount", 0) AS "resourceCount",
         t."totalCount"
         FROM distincturls d
@@ -520,7 +521,7 @@ export async function resourceFlatData(scopes) {
           ON d.url = t.url
         LEFT JOIN urlvals u
           ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
-        ORDER BY 1,2;
+        ORDER BY 1,4 ASC;
     `,
     {
       type: QueryTypes.SELECT,
@@ -537,6 +538,7 @@ export async function resourceFlatData(scopes) {
       SELECT
         t.name,
         f."rollUpDate",
+
         count(f.id) AS "resourceCount"
       FROM ${createdTopicsTempTableName}  t
         JOIN ${createdAroTopicsTempTableName} arot
@@ -562,6 +564,7 @@ export async function resourceFlatData(scopes) {
     SELECT
       d.name,
       to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
       coalesce(t."resourceCount", 0) AS "resourceCount",
       tt."totalCount"
     FROM ${createdTopicsTempTableName} d
@@ -571,7 +574,7 @@ export async function resourceFlatData(scopes) {
       ON d.name = tt.name
     LEFT JOIN topics t
       ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
-    ORDER BY 1,2;`,
+    ORDER BY 1, 3 ASC;`,
     {
       type: QueryTypes.SELECT,
       transaction,
