@@ -104,6 +104,7 @@ function MultiSelect({
   onCreateOption,
   placeholderText,
   components: componentReplacements,
+  onClick = () => {},
 }) {
   const inputId = `select-${uuidv4()}`;
 
@@ -165,35 +166,38 @@ function MultiSelect({
       render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
-          <Selector
-            className="ttahub-multi-select margin-top-1"
-            id={name}
-            value={values}
-            onBlur={onBlur}
-            onChange={(event) => {
-              if (onItemSelected) {
-                onItemSelected(event);
-              } else if (event) {
-                onChange(event, controllerOnChange);
-              } else {
-                controllerOnChange([]);
-              }
-            }}
-            inputId={inputId}
-            styles={styles(singleRowInput)}
-            components={{ ...componentReplacements, DropdownIndicator }}
-            options={options}
-            isDisabled={disabled}
-            tabSelectsValue={false}
-            isClearable={multiSelectOptions.isClearable}
-            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
-            controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-            hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-            placeholder={placeholderText || ''}
-            onCreateOption={onCreateOption}
-            isMulti
-            required={!!(required)}
-          />
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div onClick={onClick} onKeyDown={() => {}} data-testid={`${name}-click-container`}>
+            <Selector
+              className="ttahub-multi-select margin-top-1"
+              id={name}
+              value={values}
+              onBlur={onBlur}
+              onChange={(event) => {
+                if (onItemSelected) {
+                  onItemSelected(event);
+                } else if (event) {
+                  onChange(event, controllerOnChange);
+                } else {
+                  controllerOnChange([]);
+                }
+              }}
+              inputId={inputId}
+              styles={styles(singleRowInput)}
+              components={{ ...componentReplacements, DropdownIndicator }}
+              options={options}
+              isDisabled={disabled}
+              tabSelectsValue={false}
+              isClearable={multiSelectOptions.isClearable}
+              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
+              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+              placeholder={placeholderText || ''}
+              onCreateOption={onCreateOption}
+              isMulti
+              required={!!(required)}
+            />
+          </div>
         );
       }}
       control={control}
@@ -253,6 +257,7 @@ MultiSelect.propTypes = {
   }),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   placeholderText: PropTypes.string,
+  onClick: PropTypes.func,
 };
 
 MultiSelect.defaultProps = {
@@ -269,6 +274,7 @@ MultiSelect.defaultProps = {
   onItemSelected: null,
   onCreateOption: null,
   placeholderText: null,
+  onClick: null,
 };
 
 export default MultiSelect;
