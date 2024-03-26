@@ -32,7 +32,7 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import { LANDING_FILTER_CONFIG } from './constants';
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -244,8 +244,7 @@ function Landing() {
   };
 
   const filtersToUse = useMemo(() => {
-    const filterConfig = hasMultipleRegions
-      ? [...LANDING_FILTER_CONFIG_WITH_REGIONS] : [...LANDING_BASE_FILTER_CONFIG];
+    const filterConfig = LANDING_FILTER_CONFIG(hasMultipleRegions);
 
     // If user has approve activity report permission add 'Specialist name' filter.
     if (hasApproveActivityReport(user)) {
