@@ -19,7 +19,7 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
       transaction: options.transaction,
     });
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in preventChangesIfEventCompletem: ${err}`);
   }
 
   if (event) {
@@ -54,7 +54,7 @@ const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifyPocIfSessionComplete: ${err}`);
   }
 };
 
@@ -84,7 +84,7 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
       }, { transaction: options.transaction });
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in setAssociatedEventToInProgress: ${err}`);
   }
 };
 
@@ -103,7 +103,7 @@ const notifySessionCreated = async (sequelize, instance, options) => {
       await trSessionCreated(event.dataValues);
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in notifySessionCreated: ${err}`);
   }
 };
 
@@ -128,7 +128,7 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
       }
     }
   } catch (err) {
-    auditLogger.error(JSON.stringify({ err }));
+    auditLogger.error(`Error in participantsAndNextStepsComplete: ${err}`);
   }
 };
 
@@ -301,7 +301,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       await processSessionReport(instance);
     }
   } catch (error) {
-    auditLogger.error(JSON.stringify({ error }));
+    auditLogger.error(`Error in createGoalsForSessionRecipientsIfNecessary: ${error}`);
   }
 };
 
@@ -319,7 +319,7 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       nextSessionRecipients = data.recipients;
     }
 
-    if (!event.id || !sessionReport.id) return;
+    if (!event || !event.id || !sessionReport || !sessionReport.id) return;
 
     nextSessionRecipients = nextSessionRecipients.map((r) => r.value);
 
@@ -373,7 +373,7 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
       await processSessionReport(instance);
     }
   } catch (error) {
-    auditLogger.error(JSON.stringify({ error }));
+    auditLogger.error(`Error in removeGoalsForSessionRecipientsIfNecessary: ${error}`);
   }
 };
 
