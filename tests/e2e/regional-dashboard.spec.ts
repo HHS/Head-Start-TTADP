@@ -11,8 +11,14 @@ test('Regional Dashboard', async ({ page }) => {
   // remove one of the filters
   await page.getByRole('button', { name: `This button removes the filter: Date started is within ${lastThirtyDays}` }).click();
 
+  // get page URL
+  const url = page.url();
+  const params = new URL(url).searchParams;
+
+  expect(params.get('region.in[]')).toBeTruthy();
+
   // open the filter menu, change the region filter to state code
-  await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
+  await page.getByRole('button', { name: /open filters for this page/i }).click();
   await page.getByLabel('Select a filter').selectOption('stateCode');
   await page.getByLabel('Select a condition').selectOption('contains');
   await page.getByLabel('Select a condition').focus();
