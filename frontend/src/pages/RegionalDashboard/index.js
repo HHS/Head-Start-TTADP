@@ -2,121 +2,97 @@ import React, {
   useMemo,
   useContext,
   useState,
-  useCallback,
 } from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
-import { Grid, GridContainer } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
-import DashboardOverview from '../../widgets/DashboardOverview';
-import TopicFrequencyGraph from '../../widgets/TopicFrequencyGraph';
-import { getUserRegions, hasApproveActivityReport } from '../../permissions';
-import ReasonList from '../../widgets/ReasonList';
-import TotalHrsAndRecipient from '../../widgets/TotalHrsAndRecipientGraph';
-import './index.css';
+import { hasApproveActivityReport } from '../../permissions';
 import { expandFilters, formatDateRange } from '../../utils';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import ActivityReportsTable from '../../components/ActivityReportsTable';
 import UserContext from '../../UserContext';
-import FilterContext from '../../FilterContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import { showFilterWithMyRegions } from '../regionHelpers';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
+import FeatureFlag from '../../components/FeatureFlag';
+import useFilters from '../../hooks/useFilters';
+import './index.css';
+import TabsNav from '../../components/TabsNav';
+import Dashboard from './components/Dashboard';
 
 const defaultDate = formatDateRange({
   lastThirtyDays: true,
   forDateTime: true,
 });
 
-const FILTER_KEY = 'regional-dashboard-filters';
-export default function RegionalDashboard() {
+const h1Text = (reportType, userHasOnlyOneRegion, defaultRegion) => {
+  const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
+  let h1 = `${prefix} TTA activity dashboard`;
+
+  switch (reportType) {
+    case ('training-reports'):
+      h1 = `${prefix} dashboard - Training Reports`;
+      break;
+    case ('all-reports'):
+      h1 = `${prefix} dashboard - All reports`;
+      break;
+    case ('activity-reports'):
+      h1 = `${prefix} dashboard - Activity Reports`;
+      break;
+    default:
+      break;
+  }
+  return h1;
+};
+
+const FILTER_KEY = (reportType) => `regional-dashboard-filters-${reportType || 'activityReport'}`;
+
+const links = [
+  {
+    to: '/regional-dashboard/activity-reports',
+    label: 'Activity Reports',
+  },
+  {
+    to: '/regional-dashboard/training-reports',
+    label: 'Training Reports',
+  },
+  {
+    to: '/regional-dashboard/all-reports',
+    label: 'All reports',
+  },
+];
+
+export default function RegionalDashboard({ match }) {
   const { user } = useContext(UserContext);
   const [resetPagination, setResetPagination] = useState(false);
-  /**
-   * we are going to memoize all this stuff so it doesn't get recomputed each time
-   * this is re-rendered. it would (generally) only get recomputed should the user change
-   */
 
-  const hasCentralOffice = useMemo(() => (
-    user && user.homeRegionId && user.homeRegionId === 14
-  ), [user]);
-  const regions = useMemo(() => getUserRegions(user), [user]);
-  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-  const defaultRegion = useMemo(() => regions[0].toString(), [regions]);
+  const { reportType } = match.params;
+  const filterKey = FILTER_KEY(reportType);
 
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+    defaultRegion,
+    allRegionsFilters,
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    filtersWithAllRegions.push({
+    // filter functionality
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
+    filterKey,
+    true,
+    [{
       id: uuidv4(),
       topic: 'startDate',
       condition: 'is within',
       query: defaultDate,
-    });
-    return filtersWithAllRegions;
-  };
+    }],
+  );
 
-  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
-
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return centralOfficeWithAllRegionFilters;
-    }
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(FILTER_KEY, defaultFilters);
-
-  const setFilters = useCallback((newFilters) => {
-    setFiltersInHook(newFilters);
-    setResetPagination(true);
-  }, [setFiltersInHook]);
-
-  // Apply filters.
-  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters(newFilters);
-    }
-  };
-
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
-      }
-    }
-  };
-
+  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const filtersToApply = expandFilters(filters);
 
   const filtersToUse = useMemo(() => {
@@ -131,9 +107,6 @@ export default function RegionalDashboard() {
 
   return (
     <div className="ttahub-dashboard">
-      <Helmet>
-        <title>Regional Dashboard</title>
-      </Helmet>
       <RegionPermissionModal
         filters={filters}
         user={user}
@@ -141,10 +114,11 @@ export default function RegionalDashboard() {
           () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
         }
       />
+      <FeatureFlag flag="training_reports_dashboard">
+        <TabsNav ariaLabel="Dashboard navigation" links={links} />
+      </FeatureFlag>
       <h1 className="landing margin-top-0 margin-bottom-3">
-        {userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}
-        {' '}
-        TTA activity dashboard
+        {h1Text(reportType, userHasOnlyOneRegion, defaultRegion)}
       </h1>
       <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
         <FilterPanel
@@ -156,67 +130,17 @@ export default function RegionalDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <GridContainer className="margin-0 padding-0">
-        <DashboardOverview
-          filters={filtersToApply}
-          fields={[
-            'Recipients served',
-            'Grants served',
-            'Activity reports',
-            'Participants',
-            'Hours of TTA',
-          ]}
-          showTooltips
-        />
-        <Grid row gap={2}>
-          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-            <ReasonList
-              filters={filtersToApply}
-            />
-          </Grid>
-          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-            <TotalHrsAndRecipient
-              filters={filtersToApply}
-            />
-          </Grid>
-        </Grid>
-        <Grid row>
-          <TopicFrequencyGraph
-            filters={filtersToApply}
-          />
-        </Grid>
-        <Grid row>
-          <FilterContext.Provider value={{ filterKey: FILTER_KEY }}>
-            <ActivityReportsTable
-              filters={filtersToApply}
-              showFilter={false}
-              tableCaption="Activity reports"
-              exportIdPrefix="rd-"
-              resetPagination={resetPagination}
-              setResetPagination={setResetPagination}
-            />
-          </FilterContext.Provider>
-        </Grid>
-      </GridContainer>
+      <Dashboard
+        reportType={reportType}
+        setResetPagination={setResetPagination}
+        filtersToApply={filtersToApply}
+        filterKey={filterKey}
+        resetPagination={resetPagination}
+      />
     </div>
-
   );
 }
 
 RegionalDashboard.propTypes = {
-  user: PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    role: PropTypes.arrayOf(PropTypes.string),
-    homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
-  }),
-};
-
-RegionalDashboard.defaultProps = {
-  user: null,
+  match: ReactRouterPropTypes.match.isRequired,
 };
