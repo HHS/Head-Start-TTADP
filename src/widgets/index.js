@@ -13,7 +13,6 @@ import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
 import topicsByGoalStatus from './regionalGoalDashboard/topicsByGoalStatus';
 import trOverview from './trOverview';
 
-
 /*
   All widgets need to be added to this object
 */
