@@ -188,6 +188,8 @@ function App() {
   };
 
   const admin = isAdmin(user);
+  const { flags } = user || {};
+  const hasTrainingReportDashboard = flags && flags.includes('training_reports_dashboard');
 
   const renderAuthenticatedRoutes = () => (
     <>
@@ -267,9 +269,7 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-
               <TrainingReports user={user} match={match} />
-
             </AppWrapper>
           )}
         />
@@ -303,9 +303,25 @@ function App() {
         <Route
           exact
           path="/regional-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <RegionalDashboard user={user} />
+          render={({ match }) => (
+            <AppWrapper
+              padded={!admin && !hasTrainingReportDashboard}
+              authenticated
+              logout={logout}
+              hasAlerts={!!(alert)}
+            >
+              <RegionalDashboard match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/regional-dashboard/:reportType(training-reports|activity-reports|all-reports)"
+          render={({ match }) => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="training_reports_dashboard" renderNotFound>
+                <RegionalDashboard match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
