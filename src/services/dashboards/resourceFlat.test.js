@@ -484,6 +484,7 @@ describe('Resources dashboard', () => {
 
     expect(resourceUseResult).toStrictEqual([
       {
+        date: '2021-01-01',
         url: 'https://eclkc.ohs.acf.hhs.gov/test',
         rollUpDate: 'Jan-21',
         title: null,
@@ -491,6 +492,7 @@ describe('Resources dashboard', () => {
         totalCount: '2',
       },
       {
+        date: '2021-01-01',
         url: 'https://eclkc.ohs.acf.hhs.gov/test2',
         rollUpDate: 'Jan-21',
         title: null,
@@ -498,6 +500,7 @@ describe('Resources dashboard', () => {
         totalCount: '3',
       },
       {
+        date: '2021-01-01',
         url: 'https://non.test1.gov/a/b/c',
         rollUpDate: 'Jan-21',
         title: null,
@@ -514,25 +517,25 @@ describe('Resources dashboard', () => {
 
     expect(topicUseResult).toStrictEqual([
       {
-        name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+        name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
       },
       {
-        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4',
+        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
       },
       {
-        name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3',
+        name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
       },
       {
-        name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1',
+        name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
       },
       {
-        name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1',
+        name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
       },
       {
-        name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+        name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
       },
       {
-        name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2',
+        name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
       },
     ]);
   });
