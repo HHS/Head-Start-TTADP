@@ -336,7 +336,7 @@ const switchToTopicCentric = (input) => {
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
 export async function resourceFlatData(scopes) {
-  console.time('overalltime');
+  // console.time('overalltime');
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -701,7 +701,7 @@ export async function resourceFlatData(scopes) {
 
   // Commit is required to run the query.
   transaction.commit();
-  console.timeEnd('overalltime');
+  // console.timeEnd('overalltime');
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
   };
