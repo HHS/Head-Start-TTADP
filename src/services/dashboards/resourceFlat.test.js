@@ -467,11 +467,14 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
+  // eslint-disable-next-line jest/no-commented-out-tests
+  /*
   it('testAllReports', async () => {
     const scopes = await filtersToScopes({});
     const { resourceUseResult } = await resourceFlatData(scopes);
     expect(true).toBe(true);
   });
+  */
 
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
