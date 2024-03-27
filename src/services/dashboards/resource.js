@@ -478,51 +478,53 @@ export async function resourceFlatData(scopes) {
   // console.timeEnd('maincreate');
   // console.time('resourceUseTime');
   // Get resource use result.
-  let resourceUseResult = sequelize.query(
-    `
-    WITH urlvals AS (
-      SELECT
-          url,
-          title,
-          "rollUpDate",
-          count(id) AS "resourceCount"
-        FROM ${createdFlatResourceTempTableName} tf
-        GROUP BY url, title, "rollUpDate"
-        ORDER BY "url", tf."rollUpDate" ASC),
-      distincturls AS (
-      SELECT DISTINCT url AS url
-      FROM ${createdFlatResourceTempTableName}
-      ),
-      totals AS
-      (
-        SELECT
+  const resourceUseSQL = `
+  WITH urlvals AS (
+    SELECT
         url,
-        SUM("resourceCount") AS "totalCount"
-        FROM urlvals
-        GROUP BY url
-        ORDER BY SUM("resourceCount") DESC
-        LIMIT 10
-      ),
-      series AS
-      (
-        SELECT * FROM ${createdFlatResourceHeadersTempTableName}
-      )
-        SELECT
-        d.url,
-        u.title,
-        to_char(s."date", 'Mon-YY') AS "rollUpDate",
-        s."date",
-        coalesce(u."resourceCount", 0) AS "resourceCount",
-        t."totalCount"
-        FROM distincturls d
-        JOIN series s
-          ON 1=1
-        JOIN totals t
-          ON d.url = t.url
-        LEFT JOIN urlvals u
-          ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
-        ORDER BY 1,4 ASC;
-    `,
+        title,
+        "rollUpDate",
+        count(id) AS "resourceCount"
+      FROM ${createdFlatResourceTempTableName} tf
+      GROUP BY url, title, "rollUpDate"
+      ORDER BY "url", tf."rollUpDate" ASC),
+    distincturls AS (
+    SELECT DISTINCT url AS url
+    FROM ${createdFlatResourceTempTableName}
+    ),
+    totals AS
+    (
+      SELECT
+      url,
+      SUM("resourceCount") AS "totalCount"
+      FROM urlvals
+      GROUP BY url
+      ORDER BY SUM("resourceCount") DESC
+      LIMIT 10
+    ),
+    series AS
+    (
+      SELECT * FROM ${createdFlatResourceHeadersTempTableName}
+    )
+      SELECT
+      d.url,
+      u.title,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(u."resourceCount", 0) AS "resourceCount",
+      t."totalCount"
+      FROM distincturls d
+      JOIN series s
+        ON 1=1
+      JOIN totals t
+        ON d.url = t.url
+      LEFT JOIN urlvals u
+        ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
+      ORDER BY 1,4 ASC;
+  `;
+  // console.log('\n\n\n-----resourceUseSQL: ', resourceUseSQL, '\n\n\n');
+  let resourceUseResult = sequelize.query(
+    resourceUseSQL,
     {
       type: QueryTypes.SELECT,
       transaction,
@@ -707,7 +709,7 @@ export async function resourceFlatData(scopes) {
   };
 
   return {
-    resourceUseResult, topicUseResult, numberOfParticipants, overView, dateHeaders,
+    resourceUseResult, topicUseResult, overView, dateHeaders,
   };
 }
 
@@ -1988,7 +1990,8 @@ export async function resourceDashboard(scopes) {
 }
 
 export async function rollUpResourceUse(data) {
-  return data.resourceUseResults.reduce((accumulator, resource) => {
+  // console.log('\n\n\n------------------\n\n\n', data.resourceUseResult, '\n\n\n------------------\n\n\n');
+  return data.resourceUseResult.reduce((accumulator, resource) => {
     const exists = accumulator.find((r) => r.url === resource.url);
     if (!exists) {
       // Add a property with the resource's URL.
@@ -2029,13 +2032,18 @@ export async function rollUpTopicUse(data) {
 
 export async function resourceDashboardFlat(scopes) {
   // Get resources from SQL.
+  // console.time('sqlonly');
   const data = await resourceFlatData(scopes);
+  // console.timeEnd('sqlonly');
 
+  // console.time('rolluponly');
   // Roll up resource use data to each distinct url.
   const rolledUpResourceUse = await rollUpResourceUse(data);
 
   // Roll up resource use data to each distinct url.
   const rolledUpTopicUse = await rollUpTopicUse(data);
-
-  return data;
+  // console.timeEnd('rolluponly');
+  return {
+    overview: data.overView, rolledUpResourceUse, rolledUpTopicUse, dateHeaders: data.dateHeaders,
+  };
 }

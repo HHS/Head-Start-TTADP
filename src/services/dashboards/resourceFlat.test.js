@@ -591,7 +591,7 @@ describe('Resources dashboard', () => {
 
   it('should roll up resource use results correctly', async () => {
     const data = {
-      resourceUseResults: [
+      resourceUseResult: [
         { url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21' },
         { url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21' },
         { url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21' },
