@@ -2,7 +2,7 @@
 import filtersToScopes from '../../scopes';
 import { currentUserId } from '../../services/currentUser';
 import { setReadRegions } from '../../services/accessValidation';
-import { resourceDashboardPhase1 } from '../../services/dashboards/resource';
+import { resourceDashboardPhase1, resourceDashboardFlat } from '../../services/dashboards/resource';
 import getCachedResponse from '../../lib/cache';
 
 const RESOURCE_DATA_CACHE_VERSION = 1.5;
@@ -27,5 +27,16 @@ export async function getResourcesDashboardData(req, res) {
     JSON.parse,
   );
 
+  res.json(response);
+}
+
+export async function getFlatResourcesDashboardData(req, res) {
+  // console.time('overallendpoint');
+  const userId = await currentUserId(req, res);
+  const query = await setReadRegions(req.query, userId);
+
+  const scopes = await filtersToScopes(query);
+  const response = await resourceDashboardFlat(scopes);
+  // console.timeEnd('overallendpoint');
   res.json(response);
 }
