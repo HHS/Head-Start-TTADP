@@ -21,12 +21,14 @@ import {
   ttaTypeFilter,
   activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
+import { goalNameFilter } from '../../components/filter/goalFilters';
 
 const RESOURCES_DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   activityReportGoalResponseFilter,
   grantNumberFilter,
+  goalNameFilter,
   otherEntitiesFilter,
   participantsFilter,
   programTypeFilter,
