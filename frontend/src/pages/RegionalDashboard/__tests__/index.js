@@ -268,10 +268,35 @@ describe('Regional Dashboard page', () => {
     const open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
 
-    // expect 'specialist name' not to be in the document.
+    // expect 'specialist name' to be in the document.
     expect(await screen.findByText('Specialist name')).toBeVisible();
+  });
 
-    // expect 'specialist name' not to be in the document.
-    expect(await screen.findByText('Specialist name')).toBeVisible();
+  it('shows region filter if user has more than one region', async () => {
+    fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/widgets/reasonList?region.in[]=1&region.in[]=2', reasonListResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse, { overwriteRoutes: true });
+
+    const user = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+
+    renderDashboard(user);
+
+    // Open filters menu.
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+
+    expect(document.querySelector('option[value="region"]')).toBeTruthy();
   });
 });
