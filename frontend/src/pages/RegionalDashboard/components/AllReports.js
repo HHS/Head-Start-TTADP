@@ -6,7 +6,7 @@ export default function AllReports() {
   return (
     <>
       <Helmet>
-        <title>Regional Dashboard - Training Reports</title>
+        <title>Regional Dashboard - All Reports</title>
       </Helmet>
       <GridContainer className="margin-0 padding-0">
         <Grid row gap={2}>
