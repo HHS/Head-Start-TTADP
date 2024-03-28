@@ -9,7 +9,6 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Button,
   Radio,
-  TextInput,
 } from '@trussworks/react-uswds';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
@@ -18,6 +17,7 @@ import {
   pageComplete,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
+import ParticipantsNumberOfParticipants from '../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
@@ -64,9 +64,18 @@ const Participants = ({ formData }) => {
       istSelectionComplete,
       recipients,
       participants,
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+      numberOfParticipants,
     } = formData;
 
-    const formStarted = (recipients && recipients.length) || (participants && participants.length);
+    const formStarted = (
+      recipients && recipients.length
+    ) || (
+      participants && participants.length
+    ) || numberOfParticipantsInPerson
+    || numberOfParticipantsVirtually
+    || numberOfParticipants;
 
     if (!istSelectionComplete && formStarted) {
       setValue('isIstVisit', 'no');
@@ -134,7 +143,7 @@ const Participants = ({ formData }) => {
           <RecipientsWithGroups />
           <div className="margin-top-2">
             <FormItem
-              label="Recipient participants "
+              label="Recipient participants"
               name="participants"
             >
               <MultiSelect
@@ -172,93 +181,15 @@ const Participants = ({ formData }) => {
       </div>
       )}
 
-      <div aria-live="polite">
-        {isHybrid ? (
-          <>
-            <div>
-              <FormItem
-                label="Number of participants attending in person "
-                name="numberOfParticipantsInPerson"
-                required
-              >
-                <div className="maxw-card-lg">
-                  <TextInput
-                    id="numberOfParticipantsInPerson"
-                    name="numberOfParticipantsInPerson"
-                    type="number"
-                    min={1}
-                    required
-                    inputRef={
-                        register({
-                          required: 'Enter number of participants attending in person',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                  />
-                </div>
-              </FormItem>
-            </div>
-            <div>
-              <FormItem
-                label="Number of participants attending virtually "
-                name="numberOfParticipantsVirtually"
-                required
-              >
-                <div className="maxw-card-lg">
-                  <TextInput
-                    required
-                    id="numberOfParticipantsVirtually"
-                    name="numberOfParticipantsVirtually"
-                    type="number"
-                    min={1}
-                    inputRef={
-                        register({
-                          required: 'Enter number of participants attending virtually',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                  />
-                </div>
-              </FormItem>
-            </div>
-          </>
-        ) : (
-          <div>
-            <FormItem
-              label="Number of participants "
-              name="numberOfParticipants"
-            >
-              <div className="maxw-card-lg">
-                <TextInput
-                  required
-                  id="numberOfParticipants"
-                  name="numberOfParticipants"
-                  type="number"
-                  min={1}
-                  inputRef={
-                      register({
-                        required: 'Enter number of participants',
-                        valueAsNumber: true,
-                        min: {
-                          value: 1,
-                          message: 'Number of participants can not be zero or negative',
-                        },
-                      })
-                    }
-                />
-              </div>
-            </FormItem>
-          </div>
-        )}
-      </div>
+      {(isIstVisit || isNotIstVisit) && (
+      <>
+
+        <ParticipantsNumberOfParticipants
+          isHybrid={isHybrid}
+          register={register}
+        />
+      </>
+      )}
       <div className="margin-top-2">
         <FormItem
           label="How was the activity conducted?"
