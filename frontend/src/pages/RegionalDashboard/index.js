@@ -4,11 +4,10 @@ import React, {
   useState,
 } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { hasApproveActivityReport } from '../../permissions';
-import { expandFilters, formatDateRange } from '../../utils';
+import { expandFilters } from '../../utils';
 import UserContext from '../../UserContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
@@ -19,11 +18,6 @@ import useFilters from '../../hooks/useFilters';
 import './index.css';
 import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
-
-const defaultDate = formatDateRange({
-  lastThirtyDays: true,
-  forDateTime: true,
-});
 
 const h1Text = (reportType, userHasOnlyOneRegion, defaultRegion) => {
   const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
@@ -84,12 +78,6 @@ export default function RegionalDashboard({ match }) {
     user,
     filterKey,
     true,
-    [{
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    }],
   );
 
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
