@@ -347,7 +347,7 @@ export function reduceObjectivesForRecipientRecord(
   currentModel,
   goal,
   grantNumbers,
-  sessionObjectives = [],
+
 ) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
@@ -440,7 +440,7 @@ export function reduceObjectivesForRecipientRecord(
   current.reasons = uniq([...goal.reasons, ...reasons]);
   current.reasons.sort();
 
-  return [...sessionObjectives, ...objectives].map((obj) => {
+  return [...objectives].map((obj) => {
     // eslint-disable-next-line no-param-reassign
     obj.topics = reduceTopicsOfDifferingType(obj.topics);
     return obj;
@@ -758,6 +758,26 @@ export async function getGoalsByActivityRecipient(
 
     allGoalIds.push(current.id);
 
+    const sessionObjectives = current.eventReportPilots
+    // shape the session objective, mold it into a form that
+    // satisfies the frontend's needs
+      .map((erp) => erp.sessionReports.map((sr) => {
+        if (!sr.data.objective) {
+          return null;
+        }
+
+        return {
+          type: 'session',
+          title: sr.data.objective,
+          topics: sr.data.objectiveTopics || [],
+          grantNumbers: [current.grant.number],
+          endDate: sr.data.endDate,
+          sessionName: sr.data.sessionName,
+          trainingReportId: sr.data.eventDisplayId,
+        };
+        // filter out nulls, and flatten the array
+      }).filter((sr) => sr)).flat();
+
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
@@ -770,10 +790,11 @@ export async function getGoalsByActivityRecipient(
         existingGoal,
         existingGoal.grantNumbers,
       );
-      existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.sessionObjectives = [...existingGoal.sessionObjectives, ...sessionObjectives];
+      existingGoal.objectiveCount = existingGoal.objectives.length
+        + existingGoal.sessionObjectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
       existingGoal.collaborators = existingGoal.collaborators || [];
-
       existingGoal.collaborators = uniqBy([
         ...existingGoal.collaborators,
         ...createCollaborators(current),
@@ -805,37 +826,19 @@ export async function getGoalsByActivityRecipient(
       createdVia: current.createdVia,
       collaborators: [],
       onAR: current.onAR,
+      sessionObjectives: [],
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));
-
-    const sessionObjectives = current.eventReportPilots
-      // shape the session objective, mold it into a form that
-      // satisfies the frontend's needs
-      .map((erp) => erp.sessionReports.map((sr) => {
-        if (!sr.data.objective) {
-          return null;
-        }
-
-        return {
-          type: 'session',
-          title: sr.data.objective,
-          topics: sr.data.objectiveTopics || [],
-          grantNumbers: [current.grant.number],
-          endDate: sr.data.endDate,
-          sessionName: sr.data.sessionName,
-          trainingReportId: sr.data.eventDisplayId,
-        };
-      // filter out nulls, and flatten the array
-      }).filter((sr) => sr)).flat();
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
       current,
       goalToAdd,
       [current.grant.number],
-      sessionObjectives,
     );
-    goalToAdd.objectiveCount = goalToAdd.objectives.length;
+
+    goalToAdd.sessionObjectives = sessionObjectives;
+    goalToAdd.objectiveCount = goalToAdd.objectives.length + goalToAdd.sessionObjectives.length;
 
     return {
       goalRows: [...previous.goalRows, goalToAdd],

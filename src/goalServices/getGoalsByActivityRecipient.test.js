@@ -801,9 +801,10 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].objectiveCount).toBe(1);
       expect(goalRowsx[1].reasons).toEqual([]);
       expect(goalRowsx[1].goalTopics).toEqual([]);
-      expect(goalRowsx[1].objectives.length).toBe(1);
+      expect(goalRowsx[1].objectives.length).toBe(0);
+      expect(goalRowsx[1].sessionObjectives.length).toBe(1);
 
-      const trObjective = goalRowsx[1].objectives[0];
+      const trObjective = goalRowsx[1].sessionObjectives[0];
       trObjective.topics.sort();
       const expectedTopics = ['Buttering', 'Breading'];
       expectedTopics.sort();
