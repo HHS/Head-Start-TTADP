@@ -7,6 +7,7 @@ export default function useFilters(
   user,
   filterKey,
   manageRegions = false,
+  additionalDefaultFilters = [],
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -20,7 +21,7 @@ export default function useFilters(
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
     filterKey,
-    defaultFilters,
+    [...defaultFilters, ...additionalDefaultFilters],
   );
 
   // Apply filters.

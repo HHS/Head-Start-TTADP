@@ -12,7 +12,7 @@ export default function useUserDefaultRegionFilters(user, manageRegions) {
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
-  let defaultFilters = [];
+  let defaultFilters = () => [];
   if (manageRegions) {
     defaultFilters = () => ((defaultRegion !== ADMIN_REGION
     && defaultRegion !== 0
@@ -31,6 +31,6 @@ export default function useUserDefaultRegionFilters(user, manageRegions) {
     defaultRegion,
     hasMultipleRegions,
     allRegionsFilters,
-    defaultFilters,
+    defaultFilters: defaultFilters(),
   };
 }

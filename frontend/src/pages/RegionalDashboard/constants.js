@@ -1,6 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  regionFilter,
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -38,7 +37,6 @@ const DASHBOARD_FILTER_CONFIG = [
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
-  regionFilter,
   reportIdFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,

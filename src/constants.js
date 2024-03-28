@@ -250,6 +250,7 @@ const FEATURE_FLAGS = [
   'merge_goals',
   'monitoring',
   'closed_goal_merge_override',
+  'training_reports_dashboard',
 ];
 
 const MAINTENANCE_CATEGORY = {
