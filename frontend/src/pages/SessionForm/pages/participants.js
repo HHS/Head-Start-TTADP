@@ -58,6 +58,23 @@ const Participants = ({ formData }) => {
   const isIstVisit = watch('isIstVisit') === 'yes';
   const isNotIstVisit = watch('isIstVisit') === 'no';
 
+  // handle existing sessions
+  useDeepCompareEffect(() => {
+    const {
+      istSelectionComplete,
+      recipients,
+    } = formData;
+
+    if (!istSelectionComplete && recipients.length) {
+      setValue('isIstVisit', 'no');
+    }
+
+    if (!istSelectionComplete) {
+      setValue('istVisitSelectionRequired', true);
+    }
+  }, [formData, setValue]);
+
+  // clear values between toggles
   useDeepCompareEffect(() => {
     if (isIstVisit) {
       setValue('recipients', []);
@@ -105,6 +122,7 @@ const Participants = ({ formData }) => {
           className="smart-hub--report-checkbox"
           inputRef={register({ required: 'Select one' })}
         />
+        <input type="hidden" name="istSelectionComplete" ref={register} />
       </FormItem>
 
       {isNotIstVisit && (
@@ -295,6 +313,7 @@ Participants.propTypes = {
     recipients: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
     })),
+    istSelectionComplete: PropTypes.bool,
     event: PropTypes.shape({
       id: PropTypes.number,
       name: PropTypes.string,
