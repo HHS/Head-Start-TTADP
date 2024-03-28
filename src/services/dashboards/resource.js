@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
-import { Sequelize, Op } from 'sequelize';
+import { Sequelize, Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -329,6 +330,423 @@ const switchToTopicCentric = (input) => {
       };
     });
 };
+
+async function GenerateFlatTempTables(reportIds, tblNames) {
+  const flatResourceSql = `
+  -- 1.) Create AR temp table.
+  SELECT
+    id,
+    "startDate",
+    "numberOfParticipants",
+    to_char("startDate", 'Mon-YY') AS "rollUpDate",
+    "regionId",
+    "calculatedStatus"
+    INTO TEMP ${tblNames.createdArTempTableName}
+    FROM "ActivityReports" ar
+    WHERE ar."id" IN (${reportIds.map((r) => r.id).join(',')});
+
+  -- 2.) Create ARO Resources temp table.
+  SELECT
+    ar.id AS "activityReportId",
+    aror."resourceId"
+    INTO TEMP ${tblNames.createdAroResourcesTempTableName}
+    FROM ${tblNames.createdArTempTableName} ar
+    JOIN "ActivityReportObjectives" aro
+      ON ar."id" = aro."activityReportId"
+    JOIN "ActivityReportObjectiveResources" aror
+      ON aro.id = aror."activityReportObjectiveId"
+    WHERE aror."sourceFields" = '{resource}'
+    GROUP BY ar.id, aror."resourceId";
+
+    -- 3.) Create Resources temp table (only what we need).
+    SELECT
+      id,
+      domain,
+      url,
+      title
+      INTO TEMP ${tblNames.createdResourcesTempTableName}
+      FROM "Resources"
+      WHERE id IN (
+      SELECT DISTINCT "resourceId"
+        FROM ${tblNames.createdAroResourcesTempTableName}
+      );
+
+      -- 4.) Create ARO Topics temp table.
+      SELECT
+      ar.id AS "activityReportId",
+      arot."activityReportObjectiveId", -- We need to group by this incase of multiple aro's.
+      arot."topicId"
+      INTO TEMP ${tblNames.createdAroTopicsTempTableName}
+      FROM ${tblNames.createdArTempTableName}  ar
+      JOIN "ActivityReportObjectives" aro
+        ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveTopics" arot
+        ON aro.id = arot."activityReportObjectiveId"
+      GROUP BY ar.id, arot."activityReportObjectiveId", arot."topicId";
+
+      -- 5.) Create Topics temp table (only what we need).
+      SELECT
+        id,
+        name
+        INTO TEMP ${tblNames.createdTopicsTempTableName}
+        FROM "Topics"
+        WHERE id IN (
+        SELECT DISTINCT "topicId"
+          FROM ${tblNames.createdAroTopicsTempTableName}
+        );
+
+      -- 6.) Create Flat Resource temp table.
+      SELECT
+      ar.id,
+      ar."startDate",
+      ar."rollUpDate",
+      arorr.domain,
+      arorr.title,
+      arorr.url,
+      ar."numberOfParticipants"
+      INTO TEMP ${tblNames.createdFlatResourceTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN ${tblNames.createdAroResourcesTempTableName} aror
+        ON ar.id = aror."activityReportId"
+      JOIN ${tblNames.createdResourcesTempTableName} arorr
+        ON aror."resourceId" = arorr.id;
+
+      -- 7.) Create date headers.
+      SELECT
+          generate_series(
+            date_trunc('month', (SELECT MIN("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MAX("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            interval '1 month'
+          )::date AS "date"
+        INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
+  `;
+  // console.log('\n\n\n-----FLAT SQL', flatResourceSql);
+
+  const transaction = await sequelize.transaction();
+  // Execute the flat table sql.
+  await sequelize.query(
+    flatResourceSql,
+    {
+      type: QueryTypes.SELECT,
+      transaction,
+    },
+  );
+  return transaction;
+}
+
+function getResourceUseSql(tblNames, transaction) {
+  return sequelize.query(
+    `
+  WITH urlvals AS (
+    SELECT
+        url,
+        title,
+        "rollUpDate",
+        count(id) AS "resourceCount"
+      FROM ${tblNames.createdFlatResourceTempTableName} tf
+      GROUP BY url, title, "rollUpDate"
+      ORDER BY "url", tf."rollUpDate" ASC),
+    distincturls AS (
+    SELECT DISTINCT url AS url
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    ),
+    totals AS
+    (
+      SELECT
+      url,
+      SUM("resourceCount") AS "totalCount"
+      FROM urlvals
+      GROUP BY url
+      ORDER BY SUM("resourceCount") DESC
+      LIMIT 10
+    ),
+    series AS
+    (
+      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
+    )
+      SELECT
+      d.url,
+      u.title,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(u."resourceCount", 0) AS "resourceCount",
+      t."totalCount"
+      FROM distincturls d
+      JOIN series s
+        ON 1=1
+      JOIN totals t
+        ON d.url = t.url
+      LEFT JOIN urlvals u
+        ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
+      ORDER BY 1,4 ASC;
+  `,
+    {
+      type: QueryTypes.SELECT,
+      transaction,
+    },
+  );
+}
+
+function getTopicsUseSql(tblNames, transaction) {
+  return sequelize.query(
+    `
+  WITH topics AS (
+      SELECT
+        t.name,
+        f."rollUpDate",
+
+        count(f.id) AS "resourceCount"
+      FROM ${tblNames.createdTopicsTempTableName}  t
+        JOIN ${tblNames.createdAroTopicsTempTableName} arot
+        ON t.id = arot."topicId"
+        JOIN ${tblNames.createdFlatResourceTempTableName} f
+        ON arot."activityReportId" = f.id
+        GROUP BY t.name, f."rollUpDate"
+        ORDER BY t.name, f."rollUpDate" ASC
+    ),
+    totals AS
+    (
+      SELECT
+        name,
+        SUM("resourceCount") AS "totalCount"
+      FROM topics
+      GROUP BY name
+      ORDER BY SUM("resourceCount") DESC
+    ),
+    series AS
+    (
+      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
+    )
+    SELECT
+      d.name,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(t."resourceCount", 0) AS "resourceCount",
+      tt."totalCount"
+    FROM ${tblNames.createdTopicsTempTableName} d
+    JOIN series s
+      ON 1=1
+    JOIN totals tt
+      ON d.name = tt.name
+    LEFT JOIN topics t
+      ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
+    ORDER BY 1, 3 ASC;`,
+    {
+      type: QueryTypes.SELECT,
+      transaction,
+    },
+  );
+}
+
+function getOverview(tblNames, totalReportCount, transaction) {
+  // - Number of Participants -
+  const numberOfParticipants = sequelize.query(`
+  WITH ar_participants AS (
+    SELECT
+    id,
+    "numberOfParticipants"
+    FROM ${tblNames.createdFlatResourceTempTableName} f
+    GROUP BY id, "numberOfParticipants"
+  )
+  SELECT
+         SUM("numberOfParticipants") AS participants
+  FROM ar_participants;
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  const numberOfRecipSql = `
+  WITH ars AS (
+    SELECT
+    DISTINCT id
+    FROM ${tblNames.createdFlatResourceTempTableName} f
+  ), recipients AS (
+    SELECT
+      DISTINCT r.id
+    FROM ars ar
+    JOIN "ActivityRecipients" arr
+      ON ar.id = arr."activityReportId"
+    JOIN "Grants" g
+      ON arr."grantId" = g.id AND g."status" = 'Active'
+     JOIN "Recipients" r
+      ON g."recipientId" = r.id
+  )
+  SELECT
+         count(r.id) AS recipients
+  FROM recipients r;
+  `;
+
+  // console.log('\n\n\n-----numberOfRecipSql', numberOfRecipSql);
+  // - Number of Recipients -
+  const numberOfRecipients = sequelize.query(numberOfRecipSql, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  // - Reports with Resources Pct -
+  const pctOfReportsWithResources = sequelize.query(`
+  SELECT
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (round(count(DISTINCT "activityReportId")::decimal / ${totalReportCount}::decimal, 4) * 100)::decimal
+    END AS "resourcesPct"
+  FROM ${tblNames.createdAroResourcesTempTableName};
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  // - Number of Reports with ECLKC Resources Pct -
+  const pctOfECKLKCResources = sequelize.query(`
+    WITH eclkc AS (
+      SELECT
+    COUNT(DISTINCT url) AS "eclkcCount"
+    FROM  ${tblNames.createdFlatResourceTempTableName}
+    WHERE url ilike '%eclkc.ohs.acf.hhs.gov%'
+    ), allres AS (
+    SELECT
+    COUNT(DISTINCT url) AS "allCount"
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    )
+    SELECT
+      e."eclkcCount",
+    r."allCount",
+      CASE WHEN
+    r."allCount" = 0
+    THEN 0
+    ELSE round(e."eclkcCount" / r."allCount"::decimal * 100,4)
+    END AS "eclkcPct"
+    FROM eclkc e
+    JOIN allres r
+      ON 1=1;
+  `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+
+  // 5.) Date Headers table.
+  const dateHeaders = sequelize.query(`
+   SELECT
+    to_char("date", 'Mon-YY') AS "rollUpDate"
+   FROM ${tblNames.createdFlatResourceHeadersTempTableName};
+ `, {
+    type: QueryTypes.SELECT,
+    transaction,
+  });
+  return {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  };
+}
+
+/*
+  Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
+  If over time the amount of data increases and slows again we can cache the flat table a set frequency.
+*/
+export async function resourceFlatData(scopes) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
+
+  // Get all ActivityReport ID's using SCOPES.
+  // We don't want to write custom filters.
+  const reportIds = await ActivityReport.findAll({
+    attributes: [
+      'id',
+    ],
+    where: {
+      [Op.and]: [
+        scopes.activityReport,
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          startDate: { [Op.ne]: null },
+          createdAt: { [Op.gt]: reportCreatedAtDate },
+        },
+      ],
+    },
+    raw: true,
+  });
+
+  // Get total number of reports.
+  const totalReportCount = reportIds.length;
+
+  // Create temp table names.
+  const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
+  const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_flat_resources_headers__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+  const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+
+  const tempTableNames = {
+    createdArTempTableName,
+    createdAroResourcesTempTableName,
+    createdResourcesTempTableName,
+    createdAroTopicsTempTableName,
+    createdTopicsTempTableName,
+    createdFlatResourceTempTableName,
+    createdFlatResourceHeadersTempTableName,
+  };
+
+  // 1. Generate the flat sql temp tables.
+  const transaction = await GenerateFlatTempTables(reportIds, tempTableNames);
+
+  // 2. Get resource use sql.
+  let resourceUseResult = getResourceUseSql(tempTableNames, transaction);
+
+  // 3. Get topic use sql.
+  let topicUseResult = getTopicsUseSql(tempTableNames, transaction);
+
+  // 4. Get Overview sql.
+  let {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  } = getOverview(tempTableNames, totalReportCount, transaction);
+
+  // 5. Execute all the sql queries.
+  [
+    resourceUseResult,
+    topicUseResult,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  ] = await Promise.all(
+    [
+      resourceUseResult,
+      topicUseResult,
+      numberOfParticipants,
+      numberOfRecipients,
+      pctOfReportsWithResources,
+      pctOfECKLKCResources,
+      dateHeaders,
+    ],
+  );
+
+  // 6. Commit is required to run the query.
+  transaction.commit();
+
+  // 7. Restructure Overview.
+  const overView = {
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
+  };
+
+  // 8. Return the data.
+  return {
+    resourceUseResult, topicUseResult, overView, dateHeaders,
+  };
+}
 
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
@@ -1602,5 +2020,54 @@ export async function resourceDashboard(scopes) {
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
+  };
+}
+
+export async function rollUpResourceUse(data) {
+  return data.resourceUseResult.reduce((accumulator, resource) => {
+    const exists = accumulator.find((r) => r.url === resource.url);
+    if (!exists) {
+      // Add a property with the resource's URL.
+      return [
+        ...accumulator,
+        {
+          url: resource.url,
+          resources: [{ ...resource }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.resources.push(resource);
+    return accumulator;
+  }, []);
+}
+
+export async function rollUpTopicUse(data) {
+  return data.topicUseResult.reduce((accumulator, topic) => {
+    const exists = accumulator.find((r) => r.name === topic.name);
+    if (!exists) {
+      // Add a property with the resource's name.
+      return [
+        ...accumulator,
+        {
+          name: topic.name,
+          topics: [{ ...topic }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.topics.push(topic);
+    return accumulator;
+  }, []);
+}
+
+export async function resourceDashboardFlat(scopes) {
+  const data = await resourceFlatData(scopes);
+  const rolledUpResourceUse = await rollUpResourceUse(data);
+  const rolledUpTopicUse = await rollUpTopicUse(data);
+  return {
+    overview: data.overView, rolledUpResourceUse, rolledUpTopicUse, dateHeaders: data.dateHeaders,
   };
 }
