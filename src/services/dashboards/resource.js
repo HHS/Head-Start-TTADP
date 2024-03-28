@@ -420,6 +420,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
           )::date AS "date"
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
+  // console.log('\n\n\n-----FLAT SQL', flatResourceSql);
 
   const transaction = await sequelize.transaction();
   // Execute the flat table sql.
@@ -555,8 +556,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
     transaction,
   });
 
-  // - Number of Recipients -
-  const numberOfRecipients = sequelize.query(`
+  const numberOfRecipSql = `
   WITH ars AS (
     SELECT
     DISTINCT id
@@ -568,14 +568,18 @@ function getOverview(tblNames, totalReportCount, transaction) {
     JOIN "ActivityRecipients" arr
       ON ar.id = arr."activityReportId"
     JOIN "Grants" g
-      ON arr."grantId" = g.id
+      ON arr."grantId" = g.id AND g."status" = 'Active'
      JOIN "Recipients" r
       ON g."recipientId" = r.id
   )
   SELECT
          count(r.id) AS recipients
   FROM recipients r;
-  `, {
+  `;
+
+  // console.log('\n\n\n-----numberOfRecipSql', numberOfRecipSql);
+  // - Number of Recipients -
+  const numberOfRecipients = sequelize.query(numberOfRecipSql, {
     type: QueryTypes.SELECT,
     transaction,
   });
@@ -757,72 +761,71 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     viaObjectives: null,
     viaGoals: null,
   };
-  dbData.allReports = await ActivityReport.findAll({
-    attributes: [
-      'id',
-      'numberOfParticipants',
-      'topics',
-      'startDate',
-      [sequelize.fn(
-        'jsonb_agg',
-        sequelize.fn(
-          'DISTINCT',
-          sequelize.fn(
-            'jsonb_build_object',
-            sequelize.literal('\'grantId\''),
-            sequelize.literal('"activityRecipients->grant"."id"'),
-            sequelize.literal('\'recipientId\''),
-            sequelize.literal('"activityRecipients->grant"."recipientId"'),
-            sequelize.literal('\'otherEntityId\''),
-            sequelize.literal('"activityRecipients"."otherEntityId"'),
-          ),
-        ),
-      ),
-      'recipients'],
-    ],
-    group: [
-      '"ActivityReport"."id"',
-      '"ActivityReport"."numberOfParticipants"',
-      '"ActivityReport"."topics"',
-      '"ActivityReport"."startDate"',
-    ],
-    where: {
-      [Op.and]: [
-        scopes.activityReport,
-        {
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-          startDate: { [Op.ne]: null },
-          createdAt: { [Op.gt]: reportCreatedAtDate },
-        },
-      ],
-    },
-    include: [
-      {
-        model: ActivityRecipient.scope(),
-        as: 'activityRecipients',
-        attributes: [],
-        required: true,
-        include: [
-          {
-            model: Grant.scope(),
-            as: 'grant',
-            attributes: [],
-            required: false,
-          },
-        ],
-      },
-    ],
-    raw: true,
-  });
-
   [
-    // dbData.allReports,
+    dbData.allReports,
     // dbData.viaReport,
     // dbData.viaSpecialistNextSteps,
     // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
+    await ActivityReport.findAll({
+      attributes: [
+        'id',
+        'numberOfParticipants',
+        'topics',
+        'startDate',
+        [sequelize.fn(
+          'jsonb_agg',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn(
+              'jsonb_build_object',
+              sequelize.literal('\'grantId\''),
+              sequelize.literal('"activityRecipients->grant"."id"'),
+              sequelize.literal('\'recipientId\''),
+              sequelize.literal('"activityRecipients->grant"."recipientId"'),
+              sequelize.literal('\'otherEntityId\''),
+              sequelize.literal('"activityRecipients"."otherEntityId"'),
+            ),
+          ),
+        ),
+        'recipients'],
+      ],
+      group: [
+        '"ActivityReport"."id"',
+        '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."topics"',
+        '"ActivityReport"."startDate"',
+      ],
+      where: {
+        [Op.and]: [
+          scopes.activityReport,
+          {
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+            startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
+          },
+        ],
+      },
+      include: [
+        {
+          model: ActivityRecipient.scope(),
+          as: 'activityRecipients',
+          attributes: [],
+          required: true,
+          include: [
+            {
+              model: Grant.scope(),
+              as: 'grant',
+              attributes: [],
+              required: false,
+            },
+          ],
+        },
+      ],
+      raw: true,
+    }),
     /*
     await ActivityReport.findAll({
       attributes: [
