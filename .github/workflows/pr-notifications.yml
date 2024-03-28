@@ -2,16 +2,28 @@ name: Pull Request Notifications
 
 on:
   pull_request:
-    branches:
-      - production
-    types: [ready_for_review]
+    # branches:
+    #   - production
+    types: [opened, ready_for_review]
 
 jobs:
-  notify_slack:
+  # notify_slack:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #   - name: Notify slack when a PR to production is opened
+  #     env:
+  #       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  #     run: |
+  #       PR_LINK="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}"
+  #       curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A pull request (#${{ github.event.pull_request.number }}) to *production* is now open! <${PR_LINK}|Click here to view the PR>\"}" $SLACK_WEBHOOK_URL
+
+  notify_slack_any_pr:
     runs-on: ubuntu-latest
+    # if: github.event.action == 'opened'
     steps:
-    - name: Notify slack when a PR to production is opened
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      run: |
-        curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A pull request (#${{ github.event.pull_request.number }}) to *production* is now open! ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}\"}" $SLACK_WEBHOOK_URL
+      - name: Notify second Slack channel for any PR opened
+        env:
+          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+        run: |
+          PR_LINK="${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
+          curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A new pull request (#${{ github.event.pull_request.number }}) has been opened! <${PR_LINK}|View Pull Request>\"}" $SLACK_WEBHOOK_URL_TEST
