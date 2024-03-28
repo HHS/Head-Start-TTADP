@@ -65,7 +65,7 @@ const Participants = ({ formData }) => {
       recipients,
     } = formData;
 
-    if (!istSelectionComplete && recipients.length) {
+    if (!istSelectionComplete && recipients && recipients.length) {
       setValue('isIstVisit', 'no');
     }
 
