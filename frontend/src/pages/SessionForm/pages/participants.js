@@ -1,15 +1,16 @@
 import React, {
   useContext,
 } from 'react';
+import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { LANGUAGES } from '@ttahub/common';
 import { useFormContext } from 'react-hook-form';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Button,
   Radio,
   TextInput,
 } from '@trussworks/react-uswds';
-import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -21,57 +22,58 @@ import FormItem from '../../../components/FormItem';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import UserContext from '../../../UserContext';
-import PocCompleteView from '../../../components/PocCompleteView';
-import ReadOnlyField from '../../../components/ReadOnlyField';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
+import ParticipantsReadOnly from '../components/ParticipantsReadOnly';
 
 const placeholderText = '- Select -';
+
+const ROLE_OPTIONS = [
+  'AA',
+  'COR',
+  'ECM',
+  'ECS',
+  'FES',
+  'GS',
+  'GSM',
+  'HS',
+  'PS',
+  'RPM',
+  'SPS',
+  'SS',
+  'TTAC',
+];
 
 const Participants = ({ formData }) => {
   const {
     control,
     register,
     watch,
+    setValue,
   } = useFormContext();
 
   const { user } = useContext(UserContext);
   const { isPoc } = useTrainingReportRole(formData.event, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
   const isHybrid = watch('deliveryMethod') === 'hybrid';
+  const isIstVisit = watch('isIstVisit') === 'yes';
+  const isNotIstVisit = watch('isIstVisit') === 'no';
+
+  useDeepCompareEffect(() => {
+    if (isIstVisit) {
+      setValue('recipients', []);
+    }
+
+    if (isNotIstVisit) {
+      setValue('regionalOfficeTta', []);
+    }
+  }, [isIstVisit, isNotIstVisit, setValue]);
 
   if (showReadOnlyView) {
     return (
-      <PocCompleteView formData={formData} userId={user.id}>
-        <Helmet>
-          <title>Session Participants</title>
-        </Helmet>
-        <ReadOnlyField label="Recipients">
-          {formData.recipients.map((r) => r.label).join('\n')}
-        </ReadOnlyField>
-        {isHybrid ? (
-          <>
-            <ReadOnlyField label="Number of participants attending in person">
-              {formData.numberOfParticipantsInPerson}
-            </ReadOnlyField>
-            <ReadOnlyField label="Number of participants attending virtually">
-              {formData.numberOfParticipantsVirtually}
-            </ReadOnlyField>
-          </>
-        ) : (
-          <ReadOnlyField label="Number of participants">
-            {formData.numberOfParticipants}
-          </ReadOnlyField>
-        )}
-        <ReadOnlyField label="Recipient participants">
-          {formData.participants.join('\n')}
-        </ReadOnlyField>
-        <ReadOnlyField label="Delivery method">
-          {capitalize(formData.deliveryMethod)}
-        </ReadOnlyField>
-        <ReadOnlyField label="Language used">
-          {formData.language.join('\n')}
-        </ReadOnlyField>
-      </PocCompleteView>
+      <ParticipantsReadOnly
+        formData={formData}
+        userId={user.id}
+      />
     );
   }
 
@@ -81,7 +83,54 @@ const Participants = ({ formData }) => {
         <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
-      <RecipientsWithGroups />
+      <FormItem
+        label="Is this an IST visit?"
+        name="isIstVisit"
+        fieldSetWrapper
+      >
+        <Radio
+          id="is-ist-visit-yes"
+          name="isIstVisit"
+          label="Yes"
+          value="yes"
+          className="smart-hub--report-checkbox"
+          inputRef={register({ required: 'Select one' })}
+        />
+
+        <Radio
+          id="is-ist-visit-no"
+          name="isIstVisit"
+          label="No"
+          value="no"
+          className="smart-hub--report-checkbox"
+          inputRef={register({ required: 'Select one' })}
+        />
+      </FormItem>
+
+      {isNotIstVisit && (
+        <RecipientsWithGroups />
+      )}
+
+      {isIstVisit && (
+      <div className="margin-top-2">
+        <FormItem
+          label="Regional Office/TTA "
+          name="regionalOfficeTta"
+        >
+          <MultiSelect
+            name="regionalOfficeTta"
+            control={control}
+            placeholderText={placeholderText}
+            options={
+              ROLE_OPTIONS
+                .map((role) => ({ value: role, label: role }))
+            }
+            required="Select at least one"
+          />
+        </FormItem>
+      </div>
+      )}
+
       <div className="margin-top-2">
         <FormItem
           label="Recipient participants "
@@ -242,7 +291,26 @@ const Participants = ({ formData }) => {
 };
 
 Participants.propTypes = {
-  formData: participantsFields.isRequired,
+  formData: PropTypes.shape({
+    recipients: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+    })),
+    event: PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      displayId: PropTypes.string,
+      status: PropTypes.string,
+      pageState: PropTypes.objectOf(PropTypes.string),
+    }),
+    numberOfParticipants: PropTypes.number,
+    numberOfParticipantsInPerson: PropTypes.number,
+    numberOfParticipantsVirtually: PropTypes.number,
+    participants: PropTypes.arrayOf(PropTypes.string),
+    deliveryMethod: PropTypes.string,
+    language: PropTypes.arrayOf(PropTypes.string),
+    isIstVisit: PropTypes.string,
+    regionalOfficeTta: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };
 
 const fields = Object.keys(participantsFields);
@@ -251,12 +319,14 @@ const position = 2;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const { recipients, participants, language } = hookForm.getValues();
+  const { isIstVisit } = hookForm.getValues();
 
-  if ((!recipients || !recipients.length)
-      || (!participants || !participants.length)
-      || (!language || !language.length)) {
-    return false;
+  if (isIstVisit === 'yes') {
+    return pageComplete(hookForm, [...fields, 'regionalOfficeTta']);
+  }
+
+  if (isIstVisit === 'no') {
+    return pageComplete(hookForm, [...fields, 'recipients']);
   }
 
   return pageComplete(hookForm, fields);
