@@ -25,4 +25,15 @@ jobs:
         env:
           SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text": "https://github.com/HHS/Head-Start-TTADP/pull/2068"}' $SLACK_WEBHOOK_URL_TEST
+        curl -X POST -H 'Content-type: application/json' \
+        --data '{
+          "blocks": [
+            {
+              "type": "section",
+              "text": {
+                "type": "mrkdwn",
+                "text": "<https://github.com/HHS/Head-Start-TTADP/pull/2068|PR #2068: New feature>"
+              }
+            }
+          ]
+        }' $SLACK_WEBHOOK_URL_TEST
