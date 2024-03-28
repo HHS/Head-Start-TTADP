@@ -25,5 +25,4 @@ jobs:
         env:
           SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
         run: |
-          PR_LINK="${{ github.server_url }}/${{ github.repository }}/pull/${{ github.event.pull_request.number }}"
-          curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A new pull request (#${{ github.event.pull_request.number }}) has been opened! <${PR_LINK}|View Pull Request>\"}" $SLACK_WEBHOOK_URL_TEST
+          curl -X POST -H 'Content-type: application/json' --data '{"text": "https://github.com/HHS/Head-Start-TTADP/pull/2068"}' $SLACK_WEBHOOK_URL_TEST
