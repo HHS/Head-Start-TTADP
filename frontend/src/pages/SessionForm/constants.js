@@ -26,7 +26,6 @@ export const sessionSummaryFields = {
 };
 
 export const participantsFields = {
-  participants: [],
   deliveryMethod: '',
   numberOfParticipants: '',
   language: [],

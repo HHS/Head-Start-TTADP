@@ -63,9 +63,12 @@ const Participants = ({ formData }) => {
     const {
       istSelectionComplete,
       recipients,
+      participants,
     } = formData;
 
-    if (!istSelectionComplete && recipients && recipients.length) {
+    const formStarted = (recipients && recipients.length) || (participants && participants.length);
+
+    if (!istSelectionComplete && formStarted) {
       setValue('isIstVisit', 'no');
     }
 
@@ -78,6 +81,7 @@ const Participants = ({ formData }) => {
   useDeepCompareEffect(() => {
     if (isIstVisit) {
       setValue('recipients', []);
+      setValue('participants', []);
     }
 
     if (isNotIstVisit) {
@@ -126,7 +130,26 @@ const Participants = ({ formData }) => {
       </FormItem>
 
       {isNotIstVisit && (
-        <RecipientsWithGroups />
+        <>
+          <RecipientsWithGroups />
+          <div className="margin-top-2">
+            <FormItem
+              label="Recipient participants "
+              name="participants"
+            >
+              <MultiSelect
+                name="participants"
+                control={control}
+                placeholderText={placeholderText}
+                options={
+              recipientParticipants
+                .map((participant) => ({ value: participant, label: participant }))
+                }
+                required="Select at least one participant"
+              />
+            </FormItem>
+          </div>
+        </>
       )}
 
       {isIstVisit && (
@@ -149,23 +172,6 @@ const Participants = ({ formData }) => {
       </div>
       )}
 
-      <div className="margin-top-2">
-        <FormItem
-          label="Recipient participants "
-          name="participants"
-        >
-          <MultiSelect
-            name="participants"
-            control={control}
-            placeholderText={placeholderText}
-            options={
-              recipientParticipants
-                .map((participant) => ({ value: participant, label: participant }))
-            }
-            required="Select at least one participant"
-          />
-        </FormItem>
-      </div>
       <div aria-live="polite">
         {isHybrid ? (
           <>
@@ -341,11 +347,11 @@ export const isPageComplete = (hookForm) => {
   const { isIstVisit } = hookForm.getValues();
 
   if (isIstVisit === 'yes') {
-    return pageComplete(hookForm, [...fields, 'regionalOfficeTta']);
+    return pageComplete(hookForm, [...fields, 'regionalOfficeTta'], true);
   }
 
   if (isIstVisit === 'no') {
-    return pageComplete(hookForm, [...fields, 'recipients']);
+    return pageComplete(hookForm, [...fields, 'recipients', 'participants']);
   }
 
   return pageComplete(hookForm, fields);
