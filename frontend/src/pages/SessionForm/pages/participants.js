@@ -70,7 +70,7 @@ const Participants = ({ formData }) => {
     }
 
     if (!istSelectionComplete) {
-      setValue('istVisitSelectionRequired', true);
+      setValue('istSelectionComplete', true);
     }
   }, [formData, setValue]);
 
