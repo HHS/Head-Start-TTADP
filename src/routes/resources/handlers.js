@@ -30,13 +30,20 @@ export async function getResourcesDashboardData(req, res) {
   res.json(response);
 }
 
-export async function getFlatResourcesDashboardData(req, res) {
-  // console.time('overallendpoint');
+export async function getFlatResourcesDataWithCache(req, res) {
   const userId = await currentUserId(req, res);
   const query = await setReadRegions(req.query, userId);
+  const key = `getFlatResourcesDashboardData?v=${RESOURCE_DATA_CACHE_VERSION}&${JSON.stringify(query)}`;
 
-  const scopes = await filtersToScopes(query);
-  const response = await resourceDashboardFlat(scopes);
-  // console.timeEnd('overallendpoint');
+  const response = await getCachedResponse(
+    key,
+    async () => {
+      const scopes = await filtersToScopes(query);
+      const data = await resourceDashboardFlat(scopes);
+      return JSON.stringify(data);
+    },
+    JSON.parse,
+  );
+
   res.json(response);
 }
