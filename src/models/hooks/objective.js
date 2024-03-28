@@ -196,7 +196,7 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
     if (goal && goal.objectives) {
       // if there is, we then need to check to see if it needs to be moved to "in progress"
       const atLeastOneInProgress = goal.objectives.some(
-        (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS,
+        (o) => o.status === OBJECTIVE_STATUS.IN_PROGRESS || o.status === OBJECTIVE_STATUS.COMPLETE,
       );
 
       // and if so, we update it (storing the previous status so we can revert if needed)

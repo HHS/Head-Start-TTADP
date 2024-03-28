@@ -13,10 +13,14 @@ describe('objective model hooks', () => {
   let recipient;
   let grant;
   let goal;
+  let additionalTestGoal;
 
   let objective1;
   let objective2;
   let objective3;
+
+  let objective4;
+  let objective5;
 
   beforeAll(async () => {
     recipient = await Recipient.create({
@@ -40,19 +44,58 @@ describe('objective model hooks', () => {
       grantId: grant.id,
       createdVia: 'rtr',
     });
+
+    additionalTestGoal = await Goal.create({
+      name: 'Goal 2 draft for testing',
+      status: 'Draft',
+      endDate: null,
+      isFromSmartsheetTtaPlan: false,
+      onApprovedAR: false,
+      grantId: grant.id,
+      createdVia: 'rtr',
+    });
+
+    objective1 = await Objective.create({
+      title: 'Objective 1',
+      goalId: goal.id,
+      status: OBJECTIVE_STATUS.DRAFT,
+    }, { individualHooks: true });
+
+    objective2 = await Objective.create({
+      title: 'Objective 2',
+      goalId: goal.id,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    }, { individualHooks: true });
+    objective3 = await Objective.create({
+      title: 'Objective 3',
+      goalId: goal.id,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    }, { individualHooks: true });
+
+    objective4 = await Objective.create({
+      title: 'Objective 4',
+      goalId: additionalTestGoal.id,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    }, { individualHooks: true });
+
+    objective5 = await Objective.create({
+      title: 'Objective 5',
+      goalId: additionalTestGoal.id,
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+    }, { individualHooks: true });
   });
 
   afterAll(async () => {
     await Objective.destroy({
       where: {
-        id: [objective1.id, objective2.id, objective3.id],
+        id: [objective1.id, objective2.id, objective3.id, objective4.id, objective5.id],
       },
       force: true,
     });
 
     await Goal.destroy({
       where: {
-        id: goal.id,
+        id: [goal.id, additionalTestGoal.id],
       },
       force: true,
     });
@@ -73,12 +116,6 @@ describe('objective model hooks', () => {
   });
 
   it('does not update when the goal does not match the qualifications', async () => {
-    objective1 = await Objective.create({
-      title: 'Objective 1',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.DRAFT,
-    }, { individualHooks: true });
-
     let testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
 
@@ -95,7 +132,7 @@ describe('objective model hooks', () => {
     await Objective.destroy({ where: { id: objective1.id }, force: true });
   });
 
-  it('updates when the goal matches the qualifications', async () => {
+  it('updates when the goal matches the qualifications (in progress objective)', async () => {
     let testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Draft');
     expect(testGoal.id).toEqual(goal.id);
@@ -107,17 +144,6 @@ describe('objective model hooks', () => {
         individualHooks: true,
       },
     );
-
-    objective2 = await Objective.create({
-      title: 'Objective 2',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-    }, { individualHooks: true });
-    objective3 = await Objective.create({
-      title: 'Objective 3',
-      goalId: goal.id,
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-    }, { individualHooks: true });
 
     testGoal = await Goal.findByPk(goal.id);
     expect(testGoal.status).toEqual('Not Started');
@@ -135,10 +161,34 @@ describe('objective model hooks', () => {
     await Objective.update({ status: OBJECTIVE_STATUS.COMPLETE }, {
       where: { id: [objective3.id, objective2.id] },
       individualHooks: true,
-
     });
 
     testGoal = await Goal.findByPk(goal.id);
+    expect(testGoal.status).toEqual('In Progress');
+  });
+
+  it('updates when the goal matches the qualifications (completed objective)', async () => {
+    let testGoal = await Goal.findByPk(additionalTestGoal.id);
+    expect(testGoal.status).toEqual('Draft');
+    expect(testGoal.id).toEqual(additionalTestGoal.id);
+
+    await Goal.update(
+      { status: 'Not Started' },
+      {
+        where: { id: additionalTestGoal.id },
+        individualHooks: true,
+      },
+    );
+
+    testGoal = await Goal.findByPk(additionalTestGoal.id);
+    expect(testGoal.status).toEqual('Not Started');
+
+    await Objective.update({ status: OBJECTIVE_STATUS.COMPLETE }, {
+      where: { id: [objective4.id] },
+      individualHooks: true,
+    });
+
+    testGoal = await Goal.findByPk(additionalTestGoal.id);
     expect(testGoal.status).toEqual('In Progress');
   });
 });
