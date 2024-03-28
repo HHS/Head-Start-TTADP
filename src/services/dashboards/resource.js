@@ -331,50 +331,7 @@ const switchToTopicCentric = (input) => {
     });
 };
 
-/*
-  Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
-  If over time the amount of data increases and slows again we can cache the flat table a set frequency.
-*/
-export async function resourceFlatData(scopes) {
-  // console.time('overalltime');
-  // Date to retrieve report data from.
-  const reportCreatedAtDate = '2022-12-01';
-
-  // Get all ActivityReport ID's using SCOPES.
-  // We don't want to write custom filters.
-
-  const reportIds = await ActivityReport.findAll({
-    attributes: [
-      'id',
-    ],
-    where: {
-      [Op.and]: [
-        scopes.activityReport,
-        {
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-          startDate: { [Op.ne]: null },
-          createdAt: { [Op.gt]: reportCreatedAtDate },
-        },
-      ],
-    },
-    raw: true,
-  });
-
-  // console.log('\n\n\n----Report Count: ', reportIds.length, '\n\n\n');
-
-  // Get total number of reports.
-  const totalReportCount = reportIds.length;
-
-  // Write raw sql to generate the flat resource data for the above reportIds.
-  const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
-  const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdFlatResourceHeadersTempTableName = `Z_temp_flat_resources_headers__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
-  const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
-
-  // Create raw sql to get flat table.
+async function GenerateFlatTempTables(reportIds, tblNames) {
   const flatResourceSql = `
   -- 1.) Create AR temp table.
   SELECT
@@ -384,7 +341,7 @@ export async function resourceFlatData(scopes) {
     to_char("startDate", 'Mon-YY') AS "rollUpDate",
     "regionId",
     "calculatedStatus"
-    INTO TEMP ${createdArTempTableName}
+    INTO TEMP ${tblNames.createdArTempTableName}
     FROM "ActivityReports" ar
     WHERE ar."id" IN (${reportIds.map((r) => r.id).join(',')});
 
@@ -392,8 +349,8 @@ export async function resourceFlatData(scopes) {
   SELECT
     ar.id AS "activityReportId",
     aror."resourceId"
-    INTO TEMP ${createdAroResourcesTempTableName}
-    FROM ${createdArTempTableName} ar
+    INTO TEMP ${tblNames.createdAroResourcesTempTableName}
+    FROM ${tblNames.createdArTempTableName} ar
     JOIN "ActivityReportObjectives" aro
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
@@ -407,11 +364,11 @@ export async function resourceFlatData(scopes) {
       domain,
       url,
       title
-      INTO TEMP ${createdResourcesTempTableName}
+      INTO TEMP ${tblNames.createdResourcesTempTableName}
       FROM "Resources"
       WHERE id IN (
       SELECT DISTINCT "resourceId"
-        FROM ${createdAroResourcesTempTableName}
+        FROM ${tblNames.createdAroResourcesTempTableName}
       );
 
       -- 4.) Create ARO Topics temp table.
@@ -419,8 +376,8 @@ export async function resourceFlatData(scopes) {
       ar.id AS "activityReportId",
       arot."activityReportObjectiveId", -- We need to group by this incase of multiple aro's.
       arot."topicId"
-      INTO TEMP ${createdAroTopicsTempTableName}
-      FROM ${createdArTempTableName}  ar
+      INTO TEMP ${tblNames.createdAroTopicsTempTableName}
+      FROM ${tblNames.createdArTempTableName}  ar
       JOIN "ActivityReportObjectives" aro
         ON ar."id" = aro."activityReportId"
       JOIN "ActivityReportObjectiveTopics" arot
@@ -431,11 +388,11 @@ export async function resourceFlatData(scopes) {
       SELECT
         id,
         name
-        INTO TEMP ${createdTopicsTempTableName}
+        INTO TEMP ${tblNames.createdTopicsTempTableName}
         FROM "Topics"
         WHERE id IN (
         SELECT DISTINCT "topicId"
-          FROM ${createdAroTopicsTempTableName}
+          FROM ${tblNames.createdAroTopicsTempTableName}
         );
 
       -- 6.) Create Flat Resource temp table.
@@ -447,27 +404,25 @@ export async function resourceFlatData(scopes) {
       arorr.title,
       arorr.url,
       ar."numberOfParticipants"
-      INTO TEMP ${createdFlatResourceTempTableName}
-      FROM ${createdArTempTableName} ar
-      JOIN ${createdAroResourcesTempTableName} aror
+      INTO TEMP ${tblNames.createdFlatResourceTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN ${tblNames.createdAroResourcesTempTableName} aror
         ON ar.id = aror."activityReportId"
-      JOIN ${createdResourcesTempTableName} arorr
+      JOIN ${tblNames.createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id;
 
       -- 7.) Create date headers.
       SELECT
           generate_series(
-            date_trunc('month', (SELECT MIN("startDate") FROM ${createdFlatResourceTempTableName})),
-            date_trunc('month', (SELECT MAX("startDate") FROM ${createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MIN("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MAX("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
             interval '1 month'
           )::date AS "date"
-        INTO TEMP ${createdFlatResourceHeadersTempTableName};
+        INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
-  // console.log('\n\n\n-----sql: ', flatResourceSql, '\n\n\n');
+
   const transaction = await sequelize.transaction();
-  // console.log('\n\n\n------AFter run sql');
-  // console.time('maincreate');
-  // Create base tables.
+  // Execute the flat table sql.
   await sequelize.query(
     flatResourceSql,
     {
@@ -475,22 +430,24 @@ export async function resourceFlatData(scopes) {
       transaction,
     },
   );
-  // console.timeEnd('maincreate');
-  // console.time('resourceUseTime');
-  // Get resource use result.
-  const resourceUseSQL = `
+  return transaction;
+}
+
+function getResourceUseSql(tblNames, transaction) {
+  return sequelize.query(
+    `
   WITH urlvals AS (
     SELECT
         url,
         title,
         "rollUpDate",
         count(id) AS "resourceCount"
-      FROM ${createdFlatResourceTempTableName} tf
+      FROM ${tblNames.createdFlatResourceTempTableName} tf
       GROUP BY url, title, "rollUpDate"
       ORDER BY "url", tf."rollUpDate" ASC),
     distincturls AS (
     SELECT DISTINCT url AS url
-    FROM ${createdFlatResourceTempTableName}
+    FROM ${tblNames.createdFlatResourceTempTableName}
     ),
     totals AS
     (
@@ -504,7 +461,7 @@ export async function resourceFlatData(scopes) {
     ),
     series AS
     (
-      SELECT * FROM ${createdFlatResourceHeadersTempTableName}
+      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
     )
       SELECT
       d.url,
@@ -521,20 +478,16 @@ export async function resourceFlatData(scopes) {
       LEFT JOIN urlvals u
         ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
       ORDER BY 1,4 ASC;
-  `;
-  // console.log('\n\n\n-----resourceUseSQL: ', resourceUseSQL, '\n\n\n');
-  let resourceUseResult = sequelize.query(
-    resourceUseSQL,
+  `,
     {
       type: QueryTypes.SELECT,
       transaction,
     },
   );
-  // console.timeEnd('resourceUseTime');
+}
 
-  // console.time('topicUseTime');
-  // Get topic use result.
-  let topicUseResult = sequelize.query(
+function getTopicsUseSql(tblNames, transaction) {
+  return sequelize.query(
     `
   WITH topics AS (
       SELECT
@@ -542,10 +495,10 @@ export async function resourceFlatData(scopes) {
         f."rollUpDate",
 
         count(f.id) AS "resourceCount"
-      FROM ${createdTopicsTempTableName}  t
-        JOIN ${createdAroTopicsTempTableName} arot
+      FROM ${tblNames.createdTopicsTempTableName}  t
+        JOIN ${tblNames.createdAroTopicsTempTableName} arot
         ON t.id = arot."topicId"
-        JOIN ${createdFlatResourceTempTableName} f
+        JOIN ${tblNames.createdFlatResourceTempTableName} f
         ON arot."activityReportId" = f.id
         GROUP BY t.name, f."rollUpDate"
         ORDER BY t.name, f."rollUpDate" ASC
@@ -561,7 +514,7 @@ export async function resourceFlatData(scopes) {
     ),
     series AS
     (
-      SELECT * FROM ${createdFlatResourceHeadersTempTableName}
+      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
     )
     SELECT
       d.name,
@@ -569,7 +522,7 @@ export async function resourceFlatData(scopes) {
       s."date",
       coalesce(t."resourceCount", 0) AS "resourceCount",
       tt."totalCount"
-    FROM ${createdTopicsTempTableName} d
+    FROM ${tblNames.createdTopicsTempTableName} d
     JOIN series s
       ON 1=1
     JOIN totals tt
@@ -582,16 +535,16 @@ export async function resourceFlatData(scopes) {
       transaction,
     },
   );
-  // console.timeEnd('topicUseTime');
+}
 
-  /* Overview */
-  // 1.) Participants
-  let numberOfParticipants = sequelize.query(`
+function getOverview(tblNames, totalReportCount, transaction) {
+  // - Number of Participants -
+  const numberOfParticipants = sequelize.query(`
   WITH ar_participants AS (
     SELECT
     id,
     "numberOfParticipants"
-    FROM ${createdFlatResourceTempTableName} f
+    FROM ${tblNames.createdFlatResourceTempTableName} f
     GROUP BY id, "numberOfParticipants"
   )
   SELECT
@@ -602,12 +555,12 @@ export async function resourceFlatData(scopes) {
     transaction,
   });
 
-  // 2.) Recipients.
-  let numberOfRecipients = sequelize.query(`
+  // - Number of Recipients -
+  const numberOfRecipients = sequelize.query(`
   WITH ars AS (
     SELECT
     DISTINCT id
-    FROM ${createdFlatResourceTempTableName} f
+    FROM ${tblNames.createdFlatResourceTempTableName} f
   ), recipients AS (
     SELECT
       DISTINCT r.id
@@ -627,8 +580,8 @@ export async function resourceFlatData(scopes) {
     transaction,
   });
 
-  // 3.) Reports with Resources.
-  let pctOfReportsWithResources = sequelize.query(`
+  // - Reports with Resources Pct -
+  const pctOfReportsWithResources = sequelize.query(`
   SELECT
     count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
     ${totalReportCount}::decimal AS "totalReportsCount",
@@ -637,23 +590,23 @@ export async function resourceFlatData(scopes) {
     ELSE
       (round(count(DISTINCT "activityReportId")::decimal / ${totalReportCount}::decimal, 4) * 100)::decimal
     END AS "resourcesPct"
-  FROM ${createdAroResourcesTempTableName};
+  FROM ${tblNames.createdAroResourcesTempTableName};
   `, {
     type: QueryTypes.SELECT,
     transaction,
   });
 
-  // 4.) ECKLKC resource percentage.
-  let pctOfECKLKCResources = sequelize.query(`
+  // - Number of Reports with ECLKC Resources Pct -
+  const pctOfECKLKCResources = sequelize.query(`
     WITH eclkc AS (
       SELECT
     COUNT(DISTINCT url) AS "eclkcCount"
-    FROM  ${createdFlatResourceTempTableName}
+    FROM  ${tblNames.createdFlatResourceTempTableName}
     WHERE url ilike '%eclkc.ohs.acf.hhs.gov%'
     ), allres AS (
     SELECT
     COUNT(DISTINCT url) AS "allCount"
-    FROM ${createdFlatResourceTempTableName}
+    FROM ${tblNames.createdFlatResourceTempTableName}
     )
     SELECT
       e."eclkcCount",
@@ -672,15 +625,91 @@ export async function resourceFlatData(scopes) {
   });
 
   // 5.) Date Headers table.
-  let dateHeaders = sequelize.query(`
+  const dateHeaders = sequelize.query(`
    SELECT
     to_char("date", 'Mon-YY') AS "rollUpDate"
-   FROM ${createdFlatResourceHeadersTempTableName};
+   FROM ${tblNames.createdFlatResourceHeadersTempTableName};
  `, {
     type: QueryTypes.SELECT,
     transaction,
   });
+  return {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  };
+}
 
+/*
+  Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
+  If over time the amount of data increases and slows again we can cache the flat table a set frequency.
+*/
+export async function resourceFlatData(scopes) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
+
+  // Get all ActivityReport ID's using SCOPES.
+  // We don't want to write custom filters.
+  const reportIds = await ActivityReport.findAll({
+    attributes: [
+      'id',
+    ],
+    where: {
+      [Op.and]: [
+        scopes.activityReport,
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          startDate: { [Op.ne]: null },
+          createdAt: { [Op.gt]: reportCreatedAtDate },
+        },
+      ],
+    },
+    raw: true,
+  });
+
+  // Get total number of reports.
+  const totalReportCount = reportIds.length;
+
+  // Create temp table names.
+  const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
+  const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_flat_resources_headers__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+  const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+
+  const tempTableNames = {
+    createdArTempTableName,
+    createdAroResourcesTempTableName,
+    createdResourcesTempTableName,
+    createdAroTopicsTempTableName,
+    createdTopicsTempTableName,
+    createdFlatResourceTempTableName,
+    createdFlatResourceHeadersTempTableName,
+  };
+
+  // 1. Generate the flat sql temp tables.
+  const transaction = await GenerateFlatTempTables(reportIds, tempTableNames);
+
+  // 2. Get resource use sql.
+  let resourceUseResult = getResourceUseSql(tempTableNames, transaction);
+
+  // 3. Get topic use sql.
+  let topicUseResult = getTopicsUseSql(tempTableNames, transaction);
+
+  // 4. Get Overview sql.
+  let {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  } = getOverview(tempTableNames, totalReportCount, transaction);
+
+  // 5. Execute all the sql queries.
   [
     resourceUseResult,
     topicUseResult,
@@ -701,13 +730,15 @@ export async function resourceFlatData(scopes) {
     ],
   );
 
-  // Commit is required to run the query.
+  // 6. Commit is required to run the query.
   transaction.commit();
-  // console.timeEnd('overalltime');
+
+  // 7. Restructure Overview.
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
   };
 
+  // 8. Return the data.
   return {
     resourceUseResult, topicUseResult, overView, dateHeaders,
   };
@@ -1990,7 +2021,6 @@ export async function resourceDashboard(scopes) {
 }
 
 export async function rollUpResourceUse(data) {
-  // console.log('\n\n\n------------------\n\n\n', data.resourceUseResult, '\n\n\n------------------\n\n\n');
   return data.resourceUseResult.reduce((accumulator, resource) => {
     const exists = accumulator.find((r) => r.url === resource.url);
     if (!exists) {
@@ -2031,18 +2061,9 @@ export async function rollUpTopicUse(data) {
 }
 
 export async function resourceDashboardFlat(scopes) {
-  // Get resources from SQL.
-  // console.time('sqlonly');
   const data = await resourceFlatData(scopes);
-  // console.timeEnd('sqlonly');
-
-  // console.time('rolluponly');
-  // Roll up resource use data to each distinct url.
   const rolledUpResourceUse = await rollUpResourceUse(data);
-
-  // Roll up resource use data to each distinct url.
   const rolledUpTopicUse = await rollUpTopicUse(data);
-  // console.timeEnd('rolluponly');
   return {
     overview: data.overView, rolledUpResourceUse, rolledUpTopicUse, dateHeaders: data.dateHeaders,
   };
