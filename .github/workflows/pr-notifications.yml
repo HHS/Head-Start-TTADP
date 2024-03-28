@@ -32,7 +32,8 @@ jobs:
                 "type": "section",
                 "text": {
                   "type": "mrkdwn",
-                  "text": "<https://github.com/HHS/Head-Start-TTADP/pull/2068|PR #2068: New feature>"
+                  "text": "<https://github.com/HHS/Head-Start-TTADP/pull/2068|PR #2068: New feature>",
+                  "unfurl_links": true
                 }
               }
             ]
