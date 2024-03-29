@@ -624,18 +624,42 @@ describe('Resources dashboard', () => {
   it('should roll up resource use results correctly', async () => {
     const data = {
       resourceUseResult: [
-        { url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21' },
-        { url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21' },
-        { url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21' },
-        { url: 'http://google.com', resourceCount: 4, rollUpDate: 'Apr-21' },
-        { url: 'http://github.com', resourceCount: 1, rollUpDate: 'Jan-21' },
-        { url: 'http://github.com', resourceCount: 2, rollUpDate: 'Feb-21' },
-        { url: 'http://github.com', resourceCount: 3, rollUpDate: 'Mar-21' },
-        { url: 'http://github.com', resourceCount: 4, rollUpDate: 'Apr-21' },
-        { url: 'http://yahoo.com', resourceCount: 1, rollUpDate: 'Jan-21' },
-        { url: 'http://yahoo.com', resourceCount: 2, rollUpDate: 'Feb-21' },
-        { url: 'http://yahoo.com', resourceCount: 3, rollUpDate: 'Mar-21' },
-        { url: 'http://yahoo.com', resourceCount: 4, rollUpDate: 'Apr-21' },
+        {
+          url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://google.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://github.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://github.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://github.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://github.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://yahoo.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://yahoo.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://yahoo.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+        },
+        {
+          url: 'http://yahoo.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+        },
       ],
     };
 
@@ -643,30 +667,63 @@ describe('Resources dashboard', () => {
 
     expect(result).toEqual([
       {
-        url: 'http://google.com',
+        url: 'http://github.com',
+        total: 10,
+        title: null,
+        sortBy: 'http://github.com',
         resources: [
-          { url: 'http://google.com', rollUpDate: 'Jan-21', resourceCount: 1 },
-          { url: 'http://google.com', rollUpDate: 'Feb-21', resourceCount: 2 },
-          { url: 'http://google.com', rollUpDate: 'Mar-21', resourceCount: 3 },
-          { url: 'http://google.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+          {
+            url: 'http://github.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://github.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://github.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://github.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+          },
         ],
       },
       {
-        url: 'http://github.com',
+        url: 'http://google.com',
+        title: null,
+        sortBy: 'http://google.com',
+        total: 10,
         resources: [
-          { url: 'http://github.com', rollUpDate: 'Jan-21', resourceCount: 1 },
-          { url: 'http://github.com', rollUpDate: 'Feb-21', resourceCount: 2 },
-          { url: 'http://github.com', rollUpDate: 'Mar-21', resourceCount: 3 },
-          { url: 'http://github.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+          {
+            url: 'http://google.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://google.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://google.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://google.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+          },
         ],
       },
       {
         url: 'http://yahoo.com',
+        total: 10,
+        title: null,
+        sortBy: 'http://yahoo.com',
         resources: [
-          { url: 'http://yahoo.com', rollUpDate: 'Jan-21', resourceCount: 1 },
-          { url: 'http://yahoo.com', rollUpDate: 'Feb-21', resourceCount: 2 },
-          { url: 'http://yahoo.com', rollUpDate: 'Mar-21', resourceCount: 3 },
-          { url: 'http://yahoo.com', rollUpDate: 'Apr-21', resourceCount: 4 },
+          {
+            url: 'http://yahoo.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://yahoo.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://yahoo.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+          },
+          {
+            url: 'http://yahoo.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+          },
         ],
       },
     ]);
@@ -676,22 +733,22 @@ describe('Resources dashboard', () => {
     const data = {
       topicUseResult: [
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1',
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2',
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3',
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1',
+          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2',
+          name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3',
+          name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
         },
       ],
     };
@@ -701,18 +758,32 @@ describe('Resources dashboard', () => {
     expect(result).toEqual([
       {
         name: 'CLASS: Classroom Organization',
+        total: '6',
         topics: [
-          { name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1' },
-          { name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2' },
-          { name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3' },
+          {
+            name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          },
+          {
+            name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          },
+          {
+            name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          },
         ],
       },
       {
         name: 'ERSEA',
+        total: '6',
         topics: [
-          { name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1' },
-          { name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2' },
-          { name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3' },
+          {
+            name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          },
+          {
+            name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          },
+          {
+            name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          },
         ],
       },
     ]);
