@@ -326,6 +326,7 @@ jobs:
           name: Notify Slack test
           command: |
             echo $CIRCLE_COMMIT_MESSAGE
+            echo "testing"
             # Attempt to extract PR number from the commit message
             PR_NUMBER=$(echo $CIRCLE_COMMIT_MESSAGE | grep -o -E '#[0-9]+' | head -n 1 | cut -c 2-)
             if [ ! -z "$PR_NUMBER" ]; then
@@ -335,7 +336,7 @@ jobs:
               MESSAGE_TEXT=":rocket: Deployment to production was successful!"
             fi
 
-            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            curl -v -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
