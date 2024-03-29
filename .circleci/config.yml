@@ -325,25 +325,15 @@ jobs:
       - run:
           name: Notify Slack test
           command: |
-            echo $CIRCLE_COMMIT_MESSAGE
-            echo "testing"
-            echo "Branch: $CIRCLE_BRANCH"
-            echo $CIRCLE_PULL_REQUEST
-
-            curl -v -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data '{"channel": "github-test", "text": "Hello World!"}' \
-            https://slack.com/api/chat.postMessage
-            # Attempt to extract PR number from the commit message
-            PR_NUMBER=$(echo $CIRCLE_COMMIT_MESSAGE | grep -o -E '#[0-9]+' | head -n 1 | cut -c 2-)
-            if [ ! -z "$PR_NUMBER" ]; then
-              PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER"
-              MESSAGE_TEXT=":rocket: Deployment of PR <https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER|$PR_NUMBER> to production was successful!"
+            # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
             else
               MESSAGE_TEXT=":rocket: Deployment to production was successful!"
             fi
 
-            curl -v -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
