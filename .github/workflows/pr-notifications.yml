@@ -5,6 +5,9 @@ on:
     # branches:
     #   - production
     types: [opened, ready_for_review, closed, reopened]
+  push:
+    branches:
+      - kw-github-slack
 
 jobs:
   # notify_slack:
