@@ -2024,7 +2024,7 @@ export async function resourceDashboard(scopes) {
 }
 
 export async function rollUpResourceUse(data) {
-  return data.resourceUseResult.reduce((accumulator, resource) => {
+  const rolledUpResourceUse = data.resourceUseResult.reduce((accumulator, resource) => {
     const exists = accumulator.find((r) => r.url === resource.url);
     if (!exists) {
       // Add a property with the resource's URL.
@@ -2032,6 +2032,9 @@ export async function rollUpResourceUse(data) {
         ...accumulator,
         {
           url: resource.url,
+          title: resource.title,
+          sortBy: resource.title || resource.url,
+          total: resource.totalCount,
           resources: [{ ...resource }],
         },
       ];
@@ -2041,10 +2044,14 @@ export async function rollUpResourceUse(data) {
     exists.resources.push(resource);
     return accumulator;
   }, []);
+
+  // Sort by total and name or url.
+  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
+  return rolledUpResourceUse;
 }
 
 export async function rollUpTopicUse(data) {
-  return data.topicUseResult.reduce((accumulator, topic) => {
+  const rolledUpTopicUse = data.topicUseResult.reduce((accumulator, topic) => {
     const exists = accumulator.find((r) => r.name === topic.name);
     if (!exists) {
       // Add a property with the resource's name.
@@ -2052,6 +2059,7 @@ export async function rollUpTopicUse(data) {
         ...accumulator,
         {
           name: topic.name,
+          total: topic.totalCount,
           topics: [{ ...topic }],
         },
       ];
@@ -2061,6 +2069,10 @@ export async function rollUpTopicUse(data) {
     exists.topics.push(topic);
     return accumulator;
   }, []);
+
+  // Sort by total then topic name.
+  rolledUpTopicUse.sort((r1, r2) => r2.total - r1.total || r1.name.localeCompare(r2.name));
+  return rolledUpTopicUse;
 }
 
 export async function resourceDashboardFlat(scopes) {
