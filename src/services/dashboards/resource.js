@@ -491,28 +491,36 @@ function getResourceUseSql(tblNames, transaction) {
 }
 
 function getTopicsUseSql(tblNames, transaction) {
-  return sequelize.query(
-    `
+  const topicUseSql = `
   WITH topics AS (
       SELECT
+        f.id,
         t.name,
         f."rollUpDate",
-
-        count(f.id) AS "resourceCount"
+        count(DISTINCT f.url) AS "resourceCount" -- Only count each resource once per ar and topic.
       FROM ${tblNames.createdTopicsTempTableName}  t
         JOIN ${tblNames.createdAroTopicsTempTableName} arot
         ON t.id = arot."topicId"
         JOIN ${tblNames.createdFlatResourceTempTableName} f
         ON arot."activityReportId" = f.id
-        GROUP BY t.name, f."rollUpDate"
+        GROUP BY f.id, t.name, f."rollUpDate"
         ORDER BY t.name, f."rollUpDate" ASC
+    ),
+    topicsperdate AS
+    (
+    SELECT
+      "name",
+      "rollUpDate",
+      SUM("resourceCount") AS "resourceCount"
+    FROM topics
+    GROUP BY "name", "rollUpDate"
     ),
     totals AS
     (
       SELECT
         name,
         SUM("resourceCount") AS "totalCount"
-      FROM topics
+      FROM topicsperdate
       GROUP BY name
       ORDER BY SUM("resourceCount") DESC
     ),
@@ -531,9 +539,12 @@ function getTopicsUseSql(tblNames, transaction) {
       ON 1=1
     JOIN totals tt
       ON d.name = tt.name
-    LEFT JOIN topics t
+    LEFT JOIN topicsperdate t
       ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
-    ORDER BY 1, 3 ASC;`,
+    ORDER BY 1, 3 ASC;`;
+  // console.log('\n\n\n--Topic use sql', topicUseSql);
+  return sequelize.query(
+    topicUseSql,
     {
       type: QueryTypes.SELECT,
       transaction,
@@ -678,6 +689,8 @@ export async function resourceFlatData(scopes) {
 
   // Get total number of reports.
   const totalReportCount = reportIds.length;
+
+  // console.log('\n\n\n-----reportIds flat', reportIds);
 
   // Create temp table names.
   const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
