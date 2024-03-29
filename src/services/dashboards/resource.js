@@ -454,10 +454,13 @@ function getResourceUseSql(tblNames, transaction) {
     (
       SELECT
       url,
+      title,
       SUM("resourceCount") AS "totalCount"
       FROM urlvals
-      GROUP BY url
-      ORDER BY SUM("resourceCount") DESC
+      GROUP BY url, title
+      ORDER BY SUM("resourceCount")  DESC,
+      -- coalesce(title, url) ASC
+      url ASC
       LIMIT 10
     ),
     series AS
@@ -1914,7 +1917,7 @@ Expected JSON:
             title: 'Jan-22',
              value: '14',
           },
-          {
+          {79
             title: 'Feb-22',
             value: '20',
           },
@@ -2046,7 +2049,8 @@ export async function rollUpResourceUse(data) {
   }, []);
 
   // Sort by total and name or url.
-  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
+  // rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
+  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.url.localeCompare(r2.url));
   return rolledUpResourceUse;
 }
 
