@@ -2,25 +2,15 @@ name: Pull Request Notifications
 
 on:
   pull_request:
-    # branches:
-    #   - production
-    types: [opened, ready_for_review, closed, reopened]
+    branches:
+      - production
+    types: [ready_for_review]
 
 jobs:
-  # notify_slack:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Notify slack when a PR to production is opened
-  #     env:
-  #       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  #     run: |
-  #       PR_LINK="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/pull/${{ github.event.pull_request.number }}"
-  #       curl -X POST -H 'Content-type: application/json' --data "{\"text\": \":rocket: A pull request (#${{ github.event.pull_request.number }}) to *production* is now open! <${PR_LINK}|Click here to view the PR>\"}" $SLACK_WEBHOOK_URL
-
-  notify_slack_any_pr:
+  notify_slack:
     runs-on: ubuntu-latest
     steps:
-      - name: Notify second Slack channel for any PR opened
+      - name: Notify slack when a PR to production is opened
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
@@ -36,6 +26,6 @@ jobs:
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -H 'Content-type: application/json;charset=utf-8' \
           --data "{
-            \"channel\": \"github-test\",
+            \"channel\": \"acf-ohs-ttahub--contractor-customer-team\",
             \"text\": \"$TEXT_MESSAGE\"
           }" https://slack.com/api/chat.postMessage
