@@ -325,6 +325,7 @@ jobs:
       - run:
           name: Notify Slack test
           command: |
+            echo $CIRCLE_COMMIT_MESSAGE
             # Attempt to extract PR number from the commit message
             PR_NUMBER=$(echo $CIRCLE_COMMIT_MESSAGE | grep -o -E '#[0-9]+' | head -n 1 | cut -c 2-)
             if [ ! -z "$PR_NUMBER" ]; then
