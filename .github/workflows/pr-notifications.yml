@@ -23,10 +23,19 @@ jobs:
       - name: Notify second Slack channel for any PR opened
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          if [ "$PR_NUMBER" != "" ]; then
+            PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
+            TEXT_MESSAGE=":rocket: A production PR <$PR_LINK|$PR_NUMBER> is now open!"
+          else
+            TEXT_MESSAGE=":rocket: A new change was pushed to the production branch. Check the latest commits for more details."
+          fi
+
           curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
           -H 'Content-type: application/json;charset=utf-8' \
-          --data '{
-            "channel": "github-test",
-            "text": ":rocket: A production PR <https://github.com/HHS/Head-Start-TTADP/pull/2068|2068> is now open!"
-          }' https://slack.com/api/chat.postMessage
+          --data "{
+            \"channel\": \"github-test\",
+            \"text\": \"$TEXT_MESSAGE\"
+          }" https://slack.com/api/chat.postMessage
