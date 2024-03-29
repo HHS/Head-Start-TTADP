@@ -7,27 +7,25 @@ import {
   creatorFilter,
   eventIdFilter,
 } from '../../components/filter/trainingReportFilters';
+import { goalNameFilter } from '../../components/filter/goalFilters';
 
-const TRAINING_REPORT_BASE_FILTER_CONFIG = [
-  startDateFilter,
-  creatorFilter,
-  collaboratorsFilter,
-  eventIdFilter,
-];
+const TRAINING_REPORT_FILTER_CONFIG = (withRegions = false) => {
+  const TRAINING_REPORT_BASE_FILTER_CONFIG = [
+    startDateFilter,
+    creatorFilter,
+    collaboratorsFilter,
+    eventIdFilter,
+    goalNameFilter,
+  ];
 
-const TRAINING_REPORT_CONFIG_WITH_REGIONS = [
-  startDateFilter,
-  regionFilter,
-  creatorFilter,
-  collaboratorsFilter,
-  eventIdFilter,
-];
+  if (withRegions) {
+    TRAINING_REPORT_BASE_FILTER_CONFIG.push(regionFilter);
+  }
 
-// sort both by display prop
-TRAINING_REPORT_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
-TRAINING_REPORT_CONFIG_WITH_REGIONS.sort((a, b) => a.display.localeCompare(b.display));
+  return TRAINING_REPORT_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+};
 
-export { TRAINING_REPORT_BASE_FILTER_CONFIG, TRAINING_REPORT_CONFIG_WITH_REGIONS };
+export { TRAINING_REPORT_FILTER_CONFIG };
 
 export const dataPropTypes = PropTypes.shape({
   Creator: PropTypes.string,

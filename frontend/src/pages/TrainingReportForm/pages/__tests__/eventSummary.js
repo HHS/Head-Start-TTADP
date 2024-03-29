@@ -74,11 +74,13 @@ describe('eventSummary', () => {
                     pointOfContact: [{
                       id: 1,
                       fullName: 'Ted User',
+                      nameWithNationalCenters: 'Ted User',
                     }],
                     collaborators: [
                       {
                         id: 2,
                         fullName: 'Tedwina User',
+                        nameWithNationalCenters: 'Tedwina User',
                       },
                     ],
                     creators: [
