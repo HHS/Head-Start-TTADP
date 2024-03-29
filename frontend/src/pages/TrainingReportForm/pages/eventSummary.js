@@ -95,9 +95,6 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
 
   const ownerName = owner && owner.name ? owner.name : '';
 
-  const eventCreatorOptions = !creators
-    ? []
-    : creators.map((o) => ({ value: o.id, label: o.name }));
   return (
     <div className="padding-x-1">
       <Helmet>
@@ -134,9 +131,9 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               <Req />
             </Label>
             <Controller
-              render={({ onChange: controllerOnChange, value }) => (
+              render={({ onChange: controllerOnChange, value: id }) => (
                 <Select
-                  value={eventCreatorOptions.find((option) => option.value === value)}
+                  value={(creators || []).find((option) => option.id === id)}
                   inputId="ownerId"
                   name="ownerId"
                   className="usa-select"
@@ -145,10 +142,12 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                     DropdownIndicator: null,
                   }}
                   onChange={(s) => {
-                    controllerOnChange(s.value);
+                    controllerOnChange(s.id);
                   }}
                   inputRef={register({ required: 'Select an event creator' })}
-                  options={eventCreatorOptions}
+                  options={creators || []}
+                  getOptionLabel={(option) => option.nameWithNationalCenters}
+                  getOptionValue={(option) => option.id}
                   required
                 />
               )}
@@ -240,7 +239,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
                   controllerOnChange(s.map((option) => option.id));
                 }}
                 inputRef={register({ required: 'Select at least one collaborator' })}
-                getOptionLabel={(option) => option.fullName}
+                getOptionLabel={(option) => option.nameWithNationalCenters}
                 getOptionValue={(option) => option.id}
                 options={collaborators}
                 required

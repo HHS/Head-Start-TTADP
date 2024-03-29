@@ -254,6 +254,17 @@ class EventReportPilotGoals{
  * updatedAt : timestamp with time zone
 }
 
+class EventReportPilotNationalCenterUsers{
+ * id : integer : <generated>
+ * eventReportPilotId : integer : REFERENCES "EventReportPilots".id
+ * nationalCenterId : integer : REFERENCES "NationalCenters".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * nationalCenterName : varchar(255)
+ * updatedAt : timestamp with time zone : now()
+ * userName : varchar(255)
+}
+
 class EventReportPilots{
  * id : integer : <generated>
  * collaboratorIds : integer[]
@@ -1356,6 +1367,20 @@ class ZALEventReportPilotGoals{
  session_sig : text
 }
 
+class ZALEventReportPilotNationalCenterUsers{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALEventReportPilots{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2325,6 +2350,7 @@ Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCourses : objectiveCourses, course
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : event, eventReportPilotGoals
+EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
@@ -2370,6 +2396,7 @@ MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReview
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
+NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
@@ -2423,6 +2450,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, 
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportCollaborators : user, reportCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUpdatedBy, reports
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
+Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, groupCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
