@@ -328,6 +328,7 @@ jobs:
             echo $CIRCLE_COMMIT_MESSAGE
             echo "testing"
             echo "Branch: $CIRCLE_BRANCH"
+            echo $CIRCLE_PULL_REQUEST
 
             curl -v -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H 'Content-type: application/json;charset=utf-8' \
