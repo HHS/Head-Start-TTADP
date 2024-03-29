@@ -108,7 +108,7 @@ commands:
           PR_NUMBER=$(echo $CIRCLE_COMMIT_MESSAGE | grep -o -E '#[0-9]+' | head -n 1 | cut -c 2-)
           if [ ! -z "$PR_NUMBER" ]; then
             PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER"
-            MESSAGE_TEXT=":rocket: Deployment of PR #$PR_NUMBER ($PR_LINK) to production was successful!"
+            MESSAGE_TEXT=":rocket: Deployment of PR <https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER|$PR_NUMBER> to production was successful!"
           else
             MESSAGE_TEXT=":rocket: Deployment to production was successful!"
           fi
@@ -311,6 +311,36 @@ parameters:
     default: "867346799"
     type: string
 jobs:
+  notify_slack_test:
+    docker:
+      - image: cimg/base:stable
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+    steps:
+      - run:
+          name: Notify Slack test
+          command: |
+            # Attempt to extract PR number from the commit message
+            PR_NUMBER=$(echo $CIRCLE_COMMIT_MESSAGE | grep -o -E '#[0-9]+' | head -n 1 | cut -c 2-)
+            if [ ! -z "$PR_NUMBER" ]; then
+              PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER"
+              MESSAGE_TEXT=":rocket: Deployment of PR <https://github.com/HHS/Head-Start-TTADP/pull/$PR_NUMBER|$PR_NUMBER> to production was successful!"
+            else
+              MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+            fi
+
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "{
+              \"channel\": \"<< parameters.slack_channel >>\",
+              \"text\": \"$MESSAGE_TEXT\"
+            }" https://slack.com/api/chat.postMessage
+        
   build_and_lint:
     executor: docker-executor
     steps:
@@ -899,6 +929,9 @@ jobs:
 workflows:
   build_test_deploy:
     jobs:
+      - notify_slack_test:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "github-test"
       - build_and_lint
       - build_and_lint_similarity_api
       - test_backend:
