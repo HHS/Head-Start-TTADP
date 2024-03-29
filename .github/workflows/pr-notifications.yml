@@ -19,22 +19,14 @@ jobs:
 
   notify_slack_any_pr:
     runs-on: ubuntu-latest
-    # if: github.event.action == 'opened'
     steps:
       - name: Notify second Slack channel for any PR opened
         env:
-          SLACK_WEBHOOK_URL_TEST: ${{ secrets.SLACK_WEBHOOK_URL_TEST }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         run: |
-          curl -X POST -H 'Content-type: application/json' \
+          curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          -H 'Content-type: application/json;charset=utf-8' \
           --data '{
-            "blocks": [
-              {
-                "type": "section",
-                "text": {
-                  "type": "mrkdwn",
-                  "text": "<https://github.com/HHS/Head-Start-TTADP/pull/2068|PR #2068: New feature>",
-                  "unfurl_links": true
-                }
-              }
-            ]
-          }' $SLACK_WEBHOOK_URL_TEST
+            "channel": "github-test",
+            "text": ":rocket: A production PR <https://github.com/HHS/Head-Start-TTADP/pull/2068|2068> is now open!"
+          }' https://slack.com/api/chat.postMessage
