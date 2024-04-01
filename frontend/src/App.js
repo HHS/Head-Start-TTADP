@@ -255,7 +255,7 @@ function App() {
         />
         <Route
           exact
-          path="/resources-dashboard"
+          path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="resources_dashboard" renderNotFound>
@@ -316,7 +316,7 @@ function App() {
         />
         <Route
           exact
-          path="/regional-dashboard/:reportType(training-reports|activity-reports|all-reports)"
+          path="/dashboards/regional-dashboard/:reportType(training-reports|activity-reports|all-reports)"
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <FeatureFlag flag="training_reports_dashboard" renderNotFound>
