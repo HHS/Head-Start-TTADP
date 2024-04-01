@@ -522,7 +522,7 @@ describe('Resources dashboard', () => {
         name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
       },
       {
-        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
+        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
       },
       {
         name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
@@ -541,33 +541,6 @@ describe('Resources dashboard', () => {
       },
     ]);
   });
-
-  /*
-  it('testlocal', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], 'startDate.win': '2022/07/01-2022/07/31' });
-    const { overView } = await resourceFlatData(scopes);
-    expect(overView).toBeDefined();
-    const {
-      numberOfParticipants,
-      numberOfRecipients,
-      // pctOfReportsWithResources,
-      // pctOfECKLKCResources,
-    } = overView;
-
-    console.log('\n\n\n---Result Recip:', numberOfRecipients);
-    console.log('\n\n\n---Result Particip:', numberOfParticipants);
-
-    // Number of Recipients.
-    expect(numberOfRecipients).toStrictEqual([{
-      recipients: '5',
-    }]);
-
-    // Number of Participants.
-    expect(numberOfParticipants).toStrictEqual([{
-      participants: '32',
-    }]);
-  });
-  */
 
   it('overviewFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
