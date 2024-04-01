@@ -420,7 +420,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
           )::date AS "date"
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
-  // console.log('\n\n\n-----FLAT SQL', flatResourceSql);
 
   const transaction = await sequelize.transaction();
   // Execute the flat table sql.
@@ -542,7 +541,6 @@ function getTopicsUseSql(tblNames, transaction) {
     LEFT JOIN topicsperdate t
       ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
     ORDER BY 1, 3 ASC;`;
-  // console.log('\n\n\n--Topic use sql', topicUseSql);
   return sequelize.query(
     topicUseSql,
     {
@@ -591,7 +589,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
   FROM recipients r;
   `;
 
-  // console.log('\n\n\n-----numberOfRecipSql', numberOfRecipSql);
   // - Number of Recipients -
   const numberOfRecipients = sequelize.query(numberOfRecipSql, {
     type: QueryTypes.SELECT,
@@ -668,8 +665,7 @@ export async function resourceFlatData(scopes) {
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
-  // Get all ActivityReport ID's using SCOPES.
-  // We don't want to write custom filters.
+  // 1.) Get report ids using the scopes.
   const reportIds = await ActivityReport.findAll({
     attributes: [
       'id',
@@ -689,10 +685,7 @@ export async function resourceFlatData(scopes) {
 
   // Get total number of reports.
   const totalReportCount = reportIds.length;
-
-  // console.log('\n\n\n-----reportIds flat', reportIds);
-
-  // Create temp table names.
+  // 2.) Create temp table names.
   const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
   const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
   const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
@@ -711,16 +704,18 @@ export async function resourceFlatData(scopes) {
     createdFlatResourceHeadersTempTableName,
   };
 
-  // 1. Generate the flat sql temp tables.
+  // 3. Generate the base temp tables (used for all calcs).
   const transaction = await GenerateFlatTempTables(reportIds, tempTableNames);
 
-  // 2. Get resource use sql.
+  // 4.) Calculate the resource data.
+
+  // -- Resource Use --
   let resourceUseResult = getResourceUseSql(tempTableNames, transaction);
 
-  // 3. Get topic use sql.
+  // -- Topic Use --
   let topicUseResult = getTopicsUseSql(tempTableNames, transaction);
 
-  // 4. Get Overview sql.
+  // -- Overview --
   let {
     numberOfParticipants,
     numberOfRecipients,
@@ -729,7 +724,7 @@ export async function resourceFlatData(scopes) {
     dateHeaders,
   } = getOverview(tempTableNames, totalReportCount, transaction);
 
-  // 5. Execute all the sql queries.
+  // -- Wait for all results --
   [
     resourceUseResult,
     topicUseResult,
@@ -749,16 +744,13 @@ export async function resourceFlatData(scopes) {
       dateHeaders,
     ],
   );
-
-  // 6. Commit is required to run the query.
   transaction.commit();
-
-  // 7. Restructure Overview.
+  // 5.) Restructure Overview.
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
   };
 
-  // 8. Return the data.
+  // 6.) Return the data.
   return {
     resourceUseResult, topicUseResult, overView, dateHeaders,
   };
