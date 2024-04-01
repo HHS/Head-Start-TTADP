@@ -35,7 +35,7 @@ const ROLE_OPTIONS = [
   'Family Engagement Specialist',
   'Grantee Specialist',
   'Grantee Specialist Manager',
-  'Grants Specialist',
+  'Grants Management Specialist',
   'Health Specialist',
   'Program Specialist',
   'Region Program Manager',
