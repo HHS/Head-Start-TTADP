@@ -200,6 +200,7 @@ export default function ResourcesDashboard() {
         const data = await fetchResourceData(
           filterQuery,
         );
+        console.log('\n\n\n----- All Data: ', data);
         setResourcesData(data);
         updateError('');
       } catch (e) {
@@ -224,6 +225,7 @@ export default function ResourcesDashboard() {
       const data = await fetchFlatResourceData(
         filterQuery,
       );
+      console.log('flat data: ', data);
       const timeAfter = new Date().getTime();
       const timeTaken = timeAfter - timeBefore;
       alert(`Time taken to fetch data: ${timeTaken} ms | ${timeTaken / 1000} seconds (see console for data)`);
