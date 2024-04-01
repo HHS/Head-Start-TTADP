@@ -11,7 +11,7 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert, Button } from '@trussworks/react-uswds';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
@@ -22,6 +22,7 @@ import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview
 import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
+// eslint-disable-next-line no-unused-vars
 import { fetchResourceData, fetchFlatResourceData } from '../../fetchers/Resources';
 import {
   downloadReports,
@@ -197,10 +198,21 @@ export default function ResourcesDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        const data = await fetchResourceData(
+        /*
+        const oldData = await fetchResourceData(
           filterQuery,
         );
-        console.log('\n\n\n----- All Data: ', data);
+        */
+        const timeBefore = new Date().getTime();
+        const data = await fetchFlatResourceData(
+          filterQuery,
+        );
+        const timeAfter = new Date().getTime();
+        const timeTaken = timeAfter - timeBefore;
+        alert(`Time taken to fetch data: ${timeTaken / 1000} seconds`);
+
+        console.log('\n\n\n----- Flat Data: ', data);
+        // console.log('\n\n\n----- Old Data: ', oldData);
         setResourcesData(data);
         updateError('');
       } catch (e) {
@@ -214,37 +226,6 @@ export default function ResourcesDashboard() {
   }, [
     filtersToApply,
   ]);
-
-  const callFlatResources = async () => {
-    try {
-      setIsLoading(true);
-      const filterQuery = filtersToQueryString(filtersToApply);
-      // show an alert message with the time taken to fetch the data
-
-      const timeBefore = new Date().getTime();
-      const data = await fetchFlatResourceData(
-        filterQuery,
-      );
-      console.log('flat data: ', data);
-      const timeAfter = new Date().getTime();
-      const timeTaken = timeAfter - timeBefore;
-      alert(`Time taken to fetch data: ${timeTaken} ms | ${timeTaken / 1000} seconds (see console for data)`);
-
-      const {
-        overview, rolledUpResourceUse, rolledUpTopicUse, dateHeaders,
-      } = data;
-      console.log('overview:', overview);
-      console.log('rolledUpResourceUse:', rolledUpResourceUse);
-      console.log('rolledUpTopicUse:', rolledUpTopicUse);
-      console.log('dateHeaders:', dateHeaders);
-      setResourcesData(data);
-      updateError('');
-    } catch (e) {
-      updateError('Unable to fetch FLAT resources');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
     try {
@@ -325,7 +306,7 @@ export default function ResourcesDashboard() {
         )}
       </Grid>
       <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-        <Button onClick={callFlatResources}>Call Flat Resources</Button>
+
         <FilterPanel
           applyButtonAria="apply filters for resources dashboard"
           filters={filters}
