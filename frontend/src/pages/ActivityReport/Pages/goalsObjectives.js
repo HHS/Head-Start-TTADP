@@ -27,6 +27,60 @@ import NavigatorButtons from '../../../components/Navigator/components/Navigator
 
 const GOALS_AND_OBJECTIVES_PAGE_STATE_IDENTIFIER = '2';
 
+const Buttons = ({
+  formData,
+  isAppLoading,
+  onContinue,
+  onSaveDraft,
+  onUpdatePage,
+  weAreAutoSaving,
+}) => {
+  const {
+    isGoalFormClosed,
+    isObjectivesFormClosed,
+  } = useContext(GoalFormContext);
+
+  const { activityRecipientType } = formData;
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
+
+  const showSaveGoalsAndObjButton = (
+    !isGoalFormClosed
+    && !isObjectivesFormClosed
+  );
+
+  if (showSaveGoalsAndObjButton) {
+    return (
+      <>
+        <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
+        <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
+        <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
+      </>
+    );
+  }
+
+  return (
+    <NavigatorButtons
+      isAppLoading={isAppLoading}
+      onContinue={onContinue}
+      onSaveDraft={onSaveDraft}
+      onUpdatePage={onUpdatePage}
+      path="goals-objectives"
+      position={2}
+    />
+  );
+};
+
+Buttons.propTypes = {
+  formData: PropTypes.shape({
+    activityRecipientType: PropTypes.string,
+  }).isRequired,
+  isAppLoading: PropTypes.bool.isRequired,
+  onContinue: PropTypes.func.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
+  onUpdatePage: PropTypes.func.isRequired,
+  weAreAutoSaving: PropTypes.bool.isRequired,
+};
+
 const GoalsObjectives = ({
   reportId,
 }) => {
@@ -395,51 +449,20 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     DraftAlert,
-  ) => {
-    const { activityRecipientType } = formData;
-    const isOtherEntityReport = activityRecipientType === 'other-entity';
-
-    const Buttons = () => {
-      const {
-        isGoalFormClosed,
-        isObjectivesFormClosed,
-      } = useContext(GoalFormContext);
-
-      const showSaveGoalsAndObjButton = (
-        !isGoalFormClosed
-        && !isObjectivesFormClosed
-      );
-
-      if (showSaveGoalsAndObjButton) {
-        return (
-          <>
-            <Button id="draft-goals-objectives-save-continue" className="margin-right-1" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={onContinue}>{`Save ${isOtherEntityReport ? 'objectives' : 'goal'}`}</Button>
-            <Button id="draft-goals-objectives-save-draft" className="usa-button--outline" type="button" disabled={isAppLoading || weAreAutoSaving} onClick={() => onSaveDraft(false)}>Save draft</Button>
-            <Button id="draft-goals-objectives-back" outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(1); }}>Back</Button>
-          </>
-        );
-      }
-
-      return (
-        <NavigatorButtons
-          isAppLoading={isAppLoading}
-          onContinue={onContinue}
-          onSaveDraft={onSaveDraft}
-          onUpdatePage={onUpdatePage}
-          path="goals-objectives"
-          position={2}
-        />
-      );
-    };
-
-    return (
-      <>
-        <GoalsObjectives
-          reportId={reportId}
-        />
-        <DraftAlert />
-        <Buttons />
-      </>
-    );
-  },
+  ) => (
+    <>
+      <GoalsObjectives
+        reportId={reportId}
+      />
+      <DraftAlert />
+      <Buttons
+        formData={formData}
+        isAppLoading={isAppLoading}
+        onContinue={onContinue}
+        onSaveDraft={onSaveDraft}
+        onUpdatePage={onUpdatePage}
+        weAreAutoSaving={weAreAutoSaving}
+      />
+    </>
+  ),
 };
