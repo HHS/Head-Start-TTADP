@@ -20,6 +20,7 @@ import {
   resourceFlatData,
   rollUpResourceUse,
   rollUpTopicUse,
+  restructureOverview,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -469,15 +470,6 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
-  // eslint-disable-next-line jest/no-commented-out-tests
-  /*
-  it('testAllReports', async () => {
-    const scopes = await filtersToScopes({});
-    const { resourceUseResult } = await resourceFlatData(scopes);
-    expect(true).toBe(true);
-  });
-  */
-
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     const { resourceUseResult } = await resourceFlatData(scopes);
@@ -640,62 +632,77 @@ describe('Resources dashboard', () => {
 
     expect(result).toEqual([
       {
+        heading: 'http://github.com',
         url: 'http://github.com',
         total: 10,
         title: null,
         sortBy: 'http://github.com',
-        resources: [
+        isUrl: true,
+        data: [
           {
-            url: 'http://github.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+            title: 'Jan-21', value: 1,
           },
           {
-            url: 'http://github.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+            title: 'Feb-21', value: 2,
           },
           {
-            url: 'http://github.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+            title: 'Mar-21', value: 3,
           },
           {
-            url: 'http://github.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+            title: 'Apr-21', value: 4,
+          },
+          {
+            title: 'Total', value: 10,
           },
         ],
       },
       {
+        heading: 'http://google.com',
         url: 'http://google.com',
         title: null,
         sortBy: 'http://google.com',
         total: 10,
-        resources: [
+        isUrl: true,
+        data: [
           {
-            url: 'http://google.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+            title: 'Jan-21', value: 1,
           },
           {
-            url: 'http://google.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+            title: 'Feb-21', value: 2,
           },
           {
-            url: 'http://google.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+            title: 'Mar-21', value: 3,
           },
           {
-            url: 'http://google.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+            title: 'Apr-21', value: 4,
+          },
+          {
+            title: 'Total', value: 10,
           },
         ],
       },
       {
+        heading: 'http://yahoo.com',
         url: 'http://yahoo.com',
         total: 10,
         title: null,
         sortBy: 'http://yahoo.com',
-        resources: [
+        isUrl: true,
+        data: [
           {
-            url: 'http://yahoo.com', rollUpDate: 'Jan-21', resourceCount: 1, title: null, totalCount: 10,
+            title: 'Jan-21', value: 1,
           },
           {
-            url: 'http://yahoo.com', rollUpDate: 'Feb-21', resourceCount: 2, title: null, totalCount: 10,
+            title: 'Feb-21', value: 2,
           },
           {
-            url: 'http://yahoo.com', rollUpDate: 'Mar-21', resourceCount: 3, title: null, totalCount: 10,
+            title: 'Mar-21', value: 3,
           },
           {
-            url: 'http://yahoo.com', rollUpDate: 'Apr-21', resourceCount: 4, title: null, totalCount: 10,
+            title: 'Apr-21', value: 4,
+          },
+          {
+            title: 'Total', value: 10,
           },
         ],
       },
@@ -730,35 +737,77 @@ describe('Resources dashboard', () => {
 
     expect(result).toEqual([
       {
+        heading: 'CLASS: Classroom Organization',
         name: 'CLASS: Classroom Organization',
         total: '6',
-        topics: [
+        isUrl: false,
+        data: [
           {
-            name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+            title: 'Jan-21', value: '1',
           },
           {
-            name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+            title: 'Feb-21', value: '2',
           },
           {
-            name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+            title: 'Mar-21', value: '3',
+          },
+          {
+            title: 'Total', value: '6',
           },
         ],
       },
       {
+        heading: 'ERSEA',
         name: 'ERSEA',
         total: '6',
-        topics: [
+        isUrl: false,
+        data: [
           {
-            name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+            title: 'Jan-21', value: '1',
           },
           {
-            name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+            title: 'Feb-21', value: '2',
           },
           {
-            name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+            title: 'Mar-21', value: '3',
+          },
+          {
+            title: 'Total', value: '6',
           },
         ],
       },
     ]);
+  });
+
+  it('verify overview restructures correctly', async () => {
+    const overviewData = {
+      overView: {
+        pctOfReportsWithResources: [{ resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' }],
+        numberOfParticipants: [{ participants: '44' }],
+        numberOfRecipients: [{ recipients: '1' }],
+        pctOfECKLKCResources: [{ eclkcCount: '2', allCount: '3', eclkcPct: '66.6667' }],
+      },
+    };
+
+    const result = restructureOverview(overviewData);
+
+    expect(result).toEqual({
+      report: {
+        percentResources: '80.0000',
+        numResources: '4',
+        num: '5',
+      },
+      participant: {
+        numParticipants: '44',
+      },
+      recipient: {
+        numResources: '1',
+      },
+      resource: {
+        count: '2',
+        total: '3',
+        percent: '66.6667',
+      },
+    });
   });
 });

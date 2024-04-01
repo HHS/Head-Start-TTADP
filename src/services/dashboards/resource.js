@@ -745,6 +745,7 @@ export async function resourceFlatData(scopes) {
     ],
   );
   transaction.commit();
+
   // 5.) Restructure Overview.
   const overView = {
     numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
@@ -2039,19 +2040,26 @@ export async function rollUpResourceUse(data) {
       return [
         ...accumulator,
         {
+          heading: resource.url,
           url: resource.url,
           title: resource.title,
           sortBy: resource.title || resource.url,
           total: resource.totalCount,
-          resources: [{ ...resource }],
+          isUrl: true,
+          data: [{ title: resource.rollUpDate, value: resource.resourceCount }],
         },
       ];
     }
 
     // Add the resource to the accumulator.
-    exists.resources.push(resource);
+    exists.data.push({ title: resource.rollUpDate, value: resource.resourceCount });
     return accumulator;
   }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpResourceUse.forEach((resource) => {
+    resource.data.push({ title: 'Total', value: resource.total });
+  });
 
   // Sort by total and name or url.
   // rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
@@ -2067,28 +2075,68 @@ export async function rollUpTopicUse(data) {
       return [
         ...accumulator,
         {
+          heading: topic.name,
           name: topic.name,
           total: topic.totalCount,
-          topics: [{ ...topic }],
+          isUrl: false,
+          data: [{ title: topic.rollUpDate, value: topic.resourceCount }],
         },
       ];
     }
 
     // Add the resource to the accumulator.
-    exists.topics.push(topic);
+    exists.data.push({ title: topic.rollUpDate, value: topic.resourceCount });
     return accumulator;
   }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpTopicUse.forEach((topic) => {
+    topic.data.push({ title: 'Total', value: topic.total });
+  });
 
   // Sort by total then topic name.
   rolledUpTopicUse.sort((r1, r2) => r2.total - r1.total || r1.name.localeCompare(r2.name));
   return rolledUpTopicUse;
 }
 
+export function restructureOverview(data) {
+  return {
+    report: {
+      percentResources: data.overView.pctOfReportsWithResources[0].resourcesPct,
+      numResources: data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount,
+      num: data.overView.pctOfReportsWithResources[0].totalReportsCount,
+    },
+    participant: {
+      numParticipants: data.overView.numberOfParticipants[0].participants,
+    },
+    recipient: {
+      numResources: data.overView.numberOfRecipients[0].recipients,
+    },
+    resource: {
+      count: data.overView.pctOfECKLKCResources[0].eclkcCount,
+      total: data.overView.pctOfECKLKCResources[0].allCount,
+      percent: data.overView.pctOfECKLKCResources[0].eclkcPct,
+    },
+  };
+}
+
 export async function resourceDashboardFlat(scopes) {
   const data = await resourceFlatData(scopes);
+
+  // Restructure overview.
+  const dashboardOverview = restructureOverview(data);
+
+  // Roll up resources.
   const rolledUpResourceUse = await rollUpResourceUse(data);
+
+  // Roll up topics.
   const rolledUpTopicUse = await rollUpTopicUse(data);
+
+  // Date headers.
+  const dateHeadersArray = data.dateHeaders.map((date) => date.rollUpDate);
   return {
-    overview: data.overView, rolledUpResourceUse, rolledUpTopicUse, dateHeaders: data.dateHeaders,
+    resourcesDashboardOverview: dashboardOverview,
+    resourceUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
+    topicUse: { headers: dateHeadersArray, topics: rolledUpTopicUse },
   };
 }
