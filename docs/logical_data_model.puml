@@ -1049,6 +1049,7 @@ enum enum_Users_flags {
  monitoring
  regional_goal_dashboard
  resources_dashboard
+ training_reports_dashboard
 }
 
 enum_Users_flags <|-- Users
