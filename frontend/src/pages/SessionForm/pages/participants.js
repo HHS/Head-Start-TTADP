@@ -28,18 +28,19 @@ import ParticipantsReadOnly from '../components/ParticipantsReadOnly';
 const placeholderText = '- Select -';
 
 const ROLE_OPTIONS = [
-  'AA',
+  'Admin. Assistant',
   'COR',
-  'ECM',
-  'ECS',
-  'FES',
-  'GS',
-  'GSM',
-  'HS',
-  'PS',
-  'RPM',
-  'SPS',
-  'SS',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist',
+  'Grantee Specialist Manager',
+  'Grants Specialist',
+  'Health Specialist',
+  'Program Specialist',
+  'Region Program Manager',
+  'Supervisory Program Specialist',
+  'System Specialist',
   'TTAC',
 ];
 
