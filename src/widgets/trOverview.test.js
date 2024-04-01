@@ -116,8 +116,8 @@ describe('TR overview widget', () => {
         deliveryMethod: 'hybrid',
         duration: 1,
         recipients: [{ value: grant1.id }, { value: grant2.id }],
-        numberOfParticipantsVirtually: 25,
-        numberOfParticipantsInPerson: 0,
+        numberOfParticipantsVirtually: 12,
+        numberOfParticipantsInPerson: 13,
         numberOfParticipants: 0,
       },
     });
