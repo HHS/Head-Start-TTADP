@@ -2103,20 +2103,20 @@ export async function rollUpTopicUse(data) {
 export function restructureOverview(data) {
   return {
     report: {
-      percentResources: data.overView.pctOfReportsWithResources[0].resourcesPct,
-      numResources: data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount,
-      num: data.overView.pctOfReportsWithResources[0].totalReportsCount,
+      percentResources: `${formatNumber(data.overView.pctOfReportsWithResources[0].resourcesPct, 2)}%`,
+      numResources: formatNumber(data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount),
+      num: formatNumber(data.overView.pctOfReportsWithResources[0].totalReportsCount),
     },
     participant: {
-      numParticipants: data.overView.numberOfParticipants[0].participants,
+      numParticipants: formatNumber(data.overView.numberOfParticipants[0].participants),
     },
     recipient: {
-      numResources: data.overView.numberOfRecipients[0].recipients,
+      numResources: formatNumber(data.overView.numberOfRecipients[0].recipients),
     },
     resource: {
-      numEclkc: data.overView.pctOfECKLKCResources[0].eclkcCount,
-      num: data.overView.pctOfECKLKCResources[0].allCount,
-      percentEclkc: data.overView.pctOfECKLKCResources[0].eclkcPct,
+      numEclkc: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
+      num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
+      percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
     },
   };
 }

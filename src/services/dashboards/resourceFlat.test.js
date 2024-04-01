@@ -793,7 +793,7 @@ describe('Resources dashboard', () => {
 
     expect(result).toEqual({
       report: {
-        percentResources: '80.0000',
+        percentResources: '80.00%',
         numResources: '4',
         num: '5',
       },
@@ -804,9 +804,9 @@ describe('Resources dashboard', () => {
         numResources: '1',
       },
       resource: {
-        count: '2',
-        total: '3',
-        percent: '66.6667',
+        numEclkc: '2',
+        num: '3',
+        percentEclkc: '66.67%',
       },
     });
   });
