@@ -45,15 +45,15 @@ const pageConfig = (userHasOnlyOneRegion, defaultRegion) => {
 
 const links = [
   {
-    to: '/regional-dashboard/activity-reports',
+    to: '/dashboards/regional-dashboard/activity-reports',
     label: 'Activity Reports',
   },
   {
-    to: '/regional-dashboard/training-reports',
+    to: '/dashboards/regional-dashboard/training-reports',
     label: 'Training Reports',
   },
   {
-    to: '/regional-dashboard/all-reports',
+    to: '/dashboards/regional-dashboard/all-reports',
     label: 'All reports',
   },
 ];
