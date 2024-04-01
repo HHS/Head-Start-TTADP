@@ -434,8 +434,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
 }
 
 function getResourceUseSql(tblNames, transaction) {
-  return sequelize.query(
-    `
+  const resourceUseSql = `
   WITH urlvals AS (
     SELECT
         url,
@@ -446,7 +445,7 @@ function getResourceUseSql(tblNames, transaction) {
       GROUP BY url, title, "rollUpDate"
       ORDER BY "url", tf."rollUpDate" ASC),
     distincturls AS (
-    SELECT DISTINCT url AS url
+    SELECT DISTINCT url, title
     FROM ${tblNames.createdFlatResourceTempTableName}
     ),
     totals AS
@@ -458,7 +457,6 @@ function getResourceUseSql(tblNames, transaction) {
       FROM urlvals
       GROUP BY url, title
       ORDER BY SUM("resourceCount")  DESC,
-      -- coalesce(title, url) ASC
       url ASC
       LIMIT 10
     ),
@@ -468,7 +466,7 @@ function getResourceUseSql(tblNames, transaction) {
     )
       SELECT
       d.url,
-      u.title,
+      d.title,
       to_char(s."date", 'Mon-YY') AS "rollUpDate",
       s."date",
       coalesce(u."resourceCount", 0) AS "resourceCount",
@@ -481,7 +479,10 @@ function getResourceUseSql(tblNames, transaction) {
       LEFT JOIN urlvals u
         ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
       ORDER BY 1,4 ASC;
-  `,
+  `;
+
+  return sequelize.query(
+    resourceUseSql,
     {
       type: QueryTypes.SELECT,
       transaction,
@@ -753,7 +754,7 @@ export async function resourceFlatData(scopes) {
 
   // 6.) Return the data.
   return {
-    resourceUseResult, topicUseResult, overView, dateHeaders,
+    resourceUseResult, topicUseResult, overView, dateHeaders, reportIds,
   };
 }
 
@@ -2113,14 +2114,15 @@ export function restructureOverview(data) {
       numResources: data.overView.numberOfRecipients[0].recipients,
     },
     resource: {
-      count: data.overView.pctOfECKLKCResources[0].eclkcCount,
-      total: data.overView.pctOfECKLKCResources[0].allCount,
-      percent: data.overView.pctOfECKLKCResources[0].eclkcPct,
+      numEclkc: data.overView.pctOfECKLKCResources[0].eclkcCount,
+      num: data.overView.pctOfECKLKCResources[0].allCount,
+      percentEclkc: data.overView.pctOfECKLKCResources[0].eclkcPct,
     },
   };
 }
 
 export async function resourceDashboardFlat(scopes) {
+  // Get flat resource data.
   const data = await resourceFlatData(scopes);
 
   // Restructure overview.
@@ -2136,7 +2138,8 @@ export async function resourceDashboardFlat(scopes) {
   const dateHeadersArray = data.dateHeaders.map((date) => date.rollUpDate);
   return {
     resourcesDashboardOverview: dashboardOverview,
-    resourceUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
+    resourcesUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
     topicUse: { headers: dateHeadersArray, topics: rolledUpTopicUse },
+    reportIds: data.reportIds.map((r) => r.id),
   };
 }
