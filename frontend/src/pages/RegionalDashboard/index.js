@@ -19,27 +19,29 @@ import './index.css';
 import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
 
-const h1Text = (reportType, userHasOnlyOneRegion, defaultRegion) => {
-  const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
-  let h1 = `${prefix} TTA activity dashboard`;
-
-  switch (reportType) {
-    case ('training-reports'):
-      h1 = `${prefix} dashboard - Training Reports`;
-      break;
-    case ('all-reports'):
-      h1 = `${prefix} dashboard - All reports`;
-      break;
-    case ('activity-reports'):
-      h1 = `${prefix} dashboard - Activity Reports`;
-      break;
-    default:
-      break;
-  }
-  return h1;
-};
-
 const FILTER_KEY = (reportType) => `regional-dashboard-filters-${reportType || 'activityReport'}`;
+
+const pageConfig = (userHasOnlyOneRegion, defaultRegion) => {
+  const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
+  return ({
+    'training-reports': {
+      h1Text: `${prefix} dashboard - Training Reports`,
+      showFilters: false,
+    },
+    'all-reports': {
+      h1Text: `${prefix} dashboard - All reports`,
+      showFilters: false,
+    },
+    'activity-reports': {
+      h1Text: `${prefix} dashboard - Activity Reports`,
+      showFilters: true,
+    },
+    default: {
+      h1Text: `${prefix} TTA activity dashboard`,
+      showFilters: true,
+    },
+  });
+};
 
 const links = [
   {
@@ -83,6 +85,12 @@ export default function RegionalDashboard({ match }) {
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
   const filtersToApply = expandFilters(filters);
 
+  const {
+    h1Text,
+    showFilters,
+  // eslint-disable-next-line max-len
+  } = pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] || pageConfig(userHasOnlyOneRegion, defaultRegion).default;
+
   const filtersToUse = useMemo(() => {
     const filterConfig = [...DASHBOARD_FILTER_CONFIG];
 
@@ -111,8 +119,9 @@ export default function RegionalDashboard({ match }) {
         <TabsNav ariaLabel="Dashboard navigation" links={links} />
       </FeatureFlag>
       <h1 className="landing margin-top-0 margin-bottom-3">
-        {h1Text(reportType, userHasOnlyOneRegion, defaultRegion)}
+        {h1Text}
       </h1>
+      {showFilters && (
       <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
@@ -123,6 +132,7 @@ export default function RegionalDashboard({ match }) {
           allUserRegions={regions}
         />
       </Grid>
+      )}
       <Dashboard
         reportType={reportType}
         setResetPagination={setResetPagination}
