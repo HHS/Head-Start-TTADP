@@ -3,9 +3,8 @@ import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import { DashboardOverviewWidget } from './DashboardOverview';
 
-function TrainingReportDashboardOverview({
+export function TrainingReportDashboardOverview({
   filters,
-  fields,
   showTooltips,
   loading,
   data,
@@ -14,7 +13,13 @@ function TrainingReportDashboardOverview({
     <DashboardOverviewWidget
       data={data}
       filters={filters}
-      fields={fields}
+      fields={[
+        'Recipients served',
+        'Grants served',
+        'Training reports',
+        'Participants',
+        'Hours of TTA',
+      ]}
       showTooltips={showTooltips}
       loading={loading}
     />
@@ -39,7 +44,6 @@ TrainingReportDashboardOverview.propTypes = {
   })).isRequired,
   loading: PropTypes.bool.isRequired,
   showTooltips: PropTypes.bool.isRequired,
-  fields: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
 TrainingReportDashboardOverview.defaultProps = {
