@@ -25,6 +25,7 @@ export async function getResourcesDashboardData(req, res) {
       });
     },
     JSON.parse,
+    { EX: 10 },
   );
 
   res.json(response);
@@ -43,6 +44,7 @@ export async function getFlatResourcesDataWithCache(req, res) {
       return JSON.stringify(data);
     },
     JSON.parse,
+    { EX: 10 },
   );
 
   res.json(response);
