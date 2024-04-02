@@ -11,7 +11,7 @@ import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+import { Grid, Alert, Radio } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { allRegionsUserHasPermissionTo } from '../../permissions';
@@ -22,7 +22,6 @@ import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview
 import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
-// eslint-disable-next-line no-unused-vars
 import { fetchResourceData, fetchFlatResourceData } from '../../fetchers/Resources';
 import {
   downloadReports,
@@ -222,6 +221,7 @@ export default function ResourcesDashboard() {
     fetcHResourcesData();
   }, [
     filtersToApply,
+    useFlat,
   ]);
 
   const handleDownloadReports = async (setIsDownloading, setDownloadError, url, buttonRef) => {
@@ -280,6 +280,12 @@ export default function ResourcesDashboard() {
     }
   };
 
+  const fetchChanged = (e) => {
+    console.log('fetchChanged', e.target, e.target.value === 'on');
+    const isFlat = e.target.name === 'fetchResourceMethodFlat' && e.target.value === 'on';
+    setUseFlat(isFlat);
+  };
+
   return (
     <div className="ttahub-resources-dashboard">
       <Helmet>
@@ -303,7 +309,26 @@ export default function ResourcesDashboard() {
         )}
       </Grid>
       <Grid className="ttahub-resources-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
-
+        <div>
+          <Radio
+            id="fetchChangedOld"
+            key="fetchResourceMethodOld"
+            onChange={fetchChanged}
+            name="fetchResourceMethodOld"
+            label="Old Fetch Method"
+            className="smart-hub--report-checkbox"
+            checked={!useFlat}
+          />
+          <Radio
+            id="fetchChangedFlat"
+            key="fetchResourceMethodFlat"
+            onChange={fetchChanged}
+            name="fetchResourceMethodFlat"
+            label="New Fetch Method"
+            className="smart-hub--report-checkbox"
+            checked={useFlat}
+          />
+        </div>
         <FilterPanel
           applyButtonAria="apply filters for resources dashboard"
           filters={filters}
