@@ -7,7 +7,6 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { hasApproveActivityReport } from '../../permissions';
-import { expandFilters } from '../../utils';
 import UserContext from '../../UserContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
@@ -18,8 +17,7 @@ import useFilters from '../../hooks/useFilters';
 import './index.css';
 import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
-
-const FILTER_KEY = (reportType) => `regional-dashboard-filters-${reportType || 'activityReport'}`;
+import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 
 const pageConfig = (userHasOnlyOneRegion, defaultRegion) => {
   const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
@@ -63,7 +61,7 @@ export default function RegionalDashboard({ match }) {
   const [resetPagination, setResetPagination] = useState(false);
 
   const { reportType } = match.params;
-  const filterKey = FILTER_KEY(reportType);
+  const filterKey = useDashboardFilterKey('regional-dashboard', reportType || 'activityReports');
 
   const {
     // from useUserDefaultRegionFilters
@@ -83,7 +81,6 @@ export default function RegionalDashboard({ match }) {
   );
 
   const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-  const filtersToApply = expandFilters(filters);
 
   const {
     h1Text,
@@ -136,7 +133,7 @@ export default function RegionalDashboard({ match }) {
       <Dashboard
         reportType={reportType}
         setResetPagination={setResetPagination}
-        filtersToApply={filtersToApply}
+        filters={filters}
         filterKey={filterKey}
         resetPagination={resetPagination}
       />
