@@ -76,6 +76,8 @@ export default function ResourcesDashboard() {
     (activePage - 1) * REPORTS_PER_PAGE,
   );
 
+  const [useFlat, setUseFlat] = useState(false);
+
   const getFiltersWithAllRegions = () => {
     const filtersWithAllRegions = [...allRegionsFilters];
     return filtersWithAllRegions;
@@ -198,21 +200,16 @@ export default function ResourcesDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        /*        const oldData = await fetchResourceData(
+        const timeBefore = new Date().getTime();
+        const data = useFlat ? await fetchFlatResourceData(
+          filterQuery,
+        ) : await fetchResourceData(
           filterQuery,
         );
-        */
+        const timeAfter = new Date().getTime();
+        const timeTaken = timeAfter - timeBefore;
+        alert(`${useFlat ? 'NEW' : 'OLD'} Fetch: Time taken to fetch data: ${timeTaken / 1000} seconds`);
 
-        // const timeBefore = new Date().getTime();
-        const data = await fetchFlatResourceData(
-          filterQuery,
-        );
-        // const timeAfter = new Date().getTime();
-        // const timeTaken = timeAfter - timeBefore;
-        // alert(`Time taken to fetch data: ${timeTaken / 1000} seconds`);
-
-        // console.log('\n\n\n----- Flat Data: ', data);
-        // console.log('\n\n\n----- Old Data: ', oldData);
         setResourcesData(data);
         updateError('');
       } catch (e) {
