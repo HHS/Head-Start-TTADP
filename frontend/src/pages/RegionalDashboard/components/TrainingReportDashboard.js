@@ -12,13 +12,6 @@ export default function TrainingReportDashboard() {
       <GridContainer className="margin-0 padding-0">
         <Overview
           filters={[]}
-          fields={[
-            'Recipients served',
-            'Grants served',
-            'Training reports',
-            'Participants',
-            'Hours of TTA',
-          ]}
           showTooltips
           loading={false}
         />
