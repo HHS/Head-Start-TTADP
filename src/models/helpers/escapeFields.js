@@ -1,5 +1,6 @@
 import { escape } from 'lodash';
 import { auditLogger } from '../../logger';
+import safeParse from './safeParse';
 
 /**
  * Intended to be used in sequelize hooks "beforeCreate" and "beforeUpdate"
@@ -10,14 +11,14 @@ import { auditLogger } from '../../logger';
  * @returns void
  */
 export function escapeDataFields(instance, fields) {
-  const { data } = instance;
+  const data = safeParse(instance);
   if (!data) return;
 
   const copy = { ...data };
 
   try {
     fields.forEach((field) => {
-      if (copy[field] !== null) {
+      if (field in copy) {
         copy[field] = escape(copy[field]);
       }
     });

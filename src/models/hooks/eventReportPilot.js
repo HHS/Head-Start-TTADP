@@ -1,31 +1,16 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
-import { escapeDataFields } from '../helpers/escapeFields';
+
 import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
 
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
+const { escapeDataFields } = require('../helpers/escapeFields');
+const safeParse = require('../helpers/safeParse');
 
 const fieldsToEscape = ['eventName'];
-
-const safeParse = (instance) => {
-  // Try to parse instance.data if it exists and has a 'val' property
-  if (instance?.data?.val) {
-    return JSON.parse(instance.data.val);
-  }
-  // Directly return instance.dataValues.data if it exists
-  if (instance?.dataValues?.data) {
-    return instance.dataValues.data;
-  }
-  // Directly return instance.data if it exists
-  if (instance?.data) {
-    return instance.data;
-  }
-
-  return null;
-};
 
 const notifyNewCollaborators = async (_sequelize, instance) => {
   try {
