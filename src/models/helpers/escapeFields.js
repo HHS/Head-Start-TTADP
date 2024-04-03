@@ -18,7 +18,7 @@ export function escapeDataFields(instance, fields) {
 
   try {
     fields.forEach((field) => {
-      if (field in copy) {
+      if (field in copy && copy[field] !== null) {
         copy[field] = escape(copy[field]);
       }
     });

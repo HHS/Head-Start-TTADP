@@ -372,12 +372,23 @@ export async function createTrainingReport(report) {
     collaboratorIds,
     pocIds,
     ownerId,
+    regionId,
     data,
   } = report;
 
+  let region;
+
+  if (regionId) {
+    region = await Region.findByPk(regionId);
+  }
+
+  if (!region) {
+    region = await createRegion();
+  }
+
   let userCreator = await User.findByPk(ownerId);
   if (!userCreator) {
-    userCreator = await createUser();
+    userCreator = await createUser({ homeRegionId: region.id });
   }
 
   const userCollaborators = await Promise.all(collaboratorIds.map(async (id) => {
@@ -391,7 +402,7 @@ export async function createTrainingReport(report) {
   const userPocs = await Promise.all(pocIds.map(async (id) => {
     let user = await User.findByPk(id);
     if (!user) {
-      user = await createUser();
+      user = await createUser({ homeRegionId: region.id });
     }
     return user.id;
   }));
@@ -400,7 +411,7 @@ export async function createTrainingReport(report) {
     data: mockTrainingReportData(data || {}),
     collaboratorIds: userCollaborators,
     ownerId: userCreator.id,
-    regionId: userCreator.homeRegionId,
+    regionId: region.id,
     imported: {},
     pocIds: userPocs,
   });

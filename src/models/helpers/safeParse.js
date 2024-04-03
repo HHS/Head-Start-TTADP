@@ -1,4 +1,4 @@
-const safeParse = (instance) => {
+function safeParse(instance) {
   // Try to parse instance.data if it exists and has a 'val' property
   if (instance?.data?.val) {
     return JSON.parse(instance.data.val);
@@ -13,6 +13,6 @@ const safeParse = (instance) => {
   }
 
   return null;
-};
+}
 
-export default safeParse;
+module.exports = safeParse;
