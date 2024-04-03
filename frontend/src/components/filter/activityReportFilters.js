@@ -10,6 +10,7 @@ import {
   MY_REPORTS_FILTER_CONDITIONS,
   SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
   SPECIALIST_NAME_CONDITIONS,
+  EMPTY_TEXT_INPUT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
@@ -44,11 +45,6 @@ const EMPTY_MY_REPORTS_MULTI_SELECT = {
 const EMPTY_SINGLE_SELECT = {
   is: '',
   'is not': '',
-};
-
-const EMPTY_TEXT_INPUT = {
-  contains: '',
-  'does not contain': '',
 };
 
 const handleStringQuery = (q) => q;

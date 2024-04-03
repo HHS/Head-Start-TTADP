@@ -72,11 +72,15 @@ function GoalCard({
     objectiveCount,
     reasons,
     objectives,
+    sessionObjectives,
     previousStatus,
     createdVia,
     collaborators,
     onAR,
   } = goal;
+
+  const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
+  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
@@ -249,7 +253,7 @@ function GoalCard({
           expanded={objectivesExpanded}
         />
       </div>
-      {objectives.map((obj) => (
+      {sortedObjectives.map((obj) => (
         <ObjectiveSwitch
           key={`objective_${uuidv4()}`}
           objective={obj}

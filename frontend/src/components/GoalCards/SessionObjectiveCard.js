@@ -16,7 +16,7 @@ function SessionObjectiveCard({
     sessionName,
   } = objective;
 
-  const trainingReportUrl = `/training-report/${trainingReportId.substring(trainingReportId.lastIndexOf('-') + 1)}/event-summary`;
+  const trainingReportUrl = `/training-report/view/${trainingReportId.substring(trainingReportId.lastIndexOf('-') + 1)}`;
 
   return (
     <dl className="ttahub-goal-card__objective-list ttahub-goal-card__objective-list--session-objective usa-list usa-list--unstyled padding-2 margin-top-2 border radius-lg" hidden={!objectivesExpanded}>
