@@ -5,6 +5,15 @@ export type SessionShape = {
   }
 };
 
+type EventReportPilotNationalCenterUserType = {
+  id: number;
+  eventReportPilotId: number;
+  nationalCenterId: number;
+  nationalCenterName: string;
+  userName: string;
+  userId: number;
+};
+
 export type EventShape = {
   id: number;
   ownerId: number;
@@ -15,6 +24,7 @@ export type EventShape = {
   updatedAt: string;
   sessionReports: SessionShape[];
   owner: undefined | { id: string; name: string; email: string };
+  eventReportPilotNationalCenterUsers: EventReportPilotNationalCenterUserType[];
 };
 
 export type CreateEventRequest = {

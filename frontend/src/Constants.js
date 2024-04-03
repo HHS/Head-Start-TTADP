@@ -20,6 +20,11 @@ export const EMPTY_MULTI_SELECT = {
   'is not': [],
 };
 
+export const EMPTY_TEXT_INPUT = {
+  contains: '',
+  'does not contain': '',
+};
+
 export const SPECIALIST_NAME_CONDITIONS = [IS_COLLABORATOR, IS_CREATOR, IS_BOTH];
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
