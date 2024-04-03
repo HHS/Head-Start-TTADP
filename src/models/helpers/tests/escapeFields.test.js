@@ -2,7 +2,11 @@ import faker from '@faker-js/faker';
 import { APPROVER_STATUSES } from '@ttahub/common';
 import db from '../..';
 import {
-  createReport, createTrainingReport, createUser, destroyReport,
+  createReport,
+  createTrainingReport,
+  createRegion,
+  createUser,
+  destroyReport,
 } from '../../../testUtils';
 import escapeFields, { escapeDataFields } from '../escapeFields';
 
@@ -122,18 +126,20 @@ describe('escapeFields', () => {
   });
 
   describe('live updates', () => {
+    let region;
     let user;
     let approver;
     let report;
     let event;
 
     beforeAll(async () => {
-      user = await createUser();
+      region = await createRegion();
+      user = await createUser({ homeRegionId: region.id });
       report = await createReport({
         context: xss,
         activityRecipients: [{ grantId: faker.datatype.number({ min: 99_000 }) }],
         userId: user.id,
-        regionId: user.homeRegionId,
+        regionId: region.id,
       });
 
       approver = await ActivityReportApprover.create({
@@ -144,6 +150,7 @@ describe('escapeFields', () => {
       });
 
       event = await createTrainingReport({
+        regionId: region.id,
         collaboratorIds: [user.id],
         pocIds: [user.id],
         ownerId: user.id,
@@ -185,6 +192,7 @@ describe('escapeFields', () => {
       await event.destroy();
       await destroyReport(report);
       await user.destroy();
+      await region.destroy();
       await db.sequelize.close();
     });
   });
