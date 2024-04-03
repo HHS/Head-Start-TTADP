@@ -355,7 +355,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-    WHERE aror."sourceFields" && '{resource}'
     GROUP BY ar.id, aror."resourceId";
 
     -- 3.) Create Resources temp table (only what we need).
@@ -692,8 +691,9 @@ export async function resourceFlatData(scopes) {
   // Get total number of reports.
   const totalReportCount = reportIds.length;
 
-  // console.log('\n\n\n----> Report Ids: ', reportIds);
-
+  if (reportIds.length === 0) {
+    reportIds.push({ id: 0 });
+  }
   // 2.) Create temp table names.
   const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
   const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
