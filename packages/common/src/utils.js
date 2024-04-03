@@ -30,6 +30,24 @@ function determineMergeGoalStatus(statuses) {
     return GOAL_STATUS.DRAFT;
 }
 
+const entityMap = {
+  '<': '&lt;',
+  '>': '&gt;',
+  '&': '&amp;',
+  '"': '&quot;',
+  "'": '&#39;',
+  '/': '&#47;',
+  '[': '&#91;',
+  ']': '&#93;',
+};
+
+function escapeHtml(str) {
+  return str.replace(/[<>&"'\/]/g, function (s) {
+    return entityMap[s];
+  });
+}
+
 module.exports = {
-  determineMergeGoalStatus
+  determineMergeGoalStatus,
+  escapeHtml,
 }
