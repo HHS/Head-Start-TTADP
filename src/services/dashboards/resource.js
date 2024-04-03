@@ -421,7 +421,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
 
-  console.log('\n\n\n---->Flat: ', flatResourceSql);
+  // console.log('\n\n\n---->Flat: ', flatResourceSql);
 
   const transaction = await sequelize.transaction();
   // Execute the flat table sql.
