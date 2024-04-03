@@ -1,3 +1,5 @@
+import escapeFields from '../helpers/escapeFields';
+
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
@@ -22,6 +24,8 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+
+const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -816,6 +820,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
 
 const beforeCreate = async (instance) => {
   copyStatus(instance);
+  escapeFields(instance, AR_FIELDS_TO_ESCAPE);
 };
 
 const getActivityReportDocument = async (sequelize, instance) => {
@@ -1033,6 +1038,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
+  escapeFields(instance, AR_FIELDS_TO_ESCAPE);
   copyStatus(instance);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);

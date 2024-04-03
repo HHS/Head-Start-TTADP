@@ -1,6 +1,8 @@
 const { Model } = require('sequelize');
 const { APPROVER_STATUSES } = require('@ttahub/common');
 const {
+  beforeCreate,
+  beforeUpdate,
   afterCreate,
   afterDestroy,
   afterRestore,
@@ -43,6 +45,8 @@ export default (sequelize, DataTypes) => {
       afterDestroy: async (instance) => afterDestroy(sequelize, instance),
       afterRestore: async (instance) => afterRestore(sequelize, instance),
       afterUpdate: async (instance) => afterUpdate(sequelize, instance),
+      beforeUpdate: async (instance) => beforeUpdate(sequelize, instance),
+      beforeCreate: async (instance) => beforeCreate(sequelize, instance),
     },
     indexes: [{
       unique: true,

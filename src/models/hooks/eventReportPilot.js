@@ -1,11 +1,14 @@
 /* eslint-disable max-len */
 /* eslint-disable global-require */
+import { escapeDataFields } from '../helpers/escapeFields';
 import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
 
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
+
+const fieldsToEscape = ['eventName'];
 
 const safeParse = (instance) => {
   // Try to parse instance.data if it exists and has a 'val' property
@@ -281,6 +284,11 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await updateGoalText(sequelize, instance, options);
+  escapeDataFields(instance, fieldsToEscape);
+};
+
+const beforeCreate = async (_sequelize, instance) => {
+  escapeDataFields(instance, fieldsToEscape);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -298,6 +306,7 @@ const afterCreate = async (sequelize, instance, options) => {
 export {
   afterUpdate,
   beforeUpdate,
+  beforeCreate,
   afterCreate,
   createOrUpdateNationalCenterUserCacheTable,
 };
