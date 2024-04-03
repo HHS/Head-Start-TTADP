@@ -61,6 +61,9 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.waitForTimeout(5000);
 
   // session participants
+  await page.getByTestId('form').getByText('No').click();
+  await blur(page);
+
   await page.getByText(/Recipients/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
