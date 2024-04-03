@@ -181,12 +181,12 @@ module.exports = {
       CREATE TEMP TABLE tmp_affected_objectives
       AS
       SELECT
-        x."activityReportId",
-        x."grantId",
-        x."goalIds"[1] "originalGoalId",
-        x."goalIds"[2] "extraGoalId",
-        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = x."goalIds"[1]),null) "originalGoalObjectiveIds",
-        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = x."goalIds"[2]),null) "extraGoalObjectiveIds",
+        targg."activityReportId",
+        targg."grantId",
+        targg."goalIds"[1] "originalGoalId",
+        targg."goalIds"[2] "extraGoalId",
+        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = targg."goalIds"[1]),null) "originalGoalObjectiveIds",
+        array_remove(array_agg(DISTINCT aro."objectiveId" ORDER BY aro."objectiveId") filter (where o."goalId" = targg."goalIds"[2]),null) "extraGoalObjectiveIds",
         aro.title
       FROM tmp_affected_reports_grants_goals targg
       LEFT JOIN "Objectives" o
@@ -258,7 +258,7 @@ module.exports = {
       CREATE TEMP TABLE tmp_sync_course_to_objectives
       AS
       WITH sync_course_to_objectives AS (
-        INSERT INTO "ObjectiveCourses" 
+        INSERT INTO "ObjectiveCourses"
         (
           "objectiveId",
           "courseId",
@@ -353,7 +353,7 @@ module.exports = {
       CREATE TEMP TABLE tmp_sync_file_to_objectives
       AS
       WITH sync_file_to_objectives AS (
-        INSERT INTO "ObjectiveFiles" 
+        INSERT INTO "ObjectiveFiles"
         (
           "objectiveId",
           "fileId",
@@ -448,7 +448,7 @@ module.exports = {
       CREATE TEMP TABLE tmp_sync_resource_to_objectives
       AS
       WITH sync_resource_to_objectives AS (
-        INSERT INTO "ObjectiveResources" 
+        INSERT INTO "ObjectiveResources"
         (
           "objectiveId",
           "resourceId",
@@ -543,7 +543,7 @@ module.exports = {
       CREATE TEMP TABLE tmp_sync_topic_to_objectives
       AS
       WITH sync_topic_to_objectives AS (
-        INSERT INTO "ObjectiveTopics" 
+        INSERT INTO "ObjectiveTopics"
         (
           "objectiveId",
           "topicId",
@@ -730,11 +730,113 @@ module.exports = {
       ON traro."objectiveId" = aro."objectiveId"
       WHERE aro.id IS NULL;
       -- 20. Remove objective courses for objective to be removed
+      DROP TABLE IF EXISTS tmp_removed_objective_courses;
+      CREATE TEMP TABLE tmp_removed_objective_courses
+      AS
+      WITH removed_objective_courses AS (
+        DELETE FROM "ObjectiveCourses" oc
+        USING tmp_objectives_to_remove totr
+        WHERE oc."objectiveId" = totr."objectiveId"
+        RETURNING
+          oc.id,
+          oc."objectiveId",
+          oc."courseId"
+      )
+      SELECT
+        roc.id,
+        roc."objectiveId",
+        roc."courseId"
+      FROM removed_objective_courses roc;
       -- 21. Remove objective files for objective to be removed
+      DROP TABLE IF EXISTS tmp_removed_objective_files;
+      CREATE TEMP TABLE tmp_removed_objective_files
+      AS
+      WITH removed_objective_files AS (
+        DELETE FROM "ObjectiveFiles" fo
+        USING tmp_objectives_to_remove totr
+        WHERE fo."objectiveId" = totr."objectiveId"
+        RETURNING
+          fo.id,
+          fo."objectiveId",
+          fo."fileId"
+      )
+      SELECT
+        rof.id,
+        rof."objectiveId",
+        rof."fileId"
+      FROM removed_objective_files rof;
       -- 22. Remove objective resources for objective to be removed
+      DROP TABLE IF EXISTS tmp_removed_objective_resources;
+      CREATE TEMP TABLE tmp_removed_objective_resources
+      AS
+      WITH removed_objective_resources AS (
+        DELETE FROM "ObjectiveResources" ro
+        USING tmp_objectives_to_remove totr
+        WHERE ro."objectiveId" = totr."objectiveId"
+        RETURNING
+          ro.id,
+          ro."objectiveId",
+          ro."resourceId"
+      )
+      SELECT
+        ror.id,
+        ror."objectiveId",
+        ror."resourceId"
+      FROM removed_objective_resources ror;
       -- 23. Remove objective topics for objective to be removed
-      -- 24. Remove objectives that are no longer referenced on any report
-      
+      DROP TABLE IF EXISTS tmp_removed_objective_topics;
+      CREATE TEMP TABLE tmp_removed_objective_topics
+      AS
+      WITH removed_objective_topics AS (
+        DELETE FROM "ObjectiveTopics" ot
+        USING tmp_objectives_to_remove totr
+        WHERE ot."objectiveId" = totr."objectiveId"
+        RETURNING
+          ot.id,
+          ot."objectiveId",
+          ot."topicId"
+      )
+      SELECT
+        rot.id,
+        rot."objectiveId",
+        rot."topicId"
+      FROM removed_objective_topics rot;
+      -- 24. Remove objective collaborators for objective to be removed
+      DROP TABLE IF EXISTS tmp_removed_objective_collaborators;
+      CREATE TEMP TABLE tmp_removed_objective_collaborators
+      AS
+      WITH removed_objective_collaborators AS (
+        DELETE FROM "ObjectiveCollaborators" oc
+        USING tmp_objectives_to_remove totr
+        WHERE oc."objectiveId" = totr."objectiveId"
+        RETURNING
+          oc.id,
+          oc."objectiveId",
+          oc."collaboratorId"
+      )
+      SELECT
+        roc.id,
+        roc."objectiveId",
+        roc."collaboratorId"
+      FROM removed_objective_collaborators roc;
+      -- 25. Remove objectives that are no longer referenced on any report
+      DROP TABLE IF EXISTS tmp_removed_objectives;
+      CREATE TEMP TABLE tmp_removed_objectives
+      AS
+      WITH removed_objectives AS (
+        DELETE FROM "ObjectiveCollaborators" o
+        USING tmp_objectives_to_remove totr
+        WHERE o.id = totr."objectiveId"
+        RETURNING
+          o.id,
+          o.title
+      )
+      SELECT
+          ro.id,
+          ro.title
+      FROM removed_objectives ro;
+
+
       -- x. Sets of Grant may/may not have matching objectives
       -- x. When not matching objectives are found, clone objective and aro to first goal
       -- x. Remove second goals objectives from AR
