@@ -355,7 +355,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-    WHERE aror."sourceFields" = '{resource}'
+    WHERE aror."sourceFields" && '{resource}'
     GROUP BY ar.id, aror."resourceId";
 
     -- 3.) Create Resources temp table (only what we need).
@@ -420,6 +420,8 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
           )::date AS "date"
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
+
+  console.log('\n\n\n---->Flat: ', flatResourceSql);
 
   const transaction = await sequelize.transaction();
   // Execute the flat table sql.
@@ -597,7 +599,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
   });
 
   // - Reports with Resources Pct -
-  const pctOfReportsWithResources = sequelize.query(`
+  const pctOfResourcesSql = `
   SELECT
     count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
     ${totalReportCount}::decimal AS "totalReportsCount",
@@ -607,10 +609,13 @@ function getOverview(tblNames, totalReportCount, transaction) {
       (round(count(DISTINCT "activityReportId")::decimal / ${totalReportCount}::decimal, 4) * 100)::decimal
     END AS "resourcesPct"
   FROM ${tblNames.createdAroResourcesTempTableName};
-  `, {
+  `;
+  const pctOfReportsWithResources = sequelize.query(pctOfResourcesSql, {
     type: QueryTypes.SELECT,
     transaction,
   });
+
+  // console.log('\n\n\n-----> Pct of Reports with Resources: ', pctOfResourcesSql);
 
   // - Number of Reports with ECLKC Resources Pct -
   const pctOfECKLKCResources = sequelize.query(`
@@ -686,6 +691,9 @@ export async function resourceFlatData(scopes) {
 
   // Get total number of reports.
   const totalReportCount = reportIds.length;
+
+  // console.log('\n\n\n----> Report Ids: ', reportIds);
+
   // 2.) Create temp table names.
   const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
   const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
