@@ -87,7 +87,12 @@ export default async function trOverview(
     where: {
       [Op.and]: [
         {
-          'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+          'data.status': {
+            [Op.in]: [
+              TRAINING_REPORT_STATUSES.IN_PROGRESS,
+              TRAINING_REPORT_STATUSES.COMPLETE,
+            ],
+          },
         },
         ...scopes.trainingReport,
       ],
@@ -96,6 +101,9 @@ export default async function trOverview(
       model: SessionReport,
       as: 'sessionReports',
       attributes: ['data', 'eventId'],
+      where: {
+        'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+      },
       required: true,
     },
   }) as ITrainingReportForOverview[];
