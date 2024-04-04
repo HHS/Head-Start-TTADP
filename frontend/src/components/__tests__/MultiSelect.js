@@ -41,6 +41,7 @@ describe('MultiSelect', () => {
             name="name"
             options={options}
             required={false}
+            onClick={() => {}}
           />
           <button data-testid="submit" type="submit">submit</button>
         </Label>
