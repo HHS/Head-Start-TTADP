@@ -4,7 +4,7 @@ import {
 } from './nextStep';
 import { processNextStepForResourcesById, calculateIsAutoDetectedForNextStep } from '../services/resource';
 
-jest.mock('../../services/resource', () => ({
+jest.mock('../services/resource', () => ({
   calculateIsAutoDetectedForNextStep: jest.fn(),
   processNextStepForResourcesById: jest.fn(),
 }));

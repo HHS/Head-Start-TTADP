@@ -21,7 +21,7 @@ import {
 } from './activityReport';
 import { auditLogger } from '../logger';
 
-jest.mock('../../policies/activityReport');
+jest.mock('../policies/activityReport');
 
 describe('activity report model hooks', () => {
   describe('automatic goal status changes', () => {

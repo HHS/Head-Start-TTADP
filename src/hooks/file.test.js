@@ -7,7 +7,7 @@ import { FILE_STATUSES } from '../constants';
 
 jest.mock('bull');
 
-jest.mock('../../services/s3Queue', () => ({
+jest.mock('../services/s3Queue', () => ({
   addDeleteFileToQueue: jest.fn(),
 }));
 
