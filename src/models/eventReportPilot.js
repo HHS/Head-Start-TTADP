@@ -4,7 +4,7 @@ const {
   beforeUpdate,
   afterCreate,
   beforeCreate,
-} = require('./hooks/eventReportPilot');
+} = require('../hooks/eventReportPilot');
 
 export default (sequelize, DataTypes) => {
   class EventReportPilot extends Model {
