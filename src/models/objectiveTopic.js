@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveTopic');
+const { beforeValidate, afterCreate, afterDestroy } = require('../hooks/objectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table

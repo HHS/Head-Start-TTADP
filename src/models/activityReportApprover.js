@@ -7,7 +7,7 @@ const {
   afterDestroy,
   afterRestore,
   afterUpdate,
-} = require('./hooks/activityReportApprover');
+} = require('../hooks/activityReportApprover');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportApprover extends Model {
