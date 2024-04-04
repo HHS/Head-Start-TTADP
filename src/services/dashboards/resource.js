@@ -355,6 +355,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
+    WHERE aror."sourceFields" && '{resource}'
     GROUP BY ar.id, aror."resourceId";
 
     -- 3.) Create Resources temp table (only what we need).
@@ -419,8 +420,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
           )::date AS "date"
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
-
-  // console.log('\n\n\n---->Flat: ', flatResourceSql);
 
   const transaction = await sequelize.transaction();
   // Execute the flat table sql.
@@ -614,8 +613,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
     transaction,
   });
 
-  // console.log('\n\n\n-----> Pct of Reports with Resources: ', pctOfResourcesSql);
-
   // - Number of Reports with ECLKC Resources Pct -
   const pctOfECKLKCResources = sequelize.query(`
     WITH eclkc AS (
@@ -695,13 +692,13 @@ export async function resourceFlatData(scopes) {
     reportIds.push({ id: 0 });
   }
   // 2.) Create temp table names.
-  const createdArTempTableName = `Z_temp_resource_ars__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroResourcesTempTableName = `Z_temp_resource_aro_resources__${uuidv4().replaceAll('-', '_')}`;
-  const createdResourcesTempTableName = `Z_temp_resource_resources__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroTopicsTempTableName = `Z_temp_resource_aro_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdTopicsTempTableName = `Z_temp_resource_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdFlatResourceHeadersTempTableName = `Z_temp_flat_resources_headers__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
-  const createdFlatResourceTempTableName = `Z_temp_flat_resources__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+  const createdArTempTableName = `Z_temp_resdb_ar__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuidv4().replaceAll('-', '_')}`;
+  const createdResourcesTempTableName = `Z_temp_resdb_res__${uuidv4().replaceAll('-', '_')}`;
+  const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuidv4().replaceAll('-', '_')}`;
+  const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuidv4().replaceAll('-', '_')}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_resdb_headers__${uuidv4().replaceAll('-', '_')}`; // Date Headers.
+  const createdFlatResourceTempTableName = `Z_temp_resdb_flat__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
 
   const tempTableNames = {
     createdArTempTableName,
