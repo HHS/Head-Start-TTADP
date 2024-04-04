@@ -677,11 +677,31 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
+    const session2 = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        objectiveTopics: ['Buttering', 'Breading'],
+        objective: 'This is a session objective',
+        grantNumbers: [grant1.number],
+        endDate: '2020-09-01',
+        sessionName: 'This is a session name',
+        eventDisplayId: '12345',
+        status: 'Complete',
+      },
+    });
+
     await EventReportPilotGoal.create({
       eventId: event.id,
       goalId: trGoal.id,
       grantId: trGoal.grantId,
       sessionId: session.id,
+    });
+
+    await EventReportPilotGoal.create({
+      eventId: event.id,
+      goalId: trGoal.id,
+      grantId: trGoal.grantId,
+      sessionId: session2.id,
     });
   });
 
@@ -798,12 +818,13 @@ describe('Goals by Recipient Test', () => {
       expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-10');
       expect(goalRowsx[1].goalText).toBe('This is a goal created on a TR');
       expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
-      expect(goalRowsx[1].objectiveCount).toBe(1);
+      expect(goalRowsx[1].objectiveCount).toBe(2);
       expect(goalRowsx[1].reasons).toEqual([]);
       expect(goalRowsx[1].goalTopics).toEqual([]);
-      expect(goalRowsx[1].objectives.length).toBe(1);
+      expect(goalRowsx[1].objectives.length).toBe(0);
+      expect(goalRowsx[1].sessionObjectives.length).toBe(2);
 
-      const trObjective = goalRowsx[1].objectives[0];
+      const trObjective = goalRowsx[1].sessionObjectives[0];
       trObjective.topics.sort();
       const expectedTopics = ['Buttering', 'Breading'];
       expectedTopics.sort();
@@ -812,6 +833,21 @@ describe('Goals by Recipient Test', () => {
         type: 'session',
         title: 'This is a session objective',
         topics: expectedTopics,
+        grantNumbers: [goalRowsx[1].grantNumbers[0]],
+        endDate: '2020-09-01',
+        sessionName: 'This is a session name',
+        trainingReportId: '12345',
+      });
+
+      const trObjective2 = goalRowsx[1].sessionObjectives[1];
+      trObjective2.topics.sort();
+      const expectedTopics2 = ['Buttering', 'Breading'];
+      expectedTopics2.sort();
+
+      expect(trObjective2).toEqual({
+        type: 'session',
+        title: 'This is a session objective',
+        topics: expectedTopics2,
         grantNumbers: [goalRowsx[1].grantNumbers[0]],
         endDate: '2020-09-01',
         sessionName: 'This is a session name',

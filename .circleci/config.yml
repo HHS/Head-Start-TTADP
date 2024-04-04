@@ -94,16 +94,30 @@ commands:
   notify_slack:
     description: "Notify slack of a deploy to production"
     parameters:
-      slack_webhook_url:
-        description: "Slack webhook url"
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
         type: string
     steps:
     - run:
         name: Notify Slack of Deployment
         command: |
-          curl -X POST -H 'Content-type: application/json' \
-          --data '{"text":"🚀 Deployment to production was successful!"}' \
-          << parameters.slack_webhook_url >>
+          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
+          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+          else
+            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+          fi
+
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data "{
+            \"channel\": \"<< parameters.slack_channel >>\",
+            \"text\": \"$MESSAGE_TEXT\"
+          }" https://slack.com/api/chat.postMessage
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
@@ -274,10 +288,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "jp/2128/display-goal-creator-name"
+    default: "mb/TTAHUB-2501/front-end-goal-name-filter"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/1185/validate-on-click"
+    default: "mb/TTAHUB-2510/add-IST-visit-dropdown"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -871,7 +885,8 @@ jobs:
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
             - notify_slack:
-                slack_webhook_url: $SLACK_WEBHOOK_URL
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
 workflows:
   build_test_deploy:
