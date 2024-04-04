@@ -12,6 +12,10 @@ import {
 } from './sessionReportPilot';
 import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../lib/mailer';
 import db from '../models';
+import {
+  createGoal,
+  createGrant,
+} from '../testUtils';
 
 jest.mock('../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
@@ -582,6 +586,7 @@ describe('syncGoalCollaborators', () => {
   let user;
   let newUser;
   let eventRecord;
+  let grant;
   let goalId;
   let sessionReport;
   let transaction;
@@ -590,7 +595,9 @@ describe('syncGoalCollaborators', () => {
     transaction = await db.sequelize.transaction();
     user = await db.User.create({ name: 'aa bb', email: 'aabb@cc.com', hsesUsername: 'aabbcc' }, { transaction });
     newUser = await db.User.create({ name: 'cc dd', email: 'ccdd@ee.com', hsesUsername: 'ccdd' }, { transaction });
-    goalId = 1;
+    grant = await createGrant();
+    const goal = await createGoal({ grantId: grant.id, status: 'Not Started' });
+    goalId = goal.id;
     sessionReport = { id: 1 };
     eventRecord = { pocIds: [user.id] };
 
@@ -603,6 +610,9 @@ describe('syncGoalCollaborators', () => {
   afterAll(async () => {
     await db.GoalCollaborator.destroy({ where: { goalId }, transaction });
     await db.CollaboratorType.destroy({ where: { name: ['Creator', 'Linker'] }, transaction });
+    await db.Goal.destroy({ where: { id: goalId }, force: true, transaction });
+    await db.GranNumberLink.destroy({ where: { grantId: grant.id }, transaction });
+    await db.Grant.destroy({ where: { id: grant.id }, transaction });
     await db.User.destroy({ where: { id: [user.id, newUser.id] }, transaction });
     await transaction.rollback();
     await db.sequelize.close();
