@@ -20,7 +20,7 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
@@ -107,6 +107,7 @@ function MultiSelect({
   onClick = () => {},
 }) {
   const inputId = `select-${uuidv4()}`;
+  const selectorRef = useRef(null);
 
   /**
    * unfortunately, given our support for ie11, we can't
@@ -159,6 +160,14 @@ function MultiSelect({
     }
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      selectorRef.current.focus();
+      onClick();
+    }
+  };
+
   const Selector = canCreate ? Creatable : Select;
 
   return (
@@ -167,8 +176,15 @@ function MultiSelect({
         const values = value ? getValues(value) : value;
         return (
           // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-          <div onClick={onClick} onKeyDown={() => {}} data-testid={`${name}-click-container`}>
+          <div
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+            data-testid={`${name}-click-container`}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={disabled ? 0 : undefined}
+          >
             <Selector
+              ref={selectorRef}
               className="ttahub-multi-select margin-top-1"
               id={name}
               value={values}
