@@ -86,6 +86,7 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
       },
     });
 
@@ -99,6 +100,7 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
       },
     });
 
@@ -119,6 +121,7 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 12,
         numberOfParticipantsInPerson: 13,
         numberOfParticipants: 0,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
       },
     });
 
@@ -132,10 +135,11 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
       },
     });
 
-    // training report 3 (not completed)
+    // training report 3 (sessions not completed)
     trainingReport3 = await createTrainingReport({
       collaboratorIds: [userCollaborator.id],
       pocIds: [userPoc.id],
@@ -152,6 +156,7 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
     });
 
@@ -165,21 +170,14 @@ describe('TR overview widget', () => {
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       },
     });
 
-    // update TR 1 to complete
+    // update TR 1 to complete, the others will be "in progress" as they have sessions
     await trainingReport1.update({
       data: {
         ...trainingReport1.data,
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-      },
-    });
-
-    // update TR 2 to complete
-    await trainingReport2.update({
-      data: {
-        ...trainingReport2.data,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
       },
     });
