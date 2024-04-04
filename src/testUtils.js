@@ -108,15 +108,11 @@ export async function createGrant(grant = {}) {
   // let grantExists = true;
   const id = grant.id || faker.datatype.number({ min: 10000, max: 100000 });
 
-  // do {
-  //   // eslint-disable-next-line no-await-in-loop
-  //   const gr = await Grant.findByPk(id);
-  //   if (gr) {
-  //     id = faker.datatype.number({ min: 10000, max: 100000 });
-  //   } else {
-  //     grantExists = false;
-  //   }
-  // } while (grantExists);
+  const gr = await Grant.findByPk(id);
+
+  if (gr) {
+    return createGrant(grant);
+  }
 
   return Grant.create({
     ...defaultGrant(),
