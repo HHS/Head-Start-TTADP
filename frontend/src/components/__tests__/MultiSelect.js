@@ -159,4 +159,26 @@ describe('MultiSelect', () => {
       },
     ]);
   });
+
+  describe('the div wrapper', () => {
+    it('forwards space to the Selector, expanding the multiselect', async () => {
+      render(<TestMultiSelect />);
+      const container = screen.getByTestId('name-click-container');
+      container.focus();
+      await act(async () => {
+        userEvent.type(container, '{space}');
+      });
+      expect(await screen.findByText('one')).toBeVisible();
+    });
+    it('forwards enter to the Selector, giving it focus', async () => {
+      render(<TestMultiSelect />);
+      const container = screen.getByTestId('name-click-container');
+      container.focus();
+      await act(async () => {
+        userEvent.type(container, '{enter}');
+      });
+      const selector = container.querySelector('input');
+      expect(selector).toHaveFocus();
+    });
+  });
 });
