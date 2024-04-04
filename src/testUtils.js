@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { AUTOMATIC_CREATION } from './constants';
 import {
   ActivityReport,
@@ -11,7 +11,8 @@ import {
   Region,
   GoalTemplate,
   Goal,
-  // GrantGoal,
+  EventReportPilot,
+  SessionReportPilot,
 } from './models';
 import { auditLogger } from './logger';
 
@@ -74,7 +75,7 @@ function defaultRegion() {
   };
 }
 
-async function createRegion(region) {
+export async function createRegion(region) {
   return Region.create({ ...defaultRegion(), ...region });
 }
 
@@ -293,5 +294,207 @@ export async function createGoalTemplate({
     hash,
     templateName: varForNameOrN,
     creationMethod,
+  });
+}
+
+export function mockTrainingReportData(data) {
+  return {
+    goal: 'The goal is that recipients have well written, fundable grant applications that reflect their community needs, includes data, and data informed decisions. The Regional Office and TTA have identified that 75% of our recipients will be completing a baseline application within the next 18 months. Staggering the supports and training for the grant application where the applications do sooner have different supports vs. programs who have 12-18 months to implement best practices when it comes to the grant application.\n',
+    region: 0,
+    status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+    vision: '\nThe series will have the following five sessions for recipients who have 6-12 months to complete their application.\n1. Grant Application Process & Nuts and Bolts of Strategic Planning \n2. Development of the Community & Self-Assessment\n3. Program and School Readiness Goals\n4. Education & Health Services\n5. Financial Essentials to Create a Fundable Application\n\nWe selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
+    creator: faker.internet.email(),
+    endDate: '12/11/2023',
+    eventId: `R08-TR-23-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+    reasons: [
+      'Full Enrollment',
+      'Ongoing Quality Improvement',
+      'School Readiness Goals',
+    ],
+    audience: 'Recipients',
+    'IST Name:': faker.hacker.noun(),
+    eventName: 'Baseline Grant Application Nuts and Bolts',
+    pageState: {
+      1: 'Complete',
+      2: 'Complete',
+      3: 'In progress',
+    },
+    startDate: '10/10/2023',
+    pocComplete: false,
+    trainingType: 'Series',
+    pocCompleteId: '',
+    '﻿Sheet Name': '',
+    eventOrganizer: 'Regional PD Event (with National Centers)',
+    pocCompleteDate: '',
+    targetPopulations: [
+      'Affected by Child Welfare Involvement',
+      'Affected by Disaster',
+      'Affected by Substance Use',
+      'Children Experiencing Homelessness',
+      'Children/Families affected by systemic discrimination/bias/exclusion.',
+      'Children/Families affected by traumatic events (select the other reasons for child welfare, disaster, substance use or homelessness)',
+      'Children in Migrant and Seasonal Families',
+      'Children with Disabilities',
+      'Children with Special Health Care Needs',
+      'Dual-Language Learners',
+      'Infants and Toddlers (ages birth to 3)',
+      'Parents/Families impacted by health disparities.',
+      'Pregnant Women / Pregnant Persons',
+      'Preschool Children (ages 3-5)',
+    ],
+    eventIntendedAudience: 'recipients',
+    'National Center(s) Requested': 'PMFO',
+    'Event Duration/# NC Days of Support': 'Series',
+    ...data,
+  };
+}
+
+export async function createTrainingReport(report) {
+  const {
+    collaboratorIds,
+    pocIds,
+    ownerId,
+    data,
+  } = report;
+
+  let userCreator = await User.findByPk(ownerId);
+  if (!userCreator) {
+    userCreator = await createUser();
+  }
+
+  const userCollaborators = await Promise.all(collaboratorIds.map(async (id) => {
+    let user = await User.findByPk(id);
+    if (!user) {
+      user = await createUser();
+    }
+    return user.id;
+  }));
+
+  const userPocs = await Promise.all(pocIds.map(async (id) => {
+    let user = await User.findByPk(id);
+    if (!user) {
+      user = await createUser();
+    }
+    return user.id;
+  }));
+
+  return EventReportPilot.create({
+    data: mockTrainingReportData(data || {}),
+    collaboratorIds: userCollaborators,
+    ownerId: userCreator.id,
+    regionId: userCreator.homeRegionId,
+    imported: {},
+    pocIds: userPocs,
+  });
+}
+
+export function mockSessionData(data) {
+  return {
+    files: [
+      {
+        id: 42698,
+        key: '709a0aec-b8a6-433f-8380-e2cdece1b492pdf',
+        url: {
+          url: faker.internet.url(),
+          error: null,
+        },
+        status: 'QUEUEING_FAILED',
+        fileSize: 10306065,
+        createdAt: '2023-11-29T14:15:25.840Z',
+        updatedAt: '2023-11-29T14:15:26.276Z',
+        originalFileName: faker.system.fileName(),
+      },
+    ],
+    status: TRAINING_REPORT_STATUSES.NOT_STARTED,
+    context: 'Participants will know what data to collect (CA, SA and other) and how to utilize that data for their baseline application.',
+    endDate: '10/23/2023',
+    eventId: '8030',
+    ownerId: null,
+    duration: 1,
+    regionId: 8,
+    eventName: faker.datatype.string(100),
+    objective: faker.datatype.string(100),
+    pageState: {
+      1: 'Complete',
+      2: 'Complete',
+      3: 'Complete',
+      4: 'Complete',
+      5: 'In progress',
+    },
+    startDate: '10/23/2023',
+    eventOwner: 305,
+    recipients: [
+      {
+        label: faker.datatype.string(100),
+        value: faker.datatype.number(10000),
+      },
+      {
+        label: faker.datatype.string(100),
+        value: faker.datatype.number(10000),
+      },
+      {
+        label: faker.datatype.string(100),
+        value: faker.datatype.number(10000),
+      },
+    ],
+    pocComplete: true,
+    sessionName: faker.datatype.string(100),
+    ttaProvided: faker.datatype.string(250),
+    participants: [
+      'CEO / CFO / Executive',
+      'Coach',
+      'Family Service Worker / Case Manager',
+      'Fiscal Manager/Team',
+      'Manager / Coordinator / Specialist',
+      'Program Director (HS / EHS)',
+      'Program Support / Administrative Assistant',
+    ],
+    pocCompleteId: '185',
+    deliveryMethod: 'virtual',
+    eventDisplayId: 'R08-TR-23-8030',
+    objectiveTopics: [
+      'Five-Year Grant',
+      'Fiscal / Budget',
+    ],
+    pocCompleteDate: '2023-12-04',
+    objectiveTrainers: [
+      'PFMO',
+    ],
+    objectiveResources: [
+      {
+        value: '',
+      },
+    ],
+    recipientNextSteps: [
+      {
+        note: 'Recipients will utilize sources of data from the self-assessment and the community assessment to inform the development of the baseline grant application.',
+        completeDate: '06/14/2024',
+      },
+    ],
+    specialistNextSteps: [
+      {
+        note: 'Specialists deployed to support recipients in developing a baseline grant will be available to answer questions related to using data from SA and CA. ',
+        completeDate: '02/09/2024',
+      },
+    ],
+    numberOfParticipants: 33,
+    objectiveSupportType: 'Planning',
+    supportingAttachments: [],
+    'pageVisited-supporting-attachments': 'true',
+    ...data,
+  };
+}
+
+export async function createSessionReport(report) {
+  const { eventId, data } = report;
+
+  const event = await EventReportPilot.findOne({
+    where: { id: eventId },
+    attributes: ['id'],
+  });
+
+  return SessionReportPilot.create({
+    data: mockSessionData(data || {}),
+    eventId: event?.id || await createTrainingReport({}).id,
   });
 }

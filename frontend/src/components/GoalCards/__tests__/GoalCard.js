@@ -1,6 +1,8 @@
 import React from 'react';
 import join from 'url-join';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render, screen, waitFor, act,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -26,13 +28,22 @@ describe('GoalCard', () => {
     source: 'The inferno',
     createdVia: 'rtr',
     onAR: true,
+    sessionObjectives: [{
+      title: 'Session objective 1',
+      trainingReportId: 'TR-1',
+      grantNumbers: ['G-1'],
+      endDate: '2021-12-31',
+      topics: ['Topic 1', 'Topic 2'],
+      sessionName: 'Session 1',
+      type: 'session',
+    }],
     objectives: [
       {
         id: 1,
+        endDate: '2022-01-01',
         title: 'Objective 1',
         arNumber: 'AR-1',
         ttaProvided: 'TTA 1',
-        endDate: '2021-01-01',
         reasons: ['Reason 1', 'Reason 2'],
         status: 'Closed',
         activityReports: [],
@@ -95,6 +106,21 @@ describe('GoalCard', () => {
   it('shows the checkbox by default', () => {
     renderGoalCard();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('properly sorts objectives', async () => {
+    renderGoalCard();
+    const expandObjectives = await screen.findByRole('button', { name: /View objectives for goal/i });
+    act(() => {
+      userEvent.click(expandObjectives);
+    });
+
+    const objectives = document.querySelectorAll('.ttahub-goal-card__objective-list');
+
+    expect(objectives.length).toBe(2);
+
+    // confirm that the second one is a session objective (that they are sorted)
+    expect(objectives[1].classList.contains('ttahub-goal-card__objective-list--session-objective')).toBe(true);
   });
 
   it('shows goal source', () => {
