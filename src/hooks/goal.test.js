@@ -3,7 +3,6 @@ const {
   autoPopulateStatusChangeDates,
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
 } = require('./goal');
 const { GOAL_STATUS } = require('../constants');
 const { createRecipient, createGrant, createGoal } = require('../testUtils');
@@ -16,7 +15,7 @@ const {
   GoalSimilarityGroupGoal: GoalSimilarityGroupGoalModel,
 } = require('../models');
 
-jest.mock('../../services/resource');
+jest.mock('../services/resource');
 
 describe('goal hooks', () => {
   describe('GoalSimilarityGroup hooks', () => {

@@ -16,7 +16,7 @@ jest.mock('./genericFile', () => ({
   propagateDestroyToFile: jest.fn(),
 }));
 
-jest.mock('../helpers/orphanCleanupHelper', () => ({
+jest.mock('../models/helpers/orphanCleanupHelper', () => ({
   cleanupOrphanFiles: jest.fn(),
 }));
 

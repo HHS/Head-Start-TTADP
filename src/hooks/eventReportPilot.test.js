@@ -11,7 +11,7 @@ import { auditLogger } from '../logger';
 import db from '../models';
 import { createUser } from '../testUtils';
 
-jest.mock('../../lib/mailer', () => ({
+jest.mock('../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),
   trPocAdded: jest.fn(),
   trPocEventComplete: jest.fn(),

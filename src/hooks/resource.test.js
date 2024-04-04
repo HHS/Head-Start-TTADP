@@ -7,7 +7,7 @@ import { addGetResourceMetadataToQueue } from '../services/resourceQueue';
 jest.mock('bull');
 
 // Mock addGetResourceMetadataToQueue.
-jest.mock('../../services/resourceQueue', () => ({
+jest.mock('../services/resourceQueue', () => ({
   addGetResourceMetadataToQueue: jest.fn(),
 }));
 

@@ -13,7 +13,7 @@ import {
 import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../lib/mailer';
 import db from '../models';
 
-jest.mock('../../lib/mailer', () => ({
+jest.mock('../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
   trSessionCompleted: jest.fn(),
   trPocSessionComplete: jest.fn(),
