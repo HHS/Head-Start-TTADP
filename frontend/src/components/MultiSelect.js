@@ -183,36 +183,38 @@ function MultiSelect({
             // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
             tabIndex={disabled ? 0 : undefined}
           >
-            <Selector
-              ref={selectorRef}
-              className="ttahub-multi-select margin-top-1"
-              id={name}
-              value={values}
-              onBlur={onBlur}
-              onChange={(event) => {
-                if (onItemSelected) {
-                  onItemSelected(event);
-                } else if (event) {
-                  onChange(event, controllerOnChange);
-                } else {
-                  controllerOnChange([]);
-                }
-              }}
-              inputId={inputId}
-              styles={styles(singleRowInput)}
-              components={{ ...componentReplacements, DropdownIndicator }}
-              options={options}
-              isDisabled={disabled}
-              tabSelectsValue={false}
-              isClearable={multiSelectOptions.isClearable}
-              closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
-              controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-              hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-              placeholder={placeholderText || ''}
-              onCreateOption={onCreateOption}
-              isMulti
-              required={!!(required)}
-            />
+            <div aria-hidden={disabled}>
+              <Selector
+                ref={selectorRef}
+                className="ttahub-multi-select margin-top-1"
+                id={name}
+                value={values}
+                onBlur={onBlur}
+                onChange={(event) => {
+                  if (onItemSelected) {
+                    onItemSelected(event);
+                  } else if (event) {
+                    onChange(event, controllerOnChange);
+                  } else {
+                    controllerOnChange([]);
+                  }
+                }}
+                inputId={inputId}
+                styles={styles(singleRowInput)}
+                components={{ ...componentReplacements, DropdownIndicator }}
+                options={options}
+                isDisabled={disabled}
+                tabSelectsValue={false}
+                isClearable={multiSelectOptions.isClearable}
+                closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
+                controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+                hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+                placeholder={placeholderText || ''}
+                onCreateOption={onCreateOption}
+                isMulti
+                required={!!(required)}
+              />
+            </div>
           </div>
         );
       }}

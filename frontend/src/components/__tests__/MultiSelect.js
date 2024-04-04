@@ -22,7 +22,7 @@ const customOptions = [
 
 describe('MultiSelect', () => {
   // eslint-disable-next-line react/prop-types
-  const TestMultiSelect = ({ onSubmit }) => {
+  const TestMultiSelect = ({ onSubmit, disabled = false }) => {
     const { control, handleSubmit } = useForm({
       defaultValues: { name: [] },
       mode: 'all',
@@ -42,6 +42,7 @@ describe('MultiSelect', () => {
             options={options}
             required={false}
             onClick={() => {}}
+            disabled={disabled}
           />
           <button data-testid="submit" type="submit">submit</button>
         </Label>
@@ -180,6 +181,12 @@ describe('MultiSelect', () => {
       });
       const selector = container.querySelector('input');
       expect(selector).toHaveFocus();
+    });
+    it('hides the Selector with aria-hidden when disabled', async () => {
+      render(<TestMultiSelect disabled />);
+      const container = screen.getByTestId('name-click-container');
+      const div = container.querySelector('div');
+      expect(div).toHaveAttribute('aria-hidden', 'true');
     });
   });
 });
