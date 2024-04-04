@@ -239,7 +239,7 @@ export async function destroyReport(report) {
   }
 }
 
-export async function createGoal(goal) {
+export async function createGoal(goal, options = {}) {
   let grant = await Grant.findByPk(goal.grantId);
 
   if (!grant) {
@@ -251,13 +251,14 @@ export async function createGoal(goal) {
     : (await GoalTemplate.findOrCreate({
       where: { templateName: dg.name },
       defaults: { templateName: dg.name },
+      ...options,
     }))[0];
   const dbGoal = await Goal.create({
     ...dg,
     ...goal,
     grantId: grant.id,
     goalTemplateId: dbGoalTemplate.id,
-  });
+  }, options);
   return dbGoal;
 }
 

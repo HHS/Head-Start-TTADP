@@ -595,8 +595,8 @@ describe('syncGoalCollaborators', () => {
     transaction = await db.sequelize.transaction();
     user = await db.User.create({ name: 'aa bb', email: 'aabb@cc.com', hsesUsername: 'aabbcc' }, { transaction });
     newUser = await db.User.create({ name: 'cc dd', email: 'ccdd@ee.com', hsesUsername: 'ccdd' }, { transaction });
-    grant = await createGrant();
-    const goal = await createGoal({ grantId: grant.id, status: 'Not Started' });
+    grant = await createGrant({}, { transaction });
+    const goal = await createGoal({ grantId: grant.id, status: 'Not Started' }, { transaction });
     goalId = goal.id;
     sessionReport = { id: 1 };
     eventRecord = { pocIds: [user.id] };
@@ -611,7 +611,7 @@ describe('syncGoalCollaborators', () => {
     await db.GoalCollaborator.destroy({ where: { goalId }, transaction });
     await db.CollaboratorType.destroy({ where: { name: ['Creator', 'Linker'] }, transaction });
     await db.Goal.destroy({ where: { id: goalId }, force: true, transaction });
-    await db.GranNumberLink.destroy({ where: { grantId: grant.id }, transaction });
+    await db.GrantNumberLink.destroy({ where: { grantId: grant.id }, transaction, force: true });
     await db.Grant.destroy({ where: { id: grant.id }, transaction });
     await db.User.destroy({ where: { id: [user.id, newUser.id] }, transaction });
     await transaction.rollback();
