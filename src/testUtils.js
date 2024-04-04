@@ -105,21 +105,7 @@ export async function createGrant(grant = {}) {
     g = await createRecipient({});
   }
 
-  // let grantExists = true;
-  const id = grant.id || faker.datatype.number({ min: 10000, max: 100000 });
-
-  const gr = await Grant.findByPk(id);
-
-  if (gr) {
-    return createGrant(grant);
-  }
-
-  return Grant.create({
-    ...defaultGrant(),
-    id,
-    ...grant,
-    recipientId: g.id,
-  });
+  return Grant.create({ ...defaultGrant(), ...grant, recipientId: g.id });
 }
 
 export async function createReport(report) {
