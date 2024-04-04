@@ -29,7 +29,7 @@ const defaultDate = formatDateRange({
 });
 const defaultDateParam = `startDate.win=${encodeURIComponent(defaultDate)}`;
 
-const resourcesUrl = join('api', 'resources');
+const resourcesUrl = join('api', 'resources/flat');
 
 const resourcesDefault = {
   resourcesDashboardOverview: {
