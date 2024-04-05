@@ -91,6 +91,7 @@ const propagateDestroyToTemplate = async (sequelize, instance, options) => {
       ],
       transaction: options.transaction,
     });
+
     if (otfs.objectiveTemplate.objectives.length > 0) {
       await sequelize.models.ObjectiveTemplateFile.update(
         {
