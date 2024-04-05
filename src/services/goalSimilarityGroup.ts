@@ -46,10 +46,15 @@ interface SimilarityGroup {
   toJSON: () => SimilarityGroup;
 }
 
-export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
+export const flattenSimilarityGroupGoals = (
+  group: SimilarityGroup,
+  userHasFeatureFlag = false,
+) => ({
   ...group.toJSON(),
   goals: group.goals.filter((goal) => {
-    if (goal.goalTemplate && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+    if (goal.goalTemplate
+      && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED
+      && !userHasFeatureFlag) {
       return goal.status !== GOAL_STATUS.CLOSED;
     }
     return true;
@@ -120,7 +125,7 @@ export async function getSimilarityGroupByContainingGoalIds(
             SELECT gs."goalSimilarityGroupId"
             FROM "GoalSimilarityGroupGoals" gs
             WHERE gs."goalId" IN (${goalIds.join(',')})
-            GROUP BY gs."goalSimilarityGroupId" 
+            GROUP BY gs."goalSimilarityGroupId"
             HAVING COUNT(DISTINCT gs."goalId") = ${goalIds.length}
           )`,
         ),
@@ -192,8 +197,10 @@ export async function getSimilarityGroupsByRecipientId(
     }],
   });
 
+  console.log('groups:', groups[3]);
+
   return groups.map(
-    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg),
+    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg, userHasFeatureFlag),
   );
 }
 

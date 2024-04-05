@@ -2811,7 +2811,9 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
       }
 
       let closedCurated = false;
-      if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+      if (current.goalTemplate
+        && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED
+        && !hasClosedMergeGoalOverride) {
         closedCurated = current.status !== GOAL_STATUS.CLOSED;
       }
 
