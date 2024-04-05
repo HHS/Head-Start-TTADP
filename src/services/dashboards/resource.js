@@ -332,8 +332,9 @@ const switchToTopicCentric = (input) => {
 };
 
 async function GenerateFlatTempTables(reportIds, tblNames) {
-  const flatResourceSql = `
+  const flatResourceSql = /* sql */ `
   -- 1.) Create AR temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdArTempTableName};
   SELECT
     id,
     "startDate",
@@ -346,6 +347,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
     WHERE ar."id" IN (${reportIds.map((r) => r.id).join(',')});
 
   -- 2.) Create ARO Resources temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdAroResourcesTempTableName};
   SELECT
     ar.id AS "activityReportId",
     aror."resourceId"
@@ -359,6 +361,11 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
     GROUP BY ar.id, aror."resourceId";
 
     -- 3.) Create Resources temp table (only what we need).
+    DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
+    WITH distinctResources AS (
+      SELECT DISTINCT "resourceId"
+      FROM ${tblNames.createdAroResourcesTempTableName}
+    )
     SELECT
       id,
       domain,
@@ -366,12 +373,11 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       title
       INTO TEMP ${tblNames.createdResourcesTempTableName}
       FROM "Resources"
-      WHERE id IN (
-      SELECT DISTINCT "resourceId"
-        FROM ${tblNames.createdAroResourcesTempTableName}
-      );
+      JOIN distinctResources dr
+        ON "Resources".id = dr."resourceId";
 
       -- 4.) Create ARO Topics temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
       SELECT
       ar.id AS "activityReportId",
       arot."activityReportObjectiveId", -- We need to group by this incase of multiple aro's.
@@ -385,17 +391,21 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       GROUP BY ar.id, arot."activityReportObjectiveId", arot."topicId";
 
       -- 5.) Create Topics temp table (only what we need).
+      DROP TABLE IF EXISTS ${tblNames.createdTopicsTempTableName};
+      WITH distinctTopics AS (
+        SELECT DISTINCT "topicId"
+        FROM ${tblNames.createdAroTopicsTempTableName}
+      )
       SELECT
         id,
         name
         INTO TEMP ${tblNames.createdTopicsTempTableName}
         FROM "Topics"
-        WHERE id IN (
-        SELECT DISTINCT "topicId"
-          FROM ${tblNames.createdAroTopicsTempTableName}
-        );
+        JOIN distinctTopics dt
+          ON "Topics".id = dt."topicId";
 
       -- 6.) Create Flat Resource temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceTempTableName};
       SELECT
       ar.id,
       ar."startDate",
@@ -412,6 +422,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         ON aror."resourceId" = arorr.id;
 
       -- 7.) Create date headers.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceHeadersTempTableName};
       SELECT
           generate_series(
             date_trunc('month', (SELECT MIN("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
@@ -434,7 +445,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
 }
 
 function getResourceUseSql(tblNames, transaction) {
-  const resourceUseSql = `
+  const resourceUseSql = /* sql */`
   WITH urlvals AS (
     SELECT
         url,
@@ -472,8 +483,7 @@ function getResourceUseSql(tblNames, transaction) {
       coalesce(u."resourceCount", 0) AS "resourceCount",
       t."totalCount"
       FROM distincturls d
-      JOIN series s
-        ON 1=1
+      CROSS JOIN series s
       JOIN totals t
         ON d.url = t.url
       LEFT JOIN urlvals u
@@ -491,8 +501,8 @@ function getResourceUseSql(tblNames, transaction) {
 }
 
 function getTopicsUseSql(tblNames, transaction) {
-  const topicUseSql = `
-  WITH topics AS (
+  const topicUseSql = /* sql */`
+  WITH topicsuse AS (
       SELECT
         f.id,
         t.name,
@@ -512,7 +522,7 @@ function getTopicsUseSql(tblNames, transaction) {
       "name",
       "rollUpDate",
       SUM("resourceCount") AS "resourceCount"
-    FROM topics
+    FROM topicsuse
     GROUP BY "name", "rollUpDate"
     ),
     totals AS
@@ -553,7 +563,7 @@ function getTopicsUseSql(tblNames, transaction) {
 
 function getOverview(tblNames, totalReportCount, transaction) {
   // - Number of Participants -
-  const numberOfParticipants = sequelize.query(`
+  const numberOfParticipants = sequelize.query(/* sql */`
   WITH ar_participants AS (
     SELECT
     id,
@@ -569,25 +579,14 @@ function getOverview(tblNames, totalReportCount, transaction) {
     transaction,
   });
 
-  const numberOfRecipSql = `
-  WITH ars AS (
-    SELECT
-    DISTINCT id
-    FROM ${tblNames.createdFlatResourceTempTableName} f
-  ), recipients AS (
-    SELECT
-      DISTINCT r.id
-    FROM ars ar
-    JOIN "ActivityRecipients" arr
-      ON ar.id = arr."activityReportId"
-    JOIN "Grants" g
-      ON arr."grantId" = g.id AND g."status" = 'Active'
-     JOIN "Recipients" r
-      ON g."recipientId" = r.id
-  )
-  SELECT
-         count(r.id) AS recipients
-  FROM recipients r;
+  const numberOfRecipSql = /* sql */`
+   SELECT
+         count(DISTINCT g."recipientId") AS recipients
+  FROM ${tblNames.createdFlatResourceTempTableName} ar
+  JOIN "ActivityRecipients" arr
+    ON ar.id = arr."activityReportId"
+  JOIN "Grants" g
+    ON arr."grantId" = g.id
   `;
 
   // - Number of Recipients -
@@ -597,7 +596,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
   });
 
   // - Reports with Resources Pct -
-  const pctOfResourcesSql = `
+  const pctOfResourcesSql = /* sql */`
   SELECT
     count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
     ${totalReportCount}::decimal AS "totalReportsCount",
@@ -614,7 +613,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
   });
 
   // - Number of Reports with ECLKC Resources Pct -
-  const pctOfECKLKCResources = sequelize.query(`
+  const pctOfECKLKCResources = sequelize.query(/* sql */`
     WITH eclkc AS (
       SELECT
     COUNT(DISTINCT url) AS "eclkcCount"
@@ -634,15 +633,14 @@ function getOverview(tblNames, totalReportCount, transaction) {
     ELSE round(e."eclkcCount" / r."allCount"::decimal * 100,4)
     END AS "eclkcPct"
     FROM eclkc e
-    JOIN allres r
-      ON 1=1;
+    CROSS JOIN allres r;
   `, {
     type: QueryTypes.SELECT,
     transaction,
   });
 
   // 5.) Date Headers table.
-  const dateHeaders = sequelize.query(`
+  const dateHeaders = sequelize.query(/* sql */`
    SELECT
     to_char("date", 'Mon-YY') AS "rollUpDate"
    FROM ${tblNames.createdFlatResourceHeadersTempTableName};
@@ -1929,7 +1927,7 @@ Expected JSON:
             title: 'Jan-22',
              value: '14',
           },
-          {79
+          {
             title: 'Feb-22',
             value: '20',
           },
