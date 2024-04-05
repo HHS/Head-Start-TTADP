@@ -162,7 +162,6 @@ function MultiSelect({
 
   const onKeyDown = (e) => {
     if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
       selectorRef.current.focus();
       onClick();
     }
