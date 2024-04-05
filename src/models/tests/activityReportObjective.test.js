@@ -34,7 +34,7 @@ describe('activityReportObjective', () => {
         objectiveId: objective.id,
       },
     });
-    await db.Objective.destroy({ where: { id: objective.id } });
+    await db.Objective.destroy({ where: { id: objective.id }, force: true });
     await destroyReport(report);
     await db.sequelize.close();
   });
