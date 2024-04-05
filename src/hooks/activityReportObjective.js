@@ -102,7 +102,6 @@ const beforeValidate = async (sequelize, instance) => {
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
-  console.log('Before Destroying!');
   await propagateDestroyToMetadata(sequelize, instance, options);
   await autoCleanupLinker(sequelize, instance, options);
 };
