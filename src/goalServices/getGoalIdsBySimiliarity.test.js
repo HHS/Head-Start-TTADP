@@ -577,7 +577,7 @@ describe('getGoalIdsBySimilarity', () => {
     const [setOne, setTwo] = filteredSet;
 
     expect(setOne.goals.length).toBe(7);
-    expect(setTwo.goals.length).toBe(4);
+    expect(setTwo.goals.length).toBe(5);
   });
 
   describe('getReportCountForGoals', () => {

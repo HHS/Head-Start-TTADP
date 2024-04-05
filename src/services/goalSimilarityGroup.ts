@@ -197,8 +197,6 @@ export async function getSimilarityGroupsByRecipientId(
     }],
   });
 
-  console.log('groups:', groups[3]);
-
   return groups.map(
     (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg, userHasFeatureFlag),
   );
