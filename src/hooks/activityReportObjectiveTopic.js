@@ -8,8 +8,7 @@ const recalculateOnAR = async (sequelize, instance, options) => {
   let topicOnReport;
   // by using the passed in objectives we can use a more performant version of the query
   if (objectiveIds !== undefined
-    && Array.isArray(objectiveIds)
-    && objectiveIds.map((i) => typeof i).every((i) => i === 'number')) {
+    && Array.isArray(objectiveIds)) {
     topicOnReport = `
       SELECT
         t."id",
