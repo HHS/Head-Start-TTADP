@@ -1,10 +1,10 @@
-import { Op } from 'sequelize';
-import { validateChangedOrSetEnums } from '../models/helpers/enum';
-import { OBJECTIVE_COLLABORATORS, OBJECTIVE_STATUS } from '../constants';
-import {
+const { Op } = require('sequelize');
+const { validateChangedOrSetEnums } = require('../models/helpers/enum');
+const { OBJECTIVE_COLLABORATORS, OBJECTIVE_STATUS } = require('../constants');
+const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
-} from '../models/helpers/genericCollaborator';
+} = require('../models/helpers/genericCollaborator');
 
 const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
   [
@@ -97,11 +97,12 @@ const afterCreate = async (sequelize, instance, options) => {
   await propagateSupportTypeToObjective(sequelize, instance, options);
 };
 
-const beforeValidate = async (sequelize, instance, options) => {
+const beforeValidate = async (sequelize, instance) => {
   validateChangedOrSetEnums(sequelize, instance);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
+  console.log('Before Destroying!');
   await propagateDestroyToMetadata(sequelize, instance, options);
   await autoCleanupLinker(sequelize, instance, options);
 };
@@ -110,7 +111,7 @@ const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
 };
 
-export {
+module.exports = {
   propagateDestroyToMetadata,
   recalculateOnAR,
   afterCreate,
