@@ -37,6 +37,8 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
+  autoPopulateCreator,
+  autoPopulateEditor,
   afterCreate,
   afterUpdate,
 };

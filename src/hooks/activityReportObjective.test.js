@@ -1,3 +1,4 @@
+import { SUPPORT_TYPES } from '@ttahub/common';
 import {
   sequelize,
   ActivityReportObjective,
@@ -20,6 +21,9 @@ describe('activityReportObjective hooks', () => {
   let ar;
   let topic;
   let objective;
+  let secondObjective;
+  let thirdObjective;
+
   let aro;
   let file;
 
@@ -31,10 +35,32 @@ describe('activityReportObjective hooks', () => {
       status: OBJECTIVE_STATUS.IN_PROGRESS,
     });
 
+    secondObjective = await Objective.create({
+      title: 'second test objective',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+    });
+
+    thirdObjective = await Objective.create({
+      title: 'third test objective',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+      supportType: SUPPORT_TYPES[0],
+    });
+
     aro = await ActivityReportObjective.create({
       activityReportId: ar.id,
       objectiveId: objective.id,
-    });
+      supportType: SUPPORT_TYPES[0],
+    }, { individualHooks: true });
+
+    await ActivityReportObjective.create({
+      activityReportId: ar.id,
+      objectiveId: secondObjective.id,
+    }, { individualHooks: true });
+
+    await ActivityReportObjective.create({
+      activityReportId: ar.id,
+      objectiveId: thirdObjective.id,
+    }, { individualHooks: true });
 
     topic = await Topic.create({
       name: 'Javascript Mastery',
@@ -87,11 +113,23 @@ describe('activityReportObjective hooks', () => {
     });
 
     await ActivityReportObjective.destroy({
-      where: { id: aro.id },
+      where: {
+        objectiveId: [
+          objective.id,
+          secondObjective.id,
+          thirdObjective.id,
+        ],
+      },
     });
 
     await Objective.destroy({
-      where: { id: objective.id },
+      where: {
+        id: [
+          objective.id,
+          secondObjective.id,
+          thirdObjective.id,
+        ],
+      },
       force: true,
     });
 
@@ -100,6 +138,18 @@ describe('activityReportObjective hooks', () => {
     });
 
     await sequelize.close();
+  });
+
+  describe('supportType', () => {
+    it('should propogate supportType to objective', async () => {
+      const objective1 = await Objective.findByPk(objective.id);
+      const objective2 = await Objective.findByPk(secondObjective.id);
+      const objective3 = await Objective.findByPk(thirdObjective.id);
+
+      expect(objective1.supportType).toBe(SUPPORT_TYPES[0]);
+      expect(objective2.supportType).toBe(null);
+      expect(objective3.supportType).toBe(SUPPORT_TYPES[0]);
+    });
   });
 
   describe('beforeDestroy', () => {

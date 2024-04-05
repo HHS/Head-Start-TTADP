@@ -129,6 +129,19 @@ describe('ProgramPersonnel hooks', () => {
         effectiveDate: new Date(),
         mapsTo: null,
         email: faker.internet.email(),
+      }, {
+        grantId: grant.id,
+        programId: program.id,
+        role: 'director',
+        title: '',
+        firstName: faker.name.firstName(),
+        lastName: faker.name.lastName(),
+        suffix: faker.name.suffix(),
+        prefix: faker.name.prefix(),
+        active: false,
+        effectiveDate: new Date(),
+        mapsTo: null,
+        email: faker.internet.email(),
       }], {
         individualHooks: false,
         returning: true,
@@ -142,13 +155,15 @@ describe('ProgramPersonnel hooks', () => {
         },
       });
 
-      expect(personnelForGrant.length).toBe(3); // all three, including the two directors
+      expect(personnelForGrant.length).toBe(4); // all three, including the two directors
 
       const activeDirector = personnelForGrant.find((p) => p.role === 'director' && p.active);
       expect(activeDirector.id).toBe(newDirector.id);
       expect(activeDirector.mapsTo).toBe(null);
-      const inactiveDirector = personnelForGrant.find((p) => p.role === 'director' && !p.active);
-      expect(inactiveDirector.mapsTo).toBe(activeDirector.id);
+      const inactiveDirectors = personnelForGrant.filter((p) => p.role === 'director' && !p.active);
+      expect(inactiveDirectors.length).toBe(2);
+      const inactiveDirector = inactiveDirectors.find((p) => p.mapsTo === activeDirector.id);
+      expect(inactiveDirector).toBeTruthy();
       const cfo = personnelForGrant.find((p) => p.role === 'cfo' && p.active);
       expect(cfo).toBeTruthy();
     });
