@@ -173,7 +173,7 @@ describe('MultiSelect', () => {
       expect(await screen.findByText('one')).toBeVisible();
     });
     it('forwards enter to the Selector, giving it focus', async () => {
-      render(<TestMultiSelect />);
+      render(<TestMultiSelect disabled onSubmit={() => {}} />);
       const container = screen.getByTestId('name-click-container');
       container.focus();
       await act(async () => {
