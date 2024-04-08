@@ -12,6 +12,7 @@ import goalsByStatus from './regionalGoalDashboard/goalsByStatus';
 import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
 import topicsByGoalStatus from './regionalGoalDashboard/topicsByGoalStatus';
 import trOverview from './trOverview';
+import trReasonList from './trReasonList';
 
 /*
   All widgets need to be added to this object
@@ -22,6 +23,7 @@ export default {
   dashboardOverview,
   totalHrsAndRecipientGraph,
   reasonList,
+  trReasonList,
   topicFrequencyGraph,
   targetPopulationTable,
   frequencyGraph,
