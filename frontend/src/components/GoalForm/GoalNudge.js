@@ -110,7 +110,7 @@ export default function GoalNudge({
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
 
   return (
-    <div className="ttahub-goal-nudge--container position-relative">
+    <div className="ttahub-goal-nudge--container position-relative margin-bottom-3">
       <GoalNudgeText
         error={error}
         inputName={inputName}
@@ -131,7 +131,7 @@ export default function GoalNudge({
         onSelectNudgedGoal={onSelectNudgedGoal}
         initiativeRef={initiativeRef}
       />
-      <div className="desktop:display-flex flex-justify margin-top-2 smart-hub-maxw-form-field">
+      <div className="desktop:display-flex flex-justify margin-top-1 smart-hub-maxw-form-field">
         { (goalTemplates && goalTemplates.length > 0) && (
         <Checkbox
           id="use-ohs-initiative-goal"
