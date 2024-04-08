@@ -29,7 +29,7 @@ export default async function getCachedResponse(
 
   // you can set ignore cache in your .env file to ignore the cache
   // for debugging and testing purposes
-  const ignoreCache = process.env.IGNORE_CACHE === 'true';
+  const ignoreCache = true; // process.env.IGNORE_CACHE === 'true';
 
   if (ignoreCache) {
     auditLogger.info(`Ignoring cache for ${key}`);

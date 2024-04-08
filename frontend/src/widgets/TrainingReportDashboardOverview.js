@@ -55,6 +55,7 @@ TrainingReportDashboardOverview.defaultProps = {
     numRecipients: '0',
     sumDuration: '0',
     numParticipants: '0',
+    numSessions: '0',
   },
 };
 
