@@ -472,7 +472,9 @@ describe('Resources dashboard', () => {
 
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const { resourceUseResult } = await resourceFlatData(scopes);
+    const transaction = await db.sequelize.transaction();
+    const { resourceUseResult } = await resourceFlatData(scopes, transaction);
+    await transaction.commit();
     expect(resourceUseResult).toBeDefined();
     expect(resourceUseResult.length).toBe(3);
 
@@ -506,7 +508,9 @@ describe('Resources dashboard', () => {
 
   it('resourceTopicUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const { topicUseResult } = await resourceFlatData(scopes);
+    const transaction = await db.sequelize.transaction();
+    const { topicUseResult } = await resourceFlatData(scopes, transaction);
+    await transaction.commit();
     expect(topicUseResult).toBeDefined();
 
     expect(topicUseResult).toStrictEqual([
@@ -536,7 +540,9 @@ describe('Resources dashboard', () => {
 
   it('overviewFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const { overView } = await resourceFlatData(scopes);
+    const transaction = await db.sequelize.transaction();
+    const { overView } = await resourceFlatData(scopes, transaction);
+    await transaction.commit();
     expect(overView).toBeDefined();
     const {
       numberOfParticipants,
@@ -576,7 +582,9 @@ describe('Resources dashboard', () => {
 
   it('resourceDateHeadersFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const { dateHeaders } = await resourceFlatData(scopes);
+    const transaction = await db.sequelize.transaction();
+    const { dateHeaders } = await resourceFlatData(scopes, transaction);
+    await transaction.commit();
     expect(dateHeaders).toBeDefined();
     expect(dateHeaders.length).toBe(1);
     expect(dateHeaders).toStrictEqual([
