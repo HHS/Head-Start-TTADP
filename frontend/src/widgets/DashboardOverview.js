@@ -82,12 +82,12 @@ const DASHBOARD_FIELDS = {
       <Field
         key="training-reports"
         showTooltip={showTooltip}
-        tooltipText="The number of completed training reports."
+        tooltipText="Training reports with a completed session"
         icon={faChartColumn}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
-        label="Training reports"
-        data={data.numReports}
+        label={`across ${data.numReports} training reports`}
+        data={`${data.numSessions} sessions`}
       />
     ),
   },
