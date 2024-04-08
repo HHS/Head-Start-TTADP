@@ -55,6 +55,7 @@ interface IReportData {
   grantIds: number[];
   sumDuration: number;
   numParticipants: number;
+  numSessions: number;
 }
 
 /**
@@ -67,6 +68,7 @@ interface IWidgetData {
   totalRecipients: string;
   sumDuration: string;
   numParticipants: string;
+  numSessions: string;
   recipientPercentage: string;
 }
 
@@ -87,7 +89,12 @@ export default async function trOverview(
     where: {
       [Op.and]: [
         {
-          'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+          'data.status': {
+            [Op.in]: [
+              TRAINING_REPORT_STATUSES.IN_PROGRESS,
+              TRAINING_REPORT_STATUSES.COMPLETE,
+            ],
+          },
         },
         ...scopes.trainingReport,
       ],
@@ -96,6 +103,9 @@ export default async function trOverview(
       model: SessionReport,
       as: 'sessionReports',
       attributes: ['data', 'eventId'],
+      where: {
+        'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+      },
       required: true,
     },
   }) as ITrainingReportForOverview[];
@@ -130,12 +140,14 @@ export default async function trOverview(
 
     return {
       ...acc,
+      numSessions: acc.numSessions + report.sessionReports.length,
       grantIds: acc.grantIds.concat(sessionGrants),
       sumDuration: acc.sumDuration + sessionDuration,
       numParticipants: acc.numParticipants + sessionParticipants,
     };
   }, {
     numReports: formatNumber(reports.length), // number of completed TRs
+    numSessions: 0,
     totalRecipients: allRecipientsFiltered.length, // total number of recipients
     grantIds: [], // number of unique grants served
     sumDuration: 0, // total hours of TTA
@@ -165,6 +177,7 @@ export default async function trOverview(
 
   return {
     numReports: data.numReports,
+    numSessions: formatNumber(data.numSessions),
     totalRecipients: allRecipientsFiltered.length.toString(),
     // "X% [number of recipients with TR] Recipients of [total active recipients]" for complete TRs,
     recipientPercentage,
