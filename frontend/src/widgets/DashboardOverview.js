@@ -7,7 +7,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
-
 import Loader from '../components/Loader';
 import Tooltip from '../components/Tooltip';
 import colors from '../colors';
@@ -75,6 +74,20 @@ const DASHBOARD_FIELDS = {
         backgroundColor={colors.successLighter}
         label="Activity reports"
         data={data.numReports}
+      />
+    ),
+  },
+  'Training reports': {
+    render: (data, showTooltip) => (
+      <Field
+        key="training-reports"
+        showTooltip={showTooltip}
+        tooltipText="Training reports with a completed session"
+        icon={faChartColumn}
+        iconColor={colors.success}
+        backgroundColor={colors.successLighter}
+        label={`across ${data.numReports} training reports`}
+        data={`${data.numSessions} sessions`}
       />
     ),
   },

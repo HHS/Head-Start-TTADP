@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
   Checkbox,
@@ -38,11 +38,19 @@ export default function GoalNudge({
   const [dismissSimilar, setDismissSimilar] = useState(false);
   const [goalTemplates, setGoalTemplates] = useState(null);
 
+  const initiativeRef = useRef();
+
   useEffect(() => {
     if (dismissSimilar) {
       setSimilarGoals([]);
     }
   }, [dismissSimilar]);
+
+  useEffect(() => {
+    if (useOhsInitiativeGoal && initiativeRef.current) {
+      initiativeRef.current.focus();
+    }
+  }, [useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
   // as we have an object (selectedGrants) in the dependency array
@@ -102,7 +110,7 @@ export default function GoalNudge({
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
 
   return (
-    <div className="ttahub-goal-nudge--container position-relative">
+    <div className="ttahub-goal-nudge--container position-relative margin-bottom-3">
       <GoalNudgeText
         error={error}
         inputName={inputName}
@@ -121,8 +129,9 @@ export default function GoalNudge({
         validateGoalName={validateGoalName}
         goalTemplates={goalTemplates || []}
         onSelectNudgedGoal={onSelectNudgedGoal}
+        initiativeRef={initiativeRef}
       />
-      <div className="desktop:display-flex flex-justify margin-top-2 smart-hub-maxw-form-field">
+      <div className="desktop:display-flex flex-justify margin-top-1 smart-hub-maxw-form-field">
         { (goalTemplates && goalTemplates.length > 0) && (
         <Checkbox
           id="use-ohs-initiative-goal"
