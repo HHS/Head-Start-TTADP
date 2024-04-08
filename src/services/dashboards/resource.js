@@ -331,7 +331,7 @@ const switchToTopicCentric = (input) => {
     });
 };
 
-async function GenerateFlatTempTables(reportIds, tblNames, transaction = null) {
+async function GenerateFlatTempTables(reportIds, tblNames) {
   const flatResourceSql = /* sql */ `
   -- 1.) Create AR temp table.
   DROP TABLE IF EXISTS ${tblNames.createdArTempTableName};
@@ -349,6 +349,7 @@ async function GenerateFlatTempTables(reportIds, tblNames, transaction = null) {
   -- 2.) Create ARO Resources temp table.
   DROP TABLE IF EXISTS ${tblNames.createdAroResourcesTempTableName};
   SELECT
+  DISTINCT
     ar.id AS "activityReportId",
     aror."resourceId"
     INTO TEMP ${tblNames.createdAroResourcesTempTableName}
@@ -357,63 +358,59 @@ async function GenerateFlatTempTables(reportIds, tblNames, transaction = null) {
       ON ar."id" = aro."activityReportId"
     JOIN "ActivityReportObjectiveResources" aror
       ON aro.id = aror."activityReportObjectiveId"
-    WHERE aror."sourceFields" && '{resource}'
-    GROUP BY ar.id, aror."resourceId";
+    WHERE aror."sourceFields" && '{resource}';
 
     -- 3.) Create Resources temp table (only what we need).
     DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
-    WITH distinctResources AS (
-      SELECT DISTINCT "resourceId"
-      FROM ${tblNames.createdAroResourcesTempTableName}
-    )
     SELECT
+    DISTINCT
       id,
       domain,
       url,
       title
       INTO TEMP ${tblNames.createdResourcesTempTableName}
       FROM "Resources"
-      JOIN distinctResources dr
+      JOIN ${tblNames.createdAroResourcesTempTableName} dr
         ON "Resources".id = dr."resourceId";
 
-      -- 4.) Create ARO Topics temp table.
+      -- 4.) Create ARO Topics temp table. **** Revisit
       DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
       SELECT
       ar.id AS "activityReportId",
-      aro."objectiveId",
-      arot."topicId"
+      arot."topicId",
+      count(DISTINCT aro."objectiveId") AS "objectiveCount"
       INTO TEMP ${tblNames.createdAroTopicsTempTableName}
       FROM ${tblNames.createdArTempTableName}  ar
       JOIN "ActivityReportObjectives" aro
         ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveResources" aror
+        ON aro.id = aror."activityReportObjectiveId"
       JOIN "ActivityReportObjectiveTopics" arot
         ON aro.id = arot."activityReportObjectiveId"
-      GROUP BY ar.id, aro."objectiveId", arot."topicId";
+      GROUP BY ar.id, arot."topicId";
 
       -- 5.) Create Topics temp table (only what we need).
       DROP TABLE IF EXISTS ${tblNames.createdTopicsTempTableName};
-      WITH distinctTopics AS (
-        SELECT DISTINCT "topicId"
-        FROM ${tblNames.createdAroTopicsTempTableName}
-      )
       SELECT
+      DISTINCT
         id,
         name
-        INTO TEMP ${tblNames.createdTopicsTempTableName}
-        FROM "Topics"
-        JOIN distinctTopics dt
-          ON "Topics".id = dt."topicId";
+      INTO TEMP ${tblNames.createdTopicsTempTableName}
+      FROM "Topics"
+      JOIN ${tblNames.createdAroTopicsTempTableName} dt
+        ON "Topics".id = dt."topicId";
 
       -- 6.) Create Flat Resource temp table.
       DROP TABLE IF EXISTS ${tblNames.createdFlatResourceTempTableName};
       SELECT
-      ar.id,
-      ar."startDate",
-      ar."rollUpDate",
-      arorr.domain,
-      arorr.title,
-      arorr.url,
-      ar."numberOfParticipants"
+      DISTINCT
+        ar.id AS "activityReportId",
+        ar."startDate",
+        ar."rollUpDate",
+        arorr.domain,
+        arorr.title,
+        arorr.url,
+        ar."numberOfParticipants"
       INTO TEMP ${tblNames.createdFlatResourceTempTableName}
       FROM ${tblNames.createdArTempTableName} ar
       JOIN ${tblNames.createdAroResourcesTempTableName} aror
@@ -439,19 +436,18 @@ async function GenerateFlatTempTables(reportIds, tblNames, transaction = null) {
     flatResourceSql,
     {
       type: QueryTypes.SELECT,
-      transaction,
     },
   );
 }
 
-function getResourceUseSql(tblNames, transaction) {
+function getResourceUseSql(tblNames) {
   const resourceUseSql = /* sql */`
   WITH urlvals AS (
     SELECT
         url,
         title,
         "rollUpDate",
-        count(id) AS "resourceCount"
+        count(tf."activityReportId") AS "resourceCount"
       FROM ${tblNames.createdFlatResourceTempTableName} tf
       GROUP BY url, title, "rollUpDate"
       ORDER BY "url", tf."rollUpDate" ASC),
@@ -470,10 +466,6 @@ function getResourceUseSql(tblNames, transaction) {
       ORDER BY SUM("resourceCount")  DESC,
       url ASC
       LIMIT 10
-    ),
-    series AS
-    (
-      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
     )
       SELECT
       d.url,
@@ -483,7 +475,7 @@ function getResourceUseSql(tblNames, transaction) {
       coalesce(u."resourceCount", 0) AS "resourceCount",
       t."totalCount"
       FROM distincturls d
-      CROSS JOIN series s
+      CROSS JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
       JOIN totals t
         ON d.url = t.url
       LEFT JOIN urlvals u
@@ -495,16 +487,15 @@ function getResourceUseSql(tblNames, transaction) {
     resourceUseSql,
     {
       type: QueryTypes.SELECT,
-      transaction,
     },
   );
 }
 
-function getTopicsUseSql(tblNames, transaction) {
+function getTopicsUseSql(tblNames) {
   const topicUseSql = /* sql */`
   WITH topicsuse AS (
       SELECT
-        f.id,
+        f."activityReportId",
         t.name,
         f."rollUpDate",
         count(DISTINCT f.url) AS "resourceCount" -- Only count each resource once per ar and topic.
@@ -512,7 +503,7 @@ function getTopicsUseSql(tblNames, transaction) {
         JOIN ${tblNames.createdAroTopicsTempTableName} arot
         ON t.id = arot."topicId"
         JOIN ${tblNames.createdFlatResourceTempTableName} f
-        ON arot."activityReportId" = f.id
+        ON arot."activityReportId" = f."activityReportId"
         GROUP BY f.id, t.name, f."rollUpDate"
         ORDER BY t.name, f."rollUpDate" ASC
     ),
@@ -533,10 +524,6 @@ function getTopicsUseSql(tblNames, transaction) {
       FROM topicsperdate
       GROUP BY name
       ORDER BY SUM("resourceCount") DESC
-    ),
-    series AS
-    (
-      SELECT * FROM ${tblNames.createdFlatResourceHeadersTempTableName}
     )
     SELECT
       d.name,
@@ -545,7 +532,7 @@ function getTopicsUseSql(tblNames, transaction) {
       coalesce(t."resourceCount", 0) AS "resourceCount",
       tt."totalCount"
     FROM ${tblNames.createdTopicsTempTableName} d
-    JOIN series s
+    JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
       ON 1=1
     JOIN totals tt
       ON d.name = tt.name
@@ -556,27 +543,25 @@ function getTopicsUseSql(tblNames, transaction) {
     topicUseSql,
     {
       type: QueryTypes.SELECT,
-      transaction,
     },
   );
 }
 
-function getOverview(tblNames, totalReportCount, transaction) {
+function getOverview(tblNames, totalReportCount) {
   // - Number of Participants -
   const numberOfParticipants = sequelize.query(/* sql */`
   WITH ar_participants AS (
     SELECT
-    id,
-    "numberOfParticipants"
+    f."activityReportId",
+    f."numberOfParticipants"
     FROM ${tblNames.createdFlatResourceTempTableName} f
-    GROUP BY id, "numberOfParticipants"
+    GROUP BY f."activityReportId", f."numberOfParticipants"
   )
   SELECT
          SUM("numberOfParticipants") AS participants
   FROM ar_participants;
   `, {
     type: QueryTypes.SELECT,
-    transaction,
   });
 
   const numberOfRecipSql = /* sql */`
@@ -584,7 +569,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
          count(DISTINCT g."recipientId") AS recipients
   FROM ${tblNames.createdFlatResourceTempTableName} ar
   JOIN "ActivityRecipients" arr
-    ON ar.id = arr."activityReportId"
+    ON ar."activityReportId" = arr."activityReportId"
   JOIN "Grants" g
     ON arr."grantId" = g.id
   `;
@@ -592,7 +577,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
   // - Number of Recipients -
   const numberOfRecipients = sequelize.query(numberOfRecipSql, {
     type: QueryTypes.SELECT,
-    transaction,
   });
 
   // - Reports with Resources Pct -
@@ -609,7 +593,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
   `;
   const pctOfReportsWithResources = sequelize.query(pctOfResourcesSql, {
     type: QueryTypes.SELECT,
-    transaction,
   });
 
   // - Number of Reports with ECLKC Resources Pct -
@@ -618,7 +601,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
       SELECT
     COUNT(DISTINCT url) AS "eclkcCount"
     FROM  ${tblNames.createdFlatResourceTempTableName}
-    WHERE url ilike '%eclkc.ohs.acf.hhs.gov%'
+    WHERE domain = 'eclkc.ohs.acf.hhs.gov'
     ), allres AS (
     SELECT
     COUNT(DISTINCT url) AS "allCount"
@@ -636,7 +619,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
     CROSS JOIN allres r;
   `, {
     type: QueryTypes.SELECT,
-    transaction,
   });
 
   // 5.) Date Headers table.
@@ -646,7 +628,6 @@ function getOverview(tblNames, totalReportCount, transaction) {
    FROM ${tblNames.createdFlatResourceHeadersTempTableName};
  `, {
     type: QueryTypes.SELECT,
-    transaction,
   });
   return {
     numberOfParticipants,
@@ -661,7 +642,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
   Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
-export async function resourceFlatData(scopes, transaction = null) {
+export async function resourceFlatData(scopes) {
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -709,15 +690,15 @@ export async function resourceFlatData(scopes, transaction = null) {
   };
 
   // 3. Generate the base temp tables (used for all calcs).
-  await GenerateFlatTempTables(reportIds, tempTableNames, transaction);
+  await GenerateFlatTempTables(reportIds, tempTableNames);
 
   // 4.) Calculate the resource data.
 
   // -- Resource Use --
-  let resourceUseResult = getResourceUseSql(tempTableNames, transaction);
+  let resourceUseResult = getResourceUseSql(tempTableNames);
 
   // -- Topic Use --
-  let topicUseResult = getTopicsUseSql(tempTableNames, transaction);
+  let topicUseResult = getTopicsUseSql(tempTableNames);
 
   // -- Overview --
   let {
@@ -726,7 +707,7 @@ export async function resourceFlatData(scopes, transaction = null) {
     pctOfReportsWithResources,
     pctOfECKLKCResources,
     dateHeaders,
-  } = getOverview(tempTableNames, totalReportCount, transaction);
+  } = getOverview(tempTableNames, totalReportCount);
 
   // -- Wait for all results --
   [
@@ -748,7 +729,6 @@ export async function resourceFlatData(scopes, transaction = null) {
       dateHeaders,
     ],
   );
-  // transaction.commit();
 
   // 5.) Restructure Overview.
   const overView = {
