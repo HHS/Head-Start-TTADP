@@ -472,126 +472,133 @@ describe('Resources dashboard', () => {
 
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const transaction = await db.sequelize.transaction();
-    const { resourceUseResult } = await resourceFlatData(scopes, transaction);
-    await transaction.commit();
-    expect(resourceUseResult).toBeDefined();
-    expect(resourceUseResult.length).toBe(3);
+    let resourceUseResult;
+    db.sequelize.transaction(async () => {
+      ({ resourceUseResult } = await resourceFlatData(scopes));
 
-    expect(resourceUseResult).toStrictEqual([
-      {
-        date: '2021-01-01',
-        url: 'https://eclkc.ohs.acf.hhs.gov/test',
-        rollUpDate: 'Jan-21',
-        title: null,
-        resourceCount: '2',
-        totalCount: '2',
-      },
-      {
-        date: '2021-01-01',
-        url: 'https://eclkc.ohs.acf.hhs.gov/test2',
-        rollUpDate: 'Jan-21',
-        title: null,
-        resourceCount: '3',
-        totalCount: '3',
-      },
-      {
-        date: '2021-01-01',
-        url: 'https://non.test1.gov/a/b/c',
-        rollUpDate: 'Jan-21',
-        title: null,
-        resourceCount: '2',
-        totalCount: '2',
-      },
-    ]);
+      expect(resourceUseResult).toBeDefined();
+      expect(resourceUseResult.length).toBe(3);
+
+      expect(resourceUseResult).toStrictEqual([
+        {
+          date: '2021-01-01',
+          url: 'https://eclkc.ohs.acf.hhs.gov/test',
+          rollUpDate: 'Jan-21',
+          title: null,
+          resourceCount: '2',
+          totalCount: '2',
+        },
+        {
+          date: '2021-01-01',
+          url: 'https://eclkc.ohs.acf.hhs.gov/test2',
+          rollUpDate: 'Jan-21',
+          title: null,
+          resourceCount: '3',
+          totalCount: '3',
+        },
+        {
+          date: '2021-01-01',
+          url: 'https://non.test1.gov/a/b/c',
+          rollUpDate: 'Jan-21',
+          title: null,
+          resourceCount: '2',
+          totalCount: '2',
+        },
+      ]);
+    });
   });
 
   it('resourceTopicUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const transaction = await db.sequelize.transaction();
-    const { topicUseResult } = await resourceFlatData(scopes, transaction);
-    await transaction.commit();
-    expect(topicUseResult).toBeDefined();
+    let topicUseResult;
+    db.sequelize.transaction(async () => {
+      ({ topicUseResult } = await resourceFlatData(scopes));
 
-    expect(topicUseResult).toStrictEqual([
-      {
-        name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
-      },
-      {
-        name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
-      },
-      {
-        name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
-      },
-      {
-        name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
-      },
-      {
-        name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
-      },
-      {
-        name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
-      },
-      {
-        name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
-      },
-    ]);
+      expect(topicUseResult).toBeDefined();
+
+      expect(topicUseResult).toStrictEqual([
+        {
+          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+        },
+        {
+          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+        },
+        {
+          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+        },
+        {
+          name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+        },
+        {
+          name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+        },
+        {
+          name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+        },
+        {
+          name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+        },
+      ]);
+    });
   });
 
   it('overviewFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const transaction = await db.sequelize.transaction();
-    const { overView } = await resourceFlatData(scopes, transaction);
-    await transaction.commit();
-    expect(overView).toBeDefined();
-    const {
-      numberOfParticipants,
-      numberOfRecipients,
-      pctOfReportsWithResources,
-      pctOfECKLKCResources,
-    } = overView;
+    let overView;
+    db.sequelize.transaction(async () => {
+      ({ overView } = await resourceFlatData(scopes));
 
-    // Number of Participants.
-    expect(numberOfParticipants).toStrictEqual([{
-      participants: '44',
-    }]);
+      expect(overView).toBeDefined();
+      const {
+        numberOfParticipants,
+        numberOfRecipients,
+        pctOfReportsWithResources,
+        pctOfECKLKCResources,
+      } = overView;
 
-    // Number of Recipients.
-    expect(numberOfRecipients).toStrictEqual([{
-      recipients: '1',
-    }]);
+      // Number of Participants.
+      expect(numberOfParticipants).toStrictEqual([{
+        participants: '44',
+      }]);
 
-    // Percent of Reports with Resources.
-    expect(pctOfReportsWithResources).toStrictEqual([
-      {
-        reportsWithResourcesCount: '4',
-        totalReportsCount: '5',
-        resourcesPct: '80.0000',
-      },
-    ]);
+      // Number of Recipients.
+      expect(numberOfRecipients).toStrictEqual([{
+        recipients: '1',
+      }]);
 
-    // Percent of ECLKC reports.
-    expect(pctOfECKLKCResources).toStrictEqual([
-      {
-        eclkcCount: '2',
-        allCount: '3',
-        eclkcPct: '66.6667',
-      },
-    ]);
+      // Percent of Reports with Resources.
+      expect(pctOfReportsWithResources).toStrictEqual([
+        {
+          reportsWithResourcesCount: '4',
+          totalReportsCount: '5',
+          resourcesPct: '80.0000',
+        },
+      ]);
+
+      // Percent of ECLKC reports.
+      expect(pctOfECKLKCResources).toStrictEqual([
+        {
+          eclkcCount: '2',
+          allCount: '3',
+          eclkcPct: '66.6667',
+        },
+      ]);
+    });
   });
 
   it('resourceDateHeadersFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
-    const transaction = await db.sequelize.transaction();
-    const { dateHeaders } = await resourceFlatData(scopes, transaction);
-    await transaction.commit();
-    expect(dateHeaders).toBeDefined();
-    expect(dateHeaders.length).toBe(1);
-    expect(dateHeaders).toStrictEqual([
-      {
-        rollUpDate: 'Jan-21',
-      },
-    ]);
+    let dateHeaders;
+    db.sequelize.transaction(async () => {
+      ({ dateHeaders } = await resourceFlatData(scopes));
+      expect(dateHeaders).toBeDefined();
+      expect(dateHeaders.length).toBe(1);
+      expect(dateHeaders).toStrictEqual([
+        {
+          rollUpDate: 'Jan-21',
+        },
+      ]);
+    });
   });
 
   it('should roll up resource use results correctly', async () => {
