@@ -3,6 +3,7 @@ import { GOAL_SOURCES, REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
+  GrantNumberLinks,
   Recipient,
   Objective,
   ActivityReportObjectiveResource,
@@ -525,7 +526,7 @@ describe('saveGoalsForReport (more tests)', () => {
       force: true,
     });
 
-    await grantNumberLinks.destroy({ where: { grantId: grantIds } });
+    await GrantNumberLinks.destroy({ where: { grantId: grantIds } });
     await Grant.destroy({ where: { regionId: region.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientIds }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
