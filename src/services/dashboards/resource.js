@@ -504,7 +504,7 @@ function getTopicsUseSql(tblNames) {
         ON t.id = arot."topicId"
         JOIN ${tblNames.createdFlatResourceTempTableName} f
         ON arot."activityReportId" = f."activityReportId"
-        GROUP BY f.id, t.name, f."rollUpDate"
+        GROUP BY f."activityReportId", t.name, f."rollUpDate"
         ORDER BY t.name, f."rollUpDate" ASC
     ),
     topicsperdate AS
@@ -587,7 +587,7 @@ function getOverview(tblNames, totalReportCount) {
     CASE WHEN ${totalReportCount} = 0 THEN
       0
     ELSE
-      (round(count(DISTINCT "activityReportId")::decimal / ${totalReportCount}::decimal, 4) * 100)::decimal
+      (count(DISTINCT "activityReportId") / ${totalReportCount}::decimal * 100)::decimal(5,2)
     END AS "resourcesPct"
   FROM ${tblNames.createdAroResourcesTempTableName};
   `;
@@ -613,7 +613,7 @@ function getOverview(tblNames, totalReportCount) {
       CASE WHEN
     r."allCount" = 0
     THEN 0
-    ELSE round(e."eclkcCount" / r."allCount"::decimal * 100,4)
+    ELSE  (e."eclkcCount" / r."allCount"::decimal * 100)::decimal(5,2)
     END AS "eclkcPct"
     FROM eclkc e
     CROSS JOIN allres r;
@@ -671,13 +671,14 @@ export async function resourceFlatData(scopes) {
     reportIds.push({ id: 0 });
   }
   // 2.) Create temp table names.
-  const createdArTempTableName = `Z_temp_resdb_ar__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuidv4().replaceAll('-', '_')}`;
-  const createdResourcesTempTableName = `Z_temp_resdb_res__${uuidv4().replaceAll('-', '_')}`;
-  const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuidv4().replaceAll('-', '_')}`;
-  const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuidv4().replaceAll('-', '_')}`;
-  const createdFlatResourceHeadersTempTableName = `Z_temp_resdb_headers__${uuidv4().replaceAll('-', '_')}`; // Date Headers.
-  const createdFlatResourceTempTableName = `Z_temp_resdb_flat__${uuidv4().replaceAll('-', '_')}`; // Main Flat Table.
+  const uuid = uuidv4().replaceAll('-', '_');
+  const createdArTempTableName = `Z_temp_resdb_ar__${uuid}`;
+  const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuid}`;
+  const createdResourcesTempTableName = `Z_temp_resdb_res__${uuid}`;
+  const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuid}`;
+  const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuid}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_resdb_headers__${uuid}`; // Date Headers.
+  const createdFlatResourceTempTableName = `Z_temp_resdb_flat__${uuid}`; // Main Flat Table.
 
   const tempTableNames = {
     createdArTempTableName,
