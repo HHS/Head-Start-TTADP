@@ -46,19 +46,9 @@ interface SimilarityGroup {
   toJSON: () => SimilarityGroup;
 }
 
-export const flattenSimilarityGroupGoals = (
-  group: SimilarityGroup,
-  userHasFeatureFlag = false,
-) => ({
+export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
   ...group.toJSON(),
-  goals: group.goals.filter((goal) => {
-    if (goal.goalTemplate
-      && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED
-      && !userHasFeatureFlag) {
-      return goal.status !== GOAL_STATUS.CLOSED;
-    }
-    return true;
-  }).map((goal) => goal.id),
+  goals: group.goals.map((goal) => goal.id),
 });
 
 export async function getSimilarityGroupById(
@@ -198,7 +188,7 @@ export async function getSimilarityGroupsByRecipientId(
   });
 
   return groups.map(
-    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg, userHasFeatureFlag),
+    (gg: SimilarityGroup) => flattenSimilarityGroupGoals(gg),
   );
 }
 
