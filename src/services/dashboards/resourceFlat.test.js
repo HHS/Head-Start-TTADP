@@ -137,9 +137,12 @@ let grant;
 let goal;
 let objective;
 let goalTwo;
+let goalThree;
 let objectiveTwo;
+let objectiveThree;
 let activityReportOneObjectiveOne;
 let activityReportOneObjectiveTwo;
+let activityReportOneObjectiveThree; // Topic but no resources.
 let activityReportObjectiveTwo;
 let activityReportObjectiveThree;
 let arIds;
@@ -155,6 +158,7 @@ describe('Resources dashboard', () => {
     });
     [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
     [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
+    [goalThree] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 3' }, validate: true, individualHooks: true });
     [objective] = await Objective.findOrCreate({
       where: {
         title: 'Objective 1',
@@ -167,6 +171,14 @@ describe('Resources dashboard', () => {
       where: {
         title: 'Objective 2',
         goalId: goalTwo.dataValues.id,
+        status: 'In Progress',
+      },
+    });
+
+    [objectiveThree] = await Objective.findOrCreate({
+      where: {
+        title: 'Objective 3',
+        goalId: goalThree.dataValues.id,
         status: 'In Progress',
       },
     });
@@ -288,6 +300,23 @@ describe('Resources dashboard', () => {
       [ECLKC_RESOURCE_URL, NONECLKC_RESOURCE_URL],
     );
 
+    // Report 1 - Activity Report Objective 3 (No resources)
+    // This topic should NOT count as there are no resources.
+    [activityReportOneObjectiveThree] = await ActivityReportObjective.findOrCreate({
+      where: {
+        activityReportId: reportOne.id,
+        status: 'Complete',
+        objectiveId: objectiveThree.id,
+      },
+    });
+
+    await ActivityReportObjectiveTopic.findOrCreate({
+      where: {
+        activityReportObjectiveId: activityReportOneObjectiveThree.id,
+        topicId: nutritionTopicId,
+      },
+    });
+
     // Report 2 (Only ECLKC).
     const reportTwo = await ActivityReport.create({ ...regionOneReportB });
     await ActivityRecipient.create({ activityReportId: reportTwo.id, grantId: mockGrant.id });
@@ -370,7 +399,7 @@ describe('Resources dashboard', () => {
       },
     });
 
-    // Report 3 Non-ECLKC Resource 1.
+    // Report 4 Non-ECLKC Resource 1.
     await processActivityReportObjectiveForResourcesById(
       activityReportObjectiveForReport4.id,
       [ECLKC_RESOURCE_URL2],
@@ -456,10 +485,10 @@ describe('Resources dashboard', () => {
     });
 
     // eslint-disable-next-line max-len
-    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id] } });
+    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id] }, force: true });
-    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] }, force: true });
+    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] }, force: true });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id, goalThree.id] }, force: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
