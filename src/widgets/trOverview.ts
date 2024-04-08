@@ -1,14 +1,14 @@
-import { Op, WhereOptions } from 'sequelize';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
 import db from '../models';
 import {
+  baseTRScopes,
   formatNumber,
   getAllRecipientsFiltered,
 } from './helpers';
+import { IScopes } from './types';
 
 const {
   EventReportPilot: TrainingReport,
-  SessionReportPilot: SessionReport,
   Recipient,
   Grant,
 } = db;
@@ -16,11 +16,6 @@ const {
 /**
  * interface for scopes
  */
-
-interface IScopes {
-  grant: WhereOptions[],
-  trainingReport: WhereOptions[],
-}
 
 /**
  * Interface for the data returned by the Training Report findAll
@@ -84,28 +79,7 @@ export default async function trOverview(
   // Get all completed training reports and their session reports
   const reports = await TrainingReport.findAll({
     attributes: ['data', 'id'],
-    where: {
-      [Op.and]: [
-        {
-          'data.status': {
-            [Op.in]: [
-              TRAINING_REPORT_STATUSES.IN_PROGRESS,
-              TRAINING_REPORT_STATUSES.COMPLETE,
-            ],
-          },
-        },
-        ...scopes.trainingReport,
-      ],
-    },
-    include: {
-      model: SessionReport,
-      as: 'sessionReports',
-      attributes: ['data', 'eventId'],
-      where: {
-        'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
-      },
-      required: true,
-    },
+    ...baseTRScopes(scopes),
   }) as ITrainingReportForOverview[];
 
   const data = reports.reduce((acc: IReportData, report) => {

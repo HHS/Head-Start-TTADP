@@ -1,11 +1,55 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/common';
 import {
   ActivityReport,
   Grant,
   Recipient,
+  SessionReportPilot,
   sequelize,
 } from '../models';
+
+export function generateReasonList() {
+  const reasons = REASONS
+    .map((reason) => ({ name: reason, count: 0 }))
+    .sort((a, b) => {
+      if (a.name < b.name) {
+        return -1;
+      }
+      if (a.name > b.name) {
+        return 1;
+      }
+      return 0;
+    });
+
+  return reasons;
+}
+
+export function baseTRScopes(scopes) {
+  return {
+    where: {
+      [Op.and]: [
+        {
+          'data.status': {
+            [Op.in]: [
+              TRAINING_REPORT_STATUSES.IN_PROGRESS,
+              TRAINING_REPORT_STATUSES.COMPLETE,
+            ],
+          },
+        },
+        ...scopes.trainingReport,
+      ],
+    },
+    include: {
+      model: SessionReportPilot,
+      as: 'sessionReports',
+      attributes: ['data', 'eventId'],
+      where: {
+        'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
+      },
+      required: true,
+    },
+  };
+}
 
 export async function getAllRecipientsFiltered(scopes) {
   return Recipient.findAll({
