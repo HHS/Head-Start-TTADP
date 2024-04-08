@@ -331,7 +331,7 @@ const switchToTopicCentric = (input) => {
     });
 };
 
-async function GenerateFlatTempTables(reportIds, tblNames) {
+async function GenerateFlatTempTables(reportIds, tblNames, transaction = null) {
   const flatResourceSql = /* sql */ `
   -- 1.) Create AR temp table.
   DROP TABLE IF EXISTS ${tblNames.createdArTempTableName};
@@ -380,7 +380,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
       SELECT
       ar.id AS "activityReportId",
-      arot."activityReportObjectiveId", -- We need to group by this incase of multiple aro's.
+      aro."objectiveId",
       arot."topicId"
       INTO TEMP ${tblNames.createdAroTopicsTempTableName}
       FROM ${tblNames.createdArTempTableName}  ar
@@ -388,7 +388,7 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         ON ar."id" = aro."activityReportId"
       JOIN "ActivityReportObjectiveTopics" arot
         ON aro.id = arot."activityReportObjectiveId"
-      GROUP BY ar.id, arot."activityReportObjectiveId", arot."topicId";
+      GROUP BY ar.id, aro."objectiveId", arot."topicId";
 
       -- 5.) Create Topics temp table (only what we need).
       DROP TABLE IF EXISTS ${tblNames.createdTopicsTempTableName};
@@ -432,7 +432,8 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
   `;
 
-  const transaction = await sequelize.transaction();
+  // console.log('\n\n\n---- Flat sql: ', flatResourceSql, '\n\n\n');
+
   // Execute the flat table sql.
   await sequelize.query(
     flatResourceSql,
@@ -441,7 +442,6 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       transaction,
     },
   );
-  return transaction;
 }
 
 function getResourceUseSql(tblNames, transaction) {
@@ -661,7 +661,7 @@ function getOverview(tblNames, totalReportCount, transaction) {
   Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
   If over time the amount of data increases and slows again we can cache the flat table a set frequency.
 */
-export async function resourceFlatData(scopes) {
+export async function resourceFlatData(scopes, transaction = null) {
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -709,7 +709,7 @@ export async function resourceFlatData(scopes) {
   };
 
   // 3. Generate the base temp tables (used for all calcs).
-  const transaction = await GenerateFlatTempTables(reportIds, tempTableNames);
+  await GenerateFlatTempTables(reportIds, tempTableNames, transaction);
 
   // 4.) Calculate the resource data.
 
@@ -748,7 +748,7 @@ export async function resourceFlatData(scopes) {
       dateHeaders,
     ],
   );
-  transaction.commit();
+  // transaction.commit();
 
   // 5.) Restructure Overview.
   const overView = {
