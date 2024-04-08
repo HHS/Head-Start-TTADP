@@ -21,6 +21,7 @@ import db, {
 import { saveGoalsForReport } from './goals';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { processObjectiveForResourcesById } from '../services/resource';
+import grantNumberLinks from '../models/grantNumberLinks';
 
 describe('saveGoalsForReport (more tests)', () => {
   const randomId = () => faker.datatype.number({ min: 75000, max: 100000 });
@@ -524,6 +525,7 @@ describe('saveGoalsForReport (more tests)', () => {
       force: true,
     });
 
+    await grantNumberLinks.destroy({ where: { grantId: grantIds } });
     await Grant.destroy({ where: { regionId: region.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientIds }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
