@@ -11,12 +11,14 @@ import goalStatusByGoalName from './goalStatusByGoalName';
 import goalsByStatus from './regionalGoalDashboard/goalsByStatus';
 import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
 import topicsByGoalStatus from './regionalGoalDashboard/topicsByGoalStatus';
+import trOverview from './trOverview';
 
 /*
   All widgets need to be added to this object
 */
 export default {
   overview,
+  trOverview,
   dashboardOverview,
   totalHrsAndRecipientGraph,
   reasonList,
