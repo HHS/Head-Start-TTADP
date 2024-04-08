@@ -3,7 +3,7 @@ import { GOAL_SOURCES, REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import db, {
   Goal,
   Grant,
-  GrantNumberLinks,
+  GrantNumberLink,
   Recipient,
   Objective,
   ActivityReportObjectiveResource,
@@ -22,7 +22,6 @@ import db, {
 import { saveGoalsForReport } from './goals';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { processObjectiveForResourcesById } from '../services/resource';
-import grantNumberLinks from '../models/grantNumberLinks';
 
 describe('saveGoalsForReport (more tests)', () => {
   const randomId = () => faker.datatype.number({ min: 75000, max: 100000 });
@@ -526,7 +525,7 @@ describe('saveGoalsForReport (more tests)', () => {
       force: true,
     });
 
-    await GrantNumberLinks.destroy({ where: { grantId: grantIds } });
+    await GrantNumberLink.destroy({ where: { grantId: grantIds } });
     await Grant.destroy({ where: { regionId: region.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipientIds }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
