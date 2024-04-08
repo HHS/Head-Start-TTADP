@@ -71,7 +71,7 @@ interface IWidgetData {
  * @returns IWidgetData
  */
 export default async function trOverview(
-  scopes: IScopes = { grant: [], trainingReport: [] },
+  scopes: IScopes,
 ): Promise<IWidgetData> {
   // get all recipients, matching how they are filtered in the AR overview
   const allRecipientsFiltered = await getAllRecipientsFiltered(scopes);

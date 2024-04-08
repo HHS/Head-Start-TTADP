@@ -5,8 +5,15 @@ import {
   Grant,
   Recipient,
   SessionReportPilot,
+  Topic,
   sequelize,
 } from '../models';
+
+export const getAllTopicsForWidget = async () => Topic.findAll({
+  attributes: ['id', 'name', 'deletedAt'],
+  where: { deletedAt: null },
+  order: [['name', 'ASC']],
+});
 
 export function generateReasonList() {
   const reasons = REASONS

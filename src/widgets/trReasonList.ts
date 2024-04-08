@@ -4,7 +4,7 @@ import { IScopes } from './types';
 
 const { EventReportPilot: TrainingReport } = db;
 
-export default async function trReasonList(scopes: IScopes = { grant: [], trainingReport: [] }) {
+export default async function trReasonList(scopes: IScopes) {
   const res = await TrainingReport.findAll({
     attributes: [
       'data',
