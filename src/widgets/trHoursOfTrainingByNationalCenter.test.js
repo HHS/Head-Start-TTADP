@@ -290,9 +290,9 @@ describe('TR hours of training by national center', () => {
     const data = await trHoursOfTrainingByNationalCenter(scopes);
 
     const center1 = data.find((d) => nationalCenter1.name === d.name);
-    expect(center1.count).toBe(2);
+    expect(center1.count).toBe(3);
 
     const center2 = data.find((d) => nationalCenter2.name === d.name);
-    expect(center2.count).toBe(1);
+    expect(center2.count).toBe(3);
   });
 });

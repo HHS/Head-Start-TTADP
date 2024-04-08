@@ -4,7 +4,7 @@ import db, {
   EventReportPilot,
   SessionReportPilot,
   Recipient,
-  NationalCenter,
+  Topic,
   Grant,
   User,
 } from '../models';
@@ -41,8 +41,8 @@ describe('TR sessions by topic', () => {
   let trainingReport2;
   let trainingReport3;
 
-  let nationalCenter1;
-  let nationalCenter2;
+  let topic1;
+  let topic2;
 
   beforeAll(async () => {
     // user/creator
@@ -74,12 +74,12 @@ describe('TR sessions by topic', () => {
     // grant 5 (only on uncompleted report)
     grant5 = await createGrant({ recipientId: recipient5.id, regionId: userCreator.homeRegionId });
 
-    nationalCenter1 = await NationalCenter.create({
-      name: faker.word.adjective(3),
+    topic1 = await Topic.create({
+      name: faker.word.conjunction(5) + faker.word.adjective(3) + faker.word.noun(4),
     });
 
-    nationalCenter2 = await NationalCenter.create({
-      name: faker.word.adjective(4),
+    topic2 = await Topic.create({
+      name: faker.word.conjunction(3) + faker.word.adjective(4) + faker.word.noun(5),
     });
 
     // training report 1
@@ -107,10 +107,7 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          nationalCenter1.name,
-          `${nationalCenter2.name} ${userCreator.fullName}`,
-        ],
+        objectiveTopics: [],
       },
     });
 
@@ -125,9 +122,8 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          nationalCenter1.name,
-          nationalCenter2.name,
+        objectiveTopics: [
+          topic1.name,
         ],
       },
     });
@@ -156,8 +152,8 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 13,
         numberOfParticipants: 0,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          `${nationalCenter1.name} ${userCreator.fullName}`,
+        objectiveTopics: [
+          topic2.name,
         ],
       },
     });
@@ -173,9 +169,7 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTrainers: [
-          nationalCenter2.name,
-        ],
+        objectiveTopics: [],
       },
     });
 
@@ -197,6 +191,10 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        objectiveTopics: [
+          topic1.name,
+          topic2.name,
+        ],
       },
     });
 
@@ -266,16 +264,16 @@ describe('TR sessions by topic', () => {
       },
     });
 
-    await NationalCenter.destroy({
+    await Topic.destroy({
       where: {
-        id: [nationalCenter1.id, nationalCenter2.id],
+        id: [topic1.id, topic2.id],
       },
     });
 
     await db.sequelize.close();
   });
 
-  it('filters and calculates hours of training by national center', async () => {
+  it('filters and calculates sessions by topics', async () => {
     // Confine this to the grants and reports that we created
     const scopes = {
       grant: [
@@ -289,10 +287,10 @@ describe('TR sessions by topic', () => {
     // run our function
     const data = await trSessionsByTopic(scopes);
 
-    const center1 = data.find((d) => nationalCenter1.name === d.name);
-    expect(center1.count).toBe(2);
+    const firstTopic = data.find((d) => topic1.name === d.name);
+    expect(firstTopic.count).toBe(1);
 
-    const center2 = data.find((d) => nationalCenter2.name === d.name);
-    expect(center2.count).toBe(1);
+    const secondTopic = data.find((d) => topic2.name === d.name);
+    expect(secondTopic.count).toBe(1);
   });
 });
