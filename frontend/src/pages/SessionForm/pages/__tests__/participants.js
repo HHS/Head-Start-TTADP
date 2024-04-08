@@ -82,6 +82,7 @@ describe('participants', () => {
       eventName: 'Event name',
       regionId: 1,
       status: 'In progress',
+      isIstVisit: 'no',
       recipients: [],
       pageState: {
         1: NOT_STARTED,
@@ -175,6 +176,24 @@ describe('participants', () => {
         );
       });
     });
+
+    it('toggles IST questions conditionally', async () => {
+      act(() => {
+        render(<RenderParticipants />);
+      });
+      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
+
+      act(() => {
+        userEvent.click(
+          screen.getByLabelText(/yes/i),
+        );
+      });
+
+      expect(screen.getByLabelText(/yes/i)).toBeChecked();
+      await selectEvent.select(screen.getByLabelText(/Regional Office\/TTA/i), 'TTAC');
+    });
+
     it('shows read only mode', async () => {
       const readOnlyFormValues = {
         ...defaultFormValues,
@@ -231,6 +250,7 @@ describe('participants', () => {
         numberOfParticipantsVirtually: 1,
         participants: ['Home Visitor'],
         language: ['English'],
+        isIstVisit: 'no',
       };
 
       act(() => {
@@ -253,6 +273,44 @@ describe('participants', () => {
       expect(virtuallyLabel).toBeVisible();
     });
 
+    it('shows read only mode correctly for ist visit selection', async () => {
+      const readOnlyFormValues = {
+        ...defaultFormValues,
+        pocComplete: true,
+        pocCompleteId: userId,
+        pocCompleteDate: todaysDate,
+        event: {
+          pocIds: [userId],
+        },
+        recipients: [
+          {
+            id: 1,
+            label: 'R1 R1 G1',
+          },
+        ],
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: 2,
+        numberOfParticipantsInPerson: 1,
+        numberOfParticipantsVirtually: 1,
+        participants: ['Home Visitor'],
+        language: ['English'],
+        isIstVisit: 'yes',
+        regionalOfficeTta: ['AA', 'TTAC'],
+      };
+
+      act(() => {
+        render(<RenderParticipants formValues={readOnlyFormValues} />);
+      });
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
+
+      // confirm alert
+      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
+      expect(alert).toBeVisible();
+
+      const regionalOfficeTta = await screen.findByText(/aa, ttac/i);
+      expect(regionalOfficeTta).toBeVisible();
+    });
+
     describe('groups', () => {
       it('correctly shows and hides all group options', async () => {
         render(<RenderParticipants />);
@@ -260,7 +318,7 @@ describe('participants', () => {
         // Click the use group checkbox.
         let useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
 
-        await act(() => {
+        act(() => {
           userEvent.click(useGroupCheckbox);
         });
 
@@ -270,7 +328,7 @@ describe('participants', () => {
 
         // Uncheck the use group checkbox.
         useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i });
-        await act(() => {
+        act(() => {
           userEvent.click(useGroupCheckbox);
         });
 
@@ -296,7 +354,7 @@ describe('participants', () => {
 
         // Click the use group checkbox.
         const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
-        await act(() => {
+        act(() => {
           userEvent.click(useGroupCheckbox);
         });
 

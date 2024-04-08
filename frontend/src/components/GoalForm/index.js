@@ -912,11 +912,12 @@ export default function GoalForm({
         goalTemplateId: goal.id,
       }));
       const created = await createOrUpdateGoals(goals);
+      setAppLoadingText('loading');
       forwardToGoalWithIds(created.map((g) => g.goalIds).flat());
     };
 
     try {
-      setAppLoadingText('Retrieving existing goal');
+      setAppLoadingText('loading existing goal');
       setNudgedGoalSelection(goal);
 
       if (goal.status === 'Suspended') {
@@ -926,6 +927,7 @@ export default function GoalForm({
 
       if (goal.isCurated) {
       // we need to do a little magic here to get the goal
+        setAppLoadingText('creating new ohs initiative goal');
         await onSelectInitiativeGoal();
         return;
       }
