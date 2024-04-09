@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { beforeValidate, afterCreate } = require('./hooks/resource');
+const { beforeValidate, afterCreate } = require('../hooks/resource');
 
 export default (sequelize, DataTypes) => {
   class Resource extends Model {
