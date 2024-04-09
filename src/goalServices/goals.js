@@ -2812,7 +2812,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
       let closedCurated = false;
       if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+        closedCurated = current.status === GOAL_STATUS.CLOSED;
       }
 
       // goal on an active report
