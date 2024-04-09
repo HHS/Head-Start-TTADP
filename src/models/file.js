@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { getPresignedURL } = require('../lib/s3');
-const { afterDestroy } = require('./hooks/file');
+const { afterDestroy } = require('../hooks/file');
 
 export default (sequelize, DataTypes) => {
   class File extends Model {
