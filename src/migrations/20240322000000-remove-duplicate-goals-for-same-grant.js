@@ -924,7 +924,7 @@ module.exports = {
         GROUP BY 1
       ),
       flags_update_for_unlinked_objectives AS (
-        UPDATE "Objectives" g
+        UPDATE "Objectives" o
         SET
           "onAR" = f."onAR",
           "onApprovedAR" = f."onApprovedAR"
@@ -935,7 +935,9 @@ module.exports = {
           OR o."onApprovedAR" != f."onApprovedAR"
         )
         RETURNING
-          o.id "objectiveId"
+          o.id "objectiveId",
+          o."onAR",
+          o."onApprovedAR"
       )
       SELECT
         "objectiveId",
@@ -987,7 +989,9 @@ module.exports = {
           OR g."onApprovedAR" != gf."onApprovedAR"
         )
         RETURNING
-          g.id "goalId"
+          g.id "goalId",
+          g."onAR",
+          g."onApprovedAR"
       )
       SELECT
         "goalId",
