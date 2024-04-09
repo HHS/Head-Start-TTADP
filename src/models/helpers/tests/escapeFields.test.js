@@ -16,8 +16,8 @@ const {
   EventReportPilot,
 } = db;
 
-const xss = '<script>alert("XSS")</script>';
-const safe = '';
+const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerror=alert(1)//>';
+const safe = '<a href="//google.com"></a><img src="x">';
 
 describe('escapeFields', () => {
   test('should escape specified fields in the instance', () => {
