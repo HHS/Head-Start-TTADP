@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/activityReportObjectiveFile');
+const { afterDestroy } = require('../hooks/activityReportObjectiveFile');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveFile extends Model {

@@ -5,7 +5,7 @@ const { GROUP_SHARED_WITH } = require('@ttahub/common');
 const {
   afterCreate,
   afterUpdate,
-} = require('./hooks/group');
+} = require('../hooks/group');
 
 export default (sequelize, DataTypes) => {
   class Group extends Model {
