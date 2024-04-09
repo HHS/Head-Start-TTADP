@@ -17,7 +17,7 @@ const {
 } = db;
 
 const xss = '<script>alert("XSS")</script>';
-const safe = '&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;';
+const safe = '';
 
 describe('escapeFields', () => {
   test('should escape specified fields in the instance', () => {

@@ -1,4 +1,5 @@
-import { escape } from 'lodash';
+import { JSDOM } from 'jsdom';
+import DOMPurify from 'dompurify';
 import { auditLogger } from '../../logger';
 import safeParse from './safeParse';
 
@@ -16,10 +17,13 @@ export function escapeDataFields(instance, fields) {
 
   const copy = { ...data };
 
+  const { window } = new JSDOM('');
+  const purify = DOMPurify(window);
+
   try {
     fields.forEach((field) => {
       if (field in copy && copy[field] !== null) {
-        copy[field] = escape(copy[field]);
+        copy[field] = purify.sanitize(copy[field]);
       }
     });
 
@@ -40,10 +44,13 @@ export function escapeDataFields(instance, fields) {
 export default function escapeFields(instance, fields) {
   const changed = instance.changed();
 
+  const { window } = new JSDOM('');
+  const purify = DOMPurify(window);
+
   try {
     fields.forEach((field) => {
       if (changed.includes(field) && instance[field] !== null) {
-        instance.set(field, escape(instance[field]));
+        instance.set(field, purify.sanitize(instance[field]));
       }
     });
   } catch (err) {

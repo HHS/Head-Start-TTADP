@@ -555,7 +555,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
     order: [
       [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
     ],
-  });
+  }, { individualHooks: true });
 
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
