@@ -176,7 +176,7 @@ module.exports = {
         moatr."objectiveId",
         moatr.title
       FROM missing_objectives_added_to_reports moatr;
-      --  4. Identify the affected objectives
+      --  5. Identify the affected objectives
       DROP TABLE IF EXISTS tmp_affected_objectives;
       CREATE TEMP TABLE tmp_affected_objectives
       AS
@@ -196,7 +196,7 @@ module.exports = {
       AND targg."activityReportId" = aro."activityReportId"
       group by 1,2,3,4,7
       having aro.title is not null;
-      --  5. Sync courses from extra activity report objectives to main objective
+      --  6. Sync courses from extra activity report objectives to main objective
       DROP TABLE IF EXISTS tmp_sync_courses_across_affected_objectives;
       CREATE TEMP TABLE tmp_sync_courses_across_affected_objectives
       AS
@@ -253,7 +253,7 @@ module.exports = {
         scafo."createdAt",
         scafo."updatedAt"
       FROM sync_courses_across_affected_objectives scafo;
-      --  6. Sync corses into the objective
+      --  7. Sync corses into the objective
       DROP TABLE IF EXISTS tmp_sync_course_to_objectives;
       CREATE TEMP TABLE tmp_sync_course_to_objectives
       AS
@@ -291,7 +291,7 @@ module.exports = {
         scto."createdAt",
         scto."updatedAt"
       FROM sync_course_to_objectives scto;
-      --  7. Sync files from extra activity report objectives to main objective
+      --  8. Sync files from extra activity report objectives to main objective
       DROP TABLE IF EXISTS tmp_sync_files_across_affected_objectives;
       CREATE TEMP TABLE tmp_sync_files_across_affected_objectives
       AS
@@ -348,7 +348,7 @@ module.exports = {
         sfafo."createdAt",
         sfafo."updatedAt"
       FROM sync_files_across_affected_objectives sfafo;
-      --  8. Sync files into the objective
+      --  9. Sync files into the objective
       DROP TABLE IF EXISTS tmp_sync_file_to_objectives;
       CREATE TEMP TABLE tmp_sync_file_to_objectives
       AS
@@ -386,7 +386,7 @@ module.exports = {
         sfto."createdAt",
         sfto."updatedAt"
       FROM sync_file_to_objectives sfto;
-      --  9. Sync resources from extra activity report objectives to main objective
+      -- 10. Sync resources from extra activity report objectives to main objective
       DROP TABLE IF EXISTS tmp_sync_resources_across_affected_objectives;
       CREATE TEMP TABLE tmp_sync_resources_across_affected_objectives
       AS
@@ -443,7 +443,7 @@ module.exports = {
       srafo."createdAt",
       srafo."updatedAt"
       FROM sync_resources_across_affected_objectives srafo;
-      -- 10. Sync resources into the objective
+      -- 11. Sync resources into the objective
       DROP TABLE IF EXISTS tmp_sync_resource_to_objectives;
       CREATE TEMP TABLE tmp_sync_resource_to_objectives
       AS
@@ -481,7 +481,7 @@ module.exports = {
         srto."createdAt",
         srto."updatedAt"
       FROM sync_resource_to_objectives srto;
-      -- 11. Sync topics from extra activity report objectives to main objective
+      -- 12. Sync topics from extra activity report objectives to main objective
       DROP TABLE IF EXISTS tmp_sync_topics_across_affected_objectives;
       CREATE TEMP TABLE tmp_sync_topics_across_affected_objectives
       AS
@@ -538,7 +538,7 @@ module.exports = {
         stafo."createdAt",
         stafo."updatedAt"
       FROM sync_topics_across_affected_objectives stafo;
-      -- 12. Sync topics into the objective
+      -- 13. Sync topics into the objective
       DROP TABLE IF EXISTS tmp_sync_topic_to_objectives;
       CREATE TEMP TABLE tmp_sync_topic_to_objectives
       AS
@@ -576,7 +576,7 @@ module.exports = {
         srto."createdAt",
         srto."updatedAt"
       FROM sync_topic_to_objectives srto;
-      -- 13. Identify objectives to unlink from reports
+      -- 14. Identify objectives to unlink from reports
       DROP TABLE IF EXISTS tmp_objectives_to_unlink_from_reports;
       CREATE TEMP TABLE tmp_objectives_to_unlink_from_reports
       AS
@@ -600,7 +600,7 @@ module.exports = {
       JOIN objectives_to_unlink otu
       ON aro."activityReportId" = otu."activityReportId"
       AND aro."objectiveId" = otu."objectiveId";
-      -- 14. Remove courses for objectives to be unlinked
+      -- 15. Remove courses for objectives to be unlinked
       DROP TABLE IF EXISTS tmp_removed_activity_report_objective_courses;
       CREATE TEMP TABLE tmp_removed_activity_report_objective_courses
       AS
@@ -625,7 +625,7 @@ module.exports = {
         raroc."activityReportObjectiveId",
         raroc."courseId"
       FROM removed_activity_report_objective_courses raroc;
-      -- 15. Remove files for objectives to be unlinked
+      -- 16. Remove files for objectives to be unlinked
       DROP TABLE IF EXISTS tmp_removed_activity_report_objective_files;
       CREATE TEMP TABLE tmp_removed_activity_report_objective_files
       AS
@@ -650,7 +650,7 @@ module.exports = {
         rarof."activityReportObjectiveId",
         rarof."fileId"
       FROM removed_activity_report_objective_files rarof;
-      -- 16. Remove resources for objectives to be unlinked
+      -- 17. Remove resources for objectives to be unlinked
       DROP TABLE IF EXISTS tmp_removed_activity_report_objective_resources;
       CREATE TEMP TABLE tmp_removed_activity_report_objective_resources
       AS
@@ -675,7 +675,7 @@ module.exports = {
         raror."activityReportObjectiveId",
         raror."resourceId"
       FROM removed_activity_report_objective_resources raror;
-      -- 17. Remove topics for objectives to be unlinked
+      -- 18. Remove topics for objectives to be unlinked
       DROP TABLE IF EXISTS tmp_removed_activity_report_objective_topics;
       CREATE TEMP TABLE tmp_removed_activity_report_objective_topics
       AS
@@ -700,7 +700,7 @@ module.exports = {
         rarot."activityReportObjectiveId",
         rarot."topicId"
       FROM removed_activity_report_objective_topics rarot;
-      --  18. Remove activity report objective records that are to be unlinked
+      --  19. Remove activity report objective records that are to be unlinked
       DROP TABLE IF EXISTS tmp_removed_activity_report_objectives;
       CREATE TEMP TABLE tmp_removed_activity_report_objectives
       AS
@@ -715,11 +715,11 @@ module.exports = {
           aro."objectiveId"
       )
       SELECT
-        raro.id,
+        raro.id "activityReportObjectiveId",
         raro."activityReportId",
         raro."objectiveId"
       FROM removed_activity_report_objectives raro;
-      -- 19. Collect a list of objectives to remove as they are no longer referenced on any report
+      -- 20. Collect a list of objectives to remove as they are no longer referenced on any report
       DROP TABLE IF EXISTS tmp_objectives_to_remove;
       CREATE TEMP TABLE tmp_objectives_to_remove
       AS
@@ -729,7 +729,7 @@ module.exports = {
       LEFT JOIN "ActivityReportObjectives" aro
       ON traro."objectiveId" = aro."objectiveId"
       WHERE aro.id IS NULL;
-      -- 20. Remove objective courses for objective to be removed
+      -- 21. Remove objective courses for objective to be removed
       DROP TABLE IF EXISTS tmp_removed_objective_courses;
       CREATE TEMP TABLE tmp_removed_objective_courses
       AS
@@ -747,7 +747,7 @@ module.exports = {
         roc."objectiveId",
         roc."courseId"
       FROM removed_objective_courses roc;
-      -- 21. Remove objective files for objective to be removed
+      -- 22. Remove objective files for objective to be removed
       DROP TABLE IF EXISTS tmp_removed_objective_files;
       CREATE TEMP TABLE tmp_removed_objective_files
       AS
@@ -765,7 +765,7 @@ module.exports = {
         rof."objectiveId",
         rof."fileId"
       FROM removed_objective_files rof;
-      -- 22. Remove objective resources for objective to be removed
+      -- 23. Remove objective resources for objective to be removed
       DROP TABLE IF EXISTS tmp_removed_objective_resources;
       CREATE TEMP TABLE tmp_removed_objective_resources
       AS
@@ -783,7 +783,7 @@ module.exports = {
         ror."objectiveId",
         ror."resourceId"
       FROM removed_objective_resources ror;
-      -- 23. Remove objective topics for objective to be removed
+      -- 24. Remove objective topics for objective to be removed
       DROP TABLE IF EXISTS tmp_removed_objective_topics;
       CREATE TEMP TABLE tmp_removed_objective_topics
       AS
@@ -801,7 +801,7 @@ module.exports = {
         rot."objectiveId",
         rot."topicId"
       FROM removed_objective_topics rot;
-      -- 24. Remove objective collaborators for objective to be removed
+      -- 25. Remove objective collaborators for objective to be removed
       DROP TABLE IF EXISTS tmp_removed_objective_collaborators;
       CREATE TEMP TABLE tmp_removed_objective_collaborators
       AS
@@ -810,21 +810,21 @@ module.exports = {
         USING tmp_objectives_to_remove totr
         WHERE oc."objectiveId" = totr."objectiveId"
         RETURNING
-          oc.id,
+          oc.id "collaboratorId",
           oc."objectiveId",
-          oc."collaboratorId"
+          oc."userId"
       )
       SELECT
-        roc.id,
+        roc."collaboratorId",
         roc."objectiveId",
-        roc."collaboratorId"
+        roc."userId"
       FROM removed_objective_collaborators roc;
-      -- 25. Remove objectives that are no longer referenced on any report
+      -- 26. Remove objectives that are no longer referenced on any report
       DROP TABLE IF EXISTS tmp_removed_objectives;
       CREATE TEMP TABLE tmp_removed_objectives
       AS
       WITH removed_objectives AS (
-        DELETE FROM "ObjectiveCollaborators" o
+        DELETE FROM "Objectives" o
         USING tmp_objectives_to_remove totr
         WHERE o.id = totr."objectiveId"
         RETURNING
@@ -835,41 +835,89 @@ module.exports = {
           ro.id,
           ro.title
       FROM removed_objectives ro;
-
-
-      -- x. Sets of Grant may/may not have matching objectives
-      -- x. When not matching objectives are found, clone objective and aro to first goal
-      -- x. Remove second goals objectives from AR
-      DROP TABLE IF EXISTS tmp_delete_objective_from_report;
-      CREATE TEMP TABLE tmp_delete_objective_from_report
+      -- 27. Collect a list of ActivityReportGoals to remove
+      DROP TABLE IF EXISTS tmp_activity_report_goals_to_remove;
+      CREATE TEMP TABLE tmp_activity_report_goals_to_remove
       AS
-      WITH delete_activity_report_objectives AS (
-        DELETE FROM "ActivityReportObjectives" aro
-        USING tmp_unlinked_objectives tuo
-        WHERE aro."objectiveId" = tug."objectiveId"
+      SELECT
+        targg."activityReportId",
+        targg."Recipeint",
+        targg."grantId",
+        targg."number",
+        g."goalId",
+        arg.id "activityReportGoalId"
+      FROM tmp_affected_reports_grants_goals targg
+      CROSS JOIN UNNEST(targg."goalIds") g("goalId")
+      JOIN "ActivityReportGoals" arg
+      ON targg."activityReportId" = arg."activityReportId"
+      AND g."goalId" = arg."goalId"
+      WHERE targg."goalIds"[1] != g."goalId";
+      -- 28. Remove ActivityReportGoalFieldResponses that are nolonger going to be referenced
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal_field_responses;
+      CREATE TEMP TABLE tmp_removed_activity_report_goal_field_responses
+      AS
+      WITH removed_activity_report_goal_field_responses AS (
+        DELETE FROM "ActivityReportGoalFieldResponses" argfr
+        USING tmp_activity_report_goals_to_remove targtr
+        WHERE argfr."activityReportGoalId" = targtr."activityReportGoalId"
         RETURNING
-          aro.id "activityReportObjectiveId",
-          aro."activityReportId",
-          aro."objectiveId"
+          argfr.id,
+          argfr."activityReportGoalId",
+          argfr.response
       )
       SELECT
-        "activityReportObjectiveId",
-        "activityReportId",
-        "objectiveId"
-      FROM delete_activity_report_objectives;
-
-      -- x. Update onAR and onApprovedAR for unlinked objective
+        rargfr.id,
+        rargfr."activityReportGoalId",
+        rargfr.response
+      FROM removed_activity_report_goal_field_responses rargfr;
+      -- 29. Remove ActivityReportGoalResources that are nolonger going to be referenced
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal_resources;
+      CREATE TEMP TABLE tmp_removed_activity_report_goal_resources
+      AS
+      WITH removed_activity_report_goal_resources AS (
+        DELETE FROM "ActivityReportGoalResources" argr
+        USING tmp_activity_report_goals_to_remove targtr
+        WHERE argr."activityReportGoalId" = targtr."activityReportGoalId"
+        RETURNING
+          argr.id,
+          argr."activityReportGoalId",
+          argr."resourceId"
+      )
+      SELECT
+        rargr.id,
+        rargr."activityReportGoalId",
+        rargr."resourceId"
+      FROM removed_activity_report_goal_resources rargr;
+      -- 30. Remove ActivityReportGoal that are nolonger going to be referenced
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal;
+      CREATE TEMP TABLE tmp_removed_activity_report_goal
+      AS
+      WITH removed_activity_report_goal AS (
+        DELETE FROM "ActivityReportGoals" arg
+        USING tmp_activity_report_goals_to_remove targtr
+        WHERE arg."id" = targtr."activityReportGoalId"
+        RETURNING
+        arg.id,
+        arg."activityReportId",
+        arg."goalId"
+      )
+      SELECT
+        rarg.id,
+        rarg."activityReportId",
+        rarg."goalId"
+      FROM removed_activity_report_goal rarg;
+      -- 31. Update onAR and onApprovedAR for unlinked objective
       DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_objectives;
       CREATE TEMP TABLE tmp_flags_update_for_unlinked_objectives
       AS
       WITH objective_flags AS (
         SELECT
-          tdofr."objectiveId",
-          count(arg.id) FILTER (WHERE arg.id IS NOT NULL) > 0 "onAR",
+          traro."objectiveId",
+          count(aro."id") FILTER (WHERE aro.id IS NOT NULL) > 0 "onAR",
           COUNT(ar.id) FILTER (WHERE ar.id IS NOT NULL) > 0 "onApprovedAR"
-        FROM tmp_delete_objective_from_report tdofr
+        FROM tmp_removed_activity_report_objectives traro
         LEFT JOIN "ActivityReportObjectives" aro
-        ON tdofr."objectiveId" = aro."objectiveId"
+        ON traro."objectiveId" = aro."objectiveId"
         LEFT JOIN "ActivityReports" ar
         ON aro."activityReportId" = ar.id
         AND ar."calculatedStatus"::text = 'approved'
@@ -894,16 +942,15 @@ module.exports = {
         "onAR",
         "onApprovedAR"
       FROM flags_update_for_unlinked_objectives;
-
-      -- x. If unlinked objective onAR is false, delete objective
+      -- 32. If unlinked objective onAR is false, delete objective
       DROP TABLE IF EXISTS tmp_deleted_objectives;
       CREATE TEMP TABLE tmp_deleted_objectives
       AS
       WITH deleted_objectives AS (
         UPDATE "Objectives" o
         SET "deletedAt" = now()
-        FROM tmp_unlinked_objectives tuo
-        WHERE o.id = tuo."objectiveId"
+        FROM tmp_flags_update_for_unlinked_objectives tfufuo
+        WHERE o.id = tfufuo."objectiveId"
         AND o."onAR" = false
         RETURNING
           o.id "objectiveId"
@@ -911,38 +958,18 @@ module.exports = {
       SELECT
         "objectiveId"
       FROM deleted_objectives;
-
-      -- x. Remove second goal from AR
-      DROP TABLE IF EXISTS tmp_delete_goal_from_report;
-      CREATE TEMP TABLE tmp_delete_goal_from_report
-      AS
-      WITH delete_activity_report_goals AS (
-        DELETE FROM "ActivityReportGoals" arg
-        USING tmp_unlinked_goals tug
-        WHERE arg."goalId" = tug."goalId"
-        RETURNING
-          arg.id "activityReportGoalId",
-          arg."activityReportId",
-          arg."goalId"
-      )
-      SELECT
-        "activityReportGoalId",
-        "activityReportId",
-        "goalId"
-      FROM delete_activity_report_goals;
-
-      -- x. Update onAR and onApprovedAR for unlinked goal
+      -- 33. Update onAR and onApprovedAR for unlinked goal
       DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_goals;
       CREATE TEMP TABLE tmp_flags_update_for_unlinked_goals
       AS
       WITH goal_flags AS (
         SELECT
-          tdgfr."goalId",
+          trarg."goalId",
           count(arg.id) FILTER (WHERE arg.id IS NOT NULL) > 0 "onAR",
           COUNT(ar.id) FILTER (WHERE ar.id IS NOT NULL) > 0 "onApprovedAR"
-        FROM tmp_delete_goal_from_report tdgfr
+        FROM tmp_removed_activity_report_goal trarg
         LEFT JOIN "ActivityReportGoals" arg
-        ON tdgfr."goalId" = arg."goalId"
+        ON trarg."goalId" = arg."goalId"
         LEFT JOIN "ActivityReports" ar
         ON arg."activityReportId" = ar.id
         AND ar."calculatedStatus"::text = 'approved'
@@ -967,8 +994,40 @@ module.exports = {
         "onAR",
         "onApprovedAR"
       FROM flags_update_for_unlinked_goals;
-
-      --
+      -- 34. Remove all temp tables
+      DROP TABLE IF EXISTS tmp_affected_reports_grants_goals;
+      DROP TABLE IF EXISTS tmp_affected_objectives;
+      DROP TABLE IF EXISTS tmp_created_missing_objectives;
+      DROP TABLE IF EXISTS tmp_missing_objectives_added_to_reports;
+      DROP TABLE IF EXISTS tmp_affected_objectives;
+      DROP TABLE IF EXISTS tmp_sync_courses_across_affected_objectives;
+      DROP TABLE IF EXISTS tmp_sync_course_to_objectives;
+      DROP TABLE IF EXISTS tmp_sync_files_across_affected_objectives;
+      DROP TABLE IF EXISTS tmp_sync_file_to_objectives;
+      DROP TABLE IF EXISTS tmp_sync_resources_across_affected_objectives;
+      DROP TABLE IF EXISTS tmp_sync_resource_to_objectives;
+      DROP TABLE IF EXISTS tmp_sync_topics_across_affected_objectives;
+      DROP TABLE IF EXISTS tmp_sync_topic_to_objectives;
+      DROP TABLE IF EXISTS tmp_objectives_to_unlink_from_reports;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_objective_courses;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_objective_files;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_objective_resources;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_objective_topics;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_objectives;
+      DROP TABLE IF EXISTS tmp_objectives_to_remove;
+      DROP TABLE IF EXISTS tmp_removed_objective_courses;
+      DROP TABLE IF EXISTS tmp_removed_objective_files;
+      DROP TABLE IF EXISTS tmp_removed_objective_resources;
+      DROP TABLE IF EXISTS tmp_removed_objective_topics;
+      DROP TABLE IF EXISTS tmp_removed_objective_collaborators;
+      DROP TABLE IF EXISTS tmp_removed_objectives;
+      DROP TABLE IF EXISTS tmp_activity_report_goals_to_remove;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal_field_responses;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal_resources;
+      DROP TABLE IF EXISTS tmp_removed_activity_report_goal;
+      DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_objectives;
+      DROP TABLE IF EXISTS tmp_deleted_objectives;
+      DROP TABLE IF EXISTS tmp_flags_update_for_unlinked_goals;
       `, { transaction });
     },
   ),
