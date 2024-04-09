@@ -265,7 +265,6 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     );
     const trailingNumber = grant.id;
     const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
-    const oldGrantNumber = grant.number;
 
     promises.push(
       grant.update({
