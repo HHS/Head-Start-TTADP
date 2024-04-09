@@ -17,7 +17,7 @@ const {
 } = db;
 
 const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerror=alert(1)//>';
-const safe = '<a href="//google.com"></a><img src="x">';
+const safe = '<a href="//google.com"><img src="x"></a>';
 
 describe('escapeFields', () => {
   test('should escape specified fields in the instance', () => {
