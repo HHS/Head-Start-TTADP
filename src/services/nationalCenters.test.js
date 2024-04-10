@@ -10,7 +10,7 @@ import {
 import { auditLogger } from '../logger';
 
 jest.spyOn(auditLogger, 'info');
-jest.mock('../models/hooks/sessionReportPilot');
+jest.mock('../hooks/sessionReportPilot');
 
 describe('nationalCenters service', () => {
   afterAll(() => {

@@ -249,6 +249,7 @@ describe('TR overview widget', () => {
       numParticipants: '100',
       numRecipients: '3',
       numReports: '2',
+      numSessions: '4',
       recipientPercentage: '60.00%',
       sumDuration: '4',
       totalRecipients: '5',

@@ -86,6 +86,7 @@ module.exports = {
         ;
 
         -- Remove AR link records: -------------
+        DROP TABLE IF EXISTS deleted_activityrecipients;
         CREATE TEMP TABLE deleted_activityrecipients AS
         WITH deletes AS (
           DELETE FROM "ActivityRecipients"

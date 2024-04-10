@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/activityReportObjectiveTopic');
+const { afterDestroy } = require('../hooks/activityReportObjectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table
