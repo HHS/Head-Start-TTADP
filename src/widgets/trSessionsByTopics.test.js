@@ -287,10 +287,10 @@ describe('TR sessions by topic', () => {
     // run our function
     const data = await trSessionsByTopic(scopes);
 
-    const firstTopic = data.find((d) => topic1.name === d.name);
+    const firstTopic = data.find((d) => topic1.name === d.topic);
     expect(firstTopic.count).toBe(1);
 
-    const secondTopic = data.find((d) => topic2.name === d.name);
+    const secondTopic = data.find((d) => topic2.name === d.topic);
     expect(secondTopic.count).toBe(1);
   });
 });
