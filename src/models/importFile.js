@@ -1,7 +1,7 @@
 const {
   Model,
 } = require('sequelize');
-const { afterDestroy } = require('../hooks/importFile');
+const { afterDestroy } = require('./hooks/importFile');
 const { IMPORT_STATUSES } = require('../constants');
 
 export default (sequelize, DataTypes) => {

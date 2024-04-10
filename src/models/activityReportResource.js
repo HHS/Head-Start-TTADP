@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { afterDestroy } = require('../hooks/activityReportResource');
+const { afterDestroy } = require('./hooks/activityReportResource');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportResource extends Model {

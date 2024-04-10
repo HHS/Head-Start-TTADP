@@ -10,7 +10,7 @@ const {
   afterUpdate,
   beforeValidate,
   afterDestroy,
-} = require('../hooks/activityReport');
+} = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
   const creatorName = ar.author ? ar.author.name : '';

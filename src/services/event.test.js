@@ -19,25 +19,9 @@ import {
 } from './event';
 
 describe('event service', () => {
-  let newOwner;
-
-  beforeAll(async () => {
-    newOwner = await db.User.create({
-      homeRegionId: 1,
-      name: 'New Owner',
-      hsesUsername: 'DF431423',
-      hsesUserId: 'DF431423',
-      email: 'newowner@test.com',
-      role: [],
-      lastLogin: new Date(),
-    });
-  });
-
   afterAll(async () => {
-    await db.User.destroy({ where: { id: newOwner.id } });
     await db.sequelize.close();
   });
-
   const createAnEvent = async (num) => createEvent({
     ownerId: num,
     regionId: num,
@@ -99,6 +83,15 @@ describe('event service', () => {
 
     it('update owner json', async () => {
       const created = await createAnEvent(99_927);
+      const newOwner = await db.User.create({
+        homeRegionId: 1,
+        name: 'New Owner',
+        hsesUsername: 'DF431423',
+        hsesUserId: 'DF431423',
+        email: 'newowner@test.com',
+        role: [],
+        lastLogin: new Date(),
+      });
 
       const updated = await updateEvent(created.id, {
         ownerId: newOwner.id,
@@ -113,6 +106,7 @@ describe('event service', () => {
       expect(updated.data.owner).toHaveProperty('email', 'newowner@test.com');
 
       await destroyEvent(created.id);
+      await db.User.destroy({ where: { id: newOwner.id } });
     });
     it('creates a new event when the id cannot be found', async () => {
       const found = await findEventByDbId(99_999);
