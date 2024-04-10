@@ -101,9 +101,7 @@ function BarGraph({ data }) {
   return (
     <>
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
-        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="ttahub-bar-graph--bars-top" tabIndex={0}>
-          <span className="sr-only">Use the arrow keys to scroll graph</span>
+        <div className="ttahub-bar-graph--bars-top">
           <Plot
             data={[trace]}
             layout={layout}

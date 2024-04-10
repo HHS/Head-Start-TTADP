@@ -1,6 +1,8 @@
 @use 'colors.scss' as *;
 @use './Grid.scss';
 
+@use './widgets/widgets.scss';
+
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
