@@ -305,7 +305,7 @@ parameters:
   sandbox_new_relic_app_id:
     default: "867346799"
     type: string
-jobs:   
+jobs:
   build_and_lint:
     executor: docker-executor
     steps:
