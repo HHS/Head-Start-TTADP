@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { beforeValidate, afterCreate, afterDestroy } = require('../hooks/objectiveResource');
+const { beforeValidate, afterCreate, afterDestroy } = require('./hooks/objectiveResource');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveResource extends Model {

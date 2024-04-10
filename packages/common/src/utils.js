@@ -31,5 +31,5 @@ function determineMergeGoalStatus(statuses) {
 }
 
 module.exports = {
-  determineMergeGoalStatus,
+  determineMergeGoalStatus
 }

@@ -7,7 +7,7 @@ const {
   beforeUpdate,
   afterUpdate,
   afterCreate,
-} = require('../hooks/objective');
+} = require('./hooks/objective');
 
 /**
  * Objective table. Stores objectives for goals.
