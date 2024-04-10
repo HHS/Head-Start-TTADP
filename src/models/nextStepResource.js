@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-const { afterDestroy } = require('../hooks/nextStepResource');
+const { afterDestroy } = require('./hooks/nextStepResource');
 
 export default (sequelize, DataTypes) => {
   class NextStepResource extends Model {
