@@ -20,7 +20,7 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
@@ -104,8 +104,10 @@ function MultiSelect({
   onCreateOption,
   placeholderText,
   components: componentReplacements,
+  onClick = () => {},
 }) {
   const inputId = `select-${uuidv4()}`;
+  const selectorRef = useRef(null);
 
   /**
    * unfortunately, given our support for ie11, we can't
@@ -158,6 +160,13 @@ function MultiSelect({
     }
   };
 
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      selectorRef.current.focus();
+      onClick();
+    }
+  };
+
   const Selector = canCreate ? Creatable : Select;
 
   return (
@@ -165,35 +174,47 @@ function MultiSelect({
       render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
-          <Selector
-            className="ttahub-multi-select margin-top-1"
-            id={name}
-            value={values}
-            onBlur={onBlur}
-            onChange={(event) => {
-              if (onItemSelected) {
-                onItemSelected(event);
-              } else if (event) {
-                onChange(event, controllerOnChange);
-              } else {
-                controllerOnChange([]);
-              }
-            }}
-            inputId={inputId}
-            styles={styles(singleRowInput)}
-            components={{ ...componentReplacements, DropdownIndicator }}
-            options={options}
-            isDisabled={disabled}
-            tabSelectsValue={false}
-            isClearable={multiSelectOptions.isClearable}
-            closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
-            controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
-            hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
-            placeholder={placeholderText || ''}
-            onCreateOption={onCreateOption}
-            isMulti
-            required={!!(required)}
-          />
+          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          <div
+            onClick={onClick}
+            onKeyDown={onKeyDown}
+            data-testid={`${name}-click-container`}
+            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            tabIndex={disabled ? 0 : undefined}
+          >
+            <div aria-hidden={disabled}>
+              <Selector
+                ref={selectorRef}
+                className="ttahub-multi-select margin-top-1"
+                id={name}
+                value={values}
+                onBlur={onBlur}
+                onChange={(event) => {
+                  if (onItemSelected) {
+                    onItemSelected(event);
+                  } else if (event) {
+                    onChange(event, controllerOnChange);
+                  } else {
+                    controllerOnChange([]);
+                  }
+                }}
+                inputId={inputId}
+                styles={styles(singleRowInput)}
+                components={{ ...componentReplacements, DropdownIndicator }}
+                options={options}
+                isDisabled={disabled}
+                tabSelectsValue={false}
+                isClearable={multiSelectOptions.isClearable}
+                closeMenuOnSelect={multiSelectOptions.closeMenuOnSelect || false}
+                controlShouldRenderValue={multiSelectOptions.controlShouldRenderValue}
+                hideSelectedOptions={multiSelectOptions.hideSelectedOptions}
+                placeholder={placeholderText || ''}
+                onCreateOption={onCreateOption}
+                isMulti
+                required={!!(required)}
+              />
+            </div>
+          </div>
         );
       }}
       control={control}
@@ -253,6 +274,7 @@ MultiSelect.propTypes = {
   }),
   required: PropTypes.oneOfType([PropTypes.string, PropTypes.bool]),
   placeholderText: PropTypes.string,
+  onClick: PropTypes.func,
 };
 
 MultiSelect.defaultProps = {
@@ -269,6 +291,7 @@ MultiSelect.defaultProps = {
   onItemSelected: null,
   onCreateOption: null,
   placeholderText: null,
+  onClick: null,
 };
 
 export default MultiSelect;
