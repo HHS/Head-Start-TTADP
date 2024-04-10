@@ -4,6 +4,7 @@ import { Grid, GridContainer } from '@trussworks/react-uswds';
 import Overview from '../../../widgets/TrainingReportDashboardOverview';
 import TRReasonList from '../../../widgets/TRReasonList';
 import TRHoursOfTrainingByNationalCenter from '../../../widgets/TRHoursOfTrainingByNationalCenter';
+import VTopicFrequency from '../../../widgets/VTopicFrequency';
 
 export default function TrainingReportDashboard() {
   return (
@@ -36,8 +37,13 @@ export default function TrainingReportDashboard() {
             />
           </Grid>
         </Grid>
-        <Grid row />
-        <Grid row />
+        <Grid row>
+          <VTopicFrequency
+            filters={[]}
+            loading={false}
+            title="Number of TR sessions by topic"
+          />
+        </Grid>
       </GridContainer>
     </>
   );

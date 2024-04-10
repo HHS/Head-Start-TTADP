@@ -3,11 +3,13 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
+import { useMediaQuery } from 'react-responsive';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import MediaCaptureButton from '../components/MediaCaptureButton';
+import WidgetH2 from '../components/WidgetH2';
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -27,6 +29,9 @@ function VBarGraph({
   function toggleAccessibleData() {
     updateShowAccessibleData((current) => !current);
   }
+
+  const isMedium = useMediaQuery({ maxWidth: 1590 });
+  const isMobile = useMediaQuery({ maxWidth: 700 });
 
   useEffect(() => {
     if (!data || !Array.isArray(data)) {
@@ -51,9 +56,16 @@ function VBarGraph({
       },
     };
 
+    const width = (() => {
+      if (isMobile) return 400;
+      if (isMedium) return 500;
+      return 700;
+    })();
+
     const layout = {
       bargap: 0.5,
-      height: 300,
+      height: 350,
+      width,
       hoverlabel: {
         bgcolor: '#000',
         bordercolor: '#000',
@@ -72,12 +84,16 @@ function VBarGraph({
       },
       xaxis: {
         automargin: true,
-        fixedrange: true,
+        autorange: true,
         tickangle: 0,
+        title: xAxisLabel,
+        standoff: 20,
       },
       yaxis: {
         tickformat: ',.0d',
-        fixedrange: true,
+        autorange: true,
+        title: yAxisLabel,
+        standoff: 50,
       },
       hovermode: 'none',
     };
@@ -89,33 +105,36 @@ function VBarGraph({
         responsive: true, displayModeBar: false, hovermode: 'none',
       },
     });
-  }, [data]);
+  }, [data, isMedium, isMobile, xAxisLabel, yAxisLabel]);
 
   return (
     <Container className="smarthub-table-widget shadow-2" loading={loading} loadingLabel={loadingLabel} ref={bars}>
-      <Grid row className="position-relative margin-bottom-2">
-        <Grid className="flex-align-self-center desktop:display-flex flex-align-center" desktop={{ col: 'auto' }} mobileLg={{ col: 10 }}>
-          <h2 className="display-inline desktop:margin-y-0 margin-left-1" aria-live="polite">
-            {title}
-          </h2>
-          <p className="usa-prose">{subtitle}</p>
-        </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
+      <Grid row className="position-relative margin-bottom-2 flex-align-start">
+        <div className="ttahub-widget-heading-grid">
+          <div className="ttahub-widget-heading-grid--title">
+            <WidgetH2>
+              {title}
+            </WidgetH2>
+            <p className="usa-prose margin-0">{subtitle}</p>
+          </div>
+          {!showAccessibleData
+            ? (
+              <MediaCaptureButton
+                reference={bars}
+                buttonText="Save screenshot"
+                id="rd-save-screenshot-vbars"
+              />
+            )
+            : null}
           <button
             type="button"
-            className="usa-button--unstyled"
-            aria-label={showAccessibleData ? 'display number of activity reports by  data as graph' : 'display number of activity reports by data as table'}
+            className="usa-button usa-button--unstyled"
             onClick={toggleAccessibleData}
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
-          <MediaCaptureButton
-            reference={bars}
-            buttonText="Save screenshot"
-            id="rd-save-screenshot-tr-hours-by-national-center"
-            className="margin-x-2"
-          />
-        </Grid>
+        </div>
+
       </Grid>
       { showAccessibleData
         ? (
@@ -127,20 +146,13 @@ function VBarGraph({
         )
         : (
           <>
-            <div className="display-flex flex-align-center">
-              <div className="margin-right-1 smart-hub--vertical-text">
-                { yAxisLabel }
-              </div>
-
+            <div className="display-flex flex-align-center position-relative">
               <Plot
                 data={plot.data}
                 layout={plot.layout}
                 config={plot.config}
               />
 
-            </div>
-            <div className="display-flex flex-justify-center margin-top-1">
-              { xAxisLabel }
             </div>
           </>
         )}
