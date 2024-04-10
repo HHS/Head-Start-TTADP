@@ -4,7 +4,7 @@ const {
   afterCreate,
   beforeDestroy,
   afterDestroy,
-} = require('../hooks/objectiveFile');
+} = require('./hooks/objectiveFile');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveFile extends Model {
