@@ -16,7 +16,7 @@ import db, {
 import { auditLogger } from '../../logger';
 import {
   copyStatus,
-} from '../hooks/activityReport';
+} from '../../hooks/activityReport';
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');

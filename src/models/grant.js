@@ -5,7 +5,7 @@ const {
   afterCreate,
   afterUpdate,
   beforeDestroy,
-} = require('./hooks/grant');
+} = require('../hooks/grant');
 
 const { GRANT_INACTIVATION_REASONS } = require('../constants');
 

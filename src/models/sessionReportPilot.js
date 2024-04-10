@@ -5,7 +5,7 @@ const {
   beforeCreate,
   beforeUpdate,
   beforeDestroy,
-} = require('./hooks/sessionReportPilot');
+} = require('../hooks/sessionReportPilot');
 
 export default (sequelize, DataTypes) => {
   class SessionReportPilot extends Model {

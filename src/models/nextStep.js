@@ -4,7 +4,7 @@ const { formatDate } = require('../lib/modelHelpers');
 const {
   afterCreate,
   afterUpdate,
-} = require('./hooks/goal');
+} = require('../hooks/goal');
 
 export default (sequelize, DataTypes) => {
   class NextStep extends Model {
