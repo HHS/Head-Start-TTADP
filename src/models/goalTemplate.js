@@ -5,7 +5,7 @@ const {
   beforeUpdate,
   afterCreate,
   afterUpdate,
-} = require('./hooks/goalTemplate');
+} = require('../hooks/goalTemplate');
 // const { auditLogger } = require('../logger');
 
 export default (sequelize, DataTypes) => {
