@@ -3,35 +3,27 @@ import db, {
   ActivityReportApprover,
   ActivityReportCollaborator,
   User,
-  Region,
 } from '../../models';
 import {
-  createReport,
-  createGrant,
-  createUser,
-  destroyReport,
-  createRegion,
+  createReport, createGrant, createUser, destroyReport,
 } from '../../testUtils';
 import { updateLegacyReportUsers } from './legacyReports';
 
 describe('LegacyReports, admin routes', () => {
   describe('updateLegacyReportUsers', () => {
-    let region;
     let grant;
     let report;
     let user;
     let userTwo;
 
     beforeAll(async () => {
-      region = await createRegion();
-      user = await createUser({ homeRegionId: region.id });
-      userTwo = await createUser({ homeRegionId: region.id });
-      grant = await createGrant({ regionId: region.id });
+      user = await createUser();
+      userTwo = await createUser();
+      grant = await createGrant();
       report = await createReport({
         userId: user.id,
         activityRecipients: [{ grantId: grant.id }],
         imported: {},
-        regionId: region.id,
       });
 
       await report.update({ userId: null });
@@ -52,7 +44,6 @@ describe('LegacyReports, admin routes', () => {
       await destroyReport(report);
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await User.destroy({ where: { id: [user.id, userTwo.id] } });
-      await Region.destroy({ where: { id: region.id } });
       await db.sequelize.close();
     });
 

@@ -7,7 +7,7 @@ const {
   afterCreate,
   afterUpdate,
   afterDestroy,
-} = require('../hooks/goal');
+} = require('./hooks/goal');
 const { GOAL_CREATED_VIA } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];

@@ -2,7 +2,7 @@ import { Model } from 'sequelize';
 import {
   beforeCreate,
   beforeUpdate,
-} from '../hooks/monitoringReviewStatus';
+} from './hooks/monitoringReviewStatus';
 
 export default (sequelize, DataTypes) => {
   class MonitoringReviewStatus extends Model {

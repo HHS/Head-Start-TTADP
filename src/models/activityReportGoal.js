@@ -8,7 +8,7 @@ const {
   afterUpdate,
   beforeValidate,
   beforeUpdate,
-} = require('../hooks/activityReportGoal');
+} = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoal extends Model {

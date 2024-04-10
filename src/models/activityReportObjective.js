@@ -6,7 +6,7 @@ const {
   beforeDestroy,
   afterDestroy,
   afterUpdate,
-} = require('../hooks/activityReportObjective');
+} = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportObjective extends Model {
