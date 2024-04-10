@@ -107,8 +107,10 @@ function VBarGraph({
     });
   }, [data, isMedium, isMobile, xAxisLabel, yAxisLabel]);
 
+  const tableData = data.map((row) => ({ data: [row.name, row.count] }));
+
   return (
-    <Container className="smarthub-table-widget shadow-2" loading={loading} loadingLabel={loadingLabel} ref={bars}>
+    <Container className="smarthub-vbar-graph shadow-2" loading={loading} loadingLabel={loadingLabel} ref={bars}>
       <Grid row className="position-relative margin-bottom-2 flex-align-start">
         <div className="ttahub-widget-heading-grid">
           <div className="ttahub-widget-heading-grid--title">
@@ -130,6 +132,7 @@ function VBarGraph({
             type="button"
             className="usa-button usa-button--unstyled"
             onClick={toggleAccessibleData}
+            aria-label={showAccessibleData ? `Display ${title} as graph` : `Display ${title} as table`}
           >
             {showAccessibleData ? 'Display graph' : 'Display table'}
           </button>
@@ -139,9 +142,9 @@ function VBarGraph({
       { showAccessibleData
         ? (
           <AccessibleWidgetData
-            caption="Number of Activity Reports by Table"
-            columnHeadings={[]}
-            rows={[]}
+            caption="Hours of training by National Center Table"
+            columnHeadings={['National Center', 'Hours']}
+            rows={tableData}
           />
         )
         : (
