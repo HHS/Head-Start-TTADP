@@ -239,7 +239,7 @@ export async function destroyReport(report) {
   }
 }
 
-export async function createGoal(goal, options = {}) {
+export async function createGoal(goal) {
   let grant = await Grant.findByPk(goal.grantId);
 
   if (!grant) {
@@ -251,14 +251,13 @@ export async function createGoal(goal, options = {}) {
     : (await GoalTemplate.findOrCreate({
       where: { templateName: dg.name },
       defaults: { templateName: dg.name },
-      ...options,
     }))[0];
   const dbGoal = await Goal.create({
     ...dg,
     ...goal,
     grantId: grant.id,
     goalTemplateId: dbGoalTemplate.id,
-  }, options);
+  });
   return dbGoal;
 }
 
@@ -355,23 +354,12 @@ export async function createTrainingReport(report) {
     collaboratorIds,
     pocIds,
     ownerId,
-    regionId,
     data,
   } = report;
 
-  let region;
-
-  if (regionId) {
-    region = await Region.findByPk(regionId);
-  }
-
-  if (!region) {
-    region = await createRegion();
-  }
-
   let userCreator = await User.findByPk(ownerId);
   if (!userCreator) {
-    userCreator = await createUser({ homeRegionId: region.id });
+    userCreator = await createUser();
   }
 
   const userCollaborators = await Promise.all(collaboratorIds.map(async (id) => {
@@ -385,7 +373,7 @@ export async function createTrainingReport(report) {
   const userPocs = await Promise.all(pocIds.map(async (id) => {
     let user = await User.findByPk(id);
     if (!user) {
-      user = await createUser({ homeRegionId: region.id });
+      user = await createUser();
     }
     return user.id;
   }));
@@ -394,7 +382,7 @@ export async function createTrainingReport(report) {
     data: mockTrainingReportData(data || {}),
     collaboratorIds: userCollaborators,
     ownerId: userCreator.id,
-    regionId: region.id,
+    regionId: userCreator.homeRegionId,
     imported: {},
     pocIds: userPocs,
   });

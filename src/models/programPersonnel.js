@@ -3,7 +3,7 @@ const {
 } = require('sequelize');
 const {
   afterBulkCreate,
-} = require('../hooks/programPersonnel');
+} = require('./hooks/programPersonnel');
 
 export default (sequelize, DataTypes) => {
   class ProgramPersonnel extends Model {

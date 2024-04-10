@@ -9,7 +9,7 @@ import {
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   // propagateName,
-} from '../../hooks/goal';
+} from '../hooks/goal';
 import { GOAL_STATUS } from '../../constants';
 
 function sleep(milliseconds) {
