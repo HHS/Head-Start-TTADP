@@ -115,7 +115,7 @@ const SiteNav = ({
                   <FeatureFlag flag="resources_dashboard">
                     <li>
                       <NavLink
-                        to="/resources-dashboard"
+                        to="/dashboards/resources-dashboard"
                       >
                         Resources Dashboard
                       </NavLink>

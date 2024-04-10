@@ -21,6 +21,9 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
+## 2.0.19
+Add "escapeHTML" function
+
 ## 1.4.0 
 Add SUPPORT_TYPE
 

@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/objectiveTemplateFile');
+const { afterDestroy } = require('../hooks/objectiveTemplateFile');
 
 export default (sequelize, DataTypes) => {
   class SessionReportPilotFile extends Model {
