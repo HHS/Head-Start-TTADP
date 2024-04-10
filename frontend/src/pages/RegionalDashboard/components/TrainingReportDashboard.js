@@ -2,6 +2,8 @@ import React from 'react';
 import { Helmet } from 'react-helmet';
 import { Grid, GridContainer } from '@trussworks/react-uswds';
 import Overview from '../../../widgets/TrainingReportDashboardOverview';
+import TRReasonList from '../../../widgets/TRReasonList';
+import TRHoursOfTrainingByNationalCenter from '../../../widgets/TRHoursOfTrainingByNationalCenter';
 
 export default function TrainingReportDashboard() {
   return (
@@ -16,8 +18,23 @@ export default function TrainingReportDashboard() {
           loading={false}
         />
         <Grid row gap={2}>
-          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }} />
-          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }} />
+          <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
+            <TRReasonList
+              filters={[]}
+              loading={false}
+              title="Reasons in Training Reports"
+            />
+          </Grid>
+          <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
+            <TRHoursOfTrainingByNationalCenter
+              filters={[]}
+              loading={false}
+              title="Hours of training by National Center"
+              subtitle="Hours reported on training report sessions"
+              xAxisLabel="National Center"
+              yAxisLabel="Hours"
+            />
+          </Grid>
         </Grid>
         <Grid row />
         <Grid row />

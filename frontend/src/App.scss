@@ -404,3 +404,8 @@ fill: #1B1B1B;
     max-width: 3rem;
   }
 }
+
+.smart-hub--vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
