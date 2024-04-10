@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { afterDestroy, afterUpdate } = require('../hooks/nationalCenter');
+const { afterDestroy, afterUpdate } = require('./hooks/nationalCenter');
 
 export default (sequelize, DataTypes) => {
   class NationalCenter extends Model {

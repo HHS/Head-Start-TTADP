@@ -3,7 +3,7 @@ const {
   beforeValidate,
   afterUpdate,
   afterCreate,
-} = require('../hooks/goalFieldResponse');
+} = require('./hooks/goalFieldResponse');
 
 export default (sequelize, DataTypes) => {
   class GoalFieldResponse extends Model {

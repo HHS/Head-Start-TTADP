@@ -2,7 +2,7 @@ const { Model } = require('sequelize');
 const {
   afterCreate,
   afterDestroy,
-} = require('../hooks/activityReportGoalFieldResponse');
+} = require('./hooks/activityReportGoalFieldResponse');
 
 export default (sequelize, DataTypes) => {
   class ActivityReportGoalFieldResponse extends Model {
