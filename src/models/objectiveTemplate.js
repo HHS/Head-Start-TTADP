@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { CREATION_METHOD } = require('../constants');
-const { beforeValidate, beforeUpdate, afterUpdate } = require('./hooks/objectiveTemplate');
+const { beforeValidate, beforeUpdate, afterUpdate } = require('../hooks/objectiveTemplate');
 // const { auditLogger } = require('../logger');
 
 export default (sequelize, DataTypes) => {
