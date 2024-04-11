@@ -2851,7 +2851,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
   const groupsWithMoreThanOneGoalAndMoreGoalsThanGrants = goalGroupsDeduplicated
     .filter((group) => {
       const grantIds = uniq(group.map((goal) => goal.grantId));
-      return group.length > 1 && group.length > grantIds.length;
+      return group.length > 1 && group.length !== grantIds.length;
     });
 
   // save the groups to the database
