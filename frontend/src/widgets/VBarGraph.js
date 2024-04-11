@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import Plotly from 'plotly.js-basic-dist';
-import { useMediaQuery } from 'react-responsive';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import MediaCaptureButton from '../components/MediaCaptureButton';
 import WidgetH2 from '../components/WidgetH2';
+import useSize from '../hooks/useSize';
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -30,11 +30,10 @@ function VBarGraph({
     updateShowAccessibleData((current) => !current);
   }
 
-  const isMedium = useMediaQuery({ maxWidth: 1590 });
-  const isMobile = useMediaQuery({ maxWidth: 700 });
+  const size = useSize(bars);
 
   useEffect(() => {
-    if (!data || !Array.isArray(data)) {
+    if (!data || !Array.isArray(data) || !size) {
       return;
     }
 
@@ -56,16 +55,10 @@ function VBarGraph({
       },
     };
 
-    const width = (() => {
-      if (isMobile) return 400;
-      if (isMedium) return 500;
-      return 700;
-    })();
-
     const layout = {
       bargap: 0.5,
       height: 350,
-      width,
+      width: size.width - 40,
       hoverlabel: {
         bgcolor: '#000',
         bordercolor: '#000',
@@ -105,7 +98,7 @@ function VBarGraph({
         responsive: true, displayModeBar: false, hovermode: 'none',
       },
     });
-  }, [data, isMedium, isMobile, xAxisLabel, yAxisLabel]);
+  }, [data, xAxisLabel, size, yAxisLabel]);
 
   const tableData = data.map((row) => ({ data: [row.name, row.count] }));
 
