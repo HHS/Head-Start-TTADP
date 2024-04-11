@@ -55,11 +55,13 @@ const ActivitySummary = ({
     setValue,
     control,
     getValues,
+    clearErrors,
   } = useFormContext();
 
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
+  const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
 
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
@@ -193,6 +195,16 @@ const ActivitySummary = ({
     />
   );
 
+  useEffect(() => {
+    if (!shouldValidateActivityRecipients) return;
+
+    if (disableRecipients) {
+      setValue('activityRecipients', [], { shouldValidate: true });
+    } else {
+      clearErrors('activityRecipients');
+    }
+  }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
+
   const renderRecipients = (marginTop = 2, marginBottom = 0) => (
     <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
       {!disableRecipients
@@ -211,9 +223,10 @@ const ActivitySummary = ({
           valueProperty="activityRecipientId"
           labelProperty="name"
           simple={false}
-          required="Select at least one"
+          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
           options={selectedRecipients}
           placeholderText={placeholderText}
+          onClick={() => setShouldValidateActivityRecipients(true)}
         />
       </FormItem>
     </div>
