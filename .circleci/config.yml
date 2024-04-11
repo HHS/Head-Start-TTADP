@@ -644,7 +644,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull docker pull owasp/zap2docker-bare:latest
+          command: docker pull owasp/zap2docker-bare:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
