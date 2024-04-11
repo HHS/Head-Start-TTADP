@@ -2,8 +2,6 @@ import { Op, WhereOptions, Model } from 'sequelize';
 import { uniq } from 'lodash';
 import db from '../models';
 import {
-  GOAL_STATUS,
-  CREATION_METHOD,
   CURRENT_GOAL_SIMILARITY_VERSION,
 } from '../constants';
 
