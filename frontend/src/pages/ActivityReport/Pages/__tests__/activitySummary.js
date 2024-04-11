@@ -66,6 +66,27 @@ describe('activity summary', () => {
       expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
     });
   });
+
+  describe('activity recipients validation', () => {
+    it('shows a validation message when clicked and recipient type is not selected', async () => {
+      render(<RenderActivitySummary />);
+      const input = screen.getByTestId('activityRecipients-click-container');
+      userEvent.click(input);
+      expect(await screen.findByText('You must first select who the activity is for')).toBeInTheDocument();
+    });
+
+    it('hides the message when the recipient type is selected', async () => {
+      const { container } = render(<RenderActivitySummary />);
+      const input = screen.getByTestId('activityRecipients-click-container');
+      userEvent.click(input);
+      expect(await screen.findByText('You must first select who the activity is for')).toBeInTheDocument();
+      await act(() => {
+        const recipient = container.querySelector('#category-recipient');
+        userEvent.click(recipient);
+      });
+      expect(screen.queryByText('You must first select who the activity is for')).not.toBeInTheDocument();
+    });
+  });
 });
 
 describe('groups', () => {

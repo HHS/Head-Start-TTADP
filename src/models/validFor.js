@@ -1,4 +1,8 @@
-const { Model } = require('sequelize');
+const {
+  Model,
+  Op,
+} = require('sequelize');
+const { ENTITY_TYPE } = require('../constants');
 
 /**
  * @param {} sequelize
