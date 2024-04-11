@@ -10,6 +10,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import MediaCaptureButton from '../components/MediaCaptureButton';
 import WidgetH2 from '../components/WidgetH2';
 import useSize from '../hooks/useSize';
+import './VBarGraph.css';
 
 const Plot = createPlotlyComponent(Plotly);
 
