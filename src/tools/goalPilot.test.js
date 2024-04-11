@@ -15,12 +15,12 @@ const fileName = 'src/tools/files/23CLASSPilotTest.csv';
 
 describe('Goal pilot script', () => {
   beforeAll(async () => {
-    await Goal.destroy({ where: { name: goalName } });
+    await Goal.destroy({ where: { name: goalName }, force: true });
     await GoalTemplate.destroy({ where: { templateName: goalName } });
     downloadFile.mockResolvedValue({ Body: readFileSync(fileName) });
   });
   afterEach(async () => {
-    await Goal.destroy({ where: { name: goalName } });
+    await Goal.destroy({ where: { name: goalName }, force: true });
     await GoalTemplate.destroy({ where: { templateName: goalName } });
   });
 
@@ -117,5 +117,10 @@ describe('Goal pilot script', () => {
     const allGoals2 = await Goal.findAll({ where: { name: goalName }, attributes: ['name'] });
     expect(allGoals).not.toBeNull();
     expect(allGoals2.length).toBe(allGoals.length);
+  });
+
+  it('should throw an error', async () => {
+    downloadFile.mockImplementationOnce(() => { throw new Error('oops'); });
+    await expect(createGoal('asdf')).rejects.toThrow('oops');
   });
 });

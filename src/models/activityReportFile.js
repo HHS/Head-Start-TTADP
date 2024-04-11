@@ -17,9 +17,11 @@ export default (sequelize, DataTypes) => {
     },
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     fileId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
   }, {
     sequelize,

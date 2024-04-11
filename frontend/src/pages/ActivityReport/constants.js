@@ -10,7 +10,7 @@ export const reasons = [
   'Below Competitive Threshold (CLASS)',
   'Below Quality Threshold (CLASS)',
   'Change in Scope',
-  'Child Incidents',
+  'Child Incident',
   'Complaint',
   'COVID-19 response',
   'Full Enrollment',
@@ -19,7 +19,7 @@ export const reasons = [
   'New Program Option',
   'New Staff / Turnover',
   'Ongoing Quality Improvement',
-  'Planning/Coordination (also TTA Plan Agreement)',
+  'Planning/Coordination',
   'School Readiness Goals',
   ...reasonsToMonitor,
 ];

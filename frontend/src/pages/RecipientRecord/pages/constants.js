@@ -1,24 +1,39 @@
 import {
-  specialistRoleFilter, endDateFilter, startDateFilter, myReportsFilter,
+  specialistRoleFilter,
+  endDateFilter,
+  startDateFilter,
+  myReportsFilter,
+  activityReportGoalResponseFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
-  statusFilter, createDateFilter, topicsFilter, reasonsFilter, grantNumberFilter, goalTypeFilter,
+  statusFilter,
+  createDateFilter,
+  topicsFilter,
+  reasonsFilter,
+  grantNumberFilter,
+  userRolesFilter,
+  goalNameFilter,
 } from '../../../components/filter/goalFilters';
 
 export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) => [
   createDateFilter,
+  goalNameFilter,
   grantNumberFilter(grantNumberParams),
   reasonsFilter,
   statusFilter,
   topicsFilter,
-  goalTypeFilter,
-];
+  userRolesFilter,
+].sort((a, b) => a.display.localeCompare(b.display));
 
-export const TTAHISTORY_FILTER_CONFIG = [
+const TTAHISTORY_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   myReportsFilter,
   specialistRoleFilter,
 ];
 
-export const GOALS_OBJECTIVES_FILTER_KEY = 'goals-objectives-filters';
+TTAHISTORY_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+export { TTAHISTORY_FILTER_CONFIG };
+
+export const GOALS_OBJECTIVES_FILTER_KEY = (recipientId) => `goals-objectives-filters-${recipientId}`;

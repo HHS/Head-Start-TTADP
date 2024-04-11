@@ -42,23 +42,17 @@ RecipientInformationSection.defaultProps = {
   distinct: false,
 };
 
-export default function RecipientSummary({ summary, regionId }) {
+export default function RecipientSummary({ summary }) {
   if (!summary || !summary.grants) {
     return null;
   }
 
   return (
     <Container paddingX={0} paddingY={0} className="ttahub--recipient-summary">
-      <h2 className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">Recipient summary</h2>
+      <div className="ttahub-recipient-record--card-header padding-x-3 padding-y-3 margin-bottom-0 margin-top-0">
+        <h2 className="margin-0 padding-0">Recipient summary</h2>
+      </div>
       <div className="padding-x-3 padding-bottom-3">
-        <div className="margin-bottom-2">
-          <p className="margin-y-1"><strong>Region</strong></p>
-          <p className="margin-y-1">
-            Region
-            {' '}
-            {regionId}
-          </p>
-        </div>
         <div className="margin-bottom-2">
           <p className="margin-y-1"><strong>Recipient ID</strong></p>
           <p className="margin-y-1">
@@ -66,8 +60,6 @@ export default function RecipientSummary({ summary, regionId }) {
           </p>
         </div>
         <RecipientInformationSection heading="Recipient type" property="recipientType" grants={[{ recipientType: summary.recipientType }]} />
-        <RecipientInformationSection heading="Program specialist" property="programSpecialistName" grants={summary.grants} distinct />
-        <RecipientInformationSection heading="Grant specialist" property="grantSpecialistName" grants={summary.grants} distinct />
       </div>
 
     </Container>
@@ -75,7 +67,6 @@ export default function RecipientSummary({ summary, regionId }) {
 }
 
 RecipientSummary.propTypes = {
-  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   summary: PropTypes.shape({
     recipientId: PropTypes.string,
     uei: PropTypes.string,

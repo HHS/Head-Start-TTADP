@@ -21,6 +21,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 let report;

@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-// const { beforeDestroy, afterDestroy } = require('./hooks/nextStepResource');
+const { afterDestroy } = require('./hooks/nextStepResource');
 
 export default (sequelize, DataTypes) => {
   class NextStepResource extends Model {
@@ -10,11 +10,19 @@ export default (sequelize, DataTypes) => {
     }
   }
   NextStepResource.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     nextStepId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     resourceId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     sourceFields: {
       allowNull: true,
@@ -32,10 +40,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'NextStepResource',
-    // hooks: {
-    //   beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
-    //   afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    // },
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return NextStepResource;
 };

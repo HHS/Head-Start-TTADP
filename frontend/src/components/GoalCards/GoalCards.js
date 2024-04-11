@@ -27,6 +27,9 @@ function GoalCards({
   allGoalIds,
   perPage,
   perPageChange,
+  canMergeGoals,
+  shouldDisplayMergeSuccess,
+  dismissMergeSuccess,
 }) {
   const history = useHistory();
   const [rttapaValidation, setRttapaValidation] = useState(false);
@@ -133,7 +136,6 @@ function GoalCards({
 
   const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
   const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
-  const nonRttapaSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.isRttapa === 'No').map((g) => g.id);
 
   const allSelectedGoalIds = (() => {
     const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
@@ -150,11 +152,11 @@ function GoalCards({
   })();
 
   const showRttapaValidation = (
-    rttapaValidation && !!(draftSelectedRttapa.length || nonRttapaSelectedRttapa.length)
+    rttapaValidation && !!(draftSelectedRttapa.length)
   );
 
   const createRttapa = async () => {
-    if (draftSelectedRttapa.length || nonRttapaSelectedRttapa.length) {
+    if (draftSelectedRttapa.length) {
       setRttapaValidation(true);
     } else {
       history.push(rttapaLink);
@@ -202,7 +204,9 @@ function GoalCards({
           showRttapaValidation={showRttapaValidation}
           createRttapa={createRttapa}
           draftSelectedRttapa={draftSelectedRttapa}
-          nonRttapaSelectedRttapa={nonRttapaSelectedRttapa}
+          canMergeGoals={canMergeGoals}
+          shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
+          dismissMergeSuccess={dismissMergeSuccess}
         />
         <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
@@ -218,10 +222,7 @@ function GoalCards({
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
-              erroneouslySelected={showRttapaValidation && [
-                ...draftSelectedRttapa,
-                ...nonRttapaSelectedRttapa,
-              ].includes(goal.id)}
+              erroneouslySelected={showRttapaValidation && draftSelectedRttapa.includes(goal.id)}
             />
           ))}
 
@@ -237,7 +238,7 @@ GoalCards.propTypes = {
   goals: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
   })).isRequired,
-  error: PropTypes.string.isRequired,
+  error: PropTypes.string,
   goalsCount: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
@@ -252,10 +253,15 @@ GoalCards.propTypes = {
   allGoalIds: PropTypes.arrayOf(PropTypes.number),
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
+  canMergeGoals: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
+  dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
+  shouldDisplayMergeSuccess: false,
   perPage: 10,
+  error: '',
 };
 export default GoalCards;

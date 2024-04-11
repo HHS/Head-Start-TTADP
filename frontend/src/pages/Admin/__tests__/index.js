@@ -84,4 +84,17 @@ describe('Admin landing page', () => {
     const heading = await screen.findByRole('heading', { name: /site alerts/i });
     expect(heading).toBeVisible();
   });
+
+  it('displays the national centers page', async () => {
+    fetchMock.get('/api/national-center', { centers: [], users: [] });
+    history.push('/admin/national-centers');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /national centers/i });
+    expect(heading).toBeVisible();
+  });
 });

@@ -36,14 +36,15 @@ describe('Activity report print and share view', () => {
       }],
     approvers: [
       {
-        id: 1, status: '', note: '', User: { id: 1, fullName: 'John Q Fullname' },
+        id: 1, status: '', note: '', user: { id: 1, fullName: 'John Q Fullname' },
       },
 
       {
-        id: 2, status: '', note: 'note', User: { id: 2, fullName: 'John Smith' },
+        id: 2, status: '', note: 'note', user: { id: 2, fullName: 'John Smith' },
       },
     ],
     targetPopulations: ['Mid size sedans'],
+    language: [],
     activityRecipientType: 'recipient',
     specialistNextSteps: [],
     recipientNextSteps: [],
@@ -202,6 +203,8 @@ describe('Activity report print and share view', () => {
       ...report,
       version: null,
     });
+
+    fetchMock.get('/api/activity-reports/5007', 401);
   });
 
   it('renders an activity report in clean view', async () => {
@@ -221,7 +224,7 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    act(() => renderApprovedActivityReport(4999));
+    act(() => renderApprovedActivityReport(5007));
 
     await waitFor(() => {
       expect(screen.getByText(/sorry, you are not allowed to view this report/i)).toBeInTheDocument();

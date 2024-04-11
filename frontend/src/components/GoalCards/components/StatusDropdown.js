@@ -12,7 +12,7 @@ import {
   NotStarted,
   Draft,
   Ceased,
-} from '../icons';
+} from '../../icons';
 import colors from '../../../colors';
 import UserContext from '../../../UserContext';
 import { canChangeGoalStatus } from '../../../permissions';
@@ -70,6 +70,7 @@ export default function StatusDropdown({
   previousStatus,
   regionId,
   showReadOnlyStatus,
+  className,
 }) {
   const { user } = useContext(UserContext);
   const key = status || 'Needs Status';
@@ -84,7 +85,7 @@ export default function StatusDropdown({
 
   if (isReadOnly) {
     return (
-      <div>
+      <div className={className}>
         {icon}
         {display}
       </div>
@@ -155,7 +156,7 @@ export default function StatusDropdown({
       menuItems={options}
       left={false}
       up={false}
-      className="ttahub-status-select"
+      className={`ttahub-status-select ${className}`}
       buttonText={(
         <>
           {icon}
@@ -174,10 +175,12 @@ StatusDropdown.propTypes = {
   previousStatus: PropTypes.string,
   regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   showReadOnlyStatus: PropTypes.bool,
+  className: PropTypes.string,
 };
 
 StatusDropdown.defaultProps = {
   status: '',
   previousStatus: null,
   showReadOnlyStatus: false,
+  className: '',
 };

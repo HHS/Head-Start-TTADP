@@ -24,6 +24,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  version: 2,
 };
 
 describe('changeStatus', () => {

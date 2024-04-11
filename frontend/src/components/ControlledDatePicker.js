@@ -1,7 +1,7 @@
 import React, { useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form';
 import {
   DatePicker,
 } from '@trussworks/react-uswds';
@@ -21,6 +21,7 @@ export default function ControlledDatePicker({
   isStartDate,
   inputId,
   endDate,
+  required,
 }) {
   /**
    * we don't want to compute these fields multiple times if we don't have to,
@@ -114,6 +115,7 @@ export default function ControlledDatePicker({
       minDate={min.datePicker}
       maxDate={max.datePicker}
       onBlur={(e) => handleOnBlur(e)}
+      required={required}
     />
   );
 }
@@ -132,6 +134,7 @@ ControlledDatePicker.propTypes = {
   setEndDate: PropTypes.func,
   inputId: PropTypes.string.isRequired,
   endDate: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 ControlledDatePicker.defaultProps = {
@@ -140,5 +143,6 @@ ControlledDatePicker.defaultProps = {
   endDate: '',
   isStartDate: false,
   setEndDate: () => {},
+  required: true,
   value: '',
 };

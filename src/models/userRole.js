@@ -16,6 +16,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   UserRole.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     userId: {
       type: DataTypes.STRING,
       allowNull: false,

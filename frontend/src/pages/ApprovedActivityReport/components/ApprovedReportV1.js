@@ -95,15 +95,10 @@ export default function ApprovedReportV1({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
-
-  // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `
-        <h2>${a.User.fullName}:</h2>
-        ${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
 
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
@@ -121,9 +116,7 @@ export default function ApprovedReportV1({ data }) {
   const attachments = mapAttachments(data.files);
 
   // third table
-  const {
-    context, displayId, additionalNotes,
-  } = data;
+  const { context, displayId } = data;
   const [goalsAndObjectiveHeadings, goalsAndObjectives] = calculateGoalsAndObjectives(data);
 
   // next steps table
@@ -261,22 +254,6 @@ export default function ApprovedReportV1({ data }) {
             [
               specialistNextSteps,
               recipientNextSteps,
-            ]
-          }
-        />
-        <ViewTable
-          className="no-print"
-          caption="Review and Submit"
-          headings={
-            [
-              'Creator notes',
-              'Manager notes',
-            ]
-          }
-          data={
-            [
-              additionalNotes,
-              managerNotes,
             ]
           }
         />

@@ -13,6 +13,7 @@ describe('Bootstrap the first Admin user', () => {
         where: {
           hsesUsername: ADMIN_USERNAME,
           hsesUserId: ADMIN_USERNAME,
+          lastLogin: new Date(),
         },
       });
     });

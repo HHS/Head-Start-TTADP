@@ -1,23 +1,54 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useContext } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import StatusDropdown from './components/StatusDropdown';
 import ContextMenu from '../ContextMenu';
-import Tooltip from '../Tooltip';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import ObjectiveCard from './ObjectiveCard';
-import ObjectiveButton from './components/ObjectiveButton';
-import Topics from './components/Topics';
+import FlagStatus from './FlagStatus';
+import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
-import colors from '../../colors';
 import { goalPropTypes } from './constants';
+import colors from '../../colors';
+import SessionObjectiveCard from './SessionObjectiveCard';
+import Tooltip from '../Tooltip';
+import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
+import UserContext from '../../UserContext';
+import { deleteGoal } from '../../fetchers/goals';
+import AppLoadingContext from '../../AppLoadingContext';
+
+const SESSION_TYPE = 'session';
+
+export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
+  if (objective.type === SESSION_TYPE) {
+    return (
+      <SessionObjectiveCard
+        objective={objective}
+        objectivesExpanded={objectivesExpanded}
+      />
+    );
+  }
+
+  return (
+    <ObjectiveCard
+      objective={objective}
+      objectivesExpanded={objectivesExpanded}
+    />
+  );
+};
+
+ObjectiveSwitch.propTypes = {
+  objective: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    type: PropTypes.string,
+  }).isRequired,
+  objectivesExpanded: PropTypes.bool.isRequired,
+};
 
 function GoalCard({
   goal,
@@ -38,18 +69,29 @@ function GoalCard({
     goalStatus,
     createdOn,
     goalText,
-    goalTopics,
     objectiveCount,
     reasons,
     objectives,
+    sessionObjectives,
     previousStatus,
-    isRttapa,
+    createdVia,
+    collaborators,
+    onAR,
   } = goal;
 
-  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (prev > curr.endDate ? prev : curr.endDate), ''), [objectives]);
+  const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
+  sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+
+  const [deleteError, setDeleteError] = useState(false);
+  const isMerged = createdVia === 'merge';
+
+  const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
   const goalNumbers = goal.goalNumbers.join(', ');
+
+  const { user } = useContext(UserContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const onUpdateGoalStatus = (newStatus) => {
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
@@ -61,24 +103,6 @@ function GoalCard({
   };
 
   const [objectivesExpanded, setObjectivesExpanded] = useState(false);
-
-  const determineFlagStatus = () => {
-    const reasonsToWatch = reasons.find((t) => reasonsToMonitor.includes(t));
-    if (reasonsToWatch) {
-      return (
-        <>
-          <Tooltip
-            displayText={<FontAwesomeIcon className="margin-left-1" size="1x" color={colors.error} icon={faFlag} />}
-            screenReadDisplayText={false}
-            buttonLabel={`Reason for flag on goal ${goalNumbers} is monitoring. Click button to visually reveal this information.`}
-            tooltipText="Related to monitoring"
-            hideUnderline
-          />
-        </>
-      );
-    }
-    return null;
-  };
 
   const closeOrOpenObjectives = () => {
     setObjectivesExpanded(!objectivesExpanded);
@@ -94,13 +118,39 @@ function GoalCard({
     },
   ];
 
-  const internalLeftMargin = hideCheckbox ? '' : 'margin-left-5';
+  const canDeleteQualifiedGoals = (() => {
+    if (isAdmin(user)) {
+      return true;
+    }
 
-  const border = erroneouslySelected ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+    return hasApproveActivityReportInRegion(user, parseInt(regionId, DECIMAL_BASE));
+  })();
+
+  if (canDeleteQualifiedGoals && !onAR && ['Draft', 'Not Started'].includes(goalStatus)) {
+    menuItems.push({
+      label: 'Delete',
+      onClick: async () => {
+        try {
+          setDeleteError(false);
+          setIsAppLoading(true);
+          await deleteGoal(ids, regionId);
+          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+        } catch (e) {
+          setDeleteError(true);
+        } finally {
+          setIsAppLoading(false);
+        }
+      },
+    });
+  }
+
+  const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
+
+  const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
   return (
     <article
-      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full`}
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
       data-testid="goalCard"
     >
       <div className="display-flex flex-justify">
@@ -115,7 +165,6 @@ function GoalCard({
             aria-label={`Select goal ${goalText}`}
             className="margin-right-1"
             data-testid="selectGoalTestId"
-            data-goalIds={ids}
           />
           )}
           <StatusDropdown
@@ -131,6 +180,7 @@ function GoalCard({
         <ContextMenu
           label={contextMenuLabel}
           menuItems={menuItems}
+          menuWidthOffset={100}
         />
         )}
       </div>
@@ -140,17 +190,24 @@ function GoalCard({
             Goal
             {' '}
             {goalNumbers}
-            { isRttapa === 'Yes' ? <Tag className="margin-left-1 text-ink" background={colors.baseLighter}>RTTAPA</Tag> : null }
+            {isMerged && (
+            <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+              Merged
+            </Tag>
+            )}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
             {goalText}
             {' '}
-            {determineFlagStatus()}
+            <FlagStatus
+              reasons={reasons}
+              goalNumbers={goalNumbers}
+            />
           </p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-topics padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Topics</p>
-          <Topics topics={goalTopics} />
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
           <p className="usa-prose text-bold  margin-y-0">Created on</p>
@@ -160,21 +217,44 @@ function GoalCard({
           <p className="usa-prose text-bold margin-y-0">Last TTA</p>
           <p className="usa-prose margin-y-0">{lastTTA}</p>
         </div>
-        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-reviewed padding-right-3">
-          <p className="usa-prose text-bold margin-y-0">Last reviewed</p>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Entered by</p>
+          {collaborators.map((c) => {
+            if (!c.goalCreatorName) return null;
+
+            return (
+              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+                {collaborators.length > 1 && (
+                  <>
+                    <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
+                    {' '}
+                  </>
+                )}
+                <Tooltip
+                  displayText={c.goalCreatorRoles}
+                  screenReadDisplayText={false}
+                  buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
+                  tooltipText={c.goalCreatorName}
+                  underlineStyle="solid"
+                  className="ttahub-goal-card__entered-by-tooltip"
+                />
+              </p>
+            );
+          })}
         </div>
       </div>
 
       <div className={internalLeftMargin}>
-        <ObjectiveButton
-          closeOrOpenObjectives={closeOrOpenObjectives}
-          objectiveCount={objectiveCount}
-          objectivesExpanded={objectivesExpanded}
-          goalNumber={goal.goalNumbers.join('')}
+        <ExpanderButton
+          type="objective"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
         />
       </div>
-      {objectives.map((obj) => (
-        <ObjectiveCard
+      {sortedObjectives.map((obj) => (
+        <ObjectiveSwitch
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}

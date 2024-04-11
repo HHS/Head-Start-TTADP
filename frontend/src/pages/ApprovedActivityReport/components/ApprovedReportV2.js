@@ -1,7 +1,6 @@
 import React from 'react';
 import moment from 'moment-timezone';
 import Container from '../../../components/Container';
-import ApprovedReportSection from './ApprovedReportSection';
 import {
   DATE_DISPLAY_FORMAT,
   DATEPICKER_VALUE_FORMAT,
@@ -9,6 +8,7 @@ import {
 import {
   reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
 } from '../helpers';
+import ReadOnlyContent from '../../../components/ReadOnlyContent';
 
 function formatNextSteps(nextSteps, heading, striped) {
   return nextSteps.map((step, index) => ({
@@ -85,9 +85,16 @@ function addObjectiveSectionsToArray(objectives, sections, striped, isOtherEntit
         'TTA objective': objective.title,
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
+        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
         'TTA provided': objective.ttaProvided,
+        'Support type': objective.supportType,
         'Objective status': objective.status,
+        ...(objective.status === 'Suspended' ? {
+          'Reason suspended': (
+            objective.closeSuspendReason || ''
+          ) + (` - ${objective.closeSuspendContext}` || ''),
+        } : {}),
       },
       isStriped,
     };
@@ -108,7 +115,8 @@ function calculateGoalsAndObjectives(report) {
   if (report.activityRecipientType === 'recipient') {
     report.goalsAndObjectives.forEach((goal) => {
       striped = !striped;
-      const goalSection = {
+
+      let goalSection = {
         heading: 'Goal summary',
         data: {
           'Recipient\'s goal': (
@@ -119,14 +127,41 @@ function calculateGoalsAndObjectives(report) {
               {goal.name}
             </>
           ),
-          'Goal type': (
-            <>
-              {goal.isRttapa === 'Yes' ? 'RTTAPA' : 'Non-RTTAPA'}
-            </>
-          ),
         },
         striped,
       };
+
+      // Add anticipated close date if we have it.
+      if (goal.activityReportGoals && goal.activityReportGoals.length) {
+        goalSection = {
+          ...goalSection.heading,
+          data: {
+            ...goalSection.data,
+            'Anticipated close date': (
+              <>
+                { goal.activityReportGoals[0].endDate}
+              </>
+            ),
+            Source: (
+              <>
+                { goal.activityReportGoals[0].source}
+              </>
+            ),
+          },
+          striped: true,
+        };
+      }
+
+      const { prompts } = goal;
+      if (prompts && prompts.length) {
+        const promptData = {};
+        prompts.forEach((prompt) => {
+          if (prompt.reportResponse.length > 0) {
+            promptData[prompt.title] = prompt.reportResponse.join(', ');
+          }
+        });
+        goalSection.data = { ...goalSection.data, ...promptData };
+      }
 
       sections.push(goalSection);
 
@@ -141,7 +176,7 @@ function calculateGoalsAndObjectives(report) {
 
 export default function ApprovedReportV2({ data }) {
   const {
-    reportId, ttaType, deliveryMethod, additionalNotes: creatorNotes, virtualDeliveryType,
+    reportId, ttaType, deliveryMethod, virtualDeliveryType,
   } = data;
 
   // first table
@@ -153,15 +188,13 @@ export default function ApprovedReportV2({ data }) {
 
   const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
-  const approvingManagers = data.approvers.map((a) => a.User.fullName).join(', ');
+  const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
   const collaborators = data.activityReportCollaborators.map(
     (a) => a.fullName,
   );
 
-  // Approver Notes.
-  const managerNotes = data.approvers.map((a) => `${a.note ? a.note : '<p>No manager notes</p>'}`).join('');
-
   const attendees = formatSimpleArray(data.participants);
+  const languages = formatSimpleArray(data.language);
   const participantCount = data.numberOfParticipants.toString();
   const reasons = formatSimpleArray(data.reason);
   const startDate = moment(data.startDate, DATEPICKER_VALUE_FORMAT).format('MMMM D, YYYY');
@@ -181,14 +214,13 @@ export default function ApprovedReportV2({ data }) {
 
   // next steps table
   const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = recipientType === 'Recipients' ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
   const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
 
   const creator = data.author.fullName;
-
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
       <h1 className="landing">
@@ -237,7 +269,7 @@ export default function ApprovedReportV2({ data }) {
           : null }
       </div>
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`activity-summary-${reportId}`}
         title="Activity summary"
         sections={[
@@ -278,6 +310,7 @@ export default function ApprovedReportV2({ data }) {
             heading: 'Training or technical assistance',
             data: {
               'TTA provided': formatTtaType(ttaType),
+              'Language used': languages,
               'TTA conducted': formatDelivery(deliveryMethod, virtualDeliveryType),
             },
             striped: true,
@@ -293,13 +326,13 @@ export default function ApprovedReportV2({ data }) {
         ]}
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`goals-and-objectives-${reportId}`}
         title="Goals and objectives"
         sections={goalSections}
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`supporting-attachments${reportId}`}
         title="Supporting attachments"
         sections={
@@ -313,7 +346,7 @@ export default function ApprovedReportV2({ data }) {
           }
       />
 
-      <ApprovedReportSection
+      <ReadOnlyContent
         key={`next-steps${reportId}`}
         title="Next steps"
         sections={[
@@ -321,22 +354,6 @@ export default function ApprovedReportV2({ data }) {
           ...recipientNextSteps,
         ]}
       />
-
-      <ApprovedReportSection
-        key={`review-and-submit-${reportId}`}
-        className="no-print"
-        title="Review and submit"
-        sections={[
-          {
-            data: {
-              'Creator notes': creatorNotes,
-              'Manager notes': managerNotes,
-            },
-            striped: true,
-          },
-        ]}
-      />
-
     </Container>
   );
 }

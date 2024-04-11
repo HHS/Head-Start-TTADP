@@ -1,8 +1,7 @@
 const { Model } = require('sequelize');
 const isEmail = require('validator/lib/isEmail');
 const generateFullName = require('./helpers/generateFullName');
-
-const featureFlags = ['resources_dashboard', 'rttapa_form', 'anv_statistics', 'regional_goal_dashboard'];
+const { FEATURE_FLAGS } = require('../constants');
 
 export default (sequelize, DataTypes) => {
   class User extends Model {
@@ -12,6 +11,7 @@ export default (sequelize, DataTypes) => {
         through: models.Permission, foreignKey: 'userId', as: 'scopes', timestamps: false,
       });
       User.hasMany(models.Permission, { foreignKey: 'userId', as: 'permissions' });
+      User.hasMany(models.UserRole, { foreignKey: 'userId', as: 'userRoles' });
       User.belongsToMany(models.Role, {
         through: models.UserRole,
         otherKey: 'roleId',
@@ -20,8 +20,15 @@ export default (sequelize, DataTypes) => {
       });
       User.hasMany(models.UserSettingOverrides, { foreignKey: 'userId', as: 'userSettingOverrides' });
       User.hasMany(models.ActivityReport, { foreignKey: 'userId', as: 'reports', hooks: true });
+      User.hasMany(models.ActivityReportApprover, { foreignKey: 'userId', as: 'reportApprovers', hooks: true });
+      User.hasMany(models.ActivityReportCollaborator, { foreignKey: 'userId', as: 'reportCollaborators', hooks: true });
       User.hasMany(models.UserValidationStatus, { foreignKey: 'userId', as: 'validationStatus' });
-      User.hasMany(models.Group, { foreignKey: 'userId', as: 'groups' });
+      User.hasMany(models.SiteAlert, { foreignKey: 'userId', as: 'siteAlerts' });
+      User.hasMany(models.CommunicationLog, { foreignKey: 'userId', as: 'communicationLogs' });
+
+      // User can belong to a national center through a national center user.
+      User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
+      User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
     }
   }
   User.init({
@@ -40,7 +47,7 @@ export default (sequelize, DataTypes) => {
     hsesUserId: {
       type: DataTypes.STRING,
       unique: true,
-      allowNull: false,
+      allowNull: true,
     },
     hsesUsername: {
       type: DataTypes.STRING,
@@ -65,21 +72,31 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
-    flags: DataTypes.ARRAY(DataTypes.ENUM(featureFlags)),
+    flags: {
+      type: DataTypes.ARRAY(DataTypes.ENUM(FEATURE_FLAGS)),
+      defaultValue: sequelize.literal('ARRAY[]::"enum_Users_flags"[]'),
+    },
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
         return generateFullName(this.name, this.roles);
       },
     },
-    lastLogin: DataTypes.DATE,
+    nameWithNationalCenters: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const centers = `, ${(this.nationalCenters || []).map((center) => center.name).join(', ')}`;
+        return `${this.name}${centers}`;
+      },
+    },
+    lastLogin: {
+      type: DataTypes.DATE,
+      allowNull: false,
+      defaultValue: sequelize.literal('now()'),
+    },
   }, {
     sequelize,
     modelName: 'User',
   });
   return User;
-};
-
-export {
-  featureFlags,
 };

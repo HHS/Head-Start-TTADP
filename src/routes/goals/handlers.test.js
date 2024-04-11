@@ -1,5 +1,13 @@
-import { INTERNAL_SERVER_ERROR, NOT_FOUND, BAD_REQUEST } from 'http-codes';
+import {
+  INTERNAL_SERVER_ERROR,
+  NOT_FOUND,
+  BAD_REQUEST,
+  UNAUTHORIZED,
+  FORBIDDEN,
+} from 'http-codes';
 import { userById } from '../../services/users';
+import { similarGoalsForRecipient } from '../../services/similarity';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
@@ -8,6 +16,10 @@ import {
   retrieveGoalsByIds,
   deleteGoal,
   createGoalsForReport,
+  mergeGoalHandler,
+  getSimilarGoalsForRecipient,
+  getSimilarGoalsByText,
+  getMissingDataForActivityReport,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -17,8 +29,16 @@ import {
   goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
-} from '../../services/goals';
+  mergeGoals,
+  getGoalIdsBySimilarity,
+} from '../../goalServices/goals';
+import nudge from '../../goalServices/nudge';
 import { currentUserId } from '../../services/currentUser';
+import { validateMergeGoalPermissions } from '../utils';
+
+jest.mock('../utils', () => ({
+  validateMergeGoalPermissions: jest.fn(),
+}));
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -28,7 +48,7 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
   goalByIdWithActivityReportsAndRegions: jest.fn(),
@@ -36,13 +56,25 @@ jest.mock('../../services/goals', () => ({
   destroyGoal: jest.fn(),
   createOrUpdateGoalsForActivityReport: jest.fn(),
   goalsByIdsAndActivityReport: jest.fn(),
+  goalRegionsById: jest.fn(),
+  mergeGoals: jest.fn(),
+  getGoalIdsBySimilarity: jest.fn(),
+  getGoalsMissingDataForActivityReportSubmission: jest.fn(),
 }));
+
+jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
+
+jest.mock('../../goalServices/nudge', () => jest.fn());
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
 }));
 
 jest.mock('../../services/accessValidation');
+
+jest.mock('../../services/similarity', () => ({
+  similarGoalsForRecipient: jest.fn(),
+}));
 
 const mockResponse = {
   attachment: jest.fn(),
@@ -51,8 +83,70 @@ const mockResponse = {
   sendStatus: jest.fn(),
   status: jest.fn(() => ({
     end: jest.fn(),
+    send: jest.fn(),
   })),
 };
+
+describe('merge goals', () => {
+  it('handles success', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    validateMergeGoalPermissions.mockResolvedValue(true);
+
+    mergeGoals.mockResolvedValue({
+      id: 1,
+    });
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({ id: 1 });
+  });
+
+  it('handles unauthorized', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    validateMergeGoalPermissions.mockResolvedValue(false);
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+  });
+
+  it('handles errors', async () => {
+    const req = {
+      body: {
+        finalGoalId: 1,
+        selectedGoalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    validateMergeGoalPermissions.mockResolvedValue(true);
+    mergeGoals.mockRejectedValue(new Error('Big time error'));
+
+    await mergeGoalHandler(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
 
 describe('retrieve goal', () => {
   it('checks permissions', async () => {
@@ -266,6 +360,99 @@ describe('createGoals', () => {
     });
 
     await createGoals(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('getMissingDataForActivityReport', () => {
+  afterAll(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+  });
+
+  it('checks permissions', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
+    });
+
+    await getMissingDataForActivityReport(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    getGoalsMissingDataForActivityReportSubmission.mockResolvedValueOnce({});
+    await getMissingDataForActivityReport(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({});
+  });
+
+  it('handles failures', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    getGoalsMissingDataForActivityReportSubmission.mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    await getMissingDataForActivityReport(req, mockResponse);
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
@@ -900,6 +1087,195 @@ describe('retrieveGoalsByIds', () => {
     });
 
     await retrieveGoalsByIds(req, mockResponse);
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('similarGoalsForRecipient', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+    similarGoalsForRecipient.mockReset();
+    goalByIdWithActivityReportsAndRegions.mockReset();
+    currentUserId.mockReset();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        recipient_id: 1,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    const simResponse = {
+      result: [
+        {
+          matches: [{ id: 1 }, { id: 2 }],
+        },
+        {
+          matches: [{ id: 1 }, { id: 2 }],
+        },
+      ],
+    };
+    validateMergeGoalPermissions.mockResolvedValue(true);
+    similarGoalsForRecipient.mockResolvedValueOnce(simResponse);
+
+    getGoalIdsBySimilarity.mockResolvedValueOnce({
+      wokka: 'wokka',
+    });
+
+    await getSimilarGoalsForRecipient(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      wokka: 'wokka',
+    });
+  });
+
+  it('handlers error', async () => {
+    const req = {
+      params: {
+        recipient_id: 1,
+      },
+      query: {
+        cluster: false,
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    validateMergeGoalPermissions.mockResolvedValue(true);
+    getGoalIdsBySimilarity.mockImplementationOnce(() => {
+      throw new Error('');
+    });
+
+    await getSimilarGoalsForRecipient(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('getSimilarGoalsByText', () => {
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+    similarGoalsForRecipient.mockReset();
+    goalByIdWithActivityReportsAndRegions.mockReset();
+    currentUserId.mockReset();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    jest.resetModules();
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+        regionId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+      query: {
+        grantNumbers: ['123', '456'],
+        name: 'Goal Name',
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    nudge.mockResolvedValueOnce({
+      wokka: 'wokka',
+    });
+
+    await getSimilarGoalsByText(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({
+      wokka: 'wokka',
+    });
+  });
+
+  it('checks permissions', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+        regionId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+      query: {
+        grantNumbers: ['123', '456'],
+        name: 'Goal Name',
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
+    });
+
+    await getSimilarGoalsByText(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(FORBIDDEN);
+  });
+
+  it('handlers error', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+        regionId: 1,
+      },
+      session: {
+        userId: 1,
+      },
+      query: {
+        grantNumbers: ['123', '456'],
+        name: 'Goal Name',
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    nudge.mockImplementationOnce(() => {
+      throw new Error('');
+    });
+
+    await getSimilarGoalsByText(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });

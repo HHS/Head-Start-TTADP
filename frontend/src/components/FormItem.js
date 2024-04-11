@@ -1,10 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import {
   Label, FormGroup, ErrorMessage, Fieldset,
 } from '@trussworks/react-uswds';
+import Req from './Req';
 
 import './FormItem.scss';
 
@@ -70,10 +71,10 @@ function FormItem({
     <>
       {label}
       {required && (
-      <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-        {' '}
-        *
-      </span>
+        <>
+          {' '}
+          <Req announce />
+        </>
       )}
     </>
   );
@@ -95,7 +96,7 @@ function FormItem({
 }
 
 FormItem.propTypes = {
-  label: PropTypes.string.isRequired,
+  label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]).isRequired,
   children: PropTypes.node.isRequired,
   name: PropTypes.string.isRequired,
   fieldSetWrapper: PropTypes.bool,

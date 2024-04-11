@@ -79,6 +79,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 describe('Activity Reports model', () => {
@@ -125,7 +126,7 @@ describe('Activity Reports model', () => {
           },
         })));
       await ActivityReport.destroy({ where: { id: report.id } });
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });

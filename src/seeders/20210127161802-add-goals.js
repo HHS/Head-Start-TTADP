@@ -16,7 +16,7 @@ module.exports = {
   up: async (queryInterface) => {
     const goalTemplates = [
       {
-        id: 1,
+        id: 2,
         hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.')),
         templateName: 'Identify strategies to support Professional Development with an emphasis on Staff Wellness and Social Emotional Development.',
         createdAt: now,
@@ -25,7 +25,7 @@ module.exports = {
         creationMethod: 'Automatic',
       },
       {
-        id: 2,
+        id: 3,
         hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.')),
         templateName: 'Recipient supports and sustains comprehensive, integrated and systemic SR, PFCE, and PD processes and services.',
         createdAt: now,
@@ -34,7 +34,7 @@ module.exports = {
         creationMethod: 'Automatic',
       },
       {
-        id: 3,
+        id: 4,
         hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', bulletedGoal)),
         templateName: bulletedGoal,
         createdAt: now,
@@ -43,7 +43,7 @@ module.exports = {
         creationMethod: 'Automatic',
       },
       {
-        id: 4,
+        id: 5,
         hash: queryInterface.sequelize.fn('md5', queryInterface.sequelize.fn('TRIM', longGoal)),
         templateName: longGoal,
         createdAt: now,
@@ -60,7 +60,7 @@ module.exports = {
         status: 'Not Started',
         createdAt: now,
         updatedAt: now,
-        goalTemplateId: 1,
+        goalTemplateId: 2,
         grantId: 1,
         onAR: false,
         onApprovedAR: false,
@@ -72,7 +72,7 @@ module.exports = {
         status: 'Not Started',
         createdAt: now,
         updatedAt: now,
-        goalTemplateId: 2,
+        goalTemplateId: 3,
         grantId: 1,
         onAR: false,
         onApprovedAR: false,
@@ -83,7 +83,7 @@ module.exports = {
         status: 'Not Started',
         createdAt: now,
         updatedAt: now,
-        goalTemplateId: 3,
+        goalTemplateId: 4,
         grantId: 1,
         onAR: false,
         onApprovedAR: false,
@@ -94,7 +94,7 @@ module.exports = {
         status: 'Not Started',
         createdAt: now,
         updatedAt: now,
-        goalTemplateId: 4,
+        goalTemplateId: 5,
         grantId: 2,
         onAR: false,
         onApprovedAR: false,

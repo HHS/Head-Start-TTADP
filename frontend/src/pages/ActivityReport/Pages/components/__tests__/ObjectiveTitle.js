@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import {
   render, screen,
 } from '@testing-library/react';

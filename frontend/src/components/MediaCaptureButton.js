@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import html2canvas from 'html2canvas';
 import { Button } from '@trussworks/react-uswds';
 
-export default function ElementCaptureButton({
+export default function MediaCaptureButton({
   reference, className, buttonText, id,
 }) {
   const capture = async () => {
@@ -45,14 +45,14 @@ export default function ElementCaptureButton({
   );
 }
 
-ElementCaptureButton.propTypes = {
+MediaCaptureButton.propTypes = {
   reference: PropTypes.shape({ current: PropTypes.instanceOf(Element) }).isRequired,
   className: PropTypes.string,
   buttonText: PropTypes.string,
   id: PropTypes.string.isRequired,
 };
 
-ElementCaptureButton.defaultProps = {
+MediaCaptureButton.defaultProps = {
   className: '',
   buttonText: 'Save image',
 };

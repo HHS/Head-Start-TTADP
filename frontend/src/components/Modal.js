@@ -50,11 +50,12 @@ const Modal = ({
             showOkButton && onOk
               ? (
                 <Button
-                  className={okButtonCss || 'usa-button usa-button--secondary usa-button'}
+                  className={okButtonCss || 'usa-button usa-button--secondary'}
                   data-focus={hideCancelButton}
                   type="button"
                   aria-label={okButtonAriaLabel}
                   onClick={onOk}
+                  style={{ marginRight: '8px' }}
                 >
                   {okButtonText}
                 </Button>
@@ -63,7 +64,7 @@ const Modal = ({
           }
           {
             SecondaryActionButton
-              ? <SecondaryActionButton />
+              ? <span style={{ marginRight: '8px' }}><SecondaryActionButton /></span>
               : null
             }
           {

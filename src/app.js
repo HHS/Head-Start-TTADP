@@ -45,7 +45,7 @@ const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
 }
 
@@ -75,7 +75,7 @@ app.use((req, res, next) => {
   cspMiddleware(req, res, next);
 });
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   app.use('/index.html', serveIndex);
   app.use(express.static(path.join(__dirname, '../client'), { index: false }));
 }
@@ -104,7 +104,7 @@ app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV === 'production') {
+if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   app.use('*', serveIndex);
 }
 

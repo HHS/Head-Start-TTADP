@@ -6,7 +6,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import Container from '../../../../../components/Container';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
-import Approved from './Approved';
+import Approved from '../Approved';
 import Submitted from './Submitted';
 
 const Submitter = ({
@@ -35,7 +35,7 @@ const Submitter = ({
   const [approverStatusList, updateApproverStatusList] = useState([]);
 
   useEffect(() => {
-    const updatedApprovers = approvers ? approvers.filter((a) => a.User) : [];
+    const updatedApprovers = approvers ? approvers.filter((a) => a.user) : [];
     if (updatedApprovers) {
       updateApproverStatusList(updatedApprovers);
     }
@@ -48,7 +48,7 @@ const Submitter = ({
   const getNeedsActionApprovingMangers = () => {
     const needActionApprovers = approvers.filter((a) => a.status === REPORT_STATUSES.NEEDS_ACTION);
     if (needActionApprovers && needActionApprovers.length > 0) {
-      return needActionApprovers.map((a) => a.User.fullName).join(', ');
+      return needActionApprovers.map((a) => a.user.fullName).join(', ');
     }
     return '';
   };
@@ -136,6 +136,9 @@ const Submitter = ({
               incompletePages={incompletePages}
               approverStatusList={approverStatusList}
               creatorRole={creatorRole}
+              displayId={displayId}
+              reportId={id}
+              availableApprovers={availableApprovers}
             />
           )}
         {approved

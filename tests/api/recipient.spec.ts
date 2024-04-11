@@ -25,6 +25,7 @@ test.describe('get /recipient', () => {
       regionId: Joi.number().required(),
       id: Joi.number().required(),
       name: Joi.string().required(),
+      deleted: Joi.boolean().allow(null),
       recipientType: Joi.any().allow(null)
     })).required()
   });
@@ -73,6 +74,7 @@ test.describe('get /recipient', () => {
       cdi: Joi.boolean(),
       status: Joi.string(),
       grantSpecialistName: Joi.any().allow(null),
+      granteeName: Joi.any().allow(null),
       grantSpecialistEmail: Joi.any().allow(null),
       programSpecialistName: Joi.any().allow(null),
       programSpecialistEmail: Joi.any().allow(null),
@@ -84,10 +86,15 @@ test.describe('get /recipient', () => {
       createdAt: Joi.string().isoDate(),
       updatedAt: Joi.string().isoDate(),
       regionId: Joi.number().integer().positive(),
+      deleted: Joi.boolean().allow(null),
+      inactivationDate: Joi.any().allow(null),
+      inactivationReason: Joi.any().allow(null),
+      recipientNameWithPrograms: Joi.string(),
       recipient: Joi.object({
         id: Joi.number().integer().positive(),
         uei: Joi.any().allow(null),
         name: Joi.string(),
+        deleted: Joi.boolean().allow(null),
         recipientType: Joi.any().allow(null),
         createdAt: Joi.string().isoDate(),
         updatedAt: Joi.string().isoDate(),
@@ -101,9 +108,10 @@ test.describe('get /recipient', () => {
       recipientType: Joi.any().allow(null),
       createdAt: Joi.string().isoDate(),
       updatedAt: Joi.string().isoDate(),
+      deleted: Joi.boolean().allow(null),
       grants: Joi.array().items(grantSchema),
     });
-    
+
     const schema = Joi.array().items(recipientSchema).min(1);
 
     await validateSchema(response, schema, expect);
@@ -176,7 +184,11 @@ test.describe('get /recipient', () => {
     const schema = Joi.array().items(
       Joi.object({
         id: Joi.number(),
+        isCurated: Joi.boolean(),
+        prompts: Joi.object(),
         name: Joi.string(),
+        source: Joi.object(),
+        goalTemplateId: Joi.number().allow(null),
         status: Joi.string(),
         regionId: Joi.number(),
         recipientId: Joi.number(),
@@ -223,7 +235,10 @@ test.describe('get /recipient', () => {
           })
         ),
         grantIds: Joi.array().items(Joi.number()),
-        isNew: Joi.boolean()
+        isNew: Joi.boolean(),
+        endDate: Joi.string().allow(null).allow(''),
+        goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+        collaborators: Joi.array().items(Joi.any().allow(null)),
       })
     ).min(1);
 

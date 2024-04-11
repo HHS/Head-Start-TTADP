@@ -115,7 +115,7 @@ describe('Audit System', () => {
           throw (err);
         }
 
-        expect(data.sort((a, b) => a.table_name >= b.table_name))
+        expect(data.sort((a, b) => a.table_name.localeCompare(b.table_name)))
           .toEqual([{
             table_catalog: 'ttasmarthub',
             table_name: 'Tests',
@@ -321,6 +321,7 @@ describe('Audit System', () => {
         email: faker.internet.exampleEmail(),
         hsesUserId: faker.datatype.number(),
         hsesUsername: faker.internet.userName(),
+        lastLogin: new Date(),
       }, { transaction: t });
     });
 

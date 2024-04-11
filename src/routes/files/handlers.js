@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
-import { DECIMAL_BASE } from '@ttahub/common';
+import httpCodes from 'http-codes';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
@@ -8,6 +9,9 @@ import {
   deleteFile,
   deleteActivityReportFile,
   deleteObjectiveFile,
+  deleteCommunicationLogFile,
+  deleteSessionFile,
+  deleteSessionSupportingAttachment,
   getFileById,
   updateStatus,
   createActivityReportFileMetaData,
@@ -15,11 +19,16 @@ import {
   createObjectiveFileMetaData,
   createObjectiveTemplateFileMetaData,
   createObjectivesFileMetaData,
+  createCommunicationLogFileMetadata,
+  createSessionSupportingAttachmentMetaData,
+  createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
 } from '../../services/files';
-import { ActivityReportObjective } from '../../models';
+import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import ObjectivePolicy from '../../policies/objective';
+import EventPolicy from '../../policies/event';
+import CommunicationLogPolicy from '../../policies/communicationLog';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import { getObjectiveById } from '../../services/objectives';
@@ -28,6 +37,9 @@ import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
 import Users from '../../policies/user';
 import { currentUserId } from '../../services/currentUser';
+import { findSessionById } from '../../services/sessionReports';
+import { findEventBySmartsheetIdSuffix } from '../../services/event';
+import { logById } from '../../services/communicationLog';
 
 const fileType = require('file-type');
 const multiparty = require('multiparty');
@@ -65,6 +77,17 @@ const hasReportAuthorization = async (user, reportId) => {
   return true;
 };
 
+const reportIsInAnEditableState = async (user, reportId) => {
+  const report = await ActivityReport.findOne(
+    {
+      where: { id: reportId },
+      attributes: ['calculatedStatus', 'submissionStatus'],
+    },
+  );
+  const authorization = new ActivityReportPolicy(user, report);
+  return authorization.reportHasEditableStatus();
+};
+
 const deleteOnlyFile = async (req, res) => {
   const { fileId } = req.params;
   const userId = await currentUserId(req, res);
@@ -76,6 +99,7 @@ const deleteOnlyFile = async (req, res) => {
   }
 
   try {
+    //
     const file = await getFileById(fileId);
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
@@ -98,13 +122,16 @@ const deleteHandler = async (req, res) => {
     reportId,
     objectiveId,
     fileId,
+    eventSessionId,
+    communicationLogId,
+    sessionAttachmentId,
   } = req.params;
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   try {
-    let file = await getFileById(fileId);
+    const file = await getFileById(fileId);
 
     if (reportId) {
       if (!await hasReportAuthorization(user, reportId)) {
@@ -130,82 +157,75 @@ const deleteHandler = async (req, res) => {
       if (of) {
         await deleteObjectiveFile(of.id);
       }
+    } else if (eventSessionId) {
+      const session = await findSessionById(eventSessionId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUploadFile()) {
+        res.sendStatus(403);
+        return;
+      }
+
+      const sof = file.sessionFiles.find(
+        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE),
+      );
+      if (sof) {
+        await deleteSessionFile(sof.id);
+      }
+    } else if (communicationLogId) {
+      const communicationLog = await logById(communicationLogId);
+      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+      if (!logPolicy.canUploadFileToLog()) {
+        res.sendStatus(httpCodes.UNAUTHORIZED);
+        return;
+      }
+
+      const clf = file.communicationLogFiles.find(
+        (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE),
+      );
+      if (clf) {
+        await deleteCommunicationLogFile(clf.id);
+      }
+    } else if (sessionAttachmentId) {
+      // Session Supporting Attachments.
+      const session = await findSessionById(sessionAttachmentId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUploadFile()) {
+        res.sendStatus(httpCodes.UNAUTHORIZED);
+        return;
+      }
+
+      const sof = file.supportingAttachments.find(
+        (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE),
+      );
+      if (sof) {
+        await deleteSessionSupportingAttachment(sof.id);
+      }
     }
 
-    file = await getFileById(fileId);
-    if (file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
+    const reportLength = file.reports ? file.reports.length : 0;
+    const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
+    const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
+    const objectiveTemplateFilesLength = file.objectiveTemplateFiles
+      ? file.objectiveTemplateFiles.length : 0;
+    const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
+
+    const canDelete = (reportLength
+      + reportObjectiveLength
+      + objectiveLength
+      + objectiveTemplateFilesLength
+      + sessionLength === 0);
+
+    if (canDelete) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
-    res.status(204).send();
-  } catch (error) {
-    handleErrors(req, res, error, logContext);
-  }
-};
 
-const linkHandler = async (req, res) => {
-  const {
-    reportId,
-    reportObjectiveId,
-    objectiveId,
-    objectiveTemplateId,
-    fileId,
-  } = req.params;
-
-  const userId = await currentUserId(req, res);
-
-  const user = await userById(userId);
-  const [report] = await activityReportAndRecipientsById(reportId);
-  const authorization = new ActivityReportPolicy(user, report);
-
-  if (!authorization.canUpdate()) {
-    res.sendStatus(403);
-    return;
-  }
-  try {
-    const file = await getFileById(fileId);
-    if (reportId
-      && !(file.reportFiles.map((r) => r.activityReportId).includes(reportId))) {
-      createActivityReportFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (reportObjectiveId
-      && !(
-        file.reportObjectiveFiles.map((aro) => aro.reportObjectiveId)
-          .includes(reportObjectiveId)
-      )) {
-      createActivityReportObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportObjectiveId,
-        file.size,
-      );
-    } else if (objectiveId
-      && !(file.objectiveFiles.map((r) => r.objectiveId).includes(objectiveId))) {
-      createObjectiveFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        reportId,
-        file.size,
-      );
-    } else if (objectiveTemplateId
-      && !(
-        file.objectiveTemplateFiles.map((r) => r.objectiveTemplateId)
-          .includes(objectiveTemplateId)
-      )) {
-      createObjectiveTemplateFileMetaData(
-        file.originalFilename,
-        file.fileName,
-        objectiveTemplateId,
-        file.size,
-      );
-    }
     res.status(204).send();
   } catch (error) {
     handleErrors(req, res, error, logContext);
@@ -237,6 +257,17 @@ const determineFileTypeFromPath = async (filePath) => {
   return altFileType || type;
 };
 
+// at least one is required
+const uploadHandlerRequiredFields = (fields) => [
+  'reportId',
+  'reportObjectiveId',
+  'objectiveId',
+  'objectiveTempleteId',
+  'sessionId',
+  'communicationLogId',
+  'sessionAttachmentId',
+].some((field) => fields[field]);
+
 const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
   const {
@@ -244,6 +275,9 @@ const uploadHandler = async (req, res) => {
     reportObjectiveId,
     objectiveId,
     objectiveTempleteId,
+    sessionId,
+    communicationLogId,
+    sessionAttachmentId,
   } = fields;
   let buffer;
   let metadata;
@@ -261,8 +295,8 @@ const uploadHandler = async (req, res) => {
     if (!size) {
       return res.status(400).send({ error: 'fileSize required' });
     }
-    if (!reportId && !reportObjectiveId && !objectiveId && !objectiveTempleteId) {
-      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
+    if (!uploadHandlerRequiredFields(fields)) {
+      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
     }
     buffer = fs.readFileSync(path);
 
@@ -273,10 +307,17 @@ const uploadHandler = async (req, res) => {
 
     fileName = `${uuidv4()}${fileTypeToUse.ext}`;
     if (reportId) {
-      if (!(await hasReportAuthorization(user, reportId)
-        || (await validateUserAuthForAdmin(userId)))) {
+      const isAdmin = await validateUserAuthForAdmin(userId);
+      const editable = await reportIsInAnEditableState(user, reportId);
+
+      if (isAdmin && !editable) {
         return res.sendStatus(403);
       }
+
+      if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
+        return res.sendStatus(403);
+      }
+
       metadata = await createActivityReportFileMetaData(
         originalFilename,
         fileName,
@@ -321,13 +362,59 @@ const uploadHandler = async (req, res) => {
         reportId,
         size,
       );
+    } else if (sessionId) {
+      const session = await findSessionById(sessionId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUploadFile()) {
+        return res.sendStatus(403);
+      }
+
+      metadata = await createSessionObjectiveFileMetaData(
+        originalFilename,
+        fileName,
+        sessionId,
+        size,
+      );
+    } else if (communicationLogId) {
+      const communicationLog = await logById(communicationLogId);
+      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+      if (!logPolicy.canUploadFileToLog()) {
+        return res.sendStatus(403);
+      }
+
+      metadata = await createCommunicationLogFileMetadata(
+        originalFilename,
+        fileName,
+        communicationLogId,
+        size,
+      );
+    } else if (sessionAttachmentId) {
+      const session = await findSessionById(sessionAttachmentId);
+      const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+      const eventPolicy = new EventPolicy(user, event);
+
+      if (!eventPolicy.canUploadFile()) {
+        return res.sendStatus(403);
+      }
+
+      metadata = await createSessionSupportingAttachmentMetaData(
+        originalFilename,
+        fileName,
+        sessionAttachmentId,
+        size,
+      );
     }
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
   try {
     const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-    const url = getPresignedURL(uploadedFile.key);
+    const url = getPresignedURL(uploadedFile.Key);
     await updateStatus(metadata.id, UPLOADED);
     res.status(200).send({ ...metadata, url });
   } catch (err) {
@@ -462,17 +549,16 @@ const deleteObjectiveFileHandler = async (req, res) => {
     }));
 
     file = await getFileById(fileId);
-    if (file.reports.length
+    if (file && file.reports.length
       + file.reportObjectiveFiles.length
       + file.objectiveFiles.length
       + file.objectiveTemplateFiles.length === 0) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
-
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 };
 
@@ -509,13 +595,12 @@ async function deleteActivityReportObjectiveFile(req, res) {
 
     res.status(204).send();
   } catch (error) {
-    handleErrors(req, res, error, logContext);
+    await handleErrors(req, res, error, logContext);
   }
 }
 
 export {
   deleteHandler,
-  linkHandler,
   uploadHandler,
   deleteOnlyFile,
   uploadObjectivesFile,

@@ -5,7 +5,7 @@ import {
   File,
 } from '..';
 
-import { OBJECTIVE_STATUS } from '../../constants';
+import { OBJECTIVE_STATUS, CURATED_CREATION, FILE_STATUSES } from '../../constants';
 import {
   afterCreate,
   checkForUseOnApprovedReport,
@@ -35,7 +35,7 @@ describe('objectiveTemplateFile hooks', () => {
 
       // delete the id so that the objective is not found, but
       // is reserved so we don't sweat test collisions
-      await objective.destroy({ transaction });
+      await objective.destroy({ transaction, force: true });
 
       const file = await File.create(
         fileGenerator(),
@@ -118,6 +118,73 @@ describe('objectiveTemplateFile hooks', () => {
       ).resolves.toBeUndefined();
 
       await transaction.rollback();
+    });
+  });
+  describe('afterDestroy', () => {
+    let objectiveTemplateToDestroy;
+    let fileToDestroy;
+
+    beforeAll(async () => {
+      objectiveTemplateToDestroy = await sequelize.models.ObjectiveTemplate.create(
+        {
+          templateTitle: 'Orphan Objective Template File Test',
+          hash: 'orphan-objective-template-file-test',
+          regionId: 1,
+          creationMethod: CURATED_CREATION,
+        },
+      );
+
+      fileToDestroy = await sequelize.models.File.create(
+        {
+          originalFileName: 'objective-template-file.xlsx',
+          key: 'objective-template-file.xlsx',
+          status: FILE_STATUSES.UPLOADED,
+          fileSize: 123445,
+        },
+      );
+
+      await sequelize.models.ObjectiveTemplateFile.create({
+        objectiveTemplateId: objectiveTemplateToDestroy.id,
+        fileId: fileToDestroy.id,
+      });
+    });
+
+    afterAll(async () => {
+      await sequelize.models.ObjectiveTemplateFile.destroy({
+        where: { objectiveTemplateId: objectiveTemplateToDestroy.id },
+      });
+
+      await sequelize.models.ObjectiveTemplate.destroy({
+        where: { id: objectiveTemplateToDestroy.id },
+      });
+
+      await sequelize.models.File.destroy({
+        where: { id: fileToDestroy.id },
+      });
+
+      // Close sequelize connection.
+      await sequelize.close();
+    });
+
+    it('cleans up orphan files', async () => {
+      // Ensure file exists.
+      let fileExists = await sequelize.models.File.findOne({
+        where: { id: fileToDestroy.id },
+      });
+      expect(fileExists).not.toBeNull();
+
+      // Delete objective template file.
+      await sequelize.models.ObjectiveTemplateFile.destroy({
+        where: { objectiveTemplateId: objectiveTemplateToDestroy.id },
+        individualHooks: true,
+        force: true,
+      });
+
+      // Ensure file is deleted.
+      fileExists = await sequelize.models.File.findOne({
+        where: { id: fileToDestroy.id },
+      });
+      expect(fileExists).toBeNull();
     });
   });
 });

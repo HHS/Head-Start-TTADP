@@ -1,6 +1,8 @@
 import { AUTOMATIC_CREATION } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 
+const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
+
 // When a new file is added to an objective, add the file to the template or update the
 // updatedAt value.
 const propagateCreateToTemplate = async (sequelize, instance, options) => {
@@ -121,8 +123,8 @@ const beforeDestroy = async (sequelize, instance, options) => {
 };
 
 const afterDestroy = async (sequelize, instance, options) => {
-  await propagateDestroyToTemplate(sequelize, instance, options);
   await propagateDestroyToFile(sequelize, instance, options);
+  await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
 export {

@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, waitFor,
+  render, screen, waitFor, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -10,6 +10,11 @@ import { createMemoryHistory } from 'history';
 import { mockWindowProperty } from '../../../testHelpers';
 import { ReportsRow } from '../MyAlerts';
 import activityReports from '../mocks';
+import UserContext from '../../../UserContext';
+
+const user = {
+  name: 'test@test.com',
+};
 
 describe('ReportsRow', () => {
   const removeItem = jest.fn();
@@ -34,13 +39,15 @@ describe('ReportsRow', () => {
     const history = createMemoryHistory();
 
     render(
-      <Router history={history}>
-        <ReportsRow
-          reports={[report, activityReports[1]]}
-          removeAlert={removeAlert}
-          message={message}
-        />
-      </Router>,
+      <UserContext.Provider value={{ user }}>
+        <Router history={history}>
+          <ReportsRow
+            reports={[report, activityReports[1]]}
+            removeAlert={removeAlert}
+            message={message}
+          />
+        </Router>
+      </UserContext.Provider>,
     );
   };
 
@@ -61,8 +68,13 @@ describe('ReportsRow', () => {
   });
 
   it('reports row shows the correct status', async () => {
-    renderReportsRow();
+    act(() => {
+      renderReportsRow();
+    });
     const needsAction = await screen.findAllByText(/needs action/i);
-    expect(needsAction.length).toBe(2);
+    expect(needsAction.length).toBe(1);
+
+    const approved = await screen.findAllByText(/approved/i);
+    expect(approved.length).toBe(1);
   });
 });

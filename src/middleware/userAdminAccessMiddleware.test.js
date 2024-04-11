@@ -24,12 +24,13 @@ describe('userAdminAccessMiddleware', () => {
   afterEach(() => {
     jest.clearAllMocks();
   });
-  beforeEach(async () => {
+  beforeAll(async () => {
     [user] = await User.findOrCreate({
       where: {
         email: 'admin@acf.hhs.gov',
         hsesUsername: 'admin@acf.hhs.gov',
         hsesUserId: 'admin@acf.hhs.gov',
+        lastLogin: new Date(),
       },
     });
 

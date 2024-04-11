@@ -4,8 +4,17 @@ import {
   scheduleAddIndexDocumentJob,
   scheduleUpdateIndexDocumentJob,
   scheduleDeleteIndexDocumentJob,
+  onCompletedAWSElasticsearchQueue,
+  onFailedAWSElasticsearchQueue,
+  processAWSElasticsearchQueue,
 } from './queueManager';
-import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
+import { AWS_ELASTIC_SEARCH_INDEXES, AWS_ELASTICSEARCH_ACTIONS } from '../../constants';
+import { logger, auditLogger } from '../../logger';
+import {
+  addIndexDocument,
+  updateIndexDocument,
+  deleteIndexDocument,
+} from '.';
 
 import db, {
   ActivityReport,
@@ -19,6 +28,7 @@ const mockUser = {
   hsesUsername: 'user2184932161',
   hsesUserId: 'user2184932161',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const reportObject = {
@@ -30,6 +40,7 @@ const reportObject = {
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
+  version: 2,
 };
 
 jest.mock('bull');
@@ -71,5 +82,54 @@ describe('queue manager tests', () => {
       AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
     );
     expect(awsElasticsearchQueue.add).toHaveBeenCalled();
+  });
+
+  it('test onCompletedAWSElasticsearchQueue on the awsElasticsearchQueue', async () => {
+    jest.spyOn(logger, 'info').mockImplementation(() => {});
+    await onCompletedAWSElasticsearchQueue(
+      { data: { key: 'test' } },
+      { status: 200 },
+    );
+    expect(logger.info).toHaveBeenCalled();
+
+    jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
+    await onCompletedAWSElasticsearchQueue(
+      { data: { key: 'test' } },
+      { status: 500 },
+    );
+    expect(auditLogger.error).toHaveBeenCalled();
+  });
+
+  it('test onCompletedAWSElasticsearchQueue on the processAWSElasticsearchQueue', async () => {
+    jest.spyOn(awsElasticsearchQueue, 'on').mockImplementation(() => {});
+    jest.spyOn(awsElasticsearchQueue, 'process').mockImplementation(() => {});
+    await processAWSElasticsearchQueue();
+    let i = 1;
+    // // expect(awsElasticsearchQueue.on)
+    // //   .toHaveBeenNthCalledWith(i, 'error', expect.any(Function));
+    // // i += 1;
+    expect(awsElasticsearchQueue.on)
+      .toHaveBeenNthCalledWith(i, 'failed', onFailedAWSElasticsearchQueue);
+    i += 1;
+    expect(awsElasticsearchQueue.on)
+      .toHaveBeenNthCalledWith(i, 'completed', onCompletedAWSElasticsearchQueue);
+    expect(awsElasticsearchQueue.process)
+      .toHaveBeenNthCalledWith(
+        1,
+        AWS_ELASTICSEARCH_ACTIONS.ADD_INDEX_DOCUMENT,
+        addIndexDocument,
+      );
+    expect(awsElasticsearchQueue.process)
+      .toHaveBeenNthCalledWith(
+        2,
+        AWS_ELASTICSEARCH_ACTIONS.UPDATE_INDEX_DOCUMENT,
+        updateIndexDocument,
+      );
+    expect(awsElasticsearchQueue.process)
+      .toHaveBeenNthCalledWith(
+        3,
+        AWS_ELASTICSEARCH_ACTIONS.DELETE_INDEX_DOCUMENT,
+        deleteIndexDocument,
+      );
   });
 });

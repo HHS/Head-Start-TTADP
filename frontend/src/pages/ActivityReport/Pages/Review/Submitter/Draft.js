@@ -2,18 +2,19 @@ import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
 import { Redirect } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../IncompletePages';
+import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DismissingComponentWrapper from '../../../../../components/DismissingComponentWrapper';
 import NetworkContext from '../../../../../NetworkContext';
-import ConnectionError from '../../components/ConnectionError';
+import ConnectionError from '../../../../../components/ConnectionError';
 import ApproverSelect from './components/ApproverSelect';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 
@@ -29,12 +30,36 @@ const Draft = ({
   creatorRole,
 }) => {
   const {
-    watch, handleSubmit, register,
+    watch,
+    handleSubmit,
+    register,
+    getValues,
   } = useFormContext();
   const hasIncompletePages = incompletePages.length > 0;
   const [justSubmitted, updatedJustSubmitted] = useState(false);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
+  const promptsMissingResponses = [];
+  const goalsMissingResponses = [];
+
+  const regionId = watch('regionId');
+
+  const allGoalsHavePromptResponses = (() => {
+    const goalsAndObjectives = getValues('goalsAndObjectives');
+    const curatedGoals = (goalsAndObjectives || []).filter((goal) => goal.isCurated);
+
+    if (!curatedGoals.length) return true;
+
+    return curatedGoals.every((goal) => goal.prompts
+      .every((prompt) => {
+        if (!prompt.allGoalsHavePromptResponse) {
+          promptsMissingResponses.push(prompt.title);
+          goalsMissingResponses.push(goal);
+        }
+
+        return prompt.allGoalsHavePromptResponse;
+      }));
+  })();
 
   const { user } = useContext(UserContext);
 
@@ -51,7 +76,7 @@ const Draft = ({
   };
 
   const onSubmit = (e) => {
-    if (!hasIncompletePages) {
+    if (allGoalsHavePromptResponses && !hasIncompletePages) {
       onFormSubmit(e);
       updatedJustSubmitted(true);
     }
@@ -130,13 +155,20 @@ const Draft = ({
           >
             <ApproverSelect
               name="approvers"
-              valueProperty="User.id"
-              labelProperty="User.fullName"
+              valueProperty="user.id"
+              labelProperty="user.fullName"
               options={availableApprovers.map((a) => ({ value: a.id, label: a.name }))}
             />
           </FormItem>
         </Fieldset>
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
+        {!allGoalsHavePromptResponses && (
+        <SomeGoalsHaveNoPromptResponse
+          regionId={regionId}
+          promptsMissingResponses={promptsMissingResponses}
+          goalsMissingResponses={goalsMissingResponses}
+        />
+        )}
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />
         </div>

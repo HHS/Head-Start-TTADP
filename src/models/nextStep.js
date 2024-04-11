@@ -9,7 +9,7 @@ const {
 export default (sequelize, DataTypes) => {
   class NextStep extends Model {
     static associate(models) {
-      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId' });
+      NextStep.belongsTo(models.ActivityReport, { foreignKey: 'activityReportId', as: 'activityReport' });
       NextStep.hasMany(models.NextStepResource, { foreignKey: 'nextStepId', as: 'nextStepResources' });
       NextStep.belongsToMany(models.Resource, {
         through: models.NextStepResource,
@@ -22,6 +22,7 @@ export default (sequelize, DataTypes) => {
   NextStep.init({
     activityReportId: {
       type: DataTypes.INTEGER,
+      allowNull: false,
     },
     note: {
       allowNull: false,

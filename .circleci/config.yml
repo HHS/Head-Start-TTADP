@@ -5,10 +5,10 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:16.19.1-browsers
+      - image: cimg/node:18.19.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:16.19.1-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -16,9 +16,12 @@ executors:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
+  docker-python-executor:
+    docker:
+      - image: cimg/python:3.9.18
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:16.19.1-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
       - image: circleci/postgres:12.4-ram
@@ -52,6 +55,16 @@ commands:
       - run:
           name: Combine package-lock.json files to single file
           command: cat yarn.lock frontend/yarn.lock packages/common/yarn.lock > << parameters.filename >>
+  create_combined_pipfreeze:
+    description: "Concatenate all requirements.txt files into a single file. File is used as checksum source for part of caching key."
+    parameters:
+      filename:
+        type: string
+        default: "combined-requirements.txt"
+    steps:
+      - run:
+          name: Combine requirements.txt files to single file
+          command: cat similarity_api/src/requirements.txt > << parameters.filename >>
   notify_new_relic:
     description: "Notify new relic of a deploy"
     parameters:
@@ -78,6 +91,34 @@ commands:
                 \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
+  notify_slack:
+    description: "Notify slack of a deploy to production"
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+    steps:
+    - run:
+        name: Notify Slack of Deployment
+        command: |
+          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
+          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+          else
+            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+          fi
+
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data "{
+            \"channel\": \"<< parameters.slack_channel >>\",
+            \"text\": \"$MESSAGE_TEXT\"
+          }" https://slack.com/api/chat.postMessage
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -136,11 +177,41 @@ commands:
       smtp_port:
         description: "SMTP port"
         type: env_var_name
+      smtp_host_test:
+        description: "SMTP server test"
+        type: env_var_name
+      smtp_port_test:
+        description: "SMTP port test"
+        type: env_var_name
       smtp_secure:
         description: "SMTP secure transport"
         type: env_var_name
+      smtp_ignore_tls:
+        description: "SMTP specifies whether to negotiate TLS"
+        type: env_var_name
       from_email_address:
         description: "From email address"
+        type: env_var_name
+      smtp_user:
+        description: "SMTP user"
+        type: env_var_name
+      smtp_password:
+        description: "SMTP password"
+        type: env_var_name
+      suppress_error_logging:
+        description: "Stop logging of non-sequelize errors to the db"
+        type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
         type: env_var_name
     steps:
       - run:
@@ -154,7 +225,7 @@ commands:
       - run:
           name: Push application with deployment vars
           command: |
-            cf push --strategy rolling \
+            cf push \
               --vars-file << parameters.deploy_config_file >> \
               --var AUTH_CLIENT_ID=${<< parameters.auth_client_id >>} \
               --var AUTH_CLIENT_SECRET=${<< parameters.auth_client_secret >>} \
@@ -166,12 +237,22 @@ commands:
               --var HSES_DATA_PASSWORD=${<< parameters.hses_data_password >>} \
               --var SMTP_HOST=${<< parameters.smtp_host >>} \
               --var SMTP_PORT=${<< parameters.smtp_port >>} \
+              --var SMTP_HOST_TEST=${<< parameters.smtp_host_test >>} \
+              --var SMTP_PORT_TEST=${<< parameters.smtp_port_test >>} \
+              --var SMTP_USER=${<< parameters.smtp_user >>} \
+              --var SMTP_PASSWORD=${<< parameters.smtp_password >>} \
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
-              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>}
-      - run:
-          name: Push maintenance application
-          command: |
-            cd maintenance_page && cf push --vars-file ../<<parameters.deploy_config_file >>
+              --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
+              --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
+      # - run:
+      #     name: Push maintenance application
+      #     command: |
+      #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -207,10 +288,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-1020/resurrect-shared-packages"
+    default: "mb/TTAHUB-2501/front-end-goal-name-filter"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "TTAHUB-1049/resources-db"
+    default: "mb/TTAHUB-2510/add-IST-visit-dropdown"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -233,16 +314,16 @@ jobs:
       - restore_cache:
           keys:
             # To manually bust the cache, increment the version e.g. v7-yarn...
-            - v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
             # If checksum is new, restore partial cache
-            - v8-yarn-deps-
+            - v14-yarn-deps-
       - run: yarn deps
       - save_cache:
           paths:
             - node_modules
             - frontend/node_modules
             - packages/common/node_modules
-          key: v8-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+          key: v11-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
       - run:
           name: Lint backend
           command: yarn lint:ci
@@ -253,11 +334,46 @@ jobs:
           path: reports
       - store_artifacts:  # store frontend lint reports
           path: frontend/reports
+      - run:
+          name: Remove similarity api data
+          command: rm -rf similarity_api
       - persist_to_workspace:
           root: .
           paths:
             - .
     # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
+  build_and_lint_similarity_api:
+    executor: docker-python-executor
+    steps:
+      - checkout
+      - create_combined_pipfreeze
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v7-pip...
+            - v2-pip-deps-{{ checksum "combined-requirements.txt" }}
+            # If checksum is new, restore partial cache
+            - v2-pip-deps-
+      - run:
+          name: Install python dependencies
+          command: |
+            cd similarity_api/src
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install -U pip setuptools wheel
+            pip install -U -r requirements.txt
+      - save_cache:
+          paths:
+            - similarity_api/src/venv
+          key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
+      - store_artifacts:  # store backend lint reports
+          path: reports
+      - store_artifacts:  # store frontend lint reports
+          path: similarity_api/reports
+      - persist_to_workspace:
+          root: .
+          paths:
+            - similarity_api
     resource_class: large
   test_backend:
     executor: docker-postgres-elasticsearch-executor
@@ -265,11 +381,12 @@ jobs:
         AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
         AWS_ELASTICSEARCH_ACCESS_KEY: admin
         AWS_ELASTICSEARCH_SECRET_KEY: admin
+        SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -281,6 +398,11 @@ jobs:
       - run:
           name: Run seeders
           command: yarn db:seed:ci
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Test backend
           command:  |
@@ -294,6 +416,50 @@ jobs:
       - store_artifacts:
           path: backend-coverage-artifacts.tar
       - store_test_results:
+          path: reports/
+    resource_class: large
+  test_similarity_api:
+    executor: docker-python-executor
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: Syft SBOM
+          environment:
+            SYFT_VERSION: v0.82.0
+            IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
+            OUTPUT_FORMAT: json
+            OUTPUT_FILE:  reports/syft_sbom.json
+          command: |
+            mkdir -p reports/
+            curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
+            ./syft similarity_api/src -vv --scope AllLayers -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
+            echo "scan results saved in $OUTPUT_FILE"
+          # echo $GITHUB_PAT | ./syft login ghcr.io -u $GITHUB_USERNAME --password-stdin  -vv
+          # echo $GITHUB_PAT | docker login ghcr.io -u $GITHUB_USERNAME --password-stdin
+      - run:
+          name: Grype Docker image
+          environment:
+            GRYPE_VERSION: v0.62.2
+            OUTPUT_FORMAT: sarif
+            OUTPUT_FILE: reports/grype.json
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b . "$GRYPE_VERSION"
+            ./grype sbom:reports/syft_sbom.json -v -o "$OUTPUT_FORMAT" > "$OUTPUT_FILE"
+            echo "scan results saved in $OUTPUT_FILE"
+      - run:
+          name: Test similarity
+          command: |
+            mkdir -p coverage/similarity
+            cd similarity_api/src
+            source venv/bin/activate
+            pip install pytest pytest-cov
+            pytest -rpP --cov=similarity --cov=. --junitxml=~/project/reports/junit.xml
+            coverage report --show-missing --skip-covered
+            coverage html -d ~/project/coverage/similarity --skip-covered
+      - store_artifacts:
           path: reports/
     resource_class: large
   test_frontend:
@@ -330,7 +496,89 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:ci
+      - store_artifacts:
+          path: playwright/e2e
+    resource_class: large
+  test_api:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: default
+      - run:
+          name: Start server
+          command: |
+            yarn build
+            BYPASS_AUTH=true CURRENT_USER_ID=5 yarn start:ci
+          background: true
+      - run:
+          name: Run migrations ci
+          command: yarn db:migrate:ci
+      - run:
+          name: Seed database
+          command: yarn db:seed:ci
+      - run:
+          name: Wait for server to start
+          command: ./bin/ping-server 3000
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
+          name: Install playwright dependencies
+          command: |
+            npx playwright install
+      - run:
+          name: Run playwright tests
+          command: yarn e2e:api
+      - store_artifacts:
+          path: playwright/api
+    resource_class: large
+  test_utils:
+    executor: docker-postgres-elasticsearch-executor
+    environment:
+        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
+        AWS_ELASTICSEARCH_ACCESS_KEY: admin
+        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    steps:
+      - attach_workspace:
+          at: .
+      - setup_remote_docker:
+          version: default
       - run:
           name: Start server
           command: |
@@ -352,9 +600,9 @@ jobs:
             npx playwright install
       - run:
           name: Run playwright tests
-          command: yarn e2e:ci
+          command: yarn e2e:utils
       - store_artifacts:
-          path: playwright/
+          path: playwright/utilsTests
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
@@ -396,7 +644,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-stable:2.11.1
+          command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
@@ -405,7 +653,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
-    resource_class: large
+    resource_class: arm.large
   deploy:
     executor: docker-executor
     steps:
@@ -457,10 +705,20 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                smtp_password: SMTP_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -500,10 +758,20 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -543,10 +811,20 @@ jobs:
                 hses_data_file_url: HSES_DATA_FILE_URL
                 hses_data_username: HSES_DATA_USERNAME
                 hses_data_password: HSES_DATA_PASSWORD
-                smtp_host: SMTP_HOST
-                smtp_port: SMTP_PORT
+                smtp_host: STAGING_SMTP_HOST
+                smtp_port: STAGING_SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -586,8 +864,18 @@ jobs:
                 hses_data_password: PROD_HSES_DATA_PASSWORD
                 smtp_host: SMTP_HOST
                 smtp_port: SMTP_PORT
+                smtp_host_test: SMTP_HOST_TEST
+                smtp_port_test: SMTP_PORT_TEST
                 smtp_secure: SMTP_SECURE
+                smtp_ignore_tls: SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
+                smtp_user: SMTP_USER
+                smtp_password: SMTP_PASSWORD
+                suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -596,11 +884,15 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
 workflows:
   build_test_deploy:
     jobs:
       - build_and_lint
+      - build_and_lint_similarity_api
       - test_backend:
           requires:
             - build_and_lint
@@ -608,6 +900,15 @@ workflows:
           requires:
             - build_and_lint
       - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
+      - test_utils:
           requires:
             - build_and_lint
       - cucumber_test:
@@ -621,6 +922,9 @@ workflows:
             - test_backend
             - test_frontend
             - test_e2e
+            - test_api
+            - test_similarity_api
+            - test_utils
             - cucumber_test
             - dynamic_security_scan
           filters:
@@ -642,6 +946,7 @@ workflows:
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
       - build_and_lint
+      - build_and_lint_similarity_api
       - test_backend:
           requires:
             - build_and_lint
@@ -649,6 +954,15 @@ workflows:
           requires:
             - build_and_lint
       - test_e2e:
+          requires:
+            - build_and_lint
+      - test_api:
+          requires:
+            - build_and_lint
+      - test_similarity_api:
+          requires:
+            - build_and_lint_similarity_api
+      - test_utils:
           requires:
             - build_and_lint
       - dynamic_security_scan:

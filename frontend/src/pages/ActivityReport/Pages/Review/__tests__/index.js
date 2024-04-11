@@ -9,7 +9,7 @@ import React from 'react';
 import userEvent from '@testing-library/user-event';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
 import NetworkContext from '../../../../../NetworkContext';
@@ -36,7 +36,7 @@ const user = {
   ],
 };
 
-const approversToPass = [{ id: 1, status: null, User: { id: 1, fullName: 'approver 1' } }];
+const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approver 1' } }];
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
@@ -44,7 +44,10 @@ const RenderReview = ({
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: { ...formData },
+    defaultValues: {
+      goalsAndObjectives: [],
+      ...formData,
+    },
   });
 
   return (
@@ -87,6 +90,7 @@ const renderReview = (
   calculatedStatus = REPORT_STATUSES.DRAFT,
   formData = {
     additionalNotes: '',
+    goalsAndObjectives: [],
   },
   onSubmit = jest.fn(),
   onReview = jest.fn(),
@@ -151,7 +155,7 @@ describe('ReviewSubmit', () => {
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
-      const reviewButton = await screen.findByRole('button');
+      const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       await waitFor(() => expect(onReview).toHaveBeenCalled());
     });
@@ -173,7 +177,7 @@ describe('ReviewSubmit', () => {
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
       userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
-      const reviewButton = await screen.findByRole('button');
+      const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       const error = await screen.findByText('Unable to review report');
       expect(error).toBeVisible();
@@ -210,7 +214,7 @@ describe('ReviewSubmit', () => {
       const isApprover = false;
       const isPendingApprover = false;
       const calculatedStatus = REPORT_STATUSES.DRAFT;
-      const formData = { additionalNotes: '' };
+      const formData = { additionalNotes: '', goalsAndObjectives: [] };
       const onSubmit = jest.fn();
       const onReview = jest.fn();
       const onResetToDraft = jest.fn();

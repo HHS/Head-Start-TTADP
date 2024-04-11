@@ -6,13 +6,17 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import App from '../App';
-import { mockRSSData, mockWindowProperty } from '../testHelpers';
+import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
 const feedsUrl = '/api/feeds/whats-new';
 
 describe('localStorageCleanup', () => {
   const removeItem = jest.fn();
+
+  mockDocumentProperty('documentElement', {
+    scrollTo: jest.fn(),
+  });
 
   afterEach(() => fetchMock.restore());
   const userUrl = join('api', 'user');
@@ -55,12 +59,12 @@ describe('localStorageCleanup', () => {
 
       const calls = [
         '__storage_test__',
-        'ar-form-data-2-0.2',
-        'ar-additional-data-2-0.2',
-        'ar-can-edit-2-0.2',
-        'ar-form-data-3-0.2',
-        'ar-additional-data-3-0.2',
-        'ar-can-edit-3-0.2',
+        'ar-form-data-2-0.3',
+        'ar-additional-data-2-0.3',
+        'ar-can-edit-2-0.3',
+        'ar-form-data-3-0.3',
+        'ar-additional-data-3-0.3',
+        'ar-can-edit-3-0.3',
       ];
 
       calls.forEach((call) => {

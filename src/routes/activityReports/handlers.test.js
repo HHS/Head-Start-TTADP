@@ -24,6 +24,8 @@ import {
   getReportsForLocalStorageCleanup,
   saveOtherEntityObjectivesForReport,
   setGoalAsActivelyEdited,
+  getReportsByManyIds,
+  getGroups,
 } from './handlers';
 import {
   activityReportAndRecipientsById,
@@ -38,11 +40,12 @@ import {
   getAllDownloadableActivityReportAlerts,
   activityReportsForCleanup,
 } from '../../services/activityReports';
-import { setActivityReportGoalAsActivelyEdited } from '../../services/goals';
+import { setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
 import { userById, usersWithPermissions } from '../../services/users';
+import { groupsByRegion } from '../../services/groups';
 import { userSettingOverridesById } from '../../services/userSettings';
 import ActivityReport from '../../policies/activityReport';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -85,7 +88,7 @@ jest.mock('../../services/activityReportApprovers', () => ({
 
 jest.mock('../../services/accessValidation');
 
-jest.mock('../../services/goals', () => ({
+jest.mock('../../goalServices/goals', () => ({
   copyGoalsToGrants: jest.fn(),
   setActivityReportGoalAsActivelyEdited: jest.fn(),
 }));
@@ -93,6 +96,10 @@ jest.mock('../../services/goals', () => ({
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
   usersWithPermissions: jest.fn(),
+}));
+
+jest.mock('../../services/groups', () => ({
+  groupsByRegion: jest.fn(),
 }));
 
 jest.mock('../../policies/user');
@@ -120,6 +127,7 @@ const mockManager = {
   hsesUsername: 'user1843',
   homeRegionId: 1,
   email: 'mockManager1843@test.gov',
+  lastLogin: new Date(),
 };
 const secondMockManager = {
   id: 1222,
@@ -127,6 +135,7 @@ const secondMockManager = {
   hsesUsername: 'user1222',
   homeRegionId: 1,
   email: 'mockManager1222@test.gov',
+  lastLogin: new Date(),
 };
 const mockUser = {
   id: 1844,
@@ -134,6 +143,7 @@ const mockUser = {
   hsesUsername: 'user1844',
   homeRegionId: 1,
   email: 'mockManager1844@test.gov',
+  lastLogin: new Date(),
 };
 const objectivesWithoutGoals = undefined;
 const report = {
@@ -144,6 +154,7 @@ const report = {
   displayId: 'mockreport-1',
   regionId: 1,
   objectivesWithoutGoals,
+  version: 2,
 };
 
 const activityRecipients = undefined;
@@ -595,6 +606,28 @@ describe('Activity Report handlers', () => {
     });
   });
 
+  describe('getGroups', () => {
+    it('returns a list of groups', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => true,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      groupsByRegion.mockResolvedValue(response);
+      await getGroups({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
+    it('handles unauthorized', async () => {
+      User.mockImplementation(() => ({
+        canWriteInRegion: () => false,
+      }));
+      const response = [{ name: 'name', id: 1 }];
+      groupsByRegion.mockResolvedValue(response);
+      await getGroups({ ...mockRequest, query: { region: 1 } }, mockResponse);
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+  });
+
   describe('resetToDraft', () => {
     const request = {
       ...mockRequest,
@@ -606,6 +639,7 @@ describe('Activity Report handlers', () => {
       activityReportAndRecipientsById.mockResolvedValue([report]);
       ActivityReport.mockImplementation(() => ({
         canReset: () => true,
+        isApproverAndCreator: () => false,
       }));
       const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
       setStatus.mockResolvedValue(setStatusResolvedValue);
@@ -623,9 +657,30 @@ describe('Activity Report handlers', () => {
     it('handles unauthorized', async () => {
       ActivityReport.mockImplementation(() => ({
         canReset: () => false,
+        isApproverAndCreator: () => false,
       }));
       await resetToDraft(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
+    it('handles approver is creator', async () => {
+      const result = { status: 'draft', displayId: 'mockreport-1', objectivesWithoutGoals: [] };
+      activityReportAndRecipientsById.mockResolvedValue([report]);
+      ActivityReport.mockImplementation(() => ({
+        isApproverAndCreator: () => true,
+        canReset: () => false,
+      }));
+      const setStatusResolvedValue = [{ dataValues: { ...result } }, [], [], []];
+      setStatus.mockResolvedValue(setStatusResolvedValue);
+      await resetToDraft(request, mockResponse);
+      const jsonResponse = {
+        ...result,
+        displayId: result.displayId,
+        activityRecipients: [],
+        goalsAndObjectives: [],
+        objectivesWithoutGoals: [],
+      };
+      expect(mockResponse.json).toHaveBeenCalledWith(jsonResponse);
     });
   });
 
@@ -737,6 +792,24 @@ describe('Activity Report handlers', () => {
       getAllDownloadableActivityReports.mockResolvedValue([]);
       getUserReadRegions.mockResolvedValue([1]);
       await downloadAllReports(request, mockResponse);
+      expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
+    });
+
+    it('accepts optional id query param', async () => {
+      const updatedMockRequest = {
+        session: {
+          userId: mockUser.id,
+        },
+        query: {
+          'region.in': '1',
+          id: [1],
+        },
+      };
+
+      getAllDownloadableActivityReports.mockResolvedValue([report]);
+      userById.mockResolvedValue({ permissions: [{ scopeId: 50 }] });
+      setReadRegions.mockResolvedValue([1]);
+      await downloadAllReports(updatedMockRequest, mockResponse);
       expect(mockResponse.attachment).toHaveBeenCalledWith('activity-reports.csv');
     });
   });
@@ -974,5 +1047,56 @@ describe('Activity Report handlers', () => {
       );
       expect(mockResponse.json).toHaveBeenCalledWith(updatedObjectivesRes);
     });
+  });
+});
+
+describe('getReportsByManyIds', () => {
+  const req = {
+    body: {
+      reportIds: [1, 2, 3],
+    },
+    session: {
+      userId: 1,
+    },
+  };
+
+  const res = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return reports with count if found', async () => {
+    const mockReportsWithCount = [{ id: 1, name: 'Report 1' }, { id: 2, name: 'Report 2' }];
+    activityReports.mockResolvedValue(mockReportsWithCount);
+    setReadRegions.mockResolvedValue({});
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.anything(),
+      req.body.reportIds,
+    );
+    expect(res.json).toHaveBeenCalledWith(mockReportsWithCount);
+    expect(res.sendStatus).not.toHaveBeenCalled();
+  });
+
+  it('should send 404 status if reports not found', async () => {
+    activityReports.mockResolvedValue(null);
+    setReadRegions.mockResolvedValue({});
+    await getReportsByManyIds(req, res);
+
+    expect(activityReports).toHaveBeenCalledWith(
+      {},
+      false,
+      expect.anything(),
+      req.body.reportIds,
+    );
+    expect(res.json).not.toHaveBeenCalled();
+    expect(res.sendStatus).toHaveBeenCalledWith(404);
   });
 });

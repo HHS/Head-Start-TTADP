@@ -9,6 +9,9 @@ import {
   ObjectiveTemplate,
   ObjectiveTemplateFile,
   ActivityReportObjective,
+  SessionReportPilotFile,
+  CommunicationLogFile,
+  SessionReportPilotSupportingAttachment,
   sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
@@ -31,6 +34,21 @@ const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
   individualHooks: true,
 });
+const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
+const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
+  where: { id },
+  individualHooks: true,
+});
+
+// eslint-disable-next-line max-len
+const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSupportingAttachment.destroy({
+  where: { id },
+  individualHooks: true,
+});
+
 const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
   where: { id },
   individualHooks: true,
@@ -77,6 +95,24 @@ const getFileById = async (id) => File.findOne({
       as: 'objectiveTemplateFiles',
       required: false,
       attributes: ['id', 'objectiveTemplateId'],
+    },
+    {
+      model: SessionReportPilotFile,
+      as: 'sessionFiles',
+      required: false,
+      attributes: ['id', 'sessionReportPilotId'],
+    },
+    {
+      model: CommunicationLogFile,
+      as: 'communicationLogFiles',
+      required: false,
+      attributes: ['id', 'communicationLogId'],
+    },
+    {
+      model: SessionReportPilotSupportingAttachment,
+      as: 'supportingAttachments',
+      required: false,
+      attributes: ['id', 'sessionReportPilotId'],
     },
   ],
 });
@@ -136,6 +172,24 @@ const updateStatus = async (fileId, fileStatus) => {
   } catch (error) {
     return error;
   }
+};
+
+/**
+ * Updates the status of a file in the database based on its key.
+ * @param {string} key - The key of the file to update.
+ * @param {string} fileStatus - The new status of the file.
+ * @returns {Promise<Object|Error>} - A promise that resolves to the updated file object or
+ * an error object if an error occurs.
+ */
+const updateStatusByKey = async (key, fileStatus) => {
+  // Update the file's status in the database using the File model
+  const results = await File.update({ status: fileStatus }, {
+    where: { key },
+    individualHooks: true,
+  });
+  const [, [file]] = results;
+  // Return the updated file
+  return file?.toJSON();
 };
 
 const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
@@ -203,7 +257,11 @@ const createActivityReportObjectiveFileMetaData = async (
     defaults: newFile,
   });
   await ActivityReportObjectiveFile
-    .create({ activityReportId: reportId, objectiveId, fileId: file.id });
+    .create({
+      activityReportId: reportId,
+      activityReportObjectiveId: objectiveId,
+      fileId: file.id,
+    });
   return file.dataValues;
 };
 
@@ -281,6 +339,81 @@ const createObjectiveTemplateFileMetaData = async (
   return file.dataValues;
 };
 
+const createSessionObjectiveFileMetaData = async (
+  originalFileName,
+  s3FileName,
+  sessionReportPilotId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await SessionReportPilotFile.create({ sessionReportPilotId, fileId: file.id });
+  return file.dataValues;
+};
+
+const createSessionSupportingAttachmentMetaData = async (
+  originalFileName,
+  s3FileName,
+  sessionReportPilotId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
+  return file.dataValues;
+};
+
+const createCommunicationLogFileMetadata = async (
+  originalFileName,
+  s3FileName,
+  communicationLogId,
+  fileSize,
+) => {
+  const newFile = {
+    originalFileName,
+    key: s3FileName,
+    status: UPLOADING,
+    fileSize,
+  };
+  const [file] = await File.findOrCreate({
+    where: {
+      originalFileName: newFile.originalFileName,
+      key: newFile.key,
+      fileSize: newFile.fileSize,
+    },
+    defaults: newFile,
+  });
+
+  await CommunicationLogFile.create({ communicationLogId, fileId: file.id });
+  return file.dataValues;
+};
+
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
   // Get ARO files to delete (destroy does NOT support join's).
   const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
@@ -322,7 +455,10 @@ export {
   deleteFile,
   deleteActivityReportFile,
   deleteActivityReportObjectiveFile,
+  deleteCommunicationLogFile,
+  deleteSessionSupportingAttachment,
   deleteObjectiveFile,
+  deleteSessionFile,
   deleteObjectiveTemplateFile,
   getFileById,
   getActivityReportFilesById,
@@ -330,11 +466,15 @@ export {
   getObjectiveFilesById,
   getObjectiveTemplateFilesById,
   updateStatus,
+  updateStatusByKey,
   createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
   createObjectiveFileMetaData, // for one objective
   createObjectivesFileMetaData, // for more than one objective
   createObjectiveTemplateFileMetaData,
+  createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
+  createCommunicationLogFileMetadata,
+  createSessionSupportingAttachmentMetaData,
 };

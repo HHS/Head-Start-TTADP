@@ -14,6 +14,7 @@ import { withRole, withoutRole } from './role';
 import { withRegion, withoutRegion } from './region';
 import { withoutProgramTypes, withProgramTypes } from './programType';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
+import { withSingleOrMultiRecipients } from './singleOrMultiRecipient';
 import { withoutReason, withReason } from './reason';
 import { withoutGrantNumber, withGrantNumber } from './grantNumber';
 import withStateCode from './stateCode';
@@ -26,6 +27,11 @@ import { withReportText, withoutReportText } from './reportText';
 import { withTtaType, withoutTtaType } from './ttaType';
 import { withGroup, withoutGroup } from './group';
 import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
+import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
+import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
+import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
+import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   reportId: {
@@ -90,6 +96,9 @@ export const topicToQuery = {
     in: (query) => withTargetPopulations(query),
     nin: (query) => withoutTargetPopulations(query),
   },
+  singleOrMultiRecipients: {
+    in: (query) => withSingleOrMultiRecipients(query),
+  },
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
@@ -118,6 +127,11 @@ export const topicToQuery = {
     bef: (query) => beforeEndDate(query),
     aft: (query) => afterEndDate(query),
     win: (query) => withinEndDate(query),
+    in: (query) => withinEndDate(query),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
   otherEntities: {
     in: (query) => withOtherEntities(query),
@@ -134,6 +148,23 @@ export const topicToQuery = {
   deliveryMethod: {
     in: (query) => withDeliveryMethod(query),
     nin: (query) => withoutDeliveryMethod(query),
+  },
+  resourceAttachment: {
+    ctn: (query) => withResourceAttachment(query),
+    nctn: (query) => withoutResourceAttachment(query),
+  },
+  resourceUrl: {
+    ctn: (query) => withResourceUrl(query),
+    nctn: (query) => withoutResourceUrl(query),
+  },
+  specialistName: {
+    collaborator: (query) => onlyCollaborators(query),
+    creator: (query) => onlyCreators(query),
+    both: (query) => bothCollaboratorsAndCreators(query),
+  },
+  activityReportGoalResponse: {
+    in: (query) => withActivityReportGoalResponse(query),
+    nin: (query) => withoutActivityReportGoalResponse(query),
   },
 };
 

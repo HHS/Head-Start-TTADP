@@ -8,29 +8,12 @@ import {
   Recipient,
   sequelize,
 } from '../models';
-import { formatNumber } from './helpers';
+import { formatNumber, getAllRecipientsFiltered } from './helpers';
 
 export default async function overview(scopes) {
   // get all distinct recipient ids from recipients with the proper scopes applied
-  const allRecipientsFiltered = await Recipient.findAll({
-    attributes: [
-      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'],
-    ],
-    raw: true,
-    include: [
-      {
-        attributes: ['regionId'], // This is required for scopes.
-        model: Grant,
-        as: 'grants',
-        required: true,
-        where: {
-          [Op.and]: [
-            scopes.grant,
-          ],
-        },
-      },
-    ],
-  });
+
+  const allRecipientsFiltered = await getAllRecipientsFiltered(scopes);
 
   // create a distinct array of recipient ids (we'll need this later, to filter the AR recipients)
   const totalRecipientIds = allRecipientsFiltered.map(({ id }) => id);
@@ -46,7 +29,11 @@ export default async function overview(scopes) {
   // the matching denominator set
   const [{ numRecipients }] = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant->recipient"."id"'))), 'numRecipients'],
+      [sequelize.fn('COUNT', sequelize.fn(
+        'DISTINCT',
+        sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')),
+        sequelize.col('"activityRecipients->grant"."regionId"'),
+      )), 'numRecipients'],
     ],
     raw: true,
     where: {

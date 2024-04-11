@@ -5,14 +5,16 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
@@ -47,11 +49,13 @@ const RenderGoalsObjectives = ({
             value: 1, label: 'Turtle 1', programs: [], id: 1,
           },
         ],
+        sessionObjectives: [],
         objectives: [{
           id: 1,
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }],
       objectivesWithoutGoals: [],
@@ -64,13 +68,29 @@ const RenderGoalsObjectives = ({
   hookForm.setValue = spy;
 
   return (
-    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-      <Router history={history}>
-        <FormProvider {...hookForm}>
-          {goalsObjectives.render(null, null, 1, null, null)}
-        </FormProvider>
-      </Router>
-    </NetworkContext.Provider>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            {goalsObjectives.render(
+              null,
+              {
+                activityRecipientType,
+              },
+              1,
+              null,
+              jest.fn(),
+              jest.fn(),
+              jest.fn(),
+              false,
+              '',
+              jest.fn(),
+              () => <></>,
+            )}
+          </FormProvider>
+        </Router>
+      </NetworkContext.Provider>
+    </UserContext.Provider>
   );
 };
 
@@ -87,13 +107,15 @@ const renderGoals = (
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
-      <RenderGoalsObjectives
-        grantIds={grantIds}
-        activityRecipientType={activityRecipientType}
-        connectionActive={!throwFetchError}
-      />
-    </GoalFormContext.Provider>,
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+        <RenderGoalsObjectives
+          grantIds={grantIds}
+          activityRecipientType={activityRecipientType}
+          connectionActive={!throwFetchError}
+        />
+      </GoalFormContext.Provider>
+    </UserContext.Provider>,
   );
 };
 
@@ -183,6 +205,29 @@ describe('goals objectives', () => {
       expect(toggleGoalForm).toHaveBeenCalledWith(false);
     });
 
+    it('you need to have completely conditional fields before editing', async () => {
+      const sampleGoals = [{
+        name: 'Test',
+        id: 1234567,
+        objectives: [],
+      }];
+      const isGoalFormClosed = true;
+      const throwFetchError = false;
+      const toggleGoalForm = jest.fn();
+      fetchMock.restore();
+      // this API call sets the goal as being edited
+      fetchMock.get('/api/activity-report/1/goals/edit?goalId=1234567', 200);
+
+      renderGoals([1], 'recipient', sampleGoals, isGoalFormClosed, throwFetchError, toggleGoalForm);
+      expect(screen.queryByText(/indicates required field/i)).toBeNull();
+      const actions = await screen.findByRole('button', { name: /actions for goal 1/i });
+      act(() => userEvent.click(actions));
+      const [button] = await screen.findAllByRole('button', { name: 'Edit' });
+      act(() => userEvent.click(button));
+      await waitFor(() => expect(fetchMock.called()).toBe(true));
+      expect(toggleGoalForm).toHaveBeenCalledWith(false);
+    });
+
     it('you can remove a goal', async () => {
       jest.restoreAllMocks();
       const sampleGoals = [{
@@ -203,7 +248,7 @@ describe('goals objectives', () => {
       expect(goalSummary).not.toBeVisible();
       const addNewGoal = await screen.findByRole('button', { name: /add new goal/i });
       expect(addNewGoal).toBeVisible();
-      const keys = ['goalForEditing', 'goalName', 'goalEndDate', 'goalIsRttapa'];
+      const keys = ['goalForEditing', 'goalName', 'goalEndDate'];
       keys.forEach((key) => {
         expect(spy).toHaveBeenCalledWith(key, '');
       });
@@ -218,6 +263,7 @@ describe('goals objectives', () => {
           title: 'title',
           ttaProvided: 'tta',
           status: 'In Progress',
+          courses: [],
         }],
       }];
 
@@ -291,6 +337,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -317,6 +364,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -325,6 +373,7 @@ describe('goals objectives', () => {
 
       it('is false if goalForEditing is true', () => {
         const goals = [{
+          sessionObjectives: [],
           name: 'Is goal',
           endDate: '2021-01-01',
           isRttapa: 'No',
@@ -353,6 +402,8 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
         {
           id: 2,
@@ -362,6 +413,8 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
+          courses: [],
         },
       ];
       const formData = { activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives };
@@ -396,6 +449,8 @@ describe('goals objectives', () => {
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
             files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+            supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
           {
             id: 2,
@@ -406,6 +461,8 @@ describe('goals objectives', () => {
             resources: [],
             roles: ['Chief Inspector'],
             files: [],
+            supportType: SUPPORT_TYPES[1],
+            courses: [],
           },
         ]}
       />);
@@ -431,6 +488,7 @@ describe('goals objectives', () => {
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
           files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          courses: [],
         }],
       }]}
       />);

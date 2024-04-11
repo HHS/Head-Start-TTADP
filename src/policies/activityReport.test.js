@@ -8,14 +8,24 @@ function activityReport(
   approvers,
   submissionStatus = REPORT_STATUSES.DRAFT,
   calculatedStatus = null,
+  raw = true,
 ) {
-  const report = {
+  const report = raw ? {
     userId: author,
     regionId: 1,
     activityReportCollaborators: [],
     approvers: [],
     submissionStatus,
     calculatedStatus,
+  } : {
+    dataValues: {
+      userId: author,
+      regionId: 1,
+      activityReportCollaborators: [],
+      approvers: [],
+      submissionStatus,
+      calculatedStatus,
+    },
   };
 
   if (activityReportCollaborator) {
@@ -24,7 +34,7 @@ function activityReport(
 
   if (approvers) {
     report.approvers = [...report.approvers, ...approvers.map((approver) => ({
-      id: 9, status: null, note: null, User: { id: approver },
+      id: 9, status: null, note: null, user: { id: approver },
     })),
     ];
   }
@@ -76,6 +86,19 @@ const canApproveRegion = user(false, false, false, true, 8);
 const canNotApproveRegion = user(false, false, false, false, 9);
 
 describe('Activity Report policies', () => {
+  describe('isApproverAndCreator', () => {
+    it('is true if the user is an approver and the creator of the report', () => {
+      const report = activityReport(author.id, null, [author.id]);
+      const policy = new ActivityReport(author, report);
+      expect(policy.isApproverAndCreator()).toBeTruthy();
+    });
+
+    it('is false if the user is not an approver', () => {
+      const report = activityReport(author.id);
+      const policy = new ActivityReport(author, report);
+      expect(policy.isApproverAndCreator()).toBeFalsy();
+    });
+  });
   describe('canReview', () => {
     it('is true if the user is the approving manager', () => {
       const report = activityReport(author.id, null, [approver.id]);
@@ -323,6 +346,12 @@ describe('Activity Report policies', () => {
         const policy = new ActivityReport(otherUser, report);
         expect(policy.canGet()).toBeFalsy();
       });
+
+      it('is false for an admin with no other permissions to the report', () => {
+        const report = activityReport(author.id);
+        const policy = new ActivityReport(admin, report);
+        expect(policy.canGet()).toBeFalsy();
+      });
     });
 
     describe('for approved reports', () => {
@@ -347,6 +376,18 @@ describe('Activity Report policies', () => {
           REPORT_STATUSES.APPROVED,
         );
         const policy = new ActivityReport(approver, report);
+        expect(policy.canGet()).toBeTruthy();
+      });
+
+      it('is true for admins', () => {
+        const report = activityReport(
+          author.id,
+          null,
+          null,
+          REPORT_STATUSES.SUBMITTED,
+          REPORT_STATUSES.APPROVED,
+        );
+        const policy = new ActivityReport(admin, report);
         expect(policy.canGet()).toBeTruthy();
       });
     });
@@ -405,6 +446,20 @@ describe('Activity Report policies', () => {
       );
       const policy = new ActivityReport(author, report);
       expect(policy.canDelete()).toBeFalsy();
+    });
+  });
+
+  describe('canReadInRegion', () => {
+    it('works with raw model instance (dataValues)', async () => {
+      const report = activityReport(author.id, null, null, null, null, true);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
+    });
+
+    it('works with non-raw model instance', async () => {
+      const report = activityReport(author.id, null, null, null, null, false);
+      const policy = new ActivityReport(author, report);
+      expect(policy.canReadInRegion()).toBeTruthy();
     });
   });
 });

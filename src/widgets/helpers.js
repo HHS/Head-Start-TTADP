@@ -2,8 +2,37 @@ import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
+  Grant,
+  Recipient,
   sequelize,
 } from '../models';
+
+export async function getAllRecipientsFiltered(scopes) {
+  return Recipient.findAll({
+    attributes: [
+      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'],
+    ],
+    raw: true,
+    include: [
+      {
+        attributes: ['regionId'], // This is required for scopes.
+        model: Grant,
+        as: 'grants',
+        required: true,
+        where: {
+          [Op.and]: [
+            scopes.grant,
+            { endDate: { [Op.gt]: '2020-08-31' } },
+            { deleted: { [Op.ne]: true } },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        },
+      },
+    ],
+  });
+}
 
 export async function countOccurrences(scopes, column, possibilities) {
   const allOccurrences = await ActivityReport.findAll({
@@ -40,7 +69,7 @@ export async function countOccurrences(scopes, column, possibilities) {
 
 export function countBySingleKey(data, key, results) {
   // Get counts for each key.
-  data.forEach((point) => {
+  data?.forEach((point) => {
     point[key].forEach((r) => {
       const obj = results.find((e) => e.name === r);
       if (obj) {

@@ -10,11 +10,12 @@ function ResourceUse({ data, loading }) {
       subtitle="Showing the 10 resources cited most often on Activity Reports"
       loading={loading}
       loadingLabel="Resource use loading"
-      showPaging={false}
+      showPagingBottom={false}
     >
       <HorizontalTableWidget
+        id="resourceUse"
         headers={data.headers}
-        data={data.resources}
+        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
         firstHeading="Resource URL"
       />
     </WidgetContainer>

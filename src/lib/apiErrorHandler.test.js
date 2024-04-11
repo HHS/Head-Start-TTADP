@@ -12,6 +12,7 @@ const mockUser = {
   email: 'test@test.com',
   homeRegionId: 1,
   permissions: [],
+  lastLogin: new Date(),
 };
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
@@ -63,7 +64,7 @@ describe('apiErrorHandler', () => {
 
     const requestErrors = await RequestErrors.findAll();
 
-    expect(requestErrors.length).toBe(0);
+    expect(requestErrors.length).not.toBe(0);
   });
 
   it('can handle unexpected error in catch block', async () => {

@@ -37,7 +37,7 @@ import {
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
   getGoalsForReport,
-} from './goals';
+} from '../goalServices/goals';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
@@ -126,7 +126,7 @@ async function saveReportCollaborators(activityReportId, collaborators) {
 
   if (updatedReportCollaborators && updatedReportCollaborators.length > 0) {
     // eslint-disable-next-line max-len
-    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all(collaborator.user.roles.map(async (role) => CollaboratorRole.findOrCreate({
+    await Promise.all(updatedReportCollaborators.map((collaborator) => Promise.all((collaborator?.user?.roles || []).map(async (role) => CollaboratorRole.findOrCreate({
       where: {
         activityReportCollaboratorId: collaborator.id,
         roleId: role.id,
@@ -281,6 +281,7 @@ export function activityReportByLegacyId(legacyId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -384,6 +385,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
       'name',
       'activityRecipientId',
       'grantId',
+      'otherEntityId',
     ],
     include: [
       {
@@ -500,7 +502,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
           },
           {
             model: Role,
-            as: 'collaboratorRoles',
+            as: 'roles',
             order: [['name', 'ASC']],
           },
         ],
@@ -538,6 +540,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['id', 'name', 'fullName'],
             include: [
               {
@@ -578,6 +581,7 @@ export async function activityReports(
   },
   excludeLegacy = false,
   userId = 0,
+  ids = [],
 ) {
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
 
@@ -588,6 +592,10 @@ export async function activityReports(
 
   if (excludeLegacy) {
     where.legacyId = { [Op.eq]: null };
+  }
+
+  if (ids && ids.length) {
+    where.id = { [Op.in]: ids };
   }
 
   const reports = await ActivityReport.findAndCountAll(
@@ -659,7 +667,7 @@ export async function activityReports(
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -671,6 +679,7 @@ export async function activityReports(
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -691,7 +700,6 @@ export async function activityReports(
       subQuery: false,
     },
   );
-
   const reportIds = reports.rows.map(({ id }) => id);
 
   const recipients = await ActivityRecipient.findAll({
@@ -704,6 +712,9 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
+    include: [{
+      model: Grant, as: 'grant', required: false,
+    }],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({
@@ -809,6 +820,7 @@ export async function activityReportsForCleanup(userId) {
           include: [
             {
               model: User,
+              as: 'user',
               attributes: ['id'],
             },
           ],
@@ -844,11 +856,16 @@ export async function activityReportAlerts(userId, {
         [Op.and]: scopes,
         [Op.or]: [
           {
-            [Op.or]: [
-              { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-              { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-            ],
-            '$approvers.userId$': userId,
+            calculatedStatus: {
+              [Op.in]: [
+                REPORT_STATUSES.SUBMITTED,
+                REPORT_STATUSES.NEEDS_ACTION,
+              ],
+            },
+            id: {
+              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
+                WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
+            },
           },
           {
             [Op.and]: [
@@ -860,7 +877,15 @@ export async function activityReportAlerts(userId, {
                 ],
               },
               {
-                [Op.or]: [{ userId }, { '$activityReportCollaborators->user.id$': userId }],
+                [Op.or]: [
+                  { userId },
+                  {
+                    id: {
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
+                    },
+                  },
+                ],
               },
             ],
           },
@@ -876,6 +901,7 @@ export async function activityReportAlerts(userId, {
         'userId',
         'createdAt',
         'creatorRole',
+        'language',
         'creatorName',
         sequelize.literal(
           '(SELECT name as authorName FROM "Users" WHERE "Users"."id" = "ActivityReport"."userId")',
@@ -889,9 +915,6 @@ export async function activityReportAlerts(userId, {
         sequelize.literal(
           `(SELECT "Recipients".name as recipientName FROM "Recipients" INNER JOIN "ActivityRecipients" ON "ActivityReport"."id" = "ActivityRecipients"."activityReportId" JOIN "Grants" ON "Grants"."id" = "ActivityRecipients"."grantId" AND "Recipients"."id" = "Grants"."recipientId" order by recipientName ${sortDir} limit 1)`,
         ),
-
-        // eslint-disable-next-line quotes
-        [sequelize.literal(`(SELECT  CASE WHEN COUNT(1) = 0 THEN '0' ELSE  CONCAT(SUM(CASE WHEN COALESCE("ActivityReportApprovers".status,'needs_action') = 'approved' THEN 1 ELSE 0 END), ' of ', COUNT(1)) END FROM "ActivityReportApprovers" WHERE "ActivityReportApprovers"."activityReportId" = "ActivityReport"."id" AND "deletedAt" IS NULL limit 1)`), 'pendingApprovals'],
       ],
       include: [
         {
@@ -924,7 +947,7 @@ export async function activityReportAlerts(userId, {
             },
             {
               model: Role,
-              as: 'collaboratorRoles',
+              as: 'roles',
             },
           ],
         },
@@ -936,6 +959,8 @@ export async function activityReportAlerts(userId, {
           include: [
             {
               model: User,
+              as: 'user',
+              required: true,
               attributes: ['id', 'name', 'fullName'],
               include: [
                 {
@@ -1151,7 +1176,7 @@ async function getDownloadableActivityReports(where, separate = true) {
   const query = {
     where,
     attributes: {
-      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'creatorName', 'submittedDate'],
+      include: ['displayId', 'createdAt', 'approvedAt', 'creatorRole', 'language', 'creatorName', 'submittedDate'],
       exclude: ['imported', 'legacyId', 'additionalNotes', 'approvers'],
     },
     include: [
@@ -1167,6 +1192,7 @@ async function getDownloadableActivityReports(where, separate = true) {
           include: [{
             model: Goal,
             as: 'goal',
+            required: false,
           },
           ],
           attributes: ['id', 'title', 'status'],
@@ -1248,7 +1274,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         },
         {
           model: Role,
-          as: 'collaboratorRoles',
+          as: 'roles',
         }],
       },
       {
@@ -1274,6 +1300,7 @@ async function getDownloadableActivityReports(where, separate = true) {
         include: [
           {
             model: User,
+            as: 'user',
             attributes: ['name'],
           },
         ],
@@ -1305,11 +1332,11 @@ export async function getAllDownloadableActivityReports(
   readRegions,
   filters,
   userId = 0,
+  reportIds = [],
 ) {
   const regions = readRegions || [];
 
   const { activityReport: scopes } = await filtersToScopes(filters, { userId });
-
   const where = {
     regionId: {
       [Op.in]: regions,
@@ -1317,6 +1344,10 @@ export async function getAllDownloadableActivityReports(
     calculatedStatus: REPORT_STATUSES.APPROVED,
     [Op.and]: scopes,
   };
+
+  if (reportIds.length) {
+    where.id = { [Op.in]: reportIds };
+  }
 
   return getDownloadableActivityReports(where);
 }

@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import moment from 'moment';
 import { render, screen, act } from '@testing-library/react';
-import { useForm } from 'react-hook-form/dist/index.ie11';
+import { useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import { Grid } from '@trussworks/react-uswds';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';

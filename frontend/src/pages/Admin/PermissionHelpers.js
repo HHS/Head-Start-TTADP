@@ -4,6 +4,8 @@ import {
   REGIONAL_SCOPES,
   GLOBAL_SCOPES,
   REGIONS,
+  ALL_REGIONS,
+  CENTRAL_OFFICE,
 } from '../../Constants';
 
 const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
@@ -32,7 +34,7 @@ export function createRegionalScopeObject() {
  */
 export function userRegionalPermissions(user) {
   const regionalPermissions = {};
-  REGIONS.forEach((region) => {
+  [...REGIONS, ALL_REGIONS].forEach((region) => {
     regionalPermissions[region] = createRegionalScopeObject();
   });
 
@@ -41,7 +43,8 @@ export function userRegionalPermissions(user) {
   }
 
   user.permissions.filter((permission) => (
-    regionalScopeIds.includes(permission.scopeId) && permission.regionId !== 14
+    regionalScopeIds.includes(permission.scopeId)
+    && ![CENTRAL_OFFICE].includes(permission.regionId)
   )).forEach(({ regionId, scopeId }) => {
     regionalPermissions[regionId][scopeId] = true;
   });

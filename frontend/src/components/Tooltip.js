@@ -9,6 +9,7 @@ export default function Tooltip({
   buttonLabel,
   screenReadDisplayText,
   hideUnderline,
+  underlineStyle,
   svgLineTo,
   className,
   position,
@@ -20,6 +21,9 @@ export default function Tooltip({
   const onClick = () => {
     setShowTooltip(!showTooltip);
   };
+
+  // Determine the stroke-dasharray based on underlineStyle
+  const strokeDasharray = underlineStyle === 'solid' ? 'none' : '5,5';
 
   return (
     <span className={cssClasses} data-testid="tooltip">
@@ -37,7 +41,7 @@ export default function Tooltip({
                       stroke="black"
                       strokeLinecap="round"
                       strokeWidth="1"
-                      strokeDasharray="5,5"
+                      strokeDasharray={strokeDasharray}
                       fill="none"
                     />
                   </svg>
@@ -73,6 +77,7 @@ Tooltip.propTypes = {
   svgLineTo: PropTypes.number,
   className: PropTypes.string,
   position: PropTypes.string,
+  underlineStyle: PropTypes.oneOf(['solid', 'dashed']),
 };
 
 Tooltip.defaultProps = {
@@ -81,4 +86,5 @@ Tooltip.defaultProps = {
   svgLineTo: 190,
   className: '',
   position: 'top',
+  underlineStyle: 'dashed',
 };

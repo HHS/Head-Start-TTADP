@@ -8,6 +8,7 @@ const testData = {
   resources: [
     {
       heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      title: 'ECLKC Sample Title Test',
       isUrl: true,
       data: [
         {
@@ -106,7 +107,9 @@ describe('Resource Use Widget', () => {
     expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
 
-    expect(screen.getByRole('link', { name: /https:\/\/eclkc\.ohs\.acf\.hhs\.gov/i })).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /eclkc Sample Title Test/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides');
     expect(screen.getByRole('cell', { name: /17/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /18/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /19/i })).toBeInTheDocument();

@@ -20,6 +20,7 @@ export const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 export const approverUserIds = () => [
@@ -32,6 +33,7 @@ export const mockApprovers = (ids) => ids.map((id) => ({
   id,
   hsesUserId: String(id),
   hsesUsername: `user${id}`,
+  lastLogin: new Date(),
 }));
 
 export const fileGenerator = (file = {}) => {

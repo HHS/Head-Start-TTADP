@@ -2,7 +2,12 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
-  render, screen, within, fireEvent,
+  render,
+  screen,
+  within,
+  fireEvent,
+  act,
+  waitFor,
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import userEvent from '@testing-library/user-event';
@@ -18,7 +23,7 @@ const {
 describe('UserSection', () => {
   const onSave = jest.fn();
 
-  beforeEach(() => {
+  beforeEach(async () => {
     const user = {
       id: 1,
       email: 'email',
@@ -43,7 +48,9 @@ describe('UserSection', () => {
     };
 
     fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
-    render(<UserSection user={user} onSave={onSave} features={[{ value: 'half_goat', label: 'Half goat' }]} />);
+    await act(() => waitFor(() => {
+      render(<UserSection user={user} onSave={onSave} features={[{ value: 'half_goat', label: 'Half goat' }]} />);
+    }));
   });
 
   afterEach(() => fetchMock.restore());
@@ -67,11 +74,14 @@ describe('UserSection', () => {
     expect(unlockCheckbox).not.toBeChecked();
   });
 
-  it('properly controls regional permissions', () => {
+  it('properly controls regional permissions', async () => {
     const permissions = screen.getByRole('group', { name: 'Regional Permissions' });
-    userEvent.selectOptions(within(permissions).getByLabelText('Region'), '1');
+    const regionalDropdown = within(permissions).getByLabelText('Region');
+    userEvent.selectOptions(regionalDropdown, '1');
     const checkbox = within(permissions).getByRole('checkbox', { checked: true });
     expect(checkbox).toBeChecked();
+    expect(checkbox).not.toBeDisabled();
+    userEvent.click(checkbox);
     userEvent.click(checkbox);
     expect(checkbox).not.toBeChecked();
   });
@@ -81,8 +91,8 @@ describe('UserSection', () => {
     const permissions = screen.getByRole('group', { name: 'Regional Permissions' });
     userEvent.selectOptions(within(permissions).getByLabelText('Region'), '1');
     const checkbox = within(permissions).getByRole('checkbox', { name: fieldName });
-
     expect(checkbox).not.toBeChecked();
+    userEvent.click(checkbox);
     userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
   });
@@ -118,5 +128,11 @@ describe('UserSection', () => {
     const save = screen.getByRole('button', { name: 'Save' });
     userEvent.click(save);
     expect(onSave).toHaveBeenCalled();
+  });
+
+  it('impersonate user', async () => {
+    const impersonate = screen.getByRole('button', { name: 'Impersonate user' });
+    userEvent.click(impersonate);
+    expect(window.location.pathname).toEqual('/');
   });
 });

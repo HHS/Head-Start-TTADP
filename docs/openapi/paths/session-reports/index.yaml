@@ -1,0 +1,15 @@
+post:
+  tags:
+    - training report
+  summary: Create a new training report
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          properties:
+            eventId:
+              type: integer
+            data:
+              type: object

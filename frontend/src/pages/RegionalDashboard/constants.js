@@ -1,6 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  regionFilter,
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -12,34 +11,43 @@ import {
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   participantsFilter,
   myReportsFilter,
   ttaTypeFilter,
   reportTextFilter,
   deliveryMethodFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
-
+import { goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const DASHBOARD_FILTER_CONFIG = [
+const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
+  activityReportGoalResponseFilter,
   deliveryMethodFilter,
   grantNumberFilter,
   groupsFilter,
+  goalNameFilter,
   myReportsFilter,
   participantsFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
-  regionFilter,
   reportIdFilter,
   reportTextFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort by display prop
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG };

@@ -10,6 +10,8 @@ import {
   Role,
   sequelize,
   UserValidationStatus,
+  EventReportPilot,
+  NationalCenter,
 } from '../models';
 
 const { SITE_ACCESS } = SCOPES;
@@ -419,4 +421,131 @@ export async function setFlag(flag, on = true) {
 
   const result = sequelize.query(query, { type: QueryTypes.UPDATE });
   return result;
+}
+
+/**
+ * @param {number} regionId region to get users for
+ * @returns {Promise<Array>} result as a promise resolving to an array of users
+ */
+
+export async function getTrainingReportUsersByRegion(regionId, eventId) {
+  // this is weird (poc = collaborators, collaborators = read/write)? but it is the case
+  // as far as I understand it
+  const pointOfContactScope = SCOPES.POC_TRAINING_REPORTS; // regional poc collab
+  const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
+
+  const users = await User.findAll({
+    exclude: [
+      'email',
+      'phoneNumber',
+      'hsesUserId',
+      'lastLogin',
+      'hsesAuthorities',
+      'hsesUsername',
+    ],
+    where: {
+      [Op.or]: {
+        '$permissions.scopeId$': {
+          [Op.in]: [
+            pointOfContactScope,
+            collaboratorScope,
+          ],
+        },
+      },
+    },
+    include: [
+      {
+        model: NationalCenter,
+        as: 'nationalCenters',
+      },
+      {
+        attributes: [
+          'id',
+          'scopeId',
+          'regionId',
+          'userId',
+        ],
+        model: Permission,
+        as: 'permissions',
+        required: true,
+        where: {
+          regionId,
+        },
+      },
+    ],
+    order: [
+      ['name', 'ASC'],
+      ['email', 'ASC'],
+    ],
+  });
+
+  const results = {
+    pointOfContact: [],
+    collaborators: [],
+    creators: [],
+  };
+
+  users.forEach((user) => {
+    if (user.permissions.some((permission) => permission.scopeId === pointOfContactScope)) {
+      results.pointOfContact.push(user);
+    } else {
+      results.collaborators.push(user);
+    }
+  });
+
+  // Copy collaborators to creators.
+  results.creators = [...results.collaborators];
+
+  if (eventId) {
+    // get event report pilot that has the id event id.
+    const eventReportPilot = await EventReportPilot.findOne({
+      attributes: ['id', 'ownerId', 'data'],
+      where: {
+        data: {
+          eventId: {
+            [Op.endsWith]: `-${eventId}`,
+          },
+        },
+      },
+    });
+
+    if (eventReportPilot) {
+      // Check if creators contains the current ownerId.
+      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId);
+      if (!currentOwner) {
+        // If the current ownerId is not in the creators array, add it.
+        const owner = await userById(eventReportPilot.ownerId);
+        results.creators.push({ id: owner.id, name: owner.name });
+      }
+    }
+  }
+
+  return results;
+}
+
+export async function getUserNamesByIds(ids) {
+  const users = await User.findAll({
+    attributes: ['id', 'name'],
+    where: {
+      id: ids,
+    },
+    raw: true,
+  });
+
+  return users.map((u) => u.name);
+}
+
+export async function findAllUsersWithScope(scope) {
+  if (!Object.values(SCOPES).includes(scope)) {
+    return [];
+  }
+  return User.findAll({
+    attributes: ['id', 'name'],
+    include: [{
+      attributes: [],
+      model: Permission,
+      as: 'permissions',
+      where: { scopeId: scope },
+    }],
+  });
 }

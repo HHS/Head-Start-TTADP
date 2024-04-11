@@ -14,6 +14,12 @@ export default (sequelize, DataTypes) => {
     }
   }
   GroupGrant.init({
+    id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      autoIncrement: true,
+      primaryKey: true,
+    },
     grantId: {
       type: DataTypes.STRING,
       allowNull: false,

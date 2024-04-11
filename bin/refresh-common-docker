@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# this is a script to refresh the common package
+## before you run this script, make sure you've upped the version number in common/package.json
+
+yarn remove @ttahub/common
+cd frontend && yarn remove @ttahub/common
+git restore package.json
+cd ..
+git restore package.json
+yarn docker:deps

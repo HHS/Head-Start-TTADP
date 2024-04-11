@@ -4,8 +4,10 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import selectEvent from 'react-select-event';
 import ObjectiveForm from '../ObjectiveForm';
+import UserContext from '../../../UserContext';
 
 import {
   OBJECTIVE_ERROR_MESSAGES,
@@ -19,6 +21,8 @@ describe('ObjectiveForm', () => {
   const defaultObjective = {
     title: 'This is an objective',
     files: [],
+    closeSuspendReason: '',
+    closeSuspendContext: '',
     topics: [
       {
         id: 1,
@@ -42,33 +46,48 @@ describe('ObjectiveForm', () => {
     goalStatus = 'Draft',
   ) => {
     render((
-      <ObjectiveForm
-        index={index}
-        isOnReport={false}
-        removeObjective={removeObjective}
-        setObjectiveError={setObjectiveError}
-        objective={objective}
-        setObjective={setObjective}
-        errors={[<></>, <></>, <></>]}
-        goalStatus={goalStatus}
-        onUploadFiles={jest.fn()}
-        topicOptions={[
-          'Behavioral / Mental Health / Trauma',
-          'Child Screening and Assessment',
-          'CLASS: Classroom Organization',
-          'CLASS: Emotional Support',
-          'CLASS: Instructional Support',
-          'Coaching',
-          'Communication',
-          'Community and Self-Assessment',
-          'Culture & Language',
-          'Curriculum (Instructional or Parenting)',
-          'Data and Evaluation',
-        ].map((name, id) => ({ id, name }))}
-        userCanEdit
-      />
+      <UserContext.Provider value={{ user: { flags: [] } }}>
+        <ObjectiveForm
+          index={index}
+          isOnReport={false}
+          removeObjective={removeObjective}
+          setObjectiveError={setObjectiveError}
+          objective={objective}
+          setObjective={setObjective}
+          errors={[<></>, <></>, <></>, <></>, <></>, <></>]}
+          goalStatus={goalStatus}
+          onUploadFiles={jest.fn()}
+          topicOptions={[
+            'Behavioral / Mental Health / Trauma',
+            'Child Screening and Assessment',
+            'CLASS: Classroom Organization',
+            'CLASS: Emotional Support',
+            'CLASS: Instructional Support',
+            'Coaching',
+            'Communication',
+            'Community and Self-Assessment',
+            'Culture & Language',
+            'Curriculum (Instructional or Parenting)',
+            'Data and Evaluation',
+          ].map((name, id) => ({ id, name }))}
+          userCanEdit
+        />
+      </UserContext.Provider>
     ));
   };
+
+  beforeEach(() => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
+  });
 
   it('validates text and topics', async () => {
     const objective = {
@@ -86,39 +105,28 @@ describe('ObjectiveForm', () => {
 
     renderObjectiveForm(objective, removeObjective, setObjectiveError, setObjective);
 
-    // Topic guidance.
-    /*
-    const topicGuidance = await screen.findByRole('button', { name: /view topic guidance/i });
-    userEvent.click(topicGuidance);
-    expect(await screen.findByText('Topic guidance')).toBeInTheDocument();
-    expect(await screen.findByText(/behavioral \/ mental health \/ trauma/i)).toBeInTheDocument();
-    const closeTopicGuidance = await screen.findByRole('button', { name: /close/i });
-    userEvent.click(closeTopicGuidance);
-
-    // Topics.
-    const topicsText = screen.queryAllByLabelText(/topics *i);
-    expect(topicsText.length).toBe(2);
-    const topics = document.querySelector('#topics');
-    */
-    const topics = await screen.findByLabelText(/topics \*/i);
+    const topics = await screen.findByLabelText(/topics \*/i, { selector: '#topics' });
     userEvent.click(topics);
 
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <span className="usa-error-message">{objectiveTopicsError}</span>, <></>, <></>, <></>, <></>]);
 
     await selectEvent.select(topics, ['Coaching', 'Communication']);
 
     userEvent.click(topics);
     userEvent.click(resourceOne);
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<></>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(
+      index, [<></>, <></>, <></>, <></>, <></>, <></>,
+      ],
+    );
 
     const objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
     userEvent.click(objectiveText);
     userEvent.click(resourceOne);
 
-    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>]);
+    expect(setObjectiveError).toHaveBeenCalledWith(index, [<span className="usa-error-message">{objectiveTextError}</span>, <></>, <></>, <></>, <></>, <></>]);
   });
 
   it('you can change status', async () => {

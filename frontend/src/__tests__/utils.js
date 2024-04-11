@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import moment from 'moment';
 import {
   queryStringToFilters, filtersToQueryString, formatDateRange, decodeQueryParam,
 } from '../utils';
@@ -76,6 +77,30 @@ describe('formatDateRange', () => {
     });
 
     expect(str).toBe('06/07/2021 - 06/08/2021');
+  });
+
+  it('last three months', () => {
+    const todaysDate = moment();
+    const startDate = moment().subtract(3, 'months');
+    const str = formatDateRange({
+      lastThreeMonths: true,
+      withSpaces: true,
+    });
+    const startDateFormatted = startDate.format('MM/DD/YYYY');
+    const todaysDateFormatted = todaysDate.format('MM/DD/YYYY');
+    expect(str).toBe(`${startDateFormatted} - ${todaysDateFormatted}`);
+  });
+
+  it('last six months', () => {
+    const todaysDate = moment();
+    const startDate = moment().subtract(6, 'months');
+    const str = formatDateRange({
+      lastSixMonths: true,
+      withSpaces: true,
+    });
+    const startDateFormatted = startDate.format('MM/DD/YYYY');
+    const todaysDateFormatted = todaysDate.format('MM/DD/YYYY');
+    expect(str).toBe(`${startDateFormatted} - ${todaysDateFormatted}`);
   });
 
   it('returns a formatted date string without spaces', () => {

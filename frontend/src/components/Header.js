@@ -28,7 +28,7 @@ function Header({
   }
 
   return (
-    <header className={headerClassNames.join(' ')} style={{ zIndex: '99998' }}>
+    <header className={headerClassNames.join(' ')} style={{ zIndex: '99' }}>
       {(alert && authenticated) && (
         <>
           <SiteAlert

@@ -23,22 +23,26 @@ const draftObject = {
   topics: ['topics'],
   ttaType: ['type'],
   creatorRole: 'TTAC',
+  version: 2,
 };
 
 const mockUser = {
   id: 9064284,
   hsesUserId: '9064284',
   hsesUsername: 'user9064284',
+  lastLogin: new Date(),
 };
 const mockManager = {
   id: 1037200,
   hsesUserId: '1037200',
   hsesUsername: 'user21037200',
+  lastLogin: new Date(),
 };
 const secondMockManager = {
   id: 3076103,
   hsesUserId: '3076103',
   hsesUsername: 'user3076103',
+  lastLogin: new Date(),
 };
 
 const mockResponse = {

@@ -20,6 +20,10 @@ import {
 import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');
+jest.mock('express-http-context', () => ({
+  get: jest.fn().mockReturnValue(1),
+  set: jest.fn(),
+}));
 
 const mockUser = {
   name: 'Joe Green',
@@ -90,6 +94,7 @@ const sampleReport = {
   deliveryMethod: 'method',
   activityRecipientType: 'test',
   creatorRole: 'COR',
+  language: ['Spanish'],
   topics: ['topic', 'topic2', 'red', 'blue', 'declination'],
   participants: ['test'],
   duration: 0,
@@ -107,6 +112,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 const mockGoals = [
@@ -226,9 +232,9 @@ describe('Activity Reports model', () => {
       await ActivityReport.destroy({ where: { id: report.id } });
       await ActivityReport.destroy({ where: { id: reportToIndex.id } });
       await ActivityReport.destroy({ where: { id: reportToSubmit.id } });
-      await Objective.destroy({ where: { id: objectives.map((o) => o.id) } });
-      await Goal.destroy({ where: { id: goals.map((g) => g.id) } });
-      await Grant.destroy({ where: { id: grants.map((g) => g.id) } });
+      await Objective.destroy({ where: { id: objectives.map((o) => o.id) }, force: true });
+      await Goal.destroy({ where: { id: goals.map((g) => g.id) }, force: true });
+      await Grant.destroy({ where: { id: grants.map((g) => g.id) }, individualHooks: true });
       await OtherEntity.destroy({ where: { id: otherEntity.id } });
       await Recipient.destroy({ where: { id: recipient.id } });
       await User.destroy({ where: { id: user.id } });
@@ -408,7 +414,10 @@ describe('Activity Reports model', () => {
             grantId: activityRecipient.grantId,
             otherEntityId: activityRecipient.otherEntityId,
           },
+          attributes: ['name'],
+          include: [{ model: Grant, as: 'grant', required: false }],
         })));
+
       expect(arr[0].name).toEqual(grants[0].name);
       expect(arr[1].name).toEqual(grants[1].name);
       expect(arr[2].name).toEqual(otherEntity.name);
@@ -435,5 +444,21 @@ describe('Activity Reports model', () => {
     });
 
     expect(r2.sortedTopics).toStrictEqual([]);
+  });
+
+  it('language', async () => {
+    const r = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r.language).toStrictEqual(['Spanish']);
+
+    await r.update({ language: ['English', 'Spanish'] });
+
+    const r2 = await ActivityReport.findOne({
+      where: { id: report.id },
+    });
+
+    expect(r2.language).toStrictEqual(['English', 'Spanish']);
   });
 });

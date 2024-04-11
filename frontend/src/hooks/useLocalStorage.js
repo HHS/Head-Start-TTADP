@@ -1,5 +1,17 @@
 import { useMemo, useState, useEffect } from 'react';
 import { storageAvailable } from './helpers';
+import { HTTPError } from '../fetchers';
+
+export function setConnectionActiveWithError(e, setConnectionActive) {
+  let connection = false;
+  // if we get an "unauthorized" or "not found" responce back from the API, we DON'T
+  // display the "network is unavailable" message
+  if (e instanceof HTTPError && [403, 404].includes(e.status)) {
+    connection = true;
+  }
+  setConnectionActive(connection);
+  return connection;
+}
 
 /**
  * Wraps around useState by saving to local storage as a side effect

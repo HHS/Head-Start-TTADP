@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
-import { useController } from 'react-hook-form/dist/index.ie11';
+import { useController } from 'react-hook-form';
 import _ from 'lodash';
 import useSpellCheck from '../../../../../../hooks/useSpellCheck';
 import { DropdownIndicator, sortSelect, styles } from '../../../../../../components/MultiSelect';
@@ -87,6 +87,7 @@ function ApproverSelect({
       closeMenuOnSelect={false}
       hideSelectedOptions
       placeholder=""
+      required
       isMulti
     />
   );

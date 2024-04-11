@@ -10,6 +10,7 @@ const mockUser = {
   homeRegionId: 1,
   hsesUsername: 'user11184161',
   hsesUserId: 'user11184161',
+  lastLogin: new Date(),
 };
 
 const mockUserTwo = {
@@ -17,6 +18,7 @@ const mockUserTwo = {
   homeRegionId: 1,
   hsesUsername: 'user22261035',
   hsesUserId: 'user22261035',
+  lastLogin: new Date(),
 };
 
 const mockManager = {
@@ -24,6 +26,7 @@ const mockManager = {
   homeRegionId: 1,
   hsesUsername: 'user22284981',
   hsesUserId: 'user22284981',
+  lastLogin: new Date(),
 };
 
 const secondMockManager = {
@@ -31,6 +34,7 @@ const secondMockManager = {
   homeRegionId: 1,
   hsesUsername: 'user33384616',
   hsesUserId: 'user33384616',
+  lastLogin: new Date(),
 };
 
 const submittedReport = {
@@ -49,6 +53,7 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  version: 2,
 };
 
 const draftReport = {
@@ -104,7 +109,7 @@ describe('activityReportApprovers services', () => {
             userId: secondMockManager.id,
           });
           expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
-          expect(approver.User).toBeDefined();
+          expect(approver.user).toBeDefined();
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();

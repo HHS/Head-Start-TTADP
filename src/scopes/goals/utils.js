@@ -2,6 +2,14 @@
 import { sequelize } from '../../models';
 import { filterAssociation as filter } from '../utils';
 
+export function selectDistinctActivityReportGoalIds(join, having) {
+  return `SELECT DISTINCT "ActivityReportGoals"."goalId"
+FROM "ActivityReportGoals"
+${join}
+GROUP BY "ActivityReportGoals"."goalId"
+HAVING ${having}`;
+}
+
 function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = true) {
   if (comparator.toLowerCase() === 'between') {
     const [min, max] = searchTerms;
