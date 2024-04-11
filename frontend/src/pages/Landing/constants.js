@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import {
   regionFilter,
   endDateFilter,
@@ -11,55 +12,47 @@ import {
   specialistRoleFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   otherEntitiesFilter,
   participantsFilter,
   myReportsFilter,
   reportTextFilter,
   ttaTypeFilter,
+  activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
+import { goalNameFilter } from '../../components/filter/goalFilters';
 
 import { groupsFilter } from '../../components/filter/grantFilters';
 
-export const LANDING_BASE_FILTER_CONFIG = [
-  startDateFilter,
-  endDateFilter,
-  grantNumberFilter,
-  groupsFilter,
-  myReportsFilter,
-  otherEntitiesFilter,
-  participantsFilter,
-  programSpecialistFilter,
-  programTypeFilter,
-  reasonsFilter,
-  recipientFilter,
-  reportIdFilter,
-  reportTextFilter,
-  specialistRoleFilter,
-  stateCodeFilter,
-  targetPopulationsFilter,
-  topicsFilter,
-  ttaTypeFilter,
-];
+export const LANDING_FILTER_CONFIG = (withRegions = false) => {
+  const LANDING_BASE_FILTER_CONFIG = [
+    startDateFilter,
+    endDateFilter,
+    activityReportGoalResponseFilter,
+    grantNumberFilter,
+    groupsFilter,
+    goalNameFilter,
+    myReportsFilter,
+    otherEntitiesFilter,
+    participantsFilter,
+    programSpecialistFilter,
+    programTypeFilter,
+    reasonsFilter,
+    recipientFilter,
+    reportIdFilter,
+    reportTextFilter,
+    specialistRoleFilter,
+    singleOrMultiRecipientsFilter,
+    stateCodeFilter,
+    targetPopulationsFilter,
+    topicsFilter,
+    ttaTypeFilter,
+  ];
 
-export const LANDING_FILTER_CONFIG_WITH_REGIONS = [
-  startDateFilter,
-  endDateFilter,
-  grantNumberFilter,
-  groupsFilter,
-  myReportsFilter,
-  otherEntitiesFilter,
-  participantsFilter,
-  programSpecialistFilter,
-  programTypeFilter,
-  reasonsFilter,
-  recipientFilter,
-  regionFilter,
-  reportIdFilter,
-  reportTextFilter,
-  specialistRoleFilter,
-  stateCodeFilter,
-  targetPopulationsFilter,
-  topicsFilter,
-  ttaTypeFilter,
-];
+  if (withRegions) {
+    LANDING_BASE_FILTER_CONFIG.push(regionFilter);
+  }
+
+  return LANDING_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+};

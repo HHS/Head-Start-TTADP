@@ -8,13 +8,18 @@ import {
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
   MY_REPORTS_FILTER_CONDITIONS,
+  SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  SPECIALIST_NAME_CONDITIONS,
+  EMPTY_TEXT_INPUT,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterTopicSelect from './FilterTopicSelect';
+import FilterActivityReportGoalResponseSelect from './FilterActivityReportGoalResponseSelect';
 import FilterPopulationSelect from './FilterPopulationSelect';
+import FilterSingleOrMultiRecipientsSelect, { mapDisplayValue } from './FilterSingleOrMultiRecipientsSelect';
 import FilterProgramType from './FilterProgramType';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import FilterStateSelect from './FilterStateSelect';
@@ -24,6 +29,8 @@ import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
+import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_MULTI_SELECT = {
   is: [],
@@ -38,18 +45,6 @@ const EMPTY_MY_REPORTS_MULTI_SELECT = {
 const EMPTY_SINGLE_SELECT = {
   is: '',
   'is not': '',
-};
-
-const EMPTY_TEXT_INPUT = {
-  contains: '',
-  'does not contain': '',
-};
-
-const handleArrayQuery = (q) => {
-  if (q.length) {
-    return [q].flat().join(', ');
-  }
-  return '';
 };
 
 const handleStringQuery = (q) => q;
@@ -69,9 +64,13 @@ export const startDateFilter = {
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+
+    const smushed = fixQueryWhetherStringOrArray(query);
+
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
@@ -93,9 +92,11 @@ export const endDateFilter = {
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    // we need to handle array vs string case here
+    const smushed = fixQueryWhetherStringOrArray(query);
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
@@ -143,6 +144,38 @@ export const reportTextFilter = {
   ),
 };
 
+export const resourceLinkFilter = {
+  id: 'resourceUrl',
+  display: 'Resource link',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceLink-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource link text"
+    />
+  ),
+};
+
+export const resourceAttachmentFilter = {
+  id: 'resourceAttachment',
+  display: 'Resource attachment',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`resourceAttachment-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter resource attachment file name"
+    />
+  ),
+};
+
 export const otherEntitiesFilter = {
   id: 'otherEntities',
   display: 'Other entities',
@@ -173,6 +206,23 @@ export const programSpecialistFilter = {
     />
   ),
 };
+
+export const specialistNameFilter = {
+  id: 'specialistName',
+  display: 'Specialist name',
+  conditions: SPECIALIST_NAME_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`specialist-name-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a specialist name"
+    />
+  ),
+};
+
 export const programTypeFilter = {
   id: 'programType',
   display: 'Program types',
@@ -314,7 +364,7 @@ export const specialistRoleFilter = {
 
 export const stateCodeFilter = {
   id: 'stateCode',
-  display: 'State',
+  display: 'State or territory',
   conditions: ['contains'],
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
@@ -336,6 +386,23 @@ export const targetPopulationsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterPopulationSelect
       inputId={`population-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const singleOrMultiRecipientsFilter = {
+  id: 'singleOrMultiRecipients',
+  display: 'Number of recipients',
+  conditions: SINGLE_OR_MULTI_RECIPIENT_CONDITIONS,
+  defaultValues: {
+    is: 'single-recipient',
+  },
+  displayQuery: mapDisplayValue,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSingleOrMultiRecipientsSelect
+      inputId={`single-or-multi-recipients-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
@@ -372,12 +439,28 @@ export const topicsFilter = {
   ),
 };
 
+export const activityReportGoalResponseFilter = {
+  id: 'activityReportGoalResponse',
+  display: 'FEI root cause',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterActivityReportGoalResponseSelect
+      inputId={`fei-root-cause-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      title="FEI root cause"
+    />
+  ),
+};
+
 export const groupsFilter = {
   id: 'group',
   display: 'Group',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: useDisplayGroups,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}

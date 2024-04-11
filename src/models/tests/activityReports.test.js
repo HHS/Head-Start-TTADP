@@ -54,6 +54,7 @@ describe('Activity Reports model', () => {
       role: 'Grants Specialist',
       homeRegionId: 1,
     },
+    version: 2,
   };
 
   describe('default scope', () => {

@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# this is a script to refresh the common package
+## before you run this script, make sure you've upped the version number in common/package.json
+
+environment='docker'
+
+help() {
+    echo "Usage: refresh-common [options...]"
+    echo "  -e, --environment       specifies whether to run this in a docker container or in a local environment. Options are docker or local."
+    echo "  -h, --help              show this help text"
+}
+
+# check if common has been changed
+git add \*
+files=$(git diff --cached --name-only)
+git reset -q
+
+package_json_changed=false
+
+if ( IFS=$'\n'; echo "${files[*]}" ) | grep -qFx "packages/common/package.json"; then
+    package_json_changed=true
+fi
+
+if [[ $package_json_changed == false ]]; then
+    echo "No changes to common package.json. Exiting."
+    exit 0
+fi
+
+if [[ $# -lt 2 ]]; then
+    help
+    exit 1
+fi
+
+
+while [ "$1" != "" ]; do
+    case  $1 in
+        --environment | -e)         shift
+                                    if [[ "$1" != "docker" && "$1" != "local" ]]; then
+                                        echo "$1 is not a valid value. Specify 'docker' or 'local'."
+                                        help
+                                        exit 1
+                                    fi
+                                    environment=$1
+                                    ;;
+        --help | -h)                help
+                                    exit 0
+                                    ;;
+        *)                          help
+                                    exit 1
+                                    ;;
+    esac
+    shift
+done
+
+cmd="yarn docker:deps"
+
+if [[ $environment == "local" ]]; then
+    cmd="yarn deps"
+fi
+
+echo 'Removing common from frontend and backend'
+yarn remove @ttahub/common
+cd frontend && yarn remove @ttahub/common
+
+echo 'Reverting package.json changes'
+git restore package.json
+cd ..
+git restore package.json
+
+echo 'Reinstalling common'
+$cmd

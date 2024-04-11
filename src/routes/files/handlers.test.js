@@ -21,7 +21,9 @@ import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
+import * as s3Queue from '../../services/s3Queue';
 
+jest.mock('bull');
 jest.mock('../../policies/activityReport');
 jest.mock('../../policies/user');
 jest.mock('../../policies/objective');
@@ -36,18 +38,21 @@ const ORIGINAL_ENV = process.env;
 
 jest.mock('../../lib/s3');
 jest.mock('../../lib/queue');
+jest.mock('../../services/s3Queue');
 
 const mockUser = {
   id: 2046,
   hsesUserId: '2046',
   hsesUsername: '2046',
   homeRegionId: 1,
+  lastLogin: new Date(),
 };
 
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
 
 const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
+jest.spyOn(s3Queue, 'addDeleteFileToQueue').mockImplementation(() => jest.fn());
 
 const reportObject = {
   activityRecipientType: 'recipient',
@@ -56,6 +61,7 @@ const reportObject = {
   lastUpdatedById: mockUser.id,
   resourcesUsed: 'test',
   regionId: 1,
+  version: 2,
 };
 
 const mockGrant = {
@@ -168,10 +174,11 @@ describe('File Upload', () => {
             objective.dataValues.id, secondTestObjective.dataValues.id,
           ],
         },
+        force: true,
       },
     );
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
     process.env = ORIGINAL_ENV; // restore original env
@@ -190,6 +197,7 @@ describe('File Upload', () => {
     it('tests a file upload', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
       const response = await request(app)
@@ -217,6 +225,7 @@ describe('File Upload', () => {
     it('allows an admin to upload a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => false,
+        reportHasEditableStatus: () => true,
       }));
       validateUserAuthForAdmin.mockResolvedValue(true);
       uploadFile.mockResolvedValue({ key: 'key' });
@@ -243,9 +252,25 @@ describe('File Upload', () => {
       expect(arf.activityReportId).toBe(report.dataValues.id);
       expect(validate(uuid)).toBe(true);
     });
+    it('disallows an admin to upload a file if the status is not editable', async () => {
+      ActivityReportPolicy.mockImplementation(() => ({
+        canUpdate: () => false,
+        reportHasEditableStatus: () => false,
+      }));
+      validateUserAuthForAdmin.mockResolvedValue(true);
+      uploadFile.mockResolvedValue({ key: 'key' });
+      const response = await request(app)
+        .post('/api/files')
+        .field('reportId', report.dataValues.id)
+        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
+        .expect(403);
+      fileId = response.body.id;
+      expect(uploadFile).not.toHaveBeenCalled();
+    });
     it('tests an unauthorized delete', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => false,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .delete(`/api/files/r/${report.dataValues.id}/1`)
@@ -255,6 +280,7 @@ describe('File Upload', () => {
     it('tests an improper delete', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .delete(`/api/files/r/${report.dataValues.id}/`)
@@ -264,6 +290,7 @@ describe('File Upload', () => {
     it('deletes a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => false,
       }));
       const file = await File.create({
         activityReportId: report.dataValues.id,
@@ -378,16 +405,18 @@ describe('File Upload', () => {
     it('tests a file upload without a report id', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, or objectiveTempleteId is required' });
+        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
       await expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .post('/api/files')
@@ -399,6 +428,7 @@ describe('File Upload', () => {
       validateUserAuthForAdmin.mockResolvedValue(false);
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => false,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .post('/api/files')
@@ -426,6 +456,7 @@ describe('File Upload', () => {
     it('tests an incorrect file type', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
       await request(app)
@@ -442,6 +473,7 @@ describe('File Upload', () => {
       mockAddToScanQueue.mockImplementationOnce(() => Promise.reject());
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
       await request(app)
@@ -461,6 +493,7 @@ describe('File Upload', () => {
       uploadFile.mockImplementationOnce(() => Promise.reject());
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
+        reportHasEditableStatus: () => true,
       }));
       await request(app)
         .post('/api/files')

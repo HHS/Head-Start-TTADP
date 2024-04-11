@@ -1,4 +1,5 @@
 import { S3 } from 'aws-sdk';
+import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
   // take configuration from cloud.gov if it is available. If not, use env variables.
@@ -37,6 +38,20 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
     Key: key,
   };
   return s3Client.deleteObject(params).promise();
+};
+
+const deleteFileFromS3Job = async (job) => {
+  const {
+    fileId, fileKey, bucket,
+  } = job.data;
+  let res;
+  try {
+    res = await deleteFileFromS3(fileKey, bucket);
+    return ({ status: 200, data: { fileId, fileKey, res } });
+  } catch (error) {
+    auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
+    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
+  }
 };
 
 const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
@@ -104,4 +119,5 @@ export {
   generateS3Config,
   verifyVersioning,
   deleteFileFromS3,
+  deleteFileFromS3Job,
 };

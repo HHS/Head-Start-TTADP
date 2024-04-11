@@ -27,6 +27,7 @@ const mockUser = {
   hsesUsername: 'JS321423',
   hsesUserId: 'JS321423',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -46,6 +47,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {
@@ -198,6 +200,7 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
 
       // Delete Goal.
@@ -205,12 +208,13 @@ describe('Collect and Map AWS Elasticsearch data', () => {
         where: {
           grantId: grant.id,
         },
+        force: true,
       });
       // Delete Report's.
       await ActivityReport.destroy({ where: { id: reportOne.id } });
 
       // Delete Grant.
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
 
       // Delete Recipient.
       await Recipient.destroy({ where: { id: recipient.id } });

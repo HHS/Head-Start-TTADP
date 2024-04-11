@@ -1,6 +1,8 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { propagateDestroyToFile } from './genericFile';
 
+const { cleanupOrphanFiles } = require('../helpers/orphanCleanupHelper');
+
 const checkForUseOnApprovedReport = async (sequelize, instance, options) => {
   const activityReport = await sequelize.models.ActivityReport.findOne({
     where: { id: instance.activityReportId },
@@ -17,6 +19,7 @@ const beforeDestroy = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToFile(sequelize, instance, options);
+  await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
 export {

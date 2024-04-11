@@ -1,5 +1,11 @@
 import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS } from '../../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { validateChangedOrSetEnums } from '../helpers/enum';
+import { skipIf } from '../helpers/flowControl';
+import {
+  currentUserPopulateCollaboratorForType,
+} from '../helpers/genericCollaborator';
 
 const findOrCreateObjectiveTemplate = async (
   sequelize,
@@ -268,6 +274,73 @@ const propagateMetadataToTemplate = async (sequelize, instance, options) => {
   }
 };
 
+const autoPopulateCreator = async (sequelize, instance, options) => {
+  if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
+  const { id: goalId } = instance;
+  return currentUserPopulateCollaboratorForType(
+    'objective',
+    sequelize,
+    options.transaction,
+    goalId,
+    OBJECTIVE_COLLABORATORS.CREATOR,
+  );
+};
+
+const autoPopulateEditor = async (sequelize, instance, options) => {
+  const { id: goalId } = instance;
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('title')
+    && instance.previous('title') !== instance.title) {
+    return currentUserPopulateCollaboratorForType(
+      'objective',
+      sequelize,
+      options.transaction,
+      goalId,
+      OBJECTIVE_COLLABORATORS.EDITOR,
+    );
+  }
+  return Promise.resolve();
+};
+
+const propagateSupportTypeToActivityReportObjective = async (sequelize, instance, options) => {
+  const { id: objectiveId, supportType } = instance;
+  // no support type? get outta here
+  if (!supportType) return;
+
+  // find all activity report objectives that are not the same support type
+  // and are not on an approved or deleted activity report
+  const activityReportObjectives = await sequelize.models.ActivityReportObjective.findAll({
+    where: {
+      objectiveId,
+      supportType: {
+        [Op.not]: supportType,
+      },
+    },
+    include: [
+      {
+        model: sequelize.models.ActivityReport,
+        as: 'activityReport',
+        where: {
+          calculatedStatus: {
+            [Op.notIn]: [
+              REPORT_STATUSES.APPROVED,
+              REPORT_STATUSES.DELETED,
+            ],
+          },
+        },
+        required: true,
+      },
+    ],
+    transaction: options.transaction,
+  });
+  await Promise.all(activityReportObjectives.map(async (aro) => aro.update({
+    supportType,
+  }, {
+    transaction: options.transaction,
+  })));
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -277,6 +350,7 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
+  validateChangedOrSetEnums(sequelize, instance);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
@@ -289,10 +363,13 @@ const afterUpdate = async (sequelize, instance, options) => {
   await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateEditor(sequelize, instance, options);
+  await propagateSupportTypeToActivityReportObjective(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await propogateStatusToParentGoal(sequelize, instance, options);
+  await autoPopulateCreator(sequelize, instance, options);
 };
 
 export {

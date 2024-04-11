@@ -1,6 +1,6 @@
 const { Model } = require('sequelize');
 const { SOURCE_FIELD } = require('../constants');
-// const { auditLogger } = require('../logger');
+const { afterDestroy } = require('./hooks/nextStepResource');
 
 export default (sequelize, DataTypes) => {
   class ObjectiveTemplateResource extends Model {
@@ -53,6 +53,9 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ObjectiveTemplateResource',
+    hooks: {
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
+    },
   });
   return ObjectiveTemplateResource;
 };

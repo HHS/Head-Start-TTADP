@@ -16,7 +16,7 @@ export default (sequelize, DataTypes) => {
         references: { model: { tableName: 'Users' }, key: 'id' },
       },
       userSettingId: { type: DataTypes.INTEGER, allowNull: false },
-      value: { type: DataTypes.STRING, allowNull: false },
+      value: { type: DataTypes.JSONB, allowNull: false },
     },
     { sequelize, modelName: 'UserSettingOverrides' },
   );

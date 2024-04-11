@@ -10,7 +10,9 @@ const {
  */
 export default (sequelize, DataTypes) => {
   class RoleTopic extends Model {
-    static associate() {
+    static associate(models) {
+      RoleTopic.belongsTo(models.Role, { foreignKey: 'roleId', onDelete: 'cascade', as: 'role' });
+      RoleTopic.belongsTo(models.Topic, { foreignKey: 'topicId', onDelete: 'cascade', as: 'topic' });
     }
   }
   RoleTopic.init({
@@ -19,6 +21,14 @@ export default (sequelize, DataTypes) => {
       autoIncrement: true,
       primaryKey: true,
       type: DataTypes.INTEGER,
+    },
+    roleId: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    topicId: {
+      type: DataTypes.STRING,
+      allowNull: false,
     },
   }, {
     sequelize,

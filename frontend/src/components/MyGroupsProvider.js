@@ -12,14 +12,17 @@ export default function MyGroupsProvider({ children, authenticated }) {
   const [myGroups, setMyGroups] = useState([]);
 
   useEffect(() => {
-    if (authenticated) {
+    async function fetchMyGroups() {
       try {
-        fetchGroups().then((groups) => {
-          setMyGroups(groups);
-        });
-      } catch (error) {
+        const groups = await fetchGroups();
+        setMyGroups(groups);
+      } catch (e) {
         setMyGroups([]);
       }
+    }
+
+    if (authenticated) {
+      fetchMyGroups();
     }
   }, [authenticated]);
 

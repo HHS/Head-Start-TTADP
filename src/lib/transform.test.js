@@ -16,7 +16,12 @@ import {
   Objective,
   File,
 } from '../models';
-import { activityReportToCsvRecord, makeGoalsAndObjectivesObject, extractListOfGoalsAndObjectives } from './transform';
+import {
+  activityReportToCsvRecord,
+  makeGoalsAndObjectivesObject,
+  extractListOfGoalsAndObjectives,
+  communicationLogToCsvRecord,
+} from './transform';
 
 describe('activityReportToCsvRecord', () => {
   const mockAuthor = {
@@ -185,7 +190,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 3,
-      User: {
+      user: {
         name: 'Test Approver 1',
 
       },
@@ -194,7 +199,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 4,
-      User: {
+      user: {
         name: 'Test Approver 3',
       },
     },
@@ -202,7 +207,7 @@ describe('activityReportToCsvRecord', () => {
       activityReportId: 209914,
       status: 'approved',
       userId: 5,
-      User: {
+      user: {
         name: 'Test Approver 2',
       },
     },
@@ -408,7 +413,7 @@ describe('activityReportToCsvRecord', () => {
         {
           model: ActivityReportApprover,
           as: 'approvers',
-          include: [{ model: User }],
+          include: [{ model: User, as: 'user' }],
         },
 
         {
@@ -435,7 +440,6 @@ describe('activityReportToCsvRecord', () => {
         },
       ],
     });
-
     const output = await activityReportToCsvRecord(report.toJSON());
     const {
       creatorName,
@@ -636,5 +640,75 @@ describe('activityReportToCsvRecord', () => {
     const report = await ActivityReport.build(mockReport, { include: [{ model: User, as: 'author' }, { model: User, as: 'lastUpdatedBy' }] });
     const output = await activityReportToCsvRecord(report, [1, true, 'regionId']);
     expect(output).toMatchObject({ regionId: 14 });
+  });
+});
+
+describe('communicationLogToCsvRecord', () => {
+  const log = {
+    id: 1,
+    author: {
+      name: 'John Doe',
+    },
+    data: {
+      communicationDate: '2021-01-01',
+      duration: 30,
+      method: 'Email',
+      purpose: 'Inquiry',
+      notes: 'Lorem ipsum',
+      result: 'Successful',
+    },
+    files: [
+      { originalFileName: 'file1.txt' },
+      { originalFileName: 'file2.txt' },
+    ],
+    recipientNextSteps: {
+      note: 'Follow up with client',
+    },
+    specialistNextSteps: {
+      note: 'Schedule a meeting',
+    },
+  };
+
+  it('should transform the log into a CSV record', () => {
+    const expectedRecord = {
+      id: 1,
+      author: 'John Doe',
+      communicationDate: '2021-01-01',
+      duration: '30',
+      method: 'Email',
+      purpose: 'Inquiry',
+      notes: 'Lorem ipsum',
+      result: 'Successful',
+      files: 'file1.txt\nfile2.txt',
+      recipientNextSteps: 'Follow up with client',
+      specialistNextSteps: 'Schedule a meeting',
+    };
+
+    expect(communicationLogToCsvRecord(log)).toEqual(expectedRecord);
+  });
+
+  it('should return an empty record if log is empty', () => {
+    const emptyLog = {};
+
+    expect(communicationLogToCsvRecord(emptyLog)).toEqual({});
+  });
+
+  it('should return an empty record if log properties are missing', () => {
+    const incompleteLog = {
+      id: 1,
+      data: {
+        communicationDate: '2021-01-01',
+      },
+    };
+
+    expect(communicationLogToCsvRecord(incompleteLog)).toEqual({
+      communicationDate: '2021-01-01',
+      duration: '',
+      id: 1,
+      method: '',
+      notes: '',
+      purpose: '',
+      result: '',
+    });
   });
 });

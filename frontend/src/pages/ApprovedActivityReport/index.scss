@@ -19,6 +19,13 @@
 }
 
 @media print {
+  .ttahub-activity-report-view {
+    margin-top: 0;
+  }
+  .ttahub-activity-report-view > div.padding-x-5.padding-y-5 {
+    padding-top: 0;
+  }
+
   .smart-hub-offset-nav {
     margin-top: 0 !important;
     margin-right: 0;

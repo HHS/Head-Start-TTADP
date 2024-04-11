@@ -11,6 +11,8 @@ services:
       - test-db
     environment:
       - POSTGRES_HOST=test-db
+    extra_hosts:
+      - "${ITAMS_MD_HOST:-sftp.itams.ohs.acf.hhs.gov}:0.0.0.0"
     volumes:
       - ".:/app:rw"
     networks:

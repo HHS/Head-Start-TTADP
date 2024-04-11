@@ -19,8 +19,8 @@ import {
   resourceDomainList,
   resourcesDashboardOverview,
   resourceUse,
-  resourceTopicUse,
   resourceDashboard,
+  resourceTopicUse,
 } from './resource';
 import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
@@ -39,6 +39,7 @@ const mockUser = {
   name: 'user5426862',
   hsesUsername: 'user5426862',
   hsesUserId: '5426862',
+  lastLogin: new Date(),
 };
 
 const mockRecipient = {
@@ -88,6 +89,7 @@ const reportObject = {
   participants: ['participants'],
   topics: ['Coaching'],
   ttaType: ['technical-assistance'],
+  version: 2,
 };
 
 const regionOneReportA = {
@@ -280,9 +282,9 @@ describe('Resources dashboard', () => {
 
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: GRANT_ID_ONE } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await db.sequelize.close();
@@ -429,6 +431,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '2' },
             { title: 'Total', value: '2' },
@@ -437,6 +440,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://non.test1.gov/a/b/c',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '2' },
             { title: 'Total', value: '2' },
@@ -445,6 +449,7 @@ describe('Resources dashboard', () => {
         {
           heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
           isUrl: true,
+          title: null,
           data: [
             { title: 'Jan-21', value: '1' },
             { title: 'Total', value: '1' },
@@ -487,6 +492,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://eclkc.ohs.acf.hhs.gov/test',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '2' },
               { title: 'Total', value: '2' },
@@ -495,6 +501,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://non.test1.gov/a/b/c',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '2' },
               { title: 'Total', value: '2' },
@@ -503,6 +510,7 @@ describe('Resources dashboard', () => {
           {
             heading: 'https://eclkc.ohs.acf.hhs.gov/test2',
             isUrl: true,
+            title: null,
             data: [
               { title: 'Jan-21', value: '1' },
               { title: 'Total', value: '1' },
@@ -529,6 +537,7 @@ describe('Resources dashboard', () => {
           reportCount: 3,
           recipientCount: 1,
           resourceCount: 2,
+          title: null,
         },
         {
           domain: 'non.test1.gov',
@@ -536,6 +545,7 @@ describe('Resources dashboard', () => {
           reportCount: 2,
           recipientCount: 1,
           resourceCount: 1,
+          title: null,
         },
       ],
     });

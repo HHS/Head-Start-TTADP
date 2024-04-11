@@ -1,29 +1,84 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import {
   Grant,
   Recipient,
+  CollaboratorType,
   Program,
   sequelize,
   Goal,
+  GoalCollaborator,
+  GoalFieldResponse,
+  GoalTemplate,
   ActivityReport,
+  EventReportPilot,
+  SessionReportPilot,
   Objective,
   ActivityRecipient,
   Topic,
   Permission,
+  ProgramPersonnel,
   User,
+  UserRole,
+  Role,
+  ActivityReportCollaborator,
+  ActivityReportApprover,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
   RECIPIENTS_PER_PAGE,
   GOALS_PER_PAGE,
   GOAL_STATUS,
+  CREATION_METHOD,
 } from '../constants';
 import filtersToScopes from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
+import {
+  findOrFailExistingGoal,
+  responsesForComparison,
+} from '../goalServices/helpers';
+
+export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
+  const reports = await ActivityReport.findAll({
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+      },
+      {
+        model: ActivityReportApprover,
+        as: 'approvers',
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        where: {
+          regionId,
+          status: 'Active',
+        },
+        required: true,
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            where: {
+              id: recipientId,
+            },
+            required: true,
+          },
+        ],
+      },
+    ],
+  });
+
+  return uniq([
+    ...reports.map((r) => r.userId),
+    ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
+    ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
+  ]);
+}
 
 /**
  *
@@ -72,12 +127,23 @@ export async function allRecipients() {
         attributes: ['id', 'number', 'regionId'],
         model: Grant,
         as: 'grants',
+        where: {
+          [Op.and]: [
+            { deleted: { [Op.ne]: true } },
+            {
+              endDate: {
+                [Op.gt]: '2020-08-31',
+              },
+            },
+            {
+              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+            },
+          ],
+        },
       },
     ],
   });
 }
-
-const todaysDate = moment().format('MM/DD/yyyy');
 
 export async function recipientById(recipientId, grantScopes) {
   return Recipient.findOne({
@@ -105,15 +171,23 @@ export async function recipientById(recipientId, grantScopes) {
         where: [{
           [Op.and]: [
             { [Op.and]: grantScopes },
+            { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
                 {
                   status: 'Active',
                 },
                 {
-                  endDate: {
-                    [Op.between]: ['2020-09-01', todaysDate],
-                  },
+                  [Op.and]: [
+                    {
+                      endDate: {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
+                    {
+                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                    },
+                  ],
                 },
               ],
             },
@@ -179,6 +253,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
       required: true,
       where: [{
         [Op.and]: [
+          { deleted: { [Op.ne]: true } },
           {
             [Op.and]: { regionId: userRegions },
           },
@@ -189,9 +264,16 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
                 status: 'Active',
               },
               {
-                endDate: {
-                  [Op.between]: ['2020-08-31', todaysDate],
-                },
+                [Op.and]: [
+                  {
+                    endDate: {
+                      [Op.gt]: '2020-08-31',
+                    },
+                  },
+                  {
+                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                  },
+                ],
               },
             ],
           },
@@ -220,6 +302,36 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
 }
 
 /**
+ * Some of the topics on an objective
+ * are strings (those from old activity reports)
+ * and some are objects (retrieved from the ObjectiveTopics linkage)
+ *
+ * In addition to this complication, because we have to deduplicate objectives within a goal,
+ * we can iterate over an objective multiple times. This makes deduplicating and formatting
+ * the topics a little tricky to do on demand (i.e. when the topics are added to the objective)
+ *
+ * So instead, we depuplicating once after the objectives have been reduced, and accounting for
+ * the differing formats then
+ */
+function reduceTopicsOfDifferingType(topics) {
+  const newTopics = uniq(topics.map((topic) => {
+    if (typeof topic === 'string') {
+      return topic;
+    }
+
+    if (topic.name) {
+      return topic.name;
+    }
+
+    return topic;
+  }));
+
+  newTopics.sort();
+
+  return newTopics;
+}
+
+/**
  *
  * @param {Object} currentModel
  * Current goal model we are working on
@@ -227,13 +339,19 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
  * a goal, either an pre built one or one we are building on the fly as we reduce goals
  * @param {String[]} grantNumbers
  * passed into here to avoid having to refigure anything else, they come from the goal
+ * @param {Object[]} sessionObjectives
+ * a bespoke data collection from the goal->eventReportPilots->sessionReports
  * @returns {Object[]} sorted objectives
  */
-function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
+export function reduceObjectivesForRecipientRecord(
+  currentModel,
+  goal,
+  grantNumbers,
+
+) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
-
   const {
     objectives,
     topics,
@@ -242,31 +360,44 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
     ...(currentModel.objectives || []),
     ...(goal.objectives || [])]
     .reduce((acc, objective) => {
-    // this secondary reduction is to extract what we need from the activity reports
-    // ( topic, reason, latest endDate)
-      const { t, r, endDate } = (objective.activityReports || []).reduce((a, report) => ({
-        t: [...a.t, ...report.topics],
-        r: [...a.r, ...report.reason],
-        endDate: new Date(report.endDate) < new Date(a.endDate) ? a.endDate : report.endDate,
-      }), { t: [], r: [], endDate: '' });
+      // we grab the support types from the activity report objectives,
+      // filtering out empty strings
+      const { supportType } = objective;
 
-      // previous added objectives have a regularly accessible attribute, the others
-      // for some reason need to be accessed by the getDataValue method
-      const objectiveTitle = objective.getDataValue ? objective.getDataValue('title') : objective.title;
-      const objectiveStatus = objective.getDataValue ? objective.getDataValue('status') : objective.status;
+      // this secondary reduction is to extract what we need from the activity reports
+      // ( topic, reason, latest endDate)
+      const {
+        reportTopics,
+        reportReasons,
+        endDate,
+      } = (objective.activityReports || []).reduce((accumulated, currentReport) => ({
+        reportTopics: [...accumulated.reportTopics, ...currentReport.topics],
+        reportReasons: [...accumulated.reportReasons, ...currentReport.reason],
+        // eslint-disable-next-line max-len
+        endDate: new Date(currentReport.endDate) < new Date(accumulated.endDate) ? accumulated.endDate : currentReport.endDate,
+      }), { reportTopics: [], reportReasons: [], endDate: '' });
 
-      const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle.trim() && o.status === objectiveStatus
-      ));
+      const objectiveTitle = objective.title.trim();
+      const objectiveStatus = objective.status;
 
       // get our objective topics
-      const objectiveTopics = (objective.topics || []).map((ot) => ot.name);
+
+      const objectiveTopics = (objective.topics || []);
+
+      const existing = acc.objectives.find((o) => (
+        o.title === objectiveTitle
+        && o.status === objectiveStatus
+        && o.supportType === supportType
+      ));
 
       if (existing) {
         existing.activityReports = uniqBy([...existing.activityReports, ...objective.activityReports], 'displayId');
-        existing.reasons = uniq([...existing.reasons, ...r]);
+        existing.reasons = uniq([...existing.reasons, ...reportReasons]);
         existing.reasons.sort();
+        existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
+        existing.topics.sort();
         existing.grantNumbers = grantNumbers;
+
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
 
@@ -277,18 +408,24 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
         grantNumberToUse = goal.grantNumbers[indexOfGoal];
       }
 
+      const formattedObjective = {
+        title: objective.title.trim(),
+        endDate,
+        status: objectiveStatus,
+        grantNumbers: [grantNumberToUse],
+        reasons: uniq(reportReasons),
+        activityReports: objective.activityReports || [],
+        topics: [...reportTopics, ...objectiveTopics],
+        supportType: supportType || null,
+      };
+
+      formattedObjective.topics.sort();
+      formattedObjective.reasons.sort();
+
       return {
-        objectives: [...acc.objectives, {
-          ...objective.dataValues,
-          title: objective.title.trim(),
-          endDate,
-          status: objectiveStatus,
-          grantNumbers: [grantNumberToUse],
-          reasons: uniq(r),
-          activityReports: objective.activityReports || [],
-        }],
-        reasons: [...acc.reasons, ...r].sort(),
-        topics: [...acc.topics, ...t, ...objectiveTopics],
+        objectives: [...acc.objectives, formattedObjective],
+        reasons: [...acc.reasons, ...reportReasons],
+        topics: reduceTopicsOfDifferingType([...acc.topics, ...reportTopics, ...objectiveTopics]),
       };
     }, {
       objectives: [],
@@ -297,13 +434,17 @@ function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
     });
 
   const current = goal;
-  current.goalTopics = uniq([...goal.goalTopics, ...topics]);
+  current.goalTopics = reduceTopicsOfDifferingType([...goal.goalTopics, ...topics]);
   current.goalTopics.sort();
 
   current.reasons = uniq([...goal.reasons, ...reasons]);
   current.reasons.sort();
 
-  return objectives.sort((a, b) => ((
+  return [...objectives].map((obj) => {
+    // eslint-disable-next-line no-param-reassign
+    obj.topics = reduceTopicsOfDifferingType(obj.topics);
+    return obj;
+  }).sort((a, b) => ((
     a.endDate === b.endDate ? a.id < b.id
       : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
@@ -356,18 +497,46 @@ export async function getGoalsByActivityRecipient(
     [Op.or]: [
       { onApprovedAR: true },
       { isFromSmartsheetTtaPlan: true },
-      { createdVia: 'rtr' },
+      { createdVia: ['rtr', 'admin', 'merge'] },
+      { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
+      {
+        createdVia: ['tr'],
+        status: {
+          [Op.not]: 'Draft',
+        },
+      },
     ],
     [Op.and]: scopes,
   };
 
   // If we have specified goals only retrieve those else all for recipient.
-  if (goalIds && goalIds.length) {
+  if (sortBy !== 'mergedGoals' && goalIds && goalIds.length) {
     goalWhere = {
       id: goalIds,
       ...goalWhere,
     };
   }
+
+  // goal IDS can be a string or an array of strings
+  // or undefined
+  // we also want at least one value here
+  // so SQL doesn't have one of it's little meltdowns
+  const sanitizedIds = [
+    0,
+    ...(() => {
+      if (!goalIds) {
+        return [];
+      }
+
+      if (Array.isArray(goalIds)) {
+        return goalIds;
+      }
+
+      return [goalIds];
+    })(),
+  ].map((id) => parseInt(id, DECIMAL_BASE))
+    .filter((id) => !Number.isNaN(id))
+    .join(',');
 
   // Get Goals.
   const rows = await Goal.findAll({
@@ -376,14 +545,90 @@ export async function getGoalsByActivityRecipient(
       'name',
       'status',
       'createdAt',
+      'createdVia',
       'goalNumber',
       'previousStatus',
       'onApprovedAR',
+      'onAR',
       'isRttapa',
-      [sequelize.literal('CASE WHEN COALESCE("Goal"."status",\'\')  = \'\' OR "Goal"."status" = \'Needs Status\' THEN 1 WHEN "Goal"."status" = \'Draft\' THEN 2 WHEN "Goal"."status" = \'Not Started\' THEN 3 WHEN "Goal"."status" = \'In Progress\' THEN 4 WHEN "Goal"."status" = \'Closed\' THEN 5 WHEN "Goal"."status" = \'Suspended\' THEN 6 ELSE 7 END'), 'status_sort'],
+      'source',
+      'goalTemplateId',
+      [sequelize.literal(`
+        CASE
+          WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
+          WHEN "Goal"."status" = 'Draft' THEN 2
+          WHEN "Goal"."status" = 'Not Started' THEN 3
+          WHEN "Goal"."status" = 'In Progress' THEN 4
+          WHEN "Goal"."status" = 'Closed' THEN 5
+          WHEN "Goal"."status" = 'Suspended' THEN 6
+          ELSE 7 END`),
+      'status_sort'],
+      [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        attributes: ['id'],
+        required: false,
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorType',
+            where: {
+              name: 'Creator',
+            },
+            attributes: ['name'],
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name'],
+            required: true,
+            include: [
+              {
+                model: UserRole,
+                as: 'userRoles',
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                    attributes: ['name'],
+                  },
+                ],
+                attributes: ['id'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: EventReportPilot,
+        as: 'eventReportPilots',
+        required: false,
+        attributes: ['id'],
+        include: [
+          {
+            model: SessionReportPilot,
+            as: 'sessionReports',
+            attributes: ['id', 'data'],
+            required: false,
+          },
+        ],
+      },
+      {
+        model: GoalFieldResponse,
+        as: 'responses',
+        required: false,
+        attributes: ['response', 'goalId'],
+      },
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['creationMethod', 'id'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -402,6 +647,7 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
+          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -451,7 +697,7 @@ export async function getGoalsByActivityRecipient(
         ],
       },
     ],
-    order: orderGoalsBy(sortBy, sortDir),
+    order: orderGoalsBy(sortBy, sortDir, goalIds),
   });
 
   let sorted = rows;
@@ -478,14 +724,62 @@ export async function getGoalsByActivityRecipient(
 
   const allGoalIds = [];
 
+  function getGoalCollaboratorDetails(collabType, dataValues) {
+    // eslint-disable-next-line max-len
+    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    return {
+      [`goal${collabType}`]: collaborator,
+      [`goal${collabType}Name`]: collaborator?.user?.name,
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+    };
+  }
+
+  function createCollaborators(goal) {
+    return [
+      {
+        goalNumber: goal.goalNumber,
+        ...getGoalCollaboratorDetails('Creator', goal),
+        ...getGoalCollaboratorDetails('Linker', goal),
+      },
+    ];
+  }
+
+  sorted = sorted.map((goal) => {
+    if (goal.goalCollaborators.length === 0) return goal;
+
+    // eslint-disable-next-line no-param-reassign
+    goal.collaborators = createCollaborators(goal);
+
+    return goal;
+  });
+
   const r = sorted.reduce((previous, current) => {
-    const existingGoal = previous.goalRows.find(
-      (g) => g.goalStatus === current.status
-        && g.goalText.trim() === current.name.trim()
-        && g.isRttapa === current.isRttapa,
-    );
+    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
     allGoalIds.push(current.id);
+
+    const sessionObjectives = current.eventReportPilots
+    // shape the session objective, mold it into a form that
+    // satisfies the frontend's needs
+      .map((erp) => erp.sessionReports.map((sr) => {
+        if (!sr.data.objective) {
+          return null;
+        }
+
+        return {
+          type: 'session',
+          title: sr.data.objective,
+          topics: sr.data.objectiveTopics || [],
+          grantNumbers: [current.grant.number],
+          endDate: sr.data.endDate,
+          sessionName: sr.data.sessionName,
+          trainingReportId: sr.data.eventDisplayId,
+        };
+        // filter out nulls, and flatten the array
+      }).filter((sr) => sr)).flat();
+
+    const isCurated = current.goalTemplate
+      && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
@@ -496,7 +790,17 @@ export async function getGoalsByActivityRecipient(
         existingGoal,
         existingGoal.grantNumbers,
       );
-      existingGoal.objectiveCount = existingGoal.objectives.length;
+      existingGoal.sessionObjectives = [...existingGoal.sessionObjectives, ...sessionObjectives];
+      existingGoal.objectiveCount = existingGoal.objectives.length
+        + existingGoal.sessionObjectives.length;
+      existingGoal.isCurated = isCurated || existingGoal.isCurated;
+      existingGoal.collaborators = existingGoal.collaborators || [];
+      existingGoal.collaborators = uniqBy([
+        ...existingGoal.collaborators,
+        ...createCollaborators(current),
+      ], 'goalCreatorName');
+
+      existingGoal.onAR = existingGoal.onAR || current.onAR;
       return {
         goalRows: previous.goalRows,
       };
@@ -512,18 +816,29 @@ export async function getGoalsByActivityRecipient(
       objectiveCount: 0,
       goalTopics: [],
       reasons: [],
+      source: current.source,
       previousStatus: calculatePreviousStatus(current),
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
+      responsesForComparison: responsesForComparison(current),
+      isCurated,
+      createdVia: current.createdVia,
+      collaborators: [],
+      onAR: current.onAR,
+      sessionObjectives: [],
     };
+
+    goalToAdd.collaborators.push(...createCollaborators(current));
 
     goalToAdd.objectives = reduceObjectivesForRecipientRecord(
       current,
       goalToAdd,
       [current.grant.number],
     );
-    goalToAdd.objectiveCount = goalToAdd.objectives.length;
+
+    goalToAdd.sessionObjectives = sessionObjectives;
+    goalToAdd.objectiveCount = goalToAdd.objectives.length + goalToAdd.sessionObjectives.length;
 
     return {
       goalRows: [...previous.goalRows, goalToAdd],
@@ -553,4 +868,43 @@ export async function getGoalsByActivityRecipient(
     statuses,
     allGoalIds,
   };
+}
+
+export async function recipientLeadership(recipientId, regionId) {
+  return ProgramPersonnel.findAll({
+    attributes: [
+      'grantId',
+      'firstName',
+      'lastName',
+      'email',
+      'effectiveDate',
+      'role',
+      // our virtual columns, which is why we fetch so much cruft above
+      'fullName',
+      'fullRole',
+      'nameAndRole',
+    ],
+    where: {
+      active: true,
+      role: ['director', 'cfo'],
+    },
+    include: [
+      {
+        required: true,
+        model: Grant,
+        as: 'grant',
+        attributes: ['recipientId', 'id', 'regionId'],
+        where: {
+          recipientId,
+          regionId,
+          status: 'Active',
+        },
+      },
+      {
+        required: true,
+        model: Program,
+        as: 'program',
+      },
+    ],
+  });
 }

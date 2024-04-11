@@ -8,7 +8,10 @@ import Select from 'react-select';
 import selectOptionsReset from '../selectOptionsReset';
 import UnusedData from './UnusedData';
 import Drawer from '../Drawer';
-import TopicsInfoList from './TopicsInfoList';
+import Req from '../Req';
+import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import './ObjectiveTopics.scss';
+import DrawerTriggerButton from '../DrawerTriggerButton';
 
 export default function ObjectiveTopics({
   error,
@@ -61,7 +64,13 @@ export default function ObjectiveTopics({
   }, { editableTopics: [], fixedTopics: [] });
 
   const savedTopicIds = fixedTopics ? fixedTopics.map(({ value }) => value) : [];
+
+  topicOptions.sort((a, b) => a.name.localeCompare(b.name));
   const filteredOptions = topicOptions.filter((option) => !savedTopicIds.includes(option.id));
+  const onTopicsChange = (newTopics) => {
+    // We need to combine the new and fixed topics.
+    onChangeTopics([...newTopics, ...fixedTopics]);
+  };
 
   return (
     <>
@@ -81,19 +90,24 @@ export default function ObjectiveTopics({
         stickyFooter
         title="Topic guidance"
       >
-        <TopicsInfoList />
+        <ContentFromFeedByTag className="ttahub-drawer--objective-topics-guidance" tagName="ttahub-topic" contentSelector="table" />
       </Drawer>
       <FormGroup error={error.props.children}>
-        <Label htmlFor={inputName}>
-          <>
-            Topics
-            {' '}
-            <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-          </>
-        </Label>
+        <div className="display-flex">
+          <Label htmlFor={inputName}>
+            <>
+              Topics
+              {' '}
+              <Req />
+            </>
+          </Label>
+          <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+            Get help choosing topics
+          </DrawerTriggerButton>
+        </div>
         {error}
         <Select
-          objectiveTopicsInputName={inputName}
+          inputName={inputName}
           inputId={inputName}
           name={inputName}
           styles={selectOptionsReset}
@@ -105,11 +119,12 @@ export default function ObjectiveTopics({
           options={filteredOptions}
           onBlur={validateObjectiveTopics}
           value={editableTopics}
-          onChange={onChangeTopics}
+          onChange={onTopicsChange}
           closeMenuOnSelect={false}
           isDisabled={isLoading}
           getOptionLabel={(option) => option.name}
           getOptionValue={(option) => option.id}
+          required
         />
       </FormGroup>
     </>

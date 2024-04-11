@@ -1,5 +1,6 @@
 import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { uniq } from 'lodash';
 import {
   ActivityReport,
   ActivityReportObjective,
@@ -8,6 +9,7 @@ import {
   Topic,
   sequelize,
 } from '../models';
+import { scopeToWhere } from '../scopes/utils';
 
 const getTopicMappings = async () => sequelize.query(`
 SELECT
@@ -36,7 +38,7 @@ export async function topicFrequencyGraph(scopes) {
       attributes: [
         [
           sequelize.literal(`(
-            SELECT ARRAY_REMOVE(ARRAY_AGG(x.topic), null)
+            SELECT ARRAY_REMOVE(ARRAY_AGG(DISTINCT x.topic), null)
             FROM (
               SELECT ar.topic
               FROM UNNEST(COALESCE("ActivityReport"."topics",array[]::varchar[])) ar(topic)
@@ -86,10 +88,10 @@ export async function topicFrequencyGraph(scopes) {
 
   return topicsAndParticipants.reduce((acc, report) => {
     // Get array of all topics from this reports and this reports objectives.
-    const allTopics = report.topics.map((t) => lookUpTopic.get(t));
+    const allTopics = uniq(report.topics).map((t) => lookUpTopic.get(t));
 
     // Loop all topics array and update totals.
-    allTopics.forEach((topic) => {
+    allTopics?.forEach((topic) => {
       const topicIndex = acc.findIndex((t) => t.topic === topic);
       if (topicIndex !== -1) {
         acc[topicIndex].count += 1;
@@ -101,6 +103,8 @@ export async function topicFrequencyGraph(scopes) {
 }
 
 export async function topicFrequencyGraphViaGoals(scopes) {
+  const activityReportWhere = await scopeToWhere(ActivityReport, 'art', scopes.activityReport);
+
   const [
     topicsAndParticipants,
     topicMappings,
@@ -119,17 +123,26 @@ export async function topicFrequencyGraphViaGoals(scopes) {
                 JOIN "ActivityReports" art
                 ON ars.id = art.id
                 CROSS JOIN UNNEST(COALESCE("art"."topics",array[]::varchar[])) ar(topic)
+                WHERE ${activityReportWhere}
                 UNION ALL
                 SELECT
-                  aro.topic,
-                  ars.id "activityReportId"
-                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives->topics".name)) aro(topic)
-                CROSS JOIN UNNEST(ARRAY_AGG("objectives->activityReportObjectives->activityReport".id)) ars(id)
+                  t.name topic,
+                  aro."activityReportId" "activityReportId"
+                FROM UNNEST(ARRAY_AGG("objectives->activityReportObjectives".id)) aros(id)
+                JOIN "ActivityReportObjectives" aro
+                ON aros.id = aro.id
+                JOIN "ActivityReportObjectiveTopics" arot
+                ON aro.id = arot."activityReportObjectiveId"
+                JOIN "Topics" t
+                ON arot."topicId" = t.id
+                JOIN "ActivityReports" art
+                ON aro."activityReportId" = art.id
+                WHERE ${activityReportWhere}
               ),
               "all_topics_with_report_array" AS (
                 SELECT
                   topic,
-                  ARRAY_AGG("activityReportId") "reportIds"
+                  ARRAY_AGG(DISTINCT "activityReportId") "reportIds"
                 FROM all_topics_with_reports atwr
                 GROUP BY topic
               )
@@ -191,25 +204,19 @@ export async function topicFrequencyGraphViaGoals(scopes) {
   // Get all DB topics.
   const topicsResponse = dbTopics.map((topic) => ({
     topic: topic.name,
-    count: 0,
+    reportIds: new Set(),
   }));
 
-  return topicsAndParticipants
-    .reduce((acc, goal) => {
-      // Get array of all topics from this goal's objectives and the reports the objectives
-      // where use on.
-      const allTopics = goal
-        .get('topics')
-        .map(({ topic, reportIds }) => ({ topic: lookUpTopic.get(topic), reportIds }));
+  topicsAndParticipants?.forEach((goalData) => {
+    goalData
+      .get('topics')?.forEach(({ topic, reportIds }) => {
+        const topicResponce = topicsResponse
+          .find((t) => t.topic === lookUpTopic.get(topic));
 
-      // Loop all topics array and update totals.
-      allTopics.forEach(({ topic, reportIds }) => {
-        const topicIndex = acc.findIndex((t) => t.topic === topic);
-        if (topicIndex !== -1) {
-          acc[topicIndex].count += reportIds.length;
-        }
+        reportIds?.forEach((id) => topicResponce.reportIds.add(id));
       });
+  });
 
-      return acc;
-    }, topicsResponse);
+  return topicsResponse
+    .map(({ topic, reportIds }) => ({ topic, count: reportIds.size }));
 }

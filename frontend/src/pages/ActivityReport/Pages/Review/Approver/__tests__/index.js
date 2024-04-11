@@ -7,7 +7,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
 import Approver from '../index';
@@ -24,7 +24,7 @@ const user = {
 };
 
 const defaultApprover = [{
-  id: 1, status: null, note: '', User: { id: 1, fullName: 'name' },
+  id: 1, status: null, note: '', user: { id: 1, fullName: 'name' },
 }];
 
 const defaultPages = [{
@@ -56,6 +56,7 @@ const RenderApprover = ({
         formData={formData}
         isPendingApprover
         pages={pages}
+        availableApprovers={[{ id: 1, name: 'Approver 1' }]}
       >
         <div>
           test
@@ -145,16 +146,16 @@ describe('Approver review page', () => {
     it('handles approver reviewing needs action', async () => {
       const approverWithNotes = [
         {
-          id: 1, status: REPORT_STATUSES.APPROVED, note: '<p>These are my approved notes 1.</p>\n', User: { id: 1, fullName: 'approver 1' },
+          id: 1, status: REPORT_STATUSES.APPROVED, note: '<p>These are my approved notes 1.</p>\n', user: { id: 1, fullName: 'approver 1' },
         },
         {
-          id: 2, status: REPORT_STATUSES.NEEDS_ACTION, note: '<p>These are my needs action notes 2.</p>\n', User: { id: 2, fullName: 'approver 2' },
+          id: 2, status: REPORT_STATUSES.NEEDS_ACTION, note: '<p>These are my needs action notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
         },
         {
-          id: 3, status: null, note: null, User: { id: 1, fullName: 'approver 3' },
+          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
         },
         {
-          id: 4, status: REPORT_STATUSES.APPROVED, note: null, User: { id: 4, fullName: 'approver 4' },
+          id: 4, status: REPORT_STATUSES.APPROVED, note: null, user: { id: 4, fullName: 'approver 4' },
         },
       ];
 
@@ -167,7 +168,7 @@ describe('Approver review page', () => {
       expect(await screen.findByText(/no creator notes/i)).toBeVisible();
       expect(await screen.findByText(/these are my approved notes 1\./i)).toBeVisible();
 
-      const statuses = screen.queryAllByLabelText('Choose report status *');
+      const statuses = screen.queryAllByLabelText('Choose approval status *');
       expect(statuses.length).toBe(1);
     });
 
@@ -190,20 +191,18 @@ describe('Approver review page', () => {
     it('shows approver notes', async () => {
       const approverWithNotes = [
         {
-          id: 1, status: null, note: '<p></p>\n', User: { id: 1, fullName: 'approver 1' },
+          id: 1, status: null, note: '<p></p>\n', user: { id: 1, fullName: 'approver 1' },
         },
         {
-          id: 2, status: null, note: '<p>These are my sample notes 2.</p>\n', User: { id: 2, fullName: 'approver 2' },
+          id: 2, status: null, note: '<p>These are my sample notes 2.</p>\n', user: { id: 2, fullName: 'approver 2' },
         },
         {
-          id: 3, status: null, note: null, User: { id: 1, fullName: 'approver 3' },
+          id: 3, status: null, note: null, user: { id: 1, fullName: 'approver 3' },
         },
       ];
       renderReview(REPORT_STATUSES.APPROVED, () => { }, false, approverWithNotes);
       const alert = document.querySelector('.usa-alert');
       expect(alert).not.toBe(null);
-      expect(await screen.findByText(/these are my sample notes 2\./i)).toBeVisible();
-      expect(await screen.findByText(/no creator notes/i)).toBeVisible();
     });
   });
 
@@ -214,7 +213,7 @@ describe('Approver review page', () => {
       const reviewed = false;
       const approvers = [
         {
-          id: 1, status: null, note: '', User: { id: 4, fullName: 'name' },
+          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
         },
       ];
       const pages = defaultPages;
@@ -232,7 +231,7 @@ describe('Approver review page', () => {
       const reviewed = false;
       const approvers = [
         {
-          id: 1, status: null, note: '', User: { id: 4, fullName: 'name' },
+          id: 1, status: null, note: '', user: { id: 4, fullName: 'name' },
         },
       ];
       const pages = defaultPages;
@@ -240,7 +239,7 @@ describe('Approver review page', () => {
         calculatedStatus, onFormReview, reviewed, approvers, pages,
       );
 
-      const statuses = screen.queryAllByLabelText('Choose report status (Required)');
+      const statuses = screen.queryAllByLabelText('Choose approval status (Required)');
       expect(statuses.length).toBe(0);
     });
   });

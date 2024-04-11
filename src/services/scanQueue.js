@@ -1,4 +1,6 @@
-import newQueue from '../lib/queue';
+import newQueue, { increaseListeners } from '../lib/queue';
+import { logger, auditLogger } from '../logger';
+import processFile from '../workers/files';
 
 const scanQueue = newQueue('scan');
 const addToScanQueue = (fileKey) => {
@@ -20,7 +22,26 @@ const addToScanQueue = (fileKey) => {
   );
 };
 
+const onFailedScanQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+const onCompletedScanQueue = (job, result) => {
+  if (result.status === 200) {
+    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+  } else {
+    auditLogger.error(`job ${job.data.key} completed with status ${result.status} and result ${result.data}`);
+  }
+};
+const processScanQueue = () => {
+  // File Scanning
+  scanQueue.on('failed', onFailedScanQueue);
+  scanQueue.on('completed', onCompletedScanQueue);
+  increaseListeners(scanQueue);
+  scanQueue.process((job) => processFile(job.data.key));
+};
+
 export {
   scanQueue,
+  onFailedScanQueue,
+  onCompletedScanQueue,
+  processScanQueue,
 };
 export default addToScanQueue;

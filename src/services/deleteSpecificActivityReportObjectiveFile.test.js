@@ -24,6 +24,7 @@ const mockUser = {
   name: 'user1134265161',
   hsesUsername: 'user1134265161',
   hsesUserId: 'user1134265161',
+  lastLogin: new Date(),
 };
 
 const report = {
@@ -45,6 +46,7 @@ const report = {
   ECLKCResourcesUsed: ['test'],
   objectivesWithoutGoals: [],
   goals: [],
+  version: 2,
 };
 
 describe('deleteSpecificActivityReportObjectiveFile', () => {
@@ -71,6 +73,8 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     number: faker.random.alphaNumeric(5),
     cdi: false,
     regionId: 1,
+    startDate: new Date(),
+    endDate: new Date(),
   };
 
   beforeAll(async () => {
@@ -195,13 +199,14 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     await ActivityReport.destroy({ where: { id: [activityReport1.id, activityReport2.id] } });
 
     // Delete Recipient Obj's
-    await Objective.destroy({ where: { goalId: goal.id } });
+    await Objective.destroy({ where: { goalId: goal.id }, force: true });
 
     // Delete Goal.
     await Goal.destroy({
       where: {
         id: goal.id,
       },
+      force: true,
     });
 
     // Delete Grant.
@@ -209,6 +214,7 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.

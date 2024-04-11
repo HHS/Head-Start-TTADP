@@ -1,6 +1,8 @@
 import { Op } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../constants';
 
+const { cleanupOrphanResources } = require('../helpers/orphanCleanupHelper');
+
 const autoPopulateOnAR = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins
   if (instance.onAR === undefined
@@ -158,6 +160,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToTemplate(sequelize, instance, options);
+  await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
 export {

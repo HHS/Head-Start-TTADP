@@ -9,3 +9,7 @@
 .usa-error-message + .ttahub-resource-repeater input[type="url"] {
     @include mixins.error;
 }
+
+button.ttahub-resource-repeater--remove-resource {
+  margin-top: 0;
+}

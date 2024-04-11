@@ -7,10 +7,10 @@ import db, {
 describe('Goals', () => {
   let grant;
   beforeAll(async () => {
-    grant = await Grant.findOne({
+    grant = await Grant.unscoped().findOne({
       include: [
         {
-          model: Recipient,
+          model: Recipient.unscoped(),
           as: 'recipient',
         },
         {

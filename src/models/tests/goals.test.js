@@ -6,7 +6,7 @@ import db, {
 } from '..';
 import {
   autoPopulateOnApprovedAR,
-  preventNamChangeWhenOnApprovedAR,
+  preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
   // propagateName,
 } from '../hooks/goal';
@@ -33,16 +33,16 @@ describe('Goals', () => {
       grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
     });
     afterAll(async () => {
-      await Goal.destroy({ where: { grantId: grant.id } });
+      await Goal.destroy({ where: { grantId: grant.id }, force: true });
       await GoalTemplate.destroy({ where: { templateName: mockGoal.name } });
-      await Grant.destroy({ where: { id: grant.id } });
+      await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id } });
       await db.sequelize.close();
     });
     it('goalNumber', async () => {
       const goal = await Goal.create({ ...mockGoal, grantId: grant.id });
       expect(goal.goalNumber).toEqual(`G-${goal.id}`);
-      await Goal.destroy({ where: { id: goal.id } });
+      await Goal.destroy({ where: { id: goal.id }, force: true });
     });
   });
   it('autoPopulateOnApprovedAR', async () => {
@@ -75,7 +75,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -83,7 +83,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -91,7 +91,7 @@ describe('Goals', () => {
       changed: () => ['name'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -99,7 +99,7 @@ describe('Goals', () => {
       changed: () => [],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .not.toThrowError(errorMsg);
 
     instance = {
@@ -107,7 +107,7 @@ describe('Goals', () => {
       changed: () => ['name'],
     };
     instance.set = (name, value) => { instance[name] = value; };
-    expect(() => preventNamChangeWhenOnApprovedAR(null, instance))
+    expect(() => preventNameChangeWhenOnApprovedAR(null, instance))
       .toThrowError(errorMsg);
   });
   it('autoPopulateStatusChangeDates', async () => {
@@ -209,13 +209,13 @@ describe('Goals', () => {
     expect(instance.lastClosedAt).toEqual(undefined);
     expect(instance.lastNotStartedAt).toEqual(instance.firstNotStartedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.firstNotStartedAt)))
       .toBeLessThan((Date.parse(instance.lastNotStartedAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.IN_PROGRESS;
     options = { fields: [] };
@@ -226,13 +226,13 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastNotStartedAt)));
     expect(instance.lastInProgressAt).toEqual(instance.firstInProgressAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastInProgressAt)))
       .toBeGreaterThan((Date.parse(instance.firstInProgressAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.SUSPENDED;
     options = { fields: [] };
@@ -243,13 +243,13 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastInProgressAt)));
     expect(instance.lastCeasedSuspendedAt).toEqual(instance.firstCeasedSuspendedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastCeasedSuspendedAt)))
       .toBeGreaterThan((Date.parse(instance.firstCeasedSuspendedAt)));
 
-    await sleep(1000);
+    sleep(1000);
 
     instance.status = GOAL_STATUS.CLOSED;
     options = { fields: [] };
@@ -260,7 +260,7 @@ describe('Goals', () => {
       .toBeGreaterThan((Date.parse(instance.lastCeasedSuspendedAt)));
     expect(instance.lastClosedAt).toEqual(instance.firstClosedAt);
 
-    await sleep(1000);
+    sleep(1000);
     options = { fields: [] };
     autoPopulateStatusChangeDates(null, instance, options);
     expect((Date.parse(instance.lastClosedAt)))

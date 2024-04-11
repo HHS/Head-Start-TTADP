@@ -15,6 +15,7 @@ import Header from './components/Header';
 
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
+import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
@@ -37,7 +38,7 @@ import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
 
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
-import { getNotifications } from './fetchers/notifications';
+import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
 import {
   LOCAL_STORAGE_DATA_KEY,
@@ -46,9 +47,15 @@ import {
 } from './Constants';
 import AppLoadingContext from './AppLoadingContext';
 import MyGroupsProvider from './components/MyGroupsProvider';
+import ScrollToTop from './components/ScrollToTop';
 import Loader from './components/Loader';
 import RegionalGoalDashboard from './pages/RegionalGoalDashboard';
 import NotificationsPage from './pages/Notifications';
+import TrainingReportForm from './pages/TrainingReportForm';
+import Group from './pages/AccountManagement/Group';
+import SessionForm from './pages/SessionForm';
+import ViewTrainingReport from './pages/ViewTrainingReport';
+import useGaUserData from './hooks/useGaUserData';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -67,6 +74,8 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+
+  useGaUserData(user);
 
   useEffect(() => {
     try {
@@ -179,6 +188,8 @@ function App() {
   };
 
   const admin = isAdmin(user);
+  const { flags } = user || {};
+  const hasTrainingReportDashboard = flags && flags.includes('training_reports_dashboard');
 
   const renderAuthenticatedRoutes = () => (
     <>
@@ -244,7 +255,7 @@ function App() {
         />
         <Route
           exact
-          path="/resources-dashboard"
+          path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="resources_dashboard" renderNotFound>
@@ -255,10 +266,62 @@ function App() {
         />
         <Route
           exact
+          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <TrainingReports user={user} match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <ViewTrainingReport match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <TrainingReportForm match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <SessionForm match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <RegionalDashboard user={user} />
+          render={({ match }) => (
+            <AppWrapper
+              padded={!admin && !hasTrainingReportDashboard}
+              authenticated
+              logout={logout}
+              hasAlerts={!!(alert)}
+            >
+              <RegionalDashboard match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/:reportType(training-reports|activity-reports|all-reports)"
+          render={({ match }) => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="training_reports_dashboard" renderNotFound>
+                <RegionalDashboard match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />
@@ -281,6 +344,15 @@ function App() {
         />
         <Route
           exact
+          path="/account/group/:groupId([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <Group match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/regional-goal-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
@@ -290,6 +362,7 @@ function App() {
             </AppWrapper>
           )}
         />
+
         <Route
           exact
           path="/account"
@@ -352,12 +425,13 @@ function App() {
 
   return (
     <>
-      <Helmet titleTemplate="%s - TTA Hub" defaultTitle="TTA Hub">
+      <Helmet titleTemplate="%s | TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
+          <ScrollToTop />
           {authenticated && (
             <>
               <a className="usa-skipnav" href="#main-content">

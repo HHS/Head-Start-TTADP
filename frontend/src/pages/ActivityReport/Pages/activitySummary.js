@@ -2,16 +2,25 @@ import React, {
   useState, useEffect, useRef, useContext,
 } from 'react';
 import PropTypes from 'prop-types';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { isEmpty, isUndefined } from 'lodash';
 import {
-  Fieldset, Radio, Grid, TextInput, Checkbox, Label,
+  Fieldset,
+  Radio,
+  Grid,
+  TextInput,
+  Checkbox,
+  Label,
+  Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
   TARGET_POPULATIONS as targetPopulations,
   REASONS as reasons,
+  DECIMAL_BASE,
+  LANGUAGES,
 } from '@ttahub/common';
 import ReviewPage from './Review/ReviewPage';
 import MultiSelect from '../../../components/MultiSelect';
@@ -22,30 +31,41 @@ import {
 import FormItem from '../../../components/FormItem';
 import { NOT_STARTED } from '../../../components/Navigator/constants';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
-import ConnectionError from './components/ConnectionError';
+import ConnectionError from '../../../components/ConnectionError';
 import NetworkContext from '../../../NetworkContext';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import HtmlReviewItem from './Review/HtmlReviewItem';
 import Section from './Review/ReviewSection';
 import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import './activitySummary.scss';
+import GroupAlert from '../../../components/GroupAlert';
 
 const ActivitySummary = ({
   recipients,
   collaborators,
+  groups,
 }) => {
   // we store this to cause the end date to re-render when updated by the start date (and only then)
   const [endDateKey, setEndDateKey] = useState('endDate');
-
   const {
     register,
     watch,
     setValue,
     control,
     getValues,
+    clearErrors,
   } = useFormContext();
-  const activityRecipientType = watch('activityRecipientType');
 
+  const [useGroup, setUseGroup] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
+  const [groupRecipientIds, setGroupRecipientIds] = useState([]);
+  const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
+
+  const activityRecipientType = watch('activityRecipientType');
+  const watchFormRecipients = watch('activityRecipients');
+  const watchGroup = watch('recipientGroup');
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const pageState = watch('pageState');
@@ -71,16 +91,29 @@ const ActivitySummary = ({
   const otherEntitySelected = activityRecipientType === 'other-entity';
   const selectedRecipients = otherEntitySelected ? otherEntities : grants;
   const previousActivityRecipientType = useRef(activityRecipientType);
-  const recipientLabel = otherEntitySelected ? 'Other entities' : 'Recipient names';
+  const recipientLabel = otherEntitySelected ? 'Other entities ' : 'Recipient names ';
   const participantsLabel = otherEntitySelected ? 'Other entity participants' : 'Recipient participants';
   const participants = otherEntitySelected ? otherEntityParticipants : recipientParticipants;
   const placeholderText = '- Select -';
+
+  const resetGroup = (checkUseGroup = true) => {
+    setValue('recipientGroup', null, { shouldValidate: false });
+    setGroupRecipientIds([]);
+    setValue('activityRecipients', [], { shouldValidate: false });
+    setShowGroupInfo(false);
+    if (checkUseGroup) {
+      setUseGroup(true);
+    }
+  };
 
   useEffect(() => {
     if (previousActivityRecipientType.current !== activityRecipientType
       && previousActivityRecipientType.current !== ''
       && previousActivityRecipientType.current !== null) {
       setValue('activityRecipients', [], { shouldValidate: false });
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
+      setShowGroupInfo(false);
       setValue('participants', [], { shouldValidate: false });
       // Goals and objectives (page 3) has required fields when the recipient
       // type is recipient, so we need to make sure that page is set as "not started"
@@ -92,6 +125,60 @@ const ActivitySummary = ({
     }
     previousActivityRecipientType.current = activityRecipientType;
   }, [activityRecipientType, setValue, pageState]);
+
+  const handleGroupChange = (event) => {
+    const { value: groupId } = event.target;
+    const groupToUse = groups.find((group) => group.id === parseInt(groupId, 10));
+
+    // Get all selectedRecipients the have ids in the recipientIds array.
+    const selectedGroupRecipients = selectedRecipients.reduce((acc, curr) => {
+      const groupRecipients = curr.options.filter(
+        (option) => groupToUse.recipients.includes(parseInt(option.value, DECIMAL_BASE)),
+      );
+      return [...acc, ...groupRecipients];
+    }, []);
+
+    // Set selected recipients.
+    const recipientsToSet = selectedGroupRecipients.map((r) => (
+      { ...r, name: r.label, activityRecipientId: r.value }));
+    setValue('activityRecipients', recipientsToSet, { shouldValidate: true });
+    setGroupRecipientIds(recipientsToSet.map((r) => (r.id)));
+  };
+
+  useDeepCompareEffect(() => {
+    // Get all selected recipients that are NOT in the watchGroup.recipients array.
+    const usedRecipientIds = watchFormRecipients.map((r) => r.id);
+    const selectedRecipientsNotInGroup = usedRecipientIds.filter(
+      (option) => !groupRecipientIds.includes(option),
+    );
+
+    // If the user changes recipients manually while using groups.
+    if (useGroup
+      && watchGroup
+      && (groupRecipientIds.length !== watchFormRecipients.length
+        || selectedRecipientsNotInGroup.length > 0)) {
+      setShowGroupInfo(true);
+      setUseGroup(false);
+      setValue('recipientGroup', null, { shouldValidate: false });
+      setGroupRecipientIds([]);
+    }
+  }, [groupRecipientIds, setValue, useGroup, watchFormRecipients, watchGroup]);
+
+  const setEndDate = (newEnd) => {
+    setValue('endDate', newEnd);
+
+    // this will trigger the re-render of the
+    // uncontrolled end date input
+    // it's a little clumsy, but it does work
+    setEndDateKey(`endDate-${newEnd}`);
+  };
+
+  const toggleUseGroup = (event) => {
+    const { target: { checked = null } = {} } = event;
+    // Reset.
+    resetGroup(false);
+    setUseGroup(checked);
+  };
 
   const renderCheckbox = (name, value, label, requiredMessage) => (
     <Checkbox
@@ -108,22 +195,50 @@ const ActivitySummary = ({
     />
   );
 
-  const setEndDate = (newEnd) => {
-    setValue('endDate', newEnd);
+  useEffect(() => {
+    if (!shouldValidateActivityRecipients) return;
 
-    // this will trigger the re-render of the
-    // uncontrolled end date input
-    // it's a little clumsy, but it does work
-    setEndDateKey(`endDate-${newEnd}`);
-  };
+    if (disableRecipients) {
+      setValue('activityRecipients', [], { shouldValidate: true });
+    } else {
+      clearErrors('activityRecipients');
+    }
+  }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
+
+  const renderRecipients = (marginTop = 2, marginBottom = 0) => (
+    <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
+      {!disableRecipients
+         && !connectionActive
+         && !selectedRecipients.length
+        ? <ConnectionError />
+        : null}
+      <FormItem
+        label={recipientLabel}
+        name="activityRecipients"
+      >
+        <MultiSelect
+          name="activityRecipients"
+          disabled={disableRecipients}
+          control={control}
+          valueProperty="activityRecipientId"
+          labelProperty="name"
+          simple={false}
+          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
+          options={selectedRecipients}
+          placeholderText={placeholderText}
+          onClick={() => setShouldValidateActivityRecipients(true)}
+        />
+      </FormItem>
+    </div>
+  );
 
   return (
     <>
       <Helmet>
-        <title>Activity summary</title>
+        <title>Activity Summary</title>
       </Helmet>
       <IndicatesRequiredField />
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
+      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
         <div id="activity-for" />
         <div className="margin-top-2">
           <FormItem
@@ -150,33 +265,61 @@ const ActivitySummary = ({
             />
           </FormItem>
         </div>
-        <div className="margin-top-2">
-          {!disableRecipients
-          && !connectionActive
-          && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
-          <FormItem
-            label={recipientLabel}
-            name="activityRecipients"
-          >
-            <MultiSelect
-              name="activityRecipients"
-              disabled={disableRecipients}
-              control={control}
-              valueProperty="activityRecipientId"
-              labelProperty="name"
-              simple={false}
-              required="Select at least one"
-              options={selectedRecipients}
-              placeholderText={placeholderText}
-            />
-          </FormItem>
-        </div>
+        {
+        showGroupInfo && (
+          <GroupAlert resetGroup={resetGroup} />
+        )
+        }
+        {
+        !useGroup
+          ? renderRecipients()
+          : (
+            <div className="margin-top-2">
+              <FormItem
+                label="Group name"
+                name="recipientGroup"
+              >
+                <Dropdown
+                  required
+                  control={control}
+                  id="recipientGroup"
+                  name="recipientGroup"
+                  inputRef={register({ required: 'Select a group' })}
+                  onAbort={resetGroup}
+                  onChange={handleGroupChange}
+                >
+                  <option value="" disabled selected hidden>- Select -</option>
+                  {groups.map((group) => (
+                    <option key={group.id} value={group.id}>{group.name}</option>
+                  ))}
+                </Dropdown>
+              </FormItem>
+            </div>
+          )
+        }
+        {
+          activityRecipientType === 'recipient' && !showGroupInfo && groups.length > 0
+           && (
+           <div className="smart-hub-activity-summary-use-group margin-top-1">
+             <Checkbox
+               id="use-group"
+               label="Use group"
+               className="smart-hub--report-checkbox"
+               onChange={toggleUseGroup}
+               checked={useGroup}
+             />
+           </div>
+           )
+        }
+        {
+          activityRecipientType === 'recipient' && useGroup
+            ? renderRecipients(1, 5)
+            : null
+        }
         <div className="margin-top-2">
           {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
           <FormItem
-            label="Collaborating specialists"
+            label="Collaborating specialists "
             name="activityReportCollaborators"
             required={false}
           >
@@ -198,7 +341,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Target populations addressed"
+            label="Target populations addressed "
             name="targetPopulations"
             required
           >
@@ -240,7 +383,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="Reasons"
+            label="Reasons "
             name="reason"
           >
             <MultiSelect
@@ -310,6 +453,7 @@ const ActivitySummary = ({
               <FormItem
                 label="Duration in hours (round to the nearest half hour)"
                 name="duration"
+                required
               >
                 <TextInput
                   id="duration"
@@ -318,6 +462,7 @@ const ActivitySummary = ({
                   min={0}
                   max={99.5}
                   step={0.5}
+                  required
                   inputRef={
                     register({
                       required: 'Enter duration',
@@ -349,6 +494,21 @@ const ActivitySummary = ({
           >
             {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
             {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
+          </FormItem>
+        </div>
+        <div className="margin-top-2">
+          <FormItem
+            label="Language used"
+            name="language"
+            required
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
+              required="Select at least one"
+              placeholderText={placeholderText}
+            />
           </FormItem>
         </div>
         <div className="margin-top-2">
@@ -447,6 +607,7 @@ const ActivitySummary = ({
                   name="numberOfParticipants"
                   type="number"
                   min={1}
+                  required
                   inputRef={
                     register({
                       required: 'Enter number of participants',
@@ -494,6 +655,12 @@ ActivitySummary.propTypes = {
       }),
     ),
   }).isRequired,
+  groups: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ).isRequired,
 };
 
 const sections = [
@@ -531,6 +698,7 @@ const sections = [
     anchor: 'tta',
     items: [
       { label: 'TTA provided', name: 'ttaType' },
+      { label: 'Language used', name: 'language' },
       { label: 'Conducted', name: 'deliveryMethod' },
     ],
   },
@@ -590,6 +758,7 @@ export const isPageComplete = (formData, formState) => {
     reason,
     ttaType,
     participants,
+    language,
 
     // numbers
     duration,
@@ -610,12 +779,18 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
+  // If language is null return false for now.
+  if (!language) {
+    return false;
+  }
+
   const arraysToValidate = [
     activityRecipients,
     targetPopulationsArray,
     reason,
     ttaType,
     participants,
+    language,
   ];
 
   if (!arraysToValidate.every((arr) => arr.length)) {
@@ -644,13 +819,37 @@ export default {
   path: 'activity-summary',
   reviewSection: () => <ReviewSection />,
   review: false,
-  render: (additionalData) => {
-    const { recipients, collaborators } = additionalData;
+  render: (
+    additionalData,
+    _formData,
+    _reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
+  ) => {
+    const { recipients, collaborators, groups } = additionalData;
     return (
-      <ActivitySummary
-        recipients={recipients}
-        collaborators={collaborators}
-      />
+      <>
+        <ActivitySummary
+          recipients={recipients}
+          collaborators={collaborators}
+          groups={groups}
+        />
+        <Alert />
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          path="activity-summary"
+          position={1}
+          onUpdatePage={onUpdatePage}
+        />
+      </>
     );
   },
   isPageComplete,

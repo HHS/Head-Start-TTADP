@@ -149,13 +149,11 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
   const Av = ({
     onClick,
     disabled,
-    buttonAriaLabel,
     clickOutsideRef,
   }) => (
     <button
       disabled={disabled}
-      aria-label={buttonAriaLabel}
-      alt={buttonAriaLabel}
+      aria-label={areThereUnreadNotifications ? 'You have unread notifications. Show user menu' : 'Show user menu'}
       type="button"
       data-testid="header-avatar"
       className={`unstyled-btn display-flex flex-align-center flex-justify-center position-relative ${areThereUnreadNotifications ? 'header-avatar-button__with-unread' : ''}`}
@@ -169,7 +167,6 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
   Av.propTypes = {
     onClick: PropTypes.func,
     disabled: PropTypes.bool,
-    buttonAriaLabel: PropTypes.string,
     clickOutsideRef: PropTypes.oneOfType([
       PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
       PropTypes.func,
@@ -179,7 +176,6 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
   Av.defaultProps = {
     onClick: () => {},
     disabled: false,
-    buttonAriaLabel: 'Show user menu',
     clickOutsideRef: () => {},
   };
 

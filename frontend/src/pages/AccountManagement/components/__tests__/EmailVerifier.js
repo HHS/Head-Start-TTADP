@@ -10,6 +10,7 @@ import fetchMock from 'fetch-mock';
 import { MemoryRouter, Route } from 'react-router';
 import AccountManagement from '../..';
 import UserContext from '../../../../UserContext';
+import AppLoadingContext from '../../../../AppLoadingContext';
 
 describe('AccountManagement', () => {
   const now = new Date();
@@ -18,12 +19,14 @@ describe('AccountManagement', () => {
     name: 'user1',
     lastLogin: now,
     validationStatus: [{ type: 'email', validatedAt: now }],
+    roles: [{ name: 'ECM' }, { name: 'GMS' }],
   };
 
   const unvalidatedUser = {
     name: 'user1',
     lastLogin: now,
     validationStatus: [],
+    roles: [],
   };
 
   const token = 123;
@@ -33,16 +36,18 @@ describe('AccountManagement', () => {
   const renderAM = (user, pth) => {
     render(
       <MemoryRouter initialEntries={[pth]}>
-        <Route path="/account/verify-email/:token" exact>
-          <UserContext.Provider value={{ user }}>
-            <AccountManagement updateUser={() => {}} />
-          </UserContext.Provider>
-        </Route>
-        <Route path="/account" exact>
-          <UserContext.Provider value={{ user }}>
-            <AccountManagement updateUser={() => {}} />
-          </UserContext.Provider>
-        </Route>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <Route path="/account/verify-email/:token" exact>
+            <UserContext.Provider value={{ user }}>
+              <AccountManagement updateUser={() => {}} />
+            </UserContext.Provider>
+          </Route>
+          <Route path="/account" exact>
+            <UserContext.Provider value={{ user }}>
+              <AccountManagement updateUser={() => {}} />
+            </UserContext.Provider>
+          </Route>
+        </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
   };

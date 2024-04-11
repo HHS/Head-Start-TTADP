@@ -7,7 +7,6 @@ import {
 import fetchMock from 'fetch-mock';
 import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-
 import { SCOPE_IDS } from '@ttahub/common';
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
@@ -23,7 +22,11 @@ describe('SiteNav', () => {
 
     beforeEach(() => {
       const user = {
-        name: 'name', id: 1, flags: [], roles: [],
+        name: 'name',
+        id: 1,
+        flags: [],
+        roles: [],
+        permissions: [],
       };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
@@ -60,7 +63,8 @@ describe('SiteNav', () => {
           },
         ],
       };
-      fetchMock.get(userUrl, { ...user });
+
+      fetchMock.get(userUrl, { ...user, permissions: [] });
 
       render(
         <MemoryRouter>
@@ -105,7 +109,7 @@ describe('SiteNav', () => {
 
     beforeEach(() => {
       const user = { name: 'name' };
-      fetchMock.get(userUrl, { ...user });
+      fetchMock.get(userUrl, { ...user, permissions: [] });
 
       render(
         <MemoryRouter>
@@ -127,7 +131,7 @@ describe('SiteNav', () => {
     const userUrl = join('api', 'user');
 
     beforeEach(() => {
-      const user = { name: 'name' };
+      const user = { name: 'name', permissions: [] };
       fetchMock.get(userUrl, { ...user });
 
       render(

@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES } from '@ttahub/common';
+import faker from '@faker-js/faker';
+import { REPORT_STATUSES, GOAL_SOURCES } from '@ttahub/common';
 import db, {
   User,
   Recipient,
@@ -18,16 +19,233 @@ import db, {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  ActivityReportObjectiveCourse,
+  ActivityReportGoalFieldResponse,
   CollaboratorRole,
   Resource,
   Topic,
+  Course,
+  ObjectiveCourse,
 } from '../models';
 import {
+  cacheGoalMetadata,
   cacheObjectiveMetadata,
+  cacheCourses,
 } from './reportCache';
 import { processObjectiveForResourcesById } from './resource';
+import {
+  createReport,
+  destroyReport,
+  createGrant,
+  createRecipient,
+  createGoal,
+} from '../testUtils';
+import { GOAL_STATUS } from '../constants';
 
-describe('reportCache', () => {
+describe('cacheCourses', () => {
+  let courseOne;
+  let courseTwo;
+  let activityReport;
+  let grant;
+  let recipient;
+  let goal;
+  let objective;
+  let aro;
+
+  beforeAll(async () => {
+    recipient = await createRecipient({});
+    grant = await createGrant({ recipientId: recipient.id });
+
+    activityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId: grant.id,
+        },
+      ],
+    });
+
+    goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+
+    objective = await Objective.create({
+      goalId: goal.id,
+      title: faker.datatype.string(200),
+      status: 'Not Started',
+    });
+
+    courseOne = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    courseTwo = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    await ObjectiveCourse.bulkCreate([
+      {
+        objectiveId: objective.id,
+        courseId: courseOne.id,
+        onAR: false,
+      },
+      {
+        objectiveId: objective.id,
+        courseId: courseTwo.id,
+        onAR: false,
+      },
+    ]);
+
+    aro = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: activityReport.id,
+    });
+
+    await ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId: aro.id,
+      courseId: courseOne.id,
+    });
+  });
+
+  afterAll(async () => {
+    await ActivityReportObjectiveCourse.destroy({
+      where: {
+        courseId: [courseOne.id, courseTwo.id],
+      },
+    });
+
+    await ObjectiveCourse.destroy({
+      where: {
+        courseId: [courseOne.id, courseTwo.id],
+      },
+    });
+
+    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
+
+    await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await destroyReport(activityReport);
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: recipient.id } });
+  });
+
+  it('should cache courses', async () => {
+    await cacheCourses(objective.id, aro.id, [{ courseId: courseTwo.id }]);
+
+    const aroCourses = await ActivityReportObjectiveCourse.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(aroCourses).toHaveLength(1);
+    expect(aroCourses[0].courseId).toEqual(courseTwo.id);
+  });
+});
+
+describe('cacheGoalMetadata', () => {
+  let activityReport;
+  let goal;
+
+  const mockUser = {
+    id: faker.datatype.number(),
+    homeRegionId: 1,
+    name: 'user13706689',
+    hsesUsername: 'user13706689',
+    hsesUserId: 'user13706689',
+    lastLogin: new Date(),
+  };
+
+  beforeAll(async () => {
+    await User.create(mockUser);
+    const grantId = faker.datatype.number();
+
+    activityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId,
+        },
+      ],
+      userId: mockUser.id,
+    });
+
+    goal = await Goal.create({
+      grantId,
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    });
+  });
+
+  afterAll(async () => {
+    await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
+    await destroyReport(activityReport);
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await User.destroy({ where: { id: mockUser.id } });
+  });
+
+  it('should cache goal metadata', async () => {
+    let arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(0);
+
+    await cacheGoalMetadata(goal, activityReport.id, false);
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(1);
+
+    const data = {
+      name: goal.name,
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    };
+
+    expect(arg[0].dataValues).toMatchObject(data);
+
+    jest.spyOn(ActivityReportGoalFieldResponse, 'destroy');
+
+    await cacheGoalMetadata(goal, activityReport.id, true, [], true);
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: activityReport.id,
+        goalId: goal.id,
+      },
+    });
+
+    const updatedData = {
+      ...data,
+      isActivelyEdited: true,
+    };
+    expect(arg).toHaveLength(1);
+    expect(arg[0].dataValues).toMatchObject(updatedData);
+
+    expect(ActivityReportGoalFieldResponse.destroy).toHaveBeenCalled();
+  });
+});
+
+describe('cacheObjectiveMetadata', () => {
   const mockUser = {
     name: 'Joe Green',
     phoneNumber: '555-555-554',
@@ -73,6 +291,7 @@ describe('reportCache', () => {
     id: 20850000,
     status: 'Not Started',
     timeframe: 'None',
+    source: GOAL_SOURCES[0],
   };
 
   const mockObjective = {
@@ -93,6 +312,7 @@ describe('reportCache', () => {
     requester: 'requester',
     regionId: 2,
     targetPopulations: [],
+    version: 2,
   };
 
   const mockFiles = [{
@@ -107,12 +327,6 @@ describe('reportCache', () => {
     key: '508bdc9e-8dec-4d64-b83d-59a72a4f2354.pdf',
     status: 'APPROVED',
     fileSize: 54417,
-  // }, {
-  //   id: 140000003,
-  //   originalFileName: 'test03.pdf',
-  //   key: '508bdc9e-8dec-4d64-b83d-59a72a4f2355.pdf',
-  //   status: 'APPROVED',
-  //   fileSize: 54417,
   }];
 
   let mockObjectiveTopics;
@@ -128,7 +342,6 @@ describe('reportCache', () => {
   let recipient;
   let grant;
   let report;
-  let activityRecipient;
   let goal;
   let objective;
   let files = [];
@@ -136,6 +349,8 @@ describe('reportCache', () => {
   const objectiveResources = [];
   const objectiveTopics = [];
   const topics = [];
+  let courseOne;
+  let courseTwo;
 
   beforeAll(async () => {
     [user] = await User.findOrCreate({ where: { ...mockUser } });
@@ -153,7 +368,7 @@ describe('reportCache', () => {
       },
     });
     [report] = await ActivityReport.findOrCreate({ where: { ...mockReport } });
-    [activityRecipient] = await ActivityRecipient.findOrCreate({
+    await ActivityRecipient.findOrCreate({
       where: {
         activityReportId: report.id,
         grantId: grant.id,
@@ -175,6 +390,26 @@ describe('reportCache', () => {
       objective.id,
       [mockObjectiveResources[0]],
     ));
+
+    courseOne = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    courseTwo = await Course.create({
+      name: faker.datatype.string(200),
+    });
+
+    await ObjectiveCourse.bulkCreate([
+      {
+        objectiveId: objective.id,
+        courseId: courseOne.id,
+      },
+      {
+        objectiveId: objective.id,
+        courseId: courseTwo.id,
+      },
+    ]);
+
     topics.push((await Topic.findOrCreate({ where: { name: 'Coaching' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Communication' } })));
     topics.push((await Topic.findOrCreate({ where: { name: 'Community and Self-Assessment' } })));
@@ -188,6 +423,7 @@ describe('reportCache', () => {
     await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
     await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
+    await ObjectiveCourse.destroy({ where: { objectiveId: objective.id } });
     await ActivityRecipient.destroy({
       where: {
         [Op.or]: [
@@ -209,11 +445,16 @@ describe('reportCache', () => {
       .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
     await ActivityReportObjectiveTopic
       .destroy({ where: { id: { [Op.in]: aroTopics.map((aroTopic) => aroTopic.id) } } });
+    const aroCourses = await ActivityReportObjectiveCourse
+      .findAll({ include: { model: ActivityReportObjective, as: 'activityReportObjective', where: { objectiveId: objective.id } } });
+    await ActivityReportObjectiveTopic
+      .destroy({ where: { id: { [Op.in]: aroCourses.map((c) => c.id) } } });
     await ActivityReportObjective.destroy({ where: { objectiveId: objective.id } });
     await ActivityReport.destroy({ where: { id: report.id } });
-    await Objective.destroy({ where: { id: objective.id } });
-    await Goal.destroy({ where: { id: goal.id } });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Objective.destroy({ where: { id: objective.id }, force: true });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+    await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
       where: { roleId: role.id },
@@ -273,6 +514,13 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
+          }, {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
+            include: [{
+              model: Course,
+              as: 'course',
+            }],
           }],
         });
         expect(arg).toBeDefined();
@@ -280,6 +528,8 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveFiles).toEqual([]);
         expect(aro.activityReportObjectiveResources).toEqual([]);
         expect(aro.activityReportObjectiveTopics).toEqual([]);
+        expect(aro.activityReportObjectiveTopics).toEqual([]);
+        expect(aro.activityReportObjectiveCourses).toEqual([]);
       }
       // });
       // i t('add to cache', async () => {
@@ -302,10 +552,17 @@ describe('reportCache', () => {
           },
         });
 
+        const coursesForThisObjective = await ObjectiveCourse.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
+
         const metadata = {
           files: filesForThisObjective,
           resources,
           topics: topicsForThisObjective,
+          courses: coursesForThisObjective,
           ttaProvided: null,
           order: 1,
         };
@@ -325,7 +582,12 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
-          }],
+          },
+          {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
+          },
+          ],
         });
         expect(aro).toBeDefined();
         expect(aro.activityReportObjectiveFiles.length).toEqual(1);
@@ -335,6 +597,7 @@ describe('reportCache', () => {
           .toEqual(mockObjectiveResources[0]);
 
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
+        expect(aro.activityReportObjectiveCourses.length).toEqual(2);
         expect(aro.arOrder).toEqual(2);
         expect(aro.activityReportObjectiveTopics[0].topicId)
           .toEqual(mockObjectiveTopics[0].topicId);
@@ -346,6 +609,7 @@ describe('reportCache', () => {
         await ObjectiveFile.destroy({ where: { objectiveId: objective.id } });
         await ObjectiveResource.destroy({ where: { objectiveId: objective.id } });
         await ObjectiveTopic.destroy({ where: { objectiveId: objective.id } });
+        await ObjectiveCourse.destroy({ where: { courseId: courseOne.id } });
         objectiveFiles.push(await ObjectiveFile.findOrCreate({
           where: {
             objectiveId: objective.id,
@@ -377,11 +641,18 @@ describe('reportCache', () => {
             objectiveId: objective.id,
           },
         });
+
+        const coursesForThisObjective = await ObjectiveCourse.findAll({
+          where: {
+            objectiveId: objective.id,
+          },
+        });
         // TODO: GH - fix
         const metadata = {
           files: filesForThisObjective,
           resources: [...resourcesForThisObjective, { url: '1302 Subpart A—Eligibility, Recruitment, Selection, Enrollment, and Attendance | ECLKC (hhs.gov)' }], // TODO: GH - FIX
           topics: topicsForThisObjective,
+          courses: coursesForThisObjective,
           ttaProvided: null,
           order: 0,
         };
@@ -401,6 +672,9 @@ describe('reportCache', () => {
           }, {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
+          }, {
+            model: ActivityReportObjectiveCourse,
+            as: 'activityReportObjectiveCourses',
           }],
         });
         expect(aro).toBeDefined();
@@ -412,6 +686,7 @@ describe('reportCache', () => {
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.activityReportObjectiveTopics[0].topicId)
           .toEqual(mockObjectiveTopics[1].topicId);
+        expect(aro.activityReportObjectiveCourses.length).toEqual(1);
       }
       // });
       // i t('remove from cache', async () => {

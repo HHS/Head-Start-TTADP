@@ -13,7 +13,7 @@ import {
   statusFilter,
   topicsFilter,
   grantNumberFilter,
-  goalTypeFilter,
+  goalNameFilter,
 } from '../goalFilters';
 import FilterErrorContext from '../FilterErrorContext';
 
@@ -111,6 +111,8 @@ describe('goalFilters', () => {
       number: 'number',
     }]);
 
+    const grantFilterWithNoPossibleGrantsYet = grantNumberFilter([]);
+
     it('renders correctly', async () => {
       renderFilter(() => grantFilter.renderInput('1', 'test', ['number'], () => {}));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
@@ -125,6 +127,14 @@ describe('goalFilters', () => {
       expect(q).toBe('number EHS');
     });
 
+    it('displays the correct values with no possible grants', async () => {
+      const q = grantFilterWithNoPossibleGrantsYet.displayQuery([
+        'number',
+      ]);
+
+      expect(q).toBe('number');
+    });
+
     it('calls onApply', async () => {
       const apply = jest.fn();
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));
@@ -134,18 +144,24 @@ describe('goalFilters', () => {
     });
   });
 
-  describe('goalTypeFilter', () => {
+  describe('goalNameFilter', () => {
     it('renders correctly', async () => {
-      renderFilter(() => goalTypeFilter.renderInput('1', 'is', 'RTTAPA', () => {}));
-      const goalTypeInput = await screen.findByLabelText('Select goal type to filter by');
-      expect(goalTypeInput).toBeInTheDocument();
+      renderFilter(() => goalNameFilter.renderInput('1', 'test', 'text', () => {}));
+      const input = await screen.findByLabelText('Goal text');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('displays the correct values', async () => {
+      const q = goalNameFilter.displayQuery('number');
+
+      expect(q).toBe('number');
     });
 
     it('calls onApply', async () => {
       const apply = jest.fn();
-      renderFilter(() => goalTypeFilter.renderInput('1', 'is not', 'RTTAPA', apply));
-      const goalTypeInput = await screen.findByLabelText('Select goal type to filter by');
-      userEvent.selectOptions(goalTypeInput, 'Non-RTTAPA');
+      renderFilter(() => goalNameFilter.renderInput('1', 'test', 'test', apply));
+      const input = await screen.findByLabelText('Goal text');
+      userEvent.type(input, 'number');
       expect(apply).toHaveBeenCalled();
     });
   });

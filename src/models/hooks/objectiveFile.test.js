@@ -6,6 +6,7 @@ import {
   checkForUseOnApprovedReport,
 } from './objectiveFile';
 import { fileGenerator, objectiveTemplateGenerator } from './testHelpers';
+import { CURATED_CREATION } from '../../constants';
 
 describe('objectiveFile hooks', () => {
   afterAll(async () => {
@@ -65,6 +66,71 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
+      });
+      await sequelize.models.ObjectiveTemplate.destroy({
+        where: {
+          id: objectiveTemplate.id,
+        },
+      });
+    });
+  });
+  describe('cleanupOrphanFiles', () => {
+    let objectiveTemplate;
+    let objective;
+    let file;
+    let objectiveFile;
+
+    beforeAll(async () => {
+      const transaction = await sequelize.transaction();
+      objectiveTemplate = await sequelize.models.ObjectiveTemplate.create(
+        {
+          templateTitle: 'Objective Template for Orphan File Test',
+          hash: 'objective-template-for-orphan-file-test',
+          regionId: 1,
+          creationMethod: CURATED_CREATION,
+        },
+        { transaction, individualHooks: true },
+      );
+      objective = await sequelize.models.Objective.create({
+        title: 'Objective for Orphan File Test',
+        objectiveTemplateId: objectiveTemplate.id,
+      }, { transaction, individualHooks: true });
+      file = await sequelize.models.File.create(
+        fileGenerator(),
+        { transaction, individualHooks: true },
+      );
+      objectiveFile = await sequelize.models.ObjectiveFile.create({
+        objectiveId: objective.id,
+        fileId: file.id,
+      }, { transaction, individualHooks: true });
+      await transaction.commit();
+    });
+
+    it('clean up orphan file', async () => {
+      await sequelize.models.ObjectiveFile.destroy({
+        where: { objectiveId: objective.id },
+        individualHooks: true,
+      });
+      const deletedFile = await sequelize.models.File.findOne({
+        where: {
+          id: objectiveFile.id,
+        },
+      });
+      expect(deletedFile).toBeNull();
+    });
+
+    afterAll(async () => {
+      await sequelize.models.ObjectiveFile.destroy({
+        where: {
+          id: objectiveFile.id,
+        },
+      });
+      await sequelize.models.Objective.destroy({
+        where: {
+          id: objective.id,
+        },
+        force: true,
       });
       await sequelize.models.ObjectiveTemplate.destroy({
         where: {
@@ -108,6 +174,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
     });
     it('should not throw an error if the file is not used on an approved report', async () => {
@@ -133,6 +200,7 @@ describe('objectiveFile hooks', () => {
         where: {
           id: objective.id,
         },
+        force: true,
       });
     });
   });

@@ -34,32 +34,60 @@ const calculateReportStatus = (approverStatus, approvals) => {
   return calculateReportStatusFromApprovals(approvals);
 };
 
-const afterCreate = async (sequelize, instance) => {
-  // The following code should match other hooks.
-  // This can not be abstracted into a function.
-  // Begin
+const updateReportStatus = async (sequelize, instance) => {
   const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
-    attributes: ['submissionStatus'],
+    attributes: ['submissionStatus', 'calculatedStatus'],
+    where: {
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+    },
   });
+
+  // we only update any of the report status fields if the report is submitted
+  if (!report) {
+    return;
+  }
+
   // We allow users to create approvers before submitting the report. Calculated
   // status should only exist for submitted reports.
-  if (report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    const foundApproverStatuses = await sequelize.models.ActivityReportApprover.findAll({
-      attributes: ['status'],
-      raw: true,
+
+  const foundApproverStatuses = await sequelize.models.ActivityReportApprover.findAll({
+    attributes: ['status'],
+    raw: true,
+    where: { activityReportId: instance.activityReportId },
+  });
+  const approverStatuses = foundApproverStatuses.map((a) => a.status);
+
+  const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
+
+  if (newCalculatedStatus === REPORT_STATUSES.APPROVED
+      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+    // if the report is being approved, we need to clear the notes on the approvers
+    await sequelize.models.ActivityReportApprover.update({
+      note: '',
+    }, {
       where: { activityReportId: instance.activityReportId },
     });
-    const approverStatuses = foundApproverStatuses.map((a) => a.status);
-
-    const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
-    await sequelize.models.ActivityReport.update({
-      calculatedStatus: newCalculatedStatus,
-    }, {
-      where: { id: instance.activityReportId },
-      individualHooks: true,
-    });
   }
-  // End
+
+  /*
+    * Here we check to see if the report will be approved and update the approvedAt
+    * as appropriate
+    */
+  const approvedAt = newCalculatedStatus === REPORT_STATUSES.APPROVED ? new Date() : null;
+
+  const updatedFields = {
+    calculatedStatus: newCalculatedStatus,
+    approvedAt,
+  };
+
+  await sequelize.models.ActivityReport.update(updatedFields, {
+    where: { id: instance.activityReportId },
+    individualHooks: true,
+  });
+};
+
+const afterCreate = async (sequelize, instance) => {
+  await updateReportStatus(sequelize, instance);
 };
 
 const afterDestroy = async (sequelize, instance) => {
@@ -89,110 +117,11 @@ const afterDestroy = async (sequelize, instance) => {
 };
 
 const afterRestore = async (sequelize, instance) => {
-  // The following code should match other hooks.
-  // This can not be abstracted into a function.
-  // Begin
-  const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
-    attributes: ['submissionStatus'],
-  });
-  // We allow users to create approvers before submitting the report. Calculated
-  // status should only exist for submitted reports.
-  if (report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    const foundApproverStatuses = await sequelize.models.ActivityReportApprover.findAll({
-      attributes: ['status'],
-      raw: true,
-      where: { activityReportId: instance.activityReportId },
-    });
-    const approverStatuses = foundApproverStatuses.map((a) => a.status);
-
-    const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
-    await sequelize.models.ActivityReport.update({
-      calculatedStatus: newCalculatedStatus,
-    }, {
-      where: { id: instance.activityReportId },
-      individualHooks: true,
-    });
-  }
-  // End
+  await updateReportStatus(sequelize, instance);
 };
 
 const afterUpdate = async (sequelize, instance) => {
-  // The following code should match other hooks.
-  // This can not be abstracted into a function.
-  // Begin
-  const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
-    attributes: ['submissionStatus'],
-  });
-  // We allow users to create approvers before submitting the report. Calculated
-  // status should only exist for submitted reports.
-  if (report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    const foundApproverStatuses = await sequelize.models.ActivityReportApprover.findAll({
-      attributes: ['status'],
-      raw: true,
-      where: { activityReportId: instance.activityReportId },
-    });
-    const approverStatuses = foundApproverStatuses.map((a) => a.status);
-
-    const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
-    await sequelize.models.ActivityReport.update({
-      calculatedStatus: newCalculatedStatus,
-    }, {
-      where: { id: instance.activityReportId },
-      individualHooks: true,
-    });
-  }
-  // End
-};
-
-const afterUpsert = async (sequelize, created) => {
-  // Created is an array. First item in created array is
-  // a model instance, second item is boolean indicating
-  // if record was newly created (false = updated existing object.)
-  const instance = created[0];
-
-  // If record can not be created or updated (upsert fails) this hook is still fired.
-  // In this case we don't need to calculateStatus.
-  if (!instance) {
-    return;
-  }
-
-  // The following code should match other hooks.
-  // This can not be abstracted into a function.
-  // Begin
-  const report = await sequelize.models.ActivityReport.findByPk(instance.activityReportId, {
-    attributes: ['submissionStatus'],
-  });
-  // We allow users to create approvers before submitting the report. Calculated
-  // status should only exist for submitted reports.
-  if (report.submissionStatus === REPORT_STATUSES.SUBMITTED) {
-    const foundApproverStatuses = await sequelize.models.ActivityReportApprover.findAll({
-      attributes: ['status'],
-      raw: true,
-      where: { activityReportId: instance.activityReportId },
-    });
-    const approverStatuses = foundApproverStatuses.map((a) => a.status);
-
-    const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
-
-    /*
-      * Here we check to see if the report will be approved and update the approvedAt
-      * as appropriate
-      */
-    const approvedAt = newCalculatedStatus === REPORT_STATUSES.APPROVED ? new Date() : null;
-
-    const updatedFields = approvedAt ? {
-      calculatedStatus: newCalculatedStatus,
-      approvedAt,
-    } : {
-      calculatedStatus: newCalculatedStatus,
-    };
-
-    await sequelize.models.ActivityReport.update(updatedFields, {
-      where: { id: instance.activityReportId },
-      individualHooks: true,
-    });
-  }
-  // End
+  await updateReportStatus(sequelize, instance);
 };
 
 export {
@@ -202,5 +131,4 @@ export {
   afterDestroy,
   afterRestore,
   afterUpdate,
-  afterUpsert,
 };

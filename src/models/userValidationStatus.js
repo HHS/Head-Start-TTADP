@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class UserValidationStatus extends Model {
     static associate(models) {
-      UserValidationStatus.belongsTo(models.User, { foreignKey: 'userId' });
+      UserValidationStatus.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
     }
   }
 

@@ -2,11 +2,22 @@
 /* eslint-disable quotes */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from '@faker-js/faker';
 import {
-  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors, sequelize,
+  ActivityReport,
+  User,
+  Recipient,
+  Grant,
+  File,
+  Permission,
+  RequestErrors,
+  GrantNumberLink,
+  MonitoringReviewGrantee,
+  MonitoringClassSummary,
+  sequelize,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -79,6 +90,8 @@ const hsesUsers = [
   },
 ];
 
+const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
+
 const processHtml = async (input) => {
   if (!input) {
     return input;
@@ -111,7 +124,7 @@ export const convertEmails = (emails) => {
       const foundTransformedUser = transformedUsers.find((user) => user.id === userId);
       return foundTransformedUser ? foundTransformedUser.email : '';
     }
-    return emails.includes('@') ? faker.internet.email() : '';
+    return emails.includes('@') ? generateFakeEmail() : '';
   });
 
   return convertedEmails.join(', ');
@@ -136,7 +149,7 @@ export const convertName = (name, email) => {
     foundTransformedUser = {
       id: foundUser.id,
       name: faker.name.findName(),
-      email: faker.internet.email(),
+      email: generateFakeEmail(),
     };
     transformedUsers.push(foundTransformedUser);
   }
@@ -196,7 +209,7 @@ export const hideUsers = async (userIds) => {
     promises.push(
       user.update({
         hsesUsername: faker.internet.email(),
-        email: faker.internet.email(),
+        email: generateFakeEmail(),
         phoneNumber: faker.phone.phoneNumber(),
         name: faker.name.findName(),
       }, { individualHooks: true }),
@@ -226,6 +239,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   });
 
   const promises = [];
+  const promisesMonitoring = [];
 
   // loop through the found reports
   for (const recipient of recipients) {
@@ -263,6 +277,39 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     );
   }
   await Promise.all(promises);
+  const oldGrantNumbers = [];
+
+  for (const grant of grants) {
+    const newGrantNumber = grant.number;
+    const oldGrantNumber = await GrantNumberLink.findOne({
+      attributes: ['grantNumber'],
+      where: { grantId: grant.id, grantNumber: { [Op.ne]: grant.number } },
+    });
+    if (oldGrantNumber) {
+      oldGrantNumbers.push(oldGrantNumber.grantNumber);
+      // Update corresponding MonitoringReviewGrantee records
+      promisesMonitoring.push(
+        MonitoringReviewGrantee.update(
+          { grantNumber: newGrantNumber },
+          { where: { grantNumber: oldGrantNumber.grantNumber } },
+        ),
+      );
+      // Update corresponding MonitoringClassSummary records
+      promisesMonitoring.push(
+        MonitoringClassSummary.update(
+          { grantNumber: newGrantNumber },
+          { where: { grantNumber: oldGrantNumber.grantNumber } },
+        ),
+      );
+    }
+  }
+
+  await Promise.all(promisesMonitoring);
+
+  await GrantNumberLink.unscoped().destroy({
+    where: { grantNumber: { [Op.in]: oldGrantNumbers } },
+    force: true,
+  });
 
   // Retrieve transformed recipients
   transformedRecipients = (await Recipient.findAll({
@@ -321,6 +368,7 @@ export const bootstrapUsers = async () => {
       homeRegionId: 14,
       role: sequelize.literal('ARRAY[\'Central Office\']::"enum_Users_role"[]'),
       hsesAuthorities: ['ROLE_FEDERAL'],
+      lastLogin: new Date(),
     };
     if (user) {
       id = user.id;

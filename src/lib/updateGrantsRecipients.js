@@ -1,22 +1,57 @@
 import AdmZip from 'adm-zip';
 import { toJson } from 'xml2json';
-import { } from 'dotenv/config';
 import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
+import { Op } from 'sequelize';
 import { fileHash } from './fileUtils';
-import {
-  Recipient, Grant, Program, sequelize,
+import db, {
+  Recipient,
+  Grant,
+  Program,
+  sequelize,
+  ProgramPersonnel,
 } from '../models';
 import { logger, auditLogger } from '../logger';
+import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
+
+// TTAHUB-2126 TTAHUB-2334
+// Update the specific attribute (e.g., state code) for each grant,
+// identified by its grant number, in the map below.
+// This patch sets the new value for the grant to ensure data accuracy.
+const grantPatches = new Map([
+  [12128, { stateCode: 'OH' }],
+  [10291, { stateCode: 'PW' }],
+  [14869, { stateCode: 'PW' }],
+]);
 
 function valueFromXML(value) {
   const isObject = typeof value === 'object';
   const isUndefined = value === undefined;
   return isObject || isUndefined ? null : value;
+}
+
+/**
+ * Retrieves the correct state code for a given grant.
+ *
+ * This function checks if there is a patched state code available for the specified grantId.
+ * If a patch exists, it returns the patched state code. Otherwise, it defaults to the
+ * original state code provided, processed through valueFromXML.
+ *
+ * @param {number} grantId - The unique identifier for the grant.
+ * @param {string} stateCode - The original state code from the XML data.
+ * @return {string} The corrected state code, either from the patch or the original XML.
+ */
+function getStateCode(grantId, stateCode) {
+  if (grantPatches.has(grantId)) {
+    const patch = grantPatches.get(grantId);
+    // Apply the patch
+    return patch.stateCode ? patch.stateCode : valueFromXML(stateCode);
+  }
+  return valueFromXML(stateCode);
 }
 
 function combineNames(firstName, lastName) {
@@ -25,6 +60,133 @@ function combineNames(firstName, lastName) {
   const joinedName = names.filter((name) => name).join(' ');
   return joinedName === '' ? null : joinedName;
 }
+
+function getPersonnelField(role, field, program) {
+  // return if program is not an object.
+  if (typeof program !== 'object') {
+    return null;
+  }
+  return typeof program[`${role}_${field}`] === 'object' ? null : program[`${role}_${field}`];
+}
+
+async function getProgramPersonnel(grantId, programId, program) {
+  const programPersonnelArray = [];
+  for (let i = 0; i < GRANT_PERSONNEL_ROLES.length; i += 1) {
+    const currentRole = GRANT_PERSONNEL_ROLES[i];
+    // Determine if this personnel exists wth a different name.
+    const firstName = getPersonnelField(currentRole, 'first_name', program);
+    const lastName = getPersonnelField(currentRole, 'last_name', program);
+    const email = getPersonnelField(currentRole, 'email', program);
+
+    if (firstName && lastName) {
+      // eslint-disable-next-line no-await-in-loop
+      const existingPersonnel = await ProgramPersonnel.findOne({
+        where: {
+          grantId,
+          programId,
+          role: currentRole,
+          firstName: { [Op.eq]: firstName },
+          lastName: { [Op.eq]: lastName },
+          active: true,
+        },
+      });
+
+      // Create personnel object (if exists then update).
+      const personnelToAdd = {
+        programId,
+        grantId,
+        role: currentRole,
+        prefix: getPersonnelField(currentRole, 'prefix', program),
+        firstName,
+        lastName,
+        suffix: getPersonnelField(currentRole, 'suffix', program),
+        title: getPersonnelField(currentRole, 'title', program),
+        email: getPersonnelField(currentRole, 'email', program),
+        effectiveDate: null,
+        active: true,
+        originalPersonnelId: null,
+      };
+
+      // If the personnel exists with a different email.
+      const existsWithDifferentEmail = existingPersonnel && existingPersonnel.email !== email;
+
+      // If the personnel doesn't exist or the email is different, then add it.
+      if (!existingPersonnel || existsWithDifferentEmail) {
+        // eslint-disable-next-line no-await-in-loop
+        const existingRole = await ProgramPersonnel.findOne({
+          where: {
+            grantId, // For this Grant
+            programId, // For this Program
+            role: currentRole, // For this Role
+            active: true, // Is this person still active?
+            firstName: { [Op.ne]: firstName }, // Does this exist with a different person?
+            lastName: { [Op.ne]: lastName }, // Does this exist with a different person?
+          },
+        });
+
+        // If this user doesn't exist or exists with a different email.
+        if (!existingRole && !existsWithDifferentEmail) {
+          // Personnel does not exist, create a new one.
+          programPersonnelArray.push({ ...personnelToAdd, active: true });
+        } else {
+          // Add the new Grant Personnel record.
+          programPersonnelArray.push(
+            {
+              ...personnelToAdd,
+              active: true, // Activate this person.
+              effectiveDate: new Date(),
+            },
+          );
+
+          // Deactivate the old Grant Personnel record.
+          let oldRecordToUpdate = null;
+          if (existsWithDifferentEmail) {
+            oldRecordToUpdate = { ...existingPersonnel.dataValues };
+          } else {
+            oldRecordToUpdate = { ...existingRole.dataValues };
+          }
+
+          // Also update the old Grant Personnel record with the active flag set to false.
+          programPersonnelArray.push({
+            ...oldRecordToUpdate,
+            active: false, // deactivate this person.
+          });
+        }
+      } else {
+        // Update the existing personnel.
+        const updatedPersonnel = {
+          ...personnelToAdd,
+          id: existingPersonnel.id,
+          active: true,
+          effectiveDate: existingPersonnel.effectiveDate,
+        };
+        programPersonnelArray.push(updatedPersonnel);
+      }
+    }
+  }
+  return programPersonnelArray;
+}
+
+export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
+  try {
+    const updatePromises = grantsToUpdate.map(async (grant) => {
+      if (grant.oldGrantId) {
+        const oldGrant = await Grant.findByPk(grant.oldGrantId);
+        if (oldGrant) {
+          return grant.update({
+            recipientId: oldGrant.recipientId,
+            regionId: oldGrant.regionId,
+          });
+        }
+      }
+      return null;
+    });
+
+    await Promise.all(updatePromises);
+  } catch (error) {
+    logger.error('updateGrantsRecipients: Error updating grants:', error);
+  }
+};
 
 /**
  * Reads HSES data files that were previously extracted to the "temp" directory.
@@ -96,7 +258,7 @@ export async function processFiles(hashSumHex) {
       });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
-      await Recipient.bulkCreate(
+      await Recipient.unscoped().bulkCreate(
         recipientsForDb,
         {
           updateOnDuplicate: ['uei', 'name', 'recipientType', 'updatedAt'],
@@ -108,9 +270,13 @@ export async function processFiles(hashSumHex) {
       const programs = JSON.parse(toJson(programData));
 
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
-        let { grant_start_date: startDate, grant_end_date: endDate } = g;
+        let {
+          grant_start_date: startDate, grant_end_date: endDate,
+          inactivation_date: inactivationDate,
+        } = g;
         if (typeof startDate === 'object') { startDate = null; }
         if (typeof endDate === 'object') { endDate = null; }
+        if (typeof inactivationDate === 'object') { inactivationDate = null; }
 
         const programSpecialistName = combineNames(
           g.program_specialist_first_name,
@@ -123,22 +289,27 @@ export async function processFiles(hashSumHex) {
 
         const regionId = parseInt(g.region_id, 10);
         const cdi = regionId === 13;
+        const id = parseInt(g.grant_award_id, 10);
         // grant belonging to recipient's id 5 is merged under recipient's id 7782  (TTAHUB-705)
         return {
-          id: parseInt(g.grant_award_id, 10),
+          id,
           number: g.grant_number,
           recipientId: g.agency_id === '5' ? 7782 : parseInt(g.agency_id, 10),
           status: g.grant_status,
-          stateCode: valueFromXML(g.grantee_state),
+          // stateCode: patches.grants[id][stateCode] || valueFromXML(g.grantee_state),
+          stateCode: getStateCode(id, g.grantee_state),
           startDate,
           endDate,
+          inactivationDate,
           regionId,
           cdi,
+          granteeName: g.grantee_name,
           programSpecialistName,
           programSpecialistEmail: valueFromXML(g.program_specialist_email),
           grantSpecialistName,
           grantSpecialistEmail: valueFromXML(g.grants_specialist_email),
           annualFundingMonth: valueFromXML(g.annual_funding_month),
+          inactivationReason: valueFromXML(g.inactivation_reason),
         };
       });
 
@@ -152,7 +323,7 @@ export async function processFiles(hashSumHex) {
         (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
       );
 
-      const programsForDb = programsWithGrants.map((program) => ({
+      const programsForDb = await Promise.all(programsWithGrants.map(async (program) => ({
         id: parseInt(program.grant_program_id, 10),
         grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
         programType: valueFromXML(program.program_type),
@@ -161,24 +332,36 @@ export async function processFiles(hashSumHex) {
         endDate: valueFromXML(program.grant_program_end_date),
         status: valueFromXML(program.program_status),
         name: valueFromXML(program.program_name),
-      }));
+        // Get grant personnel.
+        programPersonnel: await getProgramPersonnel(
+          parseInt(grantAgencyMap[program.grant_agency_id], 10),
+          parseInt(program.grant_program_id, 10),
+          program,
+        ),
+      })));
 
+      // Extract an array of all grant personnel to update.
+      const programPersonnel = programsForDb.flatMap((p) => p.programPersonnel);
+
+      // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
       const nonCdiGrants = grantsForDb.filter((g) => g.regionId !== 13);
 
+      // Update non-CDI grants.
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
-      await Grant.bulkCreate(
+      await Grant.unscoped().bulkCreate(
         nonCdiGrants,
         {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
 
-      await Grant.bulkCreate(
+      // Update CDI grants.
+      await Grant.unscoped().bulkCreate(
         cdiGrants,
         {
-          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth'],
+          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
           transaction,
         },
       );
@@ -195,7 +378,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantUpdatePromises = grantsToUpdate.map((g) => (
-        Grant.update(
+        Grant.unscoped().update(
           { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
           {
             where: { id: parseInt(g.replacement_grant_award_id, 10) },
@@ -209,11 +392,29 @@ export async function processFiles(hashSumHex) {
 
       await Promise.all(grantUpdatePromises);
 
+      // Automate CDI linking to preceding recipients
+      const cdiGrantsToLink = await Grant.unscoped().findAll({
+        where: { regionId: 13, endDate: { [Op.gte]: '2021-03-17' } },
+        attributes: ['id', 'endDate', 'oldGrantId'],
+      });
+
+      await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
+
       await Program.bulkCreate(
         programsForDb,
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
           transaction,
+        },
+      );
+
+      // Update grant personnel.
+      await ProgramPersonnel.bulkCreate(
+        programPersonnel,
+        {
+          updateOnDuplicate: ['suffix', 'prefix', 'title', 'active', 'effectiveDate', 'updatedAt', 'mapsTo'], // Only pass what fields we want to update.
+          transaction,
+          individualHooks: false, // We don't run these for afterBulkCreate.
         },
       );
     });

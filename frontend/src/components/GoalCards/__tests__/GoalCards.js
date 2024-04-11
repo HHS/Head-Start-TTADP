@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, waitFor, fireEvent,
 } from '@testing-library/react';
@@ -45,6 +45,7 @@ const baseGoals = [{
   goalNumbers: ['G-4598'],
   reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 8547,
@@ -57,6 +58,7 @@ const baseGoals = [{
   goalNumbers: ['G-8547'],
   reasons: ['Below Competitive Threshold (CLASS)'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65478,
@@ -69,6 +71,7 @@ const baseGoals = [{
   goalNumbers: ['G-65478'],
   reasons: ['Monitoring | Area of Concern'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65479,
@@ -81,6 +84,7 @@ const baseGoals = [{
   goalNumbers: ['G-65479'],
   reasons: ['COVID-19 response'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65480,
@@ -93,6 +97,7 @@ const baseGoals = [{
   goalNumbers: ['G-65480'],
   reasons: ['New Recipient'],
   objectives: [],
+  collaborators: [],
 },
 {
   id: 65481,
@@ -105,6 +110,7 @@ const baseGoals = [{
   goalNumbers: ['G-65481'],
   reasons: ['School Readiness Goals'],
   objectives: [],
+  collaborators: [],
 },
 ];
 
@@ -126,6 +132,7 @@ const goalWithObjectives = [{
     id: 345345345,
     ttaProvided: '',
     grantNumbers: ['1'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 1,
       displayId: 'ar-number-1',
@@ -140,6 +147,7 @@ const goalWithObjectives = [{
     status: 'Not Started',
     id: 234234253,
     ttaProvided: '',
+    topics: ['Human Resources'],
     grantNumbers: ['1'],
     activityReports: [{
       id: 2,
@@ -156,6 +164,7 @@ const goalWithObjectives = [{
     id: 2938234,
     ttaProvided: '',
     grantNumbers: ['1'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 3,
       displayId: 'ar-number-3',
@@ -171,6 +180,7 @@ const goalWithObjectives = [{
     id: 255384234,
     ttaProvided: '',
     grantNumbers: ['200342cat'],
+    topics: ['Human Resources'],
     activityReports: [{
       id: 4,
       displayId: 'ar-number-4',
@@ -184,6 +194,7 @@ const goalWithObjectives = [{
     reasons: ['Complaint'],
     status: 'Unknown Status',
     id: 298398934834,
+    topics: ['Human Resources'],
     ttaProvided: '',
     grantNumbers: ['1'],
     activityReports: [{
@@ -194,60 +205,7 @@ const goalWithObjectives = [{
     }],
   },
   ],
-},
-];
-
-const goalsForRttapaTest = [{
-  id: 4598,
-  ids: [4598],
-  goalStatus: 'Draft',
-  createdOn: '2021-06-15',
-  goalText: 'This is goal text 1.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 5,
-  isRttapa: 'Yes',
-  goalNumbers: ['G-4598'],
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-  objectives: [],
-},
-{
-  id: 4523498,
-  ids: [4523498],
-  goalStatus: 'Draft',
-  createdOn: '2021-06-15',
-  goalText: 'This is goal text 4523498.',
-  goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-  objectiveCount: 5,
-  isRttapa: 'No',
-  goalNumbers: ['G-4523498'],
-  reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-  objectives: [],
-},
-{
-  id: 8547,
-  ids: [8547],
-  goalStatus: 'Not Started',
-  createdOn: '2021-05-15',
-  goalText: 'This is goal text 2.',
-  goalTopics: ['Nutrition', 'Oral Health'],
-  objectiveCount: 2,
-  goalNumbers: ['G-8547'],
-  reasons: ['Below Competitive Threshold (CLASS)'],
-  objectives: [],
-  isRttapa: 'Yes',
-},
-{
-  id: 65478,
-  ids: [65478],
-  goalStatus: 'Completed',
-  createdOn: '2021-04-15',
-  goalText: 'This is goal text 3.',
-  goalTopics: ['Parent and Family Engagement'],
-  objectiveCount: 4,
-  goalNumbers: ['G-65478'],
-  reasons: ['Monitoring | Area of Concern'],
-  objectives: [],
-  isRttapa: 'No',
+  collaborators: [],
 },
 ];
 
@@ -281,6 +239,8 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             }}
             setGoals={setGoals}
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
+            shouldDisplayMergeSuccess={false}
+            dismissMergeSuccess={jest.fn()}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -636,75 +596,6 @@ describe('Goals Table', () => {
       // print goals
       const printButton = await screen.findByRole('button', { name: /Preview and print/i });
       userEvent.click(printButton);
-
-      expect(history.push).toHaveBeenCalled();
-    });
-  });
-
-  describe('create rttapa', () => {
-    afterEach(() => {
-      window.location.assign.mockReset();
-      fetchMock.restore();
-    });
-
-    it('validates before creating an rttapa', async () => {
-      renderTable({
-        goals: goalsForRttapaTest,
-        goalsCount: goalsForRttapaTest.length,
-      }, defaultUser);
-
-      await screen.findByText('TTA goals and objectives');
-      const selectAll = await screen.findByRole('checkbox', { name: /deselect all goals/i });
-      fireEvent.click(selectAll);
-
-      const createRttapa = await screen.findByRole('button', { name: /Create rttapa/i });
-      expect(createRttapa).toBeInTheDocument();
-
-      act(() => {
-        fireEvent.click(createRttapa);
-      });
-      expect(await screen.findByText(/are non-Rttapa goals. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
-      expect(await screen.findByText(/are draft goals, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeInTheDocument();
-
-      const nonRttapaGoals = goalsForRttapaTest.filter((goal) => goal.isRttapa !== 'Yes');
-      const draftGoals = goalsForRttapaTest.filter((goal) => goal.goalStatus === 'Draft');
-      const checkboxes = await screen.findAllByRole('checkbox');
-      const nonRttapaCheckboxes = checkboxes.filter((checkbox) => nonRttapaGoals
-        .map((goal) => goal.id)
-        .includes(parseInt(checkbox.value, DECIMAL_BASE)));
-
-      expect(nonRttapaCheckboxes.length).toBe(2);
-
-      act(() => {
-        fireEvent.click(nonRttapaCheckboxes[0]);
-      });
-
-      expect(await screen.findByText(/is a non-Rttapa goal. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
-      expect(await screen.findByText(/is a draft goal, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeInTheDocument();
-
-      const draftCheckboxes = checkboxes.filter((checkbox) => (draftGoals
-        .map((goal) => goal.id)
-        .includes(parseInt(checkbox.value, DECIMAL_BASE)) && checkbox.checked));
-
-      expect(draftCheckboxes.length).toBe(1);
-
-      act(() => {
-        fireEvent.click(draftCheckboxes[0]);
-      });
-
-      expect(await screen.findByText(/is a non-Rttapa goal. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeInTheDocument();
-      expect(screen.queryByText(/is a draft goal, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeNull();
-
-      act(() => {
-        fireEvent.click(nonRttapaCheckboxes[1]);
-      });
-
-      expect(screen.queryByText(/is a non-Rttapa goal. Any goals added to a regional agreement must be RTTAPA goals. Deselect any non-RTTAPA goals./i)).toBeNull();
-      expect(screen.queryByText(/is a draft goal, and draft goals can't be added to an RTTAPA. Deselect any draft goals./i)).toBeNull();
-
-      act(() => {
-        fireEvent.click(createRttapa);
-      });
 
       expect(history.push).toHaveBeenCalled();
     });

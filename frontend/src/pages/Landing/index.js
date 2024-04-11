@@ -22,7 +22,7 @@ import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import NewReport from './NewReport';
 import './index.scss';
 import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasPermissionTo } from '../../permissions';
+import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
 import {
   ALERTS_PER_PAGE,
 } from '../../Constants';
@@ -32,11 +32,12 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import { LANDING_FILTER_CONFIG } from './constants';
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import colors from '../../colors';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 
 const FILTER_KEY = 'landing-filters';
 
@@ -64,7 +65,7 @@ function Landing() {
   const { user } = useContext(UserContext);
 
   // Determine Default Region.
-  const regions = allRegionsUserHasPermissionTo(user);
+  const regions = allRegionsUserHasActivityReportPermissionTo(user);
   const defaultRegion = user.homeRegionId || regions[0] || 0;
   const hasMultipleRegions = regions && regions.length > 1;
 
@@ -239,13 +240,21 @@ function Landing() {
     }
   };
 
-  const filterConfig = hasMultipleRegions
-    ? LANDING_FILTER_CONFIG_WITH_REGIONS : LANDING_BASE_FILTER_CONFIG;
+  const filtersToUse = useMemo(() => {
+    const filterConfig = LANDING_FILTER_CONFIG(hasMultipleRegions);
+
+    // If user has approve activity report permission add 'Specialist name' filter.
+    if (hasApproveActivityReport(user)) {
+      filterConfig.push(specialistNameFilter);
+      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+    }
+    return filterConfig;
+  }, [hasMultipleRegions, user]);
 
   return (
     <>
       <Helmet>
-        <title>Landing</title>
+        <title>Activity Reports</title>
       </Helmet>
       <>
         <RegionPermissionModal
@@ -259,6 +268,7 @@ function Landing() {
           <Alert
             type="success"
             role="alert"
+            className="margin-bottom-2"
             noIcon
             cta={(
               <Button
@@ -293,7 +303,8 @@ function Landing() {
               filters={filters}
               onApplyFilters={onApply}
               onRemoveFilter={onRemoveFilter}
-              filterConfig={filterConfig}
+              // filterConfig={getFilters()}
+              filterConfig={filtersToUse}
               allUserRegions={regions}
             />
           </Grid>

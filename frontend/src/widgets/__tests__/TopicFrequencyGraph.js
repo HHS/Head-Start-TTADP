@@ -49,14 +49,13 @@ describe('Topic & Frequency Graph Widget', () => {
   it('shows the correct data', async () => {
     renderArGraphOverview({ data: TEST_DATA });
     const graphTitle = screen.getByRole('heading', { name: /number of activity reports by topic/i });
-    await expect(graphTitle).toBeInTheDocument();
-    await expect(document.querySelector('svg')).toBeInTheDocument();
+    expect(graphTitle).toBeInTheDocument();
+    expect(document.querySelector('svg')).toBeInTheDocument();
   });
 
   it('correctly sorts data by count', () => {
     const data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC);
-
     expect(data).toStrictEqual([
       {
         topic: 'Community and Self-Assessment',
@@ -75,15 +74,14 @@ describe('Topic & Frequency Graph Widget', () => {
         count: 12,
       },
       {
-        topic: 'Fiscal / Budget',
-        count: 0,
-      },
-      {
         topic: 'Human Resources',
         count: 0,
       },
-
-    ]);
+      {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+    ].reverse());
   });
 
   it('correctly sorts data alphabetically', () => {
@@ -116,7 +114,7 @@ describe('Topic & Frequency Graph Widget', () => {
         topic: 'Human Resources',
         count: 0,
       },
-    ]);
+    ].reverse());
   });
 
   it('handles undefined data', async () => {
@@ -144,14 +142,15 @@ describe('Topic & Frequency Graph Widget', () => {
     act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
-    const point1 = document.querySelector('g.xtick');
+    const point1 = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point1.__data__.text).toBe(' Community<br />and<br />Self-Assessment');
+    expect(point1.__data__.text).toBe('Fiscal / Budget');
+
     act(() => userEvent.click(apply));
 
-    const point2 = document.querySelector('g.xtick');
+    const point2 = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point2.__data__.text).toBe(' CLASS:<br />Instructional<br />Support');
+    expect(point2.__data__.text).toBe('Human Resources');
   });
 
   it('handles switching display contexts', async () => {

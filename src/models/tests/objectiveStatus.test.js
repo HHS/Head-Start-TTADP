@@ -72,6 +72,7 @@ const sampleReport = {
     role: 'Grants Specialist',
     homeRegionId: 1,
   },
+  version: 2,
 };
 
 describe('Objective status update hook', () => {
@@ -306,9 +307,15 @@ describe('Objective status update hook', () => {
           reportOnlyUsingObjective.id],
       },
     });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] } });
-    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] } });
-    await Grant.destroy({ where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] } });
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveTwo.id, objectiveTwoB.id] },
+      force: true,
+    });
+    await Goal.destroy({ where: { id: [goal.id, goalTwo.id] }, force: true });
+    await Grant.destroy({
+      where: { id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id] },
+      individualHooks: true,
+    });
     await Recipient.destroy({
       where:
       { id: [recipientOne.id, recipientTwo.id, recipientThree.id, recipientFour.id] },

@@ -1,4 +1,5 @@
 const { getSingularOrPluralData } = require('../helpers/hookMetadata');
+const { cleanupOrphanResources } = require('../helpers/orphanCleanupHelper');
 
 const propagateOnAR = async (sequelize, instance, options) => sequelize.models.GoalResource
   .update(
@@ -77,6 +78,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await recalculateOnAR(sequelize, instance, options);
+  await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
 export {

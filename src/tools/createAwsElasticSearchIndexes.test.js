@@ -28,6 +28,7 @@ const mockUser = {
   hsesUsername: 'tg234234',
   hsesUserId: 'tg234234',
   role: ['Grants Specialist', 'Health Specialist'],
+  lastLogin: new Date(),
 };
 
 const draft = {
@@ -47,6 +48,7 @@ const draft = {
   context: 'Lets give some context.',
   nonECLKCResourcesUsed: [],
   ECLKCResourcesUsed: [],
+  version: 2,
 };
 
 const approvedReport = {
@@ -89,6 +91,8 @@ describe('Create AWS Elastic Search Indexes', () => {
         number: 'ES234234',
         recipientId: recipient.id,
         regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
       });
 
       // Draft Report (excluded).
@@ -268,6 +272,7 @@ describe('Create AWS Elastic Search Indexes', () => {
           id: objective.id,
         },
         individualHooks: true,
+        force: true,
       });
       // Delete Goal.
       await Goal.destroy({
@@ -275,6 +280,7 @@ describe('Create AWS Elastic Search Indexes', () => {
           grantId: grant.id,
         },
         individualHooks: true,
+        force: true,
       });
       // Delete Report's.
       await ActivityReport.destroy({

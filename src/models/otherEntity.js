@@ -11,13 +11,14 @@ const {
 export default (sequelize, DataTypes) => {
   class OtherEntity extends Model {
     static associate(models) {
-      OtherEntity.belongsTo(models.ActivityRecipient, { foreignKey: 'id', as: 'activityRecipients' });
+      OtherEntity.hasMany(models.ActivityRecipient, { foreignKey: 'id', as: 'activityRecipients' });
       OtherEntity.belongsToMany(models.ActivityReport, {
         through: models.ActivityRecipient,
         foreignKey: 'otherEntityId',
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
+      OtherEntity.hasMany(models.Objective, { foreignKey: 'otherEntityId', as: 'objectives' });
     }
   }
   OtherEntity.init({

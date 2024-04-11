@@ -6,6 +6,14 @@ import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
 import { TOPICS_PER_PAGE } from '../Constants';
 
+export const parseValue = (value) => {
+  const noCommasValue = value.replaceAll(',', '');
+  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+  if (Number.isNaN(parsedValue)) {
+    return value;
+  }
+  return parsedValue;
+};
 function ResourcesAssociatedWithTopics({
   data,
   loading,
@@ -62,15 +70,6 @@ function ResourcesAssociatedWithTopics({
     }
   };
 
-  const parseValue = (value) => {
-    const noCommasValue = value.replaceAll(',', '');
-    const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
-    if (Number.isNaN(parsedValue)) {
-      return value;
-    }
-    return parsedValue;
-  };
-
   const requestSort = (sortBy) => {
     // Get sort direction.
     let direction = 'asc';
@@ -116,7 +115,7 @@ function ResourcesAssociatedWithTopics({
       subtitle="Number of resources cited on Activity Reports with a given topic. If an activity report has more than one topic, resources count towards each topic."
       loading={loading || localLoading}
       loadingLabel="Resource associated with topics loading"
-      showPaging
+      showPagingBottom
       currentPage={activePage}
       totalCount={topicCount}
       offset={offset}

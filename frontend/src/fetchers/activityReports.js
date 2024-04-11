@@ -4,6 +4,7 @@ import {
   get, put, post, destroy,
 } from './index';
 import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
+import { combineReportDataFromApi } from './helpers';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
@@ -34,6 +35,11 @@ export const deleteReport = async (reportId) => {
   await destroy(join(activityReportUrl, reportId.toString(DECIMAL_BASE)));
 };
 
+export const getGroupsForActivityReport = async (region) => {
+  const res = await get(join(activityReportUrl, 'groups', `?region=${region}`));
+  return res.json();
+};
+
 export const unlockReport = async (reportId) => {
   const url = join(activityReportUrl, reportId.toString(DECIMAL_BASE), 'unlock');
   const response = await put(url);
@@ -50,39 +56,22 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-function combineTopics(report, expandedTopics) {
-  const reportTopics = expandedTopics.filter((topic) => report.id === topic.activityReportId)
-    .map((t) => t.name);
-
-  const exclusiveTopics = new Set([
-    ...report.sortedTopics,
-    ...reportTopics,
-  ]);
-  const topicsArr = [...exclusiveTopics];
-  topicsArr.sort();
-
-  return topicsArr;
-}
-
 export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
   const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
   const json = await reports.json();
-  const {
-    count, rows: rawRows, recipients, topics,
-  } = json;
+  return combineReportDataFromApi(json);
+};
 
-  const rows = rawRows.map((row) => ({
-    ...row,
-    activityRecipients: recipients.filter(
-      (recipient) => recipient.activityReportId === row.id,
-    ),
-    sortedTopics: combineTopics(row, topics),
-  }));
-
-  return {
-    rows,
-    count,
-  };
+export const getReportsViaIdPost = async (reportIds, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE) => {
+  const reports = await post(`${activityReportUrl}/reportsByManyIds`, {
+    reportIds,
+    sortBy,
+    sortDir,
+    offset,
+    limit,
+  });
+  const json = await reports.json();
+  return combineReportDataFromApi(json);
 };
 
 export const getReportsForLocalStorageCleanup = async () => {

@@ -5,7 +5,7 @@ import db, {
   Role,
   UserRole,
 } from '../../models';
-import { featureFlags } from '../../models/user';
+import { FEATURE_FLAGS } from '../../constants';
 import {
   getUsers,
   getUser,
@@ -119,7 +119,7 @@ describe('User route handler', () => {
 
   it('properly fetches features', async () => {
     await getFeatures(mockRequest, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith(featureFlags);
+    expect(mockResponse.json).toHaveBeenCalledWith(FEATURE_FLAGS);
   });
 
   it('Creates a new user', async () => {
@@ -172,6 +172,7 @@ describe('User route handler', () => {
         },
       ],
       roles: [],
+      lastLogin: new Date(),
     };
 
     mockRequest.body = testUpdateUser;
@@ -289,7 +290,7 @@ describe('User route handler', () => {
 
     const mockRole = {
       id: faker.datatype.number({ min: 10000, max: 99999 }),
-      name: faker.random.alpha(3),
+      name: faker.random.alpha(100),
       fullName: faker.name.jobTitle(),
       isSpecialist: false,
       mapsTo: null,
@@ -331,6 +332,50 @@ describe('User route handler', () => {
 
       expect(userRoles.length).toBe(1);
       expect(userRoles[0].roleId).toBe(r.id);
+    });
+
+    it('Does nothing if user roles haven\'t changed', async () => {
+      await UserRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          userId: u.id,
+        },
+      });
+
+      await createUserRoles({
+        roles: [r],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(1);
+      expect(userRoles[0].roleId).toBe(r.id);
+    });
+
+    it('removes a user role if it exists', async () => {
+      await UserRole.findOrCreate({
+        where: {
+          roleId: r.id,
+          userId: u.id,
+        },
+      });
+
+      await createUserRoles({
+        roles: [],
+      }, u.id);
+
+      const userRoles = await UserRole.findAll({ where: { userId: u.id } });
+
+      expect(userRoles.length).toBe(0);
+    });
+
+    it('doesn\'t throw when requestUser has no roles', async () => {
+      await expect(createUserRoles({ roles: [] }, u.id)).resolves.not.toThrow();
+      await expect(createUserRoles({}, u.id)).resolves.not.toThrow();
+    });
+
+    it('when there is no requestUser, it still works', async () => {
+      await expect(createUserRoles(undefined, u.id)).resolves.not.toThrow();
     });
   });
 });

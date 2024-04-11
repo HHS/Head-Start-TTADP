@@ -5,12 +5,13 @@ import {
   FormGroup, Label, Button, Textarea, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { useFormContext, useFieldArray } from 'react-hook-form/dist/index.ie11';
+import { useFormContext, useFieldArray } from 'react-hook-form';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import { faPlusCircle } from '@fortawesome/pro-regular-svg-icons';
-import colors from '../../../../colors';
+
 import './NextStepsRepeater.scss';
 import ControlledDatePicker from '../../../../components/ControlledDatePicker';
+import Req from '../../../../components/Req';
+import PlusButton from '../../../../components/GoalForm/PlusButton';
 
 const DEFAULT_STEP_HEIGHT = 80;
 
@@ -18,6 +19,7 @@ export default function NextStepsRepeater({
   name,
   ariaName,
   recipientType,
+  required,
 }) {
   const [heights, setHeights] = useState([]);
 
@@ -94,6 +96,13 @@ export default function NextStepsRepeater({
     ? `When does the ${recipientLabel} anticipate completing step ${index + 1}?`
     : `When do you anticipate completing step ${index + 1}?`);
 
+  const textareaRegister = (() => {
+    if (required) {
+      return register({ required: 'Enter a next step' });
+    }
+    return register();
+  })();
+
   return (
     <>
       <div className="ttahub-next-steps-repeater">
@@ -108,10 +117,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-${index + 1}`}
               >
                 {`Step ${index + 1}`}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                {required && (<Req />)}
               </Label>
               {(errors[name]
                 && errors[name][index] && errors[name][index].note)
@@ -126,10 +132,11 @@ export default function NextStepsRepeater({
                   className="height-10 minh-5 smart-hub--text-area__resize-vertical"
                   name={`${name}[${index}].note`}
                   defaultValue={item.note}
-                  inputRef={register({ required: 'Enter a next step' })}
+                  inputRef={textareaRegister}
                   data-testid={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-input`}
                   style={{ height: !heights[index] ? `${DEFAULT_STEP_HEIGHT}px` : heights[index] }}
                   onChange={(e) => onStepTextChanged(e, index)}
+                  required={required}
                 />
                 {canDelete ? (
                   <Button
@@ -158,10 +165,7 @@ export default function NextStepsRepeater({
                 htmlFor={`${stepType}-next-step-date-${index + 1}`}
               >
                 {dateLabel(index)}
-                <span className="smart-hub--form-required font-family-sans font-ui-xs text-secondary-dark">
-                  {' '}
-                  *
-                </span>
+                {required && (<Req announce />)}
               </Label>
               {(errors[name] && errors[name][index]
                   && errors[name][index].completeDate)
@@ -177,6 +181,7 @@ export default function NextStepsRepeater({
                   name={`${name}[${index}].completeDate`}
                   value={item.completeDate}
                   dataTestId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}StepCompleteDate-input`}
+                  required={required}
                 />
               </div>
             </FormGroup>
@@ -184,19 +189,12 @@ export default function NextStepsRepeater({
         ))}
       </div>
 
-      <Button
-        type="button"
-        unstyled
+      <PlusButton
         onClick={onAddNewStep}
-        className="ttahub-next-steps__add-step-button margin-bottom-2"
-        data-testid={
-          `${name === 'specialistNextSteps'
-            ? 'specialist' : 'recipient'}NextSteps-button`
-        }
-      >
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faPlusCircle} />
-        Add next step
-      </Button>
+        text="Add next step"
+        testId={`${name === 'specialistNextSteps' ? 'specialist' : 'recipient'}NextSteps-button`}
+        className="margin-bottom-2"
+      />
     </>
   );
 }
@@ -205,8 +203,10 @@ NextStepsRepeater.propTypes = {
   name: PropTypes.string.isRequired,
   ariaName: PropTypes.string.isRequired,
   recipientType: PropTypes.string,
+  required: PropTypes.bool,
 };
 
 NextStepsRepeater.defaultProps = {
   recipientType: '',
+  required: true,
 };

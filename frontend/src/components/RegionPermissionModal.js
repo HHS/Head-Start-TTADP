@@ -17,10 +17,10 @@ function RegionPermissionModal({
     && f.condition !== 'is not'
     && !userRegions
       .includes(parseInt(f.query, DECIMAL_BASE)))
-    .map((m) => m.query), [filters, userRegions]);
+    .map((m) => Number(m.query)), [filters, userRegions]);
 
   const showMultipleRegions = missingRegions && missingRegions.length > 1 ? 's' : '';
-  const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort().join(', ') : '';
+  const missingRegionsList = missingRegions && missingRegions.length > 0 ? missingRegions.sort((a, b) => a - b).join(', ') : '';
 
   useEffect(() => {
     if (missingRegions

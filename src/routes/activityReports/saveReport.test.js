@@ -57,6 +57,7 @@ describe('saveReport', () => {
       phoneNumber: faker.phone.phoneNumber(),
       name: faker.name.findName(),
       role: ['Grants Specialist'],
+      lastLogin: new Date(),
     });
 
     secondUser = await User.create({
@@ -67,6 +68,7 @@ describe('saveReport', () => {
       phoneNumber: faker.phone.phoneNumber(),
       name: faker.name.findName(),
       role: ['Grants Specialist'],
+      lastLogin: new Date(),
     });
 
     await Permission.create({
@@ -190,10 +192,12 @@ describe('saveReport', () => {
     await Objective.destroy({
       where: { goalId: goalsToDelete.map(({ id }) => id) },
       individualHooks: true,
+      force: true,
     });
     await Goal.destroy({
       where: { id: goalsToDelete.map(({ id }) => id) },
       individualHooks: true,
+      force: true,
     });
     await Grant.destroy({
       where: { id: [firstGrant.id, secondGrant.id] },

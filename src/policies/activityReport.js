@@ -16,6 +16,10 @@ export default class ActivityReport {
     this.activityReport = activityReport;
   }
 
+  isApproverAndCreator() {
+    return this.isApprovingManager() && this.isAuthor();
+  }
+
   canReview() {
     // Ability to review is meant to be independent of report status per acceptance criteria
     return this.isApprovingManager() && this.canApproveInRegion();
@@ -64,6 +68,11 @@ export default class ActivityReport {
     }
 
     if (this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
+      // TTAHUB-1817: Admins should be allowed to read an approved report.
+      if (this.isAdmin()) {
+        return true;
+      }
+
       return this.canReadInRegion();
     }
 
@@ -71,33 +80,42 @@ export default class ActivityReport {
   }
 
   canApproveInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
+    const regionId = this.activityReport.regionId
+    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+
     const permissions = _.find(
       this.user.permissions,
       (permission) => (
         (permission.scopeId === SCOPES.READ_REPORTS
           || permission.scopeId === SCOPES.APPROVE_REPORTS
           || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === this.activityReport.regionId),
+        && permission.regionId === regionId),
     );
     return !_.isUndefined(permissions);
   }
@@ -143,12 +161,24 @@ export default class ActivityReport {
     if (!this.activityReport.approvers) {
       return false;
     }
-    const approverUserIds = this.activityReport.approvers.map((approval) => approval.User.id);
+    const approverUserIds = this.activityReport.approvers.map((approval) => approval.user.id);
     return approverUserIds.includes(this.user.id);
   }
 
+  // This is a helper function to determine if the report is in a state where it can be edited
   reportHasEditableStatus() {
-    return this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
-      || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
+    // if the report is in draft, it's editable
+    if (this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
+      || this.activityReport.calculatedStatus === REPORT_STATUSES.DRAFT) {
+      return true;
+    }
+
+    // if the report is in needs action, it's editable,
+    // regardless of whether the report is submitted
+    if (this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      return true;
+    }
+
+    return false;
   }
 }

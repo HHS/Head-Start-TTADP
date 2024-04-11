@@ -4,7 +4,7 @@ import {
 } from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import React from 'react';
-import { FormProvider, useForm } from 'react-hook-form/dist/index.ie11';
+import { FormProvider, useForm } from 'react-hook-form';
 import ApproverSelect from '../ApproverSelect';
 import FormItem from '../../../../../../../components/FormItem';
 
@@ -24,7 +24,7 @@ describe('ApproverSelect', () => {
     // eslint-disable-next-line react/jsx-props-no-spreading
       <FormProvider {...hookForm}>
         <FormItem
-          label="Approving manager"
+          label="Approving manager "
           name="approvers"
         >
           <ApproverSelect

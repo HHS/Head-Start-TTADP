@@ -1,6 +1,12 @@
 import join from 'url-join';
 import fetchMock from 'fetch-mock';
-import { getStateCodes, requestVerificationEmail, getActiveUsers } from '../users';
+import {
+  getStateCodes,
+  requestVerificationEmail,
+  getActiveUsers,
+  getTrainingReportUsers,
+  getNamesByIds,
+} from '../users';
 
 const usersUrl = join('/', 'api', 'users');
 
@@ -33,5 +39,27 @@ describe('users fetcher', () => {
     const res = await getActiveUsers();
     expect(res.type).toBe('text/csv');
     expect(res.arrayBuffer).toBeDefined();
+  });
+
+  it('calls /api/users/training-report-users', async () => {
+    const url = join('/', 'api', 'users', 'training-report-users', '?regionId=1&eventId=1');
+    fetchMock.once(
+      url, {},
+    );
+
+    await getTrainingReportUsers(1, 1);
+
+    expect(fetchMock.called(url)).toBe(true);
+  });
+
+  it('calls /api/users/names', async () => {
+    const url = join('/', 'api', 'users', 'names', '?ids=1');
+    fetchMock.once(
+      url, {},
+    );
+
+    await getNamesByIds([1]);
+
+    expect(fetchMock.called(url)).toBe(true);
   });
 });

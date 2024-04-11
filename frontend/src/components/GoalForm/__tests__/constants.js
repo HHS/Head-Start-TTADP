@@ -1,4 +1,43 @@
-import { validateListOfResources } from '../constants';
+import {
+  validateListOfResources,
+  FORM_FIELD_DEFAULT_ERRORS,
+  FORM_FIELD_INDEXES,
+  objectivesWithValidResourcesOnly,
+  grantsToMultiValue,
+} from '../constants';
+
+describe('form constants', () => {
+  it('the amount of form fields and the amount of default errors should match', () => {
+    expect(Object.keys(FORM_FIELD_INDEXES).length).toBe(FORM_FIELD_DEFAULT_ERRORS.length);
+  });
+});
+
+describe('objectivesWithValidResourcesOnly', () => {
+  it('strips invalid resources', () => {
+    const objectives = [
+      {
+        resources: [
+          { value: 'https://www.google.com' },
+          { value: 'not a valid url' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com ' },
+          { value: ' https://www.google.com' },
+        ],
+      },
+    ];
+
+    expect(objectivesWithValidResourcesOnly(objectives)).toEqual([
+      {
+        resources: [
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+          { value: 'https://www.google.com' },
+        ],
+      },
+    ]);
+  });
+});
 
 describe('validateListOfResources', () => {
   it('returns false if there is an invalid resource', () => {
@@ -21,4 +60,28 @@ describe('validateListOfResources', () => {
       { value: 'https://www.google.com' },
     ])).toBe(false);
   });
+});
+
+test('grantsToSources function should return the correct source object', () => {
+  const grants = [
+    { numberWithProgramTypes: '123' },
+    { numberWithProgramTypes: '456' },
+    { numberWithProgramTypes: '789' },
+  ];
+
+  const source = {
+    123: 'Source 1',
+    456: 'Source 2',
+    1234: 'Source 1',
+  };
+
+  const expected = {
+    123: 'Source 1',
+    456: 'Source 2',
+    789: '',
+  };
+
+  const result = grantsToMultiValue(grants, source);
+
+  expect(result).toEqual(expected);
 });

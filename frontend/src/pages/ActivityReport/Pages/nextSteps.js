@@ -6,6 +6,7 @@ import { Fieldset } from '@trussworks/react-uswds';
 import NextStepsRepeater from './components/NextStepsRepeater';
 import ReviewPage from './Review/ReviewPage';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -36,7 +37,7 @@ const NextSteps = ({ activityRecipientType }) => {
   return (
     <>
       <Helmet>
-        <title>Next steps</title>
+        <title>Next Steps</title>
       </Helmet>
       <IndicatesRequiredField />
       <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
@@ -66,36 +67,74 @@ NextSteps.defaultProps = {
   activityRecipientType: '',
 };
 
-const sections = [
-  {
-    title: "Specialist's next steps",
-    anchor: 'specialist-next-steps',
-    items: [
-      { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
-    ],
-  },
-  {
-    title: "Recipient's next steps",
-    anchor: 'recipient-next-steps',
-    items: [
-      { label: 'What has the recipient agreed to do next?', name: 'recipientNextSteps', path: 'note' },
-    ],
-  },
-];
+const getNextStepsSections = (activityRecipientType) => {
+  const isRecipient = activityRecipientType === 'recipient';
+  const labelDisplayName = isRecipient ? "Recipient's" : 'Other entity\'s';
+  const subtitleDisplayText = isRecipient ? 'recipient' : 'other entity';
+  return [
+    {
+      title: "Specialist's next steps",
+      anchor: 'specialist-next-steps',
+      items: [
+        { label: 'What have you agreed to do next?', name: 'specialistNextSteps', path: 'note' },
+        { label: 'Anticipated completion', name: 'specialistNextSteps', path: 'completeDate' },
+      ],
+    },
+    {
+      title: `${labelDisplayName} next steps`,
+      anchor: 'recipient-next-steps',
+      items: [
+        { label: `What has the ${subtitleDisplayText} agreed to do next?`, name: 'recipientNextSteps', path: 'note' },
+        { label: 'Anticipated completion', name: 'recipientNextSteps', path: 'completeDate' },
+      ],
+    },
+  ];
+};
 
-const ReviewSection = () => (
-  <ReviewPage sections={sections} path="next-steps" />
+const ReviewSection = ({ activityRecipientType }) => (
+  <ReviewPage sections={getNextStepsSections(activityRecipientType)} path="next-steps" />
 );
+
+ReviewSection.propTypes = {
+  activityRecipientType: PropTypes.string.isRequired,
+};
 
 export default {
   position: 4,
   label: 'Next steps',
   path: 'next-steps',
   review: false,
-  reviewSection: () => <ReviewSection />,
-  render: (_additionalData, formData) => {
+  reviewSection: (activityRecipientType) => (
+    <ReviewSection activityRecipientType={activityRecipientType} />
+  ),
+  render: (
+    _additionalData,
+    formData,
+    _reportId,
+    isAppLoading,
+    onContinue,
+    onSaveDraft,
+    onUpdatePage,
+    _weAreAutoSaving,
+    _datePickerKey,
+    _onFormSubmit,
+    Alert,
+  ) => {
     const { activityRecipientType } = formData;
-    return (<NextSteps activityRecipientType={activityRecipientType} />);
+    return (
+      <>
+        <NextSteps activityRecipientType={activityRecipientType} />
+        <Alert />
+        <NavigatorButtons
+          isAppLoading={isAppLoading}
+          onContinue={onContinue}
+          onSaveDraft={onSaveDraft}
+          onUpdatePage={onUpdatePage}
+          path="next-steps"
+          position={4}
+        />
+      </>
+    );
   },
   isPageComplete,
 };

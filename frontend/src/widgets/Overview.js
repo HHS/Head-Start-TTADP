@@ -37,7 +37,7 @@ Field.defaultProps = {
   API. Note the `example` passed as a 2nd parameter to `withWidgetData` must match the widget
   id in the backend `src/widgets/index.js` file or you will get 404s.
 */
-function Overview({
+export function OverviewWidget({
   data, loading, tableCaption,
 }) {
   const title = !tableCaption ? 'TTA overview' : tableCaption;
@@ -59,7 +59,7 @@ function Overview({
   );
 }
 
-Overview.propTypes = {
+OverviewWidget.propTypes = {
   data: PropTypes.shape({
     numReports: PropTypes.string,
     numGrants: PropTypes.string,
@@ -72,7 +72,7 @@ Overview.propTypes = {
   tableCaption: PropTypes.string,
 };
 
-Overview.defaultProps = {
+OverviewWidget.defaultProps = {
   data: {
     numReports: '0',
     numGrants: '0',
@@ -84,4 +84,4 @@ Overview.defaultProps = {
   tableCaption: null,
 };
 
-export default withWidgetData(Overview, 'overview');
+export default withWidgetData(OverviewWidget, 'overview');

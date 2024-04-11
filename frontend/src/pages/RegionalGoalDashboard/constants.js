@@ -4,6 +4,7 @@ import {
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
@@ -11,16 +12,19 @@ import {
   reportIdFilter,
   stateCodeFilter,
   targetPopulationsFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
   topicsFilter,
   participantsFilter,
   myReportsFilter,
   ttaTypeFilter,
 } from '../../components/filter/activityReportFilters';
 
-export const DASHBOARD_FILTER_CONFIG = [
+const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
+  groupsFilter,
   myReportsFilter,
   participantsFilter,
   programSpecialistFilter,
@@ -29,8 +33,15 @@ export const DASHBOARD_FILTER_CONFIG = [
   recipientFilter,
   regionFilter,
   reportIdFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
   stateCodeFilter,
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
 ];
+
+// sort by display prop
+DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
+export { DASHBOARD_FILTER_CONFIG };

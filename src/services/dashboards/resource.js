@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import { Sequelize, Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
@@ -6,12 +7,12 @@ import {
   ActivityReportObjective,
   ActivityRecipient,
   Grant,
-  NextStep,
+  // NextStep,
   Goal,
   Objective,
   Recipient,
   Resource,
-  Topic,
+  // Topic,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
@@ -62,6 +63,7 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @property {number} resourceId
  * @property {string} url
  * @property {string} domain
+ * @property {string} title
  * @property {string[]} sourceFields
  * @property {string} tableType
  * @property {string[]?} topics
@@ -70,6 +72,7 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @property {number} resourceId
  * @property {string} url
  * @property {string} domain
+ * @property {string} title
  * @property {{ sourceField: string, tableType: string }[]} sourceFields
  * @property {string[]?} topics
  *
@@ -150,6 +153,7 @@ const mergeInResources = (currentData, additionalData) => additionalData
 * @property {number} resourceId
 * @property {string} url
 * @property {string} domain
+* @property {string} title
 * @property {string[]} sourceFields
 * @property {string} tableType
 * @property {string[]?} topics
@@ -176,6 +180,7 @@ const switchToResourceCentric = (input) => {
         resourceId,
         url,
         domain,
+        title,
         tableType,
         sourceFields,
         topics: resourceTopics,
@@ -185,6 +190,7 @@ const switchToResourceCentric = (input) => {
             resourceId,
             url,
             domain,
+            title,
             sourceFields,
             reports: [],
             topics: resourceTopics,
@@ -326,20 +332,22 @@ const switchToTopicCentric = (input) => {
 
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
   // Query Database for all Resources within the scope.
   const dbData = {
     allReports: null,
-    viaReport: null,
-    viaSpecialistNextSteps: null,
-    viaRecipientNextSteps: null,
+    // viaReport: null,
+    // viaSpecialistNextSteps: null,
+    // viaRecipientNextSteps: null,
     viaObjectives: null,
     viaGoals: null,
   };
   [
     dbData.allReports,
-    dbData.viaReport,
-    dbData.viaSpecialistNextSteps,
-    dbData.viaRecipientNextSteps,
+    // dbData.viaReport,
+    // dbData.viaSpecialistNextSteps,
+    // dbData.viaRecipientNextSteps,
     dbData.viaObjectives,
     dbData.viaGoals,
   ] = await Promise.all([
@@ -378,6 +386,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -399,6 +408,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -433,6 +443,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -489,6 +501,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
+    /*
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -523,6 +537,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"specialistNextSteps->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"specialistNextSteps->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"specialistNextSteps->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -549,6 +565,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -619,6 +636,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"recipientNextSteps->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"recipientNextSteps->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"recipientNextSteps->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -645,6 +664,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
         ],
       },
@@ -681,6 +701,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       ],
       raw: true,
     }),
+    */
     await ActivityReport.findAll({
       attributes: [
         'id',
@@ -715,6 +736,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"activityReportObjectives->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportObjectives->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"activityReportObjectives->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -750,6 +773,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
@@ -802,14 +826,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 },
               ],
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -850,6 +866,8 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               sequelize.literal('"activityReportGoals->resources"."url"'),
               sequelize.literal('\'domain\''),
               sequelize.literal('"activityReportGoals->resources"."domain"'),
+              sequelize.literal('\'title\''),
+              sequelize.literal('"activityReportGoals->resources"."title"'),
               sequelize.literal('\'sourceFields\''),
               sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
@@ -885,6 +903,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           {
             calculatedStatus: REPORT_STATUSES.APPROVED,
             startDate: { [Op.ne]: null },
+            createdAt: { [Op.gt]: reportCreatedAtDate },
           },
           {
             [Op.or]: [
@@ -947,14 +966,6 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               attributes: [],
               required: true,
             },
-            {
-              model: Topic,
-              as: 'topics',
-              attributes: [],
-              through: {
-                attributes: [],
-              },
-            },
           ],
           required: true,
         },
@@ -964,13 +975,19 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   ]);
 
   let reportsMap = mergeInResources(new Map(), dbData.allReports);
+  const reportIds = Array.from(reportsMap.keys());
+
   delete dbData.allReports;
-  reportsMap = mergeInResources(reportsMap, dbData.viaReport);
+  /*
+  let reportsMap = mergeInResources(new Map(), dbData.viaReport);
   delete dbData.viaReport;
+  */
+  /*
   reportsMap = mergeInResources(reportsMap, dbData.viaSpecialistNextSteps);
   delete dbData.viaSpecialistNextSteps;
   reportsMap = mergeInResources(reportsMap, dbData.viaRecipientNextSteps);
   delete dbData.viaRecipientNextSteps;
+  */
   reportsMap = mergeInResources(reportsMap, dbData.viaObjectives);
   delete dbData.viaObjectives;
   reportsMap = mergeInResources(reportsMap, dbData.viaGoals);
@@ -985,7 +1002,12 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     ? []
     : switchToTopicCentric(reports);
 
-  return { resources, reports, topics };
+  return {
+    resources,
+    reports,
+    topics,
+    reportIds,
+  };
 }
 
 const generateResourceList = (
@@ -1093,6 +1115,7 @@ function generateResourceDomainList(
       ...domains,
       {
         domain: resource.domain,
+        title: resource.title,
         urls: [resource.url],
         count: resource.reports.length,
         recipients: resource.recipients,
@@ -1110,9 +1133,9 @@ function generateResourceDomainList(
 
   if (removeLists) {
     domainCounts = domainCounts.map(({
-      domain, count, reportCount, recipientCount, resourceCount,
+      domain, title, count, reportCount, recipientCount, resourceCount,
     }) => ({
-      domain, count, reportCount, recipientCount, resourceCount,
+      domain, title, count, reportCount, recipientCount, resourceCount,
     }));
   }
 
@@ -1324,7 +1347,6 @@ const generateResourcesDashboardOverview = (allData) => {
 /*
 WidgetID: resourceDashboardOverview
 Expected JSON (we have this now):
-
 {
   report: {
     numResources: '8,135',
@@ -1406,6 +1428,7 @@ const generateResourceUse = (allData) => {
     .slice(0, 10) // limit to the top 10
     .map((resource) => ({
       heading: resource.url,
+      title: resource.title,
       isUrl: true,
       data: [
         ...resource.startDates.reduce((data, startDate) => {
@@ -1568,6 +1591,7 @@ export async function resourceDashboardPhase1(scopes) {
     overview: generateResourcesDashboardOverview(data),
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
+    reportIds: data.reportIds,
   };
 }
 

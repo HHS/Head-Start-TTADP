@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Redirect } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import UserContext from '../../../../../UserContext';
 import Review from './Review';
-import Approved from './Approved';
+import Approved from '../Approved';
 import Container from '../../../../../components/Container';
 
 const Approver = ({
@@ -16,6 +17,9 @@ const Approver = ({
   error,
   isPendingApprover,
   pages,
+  onResetToDraft,
+  onFormSubmit,
+  availableApprovers,
 }) => {
   const {
     additionalNotes,
@@ -43,17 +47,20 @@ const Approver = ({
     displayId: formData.displayId,
   };
   const { author } = formData;
+  const { user } = useContext(UserContext);
 
   const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
   const approverCount = approvers ? approvers.length : 0;
 
-  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.User.id === author.id) : false;
+  const approverIsAlsoCreator = approvers ? approvers.some((a) => a.user.id === author.id) : false;
 
   // if a user is an approver and they are also the creator of the report, the logic below
   // needs to account for what they'll see
   const showDraftViewForApproverAndCreator = (
     approverIsAlsoCreator && calculatedStatus === REPORT_STATUSES.DRAFT
   );
+
+  const submissionFunction = showDraftViewForApproverAndCreator ? onFormSubmit : onFormReview;
 
   const renderTopAlert = () => {
     if (showDraftViewForApproverAndCreator) {
@@ -117,10 +124,14 @@ const Approver = ({
               pendingOtherApprovals={pendingOtherApprovals}
               additionalNotes={additionalNotes}
               dateSubmitted={submittedDate}
-              onFormReview={onFormReview}
+              onFormReview={submissionFunction}
               approverStatusList={approvers}
               pages={pages}
               showDraftViewForApproverAndCreator={showDraftViewForApproverAndCreator}
+              creatorIsApprover={author.id === user.id}
+              onResetToDraft={onResetToDraft}
+              calculatedStatus={calculatedStatus}
+              availableApprovers={availableApprovers}
             />
           )}
         {approved
@@ -136,6 +147,12 @@ const Approver = ({
 };
 
 Approver.propTypes = {
+  availableApprovers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    }),
+  ).isRequired,
   onFormReview: PropTypes.func.isRequired,
   reviewed: PropTypes.bool.isRequired,
   children: PropTypes.node.isRequired,
@@ -162,6 +179,8 @@ Approver.propTypes = {
     review: PropTypes.bool,
     label: PropTypes.string,
   })).isRequired,
+  onResetToDraft: PropTypes.func.isRequired,
+  onFormSubmit: PropTypes.func.isRequired,
 };
 
 Approver.defaultProps = {

@@ -1,11 +1,12 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { useFormContext } from 'react-hook-form/dist/index.ie11';
+import { useFormContext } from 'react-hook-form';
 import { isUndefined } from 'lodash';
 import { Editor } from 'react-draft-wysiwyg';
 import { getEditorState, reportIsEditable } from '../../../../utils';
 
 import Section from '../Review/ReviewSection';
+import AttachmentReviewSection from './AttachmentReviewSection';
 
 const OtherEntityReviewSection = () => {
   const { watch } = useFormContext();
@@ -52,27 +53,13 @@ const OtherEntityReviewSection = () => {
               </ul>
             </div>
             <div className="margin-top-1">
-              <span className="text-bold">Resource attachments:</span>
+              <span className="text-bold">iPD courses:</span>
               {' '}
               {
-                objective.files.map((attachment) => (
-                  <li key={attachment.url.url}>
-                    <a
-                      href={attachment.url.url}
-                      target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                      rel="noreferrer"
-                    >
-                      {
-                        `${attachment.originalFileName}
-                         ${attachment.originalFileName.endsWith('.txt')
-                          ? ' (opens in new tab)'
-                          : ''}`
-                      }
-                    </a>
-                  </li>
-                ))
+                objective.courses.map((c) => c.name).join(', ')
               }
             </div>
+            <AttachmentReviewSection attachments={objective.files} />
             <div className="margin-top-1">
               <span className="text-bold">TTA provided:</span>
               {' '}
@@ -82,6 +69,13 @@ const OtherEntityReviewSection = () => {
                 defaultEditorState={getEditorState(objective.ttaProvided)}
               />
             </div>
+            {objective.supportType && (
+            <div className="margin-top-1">
+              <span className="text-bold">Support type:</span>
+              {' '}
+              {objective.supportType}
+            </div>
+            )}
             <div className="margin-top-1">
               <span className="text-bold">Objective status:</span>
               {' '}

@@ -49,7 +49,7 @@ export function renderData(heading, data) {
 }
 
 export function formatSimpleArray(arr) {
-  return arr.sort().join(', ');
+  return arr ? arr.sort().join(', ') : '';
 }
 
 export function mapAttachments(attachments) {
@@ -101,12 +101,12 @@ export const reportDataPropTypes = {
     })),
     targetPopulations: PropTypes.arrayOf(PropTypes.string),
     approvers: PropTypes.arrayOf(PropTypes.shape({
-      User: PropTypes.shape({
+      user: PropTypes.shape({
         fullName: PropTypes.string,
       }),
     })),
     activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      User: PropTypes.shape({
+      user: PropTypes.shape({
         fullName: PropTypes.string,
         note: PropTypes.string,
       }),

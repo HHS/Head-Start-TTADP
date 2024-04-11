@@ -1,3 +1,4 @@
+import { SUPPORT_TYPES } from '@ttahub/common';
 import {
   unfinishedObjectives,
   unfinishedGoals,
@@ -9,9 +10,11 @@ import {
   OBJECTIVE_TITLE,
   OBJECTIVE_TTA,
   OBJECTIVE_RESOURCES,
+  validatePrompts,
+  validateOnlyWithFlag,
 } from '../goalValidator';
 import {
-  GOAL_NAME_ERROR, GOAL_RTTAPA_ERROR,
+  GOAL_NAME_ERROR,
 } from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
@@ -33,6 +36,12 @@ const validObjective = {
   ttaProvided: 'ttaProvided',
   topics: ['Hello'],
   resources: [],
+  supportType: SUPPORT_TYPES[1],
+};
+
+const missingSupportType = {
+  ...validObjective,
+  supportType: '',
 };
 
 const goalUnfinishedObjective = {
@@ -56,16 +65,6 @@ const goalValid = {
   name: 'Test goal',
   endDate: '2021-01-01',
   isRttapa: 'No',
-  objectives: [
-    { ...validObjective },
-    { ...validObjective },
-  ],
-};
-
-const goalNoIsRttapa = {
-  name: 'Test goal',
-  endDate: '2021-01-01',
-  isRttapa: '',
   objectives: [
     { ...validObjective },
     { ...validObjective },
@@ -111,6 +110,18 @@ describe('validateGoals', () => {
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
       });
 
+      it('if one objective has no "supportType"', () => {
+        const objectives = [
+          { ...validObjective },
+          missingSupportType,
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives, setError);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
+      });
+
       it('if one objective has invalid "resources"', () => {
         const objectives = [
           { ...validObjective },
@@ -121,6 +132,18 @@ describe('validateGoals', () => {
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
         expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
+      });
+
+      it('doesn\'t die if there is no setError', () => {
+        const objectives = [
+          { ...validObjective },
+          { ...validObjective, resources: [{ value: '234runwf78n' }] },
+        ];
+
+        const setError = jest.fn();
+        const result = unfinishedObjectives(objectives);
+        expect(result).toEqual(UNFINISHED_OBJECTIVES);
+        expect(setError).not.toHaveBeenCalled();
       });
     });
 
@@ -146,13 +169,6 @@ describe('validateGoals', () => {
         const setError = jest.fn();
         unfinishedGoals(goals, setError);
         expect(setError).toHaveBeenCalledWith('goalName', { message: GOAL_NAME_ERROR });
-      });
-
-      it('if goal has no isRttapa set', () => {
-        const goals = [goalNoIsRttapa];
-        const setError = jest.fn();
-        unfinishedGoals(goals, setError);
-        expect(setError).toHaveBeenCalledWith('goalIsRttapa', { message: GOAL_RTTAPA_ERROR });
       });
 
       it('if one goal has no objectives', () => {
@@ -186,6 +202,36 @@ describe('validateGoals', () => {
         const result = unfinishedGoals(goals);
         expect(result).toEqual(false);
       });
+    });
+  });
+
+  describe('validatePrompts', () => {
+    it('returns true if no prompts', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = [];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns true if prompts are undefined', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = undefined;
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns the result of trigger when true', async () => {
+      const trigger = jest.fn(() => true);
+      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeTruthy();
+    });
+
+    it('returns the result of trigger when false', async () => {
+      const trigger = jest.fn(() => false);
+      const prompts = [{ trigger: 'trigger', prompt: 'prompt' }];
+      const result = await validatePrompts(prompts, trigger);
+      expect(result).toBeFalsy();
     });
   });
 
@@ -228,6 +274,25 @@ describe('validateGoals', () => {
         const result = validateGoals(goals);
         expect(result).toEqual(true);
       });
+    });
+  });
+
+  describe('validateOnlyWithFlag', () => {
+    it('returns true if no flags on user', () => {
+      const result = validateOnlyWithFlag({}, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if user does not have flag', () => {
+      const result = validateOnlyWithFlag({ flags: [] }, 'flag', false);
+      expect(result).toEqual(true);
+    });
+    it('returns true if flag is valid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', 1);
+      expect(result).toEqual(true);
+    });
+    it('returns false if flag is invalid', () => {
+      const result = validateOnlyWithFlag({ flags: ['flag'] }, 'flag', false);
+      expect(result).toEqual(false);
     });
   });
 });

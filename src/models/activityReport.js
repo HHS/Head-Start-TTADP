@@ -9,6 +9,7 @@ const {
   afterCreate,
   afterUpdate,
   beforeValidate,
+  afterDestroy,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
@@ -26,6 +27,18 @@ export default (sequelize, DataTypes) => {
       ActivityReport.belongsTo(models.User, { foreignKey: 'userId', as: 'author' });
       ActivityReport.belongsTo(models.User, { foreignKey: 'lastUpdatedById', as: 'lastUpdatedBy' });
       ActivityReport.hasMany(models.ActivityRecipient, { foreignKey: 'activityReportId', as: 'activityRecipients' });
+      ActivityReport.belongsToMany(models.Grant, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'grantId',
+        as: 'grants',
+      });
+      ActivityReport.belongsToMany(models.OtherEntity, {
+        through: models.ActivityRecipient,
+        foreignKey: 'activityReportId',
+        otherKey: 'otherEntityId',
+        as: 'otherEntities',
+      });
       ActivityReport.hasMany(models.ActivityReportCollaborator, { foreignKey: 'activityReportId', as: 'activityReportCollaborators' });
       ActivityReport.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ActivityReport.hasMany(models.ActivityReportFile, { foreignKey: 'activityReportId', as: 'reportFiles' });
@@ -134,6 +147,10 @@ export default (sequelize, DataTypes) => {
     },
     version: {
       type: DataTypes.INTEGER,
+      allowNull: false,
+      // NOTE: if/when the default version needs to change. The database default needs to be
+      // changed in coordination
+      defaultValue: 2,
     },
     duration: {
       type: DataTypes.DECIMAL(3, 1),
@@ -155,6 +172,9 @@ export default (sequelize, DataTypes) => {
     targetPopulations: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
+    language: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
     virtualDeliveryType: {
       type: DataTypes.STRING,
     },
@@ -165,6 +185,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     topics: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+    },
+    programTypes: {
       type: DataTypes.ARRAY(DataTypes.STRING),
     },
     context: {
@@ -178,7 +201,7 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     submissionStatus: {
-      allowNull: false,
+      allowNull: true,
       type: DataTypes.ENUM(Object.keys(REPORT_STATUSES).map((k) => REPORT_STATUSES[k])),
       validate: {
         checkRequiredForSubmission() {
@@ -285,6 +308,7 @@ export default (sequelize, DataTypes) => {
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
     sequelize,
     modelName: 'ActivityReport',
