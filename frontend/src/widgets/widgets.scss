@@ -1,0 +1,17 @@
+.ttahub-widget-heading-grid {
+    align-items: start;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1em;
+    width: 100%;
+}
+
+@media(min-width: 1300px) {
+    .ttahub-widget-heading-grid {
+        grid-template-columns: repeat(2, 1fr) repeat(2, max-content);
+    }
+
+    .ttahub-widget-heading-grid--title, .tta-widget-heading-grid--actions {
+        grid-column: span 2;
+    }
+}

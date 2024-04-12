@@ -37,9 +37,9 @@ export default async function trSessionByTopic(
   ];
 
   const dataStruct = topics.map((topic: { name: string }) => ({
-    name: topic.name,
+    topic: topic.name,
     count: 0,
-  })) as { name: string, count: number }[];
+  })) as { topic: string, count: number }[];
 
   const response = reports.reduce((acc, report) => {
     const { sessionReports } = report;
@@ -47,7 +47,7 @@ export default async function trSessionByTopic(
       const { objectiveTopics } = sessionReport.data;
 
       objectiveTopics.forEach((topic) => {
-        const d = dataStruct.find((c) => c.name === topic);
+        const d = dataStruct.find((c) => c.topic === topic);
         if (d) {
           d.count += 1;
         }
