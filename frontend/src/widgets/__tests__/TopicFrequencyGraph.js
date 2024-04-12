@@ -53,7 +53,7 @@ describe('Topic & Frequency Graph Widget', () => {
   });
 
   it('correctly sorts data by count', () => {
-    const data = [...TEST_DATA];
+    let data = [...TEST_DATA];
     sortData(data, SORT_ORDER.DESC);
     expect(data).toStrictEqual([
       {
@@ -73,14 +73,43 @@ describe('Topic & Frequency Graph Widget', () => {
         count: 12,
       },
       {
+        topic: 'Fiscal / Budget',
+        count: 0,
+      },
+      {
         topic: 'Human Resources',
         count: 0,
+      },
+    ].reverse());
+
+    data = [...TEST_DATA];
+    sortData(data, SORT_ORDER.DESC, true);
+    expect(data).toStrictEqual([
+      {
+        topic: 'Community and Self-Assessment',
+        count: 155,
+      },
+      {
+        topic: 'Family Support Services',
+        count: 53,
+      },
+      {
+        topic: 'Five-Year Grant',
+        count: 33,
+      },
+      {
+        topic: 'CLASS: Instructional Support',
+        count: 12,
       },
       {
         topic: 'Fiscal / Budget',
         count: 0,
       },
-    ].reverse());
+      {
+        topic: 'Human Resources',
+        count: 0,
+      },
+    ]);
   });
 
   it('correctly sorts data alphabetically', () => {
@@ -136,15 +165,21 @@ describe('Topic & Frequency Graph Widget', () => {
     act(() => userEvent.click(aZ));
     const apply = screen.getByRole('button', { name: 'Apply filters for the Change topic graph order menu' });
 
-    const point1 = document.querySelector('g.ytick');
+    // this won't change because we sort count and then alphabetically
+    // and this is always last in that case
+    const firstPoint = document.querySelector('g.ytick');
     // eslint-disable-next-line no-underscore-dangle
-    expect(point1.__data__.text).toBe('Fiscal / Budget');
+    expect(firstPoint.__data__.text).toBe('Human Resources');
+
+    const point1 = Array.from(document.querySelectorAll('g.ytick')).pop();
+    // eslint-disable-next-line no-underscore-dangle
+    expect(point1.__data__.text).toBe('Community and Self-Assessment');
 
     act(() => userEvent.click(apply));
 
-    const point2 = document.querySelector('g.ytick');
+    const point2 = Array.from(document.querySelectorAll('g.ytick')).pop();
     // eslint-disable-next-line no-underscore-dangle
-    expect(point2.__data__.text).toBe('Human Resources');
+    expect(point2.__data__.text).toBe('CLASS: Instructional Support');
   });
 
   it('handles switching display contexts', async () => {
