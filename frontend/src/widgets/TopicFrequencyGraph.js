@@ -15,12 +15,20 @@ export const SORT_ORDER = {
 };
 
 export function sortData(data, order, tabular = false) {
+  // if order === SORT_ORDER.ALPHA, sort alphabetically
   if (order === SORT_ORDER.ALPHA) {
     data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
-    data.sort((a, b) => b.count - a.count);
+    // sort by count and then alphabetically
+    data.sort((a, b) => {
+      if (a.count === b.count) {
+        return a.topic.localeCompare(b.topic);
+      }
+      return b.count - a.count;
+    });
   }
 
+  // the orientation is reversed visually in the table
   if (!tabular) {
     data.reverse();
   }
