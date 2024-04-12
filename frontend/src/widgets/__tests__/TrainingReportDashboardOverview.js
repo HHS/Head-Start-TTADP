@@ -21,7 +21,7 @@ describe('TrainingReportDashboardOverview', () => {
     expect(screen.getAllByText('0%')).toHaveLength(1);
     expect(screen.getByText('Recipients have at least one active grant click to visually reveal this information')).toBeInTheDocument();
     expect(screen.getByText('Grants served')).toBeInTheDocument();
-    expect(screen.getByText('across 0 training reports')).toBeInTheDocument();
+    expect(screen.getByText('across 0 Training Reports')).toBeInTheDocument();
     expect(screen.getByText('Participants')).toBeInTheDocument();
     expect(screen.getByText('Hours of TTA')).toBeInTheDocument();
   });
@@ -47,7 +47,7 @@ describe('TrainingReportDashboardOverview', () => {
 
     expect(screen.getByText('Recipients have at least one active grant click to visually reveal this information')).toBeInTheDocument();
     expect(screen.getByText('Grants served')).toBeInTheDocument();
-    expect(screen.getByText('across 2 training reports')).toBeInTheDocument();
+    expect(screen.getByText('across 2 Training Reports')).toBeInTheDocument();
     expect(screen.getByText('Participants')).toBeInTheDocument();
     expect(screen.getByText('Hours of TTA')).toBeInTheDocument();
   });
