@@ -60,7 +60,7 @@ services:
     volumes:
       - ".:/app:rw"
   owasp_zap_backend:
-    image: owasp/zap2docker-stable:latest
+    image: softwaresecurityproject/zap-stable:latest
     platform: linux/arm64
     user: zap
     command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
@@ -70,7 +70,7 @@ services:
     depends_on:
       - backend
   owasp_zap_similarity:
-    image: owasp/zap2docker-stable:latest
+    image: softwaresecurityproject/zap-stable:latest
     platform: linux/arm64
     user: zap
     command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html
