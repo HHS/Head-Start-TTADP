@@ -919,7 +919,7 @@ jobs:
           name: Connect to DB
           command: |
             # Create the script file
-            cat <<'EOF' > /tmp/setup_db_connection.sh
+            cat \<<<'EOF' > /tmp/setup_db_connection.sh
             #!/bin/bash
             echo "Starting the connection setup..."
             cf connect-to-service --no-client my-app my-db-service > /dev/shm/cf_output &
@@ -963,7 +963,7 @@ jobs:
           name: Prep S3 Connection
           command: |
             # Create the script file
-            cat <<'EOF' > /tmp/prep_s3_connection.sh
+            cat \<<<'EOF' > /tmp/prep_s3_connection.sh
             #!/bin/bash
             # Ensure jq and AWS CLI are available
             if ! type "jq" > /dev/null || ! type "aws" > /dev/null; then
@@ -995,7 +995,7 @@ jobs:
           name: Verify DB & S3 Connections and Wait for DB PID
           command: |
             # Create the script file
-            cat <<'EOF' > /tmp/verify_db_s3_connections.sh
+            cat \<<<'EOF' > /tmp/verify_db_s3_connections.sh
             #!/bin/bash
 
             # Check every second for the existence of the PID in BASH_ENV and that the process is running
@@ -1056,7 +1056,7 @@ jobs:
           command: |
             source $BASH_ENV
             # Write the script to a file
-            cat <<'EOF' > /tmp/backup_script.sh
+            cat \<<<'EOF' > /tmp/backup_script.sh
             #!/bin/bash
             # Assuming environment variables are already exported and available
 
