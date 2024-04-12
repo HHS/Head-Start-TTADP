@@ -43,6 +43,9 @@ executors:
   machine-executor:
     machine:
       image: ubuntu-2204:current
+  aws-executor:
+    docker:
+      - image: cimg/aws:stable
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
@@ -888,6 +891,248 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
+  backup_upload:
+    executor: aws-executor
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            # update
+            sudo apt-get update
+            # Install PostgreSQL Client
+            sudo apt-get install -y postgresql-client
+            # Install jq
+            sudo apt-get install -y jq
+            # Install zip & unzip
+            sudo apt-get install -y zip unzip
+            # Install Curl
+            sudo apt-get install -y curl
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install cf8-cli
+            # cleanup
+            rm -rf /var/lib/apt/lists/*
+
+      - run:
+          name: Connect to DB
+          command: |
+            # Create the script file
+            cat << 'EOF' > /tmp/setup_db_connection.sh
+            #!/bin/bash
+            echo "Starting the connection setup..."
+            cf connect-to-service --no-client my-app my-db-service > /dev/shm/cf_output &
+
+            # Capture the PID of the cf connect-to-service process
+            CF_DB_CONNECTION_PID=$!
+            echo "CF Connect to Service Process ID: $CF_DB_CONNECTION_PID"
+
+            sleep 10  # Wait for connection setup
+
+            # Parse connection details
+            HOST=$(grep 'Host:' /dev/shm/cf_output | awk '{print $2}')
+            PORT=$(grep 'Port:' /dev/shm/cf_output | awk '{print $2}')
+            USERNAME=$(grep 'Username:' /dev/shm/cf_output | awk '{print $2}')
+            PASSWORD=$(grep 'Password:' /dev/shm/cf_output | awk '{print $2}')
+            DB_NAME=$(grep 'Name:' /dev/shm/cf_output | awk '{print $2}')
+
+            # Export them for use in this script
+            echo "export CF_DB_HOST=$HOST" >> $BASH_ENV
+            echo "export CF_DB_PORT=$PORT" >> $BASH_ENV
+            echo "export CF_DB_USERNAME=$USERNAME" >> $BASH_ENV
+            echo "export CF_DB_PASSWORD=$PASSWORD" >> $BASH_ENV
+            echo "export CF_DB_NAME=$DB_NAME" >> $BASH_ENV
+
+            # Store the PID in an environment variable for later use
+            echo "export CF_DB_CONNECTION_PID=$CF_DB_CONNECTION_PID" >> $BASH_ENV
+
+            # Clean up
+            rm /dev/shm/cf_output
+            echo "Cleanup done."
+
+            EOF
+
+            # Make the script executable
+            chmod +x /tmp/setup_db_connection.sh
+
+            # Execute the script
+            /tmp/setup_db_connection.sh
+          background: true
+      - run:
+          name: Prep S3 Connection
+          command: |
+            # Create the script file
+            cat << 'EOF' > /tmp/prep_s3_connection.sh
+            #!/bin/bash
+            # Ensure jq and AWS CLI are available
+            if ! type "jq" > /dev/null || ! type "aws" > /dev/null; then
+              echo "Ensure both jq and AWS CLI are installed."
+              exit 1
+            fi
+
+            # Extract credentials
+            vcap_services=$(echo $VCAP_SERVICES)
+            access_key=$(echo $vcap_services | jq -r '.["s3-service"][0].credentials.access_key_id')
+            secret_key=$(echo $vcap_services | jq -r '.["s3-service"][0].credentials.secret_access_key')
+            bucket_name=$(echo $vcap_services | jq -r '.["s3-service"][0].credentials.bucket')
+            region=$(echo $vcap_services | jq -r '.["s3-service"][0].credentials.region')
+
+            # Export them for use in this script
+            echo "export CF_S3_ACCESS_KEY=$access_key" >> $BASH_ENV
+            echo "export CF_S3_SECRET_KEY=$secret_key" >> $BASH_ENV
+            echo "export CF_S3_BUCKET_NAME=$bucket_name" >> $BASH_ENV
+            echo "export CF_S3_REGION=$region" >> $BASH_ENV
+            EOF
+
+            # Make the script executable
+            chmod +x /tmp/prep_s3_connection.sh
+
+            # Execute the script
+            /tmp/prep_s3_connection.sh
+          background: true
+      - run:
+          name: Verify DB & S3 Connections and Wait for DB PID
+          command: |
+            # Create the script file
+            cat << 'EOF' > /tmp/verify_db_s3_connections.sh
+            #!/bin/bash
+
+            # Check every second for the existence of the PID in BASH_ENV and that the process is running
+            echo "Checking for active database connection process..."
+            timeout=30
+            while [ $timeout -gt 0 ]; do
+              if [ -s $BASH_ENV ] && grep -q "CF_DB_CONNECTION_PID" $BASH_ENV; then
+                source $BASH_ENV
+                if kill -0 $CF_DB_CONNECTION_PID 2>/dev/null; then
+                  echo "Database connection established, continuing..."
+                  break
+                fi
+              fi
+              echo "Waiting for process to start..."
+              sleep 1
+              ((timeout--))
+            done
+
+            if [ $timeout -eq 0 ]; then
+              echo "Failed to verify database connection within 30 seconds."
+              exit 1
+            fi
+
+            # List your environment variables
+            env_vars=(\
+              "CF_DB_HOST"\
+              "CF_DB_PORT"\
+              "CF_DB_USERNAME"\
+              "CF_DB_PASSWORD"\
+              "CF_DB_NAME"\
+              "CF_S3_ACCESS_KEY"\
+              "CF_S3_SECRET_KEY"\
+              "CF_S3_BUCKET_NAME"\
+              "CF_S3_REGION"\
+            )
+
+            # Function to check each environment variable
+            check_env_vars() {
+                for var in "${env_vars[@]}"
+                do
+                    if [[ -z "${!var}" ]]; then  # Using indirect reference to check if variable is empty
+                        echo "Error: Environment variable $var is not set or is empty."
+                        exit 1
+                    fi
+                done
+            }
+
+            check_env_vars
+            EOF
+
+            # Make the script executable
+            chmod +x /tmp/verify_db_s3_connections.sh
+
+            # Execute the script
+            /tmp/verify_db_s3_connections.sh
+      - run:
+          name: Backup DB, ZIP/Encrypt/Password, & Upload To S3
+          command: |
+            source $BASH_ENV
+            # Write the script to a file
+            cat << 'EOF' > /tmp/backup_script.sh
+            #!/bin/bash
+            # Assuming environment variables are already exported and available
+
+            # Define S3 file names
+            TS="$(date +%Y-%m-%d)"
+            S3_FILE_NAME="production-$(TS).sql.zip"
+            PASSWORD_FILE_NAME="production$(TS).sql.pwd"
+            LATEST_BACKUP_FILE_NAME="latest-backup.txt"
+
+            # Generate UUID as the password
+            ZIP_PASSWORD=$(uuidgen)
+
+            # Configure AWS CLI
+            export AWS_ACCESS_KEY_ID=$CF_S3_ACCESS_KEY
+            export AWS_SECRET_ACCESS_KEY=$CF_S3_SECRET_KEY
+            export AWS_DEFAULT_REGION=$CF_S3_REGION
+
+            # Generate presigned URLs using AWS CLI
+            PRESIGNED_UPLOAD_URL=$(aws s3 presign s3://${CF_S3_BUCKET_NAME}/${S3_FILE_NAME} --expires-in 3600)
+            PRESIGNED_PASSWORD_URL=$(aws s3 presign s3://${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME} --expires-in 3600)
+            PRESIGNED_LATEST_URL=$(aws s3 presign s3://${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME} --expires-in 3600)
+
+            # Perform the backup and compress with the generated password
+            PGPASSWORD=$CF_DB_PASSWORD\
+              pg_dump\
+                -U $CF_DB_USERNAME\
+                -h $CF_DB_HOSTNAME\
+                -p $CF_DB_PORT\
+                $CF_DB_NAME |\
+              tee >(pv -n -brt --interval 30 > /dev/null) |\
+              zip\
+                -P $ZIP_PASSWORD - - |\
+              curl\
+                -X PUT\
+                -T -\
+                -L "$PRESIGNED_UPLOAD_URL"\
+                -o /dev/null
+
+            # Check upload success and handle password file upload
+            if [ $? -eq 0 ]; then
+                echo $ZIP_PASSWORD | curl -X PUT -T - -L "$PRESIGNED_PASSWORD_URL" -o /dev/null
+                if [ $? -eq 0 ]; then
+                    echo "${S3_FILE_NAME}\n${PASSWORD_FILE_NAME}" |\
+                      curl -X PUT -T - -L "$PRESIGNED_LATEST_URL" -o /dev/null
+                else
+                    echo "Password file upload failed, cleaning up backup file."
+                    aws s3 rm s3://${S3_BUCKET}/${S3_FILE_NAME}
+                fi
+            else
+                echo "Backup upload failed, cleaning up any uploaded files."
+                aws s3 rm s3://${S3_BUCKET}/${S3_FILE_NAME}
+                aws s3 rm s3://${S3_BUCKET}/${PASSWORD_FILE_NAME}
+                exit 1
+            fi
+            EOF
+
+            # Change the permission of the script to make it executable
+            chmod +x /tmp/backup_script.sh
+
+            # Execute the script
+            /tmp/backup_script.sh
+
+      - run:
+          name: Cleanup and Terminate Connection
+          command: |
+            # Source the environment variables again if needed
+            source $BASH_ENV
+
+            # Terminate the connection
+            if kill -0 $CF_DB_CONNECTION_PID; then
+                kill $CF_DB_CONNECTION_PID
+                echo "Database connection process terminated."
+            else
+                echo "Database connection process was not running."
+          when: always
+
 workflows:
   build_test_deploy:
     jobs:
@@ -968,3 +1213,9 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+  daily_backup_upload:
+    triggers:
+      - schedule:
+          cron: "0 10 * * 1-5"
+    jobs:
+      - backup_upload
