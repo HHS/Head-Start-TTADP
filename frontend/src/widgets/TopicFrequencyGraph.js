@@ -195,6 +195,7 @@ export function TopicFrequencyGraphWidget({
                 buttonText="Save screenshot"
                 id="rd-save-screenshot-topic-frequency"
                 className="margin-x-2"
+                title={title}
               />
             )
             : null}
