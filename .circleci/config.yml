@@ -1217,5 +1217,9 @@ workflows:
     triggers:
       - schedule:
           cron: "0 10 * * 1-5"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
     jobs:
       - backup_upload
