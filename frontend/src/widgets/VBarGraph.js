@@ -80,14 +80,19 @@ function VBarGraph({
         automargin: true,
         autorange: true,
         tickangle: 0,
-        title: xAxisLabel,
+        title: {
+          text: xAxisLabel,
+          standoff: 40,
+        },
         standoff: 20,
       },
       yaxis: {
         tickformat: ',.0d',
         autorange: true,
-        title: yAxisLabel,
-        standoff: 50,
+        title: {
+          text: yAxisLabel,
+          standoff: 20,
+        },
       },
       hovermode: 'none',
     };
@@ -119,6 +124,7 @@ function VBarGraph({
                 reference={bars}
                 buttonText="Save screenshot"
                 id="rd-save-screenshot-vbars"
+                title={title}
               />
             )
             : null}
