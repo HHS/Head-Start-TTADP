@@ -10,6 +10,7 @@ import {
   sequelize,
 } from '../models';
 import { scopeToWhere } from '../scopes/utils';
+import { getAllTopicsForWidget as getAllTopics } from './helpers';
 
 const getTopicMappings = async () => sequelize.query(`
 SELECT
@@ -21,12 +22,6 @@ LEFT JOIN "Topics" TT2 ON TT."mapsTo" = TT2.ID
 WHERE TT."deletedAt" IS NULL OR TT."mapsTo" IS NOT NULL
 ORDER BY TT."name"
 `, { type: QueryTypes.SELECT });
-
-const getAllTopics = async () => Topic.findAll({
-  attributes: ['id', 'name', 'deletedAt'],
-  where: { deletedAt: null },
-  order: [['name', 'ASC']],
-});
 
 export async function topicFrequencyGraph(scopes) {
   const [
