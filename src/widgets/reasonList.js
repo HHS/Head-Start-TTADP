@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, REASONS } from '@ttahub/common';
+import { REPORT_STATUSES } from '@ttahub/common';
 import { ActivityReport } from '../models';
-import { countBySingleKey } from './helpers';
+import { countBySingleKey, generateReasonList } from './helpers';
 
 export default async function reasonList(scopes) {
   // Query Database for all Reasons within the scope.
@@ -18,17 +18,7 @@ export default async function reasonList(scopes) {
     raw: true,
   });
 
-  const reasons = REASONS
-    .map((reason) => ({ name: reason, count: 0 }))
-    .sort((a, b) => {
-      if (a.name < b.name) {
-        return -1;
-      }
-      if (a.name > b.name) {
-        return 1;
-      }
-      return 0;
-    });
+  const reasons = generateReasonList();
 
   return countBySingleKey(res, 'reason', reasons);
 }
