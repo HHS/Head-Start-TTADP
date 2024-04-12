@@ -48,7 +48,7 @@ test('Regional Dashboard', async ({ page }) => {
   ]);
 
   // view the topics as a table
-  await page.getByRole('button', { name: 'display number of activity reports by topic data as table' }).click();
+  await page.getByRole('button', { name: /display Number of Activity Reports by Topic as table/i }).click();
 
   // change the topics graph order
   await page.getByRole('button', { name: 'toggle Change topic graph order menu' }).click();
