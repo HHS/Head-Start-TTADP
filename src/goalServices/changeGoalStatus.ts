@@ -1,4 +1,3 @@
-import { nestedRawish } from '../lib/modelUtils';
 import db from '../models';
 
 interface GoalStatusChangeParams {

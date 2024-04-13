@@ -14,6 +14,8 @@ const mockUser = {
 
 describe('changeGoalStatus service', () => {
   let user;
+  let userRole;
+  let role;
   let goal;
   let grant;
   let recipient;
@@ -40,6 +42,15 @@ describe('changeGoalStatus service', () => {
       status: 'Draft',
       grantId: grant.id,
     });
+    role = await db.Role.create({
+      id: faker.datatype.number(),
+      name: 'Astronaut',
+      isSpecialist: true,
+    });
+    userRole = await db.UserRole.create({
+      userId: user.id,
+      roleId: role.id,
+    });
   });
 
   afterAll(async () => {
@@ -47,6 +58,8 @@ describe('changeGoalStatus service', () => {
     await db.Goal.destroy({ where: { id: goal.id } });
     await db.Grant.destroy({ where: { id: grant.id } });
     await db.Recipient.destroy({ where: { id: recipient.id } });
+    await db.UserRole.destroy({ where: { userId: user.id } });
+    await db.Role.destroy({ where: { id: role.id } });
   });
 
   it('should change the status of a goal and create a status change log', async () => {
@@ -71,6 +84,7 @@ describe('changeGoalStatus service', () => {
     expect(statusChangeLog.context).toBe(context);
     expect(statusChangeLog.userId).toBe(mockUser.id);
     expect(statusChangeLog.userName).toBe(user.name);
+    expect(statusChangeLog.userRoles).toStrictEqual(['Astronaut']);
   });
 
   it('should throw an error if the goal does not exist', async () => {
