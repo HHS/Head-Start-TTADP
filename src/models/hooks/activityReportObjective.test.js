@@ -131,4 +131,41 @@ describe('activityReportObjective hooks', () => {
       expect(transaction.finished).toBe('commit');
     });
   });
+
+  describe('propagateSupportTypeToObjective', () => {
+    let supportObjective;
+
+    beforeAll(async () => {
+      supportObjective = await Objective.create({
+        title: 'test support objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: { id: supportObjective.id },
+        force: true,
+      });
+    });
+
+    it('sets supportType on the objective when a new activityReportObjective with supportType is created', async () => {
+      const supportType = 'Introducing';
+      const newAro = await ActivityReportObjective.create({
+        objectiveId: supportObjective.id,
+        activityReportId: ar.id,
+        supportType,
+      });
+
+      const updatedObjective = await Objective.findOne({
+        where: { id: supportObjective.id },
+      });
+
+      expect(updatedObjective.supportType).toEqual(supportType);
+
+      await ActivityReportObjective.destroy({
+        where: { id: newAro.id },
+      });
+    });
+  });
 });
