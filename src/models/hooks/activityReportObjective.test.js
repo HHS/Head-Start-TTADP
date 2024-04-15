@@ -13,7 +13,7 @@ import {
 
 import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
-import { beforeDestroy } from './activityReportObjective';
+import { beforeDestroy, afterCreate } from './activityReportObjective';
 import { processObjectiveForResourcesById, processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 describe('activityReportObjective hooks', () => {

@@ -11,6 +11,7 @@ import db, {
   Objective,
   Recipient,
   Grant,
+  GrantNumberLink,
   User,
 } from '..';
 import { unlockReport } from '../../routes/activityReports/handlers';
@@ -186,11 +187,16 @@ describe('activity report model hooks', () => {
         force: true,
       });
 
+      await GrantNumberLink.destroy({
+        where: { grantId: grant.id },
+        force: true,
+      });
+
       await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
-        individualHooks: true,
+        force: true,
       });
 
       await Recipient.unscoped().destroy({
@@ -227,10 +233,12 @@ describe('activity report model hooks', () => {
     it('submitting the report should set the goal status to "Not Started"', async () => {
       const testReport = await ActivityReport.findByPk(report.id);
 
+      auditLogger.info('testReport update >');
       await testReport.update({
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
+      auditLogger.info('testReport updated?');
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('Not Started');
