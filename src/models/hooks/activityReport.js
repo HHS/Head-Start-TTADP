@@ -23,7 +23,6 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
-const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -52,6 +51,8 @@ const copyStatus = (instance) => {
 };
 
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
