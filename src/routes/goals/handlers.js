@@ -138,6 +138,7 @@ export async function changeGoalStatus(req, res) {
 
     const updatedGoal = await updateGoalStatusById(
       ids,
+      userId,
       oldStatus,
       newStatus,
       closeSuspendReason,
@@ -146,8 +147,6 @@ export async function changeGoalStatus(req, res) {
     );
 
     if (!updatedGoal) {
-      // the updateGoalStatusById function returns false
-      // if the goal status change is not allowed
       res.sendStatus(httpCodes.BAD_REQUEST);
     }
 
@@ -156,6 +155,7 @@ export async function changeGoalStatus(req, res) {
     await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }
+
 export async function deleteGoal(req, res) {
   try {
     const { goalIds } = req.query;

@@ -48,4 +48,6 @@ export default async function changeGoalStatus({
     reason,
     context,
   });
+
+  return goal;
 }
