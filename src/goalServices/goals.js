@@ -2349,13 +2349,13 @@ export async function updateGoalStatusById(
     return false;
   }
 
-  return Promise.all(goalIds.map((goalId) => changeGoalStatus(
+  return Promise.all(goalIds.map((goalId) => changeGoalStatus({
     goalId,
     userId,
     newStatus,
-    closeSuspendReason,
-    closeSuspendContext,
-  )));
+    reason: closeSuspendReason,
+    context: closeSuspendContext,
+  })));
 }
 
 export async function getGoalsForReport(reportId) {
