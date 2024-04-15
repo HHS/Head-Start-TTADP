@@ -89,7 +89,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
         transaction: options.transaction,
       })));
     } catch (error) {
-      auditLogger.error(JSON.stringify({ error }));
+      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
     }
   }
 };
@@ -108,7 +108,7 @@ const setSubmittedDate = (sequelize, instance, options) => {
       instance.set('submittedDate', null);
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`setSubmittedDate error: ${e}`);
   }
 };
 
@@ -131,11 +131,12 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
       instance.set('additionalNotes', '');
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`clearAdditionalNotes: ${e}`);
   }
 };
 
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
+  auditLogger.info('jp: propagateSubmissionStatus');
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
@@ -187,7 +188,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
     }
 
     let objectives;
@@ -238,7 +239,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating objective: ${e}`);
     }
   }
 };
@@ -1062,7 +1063,7 @@ const afterDestroy = async (sequelize, instance, options) => {
     })));
   } catch (e) {
     // we do not want to surface these errors to the UI
-    auditLogger.error('Failed to destroy linked similarity groups', JSON.stringify({ e }));
+    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
   }
 };
 

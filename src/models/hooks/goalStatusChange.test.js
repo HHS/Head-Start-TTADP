@@ -3,6 +3,7 @@ import {
   sequelize,
   GoalStatusChange,
   Grant,
+  GrantNumberLink,
   Goal,
   Recipient,
   User,
@@ -15,7 +16,7 @@ const mockUser = {
   homeRegionId: 1,
   name: fakeName,
   hsesUsername: fakeName,
-  hsesUserId: fakeName,
+  hsesUserId: faker.datatype.number(),
   lastLogin: new Date(),
 };
 
@@ -48,10 +49,11 @@ describe('GoalStatusChange hooks', () => {
   });
 
   afterAll(async () => {
-    await Goal.destroy({ where: { id: goal.id } });
     await GoalStatusChange.destroy({ where: { id: goalStatusChange.id } });
-    await Grant.destroy({ where: { id: grant.id } });
     await User.destroy({ where: { id: user.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });

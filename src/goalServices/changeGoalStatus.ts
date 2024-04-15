@@ -12,7 +12,7 @@ interface GoalStatusChangeParams {
 
 export default async function changeGoalStatus({
   goalId,
-  userId = 5,
+  userId = 1,
   newStatus,
   reason,
   context,
@@ -32,6 +32,7 @@ export default async function changeGoalStatus({
           },
         },
       ],
+      ...(transaction ? { transaction } : {}),
     }),
     db.Goal.findByPk(goalId),
   ]);
