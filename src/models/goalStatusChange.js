@@ -7,6 +7,9 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       GoalStatusChange.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
       GoalStatusChange.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+
+      models.Goal.hasMany(GoalStatusChange, { foreignKey: 'goalId', as: 'statusChanges' });
+      models.User.hasMany(GoalStatusChange, { foreignKey: 'userId', as: 'goalStatusChanges' });
     }
   }
 
