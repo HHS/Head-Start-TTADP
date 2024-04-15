@@ -1,6 +1,7 @@
 import faker from '@faker-js/faker';
 import db, {
   Goal,
+  GoalStatusChange,
   Objective,
   Recipient,
   Grant,
@@ -100,13 +101,16 @@ describe('objective model hooks', () => {
     expect(testGoal.status).toEqual('Draft');
     expect(testGoal.id).toEqual(goal.id);
 
-    await Goal.update(
-      { status: 'Not Started' },
-      {
-        where: { id: goal.id },
-        individualHooks: true,
-      },
-    );
+    await GoalStatusChange.create({
+      goalId: goal.id,
+      userId: 5,
+      userName: 'Test User',
+      userRoles: ['a', 'b'],
+      oldStatus: 'Draft',
+      newStatus: 'Not Started',
+      reason: 'Just because',
+      context: 'Testing',
+    });
 
     objective2 = await Objective.create({
       title: 'Objective 2',
