@@ -65,6 +65,7 @@ import {
   setSimilarityGroupAsUserMerged,
 } from '../services/goalSimilarityGroup';
 import Users from '../policies/user';
+import changeGoalStatus from './changeGoalStatus';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -2319,6 +2320,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
 /**
  * Updates a goal status by id
  * @param {number[]} goalIds
+ * @param {number} userId
  * @param {string} oldStatus
  * @param {string} newStatus
  * @param {string} closeSuspendReason
@@ -2328,6 +2330,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
  */
 export async function updateGoalStatusById(
   goalIds,
+  userId,
   oldStatus,
   newStatus,
   closeSuspendReason,
@@ -2346,22 +2349,13 @@ export async function updateGoalStatusById(
     return false;
   }
 
-  // finally, if everything is golden, we update the goal
-  const g = await Goal.update({
-    status: newStatus,
+  return Promise.all(goalIds.map((goalId) => changeGoalStatus(
+    goalId,
+    userId,
+    newStatus,
     closeSuspendReason,
     closeSuspendContext,
-    previousStatus: oldStatus,
-  }, {
-    where: {
-      id: goalIds,
-    },
-    returning: true,
-    individualHooks: true,
-  });
-
-  const [, updated] = g;
-  return updated;
+  )));
 }
 
 export async function getGoalsForReport(reportId) {
