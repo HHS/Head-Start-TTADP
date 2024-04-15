@@ -103,7 +103,7 @@ describe('objective model hooks', () => {
 
     await GoalStatusChange.create({
       goalId: goal.id,
-      userId: 5,
+      userId: 2,
       userName: 'Test User',
       userRoles: ['a', 'b'],
       oldStatus: 'Draft',
