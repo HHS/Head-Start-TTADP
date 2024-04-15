@@ -1,3 +1,4 @@
+const httpContext = require('express-http-context');
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
@@ -22,6 +23,7 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -76,18 +78,15 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
       });
 
       const goalIds = goals.map((goal) => goal.id);
-      await sequelize.models.Goal.update(
-        { status: 'Not Started' },
-        {
-          where: {
-            id: {
-              [Op.in]: goalIds,
-            },
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
+        goalId,
+        userId,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        reason: 'Activity Report submission',
+        context: null,
+        transaction: options.transaction,
+      })));
     } catch (error) {
       auditLogger.error(JSON.stringify({ error }));
     }
