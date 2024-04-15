@@ -15,22 +15,23 @@ export default async function changeGoalStatus({
   reason,
   context,
 }: GoalStatusChangeParams) {
-  const user = await db.User.findOne({
-    where: { id: userId },
-    attributes: ['id', 'name'],
-    include: [
-      {
-        model: db.Role,
-        as: 'roles',
-        attributes: ['name'],
-        through: {
-          attributes: [],
+  const [user, goal] = await Promise.all([
+    db.User.findOne({
+      where: { id: userId },
+      attributes: ['id', 'name'],
+      include: [
+        {
+          model: db.Role,
+          as: 'roles',
+          attributes: ['name'],
+          through: {
+            attributes: [],
+          },
         },
-      },
-    ],
-  });
-
-  const goal = await db.Goal.findByPk(goalId);
+      ],
+    }),
+    db.Goal.findByPk(goalId),
+  ]);
 
   if (!goal || !user) {
     throw new Error('Goal or user not found');
