@@ -160,7 +160,13 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       updatedGoal.objectives.forEach((objective) => {
         const expectedStatus = objective.onApprovedAR
           ? OBJECTIVE_STATUS.COMPLETE : objectiveNotOnApprovedAr.status;
+        const expectedSuspendReason = objective.onApprovedAR
+          ? data.closeSuspendReason : null;
+        const expectedSuspendContext = objective.onApprovedAR
+          ? data.closeSuspendContext : null;
         expect(objective.status).toBe(expectedStatus);
+        expect(objective.closeSuspendReason).toBe(expectedSuspendReason);
+        expect(objective.closeSuspendContext).toBe(expectedSuspendContext);
       });
     });
 
