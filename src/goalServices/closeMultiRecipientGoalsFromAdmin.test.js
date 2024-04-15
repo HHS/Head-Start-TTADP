@@ -125,7 +125,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
     };
 
-    const response = await closeMultiRecipientGoalsFromAdmin(data);
+    const response = await closeMultiRecipientGoalsFromAdmin(data, 1);
     expect(response.isError).toBe(false);
     expect(response.goals.length).toBe(2);
 
@@ -157,8 +157,6 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
 
     updatedGoals.forEach((updatedGoal) => {
       expect(updatedGoal.status).toBe(GOAL_STATUS.CLOSED);
-      expect(updatedGoal.closeSuspendContext).toBe(data.closeSuspendContext);
-      expect(updatedGoal.closeSuspendReason).toBe(data.closeSuspendReason);
       updatedGoal.objectives.forEach((objective) => {
         const expectedStatus = objective.onApprovedAR
           ? OBJECTIVE_STATUS.COMPLETE : objectiveNotOnApprovedAr.status;
