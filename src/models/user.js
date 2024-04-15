@@ -29,8 +29,6 @@ export default (sequelize, DataTypes) => {
       // User can belong to a national center through a national center user.
       User.hasMany(models.NationalCenterUser, { foreignKey: 'userId', as: 'nationalCenterUsers' });
       User.belongsToMany(models.NationalCenter, { through: models.NationalCenterUser, foreignKey: 'userId', as: 'nationalCenters' });
-
-      User.hasMany(models.GoalStatusChange, { foreignKey: 'userId', as: 'goalStatusChanges' });
     }
   }
   User.init({

@@ -18,31 +18,23 @@ export default async function changeGoalStatus({
   context,
   transaction = null,
 }: GoalStatusChangeParams) {
-  // If userId is null, and we're in CI or a Jest test, just set it to 5.
-  // This let's us simplify the way we write the many tests that end up using this function
-  // one way or another, since mocking httpContext is a pain.
-  if (!userId && (process.env.NODE_ENV === 'test' || process.env.CI)) {
-    // eslint-disable-next-line no-param-reassign
-    userId = 5;
-  }
-
-  const user = await db.User.findOne({
-    where: { id: userId },
-    attributes: ['id', 'name'],
-    include: [
-      {
-        model: db.Role,
-        as: 'roles',
-        attributes: ['name'],
-        through: {
-          attributes: [],
+  const [user, goal] = await Promise.all([
+    db.User.findOne({
+      where: { id: userId },
+      attributes: ['id', 'name'],
+      include: [
+        {
+          model: db.Role,
+          as: 'roles',
+          attributes: ['name'],
+          through: {
+            attributes: [],
+          },
         },
-      },
-    ],
-    ...(transaction ? { transaction } : {}),
-  });
-
-  const goal = await db.Goal.findByPk(goalId);
+      ],
+    }),
+    db.Goal.findByPk(goalId),
+  ]);
 
   if (!goal || !user) {
     throw new Error('Goal or user not found');
