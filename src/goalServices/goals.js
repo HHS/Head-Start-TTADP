@@ -3483,7 +3483,7 @@ Exampled request body, the data param:
   }
 }
  */
-export async function closeMultiRecipientGoalsFromAdmin(data) {
+export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const {
     selectedGoal,
     closeSuspendContext,
@@ -3517,6 +3517,7 @@ export async function closeMultiRecipientGoalsFromAdmin(data) {
     isError: false,
     goals: await updateGoalStatusById(
       goalIds,
+      userId,
       status,
       GOAL_STATUS.CLOSED,
       closeSuspendReason,
