@@ -369,10 +369,7 @@ describe('moveDraftGoalsToNotStartedOnSubmission', () => {
     const mockSequelize = {
       models: {
         Goal: {
-          findAll: jest.fn(() => []),
-          update: jest.fn(() => {
-            throw new Error('test error');
-          }),
+          findAll: jest.fn(() => { throw new Error('test error'); }),
         },
         ActivityReport: {},
       },
