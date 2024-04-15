@@ -49,5 +49,7 @@ export default async function changeGoalStatus({
     context,
   });
 
+  await goal.reload();
+
   return goal;
 }
