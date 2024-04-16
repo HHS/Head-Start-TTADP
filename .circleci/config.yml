@@ -502,7 +502,10 @@ commands:
             check_dependencies
 
             create_service_key
+            echo 'finished create_service_key'
+            echo 'start fetch_service_key'
             credentials_json=$(fetch_service_key)
+            echo 'finished fetch_service_key'
 
             # Extract credentials using jq
             access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
