@@ -922,7 +922,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install cf8-cli
             # cleanup
-            rm -rf /var/lib/apt/lists/*
+            sudo rm -rf /var/lib/apt/lists/*
       - run:
           name: Connect to DB
           command: |
