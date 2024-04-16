@@ -935,10 +935,10 @@ jobs:
             # Function to check for required dependencies
             function check_dependencies() {
                 local dependencies=("cf" "awk" "grep" "stat")
-                for dep in "\${dependencies[@]}"; do
-                    echo \${dep}
-                    if ! type "\${dep}" > /dev/null; then
-                        echo "Dependency \${dep} is not installed." >&2
+                for dep in "${dependencies[@]}"; do
+                    echo ${dep}
+                    if ! type "${dep}" > /dev/null; then
+                        echo "Dependency ${dep} is not installed." >&2
                         exit 1
                     fi
                 done
@@ -948,34 +948,34 @@ jobs:
 
             echo "Starting the connection setup..."
             # Execute cf connect-to-service and redirect output to a file, run in the background
-            cf connect-to-service --no-client \${CF_APP_NAME} \${CF_SERVICE_NAME} > /dev/shm/cf_output 2> /dev/shm/cf_error &
+            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > /dev/shm/cf_output 2> /dev/shm/cf_error &
 
             # Capture the PID of the cf connect-to-service process
-            CF_DB_CONNECTION_PID=\$!
-            echo "CF Connect to Service Process ID: \${CF_DB_CONNECTION_PID}"
+            CF_DB_CONNECTION_PID=$!
+            echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
 
             # Function to check if file size has stabilized for both output and error files
             function check_file_stabilization() {
-                local output_file=\${1}
-                local error_file=\${2}
+                local output_file=${1}
+                local error_file=${2}
                 local last_output_size=0
                 local last_error_size=0
                 local current_output_size
                 local current_error_size
                 local max_checks=60 # Max checks at every 0.5 seconds gives us 30 seconds total
 
-                for (( i=0; i<\$max_checks; i++ )); do
-                    current_output_size=\$(stat --format=%s "\${output_file}" 2>/dev/null || echo 0)
-                    current_error_size=\$(stat --format=%s "\${error_file}" 2>/dev/null || echo 0)
+                for (( i=0; i<$max_checks; i++ )); do
+                    current_output_size=$(stat --format=%s "${output_file}" 2>/dev/null || echo 0)
+                    current_error_size=$(stat --format=%s "${error_file}" 2>/dev/null || echo 0)
 
                     # Check if both files have stopped changing and are not empty
-                    if [[ "\$last_output_size" -eq "\${current_output_size}" && "\${last_error_size}" -eq "\${current_error_size}" && "\${current_output_size}" -ne 0 && "\${current_error_size}" -ne 0 ]]; then
+                    if [[ "$last_output_size" -eq "${current_output_size}" && "${last_error_size}" -eq "${current_error_size}" && "${current_output_size}" -ne 0 && "${current_error_size}" -ne 0 ]]; then
                         echo "Both output and error file sizes have stabilized."
                         return 0
                     fi
 
-                    last_output_size=\${current_output_size}
-                    last_error_size=\${current_error_size}
+                    last_output_size=${current_output_size}
+                    last_error_size=${current_error_size}
                     sleep 0.5
                 done
 
@@ -990,7 +990,7 @@ jobs:
             fi
 
             # Check if the process is still running
-            if ! kill -0 \${CF_DB_CONNECTION_PID} 2>/dev/null; then
+            if ! kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
                 echo "cf connect-to-service process has unexpectedly terminated." >&2
                 if [ -s /dev/shm/cf_error ]; then
                     echo "Error output from cf connect-to-service:"
@@ -1006,27 +1006,27 @@ jobs:
               exit 1
             fi
 
-            HOST=\$(grep 'Host:' /dev/shm/cf_output | awk '{print \$2}')
-            PORT=\$(grep 'Port:' /dev/shm/cf_output | awk '{print \$2}')
-            USERNAME=\$(grep 'Username:' /dev/shm/cf_output | awk '{print \$2}')
-            PASSWORD=\$(grep 'Password:' /dev/shm/cf_output | awk '{print \$2}')
-            DB_NAME=\$(grep 'Name:' /dev/shm/cf_output | awk '{print \$2}')
+            HOST=$(grep 'Host:' /dev/shm/cf_output | awk '{print $2}')
+            PORT=$(grep 'Port:' /dev/shm/cf_output | awk '{print $2}')
+            USERNAME=$(grep 'Username:' /dev/shm/cf_output | awk '{print $2}')
+            PASSWORD=$(grep 'Password:' /dev/shm/cf_output | awk '{print $2}')
+            DB_NAME=$(grep 'Name:' /dev/shm/cf_output | awk '{print $2}')
 
             # Check if any variable was not properly assigned
-            if [[ -z "\$HOST" || -z "\${PORT}" || -z "\${USERNAME}" || -z "\${PASSWORD}" || -z "\${DB_NAME}" ]]; then
+            if [[ -z "$HOST" || -z "${PORT}" || -z "${USERNAME}" || -z "${PASSWORD}" || -z "${DB_NAME}" ]]; then
               echo "Failed to extract all necessary database connection credentials." >&2
               exit 2
             fi
 
             # Export them for use in this script
-            echo "export CF_DB_HOST=\${HOST}" >> \${BASH_ENV}
-            echo "export CF_DB_PORT=\${PORT}" >> \${BASH_ENV}
-            echo "export CF_DB_USERNAME=\${USERNAME}" >> \${BASH_ENV}
-            echo "export CF_DB_PASSWORD=\${PASSWORD}" >> \${BASH_ENV}
-            echo "export CF_DB_NAME=\${DB_NAME}" >> \${BASH_ENV}
+            echo "export CF_DB_HOST=${HOST}" >> ${BASH_ENV}
+            echo "export CF_DB_PORT=${PORT}" >> ${BASH_ENV}
+            echo "export CF_DB_USERNAME=${USERNAME}" >> ${BASH_ENV}
+            echo "export CF_DB_PASSWORD=${PASSWORD}" >> ${BASH_ENV}
+            echo "export CF_DB_NAME=${DB_NAME}" >> ${BASH_ENV}
 
             # Store the PID in an environment variable for later use
-            echo "export CF_DB_CONNECTION_PID=\${CF_DB_CONNECTION_PID}" >> \${BASH_ENV}
+            echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> ${BASH_ENV}
 
             # Clean up
             rm /dev/shm/cf_output
@@ -1057,21 +1057,21 @@ jobs:
             # Functions definition
             function check_dependencies() {
                 local dependencies=("jq" "aws" "cf" "uuidgen")
-                for dep in "\${dependencies[@]}"; do
-                    if ! type "\${dep}" > /dev/null; then
-                        echo "Dependency \${dep} is not installed." >&2
+                for dep in "${dependencies[@]}"; do
+                    if ! type "${dep}" > /dev/null; then
+                        echo "Dependency ${dep} is not installed." >&2
                         exit 1
                     fi
                 done
             }
 
             # Generate a unique service key name using uuidgen
-            KEY_NAME="\${CF_S3_SERVICE_NAME}-key-\$(uuidgen)"
+            KEY_NAME="${CF_S3_SERVICE_NAME}-key-$(uuidgen)"
 
             # Create a service key
             function create_service_key() {
-                echo "Creating service key with name \${KEY_NAME}..."
-                if ! cf create-service-key "\${CF_S3_SERVICE_NAME}" "\${KEY_NAME}"; then
+                echo "Creating service key with name ${KEY_NAME}..."
+                if ! cf create-service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}"; then
                     echo "Failed to create service key." >&2
                     exit 2
                 fi
@@ -1080,33 +1080,33 @@ jobs:
             # Fetch the service key credentials
             function fetch_service_key() {
                 echo "Fetching service key..."
-                credentials_json=\$(cf service-key "${CF_S3_SERVICE_NAME}" "\${KEY_NAME}")
-                echo \${credentials_json}
+                credentials_json=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}")
+                echo ${credentials_json}
             }
 
             # Main execution
             check_dependencies
 
             create_service_key
-            credentials_json=\$(fetch_service_key)
+            credentials_json=$(fetch_service_key)
 
             # Extract credentials using jq
-            access_key=\$(echo "\${credentials_json}" | jq -r '.access_key_id')
-            secret_key=\$(echo "\${credentials_json}" | jq -r '.secret_access_key')
-            bucket_name=\$(echo "\${credentials_json}" | jq -r '.bucket')
-            region=\$(echo "\${credentials_json}" | jq -r '.region')
+            access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
+            secret_key=$(echo "${credentials_json}" | jq -r '.secret_access_key')
+            bucket_name=$(echo "${credentials_json}" | jq -r '.bucket')
+            region=$(echo "${credentials_json}" | jq -r '.region')
 
-            if [[ -z "\${access_key}" || -z "\${secret_key}" || -z "\${bucket_name}" || -z "\${region}" ]]; then
+            if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
                 echo "Failed to extract all necessary credentials." >&2
                 exit 4
             fi
 
             # Export credentials and the service key name for use in this script and potentially others
-            echo "export CF_S3_ACCESS_KEY=\${access_key}" >> \${BASH_ENV}
-            echo "export CF_S3_SECRET_KEY=\${secret_key}" >> \${BASH_ENV}
-            echo "export CF_S3_BUCKET_NAME=\${bucket_name}" >> \${BASH_ENV}
-            echo "export CF_S3_REGION=\${region}" >> \${BASH_ENV}
-            echo "export CF_S3_SERVICE_KEY_NAME=\${KEY_NAME}" >> \${BASH_ENV}
+            echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
+            echo "export CF_S3_SECRET_KEY=${secret_key}" >> ${BASH_ENV}
+            echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
+            echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
+            echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
 
             EOF
 
@@ -1133,10 +1133,10 @@ jobs:
             function check_db_connection() {
                 local timeout=30
                 echo "Checking for active database connection process..."
-                while [ \${timeout} -gt 0 ]; do
-                    if [ -s \${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" \${BASH_ENV}; then
-                        source \${BASH_ENV}
-                        if kill -0 \${CF_DB_CONNECTION_PID} 2>/dev/null; then
+                while [ ${timeout} -gt 0 ]; do
+                    if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
+                        source ${BASH_ENV}
+                        if kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
                             echo "Database connection established, continuing..."
                             return 0
                         fi
@@ -1152,10 +1152,10 @@ jobs:
 
             # Function to check each environment variable
             function check_env_vars() {
-                local env_vars=("\$@")  # Receive array elements as an argument
-                for var in "\${env_vars[@]}"; do
-                    if [[ -z "\${!var}" ]]; then  # Using indirect reference to check if variable is empty
-                        echo "Error: Environment variable \$var is not set or is empty."
+                local env_vars=("$@")  # Receive array elements as an argument
+                for var in "${env_vars[@]}"; do
+                    if [[ -z "${!var}" ]]; then  # Using indirect reference to check if variable is empty
+                        echo "Error: Environment variable $var is not set or is empty."
                         exit 1
                     fi
                 done
@@ -1181,9 +1181,9 @@ jobs:
             # Main execution flow
             check_db_connection
             echo "Checking DB environment variables..."
-            check_env_vars "\${db_vars[@]}"
+            check_env_vars "${db_vars[@]}"
             echo "Checking S3 environment variables..."
-            check_env_vars "\${s3_vars[@]}"
+            check_env_vars "${s3_vars[@]}"
 
             echo "All checks passed. Both DB and S3 connections are verified."
             EOF
@@ -1197,7 +1197,7 @@ jobs:
           name: Backup DB, ZIP/Encrypt/Password, & Upload To S3
           command: |
             # Assuming BASH_ENV contains necessary environment variables
-            source \$BASH_ENV
+            source $BASH_ENV
 
             # Write the script to a file
             cat \<<<'EOF' > /tmp/backup_script.sh
@@ -1208,9 +1208,9 @@ jobs:
             # Function to check for required dependencies
             function check_dependencies() {
                 local dependencies=("aws" "pg_dump" "zip" "curl" "uuidgen" "pv")
-                for dep in "\${dependencies[@]}"; do
-                    if ! type "\${dep}" > /dev/null; then
-                        echo "Dependency \${dep} is not installed." >&2
+                for dep in "${dependencies[@]}"; do
+                    if ! type "${dep}" > /dev/null; then
+                        echo "Dependency ${dep} is not installed." >&2
                         exit 1
                     fi
                 done
@@ -1221,15 +1221,15 @@ jobs:
 
             # Function to generate pre-signed S3 URLs for PUT operations
             generate_presigned_url() {
-                local file_name=\${1}
-                local url=\$(aws s3 presign s3://\${CF_S3_BUCKET_NAME}/\${file_name} --expires-in 3600 --http-method PUT)
-                echo \$url
+                local file_name=${1}
+                local url=$(aws s3 presign s3://${CF_S3_BUCKET_NAME}/${file_name} --expires-in 3600 --http-method PUT)
+                echo $url
             }
 
             # Function to check if a file exists on S3
             file_exists_on_s3() {
-                local file_name=\${1}
-                if aws s3 ls s3://\${CF_S3_BUCKET_NAME}/\${file_name} > /dev/null; then
+                local file_name=${1}
+                if aws s3 ls s3://${CF_S3_BUCKET_NAME}/${file_name} > /dev/null; then
                     return 0
                 else
                     return 1
@@ -1238,50 +1238,50 @@ jobs:
 
             # Function to safely remove a file from S3 if it exists
             safe_remove_s3_file() {
-                local file_name=\${1}
-                if file_exists_on_s3 \${file_name}; then
-                    aws s3 rm s3://\${CF_S3_BUCKET_NAME}/\${file_name}
+                local file_name=${1}
+                if file_exists_on_s3 ${file_name}; then
+                    aws s3 rm s3://${CF_S3_BUCKET_NAME}/${file_name}
                 fi
             }
 
             # Define S3 file names with precision down to the second
-            TS="\$(date +%Y-%m-%d-%H-%M-%S)"
-            S3_FILE_NAME="production-\${TS}.sql.zip"
-            PASSWORD_FILE_NAME="production-\${TS}.sql.pwd"
+            TS="$(date +%Y-%m-%d-%H-%M-%S)"
+            S3_FILE_NAME="production-${TS}.sql.zip"
+            PASSWORD_FILE_NAME="production-${TS}.sql.pwd"
             LATEST_BACKUP_FILE_NAME="latest-backup.txt"
 
             # Generate UUID as the password
-            ZIP_PASSWORD=\$(uuidgen)
+            ZIP_PASSWORD=$(uuidgen)
 
             # Configure AWS CLI
-            export AWS_ACCESS_KEY_ID=\${CF_S3_ACCESS_KEY}
-            export AWS_SECRET_ACCESS_KEY=\${CF_S3_SECRET_KEY}
-            export AWS_DEFAULT_REGION=\${CF_S3_REGION}
+            export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
+            export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
+            export AWS_DEFAULT_REGION=${CF_S3_REGION}
 
             # Generate presigned URLs for PUT operations using AWS CLI
-            PRESIGNED_UPLOAD_URL=\$(generate_presigned_url \${S3_FILE_NAME})
-            PRESIGNED_PASSWORD_URL=\$(generate_presigned_url \${PASSWORD_FILE_NAME})
-            PRESIGNED_LATEST_URL=\$(generate_presigned_url \${LATEST_BACKUP_FILE_NAME})
+            PRESIGNED_UPLOAD_URL=$(generate_presigned_url ${S3_FILE_NAME})
+            PRESIGNED_PASSWORD_URL=$(generate_presigned_url ${PASSWORD_FILE_NAME})
+            PRESIGNED_LATEST_URL=$(generate_presigned_url ${LATEST_BACKUP_FILE_NAME})
 
             # Perform the backup and compress with the generated password
-            PGPASSWORD=\$CF_DB_PASSWORD pg_dump -U \${CF_DB_USERNAME} -h \${CF_DB_HOST} -p \${CF_DB_PORT} \${CF_DB_NAME} |\
+            PGPASSWORD=$CF_DB_PASSWORD pg_dump -U ${CF_DB_USERNAME} -h ${CF_DB_HOST} -p ${CF_DB_PORT} ${CF_DB_NAME} |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
-                zip -P \${ZIP_PASSWORD} - - |\
-                curl -X PUT -T - -L "\${PRESIGNED_UPLOAD_URL}" -o /dev/null
+                zip -P ${ZIP_PASSWORD} - - |\
+                curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
             # Evaluate the result of the backup and upload process
-            if [ \$? -eq 0 ]; then
-                echo "\${ZIP_PASSWORD}" | curl -X PUT -T - -L "\${PRESIGNED_PASSWORD_URL}" -o /dev/null
-                if [ \$? -eq 0 ]; then
-                    echo -e "\${S3_FILE_NAME}\n\${PASSWORD_FILE_NAME}" | curl -X PUT -T - -L "\${PRESIGNED_LATEST_URL}" -o /dev/null
+            if [ $? -eq 0 ]; then
+                echo "${ZIP_PASSWORD}" | curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
+                if [ $? -eq 0 ]; then
+                    echo -e "${S3_FILE_NAME}\n${PASSWORD_FILE_NAME}" | curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
                 else
                     echo "Password file upload failed, cleaning up backup files."
-                    safe_remove_s3_file \${S3_FILE_NAME}
-                    safe_remove_s3_file \${PASSWORD_FILE_NAME}
+                    safe_remove_s3_file ${S3_FILE_NAME}
+                    safe_remove_s3_file ${PASSWORD_FILE_NAME}
                 fi
             else
                 echo "Backup upload failed, cleaning up uploaded file."
-                safe_remove_s3_file \${S3_FILE_NAME}
+                safe_remove_s3_file ${S3_FILE_NAME}
                 exit 1
             fi
             EOF
@@ -1295,7 +1295,7 @@ jobs:
           name: Cleanup and Terminate Connection
           command: |
             # Assuming BASH_ENV contains necessary environment variables
-            source \$BASH_ENV
+            source $BASH_ENV
 
             # Write the script to a file
             cat \<<<'EOF' > /tmp/terminate_and_cleanup.sh
@@ -1306,9 +1306,9 @@ jobs:
             # Function to check for required dependencies
             function check_dependencies() {
                 local dependencies=("cf")
-                for dep in "\${dependencies[@]}"; do
-                    if ! type "\$dep" > /dev/null; then
-                        echo "Dependency \$dep is not installed." >&2
+                for dep in "${dependencies[@]}"; do
+                    if ! type "$dep" > /dev/null; then
+                        echo "Dependency $dep is not installed." >&2
                         exit 1
                     fi
                 done
@@ -1316,8 +1316,8 @@ jobs:
 
             # Terminate the database connection process if it's running
             function terminate_db_connection() {
-                if kill -0 \${CF_DB_CONNECTION_PID} 2>/dev/null; then
-                    kill \${CF_DB_CONNECTION_PID}
+                if kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
+                    kill ${CF_DB_CONNECTION_PID}
                     echo "Database connection process terminated."
                 else
                     echo "Database connection process was not running."
@@ -1326,27 +1326,27 @@ jobs:
 
             # Function to check if a service key exists
             function check_service_key_exists() {
-                echo "Checking if service key \${CF_S3_SERVICE_KEY_NAME} exists..."
-                if cf service-keys "\${CF_S3_SERVICE_NAME}" | grep -q "\${CF_S3_SERVICE_KEY_NAME}"; then
-                    echo "Service key \${CF_S3_SERVICE_KEY_NAME} exists."
+                echo "Checking if service key ${CF_S3_SERVICE_KEY_NAME} exists..."
+                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${CF_S3_SERVICE_KEY_NAME}"; then
+                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} exists."
                     return 0
                 else
-                    echo "Service key \${CF_S3_SERVICE_KEY_NAME} does not exist."
+                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} does not exist."
                     return 1
                 fi
             }
 
             # Delete the S3 service key if deletion is allowed and the key exists
             function delete_service_key() {
-                if [ "\${DELETION_ALLOWED:-no}" = "yes" ]; then
+                if [ "${DELETION_ALLOWED:-no}" = "yes" ]; then
                     if check_service_key_exists; then
-                        echo "Deleting service key \${CF_S3_SERVICE_KEY_NAME}..."
-                        if ! cf delete-service-key "\$CF_S3_SERVICE_NAME" "\${CF_S3_SERVICE_KEY_NAME}" -f; then
-                            echo "Failed to delete service key \${CF_S3_SERVICE_KEY_NAME}." >&2
+                        echo "Deleting service key ${CF_S3_SERVICE_KEY_NAME}..."
+                        if ! cf delete-service-key "$CF_S3_SERVICE_NAME" "${CF_S3_SERVICE_KEY_NAME}" -f; then
+                            echo "Failed to delete service key ${CF_S3_SERVICE_KEY_NAME}." >&2
                             exit 2
                         fi
                     else
-                        echo "No service key \${CF_S3_SERVICE_KEY_NAME} to delete."
+                        echo "No service key ${CF_S3_SERVICE_KEY_NAME} to delete."
                     fi
                 else
                     echo "Service key deletion is not enabled. Set DELETION_ALLOWED=yes to enable."
