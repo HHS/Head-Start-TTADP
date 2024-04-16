@@ -444,7 +444,8 @@ commands:
           command: |
             # Create the script file
             cat \<<<'EOF' > /tmp/prep_s3_connection.sh
-            #!/bin/bash -e
+            #!/bin/bash -x
+            set -e
             set -u
             set -o pipefail
 
