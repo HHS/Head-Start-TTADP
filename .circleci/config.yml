@@ -494,20 +494,19 @@ commands:
             # Fetch the service key credentials and filter out the JSON part
             function fetch_service_key() {
                 echo "Fetching service key..."
-                # First, capture the entire output of the command
+                # Capture the entire output of the command, without echo commands affecting it
                 full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
 
-                # Now filter out only the JSON part from the full output
-                # Assuming the JSON output starts with a '{' and spans multiple lines until the end of the output
-                credentials_json=$(echo "${full_output}" | awk '/^{/ {print}')
+                # Use awk to capture lines starting from the first '{' until the end of the file
+                credentials_json=$(echo "${full_output}" | awk '/\{/,0')
                 if [ -z "${credentials_json}" ]; then
                     echo "No JSON data found." >&2
                     exit 5
                 fi
 
-                echo "${credentials_json}"  # Output the filtered JSON
+                # Output the filtered JSON, removing any extraneous output before it
+                echo "${credentials_json}"
             }
-
 
             # Validate JSON
             function validate_json() {
@@ -515,7 +514,7 @@ commands:
                 if ! echo "$1" | jq empty 2>/dev/null; then
                     echo "Invalid JSON format." >&2
                     echo $1
-                    exit 5
+                    exit 6
                 fi
             }
 
@@ -536,7 +535,7 @@ commands:
 
             if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
                 echo "Failed to extract all necessary credentials." >&2
-                exit 6
+                exit 7
             fi
 
             # Export credentials and the service key name for use in this script and potentially others
