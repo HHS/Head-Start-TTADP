@@ -425,7 +425,6 @@ commands:
             # Clean up
             rm /dev/shm/cf_output
             echo "Cleanup done."
-
             EOF
 
             # Make the script executable
@@ -543,7 +542,6 @@ commands:
             echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
             echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
             echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
-
             EOF
 
             # Make the script executable
@@ -793,7 +791,6 @@ commands:
             check_dependencies
             terminate_db_connection
             delete_service_key
-
             EOF
 
             # Make the script executable
