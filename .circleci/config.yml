@@ -321,9 +321,8 @@ commands:
       - run:
           name: Connect to DB
           command: |
-            # Create the script file
-            cat \<<<'EOF' > /tmp/setup_db_connection.sh
-            #!/bin/bash -e
+            set -x
+            set -e
             set -u
             set -o pipefail
 
@@ -425,13 +424,6 @@ commands:
             # Clean up
             rm /dev/shm/cf_output
             echo "Cleanup done."
-            EOF
-
-            # Make the script executable
-            chmod +x /tmp/setup_db_connection.sh
-
-            # Execute the script
-            /tmp/setup_db_connection.sh
           background: true
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
@@ -441,6 +433,7 @@ commands:
       - run:
           name: Prep S3 Connection
           command: |
+            set -x
             set -e
             set -u
             set -o pipefail
@@ -551,9 +544,8 @@ commands:
       - run:
           name: Verify DB & S3 Connections and Wait for DB PID
           command: |
-            # Create, execute, and clean up the script within a heredoc
-            cat \<<<'EOF' > /tmp/verify_db_s3_connections.sh
-            #!/bin/bash -e
+            set -x
+            set -e
             set -u
             set -o pipefail
 
@@ -614,22 +606,11 @@ commands:
             check_env_vars "${s3_vars[@]}"
 
             echo "All checks passed. Both DB and S3 connections are verified."
-            EOF
-
-            # Set the script as executable
-            chmod +x /tmp/verify_db_s3_connections.sh
-
-            # Execute the script
-            /tmp/verify_db_s3_connections.sh
       - run:
           name: Backup DB, ZIP/Encrypt/Password, & Upload To S3
           command: |
-            # Assuming BASH_ENV contains necessary environment variables
-            source $BASH_ENV
-
-            # Write the script to a file
-            cat \<<<'EOF' > /tmp/backup_script.sh
-            #!/bin/bash -e
+            set -x
+            set -e
             set -u
             set -o pipefail
 
@@ -712,22 +693,11 @@ commands:
                 safe_remove_s3_file ${S3_FILE_NAME}
                 exit 1
             fi
-            EOF
-
-            # Change the permission of the script to make it executable
-            chmod +x /tmp/backup_script.sh
-
-            # Execute the script
-            /tmp/backup_script.sh
       - run:
           name: Cleanup and Terminate Connection
           command: |
-            # Assuming BASH_ENV contains necessary environment variables
-            source $BASH_ENV
-
-            # Write the script to a file
-            cat \<<<'EOF' > /tmp/terminate_and_cleanup.sh
-            #!/bin/bash -e
+            set -x
+            set -e
             set -u
             set -o pipefail
 
@@ -785,13 +755,6 @@ commands:
             check_dependencies
             terminate_db_connection
             delete_service_key
-            EOF
-
-            # Make the script executable
-            chmod +x /tmp/terminate_and_cleanup.sh
-
-            # Execute the script
-            /tmp/terminate_and_cleanup.sh
           when: always
           environment:
             CF_APP_NAME: tta-smarthub-prod
