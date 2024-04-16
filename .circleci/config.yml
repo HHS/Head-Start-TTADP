@@ -471,7 +471,7 @@ commands:
                     return 0
                 else
                     echo "Service key ${KEY_NAME} does not exist."
-                    return 1
+                    return 2
                 fi
             }
 
@@ -483,10 +483,10 @@ commands:
                   echo "Creating service key with name ${KEY_NAME}..."
                   if ! cf create-service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}"; then
                       echo "Failed to create service key." >&2
-                      exit 2
+                      exit 3
                   elif ! check_service_key_exists; then
                       echo "Failed to create service key, even thou it returned." >&2
-                      exit 2
+                      exit 4
                   fi
                 fi
             }
@@ -498,14 +498,24 @@ commands:
                 echo ${credentials_json}
             }
 
+            # Validate JSON
+            function validate_json() {
+                echo "Validating JSON..."
+                if ! echo "$1" | jq empty 2>/dev/null; then
+                    echo "Invalid JSON format." >&2
+                    echo $1
+                    exit 5
+                fi
+            }
+
             # Main execution
             check_dependencies
 
             create_service_key
-            echo 'finished create_service_key'
-            echo 'start fetch_service_key'
             credentials_json=$(fetch_service_key)
-            echo 'finished fetch_service_key'
+
+            # Validate JSON before parsing
+            validate_json "${credentials_json}"
 
             # Extract credentials using jq
             access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
@@ -515,7 +525,7 @@ commands:
 
             if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
                 echo "Failed to extract all necessary credentials." >&2
-                exit 4
+                exit 6
             fi
 
             # Export credentials and the service key name for use in this script and potentially others
