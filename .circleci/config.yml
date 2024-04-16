@@ -491,12 +491,23 @@ commands:
                 fi
             }
 
-            # Fetch the service key credentials
+            # Fetch the service key credentials and filter out the JSON part
             function fetch_service_key() {
                 echo "Fetching service key..."
-                credentials_json=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}")
-                echo ${credentials_json}
+                # First, capture the entire output of the command
+                full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
+
+                # Now filter out only the JSON part from the full output
+                # Assuming the JSON output starts with a '{' and spans multiple lines until the end of the output
+                credentials_json=$(echo "${full_output}" | awk '/^{/ {print}')
+                if [ -z "${credentials_json}" ]; then
+                    echo "No JSON data found." >&2
+                    exit 5
+                fi
+
+                echo "${credentials_json}"  # Output the filtered JSON
             }
+
 
             # Validate JSON
             function validate_json() {
