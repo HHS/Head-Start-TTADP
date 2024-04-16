@@ -448,16 +448,6 @@ commands:
                 done
             }
 
-            check_dependencies
-
-            echo "Starting the connection setup..."
-            # Execute cf connect-to-service and redirect output to a file, run in the background
-            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > /dev/shm/cf_output 2> /dev/shm/cf_error &
-
-            # Capture the PID of the cf connect-to-service process
-            CF_DB_CONNECTION_PID=$!
-            echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
-
             # Function to check if file size has stabilized for both output and error files
             function check_file_stabilization() {
                 local output_file=${1}
@@ -487,6 +477,19 @@ commands:
                 echo "Timeout reached without stabilization."
                 return 1
             }
+
+            check_dependencies
+
+            echo "Starting the connection setup..."
+            # Execute cf connect-to-service and redirect output to a file, run in the background
+            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > /dev/shm/cf_output 2> /dev/shm/cf_error &
+
+            # Capture the PID of the cf connect-to-service process
+            CF_DB_CONNECTION_PID=$!
+            echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
+
+            stat --format=%s /dev/shm/cf_output
+            stat --format=%s /dev/shm/cf_error
 
             # Wait for the output and error file sizes to stabilize
             if ! check_file_stabilization /dev/shm/cf_output /dev/shm/cf_error; then
