@@ -493,7 +493,6 @@ commands:
 
             # Fetch the service key credentials and filter out the JSON part
             function fetch_service_key() {
-                echo "Fetching service key..."
                 # Capture the entire output of the command, without echo commands affecting it
                 full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
 
