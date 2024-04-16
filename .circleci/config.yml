@@ -551,6 +551,7 @@ commands:
             # Make the script executable
             chmod +x /tmp/prep_s3_connection.sh
 
+            cat /tmp/prep_s3_connection.sh
             # Execute the script
             /tmp/prep_s3_connection.sh
             echo 'test.5'
