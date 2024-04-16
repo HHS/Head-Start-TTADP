@@ -308,6 +308,9 @@ parameters:
   sandbox_new_relic_app_id:
     default: "867346799"
     type: string
+  manual-trigger:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -1453,5 +1456,10 @@ workflows:
             branches:
               only:
                 - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - backup_upload
+  manual_backup_upload:
+    when:
+      equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload
