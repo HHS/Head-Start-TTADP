@@ -233,12 +233,10 @@ describe('activity report model hooks', () => {
     it('submitting the report should set the goal status to "Not Started"', async () => {
       const testReport = await ActivityReport.findByPk(report.id);
 
-      auditLogger.info('testReport update >');
       await testReport.update({
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.SUBMITTED,
       });
-      auditLogger.info('testReport updated?');
 
       const testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('Not Started');
