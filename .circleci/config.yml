@@ -441,6 +441,7 @@ commands:
       - run:
           name: Prep S3 Connection
           command: |
+            echo 'test.a'
             # Create the script file
             cat \<<<'EOF' > /tmp/prep_s3_connection.sh
             #!/bin/bash -x
@@ -547,14 +548,16 @@ commands:
             echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
             echo 'test.4'
             EOF
+            echo 'test.b'
 
             # Make the script executable
             chmod +x /tmp/prep_s3_connection.sh
+            echo 'test.c'
 
             cat /tmp/prep_s3_connection.sh
             # Execute the script
             /tmp/prep_s3_connection.sh
-            echo 'test.5'
+            echo 'test.d'
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
