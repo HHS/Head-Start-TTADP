@@ -936,6 +936,7 @@ jobs:
             function check_dependencies() {
                 local dependencies=("cf" "awk" "grep" "stat")
                 for dep in "\${dependencies[@]}"; do
+                    echo \${dep}
                     if ! type "\${dep}" > /dev/null; then
                         echo "Dependency \${dep} is not installed." >&2
                         exit 1
