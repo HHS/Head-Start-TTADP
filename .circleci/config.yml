@@ -405,10 +405,10 @@ commands:
             echo 'test.1'
 
             # Extract credentials using jq
-            access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
-            secret_key=$(echo "${credentials_json}" | jq -r '.secret_access_key')
-            bucket_name=$(echo "${credentials_json}" | jq -r '.bucket')
-            region=$(echo "${credentials_json}" | jq -r '.region')
+            access_key=$(echo "${credentials_json}" | jq -r '.credentials.access_key_id')
+            secret_key=$(echo "${credentials_json}" | jq -r '.credentials.secret_access_key')
+            bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
+            region=$(echo "${credentials_json}" | jq -r '.credentials.region')
             echo 'test.2'
 
             if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
@@ -469,6 +469,7 @@ commands:
                 local max_checks=60 # Max checks at every 0.5 seconds gives us 30 seconds total
 
                 for (( i=0; i<$max_checks; i++ )); do
+                    cat ${output_file}
                     current_output_size=$(stat --format=%s "${output_file}" 2>/dev/null || echo 0)
                     current_error_size=$(stat --format=%s "${error_file}" 2>/dev/null || echo 0)
 
