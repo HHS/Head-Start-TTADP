@@ -465,12 +465,12 @@ commands:
 
             # Function to check if a service key exists
             function check_service_key_exists() {
-                echo "Checking if service key ${CF_S3_SERVICE_KEY_NAME} exists..."
-                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${CF_S3_SERVICE_KEY_NAME}"; then
-                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} exists."
+                echo "Checking if service key ${KEY_NAME} exists..."
+                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${KEY_NAME}"; then
+                    echo "Service key ${KEY_NAME} exists."
                     return 0
                 else
-                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} does not exist."
+                    echo "Service key ${KEY_NAME} does not exist."
                     return 1
                 fi
             }
