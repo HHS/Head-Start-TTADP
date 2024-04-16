@@ -45,7 +45,7 @@ executors:
       image: ubuntu-2204:current
   aws-executor:
     docker:
-      - image: cimg/aws:stable
+      - image: cimg/aws
 commands:
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
