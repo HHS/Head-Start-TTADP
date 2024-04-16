@@ -319,6 +319,117 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Prep S3 Connection
+          command: |
+            set -x
+            set -e
+            set -u
+            set -o pipefail
+
+            # Functions definition
+            function check_dependencies() {
+                local dependencies=("jq" "aws" "cf" "uuidgen")
+                for dep in "${dependencies[@]}"; do
+                    if ! type "${dep}" > /dev/null; then
+                        echo "Dependency ${dep} is not installed." >&2
+                        exit 1
+                    fi
+                done
+            }
+
+            # Generate a unique service key name using uuidgen
+            KEY_NAME="${CF_S3_SERVICE_NAME}-key-$(uuidgen)"
+
+            # Function to check if a service key exists
+            function check_service_key_exists() {
+                echo "Checking if service key ${KEY_NAME} exists..."
+                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${KEY_NAME}"; then
+                    echo "Service key ${KEY_NAME} exists."
+                    return 0
+                else
+                    echo "Service key ${KEY_NAME} does not exist."
+                    return 2
+                fi
+            }
+
+            # Create a service key
+            function create_service_key() {
+                if check_service_key_exists; then
+                  echo "Service key with name ${KEY_NAME} already exists"
+                else
+                  echo "Creating service key with name ${KEY_NAME}..."
+                  if ! cf create-service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}"; then
+                      echo "Failed to create service key." >&2
+                      exit 3
+                  elif ! check_service_key_exists; then
+                      echo "Failed to create service key, even thou it returned." >&2
+                      exit 4
+                  fi
+                fi
+            }
+
+            # Fetch the service key credentials and filter out the JSON part
+            function fetch_service_key() {
+                # Capture the entire output of the command, without echo commands affecting it
+                full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
+
+                # Use awk to capture lines starting from the first '{' until the end of the file
+                credentials_json=$(echo "${full_output}" | awk '/\{/,0')
+                if [ -z "${credentials_json}" ]; then
+                    echo "No JSON data found." >&2
+                    exit 5
+                fi
+
+                # Output the filtered JSON, removing any extraneous output before it
+                echo "${credentials_json}"
+            }
+
+            # Validate JSON
+            function validate_json() {
+                echo "Validating JSON..."
+                if ! echo "$1" | jq empty 2>/dev/null; then
+                    echo "Invalid JSON format." >&2
+                    echo $1
+                    exit 6
+                fi
+            }
+
+            # Main execution
+            check_dependencies
+
+            create_service_key
+            credentials_json=$(fetch_service_key)
+
+            # Validate JSON before parsing
+            validate_json "${credentials_json}"
+            echo 'test.1'
+
+            # Extract credentials using jq
+            access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
+            secret_key=$(echo "${credentials_json}" | jq -r '.secret_access_key')
+            bucket_name=$(echo "${credentials_json}" | jq -r '.bucket')
+            region=$(echo "${credentials_json}" | jq -r '.region')
+            echo 'test.2'
+
+            if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
+                echo "Failed to extract all necessary credentials." >&2
+                exit 7
+            fi
+            echo 'test.3'
+
+            # Export credentials and the service key name for use in this script and potentially others
+            echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
+            echo "export CF_S3_SECRET_KEY=${secret_key}" >> ${BASH_ENV}
+            echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
+            echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
+            echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
+            echo 'test.4'
+          environment:
+            auth_client_id: PROD_AUTH_CLIENT_ID
+            auth_client_secret: PROD_AUTH_CLIENT_SECRET
+            CF_APP_NAME: tta-smarthub-prod
+            CF_S3_SERVICE_NAME: ttahub-db-backups
+      - run:
           name: Connect to DB
           command: |
             set -x
@@ -430,117 +541,6 @@ commands:
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
             CF_APP_NAME: tta-smarthub-prod
             CF_SERVICE_NAME: tta-prod
-      - run:
-          name: Prep S3 Connection
-          command: |
-            set -x
-            set -e
-            set -u
-            set -o pipefail
-
-            # Functions definition
-            function check_dependencies() {
-                local dependencies=("jq" "aws" "cf" "uuidgen")
-                for dep in "${dependencies[@]}"; do
-                    if ! type "${dep}" > /dev/null; then
-                        echo "Dependency ${dep} is not installed." >&2
-                        exit 1
-                    fi
-                done
-            }
-
-            # Generate a unique service key name using uuidgen
-            KEY_NAME="${CF_S3_SERVICE_NAME}-key-$(uuidgen)"
-
-            # Function to check if a service key exists
-            function check_service_key_exists() {
-                echo "Checking if service key ${KEY_NAME} exists..."
-                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${KEY_NAME}"; then
-                    echo "Service key ${KEY_NAME} exists."
-                    return 0
-                else
-                    echo "Service key ${KEY_NAME} does not exist."
-                    return 2
-                fi
-            }
-
-            # Create a service key
-            function create_service_key() {
-                if check_service_key_exists; then
-                  echo "Service key with name ${KEY_NAME} already exists"
-                else
-                  echo "Creating service key with name ${KEY_NAME}..."
-                  if ! cf create-service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}"; then
-                      echo "Failed to create service key." >&2
-                      exit 3
-                  elif ! check_service_key_exists; then
-                      echo "Failed to create service key, even thou it returned." >&2
-                      exit 4
-                  fi
-                fi
-            }
-
-            # Fetch the service key credentials and filter out the JSON part
-            function fetch_service_key() {
-                # Capture the entire output of the command, without echo commands affecting it
-                full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
-
-                # Use awk to capture lines starting from the first '{' until the end of the file
-                credentials_json=$(echo "${full_output}" | awk '/\{/,0')
-                if [ -z "${credentials_json}" ]; then
-                    echo "No JSON data found." >&2
-                    exit 5
-                fi
-
-                # Output the filtered JSON, removing any extraneous output before it
-                echo "${credentials_json}"
-            }
-
-            # Validate JSON
-            function validate_json() {
-                echo "Validating JSON..."
-                if ! echo "$1" | jq empty 2>/dev/null; then
-                    echo "Invalid JSON format." >&2
-                    echo $1
-                    exit 6
-                fi
-            }
-
-            # Main execution
-            check_dependencies
-
-            create_service_key
-            credentials_json=$(fetch_service_key)
-
-            # Validate JSON before parsing
-            validate_json "${credentials_json}"
-            echo 'test.1'
-
-            # Extract credentials using jq
-            access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
-            secret_key=$(echo "${credentials_json}" | jq -r '.secret_access_key')
-            bucket_name=$(echo "${credentials_json}" | jq -r '.bucket')
-            region=$(echo "${credentials_json}" | jq -r '.region')
-            echo 'test.2'
-
-            if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
-                echo "Failed to extract all necessary credentials." >&2
-                exit 7
-            fi
-            echo 'test.3'
-
-            # Export credentials and the service key name for use in this script and potentially others
-            echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
-            echo "export CF_S3_SECRET_KEY=${secret_key}" >> ${BASH_ENV}
-            echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
-            echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
-            echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
-            echo 'test.4'
-          environment:
-            auth_client_id: PROD_AUTH_CLIENT_ID
-            auth_client_secret: PROD_AUTH_CLIENT_SECRET
-            CF_APP_NAME: tta-smarthub-prod
-            CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
           name: Verify DB & S3 Connections and Wait for DB PID
           command: |
