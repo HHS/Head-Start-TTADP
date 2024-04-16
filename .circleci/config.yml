@@ -524,17 +524,20 @@ commands:
 
             # Validate JSON before parsing
             validate_json "${credentials_json}"
+            echo 'test.1'
 
             # Extract credentials using jq
             access_key=$(echo "${credentials_json}" | jq -r '.access_key_id')
             secret_key=$(echo "${credentials_json}" | jq -r '.secret_access_key')
             bucket_name=$(echo "${credentials_json}" | jq -r '.bucket')
             region=$(echo "${credentials_json}" | jq -r '.region')
+            echo 'test.2'
 
             if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
                 echo "Failed to extract all necessary credentials." >&2
                 exit 7
             fi
+            echo 'test.3'
 
             # Export credentials and the service key name for use in this script and potentially others
             echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
@@ -542,6 +545,7 @@ commands:
             echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
             echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
             echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
+            echo 'test.4'
             EOF
 
             # Make the script executable
@@ -549,6 +553,7 @@ commands:
 
             # Execute the script
             /tmp/prep_s3_connection.sh
+            echo 'test.5'
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
