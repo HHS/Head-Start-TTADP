@@ -516,15 +516,15 @@ commands:
             fi
 
             # Check if the process is still running
-            if ! ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-                echo "cf connect-to-service process has unexpectedly terminated." >&2
-                if [ -s ${cf_error} ]; then
-                    echo "Error output from cf connect-to-service:"
-                    cat ${cf_error} >&2
-                fi
-                rm ${cf_error}
-                exit 1
-            fi
+            # if ! ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
+            #     echo "cf connect-to-service process has unexpectedly terminated." >&2
+            #     if [ -s ${cf_error} ]; then
+            #         echo "Error output from cf connect-to-service:"
+            #         cat ${cf_error} >&2
+            #     fi
+            #     rm ${cf_error}
+            #     exit 1
+            # fi
 
             # Ensure the output file exists and is not empty before attempting to parse it
             if [ ! -f ${cf_output} ] || [ ! -s ${cf_output} ]; then
@@ -578,12 +578,8 @@ commands:
                 while [ ${timeout} -gt 0 ]; do
                     if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
                         source ${BASH_ENV}
-
-                        ps
-                        if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-                            echo "Database connection established, continuing..."
-                            return 0
-                        fi
+                        echo "Database connection established, continuing..."
+                        return 0
                     fi
                     echo "Waiting for process to start..."
                     sleep 1
@@ -737,14 +733,14 @@ commands:
             }
 
             # Terminate the database connection process if it's running
-            function terminate_db_connection() {
-                if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-                    kill ${CF_DB_CONNECTION_PID}
-                    echo "Database connection process terminated."
-                else
-                    echo "Database connection process was not running."
-                fi
-            }
+            # function terminate_db_connection() {
+            #     if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
+            #         kill ${CF_DB_CONNECTION_PID}
+            #         echo "Database connection process terminated."
+            #     else
+            #         echo "Database connection process was not running."
+            #     fi
+            # }
 
             # Function to check if a service key exists
             function check_service_key_exists() {
@@ -777,7 +773,7 @@ commands:
 
             # Main execution
             check_dependencies
-            terminate_db_connection
+            # terminate_db_connection
             delete_service_key
           when: always
           environment:
