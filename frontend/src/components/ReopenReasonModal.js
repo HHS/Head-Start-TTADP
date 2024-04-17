@@ -83,12 +83,12 @@ const ReopenReasonModal = ({
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label htmlFor="close-suspend-reason-context">
+              <Label htmlFor="reopen-reason-context">
                 Additional context
               </Label>
               <Textarea
-                id="close-suspend-reason-context"
-                name="close-suspend-reason-context"
+                id="reopen-reason-context"
+                name="reopen-reason-context"
                 type="text"
                 value={reopenContext}
                 onChange={contextChanged}
