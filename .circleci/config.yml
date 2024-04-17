@@ -314,6 +314,19 @@ commands:
             sudo apt-get install cf8-cli
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
+
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
+
             # cleanup
             sudo rm -rf /var/lib/apt/lists/*
       - run:
