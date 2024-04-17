@@ -287,6 +287,10 @@ commands:
       - run:
           name: Install Dependencies
           command: |
+            set -x
+            set -e
+            set -u
+            set -o pipefail
             # update
             sudo apt-get update
             # Install PostgreSQL Client to have access to pg_dump
@@ -309,7 +313,7 @@ commands:
             sudo apt-get update
             sudo apt-get install cf8-cli
             # Install plugin needed for connect-to-service
-            cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
             # cleanup
             sudo rm -rf /var/lib/apt/lists/*
       - run:
