@@ -516,7 +516,7 @@ commands:
             fi
 
             # Check if the process is still running
-            if ! kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
+            if ! ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
                 echo "cf connect-to-service process has unexpectedly terminated." >&2
                 if [ -s ${cf_error} ]; then
                     echo "Error output from cf connect-to-service:"
@@ -578,7 +578,7 @@ commands:
                 while [ ${timeout} -gt 0 ]; do
                     if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
                         source ${BASH_ENV}
-                        if kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
+                        if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
                             echo "Database connection established, continuing..."
                             return 0
                         fi
@@ -588,7 +588,7 @@ commands:
                     ((timeout--))
                 done
 
-                echo "Failed to verify database connection within 30 seconds."
+                echo "Failed to verify database connection within 45 seconds."
                 exit 1
             }
 
@@ -736,7 +736,7 @@ commands:
 
             # Terminate the database connection process if it's running
             function terminate_db_connection() {
-                if kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
+                if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
                     kill ${CF_DB_CONNECTION_PID}
                     echo "Database connection process terminated."
                 else
