@@ -651,7 +651,7 @@ commands:
             # Function to generate pre-signed S3 URLs for PUT operations
             generate_presigned_url() {
                 local file_name=${1}
-                local url=$(aws s3 presign s3://${CF_S3_BUCKET_NAME}/${file_name} --expires-in 3600 --http-method PUT)
+                local url=$(aws s3api put-object --bucket ${CF_S3_BUCKET_NAME} --key ${file_name} --expires-in 3600 --region your-region --generate-presigned-url PUT)
                 echo $url
             }
 
