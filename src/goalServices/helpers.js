@@ -24,8 +24,9 @@ const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate)
     && g[translate.responsesForComparison] === responsesForComparison(needle)
     && (
       // Check if both needle and haystack goal have no valid collaborators
-      (needleCollaborators.length === 0 && (g.collaborators || []).every(c => c.goalCreatorName === undefined)) || 
-      haystackCollaborators.some((c) => needleCollaborators.includes(c))
+      (needleCollaborators.length === 0 && (g.collaborators || [])
+        .every((c) => c.goalCreatorName === undefined))
+      || haystackCollaborators.some((c) => needleCollaborators.includes(c))
     )
   ));
 };
