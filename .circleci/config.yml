@@ -651,9 +651,28 @@ commands:
             # Function to generate pre-signed S3 URLs for PUT operations
             generate_presigned_url() {
                 local file_name=${1}
-                local url=$(aws s3api put-object --bucket ${CF_S3_BUCKET_NAME} --key ${file_name} --expires-in 3600 --region your-region --generate-presigned-url PUT)
+                local region=${2:-"default-region"}  # Use a default region if not specified
+                local log_file=$(mktemp)  # Create a temporary file for logging
+
+                # Ensure the temporary logfile is deleted upon function exit
+                trap 'rm -f "${log_file}"' EXIT
+
+                if [ -z "${file_name}" ]; then
+                    echo "Error: No file name provided."
+                    return 1
+                fi
+
+                local url=$(aws s3api put-object --bucket ${CF_S3_BUCKET_NAME} --key ${file_name} --expires-in 3600 --region ${region} --generate-presigned-url PUT 2>>${log_file})
+
+                if [ $? -ne 0 ]; then
+                    echo "Failed to generate presigned URL. Check the log file for details: ${log_file}"
+                    cat ${log_file}  # Output the log file content for debugging
+                    return 1
+                fi
+
                 echo $url
             }
+
 
             # Function to check if a file exists on S3
             file_exists_on_s3() {
