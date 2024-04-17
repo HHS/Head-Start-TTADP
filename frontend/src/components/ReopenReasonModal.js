@@ -60,7 +60,7 @@ const ReopenReasonModal = ({
         modalId="ReopenReasonModal"
         title="Why are you reopening this goal?"
         okButtonText="Submit"
-        okButtonAriaLabel="Change goal status"
+        okButtonAriaLabel="Reopen goal"
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
