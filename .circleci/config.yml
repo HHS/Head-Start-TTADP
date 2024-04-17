@@ -480,19 +480,22 @@ commands:
 
             check_dependencies
 
+            cf_output=$(mktemp)
+            cf_error=$(mktemp)
+
             echo "Starting the connection setup..."
             # Execute cf connect-to-service and redirect output to a file, run in the background
-            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > /dev/shm/cf_output 2> /dev/shm/cf_error &
+            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > ${cf_output} 2> ${cf_error} &
 
             # Capture the PID of the cf connect-to-service process
             CF_DB_CONNECTION_PID=$!
             echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
 
-            stat --format=%s /dev/shm/cf_output
-            stat --format=%s /dev/shm/cf_error
+            stat --format=%s ${cf_output}
+            stat --format=%s ${cf_error}
 
             # Wait for the output and error file sizes to stabilize
-            if ! check_file_stabilization /dev/shm/cf_output /dev/shm/cf_error; then
+            if ! check_file_stabilization ${cf_output} ${cf_error}; then
                 echo "Failed to verify file stabilization." >&2
                 exit 1
             fi
@@ -500,25 +503,25 @@ commands:
             # Check if the process is still running
             if ! kill -0 ${CF_DB_CONNECTION_PID} 2>/dev/null; then
                 echo "cf connect-to-service process has unexpectedly terminated." >&2
-                if [ -s /dev/shm/cf_error ]; then
+                if [ -s ${cf_error} ]; then
                     echo "Error output from cf connect-to-service:"
-                    cat /dev/shm/cf_error >&2
+                    cat ${cf_error} >&2
                 fi
-                rm /dev/shm/cf_error
+                rm ${cf_error}
                 exit 1
             fi
 
             # Ensure the output file exists and is not empty before attempting to parse it
-            if [ ! -f /dev/shm/cf_output ] || [ ! -s /dev/shm/cf_output ]; then
+            if [ ! -f ${cf_output} ] || [ ! -s ${cf_output} ]; then
               echo "No output file found or file is empty, cannot proceed with parsing." >&2
               exit 1
             fi
 
-            HOST=$(grep 'Host:' /dev/shm/cf_output | awk '{print $2}')
-            PORT=$(grep 'Port:' /dev/shm/cf_output | awk '{print $2}')
-            USERNAME=$(grep 'Username:' /dev/shm/cf_output | awk '{print $2}')
-            PASSWORD=$(grep 'Password:' /dev/shm/cf_output | awk '{print $2}')
-            DB_NAME=$(grep 'Name:' /dev/shm/cf_output | awk '{print $2}')
+            HOST=$(grep 'Host:' ${cf_output} | awk '{print $2}')
+            PORT=$(grep 'Port:' ${cf_output} | awk '{print $2}')
+            USERNAME=$(grep 'Username:' ${cf_output} | awk '{print $2}')
+            PASSWORD=$(grep 'Password:' ${cf_output} | awk '{print $2}')
+            DB_NAME=$(grep 'Name:' ${cf_output} | awk '{print $2}')
 
             # Check if any variable was not properly assigned
             if [[ -z "$HOST" || -z "${PORT}" || -z "${USERNAME}" || -z "${PASSWORD}" || -z "${DB_NAME}" ]]; then
@@ -537,7 +540,7 @@ commands:
             echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> ${BASH_ENV}
 
             # Clean up
-            rm /dev/shm/cf_output
+            rm ${cf_output}
             echo "Cleanup done."
           background: true
           environment:
