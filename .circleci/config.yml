@@ -464,7 +464,7 @@ commands:
                     current_error_size=$(stat --format=%s "${error_file}" 2>/dev/null || echo 0)
 
                     # Check if both files have stopped changing and are not empty
-                    if [[ "$last_output_size" -eq "${current_output_size}" && "${last_error_size}" -eq "${current_error_size}" && "${current_output_size}" -ne 0 && "${current_error_size}" -ne 0 ]]; then
+                    if [[ "$last_output_size" -eq "${current_output_size}" && "${last_error_size}" -eq "${current_error_size}" && "${current_output_size}" -ne 0 ]]; then
                         echo "Both output and error file sizes have stabilized."
                         return 0
                     fi
