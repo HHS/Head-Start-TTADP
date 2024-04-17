@@ -308,6 +308,8 @@ commands:
             echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
             sudo apt-get update
             sudo apt-get install cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin https://github.com/cloud-gov/cf-service-connect/releases/download/1.1.0/cf-service-connect-darwin-386
             # cleanup
             sudo rm -rf /var/lib/apt/lists/*
       - run:
