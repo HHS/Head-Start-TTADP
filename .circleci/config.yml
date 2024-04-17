@@ -484,6 +484,7 @@ commands:
             cf_error=$(mktemp)
 
             echo "Starting the connection setup..."
+            cf help -a
             # Execute cf connect-to-service and redirect output to a file, run in the background
             cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > ${cf_output} 2> ${cf_error} &
 
