@@ -491,6 +491,14 @@ commands:
             CF_DB_CONNECTION_PID=$!
             echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
 
+            # Give some time for the process to start and produce output
+            sleep 2
+
+            echo "Initial sizes and contents of output and error files:"
+            ls -l ${cf_output} ${cf_error}  # List file sizes for debugging
+            cat ${cf_output}  # Show current output file content
+            cat ${cf_error}   # Show current error file content
+
             stat --format=%s ${cf_output}
             stat --format=%s ${cf_error}
 
