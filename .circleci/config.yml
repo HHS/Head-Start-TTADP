@@ -462,7 +462,7 @@ commands:
                 local last_error_size=0
                 local current_output_size
                 local current_error_size
-                local max_checks=15 # Max checks at every 0.5 seconds gives us 30 seconds total
+                local max_checks=6 # Max checks at every 5 seconds gives us 30 seconds total
 
                 for (( i=0; i<$max_checks; i++ )); do
                     cat ${output_file}
@@ -477,7 +477,7 @@ commands:
 
                     last_output_size=${current_output_size}
                     last_error_size=${current_error_size}
-                    sleep 2
+                    sleep 5
                 done
 
                 echo "Timeout reached without stabilization."
