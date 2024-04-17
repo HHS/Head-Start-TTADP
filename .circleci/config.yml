@@ -578,7 +578,8 @@ commands:
                 while [ ${timeout} -gt 0 ]; do
                     if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
                         source ${BASH_ENV}
-                        ps -p ${CF_DB_CONNECTION_PID}
+
+                        ps
                         if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
                             echo "Database connection established, continuing..."
                             return 0
