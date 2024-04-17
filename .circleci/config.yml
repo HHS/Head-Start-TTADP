@@ -555,7 +555,7 @@ commands:
             auth_client_id: PROD_AUTH_CLIENT_ID
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
             CF_APP_NAME: tta-smarthub-prod
-            CF_SERVICE_NAME: tta-prod
+            CF_SERVICE_NAME: ttahub-prod
       - run:
           name: Verify DB & S3 Connections and Wait for DB PID
           command: |
