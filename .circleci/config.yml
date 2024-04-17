@@ -573,7 +573,7 @@ commands:
 
             # Function to check for the existence and activity of a database connection process
             function check_db_connection() {
-                local timeout=30
+                local timeout=45
                 echo "Checking for active database connection process..."
                 while [ ${timeout} -gt 0 ]; do
                     if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
