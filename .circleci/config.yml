@@ -484,6 +484,27 @@ commands:
                 return 1
             }
 
+            check_port_connectivity() {
+                local host=${1}
+                local port=${2}
+                local timeout=${3:-5}  # Default timeout is 5 seconds
+
+                # Check for empty host or port
+                if [ -z "${host}" ] || [ -z "${port}" ]; then
+                    echo "Usage: check_port_connectivity <host> <port> [timeout]"
+                    return 1
+                fi
+
+                # Using nc to check port connectivity
+                if nc -z -w ${timeout} ${host} ${port}; then
+                    echo "Port ${port} on ${host} is open."
+                    return 0
+                else
+                    echo "Port ${port} on ${host} is not connectable."
+                    return 1
+                fi
+            }
+
             check_dependencies
 
             cf_output=$(mktemp)
@@ -553,6 +574,9 @@ commands:
 
             # Store the PID in an environment variable for later use
             echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> ${BASH_ENV}
+
+
+            check_port_connectivity ${HOST}, ${PORT}
 
             # Clean up
             rm ${cf_output}
