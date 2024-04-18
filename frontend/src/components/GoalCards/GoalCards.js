@@ -73,6 +73,7 @@ function GoalCards({
       ...g,
       goalStatus: 'In Progress',
       previousStatus: 'Closed',
+      isReopenedGoal: true,
     } : g));
 
     setGoals(newGoals);
