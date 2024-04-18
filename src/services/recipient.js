@@ -10,6 +10,7 @@ import {
   Goal,
   GoalCollaborator,
   GoalFieldResponse,
+  GoalStatusChange,
   GoalTemplate,
   ActivityReport,
   EventReportPilot,
@@ -455,6 +456,14 @@ function calculatePreviousStatus(goal) {
     return goal.previousStatus;
   }
 
+  if (goal.statusChanges) {
+    // statusChanges is an array of { oldStatus, newStatus }.
+    const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
+    if (lastStatusChange) {
+      return lastStatusChange.oldStatus;
+    }
+  }
+
   // otherwise we check to see if there is the goal is on an activity report,
   // and also check the status
   if (goal.objectives.length) {
@@ -547,7 +556,6 @@ export async function getGoalsByActivityRecipient(
       'createdAt',
       'createdVia',
       'goalNumber',
-      'previousStatus',
       'onApprovedAR',
       'onAR',
       'isRttapa',
@@ -567,6 +575,12 @@ export async function getGoalsByActivityRecipient(
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
