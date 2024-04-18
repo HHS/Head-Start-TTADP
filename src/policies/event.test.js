@@ -87,6 +87,12 @@ describe('Event Report policies', () => {
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canGetGroupsForEditingSession()).toBe(false);
     });
+
+    it('is true if the user is admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
   });
 
   describe('canDelete', () => {
