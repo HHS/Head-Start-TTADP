@@ -239,6 +239,10 @@ test.describe('get /recipient', () => {
         endDate: Joi.string().allow(null).allow(''),
         goalCollaborators: Joi.array().items(Joi.any().allow(null)),
         collaborators: Joi.array().items(Joi.any().allow(null)),
+        statusChanges: Joi.array().items(Joi.object({
+          oldStatus: Joi.string(),
+          newStatus: Joi.string(),
+        })),
       })
     ).min(1);
 
