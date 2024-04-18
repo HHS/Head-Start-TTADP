@@ -22,6 +22,7 @@ const createUser = ({
   write = false,
   read = false,
   admin = false,
+  poc = false,
   regionId = 1,
 }) => {
   const permissions = [];
@@ -40,12 +41,17 @@ const createUser = ({
     permissions.push({ scopeId: SCOPES.ADMIN, regionId });
   }
 
+  if (poc) {
+    permissions.push({ scopeId: SCOPES.POC_TRAINING_REPORTS, regionId });
+  }
+
   return { id: nextUserId, permissions };
 };
 
 const authorRegion1 = createUser({ write: true, regionId: 1 });
 const authorRegion2 = createUser({ write: true, regionId: 2 });
 const authorRegion1Collaborator = createUser({ write: true, regionId: 1 });
+const pocRegion1 = createUser({ poc: true, regionId: 1 });
 const admin = createUser({ admin: true });
 
 describe('Event Report policies', () => {
@@ -60,6 +66,26 @@ describe('Event Report policies', () => {
       const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canCreate()).toBe(false);
+    });
+  });
+
+  describe('canGetGroupsForEditingSession', () => {
+    it('is true if the user has write permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
+
+    it('is true if the user has poc permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(pocRegion1, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
+
+    it('is false if the user does not have write permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(false);
     });
   });
 

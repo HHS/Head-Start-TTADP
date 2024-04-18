@@ -106,6 +106,13 @@ export default class EventReport {
     ].includes(p.scopeId) && p.regionId === regionId);
   }
 
+  canGetGroupsForEditingSession() {
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.POC_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+  }
+
   isAdmin() {
     return !!this.permissions.find(
       (p) => p.scopeId === SCOPES.ADMIN,
@@ -125,7 +132,6 @@ export default class EventReport {
   }
 
   // some handy & fun aliases
-
   canEditEvent() {
     return this.isAdmin() || this.isAuthor() || this.isPoc();
   }
