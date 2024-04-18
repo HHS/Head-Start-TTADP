@@ -89,7 +89,9 @@ function GoalCard({
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
-  const goalNumbers = goal.goalNumbers.join(', ');
+  const isReopenedGoal = previousStatus && previousStatus === 'Closed';
+
+  const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
