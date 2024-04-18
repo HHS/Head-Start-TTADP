@@ -74,6 +74,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
       oldStatus: Joi.string(),
       newStatus: Joi.string(),
     })),
+    isReopenedGoal: Joi.boolean(),
   }));
 
   await validateSchema(response, schema, expect);
