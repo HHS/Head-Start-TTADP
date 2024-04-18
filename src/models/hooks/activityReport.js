@@ -731,6 +731,8 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 };
 
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -761,13 +763,22 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    return Promise.all((goals.map((goal) => {
+    return Promise.all((goals.map(async (goal) => {
       const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        goal.set('previousStatus', goal.status);
-        goal.set('status', status);
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: status,
+          reason: 'Activity Report approved',
+          context: null,
+          transaction: options.transaction,
+        });
+
         if (instance.endDate) {
           if (!goal.firstInProgressAt) {
             goal.set('firstInProgressAt', instance.endDate);
