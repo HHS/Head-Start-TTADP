@@ -243,6 +243,7 @@ test.describe('get /recipient', () => {
           oldStatus: Joi.string(),
           newStatus: Joi.string(),
         })),
+        isReopenedGoal: Joi.boolean(),
       })
     ).min(1);
 
