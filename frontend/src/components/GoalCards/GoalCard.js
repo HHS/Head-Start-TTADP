@@ -78,6 +78,7 @@ function GoalCard({
     createdVia,
     collaborators,
     onAR,
+    isReopenedGoal,
   } = goal;
 
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
@@ -88,8 +89,6 @@ function GoalCard({
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
-
-  const isReopenedGoal = previousStatus && previousStatus === 'Closed';
 
   const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
