@@ -134,6 +134,7 @@ describe('activityReportObjective hooks', () => {
 
   describe('propagateSupportTypeToObjective', () => {
     let supportObjective;
+    let aroWithSupportType;
 
     beforeAll(async () => {
       supportObjective = await Objective.create({
@@ -147,11 +148,17 @@ describe('activityReportObjective hooks', () => {
         where: { id: supportObjective.id },
         force: true,
       });
+
+      if (aroWithSupportType) {
+        await ActivityReportObjective.destroy({
+          where: { id: aroWithSupportType.id },
+        });
+      }
     });
 
     it('sets supportType on the objective when a new activityReportObjective with supportType is created', async () => {
       const supportType = 'Introducing';
-      const newAro = await ActivityReportObjective.create({
+      aroWithSupportType = await ActivityReportObjective.create({
         objectiveId: supportObjective.id,
         activityReportId: ar.id,
         supportType,
@@ -162,10 +169,6 @@ describe('activityReportObjective hooks', () => {
       });
 
       expect(updatedObjective.supportType).toEqual(supportType);
-
-      await ActivityReportObjective.destroy({
-        where: { id: newAro.id },
-      });
     });
   });
 });
