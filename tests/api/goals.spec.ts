@@ -69,7 +69,11 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     isNew: Joi.boolean(),
     collaborators: Joi.array().items(Joi.any().allow(null)),
     prompts: Joi.object(),
-    source: Joi.any()
+    source: Joi.any(),
+    statusChanges: Joi.array().items(Joi.object({
+      oldStatus: Joi.string(),
+      newStatus: Joi.string(),
+    })),
   }));
 
   await validateSchema(response, schema, expect);
@@ -130,6 +134,10 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
        }),
       ),
     goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+    statusChanges: Joi.array().items(Joi.object({
+      oldStatus: Joi.string(),
+      newStatus: Joi.string(),
+    })),
   });
 
   await validateSchema(response, schema, expect);
