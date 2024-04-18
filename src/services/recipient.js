@@ -450,6 +450,18 @@ export function reduceObjectivesForRecipientRecord(
       : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
+    return true;
+  }
+
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 function calculatePreviousStatus(goal) {
   // if we have a previous status recorded, return that
   if (goal.previousStatus) {
@@ -815,6 +827,8 @@ export async function getGoalsByActivityRecipient(
       ], 'goalCreatorName');
 
       existingGoal.onAR = existingGoal.onAR || current.onAR;
+      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal || wasGoalPreviouslyClosed(current);
+
       return {
         goalRows: previous.goalRows,
       };
@@ -832,6 +846,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       source: current.source,
       previousStatus: calculatePreviousStatus(current),
+      isReopenedGoal: wasGoalPreviouslyClosed(current),
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,
