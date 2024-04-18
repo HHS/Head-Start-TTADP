@@ -107,6 +107,8 @@ export default class EventReport {
   }
 
   canGetGroupsForEditingSession() {
+    if (this.isAdmin()) { return true; }
+
     return !!this.permissions.find((p) => [
       SCOPES.READ_WRITE_TRAINING_REPORTS,
       SCOPES.POC_TRAINING_REPORTS,
