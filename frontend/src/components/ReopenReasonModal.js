@@ -70,13 +70,11 @@ const ReopenReasonModal = ({
           key={`reopen-reason-form-goal-${goalId}`}
         >
           <FormGroup error={showValidationError} className="margin-top-0">
-            <Fieldset>
+            <ErrorMessage>
               {showValidationError
-                ? (
-                  <ErrorMessage>
-                    Please select a reason for reopening this goal.
-                  </ErrorMessage>
-                ) : null}
+                ? 'Please select a reason for reopening this goal.' : null}
+            </ErrorMessage>
+            <Fieldset>
               {
                 generateReasonRadioButtons()
               }
