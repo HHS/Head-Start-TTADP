@@ -347,6 +347,20 @@ class GoalSimilarityGroups{
  version : integer
 }
 
+class GoalStatusChanges{
+ * id : integer : <generated>
+ * goalId : integer : REFERENCES "Goals".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone : now()
+ * newStatus : varchar(255)
+ * reason : text
+ * updatedAt : timestamp with time zone : now()
+ * userName : varchar(255)
+ * userRoles : varchar(255)[]
+ context : text
+ oldStatus : varchar(255)
+}
+
 class GoalTemplateFieldPrompts{
  * id : integer : <generated>
  * goalTemplateId : integer : REFERENCES "GoalTemplates".id
@@ -1480,6 +1494,20 @@ class ZALGoalSimilarityGroups{
  session_sig : text
 }
 
+class ZALGoalStatusChanges{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGoalTemplateFieldPrompts{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2374,6 +2402,7 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : goal, respo
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : goal, goalResources
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goal, goalSimilarityGroupGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : finalGoal, goalSimilarityGroups
+Goals "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : goal, statusChanges
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Goals : parentGoal, childGoals
 Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
@@ -2453,6 +2482,7 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : author, lastUp
 Users "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : author, communicationLogs
 Users "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : user, eventReportPilotNationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCollaborators
+Users "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : user, goalStatusChanges
 Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, groupCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators

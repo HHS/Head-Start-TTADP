@@ -31,9 +31,9 @@ export default function TrainingReportDashboard() {
               filters={[]}
               loading={false}
               title="Hours of training by National Center"
-              subtitle="Hours reported on training report sessions"
+              subtitle="Hours reported on Training Report sessions"
               xAxisLabel="National Center"
-              yAxisLabel="Hours"
+              yAxisLabel="Number of hours"
             />
           </Grid>
         </Grid>
