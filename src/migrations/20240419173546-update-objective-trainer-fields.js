@@ -9,25 +9,20 @@ module.exports = {
       await queryInterface.sequelize.query(/* sql */`
         UPDATE "SessionReportPilots" 
         SET data = jsonb_set(data, '{objectiveTrainers}', '["PFCE"]'::jsonb, false)
-        WHERE data -> 'objectiveTrainers' = '["PFCE: IST, Yvette Dominquez"]'::jsonb;
+        WHERE id = 7;
 
         UPDATE "SessionReportPilots" 
         SET data = jsonb_set(data, '{objectiveTrainers}', '["PFMO"]'::jsonb, false)
-        WHERE data -> 'objectiveTrainers' = '["PMFO: IST, Rob Pfeffer"]'::jsonb;
-
-        UPDATE "SessionReportPilots" 
-        SET data = jsonb_set(data, '{objectiveTrainers}', '["PFMO"]'::jsonb, false)
-        WHERE data -> 'objectiveTrainers' = '["PFMO: IST, Rob Pfeffer"]'::jsonb;
+        WHERE id IN (3, 5);
 
         UPDATE "SessionReportPilots" 
         SET data = jsonb_set(data, '{objectiveTrainers}', '["HBHS"]'::jsonb, false)
-        WHERE data -> 'objectiveTrainers' = '["HBHS: IST, Rebecca Timmen"]'::jsonb;
+        WHERE id = 6;
 
         UPDATE "SessionReportPilots" 
         SET data = jsonb_set(data, '{objectiveTrainers}', '["DTL"]'::jsonb, false)
-        WHERE data -> 'objectiveTrainers' = '["DTL: IST, Beth Elbertson"]'::jsonb;
+        WHERE id = 8;
 
-        SELECT DISTINCT data -> 'objectiveTrainers' FROM "SessionReportPilots";
       `, { transaction });
     },
   ),
