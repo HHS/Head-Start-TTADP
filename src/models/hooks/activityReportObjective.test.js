@@ -144,16 +144,14 @@ describe('activityReportObjective hooks', () => {
     });
 
     afterAll(async () => {
+      await ActivityReportObjective.destroy({
+        where: { objectiveId: supportObjective.id },
+      });
+
       await Objective.destroy({
         where: { id: supportObjective.id },
         force: true,
       });
-
-      if (aroWithSupportType) {
-        await ActivityReportObjective.destroy({
-          where: { id: aroWithSupportType.id },
-        });
-      }
     });
 
     it('sets supportType on the objective when a new activityReportObjective with supportType is created', async () => {
