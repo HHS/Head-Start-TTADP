@@ -51,7 +51,7 @@ describe('Reopen Goal Reason', () => {
     expect(modalElement).toHaveClass('is-visible');
   });
 
-  it('exits when escape key is pressed', async () => {
+  it('does not exit when escape key is pressed (because forceAction is true)', async () => {
     render(<ModalComponent />);
 
     // Open modal.
@@ -65,9 +65,9 @@ describe('Reopen Goal Reason', () => {
     // Press ESC.
     userEvent.type(modalElement, '{esc}', { skipClick: true });
 
-    // Check Modal is hidden.
+    // Check Modal is still visible.
     modalElement = document.querySelector('.usa-modal-wrapper');
-    expect(modalElement).toHaveClass('is-hidden');
+    expect(modalElement).not.toHaveClass('is-hidden');
   });
 
   it('does not escape when any other key is pressed', async () => {
