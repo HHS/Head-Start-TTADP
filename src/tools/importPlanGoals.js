@@ -8,6 +8,7 @@ import {
   Grant,
 } from '../models';
 import { logger } from '../logger';
+import changeGoalStatus from '../goalServices/changeGoalStatus';
 
 async function parseCsv(fileKey) {
   let recipients = {};
@@ -44,15 +45,12 @@ export async function updateStatus(goal, dbgoal) {
 
   if (dbGoalStatusIdx < goalStatusIdx) {
     logger.info(`Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`);
-    await Goal.update(
-      {
-        status: goal.status,
-      },
-      {
-        where: { id: dbgoal.id },
-        individualHooks: true,
-      },
-    );
+    await changeGoalStatus({
+      goalId: dbgoal.id,
+      userId: 1,
+      newStatus: goal.status,
+      reason: 'Imported from Smartsheet',
+    });
   } else {
     logger.info(`Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`);
   }
