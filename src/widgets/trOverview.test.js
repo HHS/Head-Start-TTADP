@@ -251,7 +251,7 @@ describe('TR overview widget', () => {
       numReports: '2',
       numSessions: '4',
       recipientPercentage: '60.00%',
-      sumDuration: '4',
+      sumDuration: '4.0',
       totalRecipients: '5',
     });
   });
