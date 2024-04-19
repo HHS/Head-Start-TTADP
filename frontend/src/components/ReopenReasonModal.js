@@ -64,6 +64,7 @@ const ReopenReasonModal = ({
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
+        forceAction
       >
         <Form
           key={`reopen-reason-form-goal-${goalId}`}
