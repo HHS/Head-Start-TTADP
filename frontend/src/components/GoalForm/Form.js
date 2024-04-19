@@ -64,6 +64,7 @@ export default function Form({
   recipient,
   regionId,
   goalTemplateId,
+  isReopenedGoal,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -101,7 +102,7 @@ export default function Form({
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
 
-  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
+  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}` : 'Recipient TTA goal';
 
   const showAlert = isOnReport && status !== 'Closed';
 
@@ -351,6 +352,7 @@ Form.propTypes = {
   })).isRequired,
   isNew: PropTypes.bool.isRequired,
   goalTemplateId: PropTypes.number,
+  isReopenedGoal: PropTypes.bool.isRequired,
 };
 
 Form.defaultProps = {
