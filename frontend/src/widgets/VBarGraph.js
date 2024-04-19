@@ -87,6 +87,7 @@ function VBarGraph({
         standoff: 20,
       },
       yaxis: {
+        hoverformat: ',.1f',
         tickformat: ',.0d',
         autorange: true,
         title: {
