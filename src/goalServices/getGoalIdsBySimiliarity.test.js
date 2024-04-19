@@ -1,3 +1,4 @@
+/* eslint-disable jest/no-conditional-expect */
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
@@ -807,15 +808,10 @@ describe('getGoalIdsBySimilarity', () => {
       expect(goalGroupSimilarityGroupGoals).toHaveLength(goalGroup.length);
 
       goalGroupSimilarityGroupGoals.forEach((g) => {
-        let creationMethod = expect.any(String);
-        let status = expect.any(String);
         if (g.excludedIfNotAdmin) {
-          creationMethod = CREATION_METHOD.CURATED;
-          status = GOAL_STATUS.CLOSED;
+          expect(g.goal.goalTemplate.creationMethod).toBe(CREATION_METHOD.CURATED);
+          expect(g.goal.status).toBe(GOAL_STATUS.CLOSED);
         }
-
-        expect(g.goal.goalTemplate.creationMethod).toBe(creationMethod);
-        expect(g.goal.status).toBe(status);
       });
 
       const excludedIfNotAdminGoalGroup = goalGroupSimilarityGroupGoals
@@ -877,16 +873,12 @@ describe('getGoalIdsBySimilarity', () => {
       expect(goalGroupSimilarityGroupGoals).toHaveLength(goalGroup.length);
 
       goalGroupSimilarityGroupGoals.forEach((g) => {
-        let creationMethod = expect.any(String);
-        let status = expect.any(String);
         if (g.excludedIfNotAdmin) {
-          creationMethod = CREATION_METHOD.CURATED;
-          status = GOAL_STATUS.CLOSED;
+          expect(g.goal.goalTemplate.creationMethod).toBe(CREATION_METHOD.CURATED);
+          expect(g.goal.status).toBe(GOAL_STATUS.CLOSED);
         }
-
-        expect(g.goal.goalTemplate.creationMethod).toBe(creationMethod);
-        expect(g.goal.status).toBe(status);
       });
+
       const allowedIfNotAdmin = goalGroupSimilarityGroupGoals
         .filter((g) => !g.excludedIfNotAdmin).map((g) => g.goal.id);
 
