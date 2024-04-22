@@ -13,7 +13,7 @@ import {
 
 import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
-import { beforeDestroy } from './activityReportObjective';
+import { beforeDestroy, afterCreate } from './activityReportObjective';
 import { processObjectiveForResourcesById, processActivityReportObjectiveForResourcesById } from '../../services/resource';
 
 describe('activityReportObjective hooks', () => {
@@ -129,6 +129,44 @@ describe('activityReportObjective hooks', () => {
       expect(aroResources.length).toBe(0);
       expect(aroTopics.length).toBe(0);
       expect(transaction.finished).toBe('commit');
+    });
+  });
+
+  describe('propagateSupportTypeToObjective', () => {
+    let supportObjective;
+    let aroWithSupportType;
+
+    beforeAll(async () => {
+      supportObjective = await Objective.create({
+        title: 'test support objective',
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      });
+    });
+
+    afterAll(async () => {
+      await ActivityReportObjective.destroy({
+        where: { objectiveId: supportObjective.id },
+      });
+
+      await Objective.destroy({
+        where: { id: supportObjective.id },
+        force: true,
+      });
+    });
+
+    it('sets supportType on the objective when a new activityReportObjective with supportType is created', async () => {
+      const supportType = 'Introducing';
+      aroWithSupportType = await ActivityReportObjective.create({
+        objectiveId: supportObjective.id,
+        activityReportId: ar.id,
+        supportType,
+      });
+
+      const updatedObjective = await Objective.findOne({
+        where: { id: supportObjective.id },
+      });
+
+      expect(updatedObjective.supportType).toEqual(supportType);
     });
   });
 });

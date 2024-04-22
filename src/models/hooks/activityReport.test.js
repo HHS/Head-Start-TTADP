@@ -11,6 +11,7 @@ import db, {
   Objective,
   Recipient,
   Grant,
+  GrantNumberLink,
   User,
 } from '..';
 import { unlockReport } from '../../routes/activityReports/handlers';
@@ -186,11 +187,16 @@ describe('activity report model hooks', () => {
         force: true,
       });
 
+      await GrantNumberLink.destroy({
+        where: { grantId: grant.id },
+        force: true,
+      });
+
       await Grant.unscoped().destroy({
         where: {
           id: grant.id,
         },
-        individualHooks: true,
+        force: true,
       });
 
       await Recipient.unscoped().destroy({
@@ -369,10 +375,7 @@ describe('moveDraftGoalsToNotStartedOnSubmission', () => {
     const mockSequelize = {
       models: {
         Goal: {
-          findAll: jest.fn(() => []),
-          update: jest.fn(() => {
-            throw new Error('test error');
-          }),
+          findAll: jest.fn(() => { throw new Error('test error'); }),
         },
         ActivityReport: {},
       },

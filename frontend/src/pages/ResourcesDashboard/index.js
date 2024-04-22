@@ -1,3 +1,5 @@
+/* eslint-disable no-alert */
+/* eslint-disable no-console */
 import React, {
   useContext,
   useMemo,
@@ -20,7 +22,7 @@ import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview
 import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
-import { fetchResourceData } from '../../fetchers/Resources';
+import { fetchFlatResourceData } from '../../fetchers/Resources';
 import {
   downloadReports,
   getReportsViaIdPost,
@@ -195,7 +197,7 @@ export default function ResourcesDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        const data = await fetchResourceData(
+        const data = await fetchFlatResourceData(
           filterQuery,
         );
         setResourcesData(data);

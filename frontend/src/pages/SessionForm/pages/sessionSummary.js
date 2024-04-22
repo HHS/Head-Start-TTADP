@@ -37,6 +37,7 @@ import {
   sessionSummaryFields,
   pageComplete,
   NO_ERROR,
+  sessionSummaryRequiredFields,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import FileTable from '../../../components/FileUploader/FileTable';
@@ -645,22 +646,19 @@ SessionSummary.propTypes = {
 };
 
 const fields = [...Object.keys(sessionSummaryFields), 'endDate', 'startDate'];
+const requiredFields = [...Object.keys(sessionSummaryRequiredFields), 'endDate', 'startDate'];
 const path = 'session-summary';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const {
-    objectiveTrainers, objectiveTopics, courses, useIpdCourses,
-  } = hookForm.getValues();
+  const { useIpdCourses } = hookForm.getValues();
 
-  if (!objectiveTrainers || !objectiveTrainers.length
-    || !objectiveTopics || !objectiveTopics.length
-    || (useIpdCourses && !courses.length)) {
-    return false;
+  if (useIpdCourses) {
+    return pageComplete(hookForm, [...requiredFields, 'courses']);
   }
 
-  return pageComplete(hookForm, fields);
+  return pageComplete(hookForm, requiredFields);
 };
 
 export default {
