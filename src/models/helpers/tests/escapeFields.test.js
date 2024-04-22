@@ -20,6 +20,27 @@ const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerro
 const safe = '<a href="//google.com"><img src="x"></a>';
 
 describe('escapeFields', () => {
+  test('returns if changed is not in instance', () => {
+    const instance = {
+      set: jest.fn(),
+    };
+
+    escapeFields(instance, ['field1']);
+
+    expect(instance.set).not.toHaveBeenCalled();
+  });
+
+  test('returns if changed is not a function', () => {
+    const instance = {
+      set: jest.fn(),
+      changed: 'not a function',
+    };
+
+    escapeFields(instance, ['field1']);
+
+    expect(instance.set).not.toHaveBeenCalled();
+  });
+
   test('should escape specified fields in the instance', () => {
     const instance = {
       field1: xss,
