@@ -23,6 +23,9 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+const { escapeFields } = require('../helpers/escapeFields');
+
+const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -827,6 +830,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
 };
 
 const beforeCreate = async (instance) => {
+  escapeFields(instance, AR_FIELDS_TO_ESCAPE);
   copyStatus(instance);
 };
 
@@ -1046,6 +1050,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
+  escapeFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
 };
