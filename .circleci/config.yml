@@ -467,6 +467,29 @@ commands:
                 done
             }
 
+            function enableSpaceSSH() {
+                # Check if CF_SERVICE_NAME is set and not empty
+                if [[ -z "${CF_SERVICE_NAME}" ]]; then
+                    echo "Error: CF_SERVICE_NAME is not set or empty."
+                    return 1
+                fi
+
+                # Use the service name from the environment variable
+                local serviceName="${CF_SERVICE_NAME}"
+
+                # Execute the cf command
+                cf allow-space-ssh "$serviceName"
+                local status=$?
+
+                # Check the exit status of the cf command
+                if [ $status -ne 0 ]; then
+                    echo "Failed to enable SSH for the service: $serviceName"
+                    return $status
+                else
+                    echo "SSH successfully enabled for the service: $serviceName"
+                fi
+            }
+
             # Function to check if file size has stabilized for both output and error files
             function check_file_stabilization() {
                 local output_file=${1}
@@ -525,6 +548,7 @@ commands:
 
             echo "Starting the connection setup..."
             cf help -a
+            enableSpaceSSH
             # Execute cf connect-to-service and redirect output to a file, run in the background
             cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > ${cf_output} 2> ${cf_error} &
 
@@ -697,6 +721,8 @@ commands:
             set -u
             set -o pipefail
 
+            source ${BASH_ENV}
+
             # Function to check for required dependencies
             function check_dependencies() {
                 local dependencies=("aws" "pg_dump" "zip" "curl" "uuidgen" "pv")
@@ -803,6 +829,8 @@ commands:
             set -u
             set -o pipefail
 
+            source ${BASH_ENV}
+
             # Function to check for required dependencies
             function check_dependencies() {
                 local dependencies=("cf")
@@ -823,6 +851,26 @@ commands:
             #         echo "Database connection process was not running."
             #     fi
             # }
+
+            function disableSpaceSSH() {
+                # Check if CF_SERVICE_NAME is set and not empty
+                if [[ -z "${CF_SERVICE_NAME}" ]]; then
+                    echo "Error: CF_SERVICE_NAME is not set or empty."
+                    return 1
+                fi
+
+                # Execute the cf command
+                cf disallow-space-ssh "${CF_SERVICE_NAME}"
+                local status=$?
+
+                # Check the exit status of the cf command
+                if [ $status -ne 0 ]; then
+                    echo "Failed to disable SSH for the service: ${CF_SERVICE_NAME}"
+                    return $status
+                else
+                    echo "SSH successfully disabled for the service: ${CF_SERVICE_NAME}"
+                fi
+            }
 
             # Function to check if a service key exists
             function check_service_key_exists() {
@@ -856,6 +904,7 @@ commands:
             # Main execution
             check_dependencies
             # terminate_db_connection
+            disableSpaceSSH
             delete_service_key
           when: always
           environment:
