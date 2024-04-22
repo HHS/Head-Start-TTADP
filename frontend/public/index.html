@@ -54,5 +54,10 @@
       })(window,document,'script','dataLayer', '%REACT_APP_GTM_ID%');</script>
       <!-- End Google Tag Manager -->
     <% } %> 
+
+    <% if (process.env.REACT_APP_INCLUDE_ACCESSIBILITY_CSS === 'true') { %>
+      <link rel="stylesheet" href="./accessibility-errors.css">
+    <% } %> 
+
   </body>
 </html>
