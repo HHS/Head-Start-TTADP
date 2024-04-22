@@ -884,6 +884,19 @@ describe('Recipient DB service', () => {
       expect(noResponse).toBeTruthy();
       expect(noResponse.ids.length).toBe(1);
     });
+
+    it('properly combines the same goals with no creators/collaborators', async () => {
+      // Remove other goals
+      goals[0].destroy();
+      goals[3].destroy();
+
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(1);
+      // Verify goal 2 and 3 have empty creators/collaborators
+      expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
+      // Verify goal 2 and 3 are rolled up
+      expect(goalRows[0].ids.length).toBe(2);
+    });
   });
 
   describe('reduceObjectivesForRecipientRecord', () => {
