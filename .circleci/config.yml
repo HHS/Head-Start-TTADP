@@ -589,7 +589,9 @@ commands:
             echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> ${BASH_ENV}
 
 
-            check_port_connectivity ${HOST}, ${PORT}
+            # check_port_connectivity ${HOST}, ${PORT}
+            PGPASSWORD=$PASSWORD pg_dump -U ${USERNAME} -h ${HOST} -p ${PORT} ${DB_NAME} |\
+              pv -n -brt --interval 30 > /dev/null
 
             # Clean up
             rm ${cf_output}
