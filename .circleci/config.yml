@@ -848,6 +848,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID
