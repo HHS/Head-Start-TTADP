@@ -8,7 +8,7 @@ import {
   createUser,
   destroyReport,
 } from '../../../testUtils';
-import escapeFields, { escapeDataFields } from '../escapeFields';
+import { escapeFields, escapeDataFields } from '../escapeFields';
 
 const {
   ActivityReportApprover,
