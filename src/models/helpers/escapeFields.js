@@ -42,12 +42,15 @@ function escapeDataFields(instance, fields) {
  * @returns void
  */
 function escapeFields(instance, fields) {
-  const changed = instance.changed();
-
   const { window } = new JSDOM('');
   const purify = DOMPurify(window);
 
+  if (!('changed' in instance) || typeof instance.changed !== 'function') {
+    return;
+  }
+
   try {
+    const changed = instance.changed();
     fields.forEach((field) => {
       if (changed.includes(field) && instance[field] !== null) {
         instance.set(field, purify.sanitize(instance[field]));
