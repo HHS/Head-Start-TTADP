@@ -116,7 +116,7 @@ describe('TR overview widget', () => {
       eventId: trainingReport2.id,
       data: {
         deliveryMethod: 'hybrid',
-        duration: 1,
+        duration: 1.5,
         recipients: [{ value: grant1.id }, { value: grant2.id }],
         numberOfParticipantsVirtually: 12,
         numberOfParticipantsInPerson: 13,
@@ -251,7 +251,7 @@ describe('TR overview widget', () => {
       numReports: '2',
       numSessions: '4',
       recipientPercentage: '60.00%',
-      sumDuration: '4.0',
+      sumDuration: '4.5',
       totalRecipients: '5',
     });
   });
