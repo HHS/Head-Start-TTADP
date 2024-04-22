@@ -14,6 +14,7 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
+  GoalStatusChange,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
@@ -65,6 +66,7 @@ import {
   setSimilarityGroupAsUserMerged,
 } from '../services/goalSimilarityGroup';
 import Users from '../policies/user';
+import changeGoalStatus from './changeGoalStatus';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -97,6 +99,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     id,
   },
   include: [
+    {
+      model: GoalStatusChange,
+      as: 'statusChanges',
+      attributes: ['oldStatus'],
+      required: false,
+    },
     {
       model: GoalCollaborator,
       as: 'goalCollaborators',
@@ -750,6 +758,18 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
     }, promptsToReduce);
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
+    return true;
+  }
+
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -806,6 +826,8 @@ function reduceGoals(goals, forReport = false) {
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
         ], 'goalCreatorName');
+
+        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
 
         if (forReport) {
           existingGoal.prompts = reducePrompts(
@@ -877,6 +899,7 @@ function reduceGoals(goals, forReport = false) {
         isNew: false,
         endDate,
         source,
+        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
       };
 
       goal.collaborators = [
@@ -1186,8 +1209,10 @@ export async function goalByIdAndRecipient(id, recipientId) {
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+
   goals = goals.map((goal) => ({
     ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => {
         const o = {
@@ -2345,6 +2370,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
 /**
  * Updates a goal status by id
  * @param {number[]} goalIds
+ * @param {number} userId
  * @param {string} oldStatus
  * @param {string} newStatus
  * @param {string} closeSuspendReason
@@ -2354,6 +2380,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
  */
 export async function updateGoalStatusById(
   goalIds,
+  userId,
   oldStatus,
   newStatus,
   closeSuspendReason,
@@ -2372,22 +2399,13 @@ export async function updateGoalStatusById(
     return false;
   }
 
-  // finally, if everything is golden, we update the goal
-  const g = await Goal.update({
-    status: newStatus,
-    closeSuspendReason,
-    closeSuspendContext,
-    previousStatus: oldStatus,
-  }, {
-    where: {
-      id: goalIds,
-    },
-    returning: true,
-    individualHooks: true,
-  });
-
-  const [, updated] = g;
-  return updated;
+  return Promise.all(goalIds.map((goalId) => changeGoalStatus({
+    goalId,
+    userId,
+    newStatus,
+    reason: closeSuspendReason,
+    context: closeSuspendContext,
+  })));
 }
 
 export async function getGoalsForReport(reportId) {
@@ -3515,7 +3533,7 @@ Exampled request body, the data param:
   }
 }
  */
-export async function closeMultiRecipientGoalsFromAdmin(data) {
+export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const {
     selectedGoal,
     closeSuspendContext,
@@ -3549,6 +3567,7 @@ export async function closeMultiRecipientGoalsFromAdmin(data) {
     isError: false,
     goals: await updateGoalStatusById(
       goalIds,
+      userId,
       status,
       GOAL_STATUS.CLOSED,
       closeSuspendReason,

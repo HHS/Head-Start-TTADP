@@ -91,6 +91,34 @@ commands:
                 \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
+  notify_slack:
+    description: "Notify slack of a deploy to production"
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+    steps:
+    - run:
+        name: Notify Slack of Deployment
+        command: |
+          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
+          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+          else
+            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+          fi
+
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data "{
+            \"channel\": \"<< parameters.slack_channel >>\",
+            \"text\": \"$MESSAGE_TEXT\"
+          }" https://slack.com/api/chat.postMessage
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -260,10 +288,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "jp/2128/display-goal-creator-name"
+    default: "al/ttahub-2570/flat-resource-sql"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-fix-fkey-error"
+    default: "jp/2793/reopen-frontend"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -616,7 +644,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-stable:latest
+          command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
@@ -625,7 +653,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
-    resource_class: large
+    resource_class: arm.large
   deploy:
     executor: docker-executor
     steps:
@@ -856,6 +884,9 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
 workflows:
   build_test_deploy:

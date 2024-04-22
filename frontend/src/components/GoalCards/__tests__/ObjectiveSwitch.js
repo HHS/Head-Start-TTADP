@@ -61,6 +61,6 @@ describe('ObjectiveSwitch', () => {
     expect(screen.getByText(/test topic 2/i)).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
     const link = screen.getByText('R-01-23-1234');
-    expect(link).toHaveAttribute('href', '/training-report/1234/event-summary');
+    expect(link).toHaveAttribute('href', '/training-report/view/1234');
   });
 });
