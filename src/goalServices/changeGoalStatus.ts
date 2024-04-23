@@ -1,3 +1,4 @@
+import * as Sequelize from 'sequelize';
 import db from '../models';
 
 interface GoalStatusChangeParams {
@@ -6,14 +7,16 @@ interface GoalStatusChangeParams {
   newStatus: string;
   reason: string;
   context: string;
+  transaction?: Sequelize.Transaction;
 }
 
 export default async function changeGoalStatus({
   goalId,
-  userId,
+  userId = 1,
   newStatus,
   reason,
   context,
+  transaction = null,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -29,6 +32,7 @@ export default async function changeGoalStatus({
           },
         },
       ],
+      ...(transaction ? { transaction } : {}),
     }),
     db.Goal.findByPk(goalId),
   ]);

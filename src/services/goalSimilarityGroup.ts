@@ -2,8 +2,6 @@ import { Op, WhereOptions, Model } from 'sequelize';
 import { uniq } from 'lodash';
 import db from '../models';
 import {
-  GOAL_STATUS,
-  CREATION_METHOD,
   CURRENT_GOAL_SIMILARITY_VERSION,
 } from '../constants';
 
@@ -48,12 +46,7 @@ interface SimilarityGroup {
 
 export const flattenSimilarityGroupGoals = (group: SimilarityGroup) => ({
   ...group.toJSON(),
-  goals: group.goals.filter((goal) => {
-    if (goal.goalTemplate && goal.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-      return goal.status !== GOAL_STATUS.CLOSED;
-    }
-    return true;
-  }).map((goal) => goal.id),
+  goals: group.goals.map((goal) => goal.id),
 });
 
 export async function getSimilarityGroupById(

@@ -14,6 +14,7 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
+  GoalStatusChange,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
@@ -98,6 +99,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     id,
   },
   include: [
+    {
+      model: GoalStatusChange,
+      as: 'statusChanges',
+      attributes: ['oldStatus'],
+      required: false,
+    },
     {
       model: GoalCollaborator,
       as: 'goalCollaborators',
@@ -751,6 +758,18 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
     }, promptsToReduce);
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
+    return true;
+  }
+
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -807,6 +826,8 @@ function reduceGoals(goals, forReport = false) {
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
         ], 'goalCreatorName');
+
+        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
 
         if (forReport) {
           existingGoal.prompts = reducePrompts(
@@ -878,6 +899,7 @@ function reduceGoals(goals, forReport = false) {
         isNew: false,
         endDate,
         source,
+        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
       };
 
       goal.collaborators = [
@@ -1187,8 +1209,10 @@ export async function goalByIdAndRecipient(id, recipientId) {
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+
   goals = goals.map((goal) => ({
     ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => {
         const o = {
@@ -2806,7 +2830,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
       let closedCurated = false;
       if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+        closedCurated = current.status === GOAL_STATUS.CLOSED;
       }
 
       // goal on an active report
@@ -2837,11 +2861,16 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
           excludedIfNotAdmin,
+          grantId: grantLookup[current.grantId],
         },
       ];
     }, []));
 
-  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+  const groupsWithMoreThanOneGoalAndMoreGoalsThanGrants = goalGroupsDeduplicated
+    .filter((group) => {
+      const grantIds = uniq(group.map((goal) => goal.grantId));
+      return group.length > 1 && group.length !== grantIds.length;
+    });
 
   // save the groups to the database
   // there should also always be an empty group
@@ -2849,7 +2878,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
   // and that we've run these computations
 
   await Promise.all(
-    [...groupsWithMoreThanOneGoal, []]
+    [...groupsWithMoreThanOneGoalAndMoreGoalsThanGrants, []]
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
