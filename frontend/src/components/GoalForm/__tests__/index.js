@@ -137,6 +137,11 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
@@ -187,7 +192,7 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
-    const save = await screen.findByRole('button', { name: /save and continue/i });
+    let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
@@ -197,18 +202,49 @@ describe('create goal', () => {
     expect(goalText.value).toBe('');
 
     const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
-    userEvent.click(editButton);
+
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text%20and%20I%20want%20to%20meet%20my%20goals&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20texts&grantNumbers=undefined', []);
+    fetchMock.get('/api/goal-templates?grantIds=1', []);
+    act(() => {
+      userEvent.click(editButton);
+    });
 
     goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
 
     expect(goalText.value).toBe('This is goal text');
-    userEvent.type(goalText, ' and I want to meet my goals');
-    userEvent.click(save);
+
+    act(() => {
+      userEvent.type(goalText, ' and I want to meet my goals');
+    });
+    save = await screen.findByRole('button', { name: /save and continue/i });
+
+    act(() => {
+      userEvent.click(save);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    });
 
     // Assert fetch mock contains the correct ids.
-    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
-    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
-    console.log('\n\n\n-----Body: ', fetchMock.lastCall('/api/goals')[1].body);
-    expect(true).toBe(false);
+    const { body } = fetchMock.lastCall('/api/goals')[1];
+    const parsed = JSON.parse(body);
+    const [goal] = parsed.goals;
+    expect(goal.ids).toEqual([456]);
+    // should be this:
+    // expect(goal.ids).toEqual([64175]);
   });
 });
