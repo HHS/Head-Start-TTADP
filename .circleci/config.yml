@@ -679,10 +679,10 @@ commands:
                 local LATEST_BACKUP_FILE_NAME="latest-backup.txt"
 
                 # Generate UUID as the password
-                local ZIP_PASSWORD=$(uuidgen)
+                local ZPASSWORD=$(uuidgen)
 
                 # Export the ZIP password for external use
-                export ZIP_PASSWORD
+                export ZIP_PASSWORD=${ZPASSWORD}
 
                 # Configure AWS CLI
                 export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
@@ -690,14 +690,14 @@ commands:
                 export AWS_DEFAULT_REGION=${CF_S3_REGION}
 
                 # Use your existing function to generate presigned URLs
-                local PRESIGNED_UPLOAD_URL=$(generate_presigned_url "${S3_FILE_NAME}")
-                local PRESIGNED_PASSWORD_URL=$(generate_presigned_url "${PASSWORD_FILE_NAME}")
-                local PRESIGNED_LATEST_URL=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
+                local PRESIGNED_UPLOAD=$(generate_presigned_url "${S3_FILE_NAME}")
+                local PRESIGNED_PASSWORD=$(generate_presigned_url "${PASSWORD_FILE_NAME}")
+                local PRESIGNED_LATEST=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
 
                 # Export URL values for external use
-                export PRESIGNED_UPLOAD_URL
-                export PRESIGNED_PASSWORD_URL
-                export PRESIGNED_LATEST_URL
+                export PRESIGNED_UPLOAD_URL=${PRESIGNED_UPLOAD}
+                export PRESIGNED_PASSWORD_URL=${PRESIGNED_PASSWORD}
+                export PRESIGNED_LATEST_URL=${PRESIGNED_LATEST}
             }
 
             function perform_backup_and_upload() {
