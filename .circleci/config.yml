@@ -547,27 +547,6 @@ commands:
                 return 1
             }
 
-            function check_port_connectivity() {
-                local host=${1}
-                local port=${2}
-                local timeout=${3:-5}  # Default timeout is 5 seconds
-
-                # Check for empty host or port
-                if [ -z "${host}" ] || [ -z "${port}" ]; then
-                    echo "Usage: check_port_connectivity <host> <port> [timeout]"
-                    return 1
-                fi
-
-                # Using nc to check port connectivity
-                if nc -z -w ${timeout} ${host} ${port}; then
-                    echo "Port ${port} on ${host} is open."
-                    return 0
-                else
-                    echo "Port ${port} on ${host} is not connectable."
-                    return 1
-                fi
-            }
-
             function setup_cf_db_connection() {
                 local cf_output=$(mktemp)
                 local cf_error=$(mktemp)
@@ -763,8 +742,6 @@ commands:
             manageSpaceSSH enable
 
             setup_cf_db_connection
-
-            check_port_connectivity ${CF_DB_HOST}, ${CF_DB_PORT}
 
             generate_presigned_urls
 
