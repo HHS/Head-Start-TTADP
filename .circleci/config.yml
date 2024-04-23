@@ -728,7 +728,7 @@ commands:
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
                 zip -P "${ZIP_PASSWORD}" - - |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
-                aws s3 cp - "${CF_S3_BUCKET_NAME}/${s3_file_path}"
+                aws s3 cp - "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
                 # curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
                 # Evaluate the result of the backup and upload process
@@ -1498,6 +1498,8 @@ jobs:
           cloudgov_space: CLOUDGOV_PROD_SPACE
 workflows:
   build_test_deploy:
+    when:
+      equal: [false, << pipeline.parameters.manual-trigger >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
