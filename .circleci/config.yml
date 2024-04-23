@@ -449,7 +449,7 @@ commands:
             CF_APP_NAME: tta-smarthub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
-          name: Connect to DB
+          name: Connect to DB, dump, zip, upload, disconnect from DB
           command: |
             set -x
             set -e
@@ -642,7 +642,8 @@ commands:
                     return 1
                 fi
 
-                local url=$(aws s3api put-object --bucket ${CF_S3_BUCKET_NAME} --key ${file_name} --expires-in 3600 --region ${region} --generate-presigned-url PUT 2>>${log_file})
+                # Corrected command to generate a presigned URL
+                local url=$(aws s3 presign "s3://${CF_S3_BUCKET_NAME}/${file_name}" --expires-in 3600 --region ${region} 2>>${log_file})
 
                 if [ $? -ne 0 ]; then
                     echo "Failed to generate presigned URL. Check the log file for details: ${log_file}"
@@ -652,6 +653,7 @@ commands:
 
                 echo $url
             }
+
 
             # Function to check if a file exists on S3
             file_exists_on_s3() {
