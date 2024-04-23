@@ -501,7 +501,7 @@ commands:
 
                 # Execute the cf command if necessary
                 if [[ -n "$command" ]]; then
-                    CF_TRACE=true cf $command "${CF_APP_NAME}"
+                    cf $command "${CF_APP_NAME}"
                     local execute_status=$?
 
                     # Check the exit status of the cf command
@@ -526,7 +526,6 @@ commands:
                 local max_checks=6 # Max checks at every 5 seconds gives us 30 seconds total
 
                 for (( i=0; i<$max_checks; i++ )); do
-                    cat ${output_file}
                     current_output_size=$(stat --format=%s "${output_file}" 2>/dev/null || echo 0)
                     current_error_size=$(stat --format=%s "${error_file}" 2>/dev/null || echo 0)
 
