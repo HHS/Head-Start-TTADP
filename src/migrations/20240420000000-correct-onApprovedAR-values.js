@@ -45,29 +45,13 @@ module.exports = {
       CREATE TEMP TABLE initial_objective_stats
       AS
       SELECT
-        SUM(CASE WHEN on_approved_ar = "onApprovedAR" THEN 1 ELSE 0 END
+        COUNT(*) FILTER (WHERE on_approved_ar = "onApprovedAR"
         ) matching_values_o,
-        SUM(
-          CASE
-            WHEN on_approved_ar = "onApprovedAR"
-              OR "onApprovedAR" IS NULL
-          THEN 0
-          ELSE 1
-          END
+        COUNT(*) FILTER (WHERE "onApprovedAR" IS NOT NULL AND on_approved_ar != "onApprovedAR"
         ) incorrect_values_o,
-        SUM(
-          CASE
-            WHEN on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
         ) should_be__marked_approved_but_isnt_o,
-        SUM(
-          CASE
-            WHEN NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
         ) marked_approved_but_shouldnt_be_o,
         COUNT(*) total_objectives
       FROM "Objectives" o
@@ -78,29 +62,13 @@ module.exports = {
       CREATE TEMP TABLE initial_goal_stats
       AS
       SELECT
-        SUM(CASE WHEN on_approved_ar = "onApprovedAR" THEN 1 ELSE 0 END
+        COUNT(*) FILTER (WHERE on_approved_ar = "onApprovedAR"
         ) matching_values_g,
-        SUM(
-          CASE
-            WHEN on_approved_ar = "onApprovedAR"
-              OR "onApprovedAR" IS NULL
-          THEN 0
-          ELSE 1
-          END
+        COUNT(*) FILTER (WHERE "onApprovedAR" IS NOT NULL AND on_approved_ar != "onApprovedAR"
         ) incorrect_values_g,
-        SUM(
-          CASE
-            WHEN on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
         ) should_be__marked_approved_but_isnt_g,
-        SUM(
-          CASE
-            WHEN NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
         ) marked_approved_but_shouldnt_be_g,
         COUNT(*) total_goals
       FROM "Goals" g
@@ -140,29 +108,13 @@ module.exports = {
       CREATE TEMP TABLE final_objective_stats
       AS
       SELECT
-        SUM(CASE WHEN on_approved_ar = "onApprovedAR" THEN 1 ELSE 0 END
+        COUNT(*) FILTER (WHERE on_approved_ar = "onApprovedAR"
         ) matching_values_o,
-        SUM(
-          CASE
-            WHEN on_approved_ar = "onApprovedAR"
-              OR "onApprovedAR" IS NULL
-          THEN 0
-          ELSE 1
-          END
+        COUNT(*) FILTER (WHERE "onApprovedAR" IS NOT NULL AND on_approved_ar != "onApprovedAR"
         ) incorrect_values_o,
-        SUM(
-          CASE
-            WHEN on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
         ) should_be__marked_approved_but_isnt_o,
-        SUM(
-          CASE
-            WHEN NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
         ) marked_approved_but_shouldnt_be_o,
         COUNT(*) total_objectives
       FROM "Objectives" o
@@ -173,29 +125,13 @@ module.exports = {
       CREATE TEMP TABLE final_goal_stats
       AS
       SELECT
-        SUM(CASE WHEN on_approved_ar = "onApprovedAR" THEN 1 ELSE 0 END
+        COUNT(*) FILTER (WHERE on_approved_ar = "onApprovedAR"
         ) matching_values_g,
-        SUM(
-          CASE
-            WHEN on_approved_ar = "onApprovedAR"
-              OR "onApprovedAR" IS NULL
-          THEN 0
-          ELSE 1
-          END
+        COUNT(*) FILTER (WHERE "onApprovedAR" IS NOT NULL AND on_approved_ar != "onApprovedAR"
         ) incorrect_values_g,
-        SUM(
-          CASE
-            WHEN on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE on_approved_ar AND (NOT "onApprovedAR" OR "onApprovedAR" IS NULL)
         ) should_be__marked_approved_but_isnt_g,
-        SUM(
-          CASE
-            WHEN NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
-            THEN 1
-            ELSE 0
-            END
+        COUNT(*) FILTER (WHERE NOT on_approved_ar AND ("onApprovedAR" OR "onApprovedAR" IS NULL)
         ) marked_approved_but_shouldnt_be_g,
         COUNT(*) total_goals
       FROM "Goals" g
