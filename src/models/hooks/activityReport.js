@@ -139,7 +139,6 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
 };
 
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
-  auditLogger.info('jp: propagateSubmissionStatus');
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')

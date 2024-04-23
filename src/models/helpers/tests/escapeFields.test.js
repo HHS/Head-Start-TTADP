@@ -168,7 +168,7 @@ describe('escapeFields', () => {
         userId: user.id,
         status: APPROVER_STATUSES.PENDING,
         note: xss,
-      });
+      }, { individualHooks: true });
 
       event = await createTrainingReport({
         regionId: region.id,
