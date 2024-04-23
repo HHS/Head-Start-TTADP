@@ -466,36 +466,36 @@ commands:
                 done
             }
 
-            # Function to check and set the state of ssh access for CF_SERVICE_NAME
-            function manageSpaceSSH() {
-                # Check if CF_SERVICE_NAME is set and not empty
-                if [[ -z "${CF_SERVICE_NAME}" ]]; then
-                    echo "Error: CF_SERVICE_NAME is not set or empty."
+            # Function to check and set the state of ssh access for CF_APP_NAME
+            function manageAppSSH() {
+                # Check if CF_APP_NAME is set and not empty
+                if [[ -z "${CF_APP_NAME}" ]]; then
+                    echo "Error: CF_APP_NAME is not set or empty."
                     return 1
                 fi
 
                 # Determine the action to take based on the argument
                 local action="$1"
                 local command=""
-                local current_state_output=$(cf space-ssh-allowed "${CF_SERVICE_NAME}" 2>&1)
+                local current_state_output=$(cf ssh-enabled "${CF_APP_NAME}" 2>&1)
                 local status=$?
 
                 # Error handling for retrieving the current SSH state
                 if [[ $status -ne 0 ]]; then
-                    echo "Error retrieving current SSH status for ${CF_SERVICE_NAME}: $current_state_output"
+                    echo "Error retrieving current SSH status for ${CF_APP_NAME}: $current_state_output"
                     return $status
                 fi
 
-                # Parsing the current state, assuming the command outputs a simple enable/disable status or similar
+                # Parsing the current state, assuming the command outputs "enabled" or "disabled"
                 local current_state=$(echo "$current_state_output" | grep -o 'enabled\|disabled')
 
                 # Determine the desired command based on the action
                 if [[ "$action" == "enable" && "$current_state" != "enabled" ]]; then
-                    command="allow-space-ssh"
+                    command="enable-ssh"
                 elif [[ "$action" == "disable" && "$current_state" != "disabled" ]]; then
-                    command="disallow-space-ssh"
+                    command="disable-ssh"
                 elif [[ "$current_state" == "enabled" && "$action" == "enable" ]] || [[ "$current_state" == "disabled" && "$action" == "disable" ]]; then
-                    echo "SSH is already ${action}d for the service: ${CF_SERVICE_NAME}"
+                    echo "SSH is already ${action}d for the app: ${CF_APP_NAME}"
                     return 0
                 else
                     echo "Invalid action specified. Use 'enable' or 'disable'."
@@ -504,18 +504,19 @@ commands:
 
                 # Execute the cf command if necessary
                 if [[ -n "$command" ]]; then
-                    CF_TRACE=true  cf $command "${CF_SERVICE_NAME}"
+                    CF_TRACE=true cf $command "${CF_APP_NAME}"
                     local execute_status=$?
 
                     # Check the exit status of the cf command
                     if [ $execute_status -ne 0 ]; then
-                        echo "Failed to ${action} SSH for the service: ${CF_SERVICE_NAME}"
+                        echo "Failed to ${action} SSH for the app: ${CF_APP_NAME}"
                         return $execute_status
                     else
-                        echo "SSH successfully ${action}d for the service: ${CF_SERVICE_NAME}"
+                        echo "SSH successfully ${action}d for the app: ${CF_APP_NAME}"
                     fi
                 fi
             }
+
 
             # Function to check if file size has stabilized for both output and error files
             function check_file_stabilization() {
@@ -765,7 +766,7 @@ commands:
             check_dependencies cf awk grep stat aws pg_dump zip curl uuidgen pv
 
             echo "enable ssh to db"
-            manageSpaceSSH enable
+            manageAppSSH enable
 
             setup_cf_db_connection
 
@@ -774,7 +775,7 @@ commands:
             perform_backup_and_upload
 
             terminate_db_connection
-            manageSpaceSSH disable
+            manageAppSSH disable
 
             # Clean up
             rm ${cf_output}
