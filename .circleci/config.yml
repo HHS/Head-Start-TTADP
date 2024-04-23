@@ -710,6 +710,11 @@ commands:
             function perform_backup_and_upload() {
                 source "${BASH_ENV}"
 
+                # Configure AWS CLI
+                export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
+                export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
+                export AWS_DEFAULT_REGION=${CF_S3_REGION}
+
                 # Check required environment variables
                 local required_vars=("CF_DB_PASSWORD" "CF_DB_USERNAME" "CF_DB_HOST" "CF_DB_PORT" "CF_DB_NAME" "ZIP_PASSWORD" "PRESIGNED_UPLOAD_URL" "PRESIGNED_PASSWORD_URL" "PRESIGNED_LATEST_URL" "S3_FILE_NAME" "PASSWORD_FILE_NAME")
                 for var in "${required_vars[@]}"; do
@@ -723,7 +728,8 @@ commands:
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
                 zip -P "${ZIP_PASSWORD}" - - |\
-                curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
+                aws s3 cp - "${CF_S3_BUCKET_NAME}/${s3_file_path}"
+                # curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
                 # Evaluate the result of the backup and upload process
                 if [ $? -ne 0 ]; then
@@ -733,7 +739,8 @@ commands:
                 fi
 
                 echo "${ZIP_PASSWORD}" |\
-                curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
+                    aws s3 cp - "${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
+                # curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
                     echo "Password file upload failed."
@@ -741,8 +748,9 @@ commands:
                     return 1
                 fi
 
-                echo -e "${S3_FILE_NAME}\n${PASSWORD_FILE_NAME}" |\
-                curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
+                echo -e "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
+                    aws s3 cp - "${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
+                # curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
                     echo "Latest backup file list upload failed."
