@@ -12,7 +12,6 @@ import { DECIMAL_BASE } from '@ttahub/common';
  *  setValue: a function to set the value of the url param
  */
 export default function useUrlParamState(param) {
-  console.log('\n\n\n\n------Called Use Url Param');
   const params = useMemo(() => new URLSearchParams(document.location.search), []);
   // we are storing in an array because that way we don't have to handle commas in the string
   // in a special way
