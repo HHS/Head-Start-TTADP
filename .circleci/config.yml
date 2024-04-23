@@ -504,7 +504,7 @@ commands:
 
                 # Execute the cf command if necessary
                 if [[ -n "$command" ]]; then
-                    cf $command "${CF_SERVICE_NAME}"
+                    CF_TRACE=true  cf $command "${CF_SERVICE_NAME}"
                     local execute_status=$?
 
                     # Check the exit status of the cf command
