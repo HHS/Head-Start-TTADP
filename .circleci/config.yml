@@ -776,10 +776,6 @@ commands:
 
             terminate_db_connection
             manageAppSSH disable
-
-            # Clean up
-            rm ${cf_output}
-            echo "Cleanup done."
           background: false
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
