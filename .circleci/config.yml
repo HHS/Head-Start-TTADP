@@ -726,8 +726,8 @@ commands:
 
                 # Perform the backup and compress with the generated password
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
-                tee >(pv -n -brt --interval 30 > /dev/null) |\
                 zip -P "${ZIP_PASSWORD}" - - |\
+                tee >(pv -n -brt --interval 30 > /dev/null) |\
                 aws s3 cp - "${CF_S3_BUCKET_NAME}/${s3_file_path}"
                 # curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
