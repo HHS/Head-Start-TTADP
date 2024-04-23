@@ -458,8 +458,7 @@ commands:
 
             # Function to check for required dependencies
             function check_dependencies() {
-                local dependencies=("cf" "awk" "grep" "stat")
-                for dep in "${dependencies[@]}"; do
+                for dep in "$@"; do
                     if ! type "${dep}" > /dev/null; then
                         echo "Dependency ${dep} is not installed." >&2
                         exit 1
@@ -467,26 +466,54 @@ commands:
                 done
             }
 
-            function enableSpaceSSH() {
+            # Function to check and set the state of ssh access for CF_SERVICE_NAME
+            function manageSpaceSSH() {
                 # Check if CF_SERVICE_NAME is set and not empty
                 if [[ -z "${CF_SERVICE_NAME}" ]]; then
                     echo "Error: CF_SERVICE_NAME is not set or empty."
                     return 1
                 fi
 
-                # Use the service name from the environment variable
-                local serviceName="${CF_SERVICE_NAME}"
-
-                # Execute the cf command
-                cf allow-space-ssh "$serviceName"
+                # Determine the action to take based on the argument
+                local action="$1"
+                local command=""
+                local current_state_output=$(cf space-ssh-allowed "${CF_SERVICE_NAME}" 2>&1)
                 local status=$?
 
-                # Check the exit status of the cf command
-                if [ $status -ne 0 ]; then
-                    echo "Failed to enable SSH for the service: $serviceName"
+                # Error handling for retrieving the current SSH state
+                if [[ $status -ne 0 ]]; then
+                    echo "Error retrieving current SSH status for ${CF_SERVICE_NAME}: $current_state_output"
                     return $status
+                fi
+
+                # Parsing the current state, assuming the command outputs a simple enable/disable status or similar
+                local current_state=$(echo "$current_state_output" | grep -o 'enabled\|disabled')
+
+                # Determine the desired command based on the action
+                if [[ "$action" == "enable" && "$current_state" != "enabled" ]]; then
+                    command="allow-space-ssh"
+                elif [[ "$action" == "disable" && "$current_state" != "disabled" ]]; then
+                    command="disallow-space-ssh"
+                elif [[ "$current_state" == "enabled" && "$action" == "enable" ]] || [[ "$current_state" == "disabled" && "$action" == "disable" ]]; then
+                    echo "SSH is already ${action}d for the service: ${CF_SERVICE_NAME}"
+                    return 0
                 else
-                    echo "SSH successfully enabled for the service: $serviceName"
+                    echo "Invalid action specified. Use 'enable' or 'disable'."
+                    return 3
+                fi
+
+                # Execute the cf command if necessary
+                if [[ -n "$command" ]]; then
+                    cf $command "${CF_SERVICE_NAME}"
+                    local execute_status=$?
+
+                    # Check the exit status of the cf command
+                    if [ $execute_status -ne 0 ]; then
+                        echo "Failed to ${action} SSH for the service: ${CF_SERVICE_NAME}"
+                        return $execute_status
+                    else
+                        echo "SSH successfully ${action}d for the service: ${CF_SERVICE_NAME}"
+                    fi
                 fi
             }
 
@@ -520,7 +547,7 @@ commands:
                 return 1
             }
 
-            check_port_connectivity() {
+            function check_port_connectivity() {
                 local host=${1}
                 local port=${2}
                 local timeout=${3:-5}  # Default timeout is 5 seconds
@@ -541,201 +568,86 @@ commands:
                 fi
             }
 
-            check_dependencies
+            function setup_cf_db_connection() {
+                local cf_output=$(mktemp)
+                local cf_error=$(mktemp)
 
-            cf_output=$(mktemp)
-            cf_error=$(mktemp)
+                echo "Starting the connection setup..."
+                # Execute cf connect-to-service and redirect output to a file, run in the background
+                cf connect-to-service --no-client "${CF_APP_NAME}" "${CF_SERVICE_NAME}" > "${cf_output}" 2> "${cf_error}" &
 
-            echo "Starting the connection setup..."
-            cf help -a
-            enableSpaceSSH
-            # Execute cf connect-to-service and redirect output to a file, run in the background
-            cf connect-to-service --no-client ${CF_APP_NAME} ${CF_SERVICE_NAME} > ${cf_output} 2> ${cf_error} &
+                # Capture the PID of the cf connect-to-service process
+                local CF_DB_CONNECTION_PID=$!
+                echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
 
-            # Capture the PID of the cf connect-to-service process
-            CF_DB_CONNECTION_PID=$!
-            echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
+                # Give some time for the process to start and produce output
+                sleep 2
 
-            # Give some time for the process to start and produce output
-            sleep 2
-
-            echo "Initial sizes and contents of output and error files:"
-            ls -l ${cf_output} ${cf_error}  # List file sizes for debugging
-            cat ${cf_output}  # Show current output file content
-            cat ${cf_error}   # Show current error file content
-
-            stat --format=%s ${cf_output}
-            stat --format=%s ${cf_error}
-
-            # Wait for the output and error file sizes to stabilize
-            if ! check_file_stabilization ${cf_output} ${cf_error}; then
-                echo "Failed to verify file stabilization." >&2
-                exit 1
-            fi
-
-            # Check if the process is still running
-            # if ! ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-            #     echo "cf connect-to-service process has unexpectedly terminated." >&2
-            #     if [ -s ${cf_error} ]; then
-            #         echo "Error output from cf connect-to-service:"
-            #         cat ${cf_error} >&2
-            #     fi
-            #     rm ${cf_error}
-            #     exit 1
-            # fi
-
-            # Ensure the output file exists and is not empty before attempting to parse it
-            if [ ! -f ${cf_output} ] || [ ! -s ${cf_output} ]; then
-              echo "No output file found or file is empty, cannot proceed with parsing." >&2
-              exit 1
-            fi
-
-            HOST=$(grep 'Host:' ${cf_output} | awk '{print $2}')
-            PORT=$(grep 'Port:' ${cf_output} | awk '{print $2}')
-            USERNAME=$(grep 'Username:' ${cf_output} | awk '{print $2}')
-            PASSWORD=$(grep 'Password:' ${cf_output} | awk '{print $2}')
-            DB_NAME=$(grep 'Name:' ${cf_output} | awk '{print $2}')
-
-            # Check if any variable was not properly assigned
-            if [[ -z "$HOST" || -z "${PORT}" || -z "${USERNAME}" || -z "${PASSWORD}" || -z "${DB_NAME}" ]]; then
-              echo "Failed to extract all necessary database connection credentials." >&2
-              exit 2
-            fi
-
-            # Export them for use in this script
-            echo "export CF_DB_HOST=${HOST}" >> ${BASH_ENV}
-            echo "export CF_DB_PORT=${PORT}" >> ${BASH_ENV}
-            echo "export CF_DB_USERNAME=${USERNAME}" >> ${BASH_ENV}
-            echo "export CF_DB_PASSWORD=${PASSWORD}" >> ${BASH_ENV}
-            echo "export CF_DB_NAME=${DB_NAME}" >> ${BASH_ENV}
-
-            # Store the PID in an environment variable for later use
-            echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> ${BASH_ENV}
-
-
-            # check_port_connectivity ${HOST}, ${PORT}
-            PGPASSWORD=$PASSWORD pg_dump -U ${USERNAME} -h ${HOST} -p ${PORT} ${DB_NAME} |\
-              pv -n -brt --interval 30 > /dev/null
-
-            # Clean up
-            rm ${cf_output}
-            echo "Cleanup done."
-          background: false
-          environment:
-            auth_client_id: PROD_AUTH_CLIENT_ID
-            auth_client_secret: PROD_AUTH_CLIENT_SECRET
-            CF_APP_NAME: tta-smarthub-prod
-            CF_SERVICE_NAME: ttahub-prod
-      - run:
-          name: Verify DB & S3 Connections and Wait for DB PID
-          command: |
-            set -x
-            set -e
-            set -u
-            set -o pipefail
-
-            # Function to check for the existence and activity of a database connection process
-            function check_db_connection() {
-                local timeout=45
-                echo "Checking for active database connection process..."
-                while [ ${timeout} -gt 0 ]; do
-                    if [ -s ${BASH_ENV} ] && grep -q "CF_DB_CONNECTION_PID" ${BASH_ENV}; then
-                        source ${BASH_ENV}
-                        echo "Database connection established, continuing..."
-                        return 0
-                    fi
-                    echo "Waiting for process to start..."
-                    sleep 1
-                    ((timeout--))
-                done
-
-                echo "Failed to verify database connection within 45 seconds."
-                exit 1
-            }
-
-            check_port_connectivity() {
-                local host=${1}
-                local port=${2}
-                local timeout=${3:-5}  # Default timeout is 5 seconds
-
-                # Check for empty host or port
-                if [ -z "${host}" ] || [ -z "${port}" ]; then
-                    echo "Usage: check_port_connectivity <host> <port> [timeout]"
-                    return 1
+                # Wait for the output and error file sizes to stabilize
+                if ! check_file_stabilization "${cf_output}" "${cf_error}"; then
+                    echo "Failed to verify file stabilization." >&2
+                    rm "${cf_output}" "${cf_error}"
+                    exit 1
                 fi
 
-                # Using nc to check port connectivity
-                if nc -z -w ${timeout} ${host} ${port}; then
-                    echo "Port ${port} on ${host} is open."
-                    return 0
+                # Check if the process is still running
+                if ! ps -p "${CF_DB_CONNECTION_PID}" > /dev/null 2>/dev/null; then
+                    echo "cf connect-to-service process has unexpectedly terminated." >&2
+                    if [ -s "${cf_error}" ]; then
+                        echo "Error output from cf connect-to-service:"
+                        cat "${cf_error}" >&2
+                    fi
+                    rm "${cf_output}" "${cf_error}"
+                    exit 1
+                fi
+
+                # Ensure the output file exists and is not empty before attempting to parse it
+                if [ ! -f "${cf_output}" ] || [ ! -s "${cf_output}" ]; then
+                    echo "No output file found or file is empty, cannot proceed with parsing." >&2
+                    rm "${cf_output}" "${cf_error}"
+                    exit 1
+                fi
+
+                # Extract credentials from the output file
+                local HOST=$(grep 'Host:' "${cf_output}" | awk '{print $2}')
+                local PORT=$(grep 'Port:' "${cf_output}" | awk '{print $2}')
+                local USERNAME=$(grep 'Username:' "${cf_output}" | awk '{print $2}')
+                local PASSWORD=$(grep 'Password:' "${cf_output}" | awk '{print $2}')
+                local DB_NAME=$(grep 'Name:' "${cf_output}" | awk '{print $2}')
+
+                # Check if any variable was not properly assigned
+                if [[ -z "$HOST" || -z "$PORT" || -z "$USERNAME" || -z "$PASSWORD" || -z "$DB_NAME" ]]; then
+                    echo "Failed to extract all necessary database connection credentials." >&2
+                    rm "${cf_output}" "${cf_error}"
+                    exit 2
+                fi
+
+                # Export them for use in this script
+                echo "export CF_DB_HOST=${HOST}" >> "${BASH_ENV}"
+                echo "export CF_DB_PORT=${PORT}" >> "${BASH_ENV}"
+                echo "export CF_DB_USERNAME=${USERNAME}" >> "${BASH_ENV}"
+                echo "export CF_DB_PASSWORD=${PASSWORD}" >> "${BASH_ENV}"
+                echo "export CF_DB_NAME=${DB_NAME}" >> "${BASH_ENV}"
+
+                # Store the PID in an environment variable for later use
+                echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> "${BASH_ENV}"
+
+                # Clean up temporary files
+                rm "${cf_output}" "${cf_error}"
+
+                # Source the BASH_ENV to make the exported variables available immediately
+                source "${BASH_ENV}"
+            }
+
+            # Terminate the database connection process if it's running
+            function terminate_db_connection() {
+                if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
+                    kill ${CF_DB_CONNECTION_PID}
+                    echo "Database connection process terminated."
                 else
-                    echo "Port ${port} on ${host} is not connectable."
-                    return 1
+                    echo "Database connection process was not running."
                 fi
             }
-
-
-            # Function to check each environment variable
-            function check_env_vars() {
-                local env_vars=("$@")  # Receive array elements as an argument
-                for var in "${env_vars[@]}"; do
-                    if [[ -z "${!var}" ]]; then  # Using indirect reference to check if variable is empty
-                        echo "Error: Environment variable $var is not set or is empty."
-                        exit 1
-                    fi
-                done
-            }
-
-            # Arrays of environment variables for DB and S3
-            db_vars=(
-                "CF_DB_HOST"
-                "CF_DB_PORT"
-                "CF_DB_USERNAME"
-                "CF_DB_PASSWORD"
-                "CF_DB_NAME"
-            )
-
-            s3_vars=(
-                "CF_S3_ACCESS_KEY"
-                "CF_S3_SECRET_KEY"
-                "CF_S3_BUCKET_NAME"
-                "CF_S3_REGION"
-                "CF_S3_SERVICE_KEY_NAME"
-            )
-
-            # Main execution flow
-            check_db_connection
-            echo "Checking DB environment variables..."
-            check_env_vars "${db_vars[@]}"
-            echo "Checking DB environment is connectable"
-            check_port_connectivity ${CF_DB_HOST}, ${CF_DB_PORT}
-            echo "Checking S3 environment variables..."
-            check_env_vars "${s3_vars[@]}"
-
-            echo "All checks passed. Both DB and S3 connections are verified."
-      - run:
-          name: Backup DB, ZIP/Encrypt/Password, & Upload To S3
-          command: |
-            set -x
-            set -e
-            set -u
-            set -o pipefail
-
-            source ${BASH_ENV}
-
-            # Function to check for required dependencies
-            function check_dependencies() {
-                local dependencies=("aws" "pg_dump" "zip" "curl" "uuidgen" "pv")
-                for dep in "${dependencies[@]}"; do
-                    if ! type "${dep}" > /dev/null; then
-                        echo "Dependency ${dep} is not installed." >&2
-                        exit 1
-                    fi
-                done
-            }
-
-            # Verify that all required dependencies are installed
-            check_dependencies
 
             # Function to generate pre-signed S3 URLs for PUT operations
             generate_presigned_url() {
@@ -762,7 +674,6 @@ commands:
                 echo $url
             }
 
-
             # Function to check if a file exists on S3
             file_exists_on_s3() {
                 local file_name=${1}
@@ -781,46 +692,96 @@ commands:
                 fi
             }
 
-            # Define S3 file names with precision down to the second
-            TS="$(date +%Y-%m-%d-%H-%M-%S)"
-            S3_FILE_NAME="production-${TS}.sql.zip"
-            PASSWORD_FILE_NAME="production-${TS}.sql.pwd"
-            LATEST_BACKUP_FILE_NAME="latest-backup.txt"
+            function generate_presigned_urls() {
+                # Define S3 file names with precision down to the second, in UTC
+                local TS="$(date --utc +%Y-%m-%d-%H-%M-%S)-UTC"
+                local S3_FILE_NAME="production-${TS}.sql.zip"
+                local PASSWORD_FILE_NAME="production-${TS}.sql.pwd"
+                local LATEST_BACKUP_FILE_NAME="latest-backup.txt"
 
-            # Generate UUID as the password
-            ZIP_PASSWORD=$(uuidgen)
+                # Generate UUID as the password
+                local ZIP_PASSWORD=$(uuidgen)
 
-            # Configure AWS CLI
-            export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
-            export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
-            export AWS_DEFAULT_REGION=${CF_S3_REGION}
+                # Export the ZIP password for external use
+                export ZIP_PASSWORD
 
-            # Generate presigned URLs for PUT operations using AWS CLI
-            PRESIGNED_UPLOAD_URL=$(generate_presigned_url ${S3_FILE_NAME})
-            PRESIGNED_PASSWORD_URL=$(generate_presigned_url ${PASSWORD_FILE_NAME})
-            PRESIGNED_LATEST_URL=$(generate_presigned_url ${LATEST_BACKUP_FILE_NAME})
+                # Configure AWS CLI
+                export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
+                export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
+                export AWS_DEFAULT_REGION=${CF_S3_REGION}
 
-            # Perform the backup and compress with the generated password
-            PGPASSWORD=$CF_DB_PASSWORD pg_dump -U ${CF_DB_USERNAME} -h ${CF_DB_HOST} -p ${CF_DB_PORT} ${CF_DB_NAME} |\
+                # Use your existing function to generate presigned URLs
+                local PRESIGNED_UPLOAD_URL=$(generate_presigned_url "${S3_FILE_NAME}")
+                local PRESIGNED_PASSWORD_URL=$(generate_presigned_url "${PASSWORD_FILE_NAME}")
+                local PRESIGNED_LATEST_URL=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
+
+                # Export URL values for external use
+                export PRESIGNED_UPLOAD_URL
+                export PRESIGNED_PASSWORD_URL
+                export PRESIGNED_LATEST_URL
+            }
+
+            function perform_backup_and_upload() {
+                # Perform the backup and compress with the generated password
+                PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
-                zip -P ${ZIP_PASSWORD} - - |\
+                zip -P "${ZIP_PASSWORD}" - - |\
                 curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
-            # Evaluate the result of the backup and upload process
-            if [ $? -eq 0 ]; then
-                echo "${ZIP_PASSWORD}" | curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
-                if [ $? -eq 0 ]; then
-                    echo -e "${S3_FILE_NAME}\n${PASSWORD_FILE_NAME}" | curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
-                else
-                    echo "Password file upload failed, cleaning up backup files."
-                    safe_remove_s3_file ${S3_FILE_NAME}
-                    safe_remove_s3_file ${PASSWORD_FILE_NAME}
+                # Evaluate the result of the backup and upload process
+                if [ $? -ne 0 ]; then
+                    echo "Backup upload failed."
+                    safe_remove_s3_file "${S3_FILE_NAME}"
+                    return 1
                 fi
-            else
-                echo "Backup upload failed, cleaning up uploaded file."
-                safe_remove_s3_file ${S3_FILE_NAME}
-                exit 1
-            fi
+
+                echo "${ZIP_PASSWORD}" |\
+                curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
+
+                if [ $? -ne 0 ]; then
+                    echo "Password file upload failed."
+                    safe_remove_s3_file "${PASSWORD_FILE_NAME}"
+                    return 1
+                fi
+
+                echo -e "${S3_FILE_NAME}\n${PASSWORD_FILE_NAME}" |\
+                curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
+
+                if [ $? -ne 0 ]; then
+                    echo "Latest backup file list upload failed."
+                    return 1
+                fi
+
+                echo "All files successfully uploaded."
+            }
+
+            # -----------------------------------------------------------------------------
+
+            check_dependencies cf awk grep stat aws pg_dump zip curl uuidgen pv
+
+            echo "enable ssh to db"
+            manageSpaceSSH enable
+
+            setup_cf_db_connection
+
+            check_port_connectivity ${CF_DB_HOST}, ${CF_DB_PORT}
+
+            generate_presigned_urls
+
+            perform_backup_and_upload
+
+            terminate_db_connection
+            manageSpaceSSH disable
+
+            # Clean up
+            rm ${cf_output}
+            echo "Cleanup done."
+          background: false
+          environment:
+            auth_client_id: PROD_AUTH_CLIENT_ID
+            auth_client_secret: PROD_AUTH_CLIENT_SECRET
+            CF_APP_NAME: tta-smarthub-prod
+            CF_SERVICE_NAME: ttahub-prod
       - run:
           name: Cleanup and Terminate Connection
           command: |
@@ -840,36 +801,6 @@ commands:
                         exit 1
                     fi
                 done
-            }
-
-            # Terminate the database connection process if it's running
-            # function terminate_db_connection() {
-            #     if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-            #         kill ${CF_DB_CONNECTION_PID}
-            #         echo "Database connection process terminated."
-            #     else
-            #         echo "Database connection process was not running."
-            #     fi
-            # }
-
-            function disableSpaceSSH() {
-                # Check if CF_SERVICE_NAME is set and not empty
-                if [[ -z "${CF_SERVICE_NAME}" ]]; then
-                    echo "Error: CF_SERVICE_NAME is not set or empty."
-                    return 1
-                fi
-
-                # Execute the cf command
-                cf disallow-space-ssh "${CF_SERVICE_NAME}"
-                local status=$?
-
-                # Check the exit status of the cf command
-                if [ $status -ne 0 ]; then
-                    echo "Failed to disable SSH for the service: ${CF_SERVICE_NAME}"
-                    return $status
-                else
-                    echo "SSH successfully disabled for the service: ${CF_SERVICE_NAME}"
-                fi
             }
 
             # Function to check if a service key exists
@@ -903,7 +834,7 @@ commands:
 
             # Main execution
             check_dependencies
-            # terminate_db_connection
+
             disableSpaceSSH
             delete_service_key
           when: always
