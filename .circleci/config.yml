@@ -452,7 +452,6 @@ commands:
             set -u
             set -o pipefail
             set -o noglob
-            set -o noclobber
 
             # Function to check for required dependencies
             function check_dependencies() {
