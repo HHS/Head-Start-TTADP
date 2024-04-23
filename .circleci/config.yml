@@ -697,9 +697,9 @@ commands:
                 local PRESIGNED_LATEST=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
 
                 # Export URL values for external use
-                echo "export PRESIGNED_UPLOAD_URL=${PRESIGNED_UPLOAD}" >> "${BASH_ENV}"
-                echo "export PRESIGNED_PASSWORD_URL=${PRESIGNED_PASSWORD}" >> "${BASH_ENV}"
-                echo "export PRESIGNED_LATEST_URL=${PRESIGNED_LATEST}" >> "${BASH_ENV}"
+                echo "export PRESIGNED_UPLOAD_URL=\"${PRESIGNED_UPLOAD}\"" >> "${BASH_ENV}"
+                echo "export PRESIGNED_PASSWORD_URL=\"${PRESIGNED_PASSWORD}\"" >> "${BASH_ENV}"
+                echo "export PRESIGNED_LATEST_URL=\"${PRESIGNED_LATEST}\"" >> "${BASH_ENV}"
             }
 
             function perform_backup_and_upload() {
