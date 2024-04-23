@@ -1,8 +1,10 @@
+/* eslint-disable jest/no-conditional-expect */
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReportGoal,
   Grant,
+  GrantNumberLink,
   Recipient,
   Goal,
   GoalTemplate,
@@ -350,6 +352,13 @@ describe('getGoalIdsBySimilarity', () => {
     await destroyReport(needsActionReport);
     await destroyReport(report);
 
+    await GrantNumberLink.destroy({
+      where: {
+        grantId: activeGrant.id,
+      },
+      force: true,
+    });
+
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
@@ -509,7 +518,7 @@ describe('getGoalIdsBySimilarity', () => {
     const [setOne, setTwo] = filteredSet;
 
     expect(setOne.goals.length).toBe(4);
-    expect(setTwo.goals.length).toBe(3);
+    expect(setTwo.goals.length).toBe(4);
 
     const goalIds = [...setOne.goals, ...setTwo.goals];
 
@@ -577,7 +586,7 @@ describe('getGoalIdsBySimilarity', () => {
     const [setOne, setTwo] = filteredSet;
 
     expect(setOne.goals.length).toBe(7);
-    expect(setTwo.goals.length).toBe(4);
+    expect(setTwo.goals.length).toBe(5);
   });
 
   describe('getReportCountForGoals', () => {
@@ -653,6 +662,368 @@ describe('getGoalIdsBySimilarity', () => {
           },
         ],
       }]))).toBe(false);
+    });
+  });
+
+  describe('getGoalIdsBySimilarity (closed, curated)', () => {
+    let goalGroup = [];
+    const goalTitle = faker.lorem.sentence();
+    let recipientForClosedCurated;
+    let activeGrantForClosedCurated;
+    let templateForClosedCurated;
+
+    beforeAll(async () => {
+      recipientForClosedCurated = await createRecipient();
+
+      activeGrantForClosedCurated = await createGrant({
+        recipientId: recipientForClosedCurated.id,
+        status: 'Active',
+      });
+
+      templateForClosedCurated = await createGoalTemplate({
+        name: goalTitle,
+        creationMethod: CREATION_METHOD.CURATED,
+      });
+
+      goalGroup = await Promise.all([
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitle,
+          goalTemplateId: templateForClosedCurated.id,
+          grantId: activeGrantForClosedCurated.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitle,
+          goalTemplateId: templateForClosedCurated.id,
+          grantId: activeGrantForClosedCurated.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.CLOSED,
+          name: goalTitle,
+          goalTemplateId: templateForClosedCurated.id,
+          grantId: activeGrantForClosedCurated.id,
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      const goals = [
+        ...goalGroup,
+      ];
+      const grants = await Grant.findAll({
+        attributes: ['id', 'recipientId'],
+        where: {
+          id: goals.map((g) => g.grantId),
+        },
+      });
+
+      const recipients = await Recipient.findAll({
+        attributes: ['id'],
+        where: {
+          id: grants.map((g) => g.recipientId),
+        },
+      });
+
+      await GoalSimilarityGroupGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        force: true,
+      });
+
+      await GoalTemplate.destroy({
+        where: {
+          id: templateForClosedCurated.id,
+        },
+        force: true,
+      });
+
+      await GrantNumberLink.destroy({
+        where: {
+          grantId: activeGrantForClosedCurated.id,
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grants.map((g) => g.id),
+        },
+        force: true,
+        individualHooks: true,
+      });
+
+      await GoalSimilarityGroup.destroy({
+        where: {
+          recipientId: [recipientForClosedCurated.id],
+        },
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: [...recipients.map((r) => r.id)],
+        },
+        force: true,
+      });
+    });
+
+    it('goal similiarity group, user has permission', async () => {
+      const similarityResponse = [
+        goalGroup,
+      ].map((group) => ({
+        id: group[0].id,
+        name: group[0].name,
+        matches: group.map((g) => ({
+          id: g.id,
+          name: g.name,
+        })),
+      }));
+
+      similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
+
+      await getGoalIdsBySimilarity(recipientForClosedCurated.id);
+
+      const goalGroupIds = goalGroup.map((g) => g.id);
+      const goalGroupSimilarityGroupGoals = await GoalSimilarityGroupGoal.findAll({
+        where: {
+          goalId: goalGroupIds,
+        },
+        include: [{
+          model: Goal,
+          as: 'goal',
+          include: [{
+            model: GoalTemplate,
+            as: 'goalTemplate',
+          }],
+        }],
+      });
+
+      expect(goalGroupSimilarityGroupGoals).toHaveLength(goalGroup.length);
+
+      goalGroupSimilarityGroupGoals.forEach((g) => {
+        if (g.excludedIfNotAdmin) {
+          expect(g.goal.goalTemplate.creationMethod).toBe(CREATION_METHOD.CURATED);
+          expect(g.goal.status).toBe(GOAL_STATUS.CLOSED);
+        }
+      });
+
+      const excludedIfNotAdminGoalGroup = goalGroupSimilarityGroupGoals
+        .filter((g) => g.excludedIfNotAdmin);
+
+      expect(excludedIfNotAdminGoalGroup).toHaveLength(1);
+
+      const user = {
+        permissions: [],
+        flags: ['closed_goal_merge_override'],
+      };
+
+      const sets = await getGoalIdsBySimilarity(
+        recipientForClosedCurated.id,
+        activeGrantForClosedCurated.regionId,
+        user,
+      );
+
+      expect(sets).toHaveLength(2);
+
+      const setsWithGoals = sets.filter((set) => set.goals.length);
+      expect(setsWithGoals).toHaveLength(1);
+
+      const [set] = setsWithGoals;
+      expect(set.goals.length).toBe(3);
+    });
+
+    it('goal similiarity group, user does not have permission', async () => {
+      const similarityResponse = [
+        goalGroup,
+      ].map((group) => ({
+        id: group[0].id,
+        name: group[0].name,
+        matches: group.map((g) => ({
+          id: g.id,
+          name: g.name,
+        })),
+      }));
+
+      similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
+
+      await getGoalIdsBySimilarity(recipientForClosedCurated.id);
+
+      const goalGroupIds = goalGroup.map((g) => g.id);
+      const goalGroupSimilarityGroupGoals = await GoalSimilarityGroupGoal.findAll({
+        where: {
+          goalId: goalGroupIds,
+        },
+        include: [{
+          model: Goal,
+          as: 'goal',
+          include: [{
+            model: GoalTemplate,
+            as: 'goalTemplate',
+          }],
+        }],
+      });
+
+      expect(goalGroupSimilarityGroupGoals).toHaveLength(goalGroup.length);
+
+      goalGroupSimilarityGroupGoals.forEach((g) => {
+        if (g.excludedIfNotAdmin) {
+          expect(g.goal.goalTemplate.creationMethod).toBe(CREATION_METHOD.CURATED);
+          expect(g.goal.status).toBe(GOAL_STATUS.CLOSED);
+        }
+      });
+
+      const allowedIfNotAdmin = goalGroupSimilarityGroupGoals
+        .filter((g) => !g.excludedIfNotAdmin).map((g) => g.goal.id);
+
+      expect(allowedIfNotAdmin).toHaveLength(2);
+
+      const sets = await getGoalIdsBySimilarity(
+        recipientForClosedCurated.id,
+        activeGrantForClosedCurated.regionId,
+      );
+
+      expect(sets).toHaveLength(2);
+
+      const setsWithGoals = sets.filter((set) => set.goals.length);
+      expect(setsWithGoals).toHaveLength(1);
+
+      const [set] = setsWithGoals;
+      expect(set.goals.length).toBe(2);
+      expect(set.goals).toEqual(expect.arrayContaining(allowedIfNotAdmin));
+    });
+  });
+
+  describe('getGoalIdsBySimilarity (two grants, 2 goals)', () => {
+    let goalGroup = [];
+    const goalTitle = faker.lorem.sentence();
+    let recipientFor2Grants2Goals;
+    let activeGrantFor2Grants2Goals;
+    let activeGrantFor2Grants2GoalsTwo;
+
+    const region = 4;
+
+    beforeAll(async () => {
+      recipientFor2Grants2Goals = await createRecipient();
+
+      activeGrantFor2Grants2Goals = await createGrant({
+        recipientId: recipientFor2Grants2Goals.id,
+        status: 'Active',
+        regionId: region,
+      });
+
+      activeGrantFor2Grants2GoalsTwo = await createGrant({
+        recipientId: recipientFor2Grants2Goals.id,
+        status: 'Active',
+        regionId: region,
+      });
+
+      goalGroup = await Promise.all([
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitle,
+          grantId: activeGrantFor2Grants2Goals.id,
+        }),
+        createGoal({
+          status: GOAL_STATUS.NOT_STARTED,
+          name: goalTitle,
+          grantId: activeGrantFor2Grants2GoalsTwo.id,
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      const goals = [
+        ...goalGroup,
+      ];
+      const grants = await Grant.findAll({
+        attributes: ['id', 'recipientId'],
+        where: {
+          id: goals.map((g) => g.grantId),
+        },
+      });
+
+      const recipients = await Recipient.findAll({
+        attributes: ['id'],
+        where: {
+          id: grants.map((g) => g.recipientId),
+        },
+      });
+
+      await GoalSimilarityGroupGoal.destroy({
+        where: {
+          goalId: goals.map((g) => g.id),
+        },
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goals.map((g) => g.id),
+        },
+        force: true,
+      });
+
+      await GrantNumberLink.destroy({
+        where: {
+          grantId: activeGrantFor2Grants2Goals.id,
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grants.map((g) => g.id),
+        },
+        force: true,
+        individualHooks: true,
+      });
+
+      await GoalSimilarityGroup.destroy({
+        where: {
+          recipientId: [recipientFor2Grants2Goals.id],
+        },
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: [...recipients.map((r) => r.id)],
+        },
+        force: true,
+      });
+    });
+
+    it('goal similiarity group w/ 2 grants and 2 goals', async () => {
+      const similarityResponse = [
+        goalGroup,
+      ].map((group) => ({
+        id: group[0].id,
+        name: group[0].name,
+        matches: group.map((g) => ({
+          id: g.id,
+          name: g.name,
+        })),
+      }));
+
+      similarGoalsForRecipient.mockResolvedValue({ result: similarityResponse });
+
+      await getGoalIdsBySimilarity(recipientFor2Grants2Goals.id);
+
+      const sets = await getGoalIdsBySimilarity(
+        recipientFor2Grants2Goals.id,
+        activeGrantFor2Grants2Goals.regionId,
+      );
+
+      expect(sets).toHaveLength(1);
+      const [set] = sets;
+
+      // we expect no goals
+      expect(set.goals.length).toBe(0);
     });
   });
 });
