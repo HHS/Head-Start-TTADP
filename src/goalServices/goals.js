@@ -2830,7 +2830,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
       let closedCurated = false;
       if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+        closedCurated = current.status === GOAL_STATUS.CLOSED;
       }
 
       // goal on an active report
@@ -2861,11 +2861,16 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
           excludedIfNotAdmin,
+          grantId: grantLookup[current.grantId],
         },
       ];
     }, []));
 
-  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+  const groupsWithMoreThanOneGoalAndMoreGoalsThanGrants = goalGroupsDeduplicated
+    .filter((group) => {
+      const grantIds = uniq(group.map((goal) => goal.grantId));
+      return group.length > 1 && group.length !== grantIds.length;
+    });
 
   // save the groups to the database
   // there should also always be an empty group
@@ -2873,7 +2878,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
   // and that we've run these computations
 
   await Promise.all(
-    [...groupsWithMoreThanOneGoal, []]
+    [...groupsWithMoreThanOneGoalAndMoreGoalsThanGrants, []]
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
