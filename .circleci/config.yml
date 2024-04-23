@@ -287,20 +287,21 @@ commands:
       - run:
           name: Install Dependencies
           command: |
-            set -x
             set -e
             set -u
             set -o pipefail
+            set -o noglob
+            set -o noclobber
+
+
             # update
             sudo apt-get update
             # Install PostgreSQL Client to have access to pg_dump
             sudo apt-get install -y postgresql-client
             # Install jq
             sudo apt-get install -y jq
-            # Install zip & unzip
-            sudo apt-get install -y zip unzip
-            # Install Curl
-            sudo apt-get install -y curl
+            # Install zip
+            sudo apt-get install -y zip
             # Install uuid-runtime to have access to uuidgen
             sudo apt-get install uuid-runtime
             # Install pv
@@ -340,10 +341,11 @@ commands:
       - run:
           name: Prep S3 Connection
           command: |
-            set -x
             set -e
             set -u
             set -o pipefail
+            set -o noglob
+            set -o noclobber
 
             # Functions definition
             function check_dependencies() {
@@ -408,7 +410,6 @@ commands:
                 echo "Validating JSON..."
                 if ! echo "$1" | jq empty 2>/dev/null; then
                     echo "Invalid JSON format." >&2
-                    echo $1
                     exit 6
                 fi
             }
@@ -421,20 +422,17 @@ commands:
 
             # Validate JSON before parsing
             validate_json "${credentials_json}"
-            echo 'test.1'
 
             # Extract credentials using jq
             access_key=$(echo "${credentials_json}" | jq -r '.credentials.access_key_id')
             secret_key=$(echo "${credentials_json}" | jq -r '.credentials.secret_access_key')
             bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
             region=$(echo "${credentials_json}" | jq -r '.credentials.region')
-            echo 'test.2'
 
             if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
                 echo "Failed to extract all necessary credentials." >&2
                 exit 7
             fi
-            echo 'test.3'
 
             # Export credentials and the service key name for use in this script and potentially others
             echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
@@ -442,7 +440,6 @@ commands:
             echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
             echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
             echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
-            echo 'test.4'
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
@@ -451,10 +448,11 @@ commands:
       - run:
           name: Connect to DB, dump, zip, upload, disconnect from DB
           command: |
-            set -x
             set -e
             set -u
             set -o pipefail
+            set -o noglob
+            set -o noclobber
 
             # Function to check for required dependencies
             function check_dependencies() {
@@ -629,33 +627,6 @@ commands:
                 fi
             }
 
-            # Function to generate pre-signed S3 URLs for PUT operations
-            generate_presigned_url() {
-                local file_name=${1}
-                local region=${2:-"default-region"}  # Use a default region if not specified
-                local log_file=$(mktemp)  # Create a temporary file for logging
-
-                # Ensure the temporary logfile is deleted upon function exit
-                trap 'rm -f "${log_file}"' EXIT
-
-                if [ -z "${file_name}" ]; then
-                    echo "Error: No file name provided."
-                    return 1
-                fi
-
-                # Corrected command to generate a presigned URL
-                local url=$(aws s3 presign "s3://${CF_S3_BUCKET_NAME}/${file_name}" --expires-in 3600 --region ${region} 2>>${log_file})
-
-                if [ $? -ne 0 ]; then
-                    echo "Failed to generate presigned URL. Check the log file for details: ${log_file}"
-                    cat ${log_file}  # Output the log file content for debugging
-                    return 1
-                fi
-
-                echo $url
-            }
-
-
             # Function to check if a file exists on S3
             file_exists_on_s3() {
                 local file_name=${1}
@@ -674,7 +645,7 @@ commands:
                 fi
             }
 
-            function generate_presigned_urls() {
+            function setup_backup_environment() {
                 # Define S3 file names with precision down to the second, in UTC
                 local TS="$(date --utc +%Y-%m-%d-%H-%M-%S)-UTC"
                 local S3_FILE_NAME="production-${TS}.sql.zip"
@@ -692,20 +663,10 @@ commands:
                 export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
                 export AWS_DEFAULT_REGION=${CF_S3_REGION}
 
-                # Use your existing function to generate presigned URLs
-                local PRESIGNED_UPLOAD=$(generate_presigned_url "${S3_FILE_NAME}")
-                local PRESIGNED_PASSWORD=$(generate_presigned_url "${PASSWORD_FILE_NAME}")
-                local PRESIGNED_LATEST=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
-
                 # Export filename values for external use
                 echo "export S3_FILE_NAME=\"${S3_FILE_NAME}\"" >> "${BASH_ENV}"
                 echo "export PASSWORD_FILE_NAME=\"${PASSWORD_FILE_NAME}\"" >> "${BASH_ENV}"
                 echo "export LATEST_BACKUP_FILE_NAME=\"${LATEST_BACKUP_FILE_NAME}\"" >> "${BASH_ENV}"
-
-                # Export URL values for external use
-                echo "export PRESIGNED_UPLOAD_URL=\"${PRESIGNED_UPLOAD}\"" >> "${BASH_ENV}"
-                echo "export PRESIGNED_PASSWORD_URL=\"${PRESIGNED_PASSWORD}\"" >> "${BASH_ENV}"
-                echo "export PRESIGNED_LATEST_URL=\"${PRESIGNED_LATEST}\"" >> "${BASH_ENV}"
             }
 
             function perform_backup_and_upload() {
@@ -717,7 +678,7 @@ commands:
                 export AWS_DEFAULT_REGION=${CF_S3_REGION}
 
                 # Check required environment variables
-                local required_vars=("CF_DB_PASSWORD" "CF_DB_USERNAME" "CF_DB_HOST" "CF_DB_PORT" "CF_DB_NAME" "ZIP_PASSWORD" "PRESIGNED_UPLOAD_URL" "PRESIGNED_PASSWORD_URL" "PRESIGNED_LATEST_URL" "S3_FILE_NAME" "PASSWORD_FILE_NAME")
+                local required_vars=("CF_DB_PASSWORD" "CF_DB_USERNAME" "CF_DB_HOST" "CF_DB_PORT" "CF_DB_NAME" "CF_S3_BUCKET_NAME" "ZIP_PASSWORD" "S3_FILE_NAME" "PASSWORD_FILE_NAME" "LATEST_BACKUP_FILE_NAME")
                 for var in "${required_vars[@]}"; do
                     if [ -z "${!var}" ]; then
                         echo "Error: Environment variable $var is not set."
@@ -730,7 +691,6 @@ commands:
                 zip -P "${ZIP_PASSWORD}" - - |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
                 aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
-                # curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
                 # Evaluate the result of the backup and upload process
                 if [ $? -ne 0 ]; then
@@ -741,7 +701,6 @@ commands:
 
                 echo "${ZIP_PASSWORD}" |\
                     aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
-                # curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
                     echo "Password file upload failed."
@@ -751,7 +710,6 @@ commands:
 
                 echo -e "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
                     aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
-                # curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
                     echo "Latest backup file list upload failed."
@@ -763,14 +721,12 @@ commands:
 
             # -----------------------------------------------------------------------------
 
-            check_dependencies cf awk grep stat aws pg_dump zip curl uuidgen pv
+            check_dependencies cf awk grep stat aws pg_dump zip uuidgen pv
 
-            echo "enable ssh to db"
             manageAppSSH enable
-
             setup_cf_db_connection
 
-            generate_presigned_urls
+            setup_backup_environment
 
             perform_backup_and_upload
 
@@ -785,10 +741,11 @@ commands:
       - run:
           name: Cleanup and Terminate Connection
           command: |
-            set -x
             set -e
             set -u
             set -o pipefail
+            set -o noglob
+            set -o noclobber
 
             source ${BASH_ENV}
 
@@ -834,8 +791,6 @@ commands:
 
             # Main execution
             check_dependencies
-
-            disableSpaceSSH
             delete_service_key
           when: always
           environment:
