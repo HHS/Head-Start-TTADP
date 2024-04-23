@@ -779,6 +779,7 @@ export default function GoalForm({
         ids,
         prompts,
       });
+
       const goals = [
         ...createdGoals.reduce((acc, goal) => {
           const g = grantsToGoals({
@@ -798,6 +799,7 @@ export default function GoalForm({
         }, []),
         ...newGoals,
       ];
+
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
