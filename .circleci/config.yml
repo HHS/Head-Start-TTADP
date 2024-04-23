@@ -682,7 +682,7 @@ commands:
                 local ZPASSWORD=$(uuidgen)
 
                 # Export the ZIP password for external use
-                export ZIP_PASSWORD=${ZPASSWORD}
+                echo "export ZIP_PASSWORD=${ZPASSWORD}" >> "${BASH_ENV}"
 
                 # Configure AWS CLI
                 export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
@@ -695,12 +695,23 @@ commands:
                 local PRESIGNED_LATEST=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
 
                 # Export URL values for external use
-                export PRESIGNED_UPLOAD_URL=${PRESIGNED_UPLOAD}
-                export PRESIGNED_PASSWORD_URL=${PRESIGNED_PASSWORD}
-                export PRESIGNED_LATEST_URL=${PRESIGNED_LATEST}
+                echo "export PRESIGNED_UPLOAD_URL=${PRESIGNED_UPLOAD}" >> "${BASH_ENV}"
+                echo "export PRESIGNED_PASSWORD_URL=${PRESIGNED_PASSWORD}" >> "${BASH_ENV}"
+                echo "export PRESIGNED_LATEST_URL=${PRESIGNED_LATEST}" >> "${BASH_ENV}"
             }
 
             function perform_backup_and_upload() {
+                source "${BASH_ENV}"
+
+                # Check required environment variables
+                local required_vars=("CF_DB_PASSWORD" "CF_DB_USERNAME" "CF_DB_HOST" "CF_DB_PORT" "CF_DB_NAME" "ZIP_PASSWORD" "PRESIGNED_UPLOAD_URL" "PRESIGNED_PASSWORD_URL" "PRESIGNED_LATEST_URL" "S3_FILE_NAME" "PASSWORD_FILE_NAME")
+                for var in "${required_vars[@]}"; do
+                    if [ -z "${!var}" ]; then
+                        echo "Error: Environment variable $var is not set."
+                        return 1
+                    fi
+                done
+
                 # Perform the backup and compress with the generated password
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
