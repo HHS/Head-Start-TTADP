@@ -728,7 +728,7 @@ commands:
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
                 zip -P "${ZIP_PASSWORD}" - - |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
-                aws s3 cp - "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
+                aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
                 # curl -X PUT -T - -L "${PRESIGNED_UPLOAD_URL}" -o /dev/null
 
                 # Evaluate the result of the backup and upload process
@@ -739,7 +739,7 @@ commands:
                 fi
 
                 echo "${ZIP_PASSWORD}" |\
-                    aws s3 cp - "${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
+                    aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
                 # curl -X PUT -T - -L "${PRESIGNED_PASSWORD_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
@@ -749,7 +749,7 @@ commands:
                 fi
 
                 echo -e "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
-                    aws s3 cp - "${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
+                    aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
                 # curl -X PUT -T - -L "${PRESIGNED_LATEST_URL}" -o /dev/null
 
                 if [ $? -ne 0 ]; then
