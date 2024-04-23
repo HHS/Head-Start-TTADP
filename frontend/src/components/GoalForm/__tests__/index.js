@@ -149,6 +149,7 @@ describe('create goal', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20a%20goal%20name&grantNumbers=1', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -185,6 +186,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.get('path:/nudge', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
@@ -234,11 +236,14 @@ describe('create goal', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
     fetchMock.get('path:/nudge?', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastOptions('/api/goals').body).toContain('ids');
     expect(fetchMock.called('/api/goals')).toBeTruthy();
   });
 
@@ -506,7 +511,7 @@ describe('create goal', () => {
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
 
     // restore our fetch mock
     fetchMock.restore();
