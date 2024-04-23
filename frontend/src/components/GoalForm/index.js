@@ -727,6 +727,7 @@ export default function GoalForm({
       });
 
       const newIds = updatedGoals.flatMap((g) => g.goalIds);
+      console.log('\n\n\n-----ON SAVE DRAFTzz');
       setIds(newIds);
     } catch (error) {
       setAlert({
@@ -765,6 +766,7 @@ export default function GoalForm({
 
     setAppLoadingText('Saving');
     setIsAppLoading(true);
+    console.log('\n\n\n-----State ids: ', ids);
     try {
       const newGoals = grantsToGoals({
         selectedGrants,
@@ -776,13 +778,14 @@ export default function GoalForm({
         regionId,
         recipient,
         objectives,
-        ids,
+        ids: [456],
         prompts,
       });
-
+      console.log('\n\n\n---Created Goals: ', createdGoals);
       const goals = [
         ...createdGoals.reduce((acc, goal) => {
           const g = grantsToGoals({
+            // ...goal,
             selectedGrants: goal.grants,
             name: goal.name,
             status: goal.status,
@@ -793,13 +796,17 @@ export default function GoalForm({
             regionId: parseInt(regionId, DECIMAL_BASE),
             recipient,
             objectives,
-            ids: [],
+            //ids: goal.goalIds,
+            ids: [1234],
+            // ids: [],
           });
           return [...acc, ...g];
         }, []),
         ...newGoals,
       ];
 
+      console.log('\n\n\n----here 1', goals);
+      console.log('here 3', goals);
       const newCreatedGoals = await createOrUpdateGoals(goals);
 
       setCreatedGoals(newCreatedGoals.map((goal) => ({
@@ -849,6 +856,8 @@ export default function GoalForm({
     setPrompts(goal.prompts);
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
+    console.log('\n\n\n-----blah set ids: ', goal.ids);
+    setIds(goal.ids);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs

@@ -170,6 +170,7 @@ export const grantsToGoals = ({
   ids,
   prompts,
 }) => selectedGrants.map((g) => {
+  console.log('\n\n\n\n-----Passed IN: ', ids);
   const goalSource = source ? source[g.numberWithProgramTypes] : '';
   const goalPrompts = prompts ? prompts[g.numberWithProgramTypes] : [];
   return {
