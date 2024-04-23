@@ -782,7 +782,6 @@ export default function GoalForm({
       const goals = [
         ...createdGoals.reduce((acc, goal) => {
           const g = grantsToGoals({
-            // ...goal,
             selectedGrants: goal.grants,
             name: goal.name,
             status: goal.status,
