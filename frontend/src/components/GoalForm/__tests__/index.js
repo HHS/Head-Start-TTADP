@@ -512,6 +512,7 @@ describe('create goal', () => {
     userEvent.click(save);
 
     expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
 
     // restore our fetch mock
     fetchMock.restore();
