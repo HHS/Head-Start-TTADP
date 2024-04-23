@@ -696,6 +696,11 @@ commands:
                 local PRESIGNED_PASSWORD=$(generate_presigned_url "${PASSWORD_FILE_NAME}")
                 local PRESIGNED_LATEST=$(generate_presigned_url "${LATEST_BACKUP_FILE_NAME}")
 
+                # Export filename values for external use
+                echo "export S3_FILE_NAME=\"${S3_FILE_NAME}\"" >> "${BASH_ENV}"
+                echo "export PASSWORD_FILE_NAME=\"${PASSWORD_FILE_NAME}\"" >> "${BASH_ENV}"
+                echo "export LATEST_BACKUP_FILE_NAME=\"${LATEST_BACKUP_FILE_NAME}\"" >> "${BASH_ENV}"
+
                 # Export URL values for external use
                 echo "export PRESIGNED_UPLOAD_URL=\"${PRESIGNED_UPLOAD}\"" >> "${BASH_ENV}"
                 echo "export PRESIGNED_PASSWORD_URL=\"${PRESIGNED_PASSWORD}\"" >> "${BASH_ENV}"
