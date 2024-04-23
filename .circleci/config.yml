@@ -620,7 +620,7 @@ commands:
             # Clean up
             rm ${cf_output}
             echo "Cleanup done."
-          background: true
+          background: false
           environment:
             auth_client_id: PROD_AUTH_CLIENT_ID
             auth_client_secret: PROD_AUTH_CLIENT_SECRET
