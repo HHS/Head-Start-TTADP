@@ -697,7 +697,7 @@ commands:
                     return 1
                 fi
 
-                echo "${ZIP_PASSWORD}" |\
+                echo -n "${ZIP_PASSWORD}" |\
                     aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
 
                 if [ $? -ne 0 ]; then
@@ -706,7 +706,7 @@ commands:
                     return 1
                 fi
 
-                echo -e "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
+                echo -e -n "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
                     aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
 
                 if [ $? -ne 0 ]; then
