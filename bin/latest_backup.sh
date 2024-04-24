@@ -2,6 +2,23 @@
 # Script to retrieve information from latest-backup.txt in S3, get presigned URLs for the files listed,
 # and then delete the service key created.
 
+# Function to check if the installed version of cf CLI is at least version 8
+check_cf_version() {
+    # Get the current version of cf CLI
+    current_version=$(cf --version | grep "cf version" | awk '{print $3}')
+
+    # Define the minimum required version
+    minimum_version="8.0.0"
+
+    # Compare the current version with the minimum version
+    if [[ "$(printf '%s\n' "$minimum_version" "$current_version" | sort -V | head -n1)" = "$minimum_version" ]]; then
+        echo "Current cf version ($current_version) is greater than or equal to $minimum_version." >&2
+    else
+        echo "Current cf version ($current_version) is less than $minimum_version. Please update your cf CLI." >&2
+        return 1  # Return 1 to indicate error
+    fi
+}
+
 # Function to check if a service key exists
 function check_service_key_exists() {
     local cf_s3_service_name=$1
@@ -188,6 +205,8 @@ function fetch_latest_backup_info_and_cleanup() {
     # Clean up by deleting the service key
     delete_service_key "$cf_s3_service_name" "$key_name" "$deletion_allowed"
 }
+
+check_cf_version
 
 # Main execution block
 if [ "$#" -gt 3 ]; then
