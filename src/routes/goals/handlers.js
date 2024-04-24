@@ -11,6 +11,7 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import nudge from '../../goalServices/nudge';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -93,6 +94,29 @@ export async function createGoals(req, res) {
     res.json(newGoals);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
+  }
+}
+
+export async function reopenGoal(req, res) {
+  try {
+    const { goalId, reason, context } = req.body;
+    const userId = await currentUserId(req, res);
+
+    const updatedGoal = await _changeGoalStatus({
+      goalId,
+      userId,
+      newStatus: 'In Progress',
+      reason,
+      context,
+    });
+
+    if (!updatedGoal) {
+      res.sendStatus(httpCodes.BAD_REQUEST);
+    }
+
+    res.json(updatedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:REOPEN_GOAL`);
   }
 }
 

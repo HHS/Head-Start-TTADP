@@ -3,6 +3,7 @@ import {
   sequelize,
   GoalStatusChange,
   Grant,
+  GrantNumberLink,
   Goal,
   Recipient,
   User,
@@ -15,7 +16,7 @@ const mockUser = {
   homeRegionId: 1,
   name: fakeName,
   hsesUsername: fakeName,
-  hsesUserId: fakeName,
+  hsesUserId: faker.datatype.number(),
   lastLogin: new Date(),
 };
 
@@ -48,10 +49,11 @@ describe('GoalStatusChange hooks', () => {
   });
 
   afterAll(async () => {
-    await Goal.destroy({ where: { id: goal.id } });
     await GoalStatusChange.destroy({ where: { id: goalStatusChange.id } });
-    await Grant.destroy({ where: { id: grant.id } });
     await User.destroy({ where: { id: user.id } });
+    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });
@@ -72,6 +74,28 @@ describe('GoalStatusChange hooks', () => {
       await goal.reload();
 
       expect(goal.status).toBe('In Progress');
+    });
+
+    it('should not update the goal status if the status is the same', async () => {
+      // Create a GoalStatusChange with the same oldStatus and newStatus
+      goalStatusChange = await GoalStatusChange.create({
+        goalId: goal.id,
+        userId: user.id,
+        userName: user.name,
+        userRoles: ['a', 'b'],
+        oldStatus: 'Draft',
+        newStatus: 'Draft', // Intentionally setting the same status
+        reason: 'Testing no status change',
+        context: 'Testing',
+      });
+
+      const previousStatus = goal.status;
+
+      await goalStatusChange.reload();
+      await goal.reload();
+
+      // The status should remain unchanged
+      expect(goal.status).toBe(previousStatus);
     });
   });
 });

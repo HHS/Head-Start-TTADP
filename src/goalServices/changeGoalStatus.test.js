@@ -54,12 +54,13 @@ describe('changeGoalStatus service', () => {
   });
 
   afterAll(async () => {
-    await db.User.destroy({ where: { id: mockUser.id } });
-    await db.Goal.destroy({ where: { id: goal.id } });
+    await db.Goal.destroy({ where: { id: goal.id }, force: true });
+    await db.GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
     await db.Grant.destroy({ where: { id: grant.id } });
     await db.Recipient.destroy({ where: { id: recipient.id } });
     await db.UserRole.destroy({ where: { userId: user.id } });
     await db.Role.destroy({ where: { id: role.id } });
+    await db.User.destroy({ where: { id: mockUser.id } });
   });
 
   it('should change the status of a goal and create a status change log', async () => {

@@ -122,7 +122,7 @@ describe('session report handlers', () => {
       });
       // Mock permissions.
       EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => true,
+        canGetGroupsForEditingSession: () => true,
       }));
       // Group response.
       const groupsByRegionResponse = [{ name: 'name', id: 1 }];
@@ -148,7 +148,7 @@ describe('session report handlers', () => {
       });
       // Mock permissions.
       EventReport.mockImplementationOnce(() => ({
-        canWriteInRegion: () => false,
+        canGetGroupsForEditingSession: () => false,
       }));
       await getGroups(
         { session: { userId: 1 }, params: { }, query: { region: 1 } },
