@@ -239,7 +239,7 @@ export function TotalHrsAndRecipientGraph({ data, loading, hideYAxis }) {
         <Grid row className="position-relative margin-bottom-2">
           <Grid desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}><h2 className="ttahub--dashboard-widget-heading margin-0">Total TTA hours</h2></Grid>
           <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-            { !showAccessibleData && <MediaCaptureButton id="rd-save-screenshot" className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
+            { !showAccessibleData && <MediaCaptureButton id="rd-save-screenshot" title="Total TTA hours" className="margin-x-2" reference={widget} buttonText="Save screenshot" /> }
             <button
               type="button"
               className="usa-button--unstyled"

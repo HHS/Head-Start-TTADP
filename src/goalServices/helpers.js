@@ -11,7 +11,7 @@ const goalFieldTransate = {
 const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate) => {
   const needleCollaborators = (needle.collaborators || []).map(
     (c) => c.goalCreatorName,
-  ).filter(Boolean) ?? [];
+  ).filter(Boolean);
 
   const haystackCollaborators = haystack.flatMap(
     (g) => (g.collaborators || []).map((c) => c.goalCreatorName).filter(Boolean),
@@ -22,7 +22,12 @@ const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate)
     && g[translate.name].trim() === needle.name.trim()
     && g[translate.source] === needle.source
     && g[translate.responsesForComparison] === responsesForComparison(needle)
-    && haystackCollaborators.some((c) => needleCollaborators.includes(c))
+    && (
+      // Check if both needle and haystack goal have no valid collaborators
+      (needleCollaborators.length === 0 && (g.collaborators || [])
+        .every((c) => c.goalCreatorName === undefined))
+      || haystackCollaborators.some((c) => needleCollaborators.includes(c))
+    )
   ));
 };
 
