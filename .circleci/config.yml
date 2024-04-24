@@ -686,7 +686,7 @@ commands:
 
                 # Perform the backup and compress with the generated password
                 PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
-                zip -P "${ZIP_PASSWORD}" - - |\
+                zip -j -P "${ZIP_PASSWORD}" - "${S3_FILE_NAME%.zip}" |\
                 tee >(pv -n -brt --interval 30 > /dev/null) |\
                 aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
 
@@ -772,18 +772,14 @@ commands:
 
             # Delete the S3 service key if deletion is allowed and the key exists
             function delete_service_key() {
-                if [ "${DELETION_ALLOWED:-no}" = "yes" ]; then
-                    if check_service_key_exists; then
-                        echo "Deleting service key ${CF_S3_SERVICE_KEY_NAME}..."
-                        if ! cf delete-service-key "$CF_S3_SERVICE_NAME" "${CF_S3_SERVICE_KEY_NAME}" -f; then
-                            echo "Failed to delete service key ${CF_S3_SERVICE_KEY_NAME}." >&2
-                            exit 2
-                        fi
-                    else
-                        echo "No service key ${CF_S3_SERVICE_KEY_NAME} to delete."
+                if check_service_key_exists; then
+                    echo "Deleting service key ${CF_S3_SERVICE_KEY_NAME}..."
+                    if ! cf delete-service-key "$CF_S3_SERVICE_NAME" "${CF_S3_SERVICE_KEY_NAME}" -f; then
+                        echo "Failed to delete service key ${CF_S3_SERVICE_KEY_NAME}." >&2
+                        exit 2
                     fi
                 else
-                    echo "Service key deletion is not enabled. Set DELETION_ALLOWED=yes to enable."
+                    echo "No service key ${CF_S3_SERVICE_KEY_NAME} to delete."
                 fi
             }
 
