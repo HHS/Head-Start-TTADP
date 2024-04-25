@@ -8,10 +8,10 @@ const safeParse = require('./safeParse');
  * Escapes fields in the data object of a sequelize model instance
  *
  * @param {Object} instance - Sequelize model instance
- * @param {String[]} fields - Array of fields to escape
+ * @param {String[]} fields - Array of fields
  * @returns void
  */
-function escapeDataFields(instance, fields) {
+function purifyDataFields(instance, fields) {
   const data = safeParse(instance);
   if (!data) return;
 
@@ -29,7 +29,7 @@ function escapeDataFields(instance, fields) {
 
     instance.set('data', copy);
   } catch (err) {
-    auditLogger.error(JSON.stringify({ 'Error escaping fields': err, instance }));
+    auditLogger.error(JSON.stringify({ 'Error purifying fields': err, instance }));
   }
 }
 
@@ -38,10 +38,10 @@ function escapeDataFields(instance, fields) {
  * Intended to be user in sequelize hooks "beforeCreate" and "beforeUpdate"
  *
  * @param {Object} instance - sequelize model instance
- * @param {String[]} fields - array of fields to escape
+ * @param {String[]} fields - array of fields
  * @returns void
  */
-function escapeFields(instance, fields) {
+function purifyFields(instance, fields) {
   const { window } = new JSDOM('');
   const purify = DOMPurify(window);
 
@@ -57,11 +57,11 @@ function escapeFields(instance, fields) {
       }
     });
   } catch (err) {
-    auditLogger.error(JSON.stringify({ 'Error escaping fields': err, instance }));
+    auditLogger.error(JSON.stringify({ 'Error purifying fields': err, instance }));
   }
 }
 
 module.exports = {
-  escapeDataFields,
-  escapeFields,
+  purifyDataFields,
+  purifyFields,
 };

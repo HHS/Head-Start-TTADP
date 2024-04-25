@@ -8,7 +8,7 @@ import {
   createUser,
   destroyReport,
 } from '../../../testUtils';
-import { escapeFields, escapeDataFields } from '../escapeFields';
+import { purifyFields, purifyDataFields } from '../purifyFields';
 
 const {
   ActivityReportApprover,
@@ -19,13 +19,13 @@ const {
 const xss = '<A HREF=//google.com><script>alert("XSS")</script><img src=x onerror=alert(1)//>';
 const safe = '<a href="//google.com"><img src="x"></a>';
 
-describe('escapeFields', () => {
+describe('purifyFields', () => {
   test('returns if changed is not in instance', () => {
     const instance = {
       set: jest.fn(),
     };
 
-    escapeFields(instance, ['field1']);
+    purifyFields(instance, ['field1']);
 
     expect(instance.set).not.toHaveBeenCalled();
   });
@@ -36,7 +36,7 @@ describe('escapeFields', () => {
       changed: 'not a function',
     };
 
-    escapeFields(instance, ['field1']);
+    purifyFields(instance, ['field1']);
 
     expect(instance.set).not.toHaveBeenCalled();
   });
@@ -52,7 +52,7 @@ describe('escapeFields', () => {
 
     const fieldsToEscape = ['field1', 'field2'];
 
-    escapeFields(instance, fieldsToEscape);
+    purifyFields(instance, fieldsToEscape);
 
     expect(instance.set).toHaveBeenCalledTimes(2);
     expect(instance.set).toHaveBeenCalledWith('field1', safe);
@@ -69,7 +69,7 @@ describe('escapeFields', () => {
 
     const fieldsToEscape = ['field1', 'field2'];
 
-    escapeFields(instance, fieldsToEscape);
+    purifyFields(instance, fieldsToEscape);
 
     expect(instance.set).toHaveBeenCalledTimes(1);
     expect(instance.set).toHaveBeenCalledWith('field2', 'Hello World');
@@ -85,12 +85,12 @@ describe('escapeFields', () => {
 
     const fieldsToEscape = ['field1', 'field2'];
 
-    escapeFields(instance, fieldsToEscape);
+    purifyFields(instance, fieldsToEscape);
 
     expect(instance.set).not.toHaveBeenCalled();
   });
 
-  describe('escapeDataFields', () => {
+  describe('purifyDataFields', () => {
     test('should escape specified fields in the instance data', () => {
       const instance = {
         data: {
@@ -103,7 +103,7 @@ describe('escapeFields', () => {
 
       const fieldsToEscape = ['field1', 'field2'];
 
-      escapeDataFields(instance, fieldsToEscape);
+      purifyDataFields(instance, fieldsToEscape);
 
       expect(instance.set).toHaveBeenCalledTimes(1);
       expect(instance.set).toHaveBeenCalledWith('data', {
@@ -124,7 +124,7 @@ describe('escapeFields', () => {
 
       const fieldsToEscape = ['field1', 'field2'];
 
-      escapeDataFields(instance, fieldsToEscape);
+      purifyDataFields(instance, fieldsToEscape);
 
       expect(instance.set).toHaveBeenCalledTimes(1);
       expect(instance.set).toHaveBeenCalledWith('data', {
@@ -140,7 +140,7 @@ describe('escapeFields', () => {
 
       const fieldsToEscape = ['field1', 'field2'];
 
-      escapeDataFields(instance, fieldsToEscape);
+      purifyDataFields(instance, fieldsToEscape);
 
       expect(instance.set).not.toHaveBeenCalled();
     });
