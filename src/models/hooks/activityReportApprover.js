@@ -1,5 +1,5 @@
 const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
-const { escapeFields } = require('../helpers/escapeFields');
+const { purifyFields } = require('../helpers/purifyFields');
 
 const FIELDS_TO_ESCAPE = ['note'];
 
@@ -128,11 +128,11 @@ const afterUpdate = async (sequelize, instance) => {
 };
 
 const beforeUpdate = async (_sequelize, instance) => {
-  escapeFields(instance, FIELDS_TO_ESCAPE);
+  purifyFields(instance, FIELDS_TO_ESCAPE);
 };
 
 const beforeCreate = async (_sequelize, instance) => {
-  escapeFields(instance, FIELDS_TO_ESCAPE);
+  purifyFields(instance, FIELDS_TO_ESCAPE);
 };
 
 export {

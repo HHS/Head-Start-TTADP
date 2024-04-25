@@ -5,7 +5,7 @@ const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 const { createGoalsForSessionRecipientsIfNecessary } = require('./sessionReportPilot');
 const safeParse = require('../helpers/safeParse');
-const { escapeDataFields } = require('../helpers/escapeFields');
+const { purifyDataFields } = require('../helpers/purifyFields');
 
 const fieldsToEscape = ['eventName'];
 
@@ -266,11 +266,11 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await updateGoalText(sequelize, instance, options);
-  escapeDataFields(instance, fieldsToEscape);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const beforeCreate = async (_sequelize, instance) => {
-  escapeDataFields(instance, fieldsToEscape);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
