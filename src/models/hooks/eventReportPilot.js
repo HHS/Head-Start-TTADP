@@ -1,28 +1,13 @@
-/* eslint-disable max-len */
 /* eslint-disable global-require */
-import { createGoalsForSessionRecipientsIfNecessary } from './sessionReportPilot';
-
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
+const { createGoalsForSessionRecipientsIfNecessary } = require('./sessionReportPilot');
+const safeParse = require('../helpers/safeParse');
+const { purifyDataFields } = require('../helpers/purifyFields');
 
-const safeParse = (instance) => {
-  // Try to parse instance.data if it exists and has a 'val' property
-  if (instance?.data?.val) {
-    return JSON.parse(instance.data.val);
-  }
-  // Directly return instance.dataValues.data if it exists
-  if (instance?.dataValues?.data) {
-    return instance.dataValues.data;
-  }
-  // Directly return instance.data if it exists
-  if (instance?.data) {
-    return instance.data;
-  }
-
-  return null;
-};
+const fieldsToEscape = ['eventName'];
 
 const notifyNewCollaborators = async (_sequelize, instance) => {
   try {
@@ -281,6 +266,11 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await updateGoalText(sequelize, instance, options);
+  purifyDataFields(instance, fieldsToEscape);
+};
+
+const beforeCreate = async (_sequelize, instance) => {
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
@@ -298,6 +288,7 @@ const afterCreate = async (sequelize, instance, options) => {
 export {
   afterUpdate,
   beforeUpdate,
+  beforeCreate,
   afterCreate,
   createOrUpdateNationalCenterUserCacheTable,
 };

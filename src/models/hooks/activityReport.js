@@ -23,6 +23,9 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+const { purifyFields } = require('../helpers/purifyFields');
+
+const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -136,7 +139,6 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
 };
 
 const propagateSubmissionStatus = async (sequelize, instance, options) => {
-  auditLogger.info('jp: propagateSubmissionStatus');
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
@@ -827,6 +829,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
 };
 
 const beforeCreate = async (instance) => {
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   copyStatus(instance);
 };
 
@@ -1046,6 +1049,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
 };
