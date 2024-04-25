@@ -165,7 +165,7 @@ module.exports = {
           on_approved_ar
       ) SELECT * FROM updater
       ;
-      --  8. Update onAR values for goals and save the results
+      --  10. Update onAR values for goals and save the results
       DROP TABLE IF EXISTS corrected_onar_goals;
       CREATE TEMP TABLE corrected_onar_goals
       AS
@@ -181,7 +181,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- produce stats on what happened
-      --  9. Final onApprovedAR stats for objectives
+      --  11. Final onApprovedAR stats for objectives
       DROP TABLE IF EXISTS final_obj_approved_ar_stats;
       CREATE TEMP TABLE final_obj_approved_ar_stats
       AS
@@ -199,7 +199,7 @@ module.exports = {
       JOIN objectives_on_ars
         ON o.id = oid
       ;
-      --  10. Final onAR stats for objectives
+      --  12. Final onAR stats for objectives
       DROP TABLE IF EXISTS final_obj_onar_stats;
       CREATE TEMP TABLE final_obj_onar_stats
       AS
@@ -217,7 +217,7 @@ module.exports = {
       JOIN objectives_on_ars
         ON o.id = oid
       ;
-      --  11. Final onApprovedAR stats for goals
+      --  13. Final onApprovedAR stats for goals
       DROP TABLE IF EXISTS final_goal_approved_ar_stats;
       CREATE TEMP TABLE final_goal_approved_ar_stats
       AS
@@ -235,7 +235,7 @@ module.exports = {
       JOIN goals_on_ars
         ON g.id = gid
       ;
-      --  12. Final onAR stats for goals
+      --  14. Final onAR stats for goals
       DROP TABLE IF EXISTS final_goal_onar_stats;
       CREATE TEMP TABLE final_goal_onar_stats
       AS
