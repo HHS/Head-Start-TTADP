@@ -26,10 +26,6 @@ const pageConfig = (userHasOnlyOneRegion, defaultRegion) => {
       h1Text: `${prefix} dashboard - Training Reports`,
       showFilters: false,
     },
-    'all-reports': {
-      h1Text: `${prefix} dashboard - All reports`,
-      showFilters: false,
-    },
     'activity-reports': {
       h1Text: `${prefix} dashboard - Activity Reports`,
       showFilters: true,
@@ -49,10 +45,6 @@ const links = [
   {
     to: '/dashboards/regional-dashboard/training-reports',
     label: 'Training Reports',
-  },
-  {
-    to: '/dashboards/regional-dashboard/all-reports',
-    label: 'All reports',
   },
 ];
 
