@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
 import ActivityReportDashboard from './ActivityReportDashboard';
 import TrainingReportDashboard from './TrainingReportDashboard';
+import AllReports from './AllReports';
 import { expandFilters } from '../../../utils';
 
 export default function Dashboard({
@@ -18,6 +19,9 @@ export default function Dashboard({
   switch (reportType) {
     case 'training-reports':
       DashboardComponent = TrainingReportDashboard;
+      break;
+    case 'all-reports':
+      DashboardComponent = AllReports;
       break;
     default:
       break;
