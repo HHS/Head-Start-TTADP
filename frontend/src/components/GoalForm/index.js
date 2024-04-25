@@ -849,6 +849,7 @@ export default function GoalForm({
     setPrompts(goal.prompts);
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
+    setIds(goal.ids);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
