@@ -128,4 +128,30 @@ describe('ResourceRepeater', () => {
     expect(resources2).toBeVisible();
     expect(resources2.tagName).toBe('A');
   });
+
+  it('calls validateOnRemove() when a resource is removed', async () => {
+    const validateOnRemoveMock = jest.fn();
+    const resources = [
+      { key: 1, value: 'http://www.resources.com', onAnyReport: false },
+      { key: 2, value: 'http://www.resources2.com', onAnyReport: true },
+    ];
+
+    render(<ResourceRepeater
+      error={<></>}
+      resources={resources}
+      setResources={jest.fn()}
+      validateResources={jest.fn()}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+      goalStatus="In Progress"
+      userCanEdit
+      validateOnRemove={validateOnRemoveMock}
+    />);
+
+    const removeButton = screen.getByRole('button', { name: /remove resource 1/i });
+    fireEvent.click(removeButton);
+
+    expect(validateOnRemoveMock).toHaveBeenCalled();
+  });
 });
