@@ -87,7 +87,7 @@ function VBarGraph({
         standoff: 20,
       },
       yaxis: {
-        hoverformat: ',.1f',
+        hoverformat: ',.2f',
         tickformat: ',.0d',
         autorange: true,
         title: {
@@ -107,7 +107,12 @@ function VBarGraph({
     });
   }, [data, xAxisLabel, size, yAxisLabel]);
 
-  const tableData = data.map((row) => ({ data: [row.name, row.count] }));
+  const tableData = data.map((row) => ({
+    data: [
+      row.name,
+      parseFloat(row.count).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    ],
+  }));
 
   return (
     <Container className="smarthub-vbar-graph shadow-2" loading={loading} loadingLabel={loadingLabel} ref={bars}>
