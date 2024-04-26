@@ -70,6 +70,7 @@ export default function ResourceRepeater({
     const newResources = [...editableResources];
     newResources.splice(i, 1);
     setResources(newResources);
+    validateResources(); // Trigger hook form validation
   };
 
   const updateResource = (value, i) => {

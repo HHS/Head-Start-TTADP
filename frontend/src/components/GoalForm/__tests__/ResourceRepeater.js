@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen,
+  render, screen, fireEvent,
 } from '@testing-library/react';
 import ResourceRepeater from '../ResourceRepeater';
 
@@ -29,6 +29,31 @@ describe('ResourceRepeater', () => {
     expect(resources2).toBeVisible();
     expect(resources2.tagName).toBe('A');
     expect(screen.queryAllByText('Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.').length).toBe(2);
+  });
+
+  it('calls validateResources() when a resource is removed', async () => {
+    const validateResourcesMock = jest.fn();
+    const resources = [
+      { key: 1, value: 'http://www.resources.com', onAnyReport: false },
+      { key: 2, value: 'http://www.resources2.com', onAnyReport: true },
+    ];
+
+    render(<ResourceRepeater
+      error={<></>}
+      resources={resources}
+      setResources={jest.fn()}
+      validateResources={validateResourcesMock}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+      goalStatus="In Progress"
+      userCanEdit
+    />);
+
+    const removeButton = screen.getByRole('button', { name: /remove resource 1/i });
+    fireEvent.click(removeButton);
+
+    expect(validateResourcesMock).toHaveBeenCalled();
   });
 
   it('render with alternate tool tip', async () => {
