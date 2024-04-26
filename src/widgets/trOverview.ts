@@ -160,7 +160,7 @@ export default async function trOverview(
     // total recipients
     numRecipients: formatNumber(numRecipients),
     // Add widget for number of hours of TTA on completed TRs
-    sumDuration: formatNumber(data.sumDuration, 1),
+    sumDuration: formatNumber(data.sumDuration, 2),
     // Add widget for number of participants on completed TRs
     numParticipants: formatNumber(data.numParticipants),
   };
