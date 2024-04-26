@@ -50,10 +50,12 @@ const links = [
     to: '/dashboards/regional-dashboard/training-reports',
     label: 'Training Reports',
   },
+  /*
   {
     to: '/dashboards/regional-dashboard/all-reports',
     label: 'All reports',
   },
+  */
 ];
 
 export default function RegionalDashboard({ match }) {
