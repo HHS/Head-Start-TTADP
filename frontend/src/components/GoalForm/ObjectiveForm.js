@@ -120,18 +120,27 @@ export default function ObjectiveForm({
       setObjectiveError(index, newErrors);
     }
   };
-  const validateResources = () => {
-    let error = <></>;
 
-    const validated = validateListOfResources(resources);
-
+  const validateResourcesPassed = (newResources) => {
+    const validated = validateListOfResources(newResources);
+    let error;
     if (!validated) {
       error = <span className="usa-error-message">{objectiveResourcesError}</span>;
+    } else {
+      error = <></>;
     }
 
     const newErrors = [...errors];
     newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES, 1, error);
     setObjectiveError(index, newErrors);
+  };
+
+  const validateResources = () => {
+    validateResourcesPassed(resources);
+  };
+
+  const validateResourcesOnRemove = (newResources) => {
+    validateResourcesPassed(newResources);
   };
 
   const setSuspendReasonError = () => {
@@ -182,6 +191,7 @@ export default function ObjectiveForm({
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
         toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
+        validateOnRemove={validateResourcesOnRemove}
       />
       { title && (
       <ObjectiveFiles

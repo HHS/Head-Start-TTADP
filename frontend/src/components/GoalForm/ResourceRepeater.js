@@ -25,6 +25,7 @@ export default function ResourceRepeater({
   userCanEdit,
   editingFromActivityReport,
   toolTipText,
+  validateOnRemove,
 }) {
   const readOnly = !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
@@ -70,7 +71,15 @@ export default function ResourceRepeater({
     const newResources = [...editableResources];
     newResources.splice(i, 1);
     setResources(newResources);
-    validateResources(); // Trigger hook form validation
+
+    // This is an attempt to handle on remove validation for resources.
+    // the AR and RTR use two different approaches to validation.
+    // This works around it by allowing the parent component to pass in a validation function.
+    if (validateOnRemove) {
+      validateOnRemove(newResources);
+    } else {
+      validateResources();
+    }
   };
 
   const updateResource = (value, i) => {
@@ -162,10 +171,12 @@ ResourceRepeater.propTypes = {
   userCanEdit: PropTypes.bool.isRequired,
   editingFromActivityReport: PropTypes.bool,
   toolTipText: PropTypes.string,
+  validateOnRemove: PropTypes.func,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
   editingFromActivityReport: false,
   toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
+  validateOnRemove: null,
 };
