@@ -691,6 +691,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -744,6 +745,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -797,6 +799,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-staging.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
