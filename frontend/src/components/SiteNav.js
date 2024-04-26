@@ -98,7 +98,7 @@ const SiteNav = ({
                   </li>
                   <li>
                     <NavLink
-                      to="/regional-dashboard"
+                      to="/dashboards/regional-dashboard/activity-reports"
                     >
                       Regional Dashboard
                     </NavLink>
