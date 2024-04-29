@@ -244,11 +244,8 @@ const MAINTENANCE_TYPE = {
 };
 
 const FEATURE_FLAGS = [
-  'resources_dashboard',
   'anv_statistics',
   'regional_goal_dashboard',
-  'merge_goals',
-  'monitoring',
   'closed_goal_merge_override',
   'training_reports_dashboard',
 ];
