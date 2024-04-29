@@ -74,6 +74,7 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 };
 
 const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
+  // Get resource urls.
   const resourceUrls = resources
     .map((r) => {
       if (r.resource && r.resource.url) return r.resource.url;
@@ -81,6 +82,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((url) => url);
+  // Get resource ids.
   const resourceIds = resources
     .map((r) => {
       if (r.resource && r.resource.id) return r.resource.id;
@@ -88,6 +90,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((id) => id);
+  // Get all existing ARO resources.
   const originalAROResources = await getResourcesForActivityReportObjectives(
     activityReportObjectiveId,
     true,
@@ -205,7 +208,9 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   });
   const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
     || [];
+  // Get topics for ARO we need to delete.
   const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
+  // Get topics to keep.
   const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
   const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
 
