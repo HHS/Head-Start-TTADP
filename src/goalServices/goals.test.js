@@ -109,13 +109,21 @@ describe('Goals DB service', () => {
 
       Objective.destroy = jest.fn();
       Objective.findOne = jest.fn();
-      Objective.create = jest.fn().mockResolvedValue({ id: mockObjectiveId });
+      Objective.create = jest.fn().mockResolvedValue({
+        id: mockObjectiveId,
+        toJSON: jest.fn().mockResolvedValue({ id: mockObjectiveId }),
+      });
+
       Objective.findOrCreate = jest.fn().mockResolvedValue([{ id: mockObjectiveId }]);
       Objective.update = jest.fn().mockResolvedValue({ id: mockObjectiveId });
       Objective.findByPk = jest.fn().mockResolvedValue({
         id: mockObjectiveId,
         update: existingObjectiveUpdate,
         save: jest.fn(),
+        toJSON: jest.fn().mockResolvedValue({
+          id: mockObjectiveId,
+          update: existingObjectiveUpdate,
+        }),
       });
     });
 
