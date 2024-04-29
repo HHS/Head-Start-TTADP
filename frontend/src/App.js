@@ -258,9 +258,7 @@ function App() {
           path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="resources_dashboard" renderNotFound>
-                <ResourcesDashboard user={user} />
-              </FeatureFlag>
+              <ResourcesDashboard user={user} />
             </AppWrapper>
           )}
         />
