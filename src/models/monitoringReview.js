@@ -89,6 +89,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: true,
     },
+    reportAttachmentId: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     outcome: {
       type: DataTypes.TEXT,
       allowNull: true,

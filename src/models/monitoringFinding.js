@@ -2,102 +2,108 @@ import { Model } from 'sequelize';
 import {
   beforeCreate,
   beforeUpdate,
-} from './hooks/monitoringFindingHistory';
+} from './hooks/monitoringFinding';
 
 export default (sequelize, DataTypes) => {
-  class MonitoringFindingHistory extends Model {
+  class MonitoringFinding extends Model {
     static associate(models) {
-      models.MonitoringReviewLink.hasMany(
-        models.MonitoringFindingHistory,
-        {
-          foreignKey: 'reviewId',
-          as: 'monitoringFindingHistories',
-        },
-      );
+      /**
+       * Associations:
+       *  monitoringFindingLink: MonitoringFindingLink.statusId >- statusId
+       *  status: statusId -< MonitoringFindingLink.statusId
+       */
 
-      models.MonitoringFindingHistory.belongsTo(
-        models.MonitoringReviewLink,
-        {
-          foreignKey: 'reviewId',
-          as: 'monitoringReviewLink',
-        },
-      );
       models.MonitoringFindingLink.hasMany(
-        models.MonitoringFindingHistory,
+        models.MonitoringFinding,
         {
           foreignKey: 'findingId',
-          as: 'monitoringFindingHistories',
+          as: 'monitoringFindings',
         },
       );
 
-      models.MonitoringFindingHistory.belongsTo(
+      models.MonitoringFinding.belongsTo(
         models.MonitoringFindingLink,
         {
           foreignKey: 'findingId',
-          as: 'monitoringFindingLink',
-        },
-      );
-      models.MonitoringFindingHistoryStatusLink.hasMany(
-        models.MonitoringFindingHistory,
-        {
-          foreignKey: 'statusId',
-          as: 'monitoringFindingHistories',
+          as: 'findingLink',
         },
       );
 
-      models.MonitoringFindingHistory.belongsTo(
-        models.MonitoringFindingHistoryStatusLink,
+      models.MonitoringFindingStatusLink.hasMany(
+        models.MonitoringFinding,
         {
           foreignKey: 'statusId',
-          as: 'monitoringFindingStatusLink',
+          as: 'monitoringFindings',
+        },
+      );
+
+      models.MonitoringFinding.belongsTo(
+        models.MonitoringFindingStatusLink,
+        {
+          foreignKey: 'statusId',
+          as: 'statusLink',
         },
       );
     }
   }
-  MonitoringFindingHistory.init({
+  MonitoringFinding.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       primaryKey: true,
       autoIncrement: true,
     },
-    reviewId: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      references: {
-        model: {
-          tableName: 'MonitoringReviewLinks',
-        },
-        key: 'reviewId',
-      },
-    },
-    findingHistoryId: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
     findingId: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     statusId: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
     },
-    narrative: {
+    findingType: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
-    ordinal: {
+    source: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    hs: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    ehs: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    arra: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    determination: {
-      type: DataTypes.TEXT,
+    correctionDeadLine: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    reportedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    closedDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    fiscalInd: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    programInd: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     hash: {
       type: DataTypes.TEXT,
-      allowNull: true,
+      allowNull: false,
     },
     sourceCreatedAt: {
       allowNull: false,
@@ -113,13 +119,13 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'MonitoringFindingHistory',
-    tableName: 'MonitoringFindingHistories',
+    modelName: 'MonitoringFinding',
+    tableName: 'MonitoringFindings',
     paranoid: true,
     hooks: {
       beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
     },
   });
-  return MonitoringFindingHistory;
+  return MonitoringFinding;
 };
