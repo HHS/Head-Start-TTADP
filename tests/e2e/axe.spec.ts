@@ -9,7 +9,7 @@ const axeUrls = [
   'http://localhost:3000/activity-reports/new/next-steps',
   'http://localhost:3000/activity-reports/new/review',
   'http://localhost:3000/activity-reports/view/9999',
-  'http://localhost:3000/regional-dashboard',
+  'http://localhost:3000/dashboards/regional-dashboard/activity-reports',
   'http://localhost:3000/training-reports/not-started',
   'http://localhost:3000/recipient-tta-records',
   'http://localhost:3000/recipient-tta-records/9/region/1/profile',
