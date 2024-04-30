@@ -31,18 +31,24 @@ const syncLink = async (
   entityId,
   onCreateCallbackWhileHoldingLock,
 ) => {
-  if (!entityId || entityId.toString().length === 0) return;
+  if (!entityId || entityId.toString().length === 0) {
+    console.log(`${model.tableName}_${entityId}`, 'bail entityId');
+    return;
+  }
 
   if (!instance.isNewRecord) {
     const changed = Array.from(instance.changed());
 
-    if (!changed.includes(sourceEntityName)) return;
+    if (!changed.includes(sourceEntityName)) {
+      console.log(`${model.tableName}_${entityId}`, 'bail value not changed');
+      return;
+    }
   }
   // Generate a unique semaphore key based on the model name and entity ID
   const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
   await semaphore.acquire(semaphoreKey);
-
+  console.log(semaphoreKey, 'locked');
   // Check if there's an existing record for the given entity ID
   const [currentRecord] = await model.findAll({
     attributes: [targetEntityName],
@@ -72,6 +78,7 @@ const syncLink = async (
 
   // Release the lock after the operation is complete
   semaphore.release(semaphoreKey);
+  console.log(semaphoreKey, 'unlocked');
 };
 
 /**
@@ -196,6 +203,135 @@ const syncMonitoringReviewStatusLink = async (
   instance.statusId,
 );
 
+/**
+ * Asynchronously synchronizes the monitoring finding status link for a given instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The instance for which the monitoring finding status link is being
+ * synchronized.
+ * @param {Object} options - Additional options for the synchronization process.
+ * @returns {Promise} A promise that resolves when the synchronization is complete.
+ * @throws {Error} Throws an error if the synchronization fails.
+ */
+const syncMonitoringFindingStatusLink = async (
+  sequelize,
+  instance,
+  options,
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.MonitoringFindingStatusLink,
+  'statusId',
+  'statusId',
+  instance.statusId,
+);
+
+/**
+ * Asynchronously synchronizes the monitoring finding history status link for a given instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The instance for which the monitoring finding history status link
+ * is being synchronized.
+ * @param {Object} options - Additional options for the synchronization process.
+ * @returns {Promise} A promise that resolves when the synchronization is complete.
+ * @throws {Error} Throws an error if the synchronization fails.
+ */
+const syncMonitoringFindingHistoryStatusLink = async (
+  sequelize,
+  instance,
+  options,
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.MonitoringFindingHistoryStatusLink,
+  'statusId',
+  'statusId',
+  instance.statusId,
+);
+
+/**
+ * Asynchronously synchronizes the monitoring standard link for a given instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The instance for which the monitoring standard link is being
+ * synchronized.
+ * @param {Object} options - Additional options for the synchronization process.
+ * @returns {Promise} A promise that resolves when the synchronization is complete.
+ * @throws {Error} Throws an error if the synchronization fails.
+ */
+const syncMonitoringStandardLink = async (
+  sequelize,
+  instance,
+  options,
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.MonitoringStandardLink,
+  'standardId',
+  'standardId',
+  instance.standardId,
+);
+
+/**
+ * Asynchronously synchronizes the monitoring finding grantee link for a given instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The instance for which the monitoring finding grantee link is being
+ * synchronized.
+ * @param {Object} options - Additional options for the synchronization process.
+ * @returns {Promise} A promise that resolves when the synchronization is complete.
+ * @throws {Error} Throws an error if the synchronization fails.
+ */
+const syncMonitoringGranteeLink = async (
+  sequelize,
+  instance,
+  options,
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.MonitoringGranteeLink,
+  'granteeId',
+  'granteeId',
+  instance.granteeId,
+);
+
+/**
+ * Asynchronously synchronizes the monitoring finding link for a given instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The instance for which the monitoring finding link is being
+ * synchronized.
+ * @param {Object} options - Additional options for the synchronization process.
+ * @returns {Promise} A promise that resolves when the synchronization is complete.
+ * @throws {Error} Throws an error if the synchronization fails.
+ */
+const syncMonitoringFindingLink = async (
+  sequelize,
+  instance,
+  options,
+) => syncLink(
+  sequelize,
+  instance,
+  options,
+  sequelize.models.MonitoringFindingLink,
+  'findingId',
+  'findingId',
+  instance.findingId,
+);
+
+/**
+ * Asynchronously clears the grant number link for a given grantee instance.
+ *
+ * @param {Object} sequelize - The Sequelize instance to be used for the operation.
+ * @param {Object} instance - The grantee instance whose grant number link is being cleared.
+ * @param {Object} options - Additional options for the clearing process.
+ * @returns {Promise} A promise that resolves when the clearing is complete.
+ * @throws {Error} Throws an error if the clearing fails.
+ */
 const clearGrantNumberLink = async (
   sequelize,
   instance,
@@ -213,5 +349,10 @@ export {
   syncGrantNumberLink,
   syncMonitoringReviewLink,
   syncMonitoringReviewStatusLink,
+  syncMonitoringFindingStatusLink,
+  syncMonitoringFindingHistoryStatusLink,
+  syncMonitoringStandardLink,
+  syncMonitoringGranteeLink,
+  syncMonitoringFindingLink,
   clearGrantNumberLink,
 };
