@@ -10,20 +10,6 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class MonitoringGranteeLink extends Model {
     static associate(models) {
-      // Many-to-Many Association between MonitoringFindingGrant and MonitoringReviewGrantee through MonitoringGranteeLink
-      models.MonitoringFindingGrant.belongsToMany(models.MonitoringReviewGrantee, {
-        through: models.MonitoringGranteeLink,
-        foreignKey: 'granteeId',
-        otherKey: 'granteeId',
-        as: 'reviewGrantees'
-      });
-
-      models.MonitoringReviewGrantee.belongsToMany(models.MonitoringFindingGrant, {
-        through: models.MonitoringGranteeLink,
-        foreignKey: 'granteeId',
-        otherKey: 'granteeId',
-        as: 'findingGrants'
-      });
     }
   }
   MonitoringGranteeLink.init({

@@ -652,7 +652,7 @@ class MonitoringFindingHistoryStatuses{
 class MonitoringFindingLinks{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
-!issue='column type does not match model: text != integer' * findingId : <color:#d54309>text</color>
+ * findingId : text
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
 }
@@ -715,7 +715,7 @@ class MonitoringFindings{
 class MonitoringGranteeLinks{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
-!issue='column type does not match model: text != integer' * granteeId : <color:#d54309>text</color>
+ * granteeId : text
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
 }
@@ -2835,13 +2835,6 @@ Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
 Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
 Groups "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, groups
-MonitoringFindingGrants "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindingStandards : findingStandards, findingGrants
-MonitoringFindingGrants "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindings : findings, findingGrants
-MonitoringFindingGrants "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringReviewGrantees : reviewGrantees, findingGrants
-MonitoringFindingHistories "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindingHistoryStatuses : findingHistoryStatuses, findingHistories
-MonitoringFindingHistories "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindingStandards : findingStandards, findingHistories
-MonitoringFindingHistories "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindings : findings, findingHistories
-MonitoringFindingStandards "n" }--[#black,dotted,thickness=2]--{ "n" MonitoringFindings : findings, findingStandards
 NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
 ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates

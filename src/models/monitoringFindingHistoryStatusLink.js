@@ -10,21 +10,6 @@ import { Model } from 'sequelize';
 export default (sequelize, DataTypes) => {
   class MonitoringFindingHistoryStatusLink extends Model {
     static associate(models) {
-      // Many-to-Many Association between MonitoringFindingHistory and MonitoringFindingHistoryStatus
-      // through MonitoringFindingHistoryStatusLink
-      models.MonitoringFindingHistory.belongsToMany(models.MonitoringFindingHistoryStatus, {
-        through: models.MonitoringFindingHistoryStatusLink,
-        foreignKey: 'statusId',
-        otherKey: 'statusId',
-        as: 'findingHistoryStatuses',
-      });
-
-      models.MonitoringFindingHistoryStatus.belongsToMany(models.MonitoringFindingHistory, {
-        through: models.MonitoringFindingHistoryStatusLink,
-        foreignKey: 'statusId',
-        otherKey: 'statusId',
-        as: 'findingHistories',
-      });
     }
   }
   MonitoringFindingHistoryStatusLink.init({
