@@ -140,6 +140,21 @@ describe('ReviewSubmit', () => {
       renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus);
       const header = await screen.findByText('Review and approve report');
       expect(header).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Submit' })).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeNull();
+    });
+
+    it('allows creator to modify draft when also an approver', async () => {
+      const allComplete = true;
+      const isApprover = true;
+      const isPendingApprover = true;
+      const calculatedStatus = REPORT_STATUSES.DRAFT;
+
+      renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus);
+      const header = await screen.findByText('Review and submit report');
+      expect(header).toBeVisible();
+      expect(screen.queryAllByRole('button', { name: 'Submit' }).length).toBe(0);
+      expect(screen.queryByRole('button', { name: 'Submit for approval' })).toBeVisible();
     });
 
     it('allows the manager to review the report', async () => {
