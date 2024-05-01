@@ -2145,6 +2145,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       topics,
       resources,
       files,
+      courses,
       ttaProvided: objective.ttaProvided,
       closeSuspendReason,
       closeSuspendContext,
