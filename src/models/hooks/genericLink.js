@@ -31,24 +31,18 @@ const syncLink = async (
   entityId,
   onCreateCallbackWhileHoldingLock,
 ) => {
-  if (!entityId || entityId.toString().length === 0) {
-    console.log(`${model.tableName}_${entityId}`, 'bail entityId');
-    return;
-  }
+  if (!entityId || entityId.toString().length === 0) return;
 
   if (!instance.isNewRecord) {
     const changed = Array.from(instance.changed());
 
-    if (!changed.includes(sourceEntityName)) {
-      console.log(`${model.tableName}_${entityId}`, 'bail value not changed');
-      return;
-    }
+    if (!changed.includes(sourceEntityName)) return;
   }
   // Generate a unique semaphore key based on the model name and entity ID
   const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
+
   await semaphore.acquire(semaphoreKey);
-  console.log(semaphoreKey, 'locked');
   // Check if there's an existing record for the given entity ID
   const [currentRecord] = await model.findAll({
     attributes: [targetEntityName],
@@ -78,7 +72,6 @@ const syncLink = async (
 
   // Release the lock after the operation is complete
   semaphore.release(semaphoreKey);
-  console.log(semaphoreKey, 'unlocked');
 };
 
 /**
