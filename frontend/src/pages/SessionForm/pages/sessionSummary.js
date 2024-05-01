@@ -495,10 +495,21 @@ const SessionSummary = ({ datePickerKey }) => {
           />
         </FormItem>
       </div>
-
+      <IpdCourseSelect
+        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-top-2"
+      />
       <div>
         <p className="usa-prose margin-bottom-0">
-          Link to TTA resources used
+          Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
           />
@@ -525,20 +536,10 @@ const SessionSummary = ({ datePickerKey }) => {
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
       </div>
-      <IpdCourseSelect
-        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
-        inputName={objectiveIpdCoursesInputName}
-        onChange={onChangeIpdCourses}
-        onBlur={onBlurIpdCourses}
-        value={objectiveIpdCourses}
-        onChangeUseIpdCourses={onChangeUseIpdCourses}
-        onBlurUseIpdCourses={onBlurUseIpdCourses}
-        useIpdCourse={objectiveUseIpdCourses}
-        useCoursesInputName={objectiveUseIpdCoursesInputName}
-      />
+
       <Fieldset className="ttahub-objective-files margin-top-3">
         <legend>
-          Did you use any TTA resources that aren&apos;t available as a link?
+          Did you use any other TTA resources that aren&apos;t available as a link?
           {' '}
           <QuestionTooltip
             text={(

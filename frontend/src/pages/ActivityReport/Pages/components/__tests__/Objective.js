@@ -158,7 +158,7 @@ describe('Objective', () => {
   it('uploads a file', async () => {
     fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link\?/i);
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);
@@ -173,7 +173,7 @@ describe('Objective', () => {
   it('handles a file upload error', async () => {
     fetchMock.post('/api/files/objectives', 500);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link?/i);
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);

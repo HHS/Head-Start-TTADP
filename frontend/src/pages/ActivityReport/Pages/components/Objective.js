@@ -355,6 +355,22 @@ export default function Objective({
         userCanEdit
         editingFromActivityReport
       />
+
+      <IpdCourseSelect
+        error={errors.courses
+          ? ERROR_FORMAT(errors.courses.message)
+          : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-top-2"
+      />
+
       <ResourceRepeater
         resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
@@ -369,19 +385,7 @@ export default function Objective({
         userCanEdit
         editingFromActivityReport
       />
-      <IpdCourseSelect
-        error={errors.courses
-          ? ERROR_FORMAT(errors.courses.message)
-          : NO_ERROR}
-        inputName={objectiveIpdCoursesInputName}
-        onChange={onChangeIpdCourses}
-        onBlur={onBlurIpdCourses}
-        value={objectiveIpdCourses}
-        onChangeUseIpdCourses={onChangeUseIpdCourses}
-        onBlurUseIpdCourses={onBlurUseIpdCourses}
-        useIpdCourse={objectiveUseIpdCourses}
-        useCoursesInputName={objectiveUseIpdCoursesInputName}
-      />
+
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
@@ -393,7 +397,7 @@ export default function Objective({
         inputName={objectiveFilesInputName}
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        label="Did you use any TTA resources that aren't available as link?"
+        label="Did you use any other TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
         editingFromActivityReport
