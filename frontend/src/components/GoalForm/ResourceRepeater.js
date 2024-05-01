@@ -106,7 +106,7 @@ export default function ResourceRepeater({
         <FormGroup error={error.props.children}>
           <div>
             <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
-              {!fixedResources.length ? 'Link to TTA resource' : 'Add resource link'}
+              {!fixedResources.length ? 'Did you use any other TTA resources that are available as a link?' : 'Add resource link'}
               <QuestionTooltip
                 text={toolTipText}
               />
