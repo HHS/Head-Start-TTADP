@@ -5,6 +5,7 @@ import isAdmin, {
   getRegionWithReadWrite,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
+  canSeeBehindFeatureFlag,
 } from '../permissions';
 
 describe('permissions', () => {
@@ -218,6 +219,53 @@ describe('permissions', () => {
 
       const region = getRegionWithReadWrite(user);
       expect(region).toBe(-1);
+    });
+  });
+
+  describe('canSeeBehindFeatureFlag', () => {
+    it('returns false if no user', () => {
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag(null, flag);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if no flags', () => {
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag({}, flag);
+      expect(result).toBe(false);
+    });
+
+    it('returns true if the user has the specified flag', () => {
+      const user = {
+        flags: ['flag1', 'flag2'],
+      };
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag(user, flag);
+      expect(result).toBe(true);
+    });
+
+    it('returns true if the user is an admin', () => {
+      const user = {
+        flags: [],
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+          },
+        ],
+      };
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag(user, flag);
+      expect(result).toBe(true);
+    });
+
+    it('returns false if the user does not have the specified flag and is not an admin', () => {
+      const user = {
+        flags: ['flag2', 'flag3'],
+        permissions: [],
+      };
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag(user, flag);
+      expect(result).toBe(false);
     });
   });
 });
