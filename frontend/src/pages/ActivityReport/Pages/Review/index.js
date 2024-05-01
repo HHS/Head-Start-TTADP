@@ -34,6 +34,10 @@ const ReviewSubmit = ({
 
   const isCreator = user.id === formData.userId;
   const isDraft = formData.calculatedStatus === REPORT_STATUSES.DRAFT;
+  const isCollaborator = formData.activityReportCollaborators
+  && formData.activityReportCollaborators.find((u) => u.userId === user.id);
+
+  const creatorOrCollaborator = (isCreator || !!isCollaborator);
 
   const onFormSubmit = async (data) => {
     try {
@@ -85,7 +89,7 @@ const ReviewSubmit = ({
         <title>Review and Submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      {(!isApprover || (isDraft && isCreator))
+      {(!isApprover || (isDraft && creatorOrCollaborator))
         && (
           <Submitter
             availableApprovers={availableApprovers}
@@ -143,6 +147,9 @@ ReviewSubmit.propTypes = {
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,
     userId: PropTypes.number,
+    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
+      userId: PropTypes.number,
+    })),
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
