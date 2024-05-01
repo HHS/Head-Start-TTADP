@@ -67,15 +67,15 @@ export default (sequelize, DataTypes) => {
     },
     source: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     hs: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     ehs: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
     },
     arra: {
       type: DataTypes.INTEGER,
@@ -83,7 +83,7 @@ export default (sequelize, DataTypes) => {
     },
     correctionDeadLine: {
       type: DataTypes.DATE,
-      allowNull: false,
+      allowNull: true,
     },
     reportedDate: {
       type: DataTypes.DATE,

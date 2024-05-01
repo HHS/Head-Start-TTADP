@@ -241,15 +241,15 @@ module.exports = {
         },
         source: {
           type: Sequelize.TEXT,
-          allowNull: false,
+          allowNull: true,
         },
         hs: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         ehs: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         arra: {
           type: Sequelize.INTEGER,
@@ -257,7 +257,7 @@ module.exports = {
         },
         correctionDeadLine: {
           type: Sequelize.DATE,
-          allowNull: false,
+          allowNull: true,
         },
         reportedDate: {
           type: Sequelize.DATE,
@@ -376,15 +376,15 @@ module.exports = {
         },
         source: {
           type: Sequelize.TEXT,
-          allowNull: false,
+          allowNull: true,
         },
         hs: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         ehs: {
           type: Sequelize.INTEGER,
-          allowNull: false,
+          allowNull: true,
         },
         arra: {
           type: Sequelize.INTEGER,
@@ -392,7 +392,7 @@ module.exports = {
         },
         correctionDeadLine: {
           type: Sequelize.DATE,
-          allowNull: false,
+          allowNull: true,
         },
         reportedDate: {
           type: Sequelize.DATE,

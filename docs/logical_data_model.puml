@@ -592,22 +592,22 @@ class MonitoringFindingGrants{
  * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
  * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
  * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
- * correctionDeadLine : timestamp with time zone
  * createdAt : timestamp with time zone
- * ehs : integer
  * findingType : text
  * hash : text
- * hs : integer
- * source : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  arra : integer
  closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
  deletedAt : timestamp with time zone
+ ehs : integer
  fiscalInd : integer
+ hs : integer
  programInd : integer
  reportedDate : timestamp with time zone
+ source : text
  sourceDeletedAt : timestamp with time zone
 }
 
@@ -693,22 +693,22 @@ class MonitoringFindings{
  * id : integer : <generated>
  * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
  * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
- * correctionDeadLine : timestamp with time zone
  * createdAt : timestamp with time zone
- * ehs : integer
  * findingType : text
  * hash : text
- * hs : integer
- * source : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  arra : integer
  closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
  deletedAt : timestamp with time zone
+ ehs : integer
  fiscalInd : integer
+ hs : integer
  programInd : integer
  reportedDate : timestamp with time zone
+ source : text
  sourceDeletedAt : timestamp with time zone
 }
 
