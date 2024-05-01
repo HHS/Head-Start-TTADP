@@ -9,7 +9,8 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       /**
        * Associations:
-       *  monitoringFindingHistoryStatusLink: MonitoringFindingHistoryStatusLink.statusId >- statusId
+       *  monitoringFindingHistoryStatusLink:
+       *      MonitoringFindingHistoryStatusLink.statusId >- statusId
        *  status: statusId -< MonitoringFindingHistoryStatusLink.statusId
        */
 
