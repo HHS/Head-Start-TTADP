@@ -32,6 +32,9 @@ function Courses() {
     hiddenElement.target = '_blank';
     hiddenElement.download = 'courses.csv';
     hiddenElement.click();
+
+    // cleanup el
+    hiddenElement.remove();
   };
 
   const validCsvHeaders = [
