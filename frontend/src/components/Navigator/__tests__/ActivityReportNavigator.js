@@ -373,8 +373,8 @@ describe('Navigator', () => {
 });
 
 describe('shouldUpdateFormData', () => {
-  it('if isAutoSave is false, returns false', () => {
-    expect(shouldUpdateFormData(false)).toBe(false);
+  it('if isAutoSave is false, returns true', () => {
+    expect(shouldUpdateFormData(false)).toBe(true);
   });
 
   it('if we are focused on a rich editor, return false', async () => {
