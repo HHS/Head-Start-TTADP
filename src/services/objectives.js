@@ -252,3 +252,14 @@ export async function getObjectivesByReportId(reportId) {
 
   return reduceOtherEntityObjectives(objectives);
 }
+
+export function updateObjectiveStatusByIds(objectiveIds, status) {
+  return Objective.update({
+    status,
+  }, {
+    where: {
+      id: objectiveIds,
+    },
+    individualHooks: true,
+  });
+}
