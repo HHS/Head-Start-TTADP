@@ -6,7 +6,7 @@ import { Checkbox, Tag } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
-import StatusDropdown from './components/StatusDropdown';
+import GoalStatusDropdown from './components/GoalStatusDropdown';
 import ContextMenu from '../ContextMenu';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ObjectiveCard from './ObjectiveCard';
@@ -21,10 +21,16 @@ import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
+import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 
 const SESSION_TYPE = 'session';
 
-export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
+export const ObjectiveSwitch = ({
+  objective,
+  objectivesExpanded,
+  regionId,
+  goalStatus,
+}) => {
   if (objective.type === SESSION_TYPE) {
     return (
       <SessionObjectiveCard
@@ -38,6 +44,8 @@ export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
     <ObjectiveCard
       objective={objective}
       objectivesExpanded={objectivesExpanded}
+      goalStatus={goalStatus}
+      regionId={regionId}
     />
   );
 };
@@ -48,6 +56,8 @@ ObjectiveSwitch.propTypes = {
     type: PropTypes.string,
   }).isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
+  regionId: PropTypes.number.isRequired,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 function GoalCard({
@@ -81,8 +91,11 @@ function GoalCard({
     isReopenedGoal,
   } = goal;
 
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+
+  const atLeastOneObjectiveIsNotCompletedOrSuspended = objectives.some((o) => o.status !== 'Complete' && o.status !== 'Suspended');
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
@@ -95,7 +108,14 @@ function GoalCard({
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
+
   const onUpdateGoalStatus = (newStatus) => {
+    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(true);
+      return;
+    }
+
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, ids, goalStatus);
@@ -121,7 +141,7 @@ function GoalCard({
     {
       label: goalStatus === 'Closed' ? 'View' : 'Edit',
       onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
+        history.push(editLink);
       },
     },
   ];
@@ -153,7 +173,6 @@ function GoalCard({
   }
 
   const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
-
   const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
   return (
@@ -175,7 +194,7 @@ function GoalCard({
             data-testid="selectGoalTestId"
           />
           )}
-          <StatusDropdown
+          <GoalStatusDropdown
             showReadOnlyStatus={showReadOnlyStatus}
             goalId={id}
             status={goalStatus}
@@ -192,6 +211,11 @@ function GoalCard({
         />
         )}
       </div>
+      <GoalStatusChangeAlert
+        internalLeftMargin={internalLeftMargin}
+        editLink={editLink}
+        invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+      />
       <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
@@ -266,6 +290,8 @@ function GoalCard({
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
+          goalStatus={goalStatus}
+          regionId={parseInt(regionId, DECIMAL_BASE)}
         />
       ))}
 

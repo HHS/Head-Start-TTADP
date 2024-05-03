@@ -398,6 +398,7 @@ export function reduceObjectivesForRecipientRecord(
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
         existing.grantNumbers = grantNumbers;
+        existing.ids = [...existing.ids, objective.id];
 
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
@@ -418,6 +419,7 @@ export function reduceObjectivesForRecipientRecord(
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
         supportType: supportType || null,
+        ids: [objective.id],
       };
 
       formattedObjective.topics.sort();

@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import ObjectiveCard from '../ObjectiveCard';
+import UserContext from '../../../UserContext';
 
 describe('ObjectiveCard', () => {
   const history = createMemoryHistory();
@@ -29,9 +30,11 @@ describe('ObjectiveCard', () => {
       ],
     };
     render(
-      <Router history={history}>
-        <ObjectiveCard objective={objective} objectivesExpanded />
-      </Router>,
+      <UserContext.Provider value={{ user: {} }}>
+        <Router history={history}>
+          <ObjectiveCard objective={objective} objectivesExpanded />
+        </Router>
+      </UserContext.Provider>,
     );
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
