@@ -454,13 +454,11 @@ const cacheGoalMetadata = async (
   ];
 
   if (prompts && prompts.length) {
-    console.log('\n\n\n----Prompts 1: ', prompts);
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );
   } else if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
-    console.log('\n\n\n---Before sql', goal.id);
     const goalPrompts = await GoalFieldResponse.findAll({
       attributes: [
         ['goalTemplateFieldPromptId', 'promptId'],
@@ -481,8 +479,6 @@ const cacheGoalMetadata = async (
         },
       ],
     });
-
-    console.log('\n\n\n----Prompts 2: ', goalPrompts);
 
     // if we have goal prompts call cache prompts with the goals prompts
     if (goalPrompts && goalPrompts.length) {

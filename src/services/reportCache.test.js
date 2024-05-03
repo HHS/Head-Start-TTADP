@@ -207,6 +207,20 @@ describe('cacheGoalMetadata', () => {
   });
 
   afterAll(async () => {
+    // Get all ActivityReportGoals ids for our goals.
+    const activityReportGoalIds = await ActivityReportGoal.findAll({
+      where: {
+        goalId: [goal.id, multiRecipientGoal.id],
+      },
+    });
+
+    // Destroy all ActivityReportGoalFieldResponses for the activityReportGoalIds.
+    await ActivityReportGoalFieldResponse.destroy({
+      where: {
+        activityReportGoalId: activityReportGoalIds.map((arg) => arg.id),
+      },
+    });
+
     await ActivityReportGoal.destroy({
       where: {
         activityReportId:
@@ -319,9 +333,9 @@ describe('cacheGoalMetadata', () => {
         activityReportGoalId: arg[0].id,
       },
     });
-    console.log('\n\n\n------fieldResponses', fieldResponses);
+
     expect(fieldResponses).toHaveLength(1);
-    expect(fieldResponses[0].dataValues.response).toEqual(prompts.response);
+    expect(fieldResponses[0].dataValues.response).toEqual(prompts[0].response);
 
     prompts = [
       {
@@ -331,7 +345,13 @@ describe('cacheGoalMetadata', () => {
       },
     ];
 
-    await cacheGoalMetadata(multiRecipientGoal, activityReport.id, true, prompts, true);
+    await cacheGoalMetadata(
+      multiRecipientGoal,
+      multiRecipientActivityReport.id,
+      false,
+      prompts,
+      true,
+    );
 
     arg = await ActivityReportGoal.findAll({
       where: {
@@ -348,7 +368,7 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(updatedFieldResponses).toHaveLength(1);
-    expect(updatedFieldResponses[0].dataValues.response).toEqual(prompts.response);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual(prompts[0].response);
   });
 });
 
