@@ -145,6 +145,9 @@ describe('cacheGoalMetadata', () => {
   let activityReport;
   let goal;
 
+  let multiRecipientActivityReport;
+  let multiRecipientGoal;
+
   const mockUser = {
     id: faker.datatype.number(),
     homeRegionId: 1,
@@ -167,7 +170,29 @@ describe('cacheGoalMetadata', () => {
       userId: mockUser.id,
     });
 
+    multiRecipientActivityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId,
+        },
+      ],
+      userId: mockUser.id,
+    });
+
     goal = await Goal.create({
+      grantId,
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      closeSuspendReason: null,
+      closeSuspendContext: null,
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    });
+
+    multiRecipientGoal = await Goal.create({
       grantId,
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.DRAFT,
@@ -182,9 +207,18 @@ describe('cacheGoalMetadata', () => {
   });
 
   afterAll(async () => {
-    await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
+    await ActivityReportGoal.destroy({
+      where: {
+        activityReportId:
+      [
+        activityReport.id,
+        multiRecipientActivityReport.id,
+      ],
+      },
+    });
     await destroyReport(activityReport);
-    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await destroyReport(multiRecipientActivityReport);
+    await Goal.destroy({ where: { id: [goal.id, multiRecipientGoal.id] }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
   });
 
@@ -242,6 +276,79 @@ describe('cacheGoalMetadata', () => {
     expect(arg[0].dataValues).toMatchObject(updatedData);
 
     expect(ActivityReportGoalFieldResponse.destroy).toHaveBeenCalled();
+  });
+
+  it('correctly handles multi recipient prompts', async () => {
+    let arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientActivityReport.id,
+      },
+    });
+
+    expect(arg).toHaveLength(0);
+
+    let prompts = [
+      {
+        promptId: 1,
+        title: 'FEI root cause',
+        response: ['Family Circumstance', 'Facilities', 'Other ECE Care Options'],
+      },
+    ];
+
+    await cacheGoalMetadata(
+      multiRecipientGoal,
+      multiRecipientActivityReport.id,
+      false,
+      prompts,
+      true,
+    );
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientGoal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(1);
+
+    // Get the ActivityReportGoalFieldResponses for the arg.id.
+    const fieldResponses = await ActivityReportGoalFieldResponse.findAll({
+      where: {
+        activityReportGoalId: arg[0].id,
+      },
+    });
+    console.log('\n\n\n------fieldResponses', fieldResponses);
+    expect(fieldResponses).toHaveLength(1);
+    expect(fieldResponses[0].dataValues.response).toEqual(prompts.response);
+
+    prompts = [
+      {
+        promptId: 1,
+        title: 'FEI root cause',
+        response: ['Family Circumstance UPDATED', 'New Response'],
+      },
+    ];
+
+    await cacheGoalMetadata(multiRecipientGoal, activityReport.id, true, prompts, true);
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientGoal.id,
+      },
+    });
+    expect(arg).toHaveLength(1);
+
+    const updatedFieldResponses = await ActivityReportGoalFieldResponse.findAll({
+      where: {
+        activityReportGoalId: arg[0].id,
+      },
+    });
+
+    expect(updatedFieldResponses).toHaveLength(1);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual(prompts.response);
   });
 });
 
