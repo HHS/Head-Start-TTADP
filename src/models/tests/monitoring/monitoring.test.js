@@ -51,7 +51,7 @@ describe('MonitoringClassSummary Model', () => {
     const updatedRecord = await MonitoringClassSummary.findByPk(newRecord.id);
 
     // Verify the updated record
-    expect(updatedRecord.emotionalSupport).toBeCloseTo('4.0000');
+    expect(updatedRecord.emotionalSupport).toBe('4.0000');
     // Add more expect statements for other fields if they were updated
 
     // Check associations
