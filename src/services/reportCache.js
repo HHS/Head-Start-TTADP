@@ -453,11 +453,8 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  if (prompts && prompts.length) {
-    finalPromises.push(
-      cachePrompts(goal.id, arg.id, prompts),
-    );
-  } else if (isMultiRecipientReport) {
+  console.log("\n\n\n----Prompts check: ", prompts);
+  if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
     const goalPrompts = await GoalFieldResponse.findAll({
       attributes: [
@@ -486,6 +483,10 @@ const cacheGoalMetadata = async (
         cachePrompts(goal.id, arg.id, goalPrompts),
       );
     }
+  } else if (prompts && prompts.length) {
+    finalPromises.push(
+      cachePrompts(goal.id, arg.id, prompts),
+    );
   }
   return Promise.all(finalPromises);
 };

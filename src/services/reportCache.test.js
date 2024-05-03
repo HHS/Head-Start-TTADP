@@ -218,7 +218,7 @@ describe('cacheGoalMetadata', () => {
     await GoalFieldResponse.create({
       goalId: multiRecipientGoal.id,
       goalTemplateFieldPromptId: fieldPrompt.id,
-      response: ['Family Circumstance UPDATED', 'New Response'],
+      response: ['Family Circumstance', 'Facilities', 'Other ECE Care Options'],
       onAr: true,
       onApprovedAR: false,
     });
@@ -321,19 +321,11 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg).toHaveLength(0);
 
-    const prompts = [
-      {
-        promptId: 1,
-        title: 'FEI root cause',
-        response: ['Family Circumstance', 'Facilities', 'Other ECE Care Options'],
-      },
-    ];
-
     await cacheGoalMetadata(
       multiRecipientGoal,
       multiRecipientActivityReport.id,
       false,
-      prompts,
+      [], // Don't pass prompts should come from goal.
       true,
     );
 
@@ -354,7 +346,16 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(fieldResponses).toHaveLength(1);
-    expect(fieldResponses[0].dataValues.response).toEqual(prompts[0].response);
+    expect(fieldResponses[0].dataValues.response).toEqual(['Family Circumstance', 'Facilities', 'Other ECE Care Options']);
+
+    // Update goal field reposone for the goal..
+    await GoalFieldResponse.update({
+      response: ['Family Circumstance UPDATED', 'New Response'],
+    }, {
+      where: {
+        goalId: multiRecipientGoal.id,
+      },
+    });
 
     await cacheGoalMetadata(
       multiRecipientGoal,
