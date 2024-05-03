@@ -1070,6 +1070,10 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('3.14')).toEqual({ value: 3.14, type: 'number' });
     });
 
+    it('should detect and cast a zero', () => {
+      expect(detectAndCast('0')).toEqual({ value: 0, type: 'number' });
+    });
+
     it('should detect and cast a Date', () => {
       const dateString = '2023-01-01T08:00:00.000Z';
       const date = new Date(dateString);

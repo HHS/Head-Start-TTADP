@@ -469,7 +469,7 @@ const detectAndCast = (value: string): {
   if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
 
   // check for number with leading zeros
-  if (/^0\d*$/.test(value)) {
+  if (/^0\d*$/.test(value) && value.length > 1) {
     // It's an octal number string or a string with leading zeros, return as a string
     return { value, type: 'string' };
   }
