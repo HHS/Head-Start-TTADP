@@ -39,9 +39,9 @@ describe('MonitoringClassSummary Model', () => {
     // Verify the inserted record
     expect(newRecord.reviewId).toBe('Review123');
     expect(newRecord.grantNumber).toBe('Grant123');
-    expect(newRecord.emotionalSupport).toBeCloseTo(3.7564, 4);
-    expect(newRecord.classroomOrganization).toBeCloseTo(4.0023, 4);
-    expect(newRecord.instructionalSupport).toBeCloseTo(2.9876, 4);
+    expect(newRecord.emotionalSupport).toBe('3.7564');
+    expect(newRecord.classroomOrganization).toBe('4.0023');
+    expect(newRecord.instructionalSupport).toBe('2.9876');
     // Add more expect statements for other fields as needed
 
     // Update a column in the record
