@@ -6,6 +6,7 @@ import db, {
   Recipient,
   Grant,
   Goal,
+  GoalFieldResponse,
   File,
   Role,
   Objective,
@@ -21,6 +22,7 @@ import db, {
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
   ActivityReportGoalFieldResponse,
+  GoalTemplateFieldPrompt,
   CollaboratorRole,
   Resource,
   Topic,
@@ -204,6 +206,22 @@ describe('cacheGoalMetadata', () => {
       isActivelyEdited: false,
       source: GOAL_SOURCES[0],
     });
+
+    // Get GoalTemplateFieldPrompts where title = 'FEI root cause'.
+    const fieldPrompt = await GoalTemplateFieldPrompt.findOne({
+      where: {
+        title: 'FEI root cause',
+      },
+    });
+
+    // Create a GoalFieldResponse for the goal.
+    await GoalFieldResponse.create({
+      goalId: multiRecipientGoal.id,
+      goalTemplateFieldPromptId: fieldPrompt.id,
+      response: ['Family Circumstance UPDATED', 'New Response'],
+      onAr: true,
+      onApprovedAR: false,
+    });
   });
 
   afterAll(async () => {
@@ -232,6 +250,11 @@ describe('cacheGoalMetadata', () => {
     });
     await destroyReport(activityReport);
     await destroyReport(multiRecipientActivityReport);
+    await GoalFieldResponse.destroy({
+      where: {
+        goalId: [goal.id, multiRecipientGoal.id],
+      },
+    });
     await Goal.destroy({ where: { id: [goal.id, multiRecipientGoal.id] }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
   });
@@ -271,8 +294,6 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg[0].dataValues).toMatchObject(data);
 
-    jest.spyOn(ActivityReportGoalFieldResponse, 'destroy');
-
     await cacheGoalMetadata(goal, activityReport.id, true, [], true);
 
     arg = await ActivityReportGoal.findAll({
@@ -288,8 +309,6 @@ describe('cacheGoalMetadata', () => {
     };
     expect(arg).toHaveLength(1);
     expect(arg[0].dataValues).toMatchObject(updatedData);
-
-    expect(ActivityReportGoalFieldResponse.destroy).toHaveBeenCalled();
   });
 
   it('correctly handles multi recipient prompts', async () => {
@@ -302,7 +321,7 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg).toHaveLength(0);
 
-    let prompts = [
+    const prompts = [
       {
         promptId: 1,
         title: 'FEI root cause',
@@ -337,19 +356,11 @@ describe('cacheGoalMetadata', () => {
     expect(fieldResponses).toHaveLength(1);
     expect(fieldResponses[0].dataValues.response).toEqual(prompts[0].response);
 
-    prompts = [
-      {
-        promptId: 1,
-        title: 'FEI root cause',
-        response: ['Family Circumstance UPDATED', 'New Response'],
-      },
-    ];
-
     await cacheGoalMetadata(
       multiRecipientGoal,
       multiRecipientActivityReport.id,
       false,
-      prompts,
+      [], // Don't pass prompts should come from goal.
       true,
     );
 
@@ -368,7 +379,7 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(updatedFieldResponses).toHaveLength(1);
-    expect(updatedFieldResponses[0].dataValues.response).toEqual(prompts[0].response);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
   });
 });
 
