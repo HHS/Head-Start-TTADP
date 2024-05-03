@@ -3,7 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import StatusDropdown from '../StatusDropdown';
+import GoalStatusDropdown from '../GoalStatusDropdown';
 import UserContext from '../../../../UserContext';
 
 const user = {
@@ -19,7 +19,7 @@ const user = {
   ],
 };
 
-describe('StatusDropdown', () => {
+describe('GoalStatusDropdown', () => {
   const renderStatusDropdown = (
     status,
     onUpdateGoalStatus,
@@ -28,7 +28,7 @@ describe('StatusDropdown', () => {
   ) => {
     render((
       <UserContext.Provider value={{ user }}>
-        <StatusDropdown
+        <GoalStatusDropdown
           goalId={345345}
           regionId={regionId}
           status={status}
