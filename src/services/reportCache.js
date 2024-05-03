@@ -453,7 +453,6 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  console.log("\n\n\n----Prompts check: ", prompts);
   if (isMultiRecipientReport) {
     // Check for fei goal prompts we need to update on the activity report goal.
     const goalPrompts = await GoalFieldResponse.findAll({
