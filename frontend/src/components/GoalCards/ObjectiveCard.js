@@ -5,18 +5,14 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
 import colors from '../../colors';
-import {
-  InProgress,
-  Closed,
-  NoStatus,
-  NotStarted,
-  Ceased,
-} from '../icons';
 import './ObjectiveCard.css';
+import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
 
 function ObjectiveCard({
   objective,
   objectivesExpanded,
+  goalStatus,
+  regionId,
 }) {
   const {
     title,
@@ -52,57 +48,6 @@ function ObjectiveCard({
       }
     </ul>
   );
-
-  const mapStatusToDisplay = [
-    {
-      stored: 'In Progress',
-      display: 'In progress',
-    },
-    {
-      stored: 'Complete',
-      display: 'Complete',
-    },
-    {
-      stored: 'Not Started',
-      display: 'Not started',
-    },
-    {
-      stored: 'Needs Status',
-      display: 'Needs status',
-    },
-    {
-      stored: 'Suspended',
-      display: 'Suspended',
-    },
-  ];
-
-  const getGoalDisplayStatusText = () => {
-    let displayStatus = 'Needs status';
-    if (status) {
-      const matchingStatus = mapStatusToDisplay.find((m) => m.stored === status);
-      if (matchingStatus) {
-        displayStatus = matchingStatus.display;
-      }
-    }
-    return displayStatus;
-  };
-
-  const displayObjStatus = getGoalDisplayStatusText();
-
-  const getObjectiveStatusIcon = (() => {
-    if (displayObjStatus === 'In progress') {
-      return <InProgress />;
-    } if (displayObjStatus === 'Complete') {
-      return <Closed />;
-    }
-    if (displayObjStatus === 'Not started') {
-      return <NotStarted />;
-    }
-    if (displayObjStatus === 'Suspended') {
-      return <Ceased />;
-    }
-    return <NoStatus />;
-  })();
 
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
@@ -155,8 +100,14 @@ function ObjectiveCard({
 
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
-        {getObjectiveStatusIcon}
-        {displayObjStatus}
+        <ObjectiveStatusDropdown
+          currentStatus={status}
+          goalStatus={goalStatus}
+          objectiveId={objective.id}
+          regionId={regionId}
+          className="line-height-sans-5"
+          onUpdateObjectiveStatus={() => {}}
+        />
       </li>
     </ul>
   );
@@ -194,5 +145,12 @@ objectivePropTypes.defaultProps = {
 ObjectiveCard.propTypes = {
   objective: objectivePropTypes.isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
+  goalStatus: PropTypes.string,
+  regionId: PropTypes.number.isRequired,
 };
+
+ObjectiveCard.defaultProps = {
+  goalStatus: null,
+};
+
 export default ObjectiveCard;
