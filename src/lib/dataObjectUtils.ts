@@ -474,9 +474,6 @@ const detectAndCast = (value: string): {
     return {
       value,
       type: 'string',
-      alternateTypes: {
-        number: Number(value),
-      },
     };
   }
 
@@ -488,10 +485,6 @@ const detectAndCast = (value: string): {
     return {
       value: newValue,
       type: 'number',
-      alternateTypes: {
-        string: value,
-        ...((newValue === 0 || newValue === 1) && { boolean: Boolean(newValue) }),
-      },
     };
   }
 
@@ -515,9 +508,6 @@ const detectAndCast = (value: string): {
       return {
         value: date,
         type: 'Date',
-        alternateTypes: {
-          string: value,
-        },
       };
     }
   }

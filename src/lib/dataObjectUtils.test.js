@@ -1062,9 +1062,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('42')).toEqual({
         value: 42,
         type: 'number',
-        alternateTypes: {
-          string: '42',
-        },
       });
     });
 
@@ -1072,9 +1069,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('-42')).toEqual({
         value: -42,
         type: 'number',
-        alternateTypes: {
-          string: '-42',
-        },
       });
     });
 
@@ -1082,9 +1076,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('3.14')).toEqual({
         value: 3.14,
         type: 'number',
-        alternateTypes: {
-          string: '3.14',
-        },
       });
     });
 
@@ -1093,9 +1084,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast(stringNumber)).toEqual({
         value: stringNumber,
         type: 'string',
-        alternateTypes: {
-          number: Number(stringNumber),
-        },
       });
     });
 
@@ -1103,10 +1091,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('0')).toEqual({
         value: 0,
         type: 'number',
-        alternateTypes: {
-          string: '0',
-          boolean: false,
-        },
       });
     });
 
@@ -1114,10 +1098,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast('1')).toEqual({
         value: 1,
         type: 'number',
-        alternateTypes: {
-          string: '1',
-          boolean: true,
-        },
       });
     });
 
@@ -1127,9 +1107,6 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast(dateString)).toEqual({
         value: date,
         type: 'Date',
-        alternateTypes: {
-          string: dateString,
-        },
       });
     });
 
@@ -1141,16 +1118,10 @@ describe('dataObjectUtils', () => {
       expect(detectAndCast(dateStringWithMilliseconds)).toEqual({
         value: dateWithMilliseconds,
         type: 'Date',
-        alternateTypes: {
-          string: dateStringWithMilliseconds,
-        },
       });
       expect(detectAndCast(dateStringWithoutMilliseconds)).toEqual({
         value: dateWithoutMilliseconds,
         type: 'Date',
-        alternateTypes: {
-          string: dateStringWithoutMilliseconds,
-        },
       });
     });
 
@@ -1180,7 +1151,6 @@ describe('dataObjectUtils', () => {
         .toEqual({
           value: stringNumber,
           type: 'string',
-          alternateTypes: { number: Number(stringNumber) },
         });
     });
 
