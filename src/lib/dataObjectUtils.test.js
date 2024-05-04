@@ -1057,30 +1057,102 @@ describe('dataObjectUtils', () => {
     it('should detect and cast boolean false', () => {
       expect(detectAndCast('false')).toEqual({ value: false, type: 'boolean' });
     });
+    
+    it('should detect and cast a number with alternate types for boolean equivalent', () => {
+      expect(detectAndCast('42')).toEqual({
+        value: 42, 
+        type: 'number',
+        alternateTypes: {
+          string: '42'
+        }
+      });
+    });
+    
+    it('should detect and cast a negative number with alternate types', () => {
+      expect(detectAndCast('-42')).toEqual({
+        value: -42, 
+        type: 'number',
+        alternateTypes: {
+          string: '-42'
+        }
+      });
+    });
+    
+    it('should detect and cast a floating point number with alternate types', () => {
+      expect(detectAndCast('3.14')).toEqual({
+        value: 3.14, 
+        type: 'number',
+        alternateTypes: {
+          string: '3.14'
+        }
+      });
+    });
+    
 
-    it('should detect and cast a number', () => {
-      expect(detectAndCast('42')).toEqual({ value: 42, type: 'number' });
+    it('should include alternateTypes for a string with leading zeros considered as a number', () => {
+      const stringNumber = '007';
+      expect(detectAndCast(stringNumber)).toEqual({
+        value: stringNumber,
+        type: 'string',
+        alternateTypes: {
+          number: Number(stringNumber)
+        }
+      });
     });
 
-    it('should detect and cast a negative number', () => {
-      expect(detectAndCast('-42')).toEqual({ value: -42, type: 'number' });
+    it('should detect and cast a zero with boolean equivalent', () => {
+      expect(detectAndCast('0')).toEqual({
+        value: 0,
+        type: 'number',
+        alternateTypes: {
+          string: '0',
+          boolean: false
+        }
+      });
+    });
+    
+    it('should detect and cast one with boolean equivalent', () => {
+      expect(detectAndCast('1')).toEqual({
+        value: 1,
+        type: 'number',
+        alternateTypes: {
+          string: '1',
+          boolean: true
+        }
+      });
     });
 
-    it('should detect and cast a floating point number', () => {
-      expect(detectAndCast('3.14')).toEqual({ value: 3.14, type: 'number' });
-    });
-
-    it('should detect and cast a zero', () => {
-      expect(detectAndCast('0')).toEqual({ value: 0, type: 'number' });
-    });
-
-    it('should detect and cast a Date', () => {
+    it('should detect and cast a Date with alternate type', () => {
       const dateString = '2023-01-01T08:00:00.000Z';
       const date = new Date(dateString);
-      const result = detectAndCast(dateString);
-      expect(result.type).toBe('Date');
-      // Compare the UTC string representations to avoid time zone issues
-      expect(result.value.toUTCString()).toBe(date.toUTCString());
+      expect(detectAndCast(dateString)).toEqual({
+        value: date,
+        type: 'Date',
+        alternateTypes: {
+          string: dateString
+        }
+      });
+    });
+    
+    it('should handle a valid date string with and without milliseconds and timezone', () => {
+      const dateStringWithMilliseconds = '2023-01-01T08:00:00.123Z';
+      const dateStringWithoutMilliseconds = '2023-01-01T08:00:00Z';
+      const dateWithMilliseconds = new Date(dateStringWithMilliseconds);
+      const dateWithoutMilliseconds = new Date(dateStringWithoutMilliseconds);
+      expect(detectAndCast(dateStringWithMilliseconds)).toEqual({
+        value: dateWithMilliseconds,
+        type: 'Date',
+        alternateTypes: {
+          string: dateStringWithMilliseconds,
+        }
+      });
+      expect(detectAndCast(dateStringWithoutMilliseconds)).toEqual({
+        value: dateWithoutMilliseconds,
+        type: 'Date',
+        alternateTypes: {
+          string: dateStringWithoutMilliseconds,
+        }
+      });
     });
 
     it('should detect and cast an array', () => {

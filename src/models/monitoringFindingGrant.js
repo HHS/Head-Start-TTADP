@@ -89,18 +89,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    hs: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    ehs: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    arra: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     correctionDeadLine: {
       type: DataTypes.DATE,
       allowNull: true,
@@ -111,14 +99,6 @@ export default (sequelize, DataTypes) => {
     },
     closedDate: {
       type: DataTypes.DATE,
-      allowNull: true,
-    },
-    fiscalInd: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    programInd: {
-      type: DataTypes.INTEGER,
       allowNull: true,
     },
     hash: {
