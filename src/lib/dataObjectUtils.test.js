@@ -1176,7 +1176,12 @@ describe('dataObjectUtils', () => {
 
     it('should not cast a string that looks like a number but starts with zeros', () => {
       const stringNumber = '007';
-      expect(detectAndCast(stringNumber)).toEqual({ value: stringNumber, type: 'string' });
+      expect(detectAndCast(stringNumber))
+        .toEqual({
+          value: stringNumber,
+          type: 'string',
+          alternateTypes: { number: Number(stringNumber) },
+        });
     });
 
     it('should not cast a string that looks like a boolean', () => {
