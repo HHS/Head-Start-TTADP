@@ -1057,34 +1057,34 @@ describe('dataObjectUtils', () => {
     it('should detect and cast boolean false', () => {
       expect(detectAndCast('false')).toEqual({ value: false, type: 'boolean' });
     });
-    
+
     it('should detect and cast a number with alternate types for boolean equivalent', () => {
       expect(detectAndCast('42')).toEqual({
         value: 42, 
         type: 'number',
         alternateTypes: {
-          string: '42'
-        }
+          string: '42',
+        },
       });
     });
-    
+
     it('should detect and cast a negative number with alternate types', () => {
       expect(detectAndCast('-42')).toEqual({
         value: -42, 
         type: 'number',
         alternateTypes: {
-          string: '-42'
-        }
+          string: '-42',
+        },
       });
     });
-    
+
     it('should detect and cast a floating point number with alternate types', () => {
       expect(detectAndCast('3.14')).toEqual({
         value: 3.14, 
         type: 'number',
         alternateTypes: {
-          string: '3.14'
-        }
+          string: '3.14',
+        },
       });
     });
     
@@ -1095,8 +1095,8 @@ describe('dataObjectUtils', () => {
         value: stringNumber,
         type: 'string',
         alternateTypes: {
-          number: Number(stringNumber)
-        }
+          number: Number(stringNumber),
+        },
       });
     });
 
@@ -1106,19 +1106,19 @@ describe('dataObjectUtils', () => {
         type: 'number',
         alternateTypes: {
           string: '0',
-          boolean: false
-        }
+          boolean: false,
+        },
       });
     });
-    
+
     it('should detect and cast one with boolean equivalent', () => {
       expect(detectAndCast('1')).toEqual({
         value: 1,
         type: 'number',
         alternateTypes: {
           string: '1',
-          boolean: true
-        }
+          boolean: true,
+        },
       });
     });
 
@@ -1129,11 +1129,11 @@ describe('dataObjectUtils', () => {
         value: date,
         type: 'Date',
         alternateTypes: {
-          string: dateString
-        }
+          string: dateString,
+        },
       });
     });
-    
+
     it('should handle a valid date string with and without milliseconds and timezone', () => {
       const dateStringWithMilliseconds = '2023-01-01T08:00:00.123Z';
       const dateStringWithoutMilliseconds = '2023-01-01T08:00:00Z';
@@ -1144,14 +1144,14 @@ describe('dataObjectUtils', () => {
         type: 'Date',
         alternateTypes: {
           string: dateStringWithMilliseconds,
-        }
+        },
       });
       expect(detectAndCast(dateStringWithoutMilliseconds)).toEqual({
         value: dateWithoutMilliseconds,
         type: 'Date',
         alternateTypes: {
           string: dateStringWithoutMilliseconds,
-        }
+        },
       });
     });
 

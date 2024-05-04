@@ -88,7 +88,7 @@ describe('modelUtils', () => {
       expect(matched).toEqual({ id: 1, name: 'John Doe' });
       expect(unmatched).toEqual({ email: 'john@example.com' });
     });
-  
+
     it('should correctly handle null values when allowed', async () => {
       const mockModel = {
         describe: jest.fn().mockResolvedValue({
@@ -102,7 +102,7 @@ describe('modelUtils', () => {
       expect(matched).toEqual({ name: null });
       expect(unmatched).toEqual({});
     });
-  
+
     it('should convert number to string if needed', async () => {
       const mockModel = {
         describe: jest.fn().mockResolvedValue({
@@ -116,7 +116,7 @@ describe('modelUtils', () => {
       expect(matched).toEqual({ age: '30' });
       expect(unmatched).toEqual({});
     });
-  
+
     it('should convert number to boolean if needed', async () => {
       const mockModel = {
         describe: jest.fn().mockResolvedValue({
@@ -130,7 +130,7 @@ describe('modelUtils', () => {
       expect(matched).toEqual({ isActive: true });
       expect(unmatched).toEqual({});
     });
-  
+
     it('should handle Date object conversion to string', async () => {
       const mockModel = {
         describe: jest.fn().mockResolvedValue({
@@ -142,10 +142,10 @@ describe('modelUtils', () => {
         createdAt: date,
       };
       const { matched, unmatched } = await filterDataToModel(data, mockModel);
-      expect(matched).toEqual({ createdAt: date }); // Assuming date handling to string is managed elsewhere
+      expect(matched).toEqual({ createdAt: date });
       expect(unmatched).toEqual({});
     });
-  
+
     it('should add fields to unmatched if the value type does not match the model definition', async () => {
       const mockModel = {
         describe: jest.fn().mockResolvedValue({
