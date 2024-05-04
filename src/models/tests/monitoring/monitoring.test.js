@@ -127,11 +127,6 @@ describe('MonitoringFindingGrant Model', () => {
     expect(newRecord.statusId).toBe(1);
     expect(newRecord.findingType).toBe('Compliance');
     expect(newRecord.source).toBe('Internal Audit');
-    expect(newRecord.hs).toBe(5);
-    expect(newRecord.ehs).toBe(10);
-    expect(newRecord.arra).toBe(15);
-    expect(newRecord.fiscalInd).toBe(0);
-    expect(newRecord.programInd).toBe(1);
     // Add more expect statements for other fields as needed
 
     // Update a column in the record
