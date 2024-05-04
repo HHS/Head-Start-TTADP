@@ -243,18 +243,6 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        hs: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        ehs: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        arra: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
         correctionDeadLine: {
           type: Sequelize.DATE,
           allowNull: true,
@@ -265,14 +253,6 @@ module.exports = {
         },
         closedDate: {
           type: Sequelize.DATE,
-          allowNull: true,
-        },
-        fiscalInd: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        programInd: {
-          type: Sequelize.INTEGER,
           allowNull: true,
         },
         hash: {
@@ -378,18 +358,6 @@ module.exports = {
           type: Sequelize.TEXT,
           allowNull: true,
         },
-        hs: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        ehs: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        arra: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
         correctionDeadLine: {
           type: Sequelize.DATE,
           allowNull: true,
@@ -400,14 +368,6 @@ module.exports = {
         },
         closedDate: {
           type: Sequelize.DATE,
-          allowNull: true,
-        },
-        fiscalInd: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-        },
-        programInd: {
-          type: Sequelize.INTEGER,
           allowNull: true,
         },
         hash: {
@@ -764,6 +724,17 @@ module.exports = {
         { transaction },
       );
 
+      await queryInterface.addColumn(
+        'MonitoringReviews',
+        'name',
+        {
+          type: Sequelize.TEXT,
+          allowNull: true,
+          defaultValue: null,
+        },
+        { transaction },
+      );
+
       await queryInterface.sequelize.query(/* sql */`
       Update "Imports" i
       SET
@@ -780,14 +751,9 @@ module.exports = {
               'StatusId', 'statusId',
               'FindingType', 'findingType',
               'Source', 'source',
-              'HS', 'hs',
-              'EHS', 'ehs',
-              'ARRA', 'arra',
               'CorrectionDeadLine', 'correctionDeadLine',
               'ReportDate', 'reportDate',
-              'ClosedDate', 'closedDate',
-              'FiscalInd', 'fiscalInd',
-              'ProgramInd', 'programInd'
+              'ClosedDate', 'closedDate'
             ),
             'tableName', 'MonitoringFindings'
           ),
@@ -803,14 +769,9 @@ module.exports = {
               'StatusId', 'statusId',
               'FindingType', 'findingType',
               'Source', 'source',
-              'HS', 'hs',
-              'EHS', 'ehs',
-              'ARRA', 'arra',
               'CorrectionDeadLine', 'correctionDeadLine',
               'ReportDate', 'reportDate',
-              'ClosedDate', 'closedDate',
-              'FiscalInd', 'fiscalInd',
-              'ProgramInd', 'programInd'
+              'ClosedDate', 'closedDate'
             ),
             'tableName', 'MonitoringFindingGrants'
           ),
@@ -880,7 +841,8 @@ module.exports = {
               'ReportDeliveryDate', 'reportDeliveryDate',
               'ReportAttachmentId', 'reportAttachmentId',
               'Outcome', 'outcome',
-              'ReviewId', 'reviewId'
+              'ReviewId', 'reviewId',
+              'Name', 'name'
             ),
             'tableName', 'MonitoringReviews'
           ),

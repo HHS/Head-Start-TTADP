@@ -598,14 +598,9 @@ class MonitoringFindingGrants{
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- arra : integer
  closedDate : timestamp with time zone
  correctionDeadLine : timestamp with time zone
  deletedAt : timestamp with time zone
- ehs : integer
- fiscalInd : integer
- hs : integer
- programInd : integer
  reportedDate : timestamp with time zone
  source : text
  sourceDeletedAt : timestamp with time zone
@@ -699,14 +694,9 @@ class MonitoringFindings{
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
- arra : integer
  closedDate : timestamp with time zone
  correctionDeadLine : timestamp with time zone
  deletedAt : timestamp with time zone
- ehs : integer
- fiscalInd : integer
- hs : integer
- programInd : integer
  reportedDate : timestamp with time zone
  source : text
  sourceDeletedAt : timestamp with time zone
@@ -776,6 +766,7 @@ class MonitoringReviews{
  deletedAt : timestamp with time zone
  endDate : date
  hash : text
+ name : text
  outcome : text
  reportAttachmentId : text
  reportDeliveryDate : timestamp with time zone

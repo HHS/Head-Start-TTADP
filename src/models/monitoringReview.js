@@ -73,6 +73,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    name: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     startDate: {
       type: DataTypes.DATEONLY,
       allowNull: true,
