@@ -490,7 +490,7 @@ const detectAndCast = (value: string): {
       type: 'number',
       alternateTypes: {
         string: value,
-        ...((newValue === 0 || newValue === 1) && { boolean: Boolean(newValue)}),
+        ...((newValue === 0 || newValue === 1) && { boolean: Boolean(newValue) }),
       },
     };
   }
