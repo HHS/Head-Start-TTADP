@@ -1087,7 +1087,6 @@ describe('dataObjectUtils', () => {
         },
       });
     });
-   
 
     it('should include alternateTypes for a string with leading zeros considered as a number', () => {
       const stringNumber = '007';
