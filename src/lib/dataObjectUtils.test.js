@@ -1060,7 +1060,7 @@ describe('dataObjectUtils', () => {
 
     it('should detect and cast a number with alternate types for boolean equivalent', () => {
       expect(detectAndCast('42')).toEqual({
-        value: 42, 
+        value: 42,
         type: 'number',
         alternateTypes: {
           string: '42',
@@ -1070,7 +1070,7 @@ describe('dataObjectUtils', () => {
 
     it('should detect and cast a negative number with alternate types', () => {
       expect(detectAndCast('-42')).toEqual({
-        value: -42, 
+        value: -42,
         type: 'number',
         alternateTypes: {
           string: '-42',
@@ -1080,14 +1080,14 @@ describe('dataObjectUtils', () => {
 
     it('should detect and cast a floating point number with alternate types', () => {
       expect(detectAndCast('3.14')).toEqual({
-        value: 3.14, 
+        value: 3.14,
         type: 'number',
         alternateTypes: {
           string: '3.14',
         },
       });
     });
-    
+   
 
     it('should include alternateTypes for a string with leading zeros considered as a number', () => {
       const stringNumber = '007';
