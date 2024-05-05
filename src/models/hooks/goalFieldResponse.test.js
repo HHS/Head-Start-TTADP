@@ -47,6 +47,8 @@ describe('goalFieldResponseHooks', () => {
     let recipientToNotUpdate;
     let grant;
     let goal;
+    let goalMissingResponse;
+    let activityReportGoalMissingResponse;
     let goalNotToUpdate;
     let report;
     let differentGoalReportNotToUpdate;
@@ -54,6 +56,7 @@ describe('goalFieldResponseHooks', () => {
     let goalTemplateFieldPrompt;
     let goalFieldResponse;
     let goalFieldResponseDiffGoalNotToUpdate;
+    let missingGoalFieldResponse;
     let activityReportGoalFieldResponse;
     let activityReportGoalFieldResponseDiffGoalNotToUpdate;
     let activityReportGoalFieldResponseApproved;
@@ -115,6 +118,16 @@ describe('goalFieldResponseHooks', () => {
         createdVia: 'rtr',
       });
 
+      goalMissingResponse = await Goal.create({
+        name: 'Goal Missing Response',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'activityReport',
+      });
+
       report = await ActivityReport.create({
         ...mockReport,
         grantId: grant.id,
@@ -154,6 +167,13 @@ describe('goalFieldResponseHooks', () => {
         goalId: goalNotToUpdate.id,
       });
 
+      // Response should be created.
+      activityReportGoalMissingResponse = await ActivityReportGoal.create({
+        activityReportId: report.id,
+        goalId: goalMissingResponse.id,
+        individualHooks: false,
+      });
+
       const activityReportGoalApproved = await ActivityReportGoal.create({
         activityReportId: approvedReport.id,
         goalId: goal.id,
@@ -176,6 +196,13 @@ describe('goalFieldResponseHooks', () => {
         goalId: goalNotToUpdate.id,
         goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
         response: ['Activity Report Goal Response NOT TO UPDATE'],
+      });
+
+      // Create missing GoalFieldResponse.
+      missingGoalFieldResponse = await GoalFieldResponse.create({
+        goalId: goalMissingResponse.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Initial Missing Activity Report Goal Response'],
       });
 
       // Create ActivityReportGoalFieldResponse.
@@ -209,6 +236,7 @@ describe('goalFieldResponseHooks', () => {
             activityReportGoalFieldResponse.id,
             activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
             activityReportGoalFieldResponseApproved.id,
+            activityReportGoalMissingResponse.id,
           ],
         },
       });
@@ -216,7 +244,11 @@ describe('goalFieldResponseHooks', () => {
       // Delete goal field response.
       await GoalFieldResponse.destroy({
         where: {
-          id: [goalFieldResponse.id, goalFieldResponseDiffGoalNotToUpdate.id],
+          id: [
+            goalFieldResponse.id,
+            goalFieldResponseDiffGoalNotToUpdate.id,
+            goalMissingResponse.id,
+          ],
         },
       });
 
@@ -234,7 +266,7 @@ describe('goalFieldResponseHooks', () => {
 
       // Delete goal.
       await Goal.destroy({
-        where: { id: [goal.id, goalNotToUpdate.id] },
+        where: { id: [goal.id, goalNotToUpdate.id, goalMissingResponse.id] },
       });
 
       // Delete grant.
@@ -299,6 +331,14 @@ describe('goalFieldResponseHooks', () => {
           id: activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
         },
       });
+
+      // Delete any ActivityReportGoalFieldResponses for the missing response.
+      await ActivityReportGoalFieldResponse.destroy({
+        where: {
+          activityReportGoalId: activityReportGoalMissingResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
     });
 
     it('should sync the goal field response with the activity report goal response', async () => {
@@ -310,6 +350,15 @@ describe('goalFieldResponseHooks', () => {
       // Assert Initial No Change values.
       expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
       expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+
+      // Ensure there are no ActivityReportGoalFieldResponse for one of the ARG's.
+      let missingResponses = await ActivityReportGoalFieldResponse.findOne({
+        where: {
+          activityReportGoalId: activityReportGoalMissingResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
+      expect(missingResponses).toBeNull();
 
       // HOOK: Change goal response to trigger hook.
       goalFieldResponse.response = ['Updated Activity Report Goal Response'];
@@ -324,6 +373,37 @@ describe('goalFieldResponseHooks', () => {
           individualHooks: true,
         },
       );
+
+      // Retrieve all ActivityReportGoalFieldResponses for the missing response.
+      missingResponses = await ActivityReportGoalFieldResponse.findAll({
+        where: {
+          activityReportGoalId: activityReportGoalMissingResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
+      expect(missingResponses.length).toBe(0);
+
+      // HOOK: Change goal response to trigger hook.
+      missingGoalFieldResponse.response = ['Updated Missing Activity Report Goal Response'];
+
+      // Update the missing response.
+      await GoalFieldResponse.update(
+        { response: ['Updated Missing Activity Report Goal Response'] },
+        {
+          where: { id: missingGoalFieldResponse.id },
+          individualHooks: true,
+        },
+      );
+
+      // Assert the ActivityReport goal field response was created.
+      missingResponses = await ActivityReportGoalFieldResponse.findOne({
+        where: {
+          activityReportGoalId: activityReportGoalMissingResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
+      expect(missingResponses).not.toBeNull();
+      expect(missingResponses.response).toEqual(['Updated Missing Activity Report Goal Response']);
 
       // Retrieve updated goal field response.
       goalFieldResponse = await GoalFieldResponse.findOne({
