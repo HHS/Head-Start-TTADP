@@ -1260,18 +1260,23 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  return Goal.findOne({
+  const goal = Goal.findOne({
     attributes: [
       'name',
       'id',
       'status',
       'createdVia',
-      'previousStatus',
     ],
     where: {
       id: goalId,
     },
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -1291,6 +1296,8 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
       },
     ],
   });
+
+  return goal;
 }
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
