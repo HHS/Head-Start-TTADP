@@ -131,7 +131,7 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
-    const previousStatus = [];
+    let previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
@@ -148,8 +148,8 @@ export async function changeGoalStatus(req, res) {
         }
 
         if (goal.statusChanges) {
-          goal.statusChanges.forEach(({ oldStatus, newStatus }) => {
-            previousStatus = [...new Set([...previousStatus, oldStatus, newStatus])];
+          goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
+            previousStatus = [...new Set([...previousStatus, o, n])];
           });
         }
       }
