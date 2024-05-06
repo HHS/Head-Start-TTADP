@@ -759,10 +759,6 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
 }
 
 function wasGoalPreviouslyClosed(goal) {
-  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
-    return true;
-  }
-
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
