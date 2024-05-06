@@ -16,6 +16,42 @@ const {
   Resource,
 } = db;
 
+export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
+  return Objective.findAll({
+    attributes: ['id', 'goalId', 'status'],
+    where: {
+      id: ids,
+    },
+    include: [
+      {
+        model: Goal,
+        as: 'goal',
+        attributes: ['id', 'grantId', 'status'],
+        required: true,
+        include: [
+          {
+            as: 'grant',
+            model: Grant,
+            required: true,
+            attributes: ['id', 'regionId'],
+          },
+        ],
+      },
+    ],
+  }) as {
+    id: number,
+    goalId: number,
+    status: string,
+    goal: {
+      id: number,
+      status: string,
+      grant: {
+        regionId: number,
+      },
+    },
+  }[];
+}
+
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
