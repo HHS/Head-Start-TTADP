@@ -25,7 +25,9 @@ import {
   getObjectiveById,
   getObjectivesByReportId,
   updateObjectiveStatusByIds,
+  getObjectiveRegionAndGoalStatusByIds,
 } from './objectives';
+import { createGrant, createRecipient } from '../testUtils';
 
 jest.mock('bull');
 
@@ -549,6 +551,79 @@ describe('Objectives DB service', () => {
 
       expect(objective1.status).toBe(OBJECTIVE_STATUS.COMPLETE);
       expect(objective2.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+    });
+  });
+
+  describe('getObjectiveRegionAndGoalStatusByIds', () => {
+    let objective1;
+    let objective2;
+    let goal;
+    let grant;
+    let recipient;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+      goal = await Goal.create({
+        name: 'goal',
+        grantId: grant.id,
+      });
+
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+        force: true,
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        force: true,
+      });
+    });
+
+    it('retrieves region and goal status of objectives', async () => {
+      const x = await getObjectiveRegionAndGoalStatusByIds([
+        objective1.id,
+        objective2.id,
+      ]);
+
+      expect(x.length).toBe(2);
+      expect(x[0].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[0].goal.status).toBe(goal.status);
+
+      expect(x[1].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[1].goal.status).toBe(goal.status);
     });
   });
 });
