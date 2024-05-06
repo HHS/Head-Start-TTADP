@@ -133,8 +133,6 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       attributes: [
         'id',
         'status',
-        'closeSuspendContext',
-        'closeSuspendReason',
       ],
       where: {
         id: response.goals.map((goal) => goal.id),
@@ -146,8 +144,6 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
             'status',
             'onApprovedAR',
             'goalId',
-            'closeSuspendContext',
-            'closeSuspendReason',
           ],
           model: Objective,
           as: 'objectives',

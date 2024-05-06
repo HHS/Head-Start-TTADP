@@ -298,8 +298,6 @@ describe('createOrUpdate', () => {
         timeframe: null,
         isFromSmartsheetTtaPlan: null,
         endDate: goal.endDate,
-        closeSuspendReason: null,
-        closeSuspendContext: null,
         grantId: grantIds[0],
         goalTemplateId: null,
         previousStatus: null,

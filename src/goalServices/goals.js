@@ -3034,8 +3034,6 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     source: finalGoal.source,
     isFromSmartsheetTtaPlan: finalGoal.isFromSmartsheetTtaPlan,
     status: finalStatus,
-    closeSuspendReason: finalGoal.closeSuspendReason,
-    closeSuspendContext: finalGoal.closeSuspendContext,
   };
 }
 
