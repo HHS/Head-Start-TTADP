@@ -3578,7 +3578,7 @@ export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
       GOAL_STATUS.CLOSED,
       closeSuspendReason,
       closeSuspendContext,
-      GOAL_STATUS.CLOSED,
+      [GOAL_STATUS.CLOSED],
     ),
   };
 }
