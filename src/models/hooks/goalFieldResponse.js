@@ -62,17 +62,18 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, _option
     const activityReportGoalIds = [...new Set(activityReportGoals.map((item) => item.id))];
 
     // Perform the update.
-    const updatedResponses = await sequelize.models.ActivityReportGoalFieldResponse.update(
+    await sequelize.models.ActivityReportGoalFieldResponse.update(
       { response: instance.response },
       {
         where: {
           activityReportGoalId: activityReportGoalIds,
           goalTemplateFieldPromptId,
         },
-        returning: true,
+        // returning: true,
       },
     );
 
+    /*
     // Get all the ActivityReportGoal ids that were updated.
     const updatedResponseIds = updatedResponses[1].map((item) => item.id);
 
@@ -89,7 +90,7 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, _option
         response: instance.response,
       });
     }));
-
+    */
     // We need to update the AR createdAt so we don't pull from outdated local storage.
     if (activityReportIds.length > 0) {
       await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id IN (${activityReportIds.join(',')})`);
