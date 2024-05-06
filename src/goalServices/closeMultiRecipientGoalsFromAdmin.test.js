@@ -144,6 +144,8 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
             'status',
             'onApprovedAR',
             'goalId',
+            'closeSuspendReason',
+            'closeSuspendContext',
           ],
           model: Objective,
           as: 'objectives',
