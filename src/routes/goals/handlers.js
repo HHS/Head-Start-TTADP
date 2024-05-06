@@ -147,8 +147,10 @@ export async function changeGoalStatus(req, res) {
           return status;
         }
 
-        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
-          previousStatus.push(goal.previousStatus);
+        if (goal.statusChanges) {
+          goal.statusChanges.forEach(({ oldStatus, newStatus }) => {
+            previousStatus = [...new Set([...previousStatus, oldStatus, newStatus])];
+          });
         }
       }
 
