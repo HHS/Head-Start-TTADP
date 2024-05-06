@@ -401,6 +401,7 @@ export {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   autoPopulateStatusChangeDates,
+  preventCloseIfObjectivesOpen,
   propagateName,
   beforeValidate,
   beforeUpdate,

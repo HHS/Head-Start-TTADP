@@ -18,9 +18,14 @@ import db, {
   Recipient,
   OtherEntity,
 } from '../models';
-import { FILE_STATUSES } from '../constants';
+import { FILE_STATUSES, OBJECTIVE_STATUS } from '../constants';
 
-import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
+import {
+  saveObjectivesForReport,
+  getObjectiveById,
+  getObjectivesByReportId,
+  updateObjectiveStatusByIds,
+} from './objectives';
 
 jest.mock('bull');
 
@@ -503,6 +508,47 @@ describe('Objectives DB service', () => {
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);
       expect(foundObj.title).toBe('there are many titles but this one is mine');
       expect(foundObj.status).toBe('Not Started');
+    });
+  });
+
+  describe('updateObjectiveStatusByIds', () => {
+    let objective1;
+    let objective2;
+
+    beforeAll(async () => {
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+    });
+
+    it('updates status of objectives', async () => {
+      await updateObjectiveStatusByIds(
+        [objective1.id, objective2.id],
+        OBJECTIVE_STATUS.COMPLETE,
+      );
+
+      await objective1.reload();
+      await objective2.reload();
+
+      expect(objective1.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(objective2.status).toBe(OBJECTIVE_STATUS.COMPLETE);
     });
   });
 });
