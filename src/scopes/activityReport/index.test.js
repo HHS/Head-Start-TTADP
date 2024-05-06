@@ -1457,6 +1457,8 @@ describe('filtersToScopes', () => {
     let possibleReportIds;
 
     let goal;
+    let goalTwo;
+    let goalThree;
     let goalTemplateFieldPrompt;
     let goalFieldResponse;
     let activityReportGoalFieldResponse1;
@@ -1491,6 +1493,26 @@ describe('filtersToScopes', () => {
         createdVia: 'rtr',
       });
 
+      goalTwo = await Goal.create({
+        name: 'Goal Response Test Two',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalThree = await Goal.create({
+        name: 'Goal Response Test Three',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
       // Reports.
       includedReport1 = await ActivityReport.create(draftReport);
       includedReport2 = await ActivityReport.create(draftReport);
@@ -1505,12 +1527,12 @@ describe('filtersToScopes', () => {
 
       const activityReportGoal2 = await ActivityReportGoal.create({
         activityReportId: includedReport2.id,
-        goalId: goal.id,
+        goalId: goalTwo.id,
       });
 
       const activityReportGoal3 = await ActivityReportGoal.create({
         activityReportId: excludedReport.id,
-        goalId: goal.id,
+        goalId: goalThree.id,
       });
 
       // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
@@ -1578,7 +1600,7 @@ describe('filtersToScopes', () => {
 
       // Destroy Goal.
       await Goal.destroy({
-        where: { id: goal.id },
+        where: { id: [goal.id, goalTwo.id, goalThree.id] },
       });
 
       // Destroy Grant.
