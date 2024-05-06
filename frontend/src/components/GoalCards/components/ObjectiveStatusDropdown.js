@@ -44,7 +44,7 @@ export default function ObjectiveStatusDropdown({
 
   return (
     <StatusDropdown
-      label={`Change status for goal ${objectiveId}`}
+      label={`Change status for objective ${objectiveId}`}
       options={options}
       className={className}
       icon={icon}
