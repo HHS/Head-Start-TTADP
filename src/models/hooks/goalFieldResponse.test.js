@@ -229,15 +229,22 @@ describe('goalFieldResponseHooks', () => {
     });
 
     afterAll(async () => {
+      // Get all activity report goals to delete.
+      const activityReportGoals = await ActivityReportGoal.findAll({
+        where: {
+          activityReportId: [
+            report.id,
+            differentGoalReportNotToUpdate.id,
+            approvedReport.id,
+          ],
+        },
+      });
+      const activityReportGoalIds = activityReportGoals.map((item) => item.id);
+
       // Delete activity report goal field response.
       await ActivityReportGoalFieldResponse.destroy({
         where: {
-          id: [
-            activityReportGoalFieldResponse.id,
-            activityReportGoalFieldResponseDiffGoalNotToUpdate.id,
-            activityReportGoalFieldResponseApproved.id,
-            activityReportGoalMissingResponse.id,
-          ],
+          activityReportGoalId: activityReportGoalIds,
         },
       });
 
@@ -247,15 +254,15 @@ describe('goalFieldResponseHooks', () => {
           id: [
             goalFieldResponse.id,
             goalFieldResponseDiffGoalNotToUpdate.id,
-            goalMissingResponse.id,
+            missingGoalFieldResponse.id,
           ],
         },
       });
 
-      // Delete activity report goal.
+      // Delete activity report goals.
       await ActivityReportGoal.destroy({
         where: {
-          activityReportId: [report.id, differentGoalReportNotToUpdate.id],
+          id: activityReportGoalIds,
         },
       });
 
@@ -267,12 +274,14 @@ describe('goalFieldResponseHooks', () => {
       // Delete goal.
       await Goal.destroy({
         where: { id: [goal.id, goalNotToUpdate.id, goalMissingResponse.id] },
+        force: true,
       });
 
       // Delete grant.
       await Grant.destroy({
         where: { id: [grant.id, grantNotToUpdate.id] },
         individualHooks: true,
+        force: true,
       });
 
       // Delete recipient.
