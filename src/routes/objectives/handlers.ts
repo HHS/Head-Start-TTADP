@@ -3,13 +3,11 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { type Request, type Response } from 'express';
 import httpCodes from 'http-codes';
 import { currentUserId } from '../../services/currentUser';
-import db from '../../models';
 import { userById } from '../../services/users';
 import GoalPolicy from '../../policies/goals';
-import { updateObjectiveStatusByIds, verifyObjectiveStatusTransition } from '../../services/objectives';
+import { updateObjectiveStatusByIds, verifyObjectiveStatusTransition, getObjectiveRegionAndGoalStatusByIds } from '../../services/objectives';
 import handleErrors from '../../lib/apiErrorHandler';
 
-const { Objective, Goal, Grant } = db;
 const namespace = 'SERVICE:OBJECTIVES';
 
 const logContext = {
@@ -34,35 +32,7 @@ export async function updateStatus(req: Request, res:Response) {
       return res.status(httpCodes.BAD_REQUEST).json({ message: 'Missing required fields' });
     }
 
-    const objectives = await Objective.findAll({
-      where: {
-        id: ids,
-        attributes: ['id', 'goalId', 'status'],
-      },
-      include: [
-        {
-          model: Goal,
-          attributes: ['id', 'grantId', 'status'],
-          include: [
-            {
-              model: Grant,
-              attributes: ['id', 'regionId'],
-            },
-          ],
-        },
-      ],
-    }) as {
-      id: number,
-      goalId: number,
-      status: string,
-      goal: {
-        id: number,
-        status: string,
-        grant: {
-          regionId: number,
-        },
-      },
-    }[];
+    const objectives = await getObjectiveRegionAndGoalStatusByIds(ids);
 
     // check if objectives are in the same region provided
     const regionIds = objectives.map((o) => o.goal.grant.regionId);
