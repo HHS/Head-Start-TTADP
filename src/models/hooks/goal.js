@@ -368,7 +368,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  preventCloseIfObjectivesOpen(sequelize, instance, options);
+  await preventCloseIfObjectivesOpen(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
   onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
