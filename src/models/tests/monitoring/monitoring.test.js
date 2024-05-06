@@ -123,7 +123,7 @@ describe('MonitoringFindingGrant Model', () => {
     const newRecord = await MonitoringFindingGrant.create({
       findingId: 'F123',
       granteeId: 'G123',
-      statusId: 1,
+      statusId: 2,
       findingType: 'Compliance',
       source: 'Internal Audit',
       correctionDeadLine: new Date(),
@@ -157,18 +157,18 @@ describe('MonitoringFindingGrant Model', () => {
     const findingLink = await MonitoringFindingLink.findOne({ where: { findingId: 'F123' } });
     expect(findingLink).not.toBe(null);
 
-    const statusLink = await MonitoringFindingStatusLink.findOne({ where: { statusId: 1 } });
+    const statusLink = await MonitoringFindingStatusLink.findOne({ where: { statusId: 2 } });
     expect(statusLink).not.toBe(null);
 
     const granteeLink = await MonitoringGranteeLink.findOne({ where: { granteeId: 'G123' } });
     expect(granteeLink).not.toBe(null);
 
     await MonitoringFindingGrant.destroy({
-      where: { statusId: 1, findingId: 'F123', granteeId: 'G123' },
+      where: { statusId: 2, findingId: 'F123', granteeId: 'G123' },
       fource: true,
     });
     await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, fource: true });
-    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 2 }, fource: true });
     await MonitoringGranteeLink.destroy({ where: { granteeId: 'G123' }, fource: true });
   });
 });
@@ -234,7 +234,7 @@ describe('MonitoringFindingHistoryStatus Model', () => {
   test('Insert and Update Record', async () => {
     // Insert a record
     const newRecord = await MonitoringFindingHistoryStatus.create({
-      statusId: 1,
+      statusId: 2,
       name: 'Initial Review',
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
@@ -257,14 +257,14 @@ describe('MonitoringFindingHistoryStatus Model', () => {
     // Add more expect statements for other fields if they were updated
 
     // Check associations
-    const statusLink = await MonitoringFindingHistoryStatusLink.findOne({ where: { statusId: 1 } });
+    const statusLink = await MonitoringFindingHistoryStatusLink.findOne({ where: { statusId: 2 } });
     expect(statusLink).not.toBe(null);
 
     await MonitoringFindingHistoryStatus.destroy({
       where: { statusId: 1 },
       fource: true,
     });
-    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 2 }, fource: true });
   });
 });
 
@@ -497,7 +497,7 @@ describe('MonitoringStandard Model', () => {
   test('Insert and Update Record', async () => {
     // Insert a record
     const newRecord = await MonitoringStandard.create({
-      standardId: 101,
+      standardId: 102,
       contentId: 'Content101',
       citation: 'Reference to relevant law or policy',
       text: 'Description of the standard',
@@ -529,13 +529,13 @@ describe('MonitoringStandard Model', () => {
     // Add more expect statements for other fields if they were updated
 
     // Check associations
-    const standardLink = await MonitoringStandardLink.findOne({ where: { standardId: 101 } });
+    const standardLink = await MonitoringStandardLink.findOne({ where: { standardId: 102 } });
     expect(standardLink).not.toBe(null);
 
     await MonitoringStandard.destroy({
-      where: { standardId: 101 },
+      where: { standardId: 102 },
       fource: true,
     });
-    await MonitoringStandardLink.destroy({ where: { standardId: 101 }, fource: true });
+    await MonitoringStandardLink.destroy({ where: { standardId: 102 }, fource: true });
   });
 });
