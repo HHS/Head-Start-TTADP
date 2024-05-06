@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
@@ -351,8 +350,6 @@ describe('goalFieldResponseHooks', () => {
       });
     });
 
-    // eslint-disable-next-line jest/no-commented-out-tests
-    /*
     it('should sync the goal field response with the activity report goal response', async () => {
       // Assert initial values.
       expect(goalFieldResponse.response).toEqual(['Initial Activity Report Goal Response']);
@@ -495,7 +492,7 @@ describe('goalFieldResponseHooks', () => {
       expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
       expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
     });
-*/
+
     it('should not sync the goal field response with the activity report goal response on approved report', async () => {
       // Update report to approved.
       await ActivityReport.update(
