@@ -346,19 +346,6 @@ const propagateSupportTypeToActivityReportObjective = async (sequelize, instance
   })));
 };
 
-const preventStatusChangeIfGoalClosed = async (sequelize, instance, options) => {
-  if (instance.goalId && instance.changed && instance.changed().includes('status')) {
-    const goal = await sequelize.models.Goal.findOne({
-      attributes: ['status'],
-      where: { id: instance.goalId },
-      transaction: options.transaction,
-    });
-    if (goal && goal.status === GOAL_STATUS.CLOSED) {
-      throw new Error('Cannot change status of objective on closed goal.');
-    }
-  }
-};
-
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -372,7 +359,6 @@ const beforeValidate = async (sequelize, instance, options) => {
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  preventStatusChangeIfGoalClosed(sequelize, instance, options);
   preventTitleChangeWhenOnApprovedAR(sequelize, instance, options);
   autoPopulateStatusChangeDates(sequelize, instance, options);
 };
