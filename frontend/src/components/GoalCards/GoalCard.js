@@ -22,6 +22,7 @@ import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 
 const SESSION_TYPE = 'session';
 
@@ -30,6 +31,7 @@ export const ObjectiveSwitch = ({
   objectivesExpanded,
   regionId,
   goalStatus,
+  dispatchStatusChange,
 }) => {
   if (objective.type === SESSION_TYPE) {
     return (
@@ -46,6 +48,7 @@ export const ObjectiveSwitch = ({
       objectivesExpanded={objectivesExpanded}
       goalStatus={goalStatus}
       regionId={regionId}
+      dispatchStatusChange={dispatchStatusChange}
     />
   );
 };
@@ -58,6 +61,7 @@ ObjectiveSwitch.propTypes = {
   objectivesExpanded: PropTypes.bool.isRequired,
   regionId: PropTypes.number.isRequired,
   goalStatus: PropTypes.string.isRequired,
+  dispatchStatusChange: PropTypes.func.isRequired,
 };
 
 function GoalCard({
@@ -95,7 +99,10 @@ function GoalCard({
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 
-  const atLeastOneObjectiveIsNotCompletedOrSuspended = objectives.some((o) => o.status !== 'Complete' && o.status !== 'Suspended');
+  const {
+    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    dispatchStatusChange,
+  } = useObjectiveStatusMonitor(objectives);
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
@@ -292,6 +299,7 @@ function GoalCard({
           objectivesExpanded={objectivesExpanded}
           goalStatus={goalStatus}
           regionId={parseInt(regionId, DECIMAL_BASE)}
+          dispatchStatusChange={dispatchStatusChange}
         />
       ))}
 

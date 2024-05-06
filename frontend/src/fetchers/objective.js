@@ -6,7 +6,7 @@ const objectiveUrl = join('/', 'api', 'objectives');
 
 export const updateObjectiveStatus = async (ids, regionId, status) => {
   const data = await put(
-    objectiveUrl,
+    join(objectiveUrl, 'status'),
     {
       ids,
       regionId,
