@@ -24,7 +24,7 @@ export async function updateStatus(req: Request, res:Response) {
     const region = parseInt(regionId, DECIMAL_BASE);
     const auth = new GoalPolicy(user, {}, region);
 
-    if (!auth.isAdmin() || !auth.canWriteInRegion()) {
+    if (!auth.isAdmin() && !auth.canWriteInRegion(region)) {
       return res.status(httpCodes.FORBIDDEN).json({ message: 'You do not have permission to update objectives in this region' });
     }
 

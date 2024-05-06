@@ -11,7 +11,7 @@ export default class Goal {
 
   isAdmin() {
     return !isUndefined(
-      this.user.permissions.some((permission) => permission.scopeId === SCOPES.ADMIN),
+      this.user.permissions.find((permission) => permission.scopeId === SCOPES.ADMIN),
     );
   }
 
