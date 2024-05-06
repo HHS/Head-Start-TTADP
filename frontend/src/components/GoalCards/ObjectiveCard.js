@@ -1,18 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
+import { Alert } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { reasonsToMonitor } from '../../pages/ActivityReport/constants';
+import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
+import { updateObjectiveStatus } from '../../fetchers/objective';
 import colors from '../../colors';
 import './ObjectiveCard.css';
-import ObjectiveStatusDropdown from './components/ObjectiveStatusDropdown';
 
 function ObjectiveCard({
   objective,
   objectivesExpanded,
   goalStatus,
   regionId,
+  dispatchStatusChange,
 }) {
   const {
     title,
@@ -23,7 +27,16 @@ function ObjectiveCard({
     grantNumbers,
     activityReports,
     supportType,
+    ids,
   } = objective;
+
+  const [localStatus, setLocalStatus] = useState(status || 'Not Started');
+  const [statusChangeError, setStatusChangeError] = useState();
+
+  // using deep compare as we have an array in the dependency list
+  useDeepCompareEffect(() => {
+    dispatchStatusChange(objective.ids, localStatus);
+  }, [dispatchStatusChange, localStatus, objective.ids]);
 
   const determineReasonMonitorStatus = (reason) => {
     if (reasonsToMonitor.includes(reason)) {
@@ -48,6 +61,19 @@ function ObjectiveCard({
       }
     </ul>
   );
+
+  const onUpdateObjectiveStatus = async (newStatus) => {
+    try {
+      setStatusChangeError(false);
+      await updateObjectiveStatus(ids, regionId, newStatus);
+      setLocalStatus(newStatus);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.log(err);
+      // show an error in the UI
+      setStatusChangeError(true);
+    }
+  };
 
   return (
     <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
@@ -100,13 +126,21 @@ function ObjectiveCard({
 
       <li className="desktop:display-flex padding-bottom-05 flex-align-start">
         <span className="margin-right-3 desktop:text-normal text-bold">Objective status </span>
+        {(statusChangeError && (
+          <Alert type="error" className="margin-top-1">
+            There was an error updating the status of this objective.
+            {' '}
+            For more assistance, please contact support.
+          </Alert>
+        ))}
         <ObjectiveStatusDropdown
-          currentStatus={status}
+          currentStatus={localStatus}
           goalStatus={goalStatus}
           objectiveId={objective.id}
           regionId={regionId}
           className="line-height-sans-5"
-          onUpdateObjectiveStatus={() => {}}
+          onUpdateObjectiveStatus={onUpdateObjectiveStatus}
+
         />
       </li>
     </ul>
@@ -131,6 +165,7 @@ export const objectivePropTypes = PropTypes.shape({
     name: PropTypes.string,
   })),
   supportType: PropTypes.string,
+  ids: PropTypes.arrayOf(PropTypes.number).isRequired,
 });
 
 objectivePropTypes.defaultProps = {
@@ -147,9 +182,11 @@ ObjectiveCard.propTypes = {
   objectivesExpanded: PropTypes.bool.isRequired,
   goalStatus: PropTypes.string,
   regionId: PropTypes.number.isRequired,
+  dispatchStatusChange: PropTypes.func,
 };
 
 ObjectiveCard.defaultProps = {
+  dispatchStatusChange: () => {},
   goalStatus: null,
 };
 
