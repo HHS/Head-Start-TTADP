@@ -368,7 +368,7 @@ export default function Objective({
         onBlurUseIpdCourses={onBlurUseIpdCourses}
         useIpdCourse={objectiveUseIpdCourses}
         useCoursesInputName={objectiveUseIpdCoursesInputName}
-        className="margin-top-2"
+        className="margin-top-3"
       />
 
       <ResourceRepeater
