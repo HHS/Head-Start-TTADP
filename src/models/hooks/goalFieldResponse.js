@@ -62,35 +62,27 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, _option
     const activityReportGoalIds = [...new Set(activityReportGoals.map((item) => item.id))];
 
     // Perform the update.
-    await sequelize.models.ActivityReportGoalFieldResponse.update(
+    const updatedResponses = await sequelize.models.ActivityReportGoalFieldResponse.update(
       { response: instance.response },
       {
         where: {
           activityReportGoalId: activityReportGoalIds,
           goalTemplateFieldPromptId,
         },
+        returning: true,
       },
     );
 
-    // Get all the ActivityReportGoals that are missing a response.
-    const missingResponses = await sequelize.models.ActivityReportGoal.findAll({
-      attributes: ['id'],
-      where: {
-        activityReportId: activityReportIds, // For these reports.
-        goalId, // For this goal.
-      },
-      include: [{
-        required: false,
-        model: sequelize.models.ActivityReportGoalFieldResponse,
-        as: 'activityReportGoalFieldResponses',
-        where: {
-          id: { [Op.is]: null }, // Missing response.
-        },
-      }],
-    });
+    // Get all the ActivityReportGoal ids that were updated.
+    const updatedResponseIds = updatedResponses[1].map((item) => item.id);
+
+    // If the activityReportGoal exists but wasn't updated we know its missing a response.
+    const argsToUpdate = activityReportGoals.filter(
+      (item) => !updatedResponseIds.includes(item.id),
+    );
 
     // Create the missing ActivityReportGoalFieldResponses.
-    await Promise.all(missingResponses.map(async (missingResponse) => {
+    await Promise.all(argsToUpdate.map(async (missingResponse) => {
       await sequelize.models.ActivityReportGoalFieldResponse.create({
         goalTemplateFieldPromptId,
         activityReportGoalId: missingResponse.id,
