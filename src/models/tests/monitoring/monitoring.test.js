@@ -262,7 +262,7 @@ describe('MonitoringFindingHistoryStatus Model', () => {
 
     await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
     await MonitoringFindingHistoryStatus.destroy({
-      where: { statusId: 1, },
+      where: { statusId: 1 },
       fource: true,
     });
   });
