@@ -1,55 +1,90 @@
 /* eslint-disable import/prefer-default-export */
+import { DECIMAL_BASE } from '@ttahub/common';
 import { type Request, type Response } from 'express';
 import httpCodes from 'http-codes';
-import db from '../../models';
 import { currentUserId } from '../../services/currentUser';
+import db from '../../models';
 import { userById } from '../../services/users';
 import GoalPolicy from '../../policies/goals';
-import { updateObjectiveStatusByIds } from '../../services/objectives';
+import { updateObjectiveStatusByIds, verifyObjectiveStatusTransition } from '../../services/objectives';
+import handleErrors from '../../lib/apiErrorHandler';
 
 const { Objective, Goal, Grant } = db;
+const namespace = 'SERVICE:OBJECTIVES';
+
+const logContext = {
+  namespace,
+};
 
 export async function updateStatus(req: Request, res:Response) {
   try {
-  // check permissions
+    // check permissions
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const { regionId } = req.params;
-    const { ids, status } = req.body;
+    const { ids, status, regionId } = req.body;
+    const region = parseInt(regionId, DECIMAL_BASE);
+    const auth = new GoalPolicy(user, {}, region);
 
-    // verify the objectives match the region and recipient
-    const objectives = await Objective.findAll({
-      attributes: ['id', 'goalId', 'status'],
-      where: { id: ids },
-      include: [{
-        model: Goal,
-        attributes: ['id', 'grantId'],
-        required: true,
-        include: [{
-          model: Grant,
-          required: true,
-          attributes: ['id'],
-          where: { regionId },
-        }],
-      }],
-    });
-
-    if (objectives.length !== ids.length) {
-      return res.status(httpCodes.BAD_REQUEST).json({ message: 'Invalid objectives' });
+    if (!auth.isAdmin() || !auth.canWriteInRegion()) {
+      return res.status(httpCodes.FORBIDDEN).json({ message: 'You do not have permission to update objectives in this region' });
     }
 
-    if (!new GoalPolicy(user, {}, regionId).canWriteInRegion()) {
-      return res.status(httpCodes.FORBIDDEN).json({ message: 'You do not have permission to update objectives in this region' });
+    if (!ids || !status) {
+      return res.status(httpCodes.BAD_REQUEST).json({ message: 'Missing required fields' });
+    }
+
+    const objectives = await Objective.findAll({
+      where: {
+        id: ids,
+        attributes: ['id', 'goalId', 'status'],
+      },
+      include: [
+        {
+          model: Goal,
+          attributes: ['id', 'grantId', 'status'],
+          include: [
+            {
+              model: Grant,
+              attributes: ['id', 'regionId'],
+            },
+          ],
+        },
+      ],
+    }) as {
+      id: number,
+      goalId: number,
+      status: string,
+      goal: {
+        id: number,
+        status: string,
+        grant: {
+          regionId: number,
+        },
+      },
+    }[];
+
+    // check if objectives are in the same region provided
+    const regionIds = objectives.map((o) => o.goal.grant.regionId);
+    const uniqueRegionIds = [...new Set(regionIds)];
+
+    if (uniqueRegionIds.length > 1 || uniqueRegionIds[0] !== region) {
+      return res.status(httpCodes.BAD_REQUEST).json({ message: 'Invalid objective ids provided' });
+    }
+
+    // check if status transition is valid
+    const validTransitions = objectives.every((o) => verifyObjectiveStatusTransition(o, status));
+    if (!validTransitions) {
+      return res.status(httpCodes.BAD_REQUEST).json({ message: 'Invalid status transition' });
     }
 
     // call update status service
     await updateObjectiveStatusByIds(ids, status);
 
     return res.status(httpCodes.OK).json({
-      objectives: objectives.map((o: { id: number }) => o.id),
+      objectives: ids,
     });
   } catch (err) {
-    return res.status(httpCodes.INTERNAL_SERVER_ERROR).json({ message: 'An error occurred' });
+    return handleErrors(req, res, err, logContext);
   }
 }

@@ -1,7 +1,11 @@
 import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
-import { OBJECTIVE_STATUS } from '../constants';
-import {
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import db from '../models';
+import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
+import { cacheObjectiveMetadata } from './reportCache';
+
+const {
   Objective,
   ActivityReportObjective,
   Goal,
@@ -10,9 +14,7 @@ import {
   File,
   Course,
   Resource,
-} from '../models';
-import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
-import { cacheObjectiveMetadata } from './reportCache';
+} = db;
 
 export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
@@ -253,7 +255,29 @@ export async function getObjectivesByReportId(reportId) {
   return reduceOtherEntityObjectives(objectives);
 }
 
-export function updateObjectiveStatusByIds(objectiveIds, status) {
+/**
+ * Verifies if the objective status transition is valid
+ *
+ * @param objective Object { goal: { status: string }, status: string}
+ * @param status string
+ * @returns boolean
+ */
+export function verifyObjectiveStatusTransition(objective: {
+  goal: { status: string },
+  status: string,
+}, status: string) {
+  if (objective.goal.status === GOAL_STATUS.CLOSED) {
+    return false;
+  }
+
+  if (objective.status === OBJECTIVE_STATUS.COMPLETE && status === OBJECTIVE_STATUS.NOT_STARTED) {
+    return false;
+  }
+
+  return true;
+}
+
+export function updateObjectiveStatusByIds(objectiveIds: number[], status: string) {
   return Objective.update({
     status,
   }, {
