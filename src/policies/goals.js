@@ -9,6 +9,12 @@ export default class Goal {
     this.regionId = regionId;
   }
 
+  isAdmin() {
+    return !isUndefined(
+      this.user.permissions.some((permission) => permission.scopeId === SCOPES.ADMIN),
+    );
+  }
+
   // this expects goal to have been found with associated data, specifically
   // goalByIdWithActivityReportsAndRegions in services/goals
   // you can see the structure expected in the conditions below
