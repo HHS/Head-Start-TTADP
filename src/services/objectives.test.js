@@ -18,7 +18,7 @@ import db, {
   Recipient,
   OtherEntity,
 } from '../models';
-import { FILE_STATUSES, OBJECTIVE_STATUS } from '../constants';
+import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 
 import {
   saveObjectivesForReport,
@@ -26,6 +26,7 @@ import {
   getObjectivesByReportId,
   updateObjectiveStatusByIds,
   getObjectiveRegionAndGoalStatusByIds,
+  verifyObjectiveStatusTransition,
 } from './objectives';
 import { createGrant, createRecipient } from '../testUtils';
 
@@ -624,6 +625,38 @@ describe('Objectives DB service', () => {
 
       expect(x[1].goal.grant.regionId).toBe(grant.regionId);
       expect(x[1].goal.status).toBe(goal.status);
+    });
+  });
+
+  describe('verifyObjectiveStatusTransition', () => {
+    it('returns true if status transition is valid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(true);
+    });
+
+    it('returns false if status transition is invalid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.COMPLETE,
+      }, OBJECTIVE_STATUS.NOT_STARTED);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if the goal is closed', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.CLOSED,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(false);
     });
   });
 });
