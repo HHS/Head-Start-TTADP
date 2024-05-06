@@ -332,6 +332,20 @@ function reduceTopicsOfDifferingType(topics) {
   return newTopics;
 }
 
+function combineObjectiveIds(existing, objective) {
+  let ids = [...existing.ids];
+
+  if (objective.ids && Array.isArray(objective.ids)) {
+    ids = [...ids, ...objective.ids];
+  }
+
+  if (objective.id) {
+    ids.push(objective.id);
+  }
+
+  return ids;
+}
+
 /**
  *
  * @param {Object} currentModel
@@ -398,7 +412,7 @@ export function reduceObjectivesForRecipientRecord(
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
         existing.grantNumbers = grantNumbers;
-        existing.ids = [...existing.ids, objective.id];
+        existing.ids = combineObjectiveIds(existing, objective);
 
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }

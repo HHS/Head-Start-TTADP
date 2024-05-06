@@ -3,9 +3,9 @@ const {
   autoPopulateStatusChangeDates,
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr,
+  preventCloseIfObjectivesOpen,
 } = require('./goal');
-const { GOAL_STATUS } = require('../../constants');
+const { GOAL_STATUS, OBJECTIVE_STATUS } = require('../../constants');
 const { createRecipient, createGrant, createGoal } = require('../../testUtils');
 const {
   sequelize: db,
@@ -19,6 +19,46 @@ const {
 jest.mock('../../services/resource');
 
 describe('goal hooks', () => {
+  describe('preventCloseIfObjectivesOpen', () => {
+    it('does nothing if instance.changed is not an array', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue({}),
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+
+    it('does nothing is instance.changed does not include status', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(false),
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+    it('does nothing if status is not CLOSED', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(true),
+        status: GOAL_STATUS.IN_PROGRESS,
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+
+    it('throws an error if status is CLOSED and objectives are not closed', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(['status']),
+        status: GOAL_STATUS.CLOSED,
+      };
+      const sequelize = {
+        models: {
+          Objective: {
+            findAll: jest.fn().mockResolvedValue([
+              { status: OBJECTIVE_STATUS.IN_PROGRESS },
+            ]),
+          },
+        },
+      };
+      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow();
+    });
+  });
+
   describe('GoalSimilarityGroup hooks', () => {
     let recipient;
     let grant;

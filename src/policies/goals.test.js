@@ -3,6 +3,32 @@ import Goal from './goals';
 import SCOPES from '../middleware/scopeConstants';
 
 describe('Goals policies', () => {
+  describe('isAdmin', () => {
+    it('returns true if the user is an admin', async () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
+      };
+
+      const policy = new Goal(user);
+      expect(policy.isAdmin()).toBe(true);
+    });
+    it('returns false if the user is not an admin', async () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user);
+      expect(policy.isAdmin()).toBe(false);
+    });
+  });
   describe('canDelete && canEdit', () => {
     it('returns false if the goal is on an approved activity report', async () => {
       const goal = {
