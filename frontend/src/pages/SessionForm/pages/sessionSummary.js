@@ -505,7 +505,7 @@ const SessionSummary = ({ datePickerKey }) => {
         onBlurUseIpdCourses={onBlurUseIpdCourses}
         useIpdCourse={objectiveUseIpdCourses}
         useCoursesInputName={objectiveUseIpdCoursesInputName}
-        className="margin-top-2"
+        className="margin-top-3"
       />
       <div>
         <p className="usa-prose margin-bottom-0">
