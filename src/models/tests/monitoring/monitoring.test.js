@@ -60,6 +60,13 @@ describe('MonitoringClassSummary Model', () => {
 
     const grantLink = await GrantNumberLink.findOne({ where: { grantNumber: 'Grant123' } });
     expect(grantLink).not.toBe(null);
+
+    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant123' }, fource: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review123' }, fource: true });
+    await MonitoringClassSummary.destroy({
+      where: { grantNumber: 'Grant123', reviewId: 'Review123' },
+      fource: true,
+    });
   });
 });
 
@@ -100,6 +107,13 @@ describe('MonitoringFinding Model', () => {
 
     const findingLink = await MonitoringFindingLink.findOne({ where: { findingId: '123' } });
     expect(findingLink).not.toBe(null);
+
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: '123' }, fource: true });
+    await MonitoringFinding.destroy({
+      where: { statusId: 1, findingId: '123' },
+      fource: true,
+    });
   });
 });
 
@@ -148,6 +162,14 @@ describe('MonitoringFindingGrant Model', () => {
 
     const granteeLink = await MonitoringGranteeLink.findOne({ where: { granteeId: 'G123' } });
     expect(granteeLink).not.toBe(null);
+
+    await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, fource: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringGranteeLink.destroy({ where: { granteeId: 'G123' }, fource: true });
+    await MonitoringFindingGrant.destroy({
+      where: { statusId: 1, findingId: 'F123', granteeId: 'G123' },
+      fource: true,
+    });
   });
 });
 
@@ -197,6 +219,14 @@ describe('MonitoringFindingHistory Model', () => {
 
     const statusLink = await MonitoringFindingHistoryStatusLink.findOne({ where: { statusId: 1 } });
     expect(statusLink).not.toBe(null);
+
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'R123' }, fource: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, fource: true });
+    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingHistory.destroy({
+      where: { statusId: 1, findingId: 'F123', reviewId: 'R123' },
+      fource: true,
+    });
   });
 });
 
@@ -229,6 +259,12 @@ describe('MonitoringFindingHistoryStatus Model', () => {
     // Check associations
     const statusLink = await MonitoringFindingHistoryStatusLink.findOne({ where: { statusId: 1 } });
     expect(statusLink).not.toBe(null);
+
+    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingHistoryStatus.destroy({
+      where: { statusId: 1, },
+      fource: true,
+    });
   });
 });
 
@@ -265,6 +301,13 @@ describe('MonitoringFindingStandard Model', () => {
 
     const findingLink = await MonitoringFindingLink.findOne({ where: { findingId: 'Finding001' } });
     expect(findingLink).not.toBe(null);
+
+    await MonitoringStandardLink.destroy({ where: { standardId: 101 }, fource: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'Finding001' }, fource: true });
+    await MonitoringFindingStandard.destroy({
+      where: { findingId: 'Finding001', standardId: 101 },
+      fource: true,
+    });
   });
 });
 
@@ -297,6 +340,12 @@ describe('MonitoringFindingStatus Model', () => {
     // Check associations
     const statusLink = await MonitoringFindingStatusLink.findOne({ where: { statusId: 1 } });
     expect(statusLink).not.toBe(null);
+
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingStatus.destroy({
+      where: { statusId: 1 },
+      fource: true,
+    });
   });
 });
 
@@ -344,6 +393,13 @@ describe('MonitoringReview Model', () => {
 
     const statusLink = await MonitoringReviewStatusLink.findOne({ where: { statusId: 1 } });
     expect(statusLink).not.toBe(null);
+
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review001' }, fource: true });
+    await MonitoringReviewStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringReview.destroy({
+      where: { reviewId: 'Review001', statusId: 1 },
+      fource: true,
+    });
   });
 });
 
@@ -388,6 +444,14 @@ describe('MonitoringReviewGrantee Model', () => {
 
     const grantNumberLink = await GrantNumberLink.findOne({ where: { grantNumber: 'Grant100' } });
     expect(grantNumberLink).not.toBe(null);
+
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review100' }, fource: true });
+    await MonitoringGranteeLink.destroy({ where: { granteeId: 'Grantee100' }, fource: true });
+    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant100' }, fource: true });
+    await MonitoringReviewGrantee.destroy({
+      where: { grantNumber: 'Grant100', granteeId: 'Grantee100', reviewId: 'Review100' },
+      fource: true,
+    });
   });
 });
 
@@ -420,6 +484,12 @@ describe('MonitoringReviewStatus Model', () => {
     // Check associations
     const statusLink = await MonitoringReviewStatusLink.findOne({ where: { statusId: 2 } });
     expect(statusLink).not.toBe(null);
+
+    await MonitoringReviewStatusLink.destroy({ where: { statusId: 2 }, fource: true });
+    await MonitoringReviewStatus.destroy({
+      where: { statusId: 2 },
+      fource: true,
+    });
   });
 });
 
@@ -461,5 +531,11 @@ describe('MonitoringStandard Model', () => {
     // Check associations
     const standardLink = await MonitoringStandardLink.findOne({ where: { standardId: 101 } });
     expect(standardLink).not.toBe(null);
+
+    await MonitoringStandardLink.destroy({ where: { standardId: 101 }, fource: true });
+    await MonitoringStandard.destroy({
+      where: { standardId: 101 },
+      fource: true,
+    });
   });
 });
