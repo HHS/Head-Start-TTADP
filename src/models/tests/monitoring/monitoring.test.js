@@ -179,7 +179,7 @@ describe('MonitoringFindingHistory Model', () => {
     const newRecord = await MonitoringFindingHistory.create({
       reviewId: 'R123',
       findingHistoryId: 'FH123',
-      findingId: 'F123',
+      findingId: 'F124',
       statusId: 1,
       narrative: 'Initial narrative',
       ordinal: 1,
@@ -193,7 +193,7 @@ describe('MonitoringFindingHistory Model', () => {
     // Verify the inserted record
     expect(newRecord.reviewId).toBe('R123');
     expect(newRecord.findingHistoryId).toBe('FH123');
-    expect(newRecord.findingId).toBe('F123');
+    expect(newRecord.findingId).toBe('F124');
     expect(newRecord.statusId).toBe(1);
     expect(newRecord.narrative).toBe('Initial narrative');
     expect(newRecord.ordinal).toBe(1);
@@ -214,18 +214,18 @@ describe('MonitoringFindingHistory Model', () => {
     const reviewLink = await MonitoringReviewLink.findOne({ where: { reviewId: 'R123' } });
     expect(reviewLink).not.toBe(null);
 
-    const findingLink = await MonitoringFindingLink.findOne({ where: { findingId: 'F123' } });
+    const findingLink = await MonitoringFindingLink.findOne({ where: { findingId: 'F124' } });
     expect(findingLink).not.toBe(null);
 
     const statusLink = await MonitoringFindingHistoryStatusLink.findOne({ where: { statusId: 1 } });
     expect(statusLink).not.toBe(null);
 
     await MonitoringFindingHistory.destroy({
-      where: { statusId: 1, findingId: 'F123', reviewId: 'R123' },
+      where: { statusId: 1, findingId: 'F124', reviewId: 'R123' },
       fource: true,
     });
     await MonitoringReviewLink.destroy({ where: { reviewId: 'R123' }, fource: true });
-    await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, fource: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'F124' }, fource: true });
     await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
   });
 });
@@ -316,7 +316,7 @@ describe('MonitoringFindingStatus Model', () => {
   test('Insert and Update Record', async () => {
     // Insert a record
     const newRecord = await MonitoringFindingStatus.create({
-      statusId: 1,
+      statusId: 3,
       name: 'Pending Review',
       sourceCreatedAt: new Date(),
       sourceUpdatedAt: new Date(),
@@ -324,7 +324,7 @@ describe('MonitoringFindingStatus Model', () => {
     });
 
     // Verify the inserted record
-    expect(newRecord.statusId).toBe(1);
+    expect(newRecord.statusId).toBe(3);
     expect(newRecord.name).toBe('Pending Review');
     // Add more expect statements for other fields as needed
 
@@ -339,14 +339,14 @@ describe('MonitoringFindingStatus Model', () => {
     // Add more expect statements for other fields if they were updated
 
     // Check associations
-    const statusLink = await MonitoringFindingStatusLink.findOne({ where: { statusId: 1 } });
+    const statusLink = await MonitoringFindingStatusLink.findOne({ where: { statusId: 3 } });
     expect(statusLink).not.toBe(null);
 
     await MonitoringFindingStatus.destroy({
-      where: { statusId: 1 },
+      where: { statusId: 3 },
       fource: true,
     });
-    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 3 }, fource: true });
   });
 });
 
