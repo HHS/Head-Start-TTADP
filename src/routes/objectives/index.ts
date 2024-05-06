@@ -10,7 +10,7 @@ const router = express.Router();
 const context = 'objectives';
 
 router.put(
-  '/region/:regionId/:recipientId',
+  '/region/:regionId/status',
   authMiddleware,
   checkRegionIdParam,
   transactionWrapper(updateStatus, context),
