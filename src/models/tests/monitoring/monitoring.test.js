@@ -138,7 +138,7 @@ describe('MonitoringFindingGrant Model', () => {
     // Verify the inserted record
     expect(newRecord.findingId).toBe('F123');
     expect(newRecord.granteeId).toBe('G123');
-    expect(newRecord.statusId).toBe(1);
+    expect(newRecord.statusId).toBe(2);
     expect(newRecord.findingType).toBe('Compliance');
     expect(newRecord.source).toBe('Internal Audit');
     // Add more expect statements for other fields as needed
@@ -242,7 +242,7 @@ describe('MonitoringFindingHistoryStatus Model', () => {
     });
 
     // Verify the inserted record
-    expect(newRecord.statusId).toBe(1);
+    expect(newRecord.statusId).toBe(2);
     expect(newRecord.name).toBe('Initial Review');
     // Add more expect statements for other fields as needed
 
@@ -307,6 +307,7 @@ describe('MonitoringFindingStandard Model', () => {
       fource: true,
     });
     await MonitoringStandardLink.destroy({ where: { standardId: 101 }, fource: true });
+    await MonitoringStandardLink.destroy({ where: { standardId: 100 }, fource: true });
     await MonitoringFindingLink.destroy({ where: { findingId: 'Finding001' }, fource: true });
   });
 });
@@ -510,7 +511,7 @@ describe('MonitoringStandard Model', () => {
     });
 
     // Verify the inserted record
-    expect(newRecord.standardId).toBe(101);
+    expect(newRecord.standardId).toBe(102);
     expect(newRecord.contentId).toBe('Content101');
     expect(newRecord.citation).toBe('Reference to relevant law or policy');
     expect(newRecord.text).toBe('Description of the standard');
