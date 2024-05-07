@@ -37,6 +37,8 @@ describe('ObjectiveCard', () => {
     );
   };
 
+  afterEach(() => fetchMock.restore());
+
   it('renders legacy reports', async () => {
     const objective = {
       id: 123,
@@ -101,6 +103,53 @@ describe('ObjectiveCard', () => {
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
     await waitFor(() => {
       expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'Complete');
+    });
+  });
+
+  it('suspends an objective', async () => {
+    const objective = {
+      id: 123,
+      ids: [123],
+      title: 'This is an objective',
+      endDate: '2020-01-01',
+      reasons: ['reason1', 'reason2'],
+      status: 'In Progress',
+      grantNumbers: ['grant1', 'grant2'],
+      topics: [],
+      supportTypes: ['Planning'],
+      activityReports: [],
+    };
+    const dispatchStatusChange = jest.fn();
+    renderObjectiveCard(objective, dispatchStatusChange);
+
+    expect(screen.getByText('This is an objective')).toBeInTheDocument();
+
+    const changeButton = await screen.findByRole('button', { name: /change status/i });
+    act(() => {
+      userEvent.click(changeButton);
+    });
+
+    expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'In Progress');
+    fetchMock.put('/api/objectives/status', { ids: [123], status: 'Suspended' });
+
+    const suspendButton = await screen.findByRole('button', { name: /Suspended/i });
+    act(() => {
+      userEvent.click(suspendButton);
+    });
+
+    const radio = await screen.findByRole('radio', { name: /Regional Office request/i });
+    act(() => {
+      userEvent.click(radio);
+    });
+
+    const submitButton = await screen.findByRole('button', { name: /submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    expect(fetchMock.called('/api/objectives/status')).toBe(true);
+    await waitFor(() => {
+      expect(dispatchStatusChange).toHaveBeenCalledWith([123], 'Suspended');
     });
   });
 });
