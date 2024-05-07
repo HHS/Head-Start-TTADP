@@ -1293,7 +1293,7 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
     ],
   });
 
-  if (goal.statusChanges.length > 0) {
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
     goal.previousStatus = goal.statusChanges[goal.statusChanges.length - 1].oldStatus;
   }
 
