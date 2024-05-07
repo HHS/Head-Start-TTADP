@@ -459,7 +459,7 @@ function wasGoalPreviouslyClosed(goal) {
 }
 
 function calculatePreviousStatus(goal) {
-  if (goal.statusChanges) {
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
     // statusChanges is an array of { oldStatus, newStatus }.
     const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
     if (lastStatusChange) {
