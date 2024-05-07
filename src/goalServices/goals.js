@@ -1256,7 +1256,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  const goal = Goal.findOne({
+  let goal = Goal.findOne({
     attributes: [
       'name',
       'id',
@@ -1292,6 +1292,10 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
       },
     ],
   });
+
+  if (goal.statusChanges.length > 0) {
+    goal.previousStatus = goal.statusChanges[goal.statusChanges.length - 1].oldStatus;
+  }
 
   return goal;
 }
@@ -2778,6 +2782,12 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
       id: group,
     },
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus', 'newStatus'],
+        required: false,
+      },
       {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
