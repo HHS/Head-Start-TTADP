@@ -31,6 +31,7 @@ module.exports = {
       // | lastCompletedAt         | YES         | timestamp with time zone |
       // +-------------------------+-------------+--------------------------+
       await Promise.all([
+        queryInterface.removeColumn('Goals', 'closeSuspendReason', { transaction }),
         queryInterface.removeColumn('Goals', 'closeSuspendContext', { transaction }),
         queryInterface.removeColumn('Goals', 'previousStatus', { transaction }),
         queryInterface.removeColumn('Goals', 'firstNotStartedAt', { transaction }),
