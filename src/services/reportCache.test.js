@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, GOAL_SOURCES } from '@ttahub/common';
@@ -143,8 +142,7 @@ describe('cacheCourses', () => {
     expect(aroCourses[0].courseId).toEqual(courseTwo.id);
   });
 });
-// eslint-disable-next-line jest/no-commented-out-tests
-/*
+
 describe('cacheGoalMetadata', () => {
   let activityReport;
   let goal;
@@ -385,7 +383,6 @@ describe('cacheGoalMetadata', () => {
     expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
   });
 });
-*/
 
 describe('cacheObjectiveMetadata', () => {
   const mockUser = {
@@ -604,7 +601,7 @@ describe('cacheObjectiveMetadata', () => {
     await Promise.all(roles.map(async (role) => role.destroy()));
     await Promise.all(files.map(async (file) => file.destroy()));
     await User.destroy({ where: { id: user.id } });
-    await db.sequelize.close();
+    db.sequelize.close();
   });
 
   describe('cache', () => {
