@@ -433,7 +433,7 @@ export function reduceObjectivesForRecipientRecord(
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
         supportType: supportType || null,
-        ids: [objective.id],
+        ids: combineObjectiveIds({ ids: [] }, objective),
       };
 
       formattedObjective.topics.sort();

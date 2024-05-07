@@ -106,7 +106,7 @@ function ObjectiveCard({
 
   return (
     <>
-      <ul className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
+      <ul data-testid="objectiveList" className="ttahub-goal-card__objective-list usa-list usa-list--unstyled padding-2 margin-top-2 bg-base-lightest radius-lg" hidden={!objectivesExpanded}>
         <li className="desktop:display-flex padding-bottom-05 flex-align-start">
           <span className="margin-right-3 desktop:text-normal text-bold">Objective </span>
           <div>{title}</div>

@@ -122,7 +122,7 @@ function GoalCard({
       setInvalidStatusChangeAttempted(true);
       return;
     }
-
+    setInvalidStatusChangeAttempted(false);
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, ids, goalStatus);
