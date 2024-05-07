@@ -505,15 +505,15 @@ const SessionSummary = ({ datePickerKey }) => {
         onBlurUseIpdCourses={onBlurUseIpdCourses}
         useIpdCourse={objectiveUseIpdCourses}
         useCoursesInputName={objectiveUseIpdCoursesInputName}
-        className="margin-top-3"
+        className="margin-y-3"
       />
-      <div>
-        <p className="usa-prose margin-bottom-0">
+      <Fieldset>
+        <legend>
           Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
           />
-        </p>
+        </legend>
         <div className="ttahub-resource-repeater">
           {resources.map((r, i) => {
             const fieldErrors = errors.objectiveResources ? errors.objectiveResources[i] : null;
@@ -532,10 +532,10 @@ const SessionSummary = ({ datePickerKey }) => {
           })}
         </div>
 
-        <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
+        <div className="ttahub-resource-repeater--add-new margin-top-1">
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
-      </div>
+      </Fieldset>
 
       <Fieldset className="ttahub-objective-files margin-top-3">
         <legend>

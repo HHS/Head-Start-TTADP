@@ -112,7 +112,8 @@
     ],
     "ignorePatterns": [
       "build/*",
-      "node_modules/*"
+      "node_modules/*",
+      "public/*"
     ],
     "rules": {
       "react/jsx-filename-extension": [
