@@ -137,7 +137,7 @@ export async function saveObjectivesForReport(objectives, report) {
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
 }
 
-export async function getObjectiveById(objectiveId) {
+export async function getObjectiveById(objectiveId: number) {
   return Objective.findOne({
     attributes: [
       'id',
@@ -313,9 +313,16 @@ export function verifyObjectiveStatusTransition(objective: {
   return true;
 }
 
-export function updateObjectiveStatusByIds(objectiveIds: number[], status: string) {
+export function updateObjectiveStatusByIds(
+  objectiveIds: number[],
+  status: string,
+  closeSuspendReason = '',
+  closeSuspendContext = '',
+) {
   return Objective.update({
     status,
+    closeSuspendReason,
+    closeSuspendContext,
   }, {
     where: {
       id: objectiveIds,

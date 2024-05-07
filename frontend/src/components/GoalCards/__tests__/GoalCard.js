@@ -40,6 +40,7 @@ describe('GoalCard', () => {
     objectives: [
       {
         id: 1,
+        ids: [1],
         endDate: '2022-01-01',
         title: 'Objective 1',
         arNumber: 'AR-1',
@@ -95,6 +96,7 @@ describe('GoalCard', () => {
               isChecked={false}
               marginX={3}
               marginY={2}
+              showReopenGoalModal={() => {}}
           // eslint-disable-next-line react/jsx-props-no-spreading
               {...props}
             />
@@ -434,8 +436,10 @@ describe('GoalCard', () => {
           activityReports: [],
           grantNumbers: ['G-1'],
           topics: [],
+          ids: [1],
         },
         {
+          ids: [2],
           id: 2,
           title: 'Objective 2',
           arNumber: 'AR-2',
