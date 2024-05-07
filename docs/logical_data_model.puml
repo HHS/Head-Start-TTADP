@@ -422,7 +422,6 @@ class Goals{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
-!issue='column missing from model' <color:#d54309>closeSuspendReason</color>: enum
  createdVia : enum
  deletedAt : timestamp with time zone
  endDate : date
