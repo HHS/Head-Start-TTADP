@@ -1256,7 +1256,7 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  let goal = Goal.findOne({
+  const goal = Goal.findOne({
     attributes: [
       'name',
       'id',
