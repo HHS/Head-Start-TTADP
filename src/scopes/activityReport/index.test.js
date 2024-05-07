@@ -1519,6 +1519,18 @@ describe('filtersToScopes', () => {
       excludedReport = await ActivityReport.create(draftReport);
       possibleReportIds = [includedReport1.id, includedReport2.id, excludedReport.id];
 
+      // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
+      goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+        where: { title: 'FEI root cause' },
+      });
+
+      // Create GoalFieldResponse.
+      goalFieldResponse = await GoalFieldResponse.create({
+        goalId: goal.id,
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: ['Community Partnerships'],
+      });
+
       // ActivityReportGoals.
       const activityReportGoal1 = await ActivityReportGoal.create({
         activityReportId: includedReport1.id,
@@ -1533,18 +1545,6 @@ describe('filtersToScopes', () => {
       const activityReportGoal3 = await ActivityReportGoal.create({
         activityReportId: excludedReport.id,
         goalId: goalThree.id,
-      });
-
-      // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
-      goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
-        where: { title: 'FEI root cause' },
-      });
-
-      // Create GoalFieldResponse.
-      goalFieldResponse = await GoalFieldResponse.create({
-        goalId: goal.id,
-        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
-        response: ['Community Partnerships'],
       });
 
       // Create ActivityReportGoalFieldResponse.
