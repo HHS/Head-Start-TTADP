@@ -205,7 +205,7 @@ describe('migration', () => {
       const valuesToRemove = ['value1', 'value2'];
       queryInterface.sequelize.query.mockResolvedValue([[{ exists: true }]]);
       await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
-      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(6);
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(8);
     });
 
     it('should remove specified values and recreate enum with FEATURE_FLAGS', async () => {
