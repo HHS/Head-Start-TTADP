@@ -51,6 +51,10 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const { DataTypes } = Sequelize;
       await Promise.all([
+        queryInterface.addColumn('Goals', 'closeSuspendReason', {
+          type: DataTypes.TEXT,
+          allowNull: true,
+        }, { transaction }),
         queryInterface.addColumn('Goals', 'closeSuspendContext', {
           type: DataTypes.TEXT,
           allowNull: true,
