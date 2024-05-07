@@ -985,7 +985,7 @@ export async function downloadAllReports(req, res) {
     const userId = await currentUserId(req, res);
     const readRegions = await setReadRegions(req.query, userId);
 
-    const ids = req.query.id || [];
+    const ids = [(req.query.id || [])].flat();
 
     const reports = await getAllDownloadableActivityReports(
       readRegions['region.in'],
