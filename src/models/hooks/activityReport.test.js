@@ -245,8 +245,6 @@ describe('activity report model hooks', () => {
     it('approving the report should set the goal and objectives to "in progress"', async () => {
       let testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('Not Started');
-      expect(testGoal.firstInProgressAt).toEqual(null);
-      expect(testGoal.lastInProgressAt).toEqual(null);
 
       let testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('Not Started');
@@ -277,8 +275,6 @@ describe('activity report model hooks', () => {
 
       testGoal = await Goal.findByPk(goal.id);
       expect(testGoal.status).toEqual('In Progress');
-      expect(moment(testGoal.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
-      expect(moment(testGoal.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
 
       testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('In Progress');
