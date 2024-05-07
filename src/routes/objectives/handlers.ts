@@ -20,7 +20,13 @@ export async function updateStatus(req: Request, res:Response) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const { ids, status, regionId } = req.body;
+    const {
+      ids,
+      status,
+      regionId,
+      closeSuspendReason,
+      closeSuspendContext,
+    } = req.body;
     const region = parseInt(regionId, DECIMAL_BASE);
     const auth = new GoalPolicy(user, {}, region);
 
@@ -49,7 +55,7 @@ export async function updateStatus(req: Request, res:Response) {
     }
 
     // call update status service
-    await updateObjectiveStatusByIds(ids, status);
+    await updateObjectiveStatusByIds(ids, status, closeSuspendReason, closeSuspendContext);
 
     return res.status(httpCodes.OK).json({
       objectives: ids,

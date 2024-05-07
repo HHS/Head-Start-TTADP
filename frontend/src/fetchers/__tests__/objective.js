@@ -9,12 +9,20 @@ describe('objectives fetcher', () => {
     const ids = [1, 2, 3];
     const regionId = 1;
     const status = 'In Progress';
+    const closeSuspendContext = '';
+    const closeSuspendReason = '';
     fetchMock.put('/api/objectives/status', { success: true });
     const data = await updateObjectiveStatus(ids, regionId, status);
     expect(fetchMock.lastUrl()).toBe('/api/objectives/status');
     expect(fetchMock.lastOptions()).toMatchObject({
       method: 'PUT',
-      body: JSON.stringify({ ids, regionId, status }),
+      body: JSON.stringify({
+        ids,
+        regionId,
+        status,
+        closeSuspendReason,
+        closeSuspendContext,
+      }),
     });
 
     expect(data).toEqual({ success: true });
