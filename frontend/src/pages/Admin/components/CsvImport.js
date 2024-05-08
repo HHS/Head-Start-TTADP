@@ -93,8 +93,10 @@ export default function CsvImport(
 
     // Verify correct encoding.
     const encodingInfo = await languageEncoding(files[0]);
+    console.log('enconding', encodingInfo.encoding.toLowerCase());
     if (encodingInfo.encoding.toLowerCase() !== 'utf-8') {
       setError('Please upload a CSV file with UTF-8 encoding.');
+      return;
     }
 
     const reader = new FileReader();
@@ -260,7 +262,7 @@ export default function CsvImport(
                   </ul>
                 </div>
               )}
-              <Button className="margin-top-2" type="button" onClick={importCsvFile}>
+              <Button className="margin-top-2" type="button" onClick={importCsvFile} disabled={error}>
                 Upload
                 {' '}
                 { typeName }
