@@ -38,6 +38,11 @@ export default function CsvImport(
 
   const importCsvFile = async () => {
     try {
+      // If errors return.
+      if (error) {
+        return;
+      }
+
       // Reset summary info.
       setCreated([]);
       setSkipped([]);
