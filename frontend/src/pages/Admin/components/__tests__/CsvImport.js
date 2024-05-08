@@ -488,6 +488,9 @@ describe('CsvImport', () => {
   });
 
   it('displays csv encoding error', async () => {
+    // Add a post to be called once the error is cleared.
+    fetchMock.post(testCsvUrl, { status: 200, body: { success: false, count: 0 } });
+
     languageEncoding.mockImplementationOnce(() => Promise.resolve({ encoding: 'ansi' }));
     const history = createMemoryHistory();
     render(
@@ -517,7 +520,7 @@ describe('CsvImport', () => {
     expect(error).toBeVisible();
 
     // Assert button 'Upload csv reports' is visible.
-    const uploadButton = await screen.findByRole('button', { name: /Upload test CSV/i });
+    let uploadButton = await screen.findByRole('button', { name: /Upload test CSV/i });
 
     // click the upload button.
     userEvent.click(uploadButton);
@@ -531,10 +534,17 @@ describe('CsvImport', () => {
     userEvent.click(fileInput);
 
     act(async () => {
-    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+      // Load good csv.
       const csvFile = new File([goodTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
       userEvent.upload(fileInput, csvFile);
       await waitFor(() => expect(screen.queryAllByText(/Please upload a CSV file with UTF-8 encoding./i).length).toBe(0));
     });
+
+    // click the upload button.
+    uploadButton = await screen.findByRole('button', { name: /Upload test CSV/i });
+    userEvent.click(uploadButton);
+
+    // Make sure the fetch event has fired now that we no longer have an error.
+    expect(fetchMock.calls(testCsvUrl).length).toBe(1);
   });
 });

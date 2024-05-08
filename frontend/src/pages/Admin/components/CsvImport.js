@@ -266,7 +266,7 @@ export default function CsvImport(
                   </ul>
                 </div>
               )}
-              <Button className="margin-top-2" type="button" onClick={importCsvFile} disabled={error}>
+              <Button className="margin-top-2" type="button" onClick={importCsvFile}>
                 Upload
                 {' '}
                 { typeName }
