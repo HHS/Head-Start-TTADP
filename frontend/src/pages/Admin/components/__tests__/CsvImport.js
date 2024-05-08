@@ -257,7 +257,7 @@ describe('CsvImport', () => {
       userEvent.upload(fileInput, file);
 
       // Assert to see correct import count.
-      await waitFor(() => expect(screen.queryAllByText(/2 test csv will be imported./i)).toBeVisible());
+      await waitFor(() => expect(screen.getByText(/2 test csv will be imported./i)).toBeVisible());
     });
 
     // Assert button 'Upload test csv' is visible.
