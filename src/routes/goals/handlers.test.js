@@ -598,42 +598,6 @@ describe('changeGoalStatus', () => {
     await changeGoalStatus(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
-
-  it('sets reason to "Unknown" when no reason is provided', async () => {
-    const req = {
-      body: {
-        goalIds: [100000],
-        newStatus: 'New Status',
-        closeSuspendContext: 'Sample context.',
-        regionId: 2,
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        },
-      ],
-    });
-
-    updateGoalStatusById.mockResolvedValueOnce(goalWhere);
-    await changeGoalStatus(req, mockResponse);
-    expect(mockResponse.json).toHaveBeenCalledWith(goalWhere);
-
-    expect(updateGoalStatusById).toHaveBeenCalledWith(
-      [100000],
-      1,
-      undefined,
-      'New Status',
-      'Unknown',
-      'Sample context.',
-    );
-  });
 });
 
 describe('deleteGoal', () => {

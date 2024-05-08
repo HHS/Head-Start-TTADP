@@ -122,17 +122,14 @@ export async function reopenGoal(req, res) {
 
 export async function changeGoalStatus(req, res) {
   try {
-    let { closeSuspendReason } = req.body;
     const {
       goalIds,
       newStatus,
+      closeSuspendReason,
       closeSuspendContext,
       oldStatus,
     } = req.body;
 
-    // Since reason cannot be null, but sometimes we just can't know the reason (or we don't ask),
-    // a default value of "Unknown" is used.
-    closeSuspendReason = closeSuspendReason?.trim() || 'Unknown';
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
