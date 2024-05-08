@@ -601,7 +601,7 @@ describe('cacheObjectiveMetadata', () => {
     await Promise.all(roles.map(async (role) => role.destroy()));
     await Promise.all(files.map(async (file) => file.destroy()));
     await User.destroy({ where: { id: user.id } });
-    db.sequelize.close();
+    await db.sequelize.close();
   });
 
   describe('cache', () => {
