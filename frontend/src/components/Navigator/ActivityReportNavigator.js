@@ -90,7 +90,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => [
  */
 export const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
-    return false;
+    return true;
   }
 
   const richTextEditors = document.querySelectorAll('.rdw-editor-main');
@@ -207,6 +207,7 @@ const ActivityReportNavigator = ({
     } else {
       newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
     }
+
     return newPageState;
   };
   const onSaveForm = async (isAutoSave = false) => {
@@ -502,6 +503,7 @@ const ActivityReportNavigator = ({
       // update form data
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
+
       if (allowUpdateFormData) {
         updateFormData(data);
       }

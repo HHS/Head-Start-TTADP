@@ -9,6 +9,7 @@ import PrintSummary from '../PrintSummary';
 import './index.scss';
 import { Accordion } from '../../../../components/Accordion';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import UserContext from '../../../../UserContext';
 
 const ReviewSubmit = ({
   onSubmit,
@@ -28,6 +29,15 @@ const ReviewSubmit = ({
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [reviewed, updateReviewed] = useState(false);
   const [error, updateError] = useState();
+
+  const { user } = useContext(UserContext);
+
+  const isCreator = user.id === formData.userId;
+  const isDraft = formData.calculatedStatus === REPORT_STATUSES.DRAFT;
+  const isCollaborator = formData.activityReportCollaborators
+  && formData.activityReportCollaborators.find((u) => u.userId === user.id);
+
+  const creatorOrCollaborator = (isCreator || !!isCollaborator);
 
   const onFormSubmit = async (data) => {
     try {
@@ -79,7 +89,7 @@ const ReviewSubmit = ({
         <title>Review and Submit</title>
       </Helmet>
       <PrintSummary reportCreator={reportCreator} />
-      {!isApprover
+      {(!isApprover || (isDraft && creatorOrCollaborator))
         && (
           <Submitter
             availableApprovers={availableApprovers}
@@ -96,7 +106,7 @@ const ReviewSubmit = ({
             </>
           </Submitter>
         )}
-      {isApprover
+      {(isApprover && !isDraft)
         && (
           <Approver
             availableApprovers={availableApprovers}
@@ -135,6 +145,11 @@ ReviewSubmit.propTypes = {
   formData: PropTypes.shape({
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
+    submissionStatus: PropTypes.string,
+    userId: PropTypes.number,
+    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
+      userId: PropTypes.number,
+    })),
   }).isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string.isRequired,
