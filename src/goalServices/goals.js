@@ -2397,7 +2397,7 @@ export async function updateGoalStatusById(
 ) {
   // Since reason cannot be null, but sometimes we just can't know the reason (or we don't ask),
   // a default value of "Unknown" is used.
-  closeSuspendReason = closeSuspendReason?.trim() || 'Unknown';
+  const reason = closeSuspendReason?.trim() || 'Unknown';
 
   // first, we verify that the transition is allowed
   const allowed = verifyAllowedGoalStatusTransition(
@@ -2415,7 +2415,7 @@ export async function updateGoalStatusById(
     goalId,
     userId,
     newStatus,
-    reason: closeSuspendReason,
+    reason,
     context: closeSuspendContext,
   })));
 }
