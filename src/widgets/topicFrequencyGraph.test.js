@@ -198,7 +198,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'First Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -206,7 +205,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Second Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -214,7 +212,6 @@ describe('Topics and frequency graph widget', () => {
       name: 'Third Topics Goal',
       status: 'In Progress',
       grantId: GRANT_ID,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 

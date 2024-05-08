@@ -119,7 +119,6 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
       name: 'Goal shared between two reports',
       status: 'In Progress',
       grantId: grant.id,
-      previousStatus: 'Not Started',
     });
 
     // Objective.

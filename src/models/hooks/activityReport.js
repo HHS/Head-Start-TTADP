@@ -780,13 +780,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           context: null,
           transaction: options.transaction,
         });
-
-        if (instance.endDate) {
-          if (!goal.firstInProgressAt) {
-            goal.set('firstInProgressAt', instance.endDate);
-          }
-          goal.set('lastInProgressAt', instance.endDate);
-        }
       }
       // removing hooks because we don't want to trigger the automatic status change
       // (i.e. last in progress at will be overwritten)
