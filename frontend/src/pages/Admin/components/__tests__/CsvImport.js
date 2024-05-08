@@ -517,7 +517,14 @@ describe('CsvImport', () => {
     expect(error).toBeVisible();
 
     // Assert button 'Upload csv reports' is visible.
-    const uploadButton = await screen.findByRole('button', { name: /Upload test csv/i });
+    const uploadButton = await screen.findByRole('button', { name: /Upload test CSV/i });
+
+    // click the upload button.
+    userEvent.click(uploadButton);
+
+    // Make sure the fetch event hasn't fired.
+    expect(fetchMock.calls(testCsvUrl).length).toBe(0);
+
     expect(uploadButton).toBeVisible();
 
     // Clear error message.
