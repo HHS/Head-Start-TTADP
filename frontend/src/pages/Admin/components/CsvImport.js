@@ -8,6 +8,7 @@ import {
   Label,
   Button,
 } from '@trussworks/react-uswds';
+import languageEncoding from 'detect-file-encoding-and-language';
 import Container from '../../../components/Container';
 import {
   importCsv,
@@ -75,7 +76,7 @@ export default function CsvImport(
     }
   };
 
-  const onChange = (e) => {
+  const onChange = async (e) => {
     const { files } = e.target;
 
     // Clear error and success messages.
@@ -88,6 +89,12 @@ export default function CsvImport(
       setError('Please upload a CSV file.');
       fileInputRef.current.clearFiles();
       return;
+    }
+
+    // Verify correct encoding.
+    const encodingInfo = await languageEncoding(files[0]);
+    if (encodingInfo.encoding.toLowerCase() !== 'utf-8') {
+      setError('Please upload a CSV file with UTF-8 encoding.');
     }
 
     const reader = new FileReader();

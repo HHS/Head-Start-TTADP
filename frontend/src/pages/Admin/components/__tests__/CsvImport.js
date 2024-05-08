@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import languageEncoding from 'detect-file-encoding-and-language';
+import {
+  render, screen, waitFor, within, act,
+} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { Router } from 'react-router';
@@ -9,6 +12,8 @@ import userEvent from '@testing-library/user-event';
 import CsvImport from '../CsvImport';
 
 const testCsvUrl = join('/', 'api', 'admin', 'test-csv');
+
+jest.mock('detect-file-encoding-and-language');
 
 // eslint-disable-next-line quotes
 const goodTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\nevent test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
@@ -23,6 +28,10 @@ describe('CsvImport', () => {
   afterEach(() => {
     fetchMock.restore();
     jest.clearAllMocks();
+  });
+
+  beforeEach(() => {
+    languageEncoding.mockImplementation(() => Promise.resolve({ encoding: 'utf-8' }));
   });
 
   it('displays the component', async () => {
@@ -242,13 +251,14 @@ describe('CsvImport', () => {
     const fileInput = await screen.findByTestId('file-input-input');
     expect(fileInput).toBeVisible();
 
+    act(async () => {
     // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-    const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
-    userEvent.upload(fileInput, file);
+      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      userEvent.upload(fileInput, file);
 
-    // Assert to see correct import count.
-    const error = await screen.findByText(/2 test csv will be imported./i);
-    expect(error).toBeVisible();
+      // Assert to see correct import count.
+      await waitFor(() => expect(screen.queryAllByText(/2 test csv will be imported./i)).toBeVisible());
+    });
 
     // Assert button 'Upload test csv' is visible.
     const uploadButton = await screen.findByRole('button', { name: /Upload test csv/i });
@@ -475,5 +485,49 @@ describe('CsvImport', () => {
     // Assert error message is no longer visible.
     error = screen.queryAllByText(/Please select a file to import./i);
     expect(error.length).toBe(0);
+  });
+
+  it('displays csv encoding error', async () => {
+    languageEncoding.mockImplementationOnce(() => Promise.resolve({ encoding: 'ansi' }));
+    const history = createMemoryHistory();
+    render(
+      <Router history={history}>
+        <CsvImport
+          validCsvHeaders={[]}
+          requiredCsvHeaders={[]}
+          typeName="Test CSV"
+          apiPathName="test-csv"
+          primaryIdColumn="Primary ID"
+        />
+      </Router>,
+    );
+
+    // Assert by data-testid 'file-input-input'.
+    const fileInput = await screen.findByTestId('file-input-input');
+    expect(fileInput).toBeVisible();
+
+    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+    const file = new File(['bad csv'], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
+
+    // Upload file.
+    userEvent.upload(fileInput, file);
+
+    // Assert to see if error message 'Please upload a CSV file with UTF-8 encoding.'.
+    const error = await screen.findByText(/Please upload a CSV file with UTF-8 encoding./i);
+    expect(error).toBeVisible();
+
+    // Assert button 'Upload csv reports' is visible.
+    const uploadButton = await screen.findByRole('button', { name: /Upload test csv/i });
+    expect(uploadButton).toBeVisible();
+
+    // Clear error message.
+    userEvent.click(fileInput);
+
+    act(async () => {
+    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+      const csvFile = new File([goodTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
+      userEvent.upload(fileInput, csvFile);
+      await waitFor(() => expect(screen.queryAllByText(/Please upload a CSV file with UTF-8 encoding./i).length).toBe(0));
+    });
   });
 });
