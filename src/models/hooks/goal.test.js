@@ -1,6 +1,5 @@
 /* eslint-disable global-require */
 const {
-  autoPopulateStatusChangeDates,
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
   onlyAllowTrGoalSourceForGoalsCreatedViaTr,
@@ -142,75 +141,6 @@ describe('goal hooks', () => {
         },
       });
       await db.close();
-    });
-  });
-
-  describe('autoPopulateStatusChangeDates', () => {
-    const sequelize = {};
-    const instance = {
-      changed: jest.fn(),
-      set: jest.fn(),
-    };
-    const options = {
-      fields: [],
-    };
-
-    afterEach(() => jest.clearAllMocks());
-
-    it('does not update fields if status is undefined, null, or empty string', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = undefined;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).not.toHaveBeenCalled();
-      expect(options.fields).toEqual([]);
-    });
-
-    it('updates fields for NOT_STARTED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.NOT_STARTED;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstNotStartedAt', expect.any(Date));
-      expect(options.fields).toContain('firstNotStartedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastNotStartedAt', expect.any(Date));
-      expect(options.fields).toContain('lastNotStartedAt');
-    });
-
-    it('updates fields for IN_PROGRESS status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.IN_PROGRESS;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstInProgressAt', expect.any(Date));
-      expect(options.fields).toContain('firstInProgressAt');
-      expect(instance.set).toHaveBeenCalledWith('lastInProgressAt', expect.any(Date));
-      expect(options.fields).toContain('lastInProgressAt');
-    });
-
-    it('updates fields for SUSPENDED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.SUSPENDED;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstCeasedSuspendedAt', expect.any(Date));
-      expect(options.fields).toContain('firstCeasedSuspendedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastCeasedSuspendedAt', expect.any(Date));
-      expect(options.fields).toContain('lastCeasedSuspendedAt');
-    });
-
-    it('updates fields for CLOSED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.CLOSED;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstClosedAt', expect.any(Date));
-      expect(options.fields).toContain('firstClosedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastClosedAt', expect.any(Date));
-      expect(options.fields).toContain('lastClosedAt');
-    });
-
-    it('throws an error for invalid status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = 'invalid_status';
-      expect(() => {
-        autoPopulateStatusChangeDates(sequelize, instance, options);
-      }).toThrowError('Goal status changed to invalid value of "invalid_status".');
     });
   });
 

@@ -74,6 +74,7 @@ export default function GoalForm({
     source: {},
     createdVia: '',
     goalTemplateId: null,
+    isReopenedGoal: false,
   }), [possibleGrants]);
 
   const [showForm, setShowForm] = useState(true);
@@ -98,6 +99,7 @@ export default function GoalForm({
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
+  const [isReopenedGoal, setIsReopenedGoal] = useState(goalDefaults.isReopenedGoal);
 
   useDeepCompareEffect(() => {
     const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
@@ -172,6 +174,7 @@ export default function GoalForm({
         setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
         setCreatedVia(goal.createdVia || '');
         setGoalCollaborators(goal.collaborators || []);
+        setIsReopenedGoal(goal.isReopenedGoal || false);
 
         // this is a lot of work to avoid two loops through the goal.objectives
         // but I'm sure you'll agree its totally worth it
@@ -846,6 +849,7 @@ export default function GoalForm({
     setPrompts(goal.prompts);
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
+    setIds(goal.ids);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -1099,6 +1103,7 @@ export default function GoalForm({
               createdVia={createdVia}
               collaborators={goalCollaborators}
               goalTemplateId={goalTemplateId}
+              isReopenedGoal={isReopenedGoal}
             />
           )}
 

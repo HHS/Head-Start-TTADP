@@ -14,6 +14,7 @@ import {
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
+  GoalStatusChange,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
@@ -65,6 +66,7 @@ import {
   setSimilarityGroupAsUserMerged,
 } from '../services/goalSimilarityGroup';
 import Users from '../policies/user';
+import changeGoalStatus from './changeGoalStatus';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -97,6 +99,12 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     id,
   },
   include: [
+    {
+      model: GoalStatusChange,
+      as: 'statusChanges',
+      attributes: ['oldStatus'],
+      required: false,
+    },
     {
       model: GoalCollaborator,
       as: 'goalCollaborators',
@@ -750,6 +758,14 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
     }, promptsToReduce);
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -806,6 +822,8 @@ function reduceGoals(goals, forReport = false) {
             ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
           },
         ], 'goalCreatorName');
+
+        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
 
         if (forReport) {
           existingGoal.prompts = reducePrompts(
@@ -877,6 +895,7 @@ function reduceGoals(goals, forReport = false) {
         isNew: false,
         endDate,
         source,
+        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
       };
 
       goal.collaborators = [
@@ -1186,8 +1205,10 @@ export async function goalByIdAndRecipient(id, recipientId) {
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+
   goals = goals.map((goal) => ({
     ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => {
         const o = {
@@ -1235,18 +1256,23 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  return Goal.findOne({
+  const goal = Goal.findOne({
     attributes: [
       'name',
       'id',
       'status',
       'createdVia',
-      'previousStatus',
     ],
     where: {
       id: goalId,
     },
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -1266,6 +1292,12 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
       },
     ],
   });
+
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
+    goal.previousStatus = goal.statusChanges[goal.statusChanges.length - 1].oldStatus;
+  }
+
+  return goal;
 }
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
@@ -2114,39 +2146,19 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = existingObjective;
       }
     }
-
-    // this will save all our objective join table data
-    // however, in the case of the Activity Report, we can't really delete
-    // unused join table data, so we'll just create any missing links
-    // so that the metadata is saved properly
-
-    const deleteUnusedAssociations = false;
-    const metadata = await saveObjectiveAssociations(
-      savedObjective,
-      resources,
+    return {
+      ...savedObjective.toJSON(),
+      status,
       topics,
+      resources,
       files,
       courses,
-      deleteUnusedAssociations,
-    );
-
-    // this will link our objective to the activity report through
-    // activity report objective and then link all associated objective data
-    // to the activity report objective to capture this moment in time
-    await cacheObjectiveMetadata(
-      savedObjective,
-      report.id,
-      {
-        ...metadata,
-        status,
-        closeSuspendContext,
-        closeSuspendReason,
-        ttaProvided: objective.ttaProvided,
-        order: index,
-        supportType,
-      },
-    );
-    return savedObjective;
+      ttaProvided: objective.ttaProvided,
+      closeSuspendReason,
+      closeSuspendContext,
+      index,
+      supportType,
+    };
   }));
 }
 
@@ -2261,6 +2273,53 @@ export async function saveGoalsForReport(goals, report) {
     }));
   }));
 
+  const uniqueObjectives = uniqBy(currentObjectives, 'id');
+  await Promise.all(uniqueObjectives.map(async (savedObjective) => {
+    const {
+      status,
+      index,
+      topics,
+      files,
+      resources,
+      closeSuspendContext,
+      closeSuspendReason,
+      ttaProvided,
+      supportType,
+      courses,
+    } = savedObjective;
+
+    // this will save all our objective join table data
+    // however, in the case of the Activity Report, we can't really delete
+    // unused join table data, so we'll just create any missing links
+    // so that the metadata is saved properly
+    const deleteUnusedAssociations = false;
+    const metadata = await saveObjectiveAssociations(
+      savedObjective,
+      resources,
+      topics,
+      files,
+      courses,
+      deleteUnusedAssociations,
+    );
+
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    return cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        ...metadata,
+        status,
+        closeSuspendContext,
+        closeSuspendReason,
+        ttaProvided,
+        order: index,
+        supportType,
+      },
+    );
+  }));
+
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
 
   // Get previous DB ARG's.
@@ -2319,6 +2378,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
 /**
  * Updates a goal status by id
  * @param {number[]} goalIds
+ * @param {number} userId
  * @param {string} oldStatus
  * @param {string} newStatus
  * @param {string} closeSuspendReason
@@ -2328,12 +2388,17 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
  */
 export async function updateGoalStatusById(
   goalIds,
+  userId,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
   previousStatus,
 ) {
+  // Since reason cannot be null, but sometimes we just can't know the reason (or we don't ask),
+  // a default value of "Unknown" is used.
+  const reason = closeSuspendReason?.trim() || 'Unknown';
+
   // first, we verify that the transition is allowed
   const allowed = verifyAllowedGoalStatusTransition(
     oldStatus,
@@ -2346,22 +2411,13 @@ export async function updateGoalStatusById(
     return false;
   }
 
-  // finally, if everything is golden, we update the goal
-  const g = await Goal.update({
-    status: newStatus,
-    closeSuspendReason,
-    closeSuspendContext,
-    previousStatus: oldStatus,
-  }, {
-    where: {
-      id: goalIds,
-    },
-    returning: true,
-    individualHooks: true,
-  });
-
-  const [, updated] = g;
-  return updated;
+  return Promise.all(goalIds.map((goalId) => changeGoalStatus({
+    goalId,
+    userId,
+    newStatus,
+    reason,
+    context: closeSuspendContext,
+  })));
 }
 
 export async function getGoalsForReport(reportId) {
@@ -2731,6 +2787,12 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     },
     include: [
       {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus', 'newStatus'],
+        required: false,
+      },
+      {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
         attributes: ['goalId', 'activityReportId'],
@@ -2812,7 +2874,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
       let closedCurated = false;
       if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
-        closedCurated = current.status !== GOAL_STATUS.CLOSED;
+        closedCurated = current.status === GOAL_STATUS.CLOSED;
       }
 
       // goal on an active report
@@ -2843,11 +2905,16 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
           excludedIfNotAdmin,
+          grantId: grantLookup[current.grantId],
         },
       ];
     }, []));
 
-  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+  const groupsWithMoreThanOneGoalAndMoreGoalsThanGrants = goalGroupsDeduplicated
+    .filter((group) => {
+      const grantIds = uniq(group.map((goal) => goal.grantId));
+      return group.length > 1 && group.length !== grantIds.length;
+    });
 
   // save the groups to the database
   // there should also always be an empty group
@@ -2855,7 +2922,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
   // and that we've run these computations
 
   await Promise.all(
-    [...groupsWithMoreThanOneGoal, []]
+    [...groupsWithMoreThanOneGoalAndMoreGoalsThanGrants, []]
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
@@ -2984,8 +3051,6 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     source: finalGoal.source,
     isFromSmartsheetTtaPlan: finalGoal.isFromSmartsheetTtaPlan,
     status: finalStatus,
-    closeSuspendReason: finalGoal.closeSuspendReason,
-    closeSuspendContext: finalGoal.closeSuspendContext,
   };
 }
 
@@ -3489,7 +3554,7 @@ Exampled request body, the data param:
   }
 }
  */
-export async function closeMultiRecipientGoalsFromAdmin(data) {
+export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const {
     selectedGoal,
     closeSuspendContext,
@@ -3523,11 +3588,12 @@ export async function closeMultiRecipientGoalsFromAdmin(data) {
     isError: false,
     goals: await updateGoalStatusById(
       goalIds,
+      userId,
       status,
       GOAL_STATUS.CLOSED,
       closeSuspendReason,
       closeSuspendContext,
-      GOAL_STATUS.CLOSED,
+      [GOAL_STATUS.CLOSED],
     ),
   };
 }

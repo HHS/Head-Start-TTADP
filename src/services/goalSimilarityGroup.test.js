@@ -168,7 +168,7 @@ describe('goalSimilarityGroup services', () => {
 
       expect(result).toEqual({
         id: 'group-id',
-        goals: ['goal-1', 'goal-3', 'goal-4'],
+        goals: ['goal-1', 'goal-2', 'goal-3', 'goal-4'],
       });
     });
   });
