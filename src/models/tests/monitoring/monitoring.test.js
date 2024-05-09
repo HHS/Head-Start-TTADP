@@ -165,11 +165,11 @@ describe('MonitoringFindingGrant Model', () => {
 
     await MonitoringFindingGrant.destroy({
       where: { statusId: 2, findingId: 'F123', granteeId: 'G123' },
-      fource: true,
+      force: true,
     });
-    await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, fource: true });
-    await MonitoringFindingStatusLink.destroy({ where: { statusId: 2 }, fource: true });
-    await MonitoringGranteeLink.destroy({ where: { granteeId: 'G123' }, fource: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'F123' }, force: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 2 }, force: true });
+    await MonitoringGranteeLink.destroy({ where: { granteeId: 'G123' }, force: true });
   });
 });
 
