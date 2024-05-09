@@ -97,9 +97,17 @@ export default function CsvImport(
     }
 
     // Verify correct encoding.
-    const encodingInfo = await languageEncoding(files[0]);
-    if (encodingInfo.encoding.toLowerCase() !== 'utf-8') {
-      setError('Please upload a CSV file with UTF-8 encoding.');
+    let correctEncoding = false;
+    try {
+      const encodingInfo = await languageEncoding(files[0]);
+      correctEncoding = encodingInfo.encoding.toLowerCase() === 'utf-8';
+    } catch (err) {
+      setError('Error reading file encoding. Ensure your CSV is using UTF-8 encoding.');
+      return;
+    }
+
+    if (!correctEncoding) {
+      setError('Upload a CSV file with UTF-8 encoding.');
       return;
     }
 
