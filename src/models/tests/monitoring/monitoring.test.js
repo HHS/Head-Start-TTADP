@@ -304,11 +304,11 @@ describe('MonitoringFindingStandard Model', () => {
 
     await MonitoringFindingStandard.destroy({
       where: { findingId: 'Finding001', standardId: 101 },
-      fource: true,
+      force: true,
     });
-    await MonitoringStandardLink.destroy({ where: { standardId: 101 }, fource: true });
-    await MonitoringStandardLink.destroy({ where: { standardId: 100 }, fource: true });
-    await MonitoringFindingLink.destroy({ where: { findingId: 'Finding001' }, fource: true });
+    await MonitoringStandardLink.destroy({ where: { standardId: 101 }, force: true });
+    await MonitoringStandardLink.destroy({ where: { standardId: 100 }, force: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'Finding001' }, force: true });
   });
 });
 
