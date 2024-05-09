@@ -488,9 +488,9 @@ describe('MonitoringReviewStatus Model', () => {
 
     await MonitoringReviewStatus.destroy({
       where: { statusId: 2 },
-      fource: true,
+      force: true,
     });
-    await MonitoringReviewStatusLink.destroy({ where: { statusId: 2 }, fource: true });
+    await MonitoringReviewStatusLink.destroy({ where: { statusId: 2 }, force: true });
   });
 });
 
