@@ -41,7 +41,6 @@ const syncLink = async (
   // Generate a unique semaphore key based on the model name and entity ID
   const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
-
   await semaphore.acquire(semaphoreKey);
   // Check if there's an existing record for the given entity ID
   const [currentRecord] = await model.findAll({
