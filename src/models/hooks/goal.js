@@ -79,76 +79,6 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   }
 };
 
-const autoPopulateStatusChangeDates = (_sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('status')) {
-    const now = new Date();
-    const { status } = instance;
-    switch (status) {
-      case undefined:
-      case null:
-      case '':
-      case GOAL_STATUS.DRAFT:
-        break;
-      case GOAL_STATUS.NOT_STARTED:
-        if (instance.firstNotStartedAt === null
-          || instance.firstNotStartedAt === undefined) {
-          instance.set('firstNotStartedAt', now);
-          if (!options.fields.includes('firstNotStartedAt')) {
-            options.fields.push('firstNotStartedAt');
-          }
-        }
-        instance.set('lastNotStartedAt', now);
-        if (!options.fields.includes('lastNotStartedAt')) {
-          options.fields.push('lastNotStartedAt');
-        }
-        break;
-      case GOAL_STATUS.IN_PROGRESS:
-        if (instance.firstInProgressAt === null
-          || instance.firstInProgressAt === undefined) {
-          instance.set('firstInProgressAt', now);
-          if (!options.fields.includes('firstInProgressAt')) {
-            options.fields.push('firstInProgressAt');
-          }
-        }
-        instance.set('lastInProgressAt', now);
-        if (!options.fields.includes('lastInProgressAt')) {
-          options.fields.push('lastInProgressAt');
-        }
-        break;
-      case GOAL_STATUS.SUSPENDED:
-        if (instance.firstCeasedSuspendedAt === null
-          || instance.firstCeasedSuspendedAt === undefined) {
-          instance.set('firstCeasedSuspendedAt', now);
-          if (!options.fields.includes('firstCeasedSuspendedAt')) {
-            options.fields.push('firstCeasedSuspendedAt');
-          }
-        }
-        instance.set('lastCeasedSuspendedAt', now);
-        if (!options.fields.includes('lastCeasedSuspendedAt')) {
-          options.fields.push('lastCeasedSuspendedAt');
-        }
-        break;
-      case GOAL_STATUS.CLOSED:
-        if (instance.firstClosedAt === null
-          || instance.firstClosedAt === undefined) {
-          instance.set('firstClosedAt', now);
-          if (!options.fields.includes('firstClosedAt')) {
-            options.fields.push('firstClosedAt');
-          }
-        }
-        instance.set('lastClosedAt', now);
-        if (!options.fields.includes('lastClosedAt')) {
-          options.fields.push('lastClosedAt');
-        }
-        break;
-      default:
-        throw new Error(`Goal status changed to invalid value of "${status}".`);
-    }
-  }
-};
-
 const propagateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -365,14 +295,12 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  autoPopulateStatusChangeDates(sequelize, instance, options);
   onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
-  autoPopulateStatusChangeDates(sequelize, instance, options);
   onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
@@ -400,7 +328,6 @@ export {
   findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
-  autoPopulateStatusChangeDates,
   preventCloseIfObjectivesOpen,
   propagateName,
   beforeValidate,

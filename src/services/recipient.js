@@ -467,10 +467,6 @@ export function reduceObjectivesForRecipientRecord(
 }
 
 function wasGoalPreviouslyClosed(goal) {
-  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
-    return true;
-  }
-
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
@@ -479,12 +475,7 @@ function wasGoalPreviouslyClosed(goal) {
 }
 
 function calculatePreviousStatus(goal) {
-  // if we have a previous status recorded, return that
-  if (goal.previousStatus) {
-    return goal.previousStatus;
-  }
-
-  if (goal.statusChanges) {
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
     // statusChanges is an array of { oldStatus, newStatus }.
     const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
     if (lastStatusChange) {
