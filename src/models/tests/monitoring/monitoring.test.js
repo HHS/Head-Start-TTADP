@@ -110,10 +110,10 @@ describe('MonitoringFinding Model', () => {
 
     await MonitoringFinding.destroy({
       where: { statusId: 1, findingId: '123' },
-      fource: true,
+      force: true,
     });
-    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, fource: true });
-    await MonitoringFindingLink.destroy({ where: { findingId: '123' }, fource: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 1 }, force: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: '123' }, force: true });
   });
 });
 
