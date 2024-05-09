@@ -448,11 +448,11 @@ describe('MonitoringReviewGrantee Model', () => {
 
     await MonitoringReviewGrantee.destroy({
       where: { grantNumber: 'Grant100', granteeId: 'Grantee100', reviewId: 'Review100' },
-      fource: true,
+      force: true,
     });
-    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review100' }, fource: true });
-    await MonitoringGranteeLink.destroy({ where: { granteeId: 'Grantee100' }, fource: true });
-    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant100' }, fource: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review100' }, force: true });
+    await MonitoringGranteeLink.destroy({ where: { granteeId: 'Grantee100' }, force: true });
+    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant100' }, force: true });
   });
 });
 
