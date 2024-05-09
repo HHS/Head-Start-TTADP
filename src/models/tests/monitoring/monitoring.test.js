@@ -222,11 +222,11 @@ describe('MonitoringFindingHistory Model', () => {
 
     await MonitoringFindingHistory.destroy({
       where: { statusId: 1, findingId: 'F124', reviewId: 'R123' },
-      fource: true,
+      force: true,
     });
-    await MonitoringReviewLink.destroy({ where: { reviewId: 'R123' }, fource: true });
-    await MonitoringFindingLink.destroy({ where: { findingId: 'F124' }, fource: true });
-    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'R123' }, force: true });
+    await MonitoringFindingLink.destroy({ where: { findingId: 'F124' }, force: true });
+    await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 1 }, force: true });
   });
 });
 
