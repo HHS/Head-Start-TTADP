@@ -132,8 +132,8 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
           Joi.string()
         ),
         prompt: Joi.string(),
-       }),
-      ),
+      }),
+    ),
     goalCollaborators: Joi.array().items(Joi.any().allow(null)),
     statusChanges: Joi.array().items(Joi.object({
       oldStatus: Joi.string(),
