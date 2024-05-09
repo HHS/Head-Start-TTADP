@@ -63,10 +63,10 @@ describe('MonitoringClassSummary Model', () => {
 
     await MonitoringClassSummary.destroy({
       where: { grantNumber: 'Grant123', reviewId: 'Review123' },
-      fource: true,
+      force: true,
     });
-    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant123' }, fource: true });
-    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review123' }, fource: true });
+    await GrantNumberLink.destroy({ where: { grantNumber: 'Grant123' }, force: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review123' }, force: true });
   });
 });
 
