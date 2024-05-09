@@ -102,7 +102,7 @@ function ObjectiveCard({
   const suspendError = suspendReasonError ? (
     ERROR_FORMAT('Select a reason for suspension')) : <></>;
 
-  const modalIdentifier = `suspend-objective-${uniqueId('objective-suspend-identifier-')}`;
+  const modalIdentifier = uniqueId('objective-suspend-identifier-');
 
   return (
     <>
