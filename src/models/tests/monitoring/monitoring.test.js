@@ -535,8 +535,8 @@ describe('MonitoringStandard Model', () => {
 
     await MonitoringStandard.destroy({
       where: { standardId: 102 },
-      fource: true,
+      force: true,
     });
-    await MonitoringStandardLink.destroy({ where: { standardId: 102 }, fource: true });
+    await MonitoringStandardLink.destroy({ where: { standardId: 102 }, force: true });
   });
 });
