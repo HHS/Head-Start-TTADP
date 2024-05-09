@@ -397,10 +397,10 @@ describe('MonitoringReview Model', () => {
 
     await MonitoringReview.destroy({
       where: { reviewId: 'Review001', statusId: 1 },
-      fource: true,
+      force: true,
     });
-    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review001' }, fource: true });
-    await MonitoringReviewStatusLink.destroy({ where: { statusId: 1 }, fource: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: 'Review001' }, force: true });
+    await MonitoringReviewStatusLink.destroy({ where: { statusId: 1 }, force: true });
   });
 });
 
