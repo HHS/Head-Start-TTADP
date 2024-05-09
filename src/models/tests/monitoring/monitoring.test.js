@@ -344,9 +344,9 @@ describe('MonitoringFindingStatus Model', () => {
 
     await MonitoringFindingStatus.destroy({
       where: { statusId: 3 },
-      fource: true,
+      force: true,
     });
-    await MonitoringFindingStatusLink.destroy({ where: { statusId: 3 }, fource: true });
+    await MonitoringFindingStatusLink.destroy({ where: { statusId: 3 }, force: true });
   });
 });
 
