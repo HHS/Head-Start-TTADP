@@ -244,11 +244,8 @@ const MAINTENANCE_TYPE = {
 };
 
 const FEATURE_FLAGS = [
-  'resources_dashboard',
   'anv_statistics',
   'regional_goal_dashboard',
-  'merge_goals',
-  'monitoring',
   'closed_goal_merge_override',
   'training_reports_dashboard',
 ];
@@ -261,7 +258,7 @@ const MAINTENANCE_CATEGORY = {
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 2;
+const CURRENT_GOAL_SIMILARITY_VERSION = 3;
 
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,

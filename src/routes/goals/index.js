@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createGoals,
   changeGoalStatus,
+  reopenGoal,
   retrieveGoalsByIds,
   retrieveGoalByIdAndRecipient,
   deleteGoal,
@@ -43,5 +44,7 @@ router.get(
   checkRegionIdParam,
   transactionWrapper(getMissingDataForActivityReport),
 );
+
+router.put('/reopen', transactionWrapper(reopenGoal));
 
 export default router;
