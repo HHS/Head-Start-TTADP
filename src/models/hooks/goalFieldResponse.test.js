@@ -63,6 +63,8 @@ describe('goalFieldResponseHooks', () => {
     let activityReportGoal;
     let activityReportGoalNotToUpdate;
     let activityReportGoalApproved;
+    let activityReportAlreadyUsingFeiRootCauses;
+    let activityReportGoalAlreadyUsingFeiResponse;
 
     // We should update this report and not create another ActivityReportGoalFieldResponse.
     let activityReportUsingSameFeiGoal;
@@ -173,6 +175,15 @@ describe('goalFieldResponseHooks', () => {
         calculatedStatus: 'approved',
       });
 
+      activityReportAlreadyUsingFeiRootCauses = await ActivityReport.create({
+        ...mockReport,
+        grantId: grant.id,
+        creatorId: mockUser.id,
+        userId: mockUser.id,
+        lastUpdatedById: mockUser.id,
+        activityRecipients: [{ grantId: grant.id }],
+      });
+
       // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
       goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
         where: { title: 'FEI root cause' },
@@ -183,6 +194,13 @@ describe('goalFieldResponseHooks', () => {
         activityReportId: activityReportUsingSameFeiGoal.id,
         goalId: goalMissingResponse.id,
         individualHooks: false,
+      });
+
+      // eslint-disable-next-line max-len
+      // By putting this before the creation of the GoalFieldResponse we know the hook will create the response.
+      activityReportGoalAlreadyUsingFeiResponse = await ActivityReportGoal.create({
+        activityReportId: activityReportAlreadyUsingFeiRootCauses.id,
+        goalId: goal.id,
       });
 
       // Create GoalFieldResponse.
@@ -260,6 +278,7 @@ describe('goalFieldResponseHooks', () => {
             differentGoalReportNotToUpdate.id,
             approvedReport.id,
             activityReportUsingSameFeiGoal.id,
+            activityReportAlreadyUsingFeiRootCauses.id,
           ],
         },
       });
@@ -279,6 +298,7 @@ describe('goalFieldResponseHooks', () => {
             goalFieldResponse.id,
             goalFieldResponseDiffGoalNotToUpdate.id,
             missingGoalFieldResponse.id,
+            activityReportAlreadyUsingFeiRootCauses.id,
           ],
         },
       });
@@ -383,7 +403,7 @@ describe('goalFieldResponseHooks', () => {
       });
     });
 
-    it('should update and sync the goal field response with the activity report goal response', async () => {
+    it('should update and sync the goal field response with the activity report goal response without duplicating', async () => {
       // Assert initial values.
       expect(goalFieldResponse.response).toEqual(['Initial Activity Report Goal Response']);
       expect(activityReportGoalFieldResponse.response).toEqual(goalFieldResponse.response);
@@ -392,6 +412,16 @@ describe('goalFieldResponseHooks', () => {
       // Assert Initial No Change values.
       expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
       expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
+
+      // Assert the activityReportGoalAlreadyUsingFeiResponse is set.
+      let alreadyUsingResponse = await ActivityReportGoalFieldResponse.findOne({
+        where: {
+          activityReportGoalId: activityReportGoalAlreadyUsingFeiResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
+      expect(alreadyUsingResponse).not.toBeNull();
+      expect(alreadyUsingResponse.response).toEqual(['Initial Activity Report Goal Response']);
 
       // HOOK: Change goal response to trigger hook.
       goalFieldResponse.response = ['Updated Activity Report Goal Response'];
@@ -485,6 +515,16 @@ describe('goalFieldResponseHooks', () => {
       expect(goalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
       expect(activityReportGoalFieldResponseDiffGoalNotToUpdate.response).toEqual(['Activity Report Goal Response NOT TO UPDATE']);
 
+      // Assert we only have one entry still for the same FEI.
+      alreadyUsingResponse = await ActivityReportGoalFieldResponse.findAll({
+        where: {
+          activityReportGoalId: activityReportGoalAlreadyUsingFeiResponse.id,
+          goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        },
+      });
+      expect(alreadyUsingResponse.length).toBe(1);
+      expect(alreadyUsingResponse[0].response).toEqual(['Updated Goal Field Response']);
+
       // Assert the final count of ActivityReportGoalFieldResponses.
       const activityReportGoalFieldResponses = await ActivityReportGoalFieldResponse.findAll({
         where: {
@@ -492,10 +532,11 @@ describe('goalFieldResponseHooks', () => {
             activityReportGoal.id,
             activityReportGoalApproved.id,
             activityReportGoalNotToUpdate.id,
+            activityReportGoalAlreadyUsingFeiResponse.id,
           ],
         },
       });
-      expect(activityReportGoalFieldResponses.length).toBe(3);
+      expect(activityReportGoalFieldResponses.length).toBe(4);
     });
 
     it('should create and sync the goal field response with the activity report goal response', async () => {
