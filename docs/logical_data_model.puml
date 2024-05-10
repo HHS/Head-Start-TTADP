@@ -240,7 +240,6 @@ class Courses{
  mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
  * name : text
- * persistsOnUpload : boolean : false
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }
@@ -423,25 +422,12 @@ class Goals{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
- closeSuspendContext : text
- closeSuspendReason : enum
  createdVia : enum
  deletedAt : timestamp with time zone
  endDate : date
- firstCeasedSuspendedAt : timestamp with time zone
- firstClosedAt : timestamp with time zone
- firstCompletedAt : timestamp with time zone
- firstInProgressAt : timestamp with time zone
- firstNotStartedAt : timestamp with time zone
  isFromSmartsheetTtaPlan : boolean
  isRttapa : enum
- lastCeasedSuspendedAt : timestamp with time zone
- lastClosedAt : timestamp with time zone
- lastCompletedAt : timestamp with time zone
- lastInProgressAt : timestamp with time zone
- lastNotStartedAt : timestamp with time zone
  name : text
- previousStatus : text
  rtrOrder : integer : 1
  source : enum
  status : varchar(255)
