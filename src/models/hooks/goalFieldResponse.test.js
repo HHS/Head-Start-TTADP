@@ -347,6 +347,18 @@ describe('goalFieldResponseHooks', () => {
     });
 
     beforeEach(async () => {
+      // Update activityReportGoalAlreadyUsingFeiResponse response to be what we will update it to.
+      await ActivityReportGoalFieldResponse.update(
+        { response: ['Updated Activity Report Goal Response'] },
+        {
+          where: {
+            activityReportGoalId: activityReportGoalAlreadyUsingFeiResponse.id,
+            goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+          },
+          individualHooks: false,
+        },
+      );
+
       // Reset goal field response.
       await GoalFieldResponse.update(
         { response: ['Initial Activity Report Goal Response'] },
@@ -421,7 +433,7 @@ describe('goalFieldResponseHooks', () => {
         },
       });
       expect(alreadyUsingResponse).not.toBeNull();
-      expect(alreadyUsingResponse.response).toEqual(['Initial Activity Report Goal Response']);
+      expect(alreadyUsingResponse.response).toEqual(['Updated Activity Report Goal Response']);
 
       // HOOK: Change goal response to trigger hook.
       goalFieldResponse.response = ['Updated Activity Report Goal Response'];
