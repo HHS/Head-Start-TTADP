@@ -600,4 +600,36 @@ describe('Goals Table', () => {
       expect(history.push).toHaveBeenCalled();
     });
   });
+
+  describe('Context Menu with Different User Permissions', () => {
+    it('Hides the edit button if the user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable({ goals: [baseGoals[0]], goalsCount: 1 }, user);
+
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = screen.queryByRole('button', { name: /Edit/i });
+      expect(editGoal).toBe(null);
+    });
+
+    it('Shows the edit button if the user has permissions', async () => {
+      renderTable({ goals: [baseGoals[0]], goalsCount: 1 }, defaultUser);
+
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = await screen.findByRole('button', { name: /Edit/i });
+      expect(editGoal).toBeVisible();
+    });
+  });
 });

@@ -17,7 +17,7 @@ import { goalPropTypes } from './constants';
 import colors from '../../colors';
 import SessionObjectiveCard from './SessionObjectiveCard';
 import Tooltip from '../Tooltip';
-import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
+import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -110,22 +110,31 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  const contextMenuLabel = `Actions for goal ${id}`;
-  const menuItems = [
-    ...(goalStatus === 'Closed' ? [{
-      label: 'Reopen',
-      onClick: () => {
-        showReopenGoalModal(id);
-      },
-    }] : []),
-    {
-      label: goalStatus === 'Closed' ? 'View' : 'Edit',
-      onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
-      },
-    },
-  ];
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+  const determineMenuItems = () => {
+    // Create default menu items.
+    const createdMenuItems = [
+      ...(goalStatus === 'Closed' ? [{
+        label: 'Reopen',
+        onClick: () => {
+          showReopenGoalModal(id);
+        },
+      }] : []),
+    ];
+    // Add edit button if user has permissions or if the goal is closed.
+    if (hasEditButtonPermissions || goalStatus === 'Closed') {
+      createdMenuItems.push({
+        label: goalStatus === 'Closed' ? 'View' : 'Edit',
+        onClick: () => {
+          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
+        },
+      });
+    }
+    return createdMenuItems;
+  };
+  const menuItems = determineMenuItems();
 
+  const contextMenuLabel = `Actions for goal ${id}`;
   const canDeleteQualifiedGoals = (() => {
     if (isAdmin(user)) {
       return true;
