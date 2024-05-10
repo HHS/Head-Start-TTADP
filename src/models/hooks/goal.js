@@ -270,9 +270,10 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
 
 const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
   const changed = instance.changed();
+  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
   if (Array.isArray(changed)
     && changed.includes('status')
-    && instance.status === GOAL_STATUS.CLOSED) {
+    && NO_GOOD_STATUSES.includes(instance.status)) {
     const objectives = await sequelize.models.Objective.findAll({
       where: {
         goalId: instance.id,

@@ -118,7 +118,12 @@ function GoalCard({
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
-    if (newStatus === 'Closed' && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+    const statusesThatNeedObjectivesFinished = [
+      'Closed',
+      'Suspended',
+    ];
+    if (statusesThatNeedObjectivesFinished.includes(newStatus)
+        && atLeastOneObjectiveIsNotCompletedOrSuspended) {
       setInvalidStatusChangeAttempted(true);
       return;
     }

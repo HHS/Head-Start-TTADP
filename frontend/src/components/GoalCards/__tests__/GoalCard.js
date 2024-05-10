@@ -421,7 +421,57 @@ describe('GoalCard', () => {
     expect(tags[0]).toBeVisible();
   });
 
-  it('prevents status changes if objectives are open', async () => {
+  it('prevents suspended status changes if objectives are open', async () => {
+    const goalWithMultipleObjectives = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: '2023-01-01',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [],
+          ids: [1],
+        },
+        {
+          ids: [2],
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: '2022-09-13',
+          reasons: ['Reason 3'],
+          status: 'Closed',
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [],
+        },
+      ],
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, goalWithMultipleObjectives);
+    const statusChange = await screen.findByRole('button', { name: /change status for goal/i });
+
+    act(() => {
+      userEvent.click(statusChange);
+    });
+
+    const closedButton = await screen.findByRole('button', { name: /suspended/i });
+
+    act(() => {
+      userEvent.click(closedButton);
+    });
+
+    const error = await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i);
+    expect(error).toBeVisible();
+  });
+
+  it('prevents closed status changes if objectives are open', async () => {
     const goalWithMultipleObjectives = {
       ...goal,
       objectives: [
