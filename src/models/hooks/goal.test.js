@@ -40,6 +40,23 @@ describe('goal hooks', () => {
       await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
     });
 
+    it('throws an error if status is SUSPENDED and objectives are not closed', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(['status']),
+        status: GOAL_STATUS.SUSPENDED,
+      };
+      const sequelize = {
+        models: {
+          Objective: {
+            findAll: jest.fn().mockResolvedValue([
+              { status: OBJECTIVE_STATUS.IN_PROGRESS },
+            ]),
+          },
+        },
+      };
+      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow();
+    });
+
     it('throws an error if status is CLOSED and objectives are not closed', async () => {
       const instance = {
         changed: jest.fn().mockReturnValue(['status']),
