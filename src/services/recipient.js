@@ -10,6 +10,7 @@ import {
   Goal,
   GoalCollaborator,
   GoalFieldResponse,
+  GoalStatusChange,
   GoalTemplate,
   ActivityReport,
   EventReportPilot,
@@ -449,10 +450,21 @@ export function reduceObjectivesForRecipientRecord(
       : new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 function calculatePreviousStatus(goal) {
-  // if we have a previous status recorded, return that
-  if (goal.previousStatus) {
-    return goal.previousStatus;
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
+    // statusChanges is an array of { oldStatus, newStatus }.
+    const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
+    if (lastStatusChange) {
+      return lastStatusChange.oldStatus;
+    }
   }
 
   // otherwise we check to see if there is the goal is on an activity report,
@@ -547,7 +559,6 @@ export async function getGoalsByActivityRecipient(
       'createdAt',
       'createdVia',
       'goalNumber',
-      'previousStatus',
       'onApprovedAR',
       'onAR',
       'isRttapa',
@@ -567,6 +578,12 @@ export async function getGoalsByActivityRecipient(
     ],
     where: goalWhere,
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: GoalCollaborator,
         as: 'goalCollaborators',
@@ -801,6 +818,8 @@ export async function getGoalsByActivityRecipient(
       ], 'goalCreatorName');
 
       existingGoal.onAR = existingGoal.onAR || current.onAR;
+      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal || wasGoalPreviouslyClosed(current);
+
       return {
         goalRows: previous.goalRows,
       };
@@ -818,6 +837,7 @@ export async function getGoalsByActivityRecipient(
       reasons: [],
       source: current.source,
       previousStatus: calculatePreviousStatus(current),
+      isReopenedGoal: wasGoalPreviouslyClosed(current),
       objectives: [],
       grantNumbers: [current.grant.number],
       isRttapa: current.isRttapa,

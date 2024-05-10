@@ -109,12 +109,6 @@ describe('Goals and Objectives', () => {
       ...user,
     };
 
-    if (canMergeGoals) {
-      userForContext.flags = [
-        'merge_goals',
-      ];
-    }
-
     render(
       <Router history={memoryHistory}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>

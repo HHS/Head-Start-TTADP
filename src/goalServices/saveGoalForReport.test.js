@@ -263,7 +263,6 @@ describe('saveGoalsForReport (more tests)', () => {
       name: 'This is an existing goal',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
     });
 
     // this represents a goal created on the RTR
@@ -271,7 +270,6 @@ describe('saveGoalsForReport (more tests)', () => {
       name: 'This is a second existing goal',
       status: 'Not Started',
       grantId: grantOne.id,
-      previousStatus: null,
     });
 
     // This is a initial goal for adding recipient report.
@@ -279,7 +277,6 @@ describe('saveGoalsForReport (more tests)', () => {
       name: 'This is a goal on a saved report',
       status: 'Not Started',
       grantId: addingRecipientGrantOne.id,
-      previousStatus: null,
     });
 
     // Goal to remove only used by one report.
@@ -287,7 +284,6 @@ describe('saveGoalsForReport (more tests)', () => {
       name: 'This goal should be removed',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 

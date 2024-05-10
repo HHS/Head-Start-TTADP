@@ -11,6 +11,7 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import nudge from '../../goalServices/nudge';
 import handleErrors from '../../lib/apiErrorHandler';
@@ -96,10 +97,37 @@ export async function createGoals(req, res) {
   }
 }
 
+export async function reopenGoal(req, res) {
+  try {
+    const { goalId, reason, context } = req.body;
+    const userId = await currentUserId(req, res);
+
+    const updatedGoal = await _changeGoalStatus({
+      goalId,
+      userId,
+      newStatus: 'In Progress',
+      reason,
+      context,
+    });
+
+    if (!updatedGoal) {
+      res.sendStatus(httpCodes.BAD_REQUEST);
+    }
+
+    res.json(updatedGoal);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:REOPEN_GOAL`);
+  }
+}
+
 export async function changeGoalStatus(req, res) {
   try {
     const {
-      goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
+      goalIds,
+      newStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+      oldStatus,
     } = req.body;
 
     const userId = await currentUserId(req, res);
@@ -107,7 +135,7 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
-    const previousStatus = [];
+    let previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
@@ -123,8 +151,10 @@ export async function changeGoalStatus(req, res) {
           return status;
         }
 
-        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
-          previousStatus.push(goal.previousStatus);
+        if (goal.statusChanges) {
+          goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
+            previousStatus = [...new Set([...previousStatus, o, n])];
+          });
         }
       }
 
@@ -138,6 +168,7 @@ export async function changeGoalStatus(req, res) {
 
     const updatedGoal = await updateGoalStatusById(
       ids,
+      userId,
       oldStatus,
       newStatus,
       closeSuspendReason,
@@ -146,8 +177,6 @@ export async function changeGoalStatus(req, res) {
     );
 
     if (!updatedGoal) {
-      // the updateGoalStatusById function returns false
-      // if the goal status change is not allowed
       res.sendStatus(httpCodes.BAD_REQUEST);
     }
 
@@ -156,6 +185,7 @@ export async function changeGoalStatus(req, res) {
     await handleErrors(req, res, error, `${logContext}:CHANGE_GOAL_STATUS`);
   }
 }
+
 export async function deleteGoal(req, res) {
   try {
     const { goalIds } = req.query;

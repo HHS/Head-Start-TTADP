@@ -178,9 +178,11 @@ export async function getGroups(req, res) {
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
   const regionNumber = parseInt(region, DECIMAL_BASE);
-  const eventPolicy = new EventReport(user, { regionNumber });
+  const eventPolicy = new EventReport(user, { regionId: regionNumber });
   // Has correct TR permissions.
-  if (!eventPolicy.canWriteInRegion(regionNumber)) {
+  if (
+    !eventPolicy.canGetGroupsForEditingSession()
+  ) {
     res.sendStatus(403);
     return;
   }

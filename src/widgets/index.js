@@ -12,16 +12,19 @@ import goalsByStatus from './regionalGoalDashboard/goalsByStatus';
 import goalsPercentage from './regionalGoalDashboard/goalsPercentage';
 import topicsByGoalStatus from './regionalGoalDashboard/topicsByGoalStatus';
 import trOverview from './trOverview';
+import trReasonList from './trReasonList';
+import trSessionsByTopic from './trSessionsByTopic';
+import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
 
 /*
   All widgets need to be added to this object
 */
 export default {
   overview,
-  trOverview,
   dashboardOverview,
   totalHrsAndRecipientGraph,
   reasonList,
+
   topicFrequencyGraph,
   targetPopulationTable,
   frequencyGraph,
@@ -30,4 +33,9 @@ export default {
   goalsByStatus,
   goalsPercentage,
   topicsByGoalStatus,
+
+  trOverview,
+  trReasonList,
+  trSessionsByTopic,
+  trHoursOfTrainingByNationalCenter,
 };

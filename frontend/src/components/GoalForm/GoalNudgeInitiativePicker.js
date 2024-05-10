@@ -17,6 +17,7 @@ export default function GoalNudgeInitiativePicker({
   validateGoalName,
   goalTemplates,
   onSelectNudgedGoal,
+  initiativeRef,
 }) {
   const [selection, setSelection] = useState('');
 
@@ -40,6 +41,8 @@ export default function GoalNudgeInitiativePicker({
         <Req />
       </Label>
       <Select
+        aria-label="OHS initiative goal"
+        ref={initiativeRef}
         inputId="goal-template"
         name="goal-template"
         className="usa-select"
@@ -68,4 +71,7 @@ GoalNudgeInitiativePicker.propTypes = {
   })).isRequired,
   useOhsInitiativeGoal: PropTypes.bool.isRequired,
   onSelectNudgedGoal: PropTypes.func.isRequired,
+  initiativeRef: PropTypes.shape({
+    current: PropTypes.instanceOf(Element),
+  }).isRequired,
 };

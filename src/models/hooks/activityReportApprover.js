@@ -1,4 +1,7 @@
 const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
+const { purifyFields } = require('../helpers/purifyFields');
+
+const FIELDS_TO_ESCAPE = ['note'];
 
 /**
  * Helper function called by model hooks.
@@ -124,9 +127,19 @@ const afterUpdate = async (sequelize, instance) => {
   await updateReportStatus(sequelize, instance);
 };
 
+const beforeUpdate = async (_sequelize, instance) => {
+  purifyFields(instance, FIELDS_TO_ESCAPE);
+};
+
+const beforeCreate = async (_sequelize, instance) => {
+  purifyFields(instance, FIELDS_TO_ESCAPE);
+};
+
 export {
   calculateReportStatusFromApprovals,
   calculateReportStatus,
+  beforeCreate,
+  beforeUpdate,
   afterCreate,
   afterDestroy,
   afterRestore,

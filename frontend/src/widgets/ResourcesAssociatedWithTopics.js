@@ -95,15 +95,16 @@ function ResourcesAssociatedWithTopics({
 
     // Value sort.
     const sortValueA = direction === 'asc' ? 1 : -1;
-    const sortValueB = direction === 'asc' ? -1 : -1;
-    valuesToSort.sort(
-      (a, b) => (
-        // eslint-disable-next-line no-nested-ternary
-        (a.sortBy > b.sortBy) ? sortValueA
-          : ((b.sortBy > a.sortBy)
-            ? sortValueB : 0)
-      ),
-    );
+    const sortValueB = direction === 'asc' ? -1 : 1;
+    valuesToSort.sort((a, b) => {
+      if (a.sortBy > b.sortBy) {
+        return sortValueA;
+      } if (b.sortBy > a.sortBy) {
+        return sortValueB;
+      }
+      return 0;
+    });
+
     setTopicUse(valuesToSort);
     setOffset(0);
     setSortConfig({ sortBy, direction, activePage: 1 });

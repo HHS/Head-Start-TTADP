@@ -1,3 +1,4 @@
+const httpContext = require('express-http-context');
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
@@ -22,6 +23,9 @@ const {
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
 const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+const { purifyFields } = require('../helpers/purifyFields');
+
+const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -50,6 +54,8 @@ const copyStatus = (instance) => {
 };
 
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
@@ -76,20 +82,17 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
       });
 
       const goalIds = goals.map((goal) => goal.id);
-      await sequelize.models.Goal.update(
-        { status: 'Not Started' },
-        {
-          where: {
-            id: {
-              [Op.in]: goalIds,
-            },
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
+        goalId,
+        userId,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        reason: 'Activity Report submission',
+        context: null,
+        transaction: options.transaction,
+      })));
     } catch (error) {
-      auditLogger.error(JSON.stringify({ error }));
+      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
     }
   }
 };
@@ -108,7 +111,7 @@ const setSubmittedDate = (sequelize, instance, options) => {
       instance.set('submittedDate', null);
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`setSubmittedDate error: ${e}`);
   }
 };
 
@@ -131,7 +134,7 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
       instance.set('additionalNotes', '');
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`clearAdditionalNotes: ${e}`);
   }
 };
 
@@ -187,7 +190,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
     }
 
     let objectives;
@@ -238,7 +241,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating objective: ${e}`);
     }
   }
 };
@@ -730,6 +733,8 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 };
 
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -760,19 +765,21 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    return Promise.all((goals.map((goal) => {
+    return Promise.all((goals.map(async (goal) => {
       const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        goal.set('previousStatus', goal.status);
-        goal.set('status', status);
-        if (instance.endDate) {
-          if (!goal.firstInProgressAt) {
-            goal.set('firstInProgressAt', instance.endDate);
-          }
-          goal.set('lastInProgressAt', instance.endDate);
-        }
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: status,
+          reason: 'Activity Report approved',
+          context: null,
+          transaction: options.transaction,
+        });
       }
       // removing hooks because we don't want to trigger the automatic status change
       // (i.e. last in progress at will be overwritten)
@@ -815,6 +822,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
 };
 
 const beforeCreate = async (instance) => {
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   copyStatus(instance);
 };
 
@@ -1034,6 +1042,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
 };
@@ -1062,7 +1071,7 @@ const afterDestroy = async (sequelize, instance, options) => {
     })));
   } catch (e) {
     // we do not want to surface these errors to the UI
-    auditLogger.error('Failed to destroy linked similarity groups', JSON.stringify({ e }));
+    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
   }
 };
 

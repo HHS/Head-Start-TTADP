@@ -492,7 +492,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -525,7 +524,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);

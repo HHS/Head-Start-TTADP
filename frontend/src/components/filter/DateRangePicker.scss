@@ -1,6 +1,6 @@
 @use '../../mixins.scss';
 
-.ttahub-custom-date-range-picker {    
+.ttahub-custom-date-range-picker-fields:not([hidden]) {    
     z-index: 2;
 }
 

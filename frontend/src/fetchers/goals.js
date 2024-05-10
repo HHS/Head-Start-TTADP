@@ -121,3 +121,9 @@ export async function missingDataForActivityReport(regionId, goalIds) {
   const response = await get(url);
   return response.json();
 }
+
+export async function reopenGoal(goalId, reason, context) {
+  const url = join(goalsUrl, 'reopen');
+  const response = await put(url, { goalId, reason, context });
+  return response.json();
+}

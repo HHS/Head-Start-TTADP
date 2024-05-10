@@ -55,6 +55,7 @@ function GoalCard({
   recipientId,
   regionId,
   showCloseSuspendGoalModal,
+  showReopenGoalModal,
   performGoalStatusUpdate,
   handleGoalCheckboxSelect,
   isChecked,
@@ -77,6 +78,7 @@ function GoalCard({
     createdVia,
     collaborators,
     onAR,
+    isReopenedGoal,
   } = goal;
 
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
@@ -88,7 +90,7 @@ function GoalCard({
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
   const history = useHistory();
 
-  const goalNumbers = goal.goalNumbers.join(', ');
+  const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -110,6 +112,12 @@ function GoalCard({
 
   const contextMenuLabel = `Actions for goal ${id}`;
   const menuItems = [
+    ...(goalStatus === 'Closed' ? [{
+      label: 'Reopen',
+      onClick: () => {
+        showReopenGoalModal(id);
+      },
+    }] : []),
     {
       label: goalStatus === 'Closed' ? 'View' : 'Edit',
       onClick: () => {
@@ -270,6 +278,7 @@ GoalCard.propTypes = {
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   showCloseSuspendGoalModal: PropTypes.func.isRequired,
+  showReopenGoalModal: PropTypes.func.isRequired,
   performGoalStatusUpdate: PropTypes.func.isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,

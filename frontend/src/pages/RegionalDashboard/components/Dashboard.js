@@ -1,17 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
 import ActivityReportDashboard from './ActivityReportDashboard';
 import TrainingReportDashboard from './TrainingReportDashboard';
 import AllReports from './AllReports';
+import { expandFilters } from '../../../utils';
 
 export default function Dashboard({
   reportType,
-  filtersToApply,
+  filters,
   resetPagination,
   setResetPagination,
   filterKey,
 }) {
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
   let DashboardComponent = ActivityReportDashboard;
   switch (reportType) {
     case 'training-reports':
@@ -37,7 +40,7 @@ export default function Dashboard({
 }
 
 Dashboard.propTypes = {
-  filtersToApply: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
   resetPagination: PropTypes.bool.isRequired,
   setResetPagination: PropTypes.func.isRequired,
   filterKey: PropTypes.string.isRequired,

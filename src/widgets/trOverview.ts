@@ -1,14 +1,14 @@
-import { Op, WhereOptions } from 'sequelize';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
 import db from '../models';
 import {
+  baseTRScopes,
   formatNumber,
   getAllRecipientsFiltered,
 } from './helpers';
+import { IScopes } from './types';
 
 const {
   EventReportPilot: TrainingReport,
-  SessionReportPilot: SessionReport,
   Recipient,
   Grant,
 } = db;
@@ -16,11 +16,6 @@ const {
 /**
  * interface for scopes
  */
-
-interface IScopes {
-  grant: WhereOptions[],
-  trainingReport: WhereOptions[],
-}
 
 /**
  * Interface for the data returned by the Training Report findAll
@@ -55,6 +50,7 @@ interface IReportData {
   grantIds: number[];
   sumDuration: number;
   numParticipants: number;
+  numSessions: number;
 }
 
 /**
@@ -67,6 +63,7 @@ interface IWidgetData {
   totalRecipients: string;
   sumDuration: string;
   numParticipants: string;
+  numSessions: string;
   recipientPercentage: string;
 }
 
@@ -76,7 +73,7 @@ interface IWidgetData {
  * @returns IWidgetData
  */
 export default async function trOverview(
-  scopes: IScopes = { grant: [], trainingReport: [] },
+  scopes: IScopes,
 ): Promise<IWidgetData> {
   // get all recipients, matching how they are filtered in the AR overview
   const allRecipientsFiltered = await getAllRecipientsFiltered(scopes);
@@ -84,20 +81,7 @@ export default async function trOverview(
   // Get all completed training reports and their session reports
   const reports = await TrainingReport.findAll({
     attributes: ['data', 'id'],
-    where: {
-      [Op.and]: [
-        {
-          'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
-        },
-        ...scopes.trainingReport,
-      ],
-    },
-    include: {
-      model: SessionReport,
-      as: 'sessionReports',
-      attributes: ['data', 'eventId'],
-      required: true,
-    },
+    ...baseTRScopes(scopes),
   }) as ITrainingReportForOverview[];
 
   const data = reports.reduce((acc: IReportData, report) => {
@@ -130,12 +114,14 @@ export default async function trOverview(
 
     return {
       ...acc,
+      numSessions: acc.numSessions + report.sessionReports.length,
       grantIds: acc.grantIds.concat(sessionGrants),
       sumDuration: acc.sumDuration + sessionDuration,
       numParticipants: acc.numParticipants + sessionParticipants,
     };
   }, {
     numReports: formatNumber(reports.length), // number of completed TRs
+    numSessions: 0,
     totalRecipients: allRecipientsFiltered.length, // total number of recipients
     grantIds: [], // number of unique grants served
     sumDuration: 0, // total hours of TTA
@@ -165,6 +151,7 @@ export default async function trOverview(
 
   return {
     numReports: data.numReports,
+    numSessions: formatNumber(data.numSessions),
     totalRecipients: allRecipientsFiltered.length.toString(),
     // "X% [number of recipients with TR] Recipients of [total active recipients]" for complete TRs,
     recipientPercentage,
@@ -173,7 +160,7 @@ export default async function trOverview(
     // total recipients
     numRecipients: formatNumber(numRecipients),
     // Add widget for number of hours of TTA on completed TRs
-    sumDuration: formatNumber(data.sumDuration),
+    sumDuration: formatNumber(data.sumDuration, 2),
     // Add widget for number of participants on completed TRs
     numParticipants: formatNumber(data.numParticipants),
   };

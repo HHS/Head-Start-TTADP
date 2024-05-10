@@ -869,12 +869,12 @@ describe('Recipient DB service', () => {
 
     it('properly de-duplicates based on responses', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(4);
+      expect(goalRows.length).toBe(3);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
 
-      expect(doubler.ids.length).toBe(1);
+      expect(doubler.ids.length).toBe(2);
 
       const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
       expect(singler).toBeTruthy();
@@ -883,6 +883,19 @@ describe('Recipient DB service', () => {
       const noResponse = goalRows.find((r) => r.responsesForComparison === '');
       expect(noResponse).toBeTruthy();
       expect(noResponse.ids.length).toBe(1);
+    });
+
+    it('properly combines the same goals with no creators/collaborators', async () => {
+      // Remove other goals
+      goals[0].destroy();
+      goals[3].destroy();
+
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(1);
+      // Verify goal 2 and 3 have empty creators/collaborators
+      expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
+      // Verify goal 2 and 3 are rolled up
+      expect(goalRows[0].ids.length).toBe(2);
     });
   });
 
@@ -1062,16 +1075,16 @@ describe('Recipient DB service', () => {
     it('successfully reduces data without losing topics', async () => {
       const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
 
-      expect(goalsForRecord.count).toBe(2);
-      expect(goalsForRecord.goalRows.length).toBe(2);
+      expect(goalsForRecord.count).toBe(1);
+      expect(goalsForRecord.goalRows.length).toBe(1);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(0);
+      expect(goal.reasons.length).toBe(1);
 
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
-      expect(objective.topics.length).toBe(1);
+      expect(objective.topics.length).toBe(4);
       expect(objective.supportType).toBe('Planning');
     });
   });
