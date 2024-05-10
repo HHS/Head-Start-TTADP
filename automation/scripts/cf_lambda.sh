@@ -91,6 +91,25 @@ function find_json_object() {
 
     echo "$found_object"
 }
+
+# Function to generate a list of files and their checksums from a given directory
+function generate_file_list_with_checksums {
+    local directory=$1
+    local output_file=$2
+
+    validate_parameters "$directory"
+    validate_parameters "$output_file"
+
+    # Find all files in the directory and generate checksums
+    find "$directory" -type f -exec md5sum {} + > "$output_file"
+    
+    if [ $? -eq 0 ]; then
+        log "INFO" "Generated file list with checksums at $output_file."
+    else
+        log "ERROR" "Failed to generate file list with checksums."
+        return 1
+    fi
+}
 # -----------------------------------------------------------------------------
 
 
@@ -431,21 +450,26 @@ function check_app_running {
     fi
 }
 
-# Function to push the app
+# Function to push the app using a manifest from a specific directory
 function push_app {
-    local app_name=$1
-    local docker_image=$2
-    validate_parameters "$app_name"
-    validate_parameters "$docker_image"
-    cf push "$app_name" --docker-image "$docker_image" --no-route --no-start
+    local directory=$1
+    local manifest_file=$2
+    validate_parameters "$directory"
+    validate_parameters "$manifest_file"
+
+    # Change to the specified directory
+    cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; exit 1; }
+
+    cf push -f "$manifest_file" --no-route --no-start
     local result=$?
     if [ $result -ne 0 ]; then
-        log "ERROR" "Failed to push $app_name with error code $result"
+        log "ERROR" "Failed to push application with error code $result"
         exit $result
     else
-        log "INFO" "$app_name pushed successfully."
+        log "INFO" "Application pushed successfully."
     fi
 }
+
 
 # Function to manage the state of the application (start, restage, stop)
 function manage_app {
@@ -548,8 +572,9 @@ check_dependencies cf awk date grep jq sleep uuidgen
 JSON_INPUT="$1"
 
 # Parse JSON and assign to variables
-APP_NAME=$(echo "$JSON_INPUT" | jq -r '.APP_NAME // "default-app-name"')
-DOCKER_IMAGE=$(echo "$JSON_INPUT" | jq -r '.DOCKER_IMAGE // "default-docker-image"')
+APP_NAME=$(echo "$JSON_INPUT" | jq -r '.APP_NAME // "tta-automation"')
+AUTOMATION_DIR=$(echo "$JSON_INPUT" | jq -r '.AUTOMATION_DIR // "./automation"')
+MANIFEST=$(echo "$JSON_INPUT" | jq -r '.MANIFEST // "manifest.yml"')
 service_instances=$(echo "$JSON_INPUT" | jq -c '.service_instances[]')
 TASK_NAME=$(echo "$JSON_INPUT" | jq -r '.TASK_NAME // "default-task-name"')
 COMMAND=$(echo "$JSON_INPUT" | jq -r '.COMMAND // "bash /path/to/default-script.sh"')
@@ -557,7 +582,7 @@ ARGS=$(echo "$JSON_INPUT" | jq -r '.ARGS // "default-arg1 default-arg2"')
 
 local service_credentials
 
-push_app "$APP_NAME" "$DOCKER_IMAGE"
+push_app "$AUTOMATION_DIR" "$MANIFEST"
 service_credentials=$(process_service_instances "up" "$JSON_INPUT")
 start_app "$APP_NAME"
 
