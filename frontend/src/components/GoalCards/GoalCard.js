@@ -1,5 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo, useContext } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useContext,
+  useEffect,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
@@ -95,7 +100,7 @@ function GoalCard({
     isReopenedGoal,
   } = goal;
 
-  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState(false);
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
 
@@ -103,6 +108,12 @@ function GoalCard({
     atLeastOneObjectiveIsNotCompletedOrSuspended,
     dispatchStatusChange,
   } = useObjectiveStatusMonitor(objectives);
+
+  useEffect(() => {
+    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(false);
+    }
+  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
@@ -122,6 +133,7 @@ function GoalCard({
       'Closed',
       'Suspended',
     ];
+
     if (statusesThatNeedObjectivesFinished.includes(newStatus)
         && atLeastOneObjectiveIsNotCompletedOrSuspended) {
       setInvalidStatusChangeAttempted(true);
