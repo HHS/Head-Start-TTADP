@@ -110,7 +110,8 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE))
+    || isAdmin(user);
   const determineMenuItems = () => {
     // Create default menu items.
     const createdMenuItems = [
