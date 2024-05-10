@@ -631,5 +631,29 @@ describe('Goals Table', () => {
       const editGoal = await screen.findByRole('button', { name: /Edit/i });
       expect(editGoal).toBeVisible();
     });
+
+    it('Shows edit if the user doesnt have the permission but is an admin', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+          {
+            scopeId: SCOPE_IDS.ADMIN,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable({ goals: [baseGoals[0]], goalsCount: 1 }, user);
+
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = await screen.findByRole('button', { name: /Edit/i });
+      expect(editGoal).toBeVisible();
+    });
   });
 });
