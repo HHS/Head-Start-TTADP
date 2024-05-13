@@ -123,7 +123,11 @@ export async function reopenGoal(req, res) {
 export async function changeGoalStatus(req, res) {
   try {
     const {
-      goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
+      goalIds,
+      newStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+      oldStatus,
     } = req.body;
 
     const userId = await currentUserId(req, res);
@@ -131,7 +135,7 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
-    const previousStatus = [];
+    let previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
@@ -147,8 +151,10 @@ export async function changeGoalStatus(req, res) {
           return status;
         }
 
-        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
-          previousStatus.push(goal.previousStatus);
+        if (goal.statusChanges) {
+          goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
+            previousStatus = [...new Set([...previousStatus, o, n])];
+          });
         }
       }
 
