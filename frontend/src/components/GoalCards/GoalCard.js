@@ -112,24 +112,26 @@ function GoalCard({
 
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const determineMenuItems = () => {
-    // Create default menu items.
-    const createdMenuItems = [
-      ...(goalStatus === 'Closed' ? [{
+    // Add reopen button if user has permissions and the goal is closed.
+    const createdMenuItems = [];
+
+    if (goalStatus === 'Closed' && hasEditButtonPermissions) {
+      createdMenuItems.push({
         label: 'Reopen',
         onClick: () => {
           showReopenGoalModal(id);
         },
-      }] : []),
-    ];
-    // Add edit button if user has permissions or if the goal is closed.
-    if (hasEditButtonPermissions || goalStatus === 'Closed') {
-      createdMenuItems.push({
-        label: goalStatus === 'Closed' ? 'View' : 'Edit',
-        onClick: () => {
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
-        },
       });
     }
+
+    // Add edit button if user has permissions or if the goal is closed.
+    createdMenuItems.push({
+      label: goalStatus === 'Closed' || !hasEditButtonPermissions ? 'View' : 'Edit',
+      onClick: () => {
+        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
+      },
+    });
+
     return createdMenuItems;
   };
   const menuItems = determineMenuItems();
