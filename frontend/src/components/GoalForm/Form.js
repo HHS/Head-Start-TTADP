@@ -44,7 +44,6 @@ export default function Form({
   objectives,
   setObjectives,
   setObjectiveError,
-  topicOptions,
   isOnApprovedReport,
   isOnReport,
   isCurated,
@@ -54,7 +53,6 @@ export default function Form({
   fetchError,
   goalNumbers,
   clearEmptyObjectiveError,
-  onUploadFiles,
   userCanEdit,
   source,
   setSource,
@@ -101,11 +99,8 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-
   const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}` : 'Recipient TTA goal';
-
   const showAlert = isOnReport && status !== 'Closed';
-
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
 
   return (
@@ -238,8 +233,6 @@ export default function Form({
           // that way we don't get the white screen of death
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
-          topicOptions={topicOptions}
-          onUploadFiles={onUploadFiles}
           goalStatus={status}
           userCanEdit={userCanEdit}
         />
@@ -302,10 +295,6 @@ Form.propTypes = {
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
@@ -325,7 +314,6 @@ Form.propTypes = {
     [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
   ).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
-  onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
   prompts: PropTypes.shape({
