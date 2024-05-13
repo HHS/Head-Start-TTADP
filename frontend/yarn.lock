@@ -4816,6 +4816,11 @@ destroy@1.2.0:
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.2.0.tgz#4803735509ad8be552934c67df614f94e66fa015"
   integrity sha512-2sJGJTaXIIaR1w4iJSNoN0hnMY7Gpc/n8D4qSCJw8QqFWXf7cuAgnEHxBpweaVcPevC2l3KpjYCx3NypQQgaJg==
 
+detect-file-encoding-and-language@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/detect-file-encoding-and-language/-/detect-file-encoding-and-language-2.4.0.tgz#0633b81fbe977c47b82b41c1732aa4534add8541"
+  integrity sha512-moFSAumrGlLCNU5jnaHyCzRUJJu0BCZunfL08iMbnDAgvNnxZad7+WZ26U2dsrIbGChlDPLKmEyEb2tEPUJFkw==
+
 detect-kerning@^2.1.2:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/detect-kerning/-/detect-kerning-2.1.2.tgz#4ecd548e4a5a3fc880fe2a50609312d000fa9fc2"
