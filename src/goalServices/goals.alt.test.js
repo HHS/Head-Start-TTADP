@@ -14,10 +14,9 @@ import db, {
   User,
 } from '../models';
 import {
-  reduceObjectives,
-  reduceObjectivesForActivityReport,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
+import { reduceObjectives, reduceObjectivesForActivityReport } from './reduceGoals';
 import {
   OBJECTIVE_STATUS,
   AUTOMATIC_CREATION,

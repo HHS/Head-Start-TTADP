@@ -24,7 +24,7 @@ import {
   recipientsByUserId,
   allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
-import { goalsByIdAndRecipient } from '../../goalServices/goals';
+import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
