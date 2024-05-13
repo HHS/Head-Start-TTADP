@@ -868,6 +868,7 @@ describe('create goal', () => {
     await waitFor(() => userEvent.click(saveDraft));
 
     const fieldset = document.querySelector('.ttahub-objective-files');
+    expect(fieldset).not.toBe(null);
 
     const yes = await within(fieldset).findByRole('radio', { name: 'Yes' });
     const no = await within(fieldset).findByRole('radio', { name: 'No' });
