@@ -17,6 +17,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
 import ObjectiveSupportType from '../ObjectiveSupportType';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
 const [
   objectiveTitleError,
@@ -227,13 +228,22 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON]}
       />
 
-      <ObjectiveSupportType
-        onBlurSupportType={validateSupportType}
-        supportType={supportType || ''}
-        onChangeSupportType={onChangeSupportType}
-        inputName={`objective-support-type-${index}`}
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          userCanEdit,
+          goalStatus !== 'Closed',
+        ]}
+        label="Support type"
+        value={supportType}
+      >
+        <ObjectiveSupportType
+          onBlurSupportType={validateSupportType}
+          supportType={supportType || ''}
+          onChangeSupportType={onChangeSupportType}
+          inputName={`objective-support-type-${index}`}
+          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <ObjectiveStatus
         status={status}
