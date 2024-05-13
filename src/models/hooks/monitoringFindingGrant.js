@@ -1,21 +1,21 @@
 import {
-  syncGrantNumberLink,
-  syncMonitoringReviewLink,
+  syncMonitoringFindingLink,
+  syncMonitoringFindingStatusLink,
   syncMonitoringGranteeLink,
 } from './genericLink';
 
 const beforeCreate = async (sequelize, instance, options) => {
   await Promise.all([
-    syncGrantNumberLink(sequelize, instance, options),
-    syncMonitoringReviewLink(sequelize, instance, options),
+    syncMonitoringFindingLink(sequelize, instance, options),
+    syncMonitoringFindingStatusLink(sequelize, instance, options),
     syncMonitoringGranteeLink(sequelize, instance, options),
   ]);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await Promise.all([
-    syncGrantNumberLink(sequelize, instance, options),
-    syncMonitoringReviewLink(sequelize, instance, options),
+    syncMonitoringFindingLink(sequelize, instance, options),
+    syncMonitoringFindingStatusLink(sequelize, instance, options),
     syncMonitoringGranteeLink(sequelize, instance, options),
   ]);
 };
