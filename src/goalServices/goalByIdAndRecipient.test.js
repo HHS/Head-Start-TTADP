@@ -21,7 +21,8 @@ import db, {
 } from '../models';
 import { createReport, destroyReport } from '../testUtils';
 import { processObjectiveForResourcesById } from '../services/resource';
-import { goalByIdAndRecipient, saveGoalsForReport, goalsByIdAndRecipient } from './goals';
+import { saveGoalsForReport } from './goals';
+import goalsByIdAndRecipient from './goalsByIdAndRecipient';
 import { FILE_STATUSES } from '../constants';
 
 describe('goalById', () => {
@@ -249,7 +250,7 @@ describe('goalById', () => {
   });
 
   it('retrieves a goal with associated data', async () => {
-    const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
+    const [goal] = await goalsByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     // seems to be something with the aliasing attributes that requires
     // them to be accessed in this way
     expect(goal.dataValues.name).toBe('Goal on activity report');
@@ -304,7 +305,7 @@ describe('goalById', () => {
       },
     ], report);
 
-    const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
+    const [goal] = await goalsByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     // seems to be something with the aliasing attributes that requires
     // them to be accessed in this way
     expect(goal.dataValues.name).toBe('Goal on activity report');
@@ -339,7 +340,7 @@ describe('goalById', () => {
       },
       individualHooks: true,
     });
-    const goal = await goalByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
+    const [goal] = await goalsByIdAndRecipient(goalOnActivityReport.id, grantRecipient.id);
     expect(goal.dataValues.name).toBe('Goal on activity report');
     expect(goal.objectives.length).toBe(1);
     expect(goal.grant.id).toBe(grantForReport.id);
