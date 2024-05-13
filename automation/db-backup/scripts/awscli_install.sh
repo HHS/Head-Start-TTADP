@@ -1,74 +1,129 @@
 #!/bin/bash
 
+# Exit Codes:
+# 0 - Installation directory already exists, no installation needed
+# 1 - General error
+# 2 - Failed to download AWS CLI
+# 3 - Failed to unzip AWS CLI package
+# 4 - Failed to install AWS CLI
+# 5 - AWS CLI verification failed
+# 6 - Parameter validation failed
+# 7 - Missing files or directories during cleanup
+
+# Set bash flags
+set -e
+set -u
+set -o pipefail
+set -o noglob
+set -o noclobber
+
+# Logging function
+function log() {
+    local type="$1"
+    local message="$2"
+    local timestamp
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+    echo "[$timestamp] $type: $message" >&2
+}
+
+# Parameter Validation
+function validate_parameters() {
+    local param="$1"
+    if [[ -z "${param}" ]]; then
+        log "ERROR" "Parameter is unset or empty."
+        exit 6
+    fi
+}
+
 # Function to check if the installation directory exists
-check_install_dir() {
+function check_install_dir() {
     local install_dir="$1"  # Pass the installation directory as an argument
+
+    validate_parameters "$install_dir"
 
     # Check if the directory exists
     if [ -d "$install_dir" ]; then
-        echo "Installation directory $install_dir already exists. Exiting the script."
+        log "INFO" "Installation directory $install_dir already exists. Exiting the script."
         exit 0
     else
-        echo "Installation directory $install_dir does not exist. Continuing with installation."
+        log "INFO" "Installation directory $install_dir does not exist. Continuing with installation."
     fi
 }
 
 # Function to download AWS CLI
-download_aws_cli() {
+function download_aws_cli() {
     local aws_cli_url="$1"
     local zip_file="$2"
-    echo "Downloading AWS CLI..."
+
+    validate_parameters "$aws_cli_url"
+    validate_parameters "$zip_file"
+
+    log "INFO" "Downloading AWS CLI..."
     if ! wget "$aws_cli_url" -O "$zip_file"; then
-        echo "Failed to download AWS CLI."
-        exit 1
+        log "ERROR" "Failed to download AWS CLI."
+        exit 2
     fi
-    echo "Download completed successfully."
+    log "INFO" "Download completed successfully."
 }
 
 # Function to install AWS CLI
-install_aws_cli() {
+function install_aws_cli() {
     local zip_file="$1"
     local install_dir="$2"
     local bin_dir="$3"
-    echo "Installing AWS CLI..."
+
+    validate_parameters "$zip_file"
+    validate_parameters "$install_dir"
+    validate_parameters "$bin_dir"
+
+    log "INFO" "Installing AWS CLI..."
     if ! unzip "$zip_file" -d "/tmp/local"; then
-        echo "Failed to unzip AWS CLI package."
-        exit 1
+        log "ERROR" "Failed to unzip AWS CLI package."
+        exit 3
     fi
     if ! ./aws/install -i "$install_dir" -b "$bin_dir"; then
-        echo "Failed to install AWS CLI."
-        exit 1
+        log "ERROR" "Failed to install AWS CLI."
+        exit 4
     fi
-    echo "Installation completed successfully."
+    log "INFO" "Installation completed successfully."
 }
 
 # Function to verify installation
-verify_installation() {
+function verify_installation() {
     local bin_dir="$1"
-    echo "Verifying AWS CLI installation..."
-    if ! "$bin_dir/aws" --version; then
-        echo "Verification failed."
-        exit 1
+
+    validate_parameters "$bin_dir"
+
+    log "INFO" "Verifying AWS CLI installation..."
+    local aws_version
+    if ! aws_version=$("$bin_dir/aws" --version); then
+        log "ERROR" "Verification failed."
+        exit 5
     fi
-    echo "AWS CLI is installed successfully: $($bin_dir/aws --version)"
+    log "INFO" "AWS CLI is installed successfully: $aws_version"
 }
 
+
 # Function to clean up installation files
-cleanup() {
+function cleanup() {
     local zip_file="$1"
     local aws_dir="$2"
-    echo "Cleanup install files"
+
+    validate_parameters "$zip_file"
+    validate_parameters "$aws_dir"
+
+    log "INFO" "Cleanup install files"
     if [ -f "$zip_file" ]; then
         rm "$zip_file"
-        echo "The zip file has been deleted."
+        log "INFO" "The zip file has been deleted."
     else
-        echo "The zip file does not exist."
+        log "INFO" "The zip file does not exist."
     fi
     if [ -d "$aws_dir" ]; then
         rm -r "$aws_dir"
-        echo "The 'aws' directory has been deleted."
+        log "INFO" "The 'aws' directory has been deleted."
     else
-        echo "The 'aws' directory does not exist."
+        log "INFO" "The 'aws' directory does not exist."
     fi
 }
 
