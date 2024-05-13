@@ -261,7 +261,7 @@ describe('MonitoringFindingHistoryStatus Model', () => {
     expect(statusLink).not.toBe(null);
 
     await MonitoringFindingHistoryStatus.destroy({
-      where: { statusId: 1 },
+      where: { statusId: 2 },
       force: true,
     });
     await MonitoringFindingHistoryStatusLink.destroy({ where: { statusId: 2 }, force: true });
