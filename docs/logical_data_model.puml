@@ -240,6 +240,7 @@ class Courses{
  mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
  * name : text
+ * persistsOnUpload : boolean : false
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }

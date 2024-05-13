@@ -1321,8 +1321,12 @@ describe('ActivityReport', () => {
     message = screen.queryByText('Add a TTA objective and save as draft to upload resources.');
     expect(message).toBeNull();
 
-    const didYouUse = await screen.findByText(/Did you use any TTA resources/i);
-    expect(didYouUse).toBeInTheDocument();
+    const didYouUse = await screen.findAllByText(/Did you use any other TTA resources/i);
+    expect(didYouUse).toHaveLength(2);
+
+    didYouUse.forEach((el) => {
+      expect(el).toBeVisible();
+    });
 
     radios = document.querySelector('.ttahub-objective-files input[type="radio"]');
     expect(radios).not.toBeNull();
