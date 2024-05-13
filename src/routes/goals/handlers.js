@@ -6,7 +6,6 @@ import {
   createOrUpdateGoals,
   goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
-  goalByIdAndRecipient,
   destroyGoal,
   mergeGoals,
   getGoalIdsBySimilarity,
@@ -251,37 +250,6 @@ export async function retrieveGoalsByIds(req, res) {
     res.json(retrievedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
-  }
-}
-
-export async function retrieveGoalByIdAndRecipient(req, res) {
-  try {
-    const { goalId, recipientId } = req.params;
-
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
-
-    const policy = new Goal(user, goal);
-
-    if (!policy.canView()) {
-      res.sendStatus(401);
-      return;
-    }
-
-    const gId = parseInt(goalId, 10);
-    const rId = parseInt(recipientId, 10);
-
-    const retrievedGoal = await goalByIdAndRecipient(gId, rId);
-
-    if (!retrievedGoal) {
-      res.sendStatus(404);
-      return;
-    }
-
-    res.json(retrievedGoal);
-  } catch (error) {
-    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOAL_BY_ID_AND_RECIPIENT`);
   }
 }
 
