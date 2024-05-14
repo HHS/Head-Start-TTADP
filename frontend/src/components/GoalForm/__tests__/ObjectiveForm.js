@@ -28,6 +28,7 @@ describe('ObjectiveForm', () => {
     ],
     id: 123,
     status: 'Not started',
+    supportType: 'Maintaining',
   };
 
   const index = 1;
@@ -38,6 +39,7 @@ describe('ObjectiveForm', () => {
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
     goalStatus = 'Draft',
+    userCanEdit = true,
   ) => {
     render((
       <UserContext.Provider value={{ user: { flags: [] } }}>
@@ -64,7 +66,7 @@ describe('ObjectiveForm', () => {
             'Curriculum (Instructional or Parenting)',
             'Data and Evaluation',
           ].map((name, id) => ({ id, name }))}
-          userCanEdit
+          userCanEdit={userCanEdit}
         />
       </UserContext.Provider>
     ));
