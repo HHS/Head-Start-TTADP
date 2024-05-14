@@ -759,10 +759,6 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
 }
 
 function wasGoalPreviouslyClosed(goal) {
-  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
-    return true;
-  }
-
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
@@ -1260,18 +1256,23 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  return Goal.findOne({
+  const goal = Goal.findOne({
     attributes: [
       'name',
       'id',
       'status',
       'createdVia',
-      'previousStatus',
     ],
     where: {
       id: goalId,
     },
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -1291,6 +1292,12 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
       },
     ],
   });
+
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
+    goal.previousStatus = goal.statusChanges[goal.statusChanges.length - 1].oldStatus;
+  }
+
+  return goal;
 }
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
@@ -2388,6 +2395,10 @@ export async function updateGoalStatusById(
   closeSuspendContext,
   previousStatus,
 ) {
+  // Since reason cannot be null, but sometimes we just can't know the reason (or we don't ask),
+  // a default value of "Unknown" is used.
+  const reason = closeSuspendReason?.trim() || 'Unknown';
+
   // first, we verify that the transition is allowed
   const allowed = verifyAllowedGoalStatusTransition(
     oldStatus,
@@ -2404,7 +2415,7 @@ export async function updateGoalStatusById(
     goalId,
     userId,
     newStatus,
-    reason: closeSuspendReason,
+    reason,
     context: closeSuspendContext,
   })));
 }
@@ -2776,6 +2787,12 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     },
     include: [
       {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus', 'newStatus'],
+        required: false,
+      },
+      {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
         attributes: ['goalId', 'activityReportId'],
@@ -3034,8 +3051,6 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     source: finalGoal.source,
     isFromSmartsheetTtaPlan: finalGoal.isFromSmartsheetTtaPlan,
     status: finalStatus,
-    closeSuspendReason: finalGoal.closeSuspendReason,
-    closeSuspendContext: finalGoal.closeSuspendContext,
   };
 }
 
@@ -3578,7 +3593,7 @@ export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
       GOAL_STATUS.CLOSED,
       closeSuspendReason,
       closeSuspendContext,
-      GOAL_STATUS.CLOSED,
+      [GOAL_STATUS.CLOSED],
     ),
   };
 }

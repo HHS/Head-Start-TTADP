@@ -191,6 +191,12 @@ const filterDataToModel = async (
       ) {
         // If the value matches the column criteria, add it to the matched object
         acc.matched[key] = value;
+      } else if (neededType === 'string' && valueType === 'number') {
+        // If the value matches the column criteria, add it to the matched object
+        acc.matched[key] = `${value}`;
+      } else if (neededType === 'boolean' && valueType === 'number' && [0, 1].includes(value)) {
+        // If the value matches the column criteria, add it to the matched object
+        acc.matched[key] = Boolean(value);
       } else {
         // Otherwise, add it to the unmatched object
         acc.unmatched[key] = value;
