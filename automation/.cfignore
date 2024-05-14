@@ -1,5 +1,7 @@
 # Ignore everything
 *
 
-!scripts/idol.sh
+!cf/scripts/*
+!common/scripts/*
+!db-backup/scripts/*
 !.cfignore

@@ -3,15 +3,13 @@ applications:
 - name: tta-automation
   stack: cflinuxfs4
   health-check-type: process
-  memory: 1G
+  memory: 512M
+  disk_quota: 512M
   instances: 1
   no-route: true
   buildpacks:
     - binary_buildpack
-  command: ./scripts/idol.sh
+  command: ./cf/scripts/idol.sh
   services:
-  - ttahub-sandbox
-    # - ttahub-prod
-    # - ttahub-db-backups
-  env:
-    CF_INSTANCE_INDEX: "0"
+    - ttahub-prod
+    - ttahub-db-backups

@@ -102,7 +102,7 @@ function generate_file_list_with_checksums {
 
     # Find all files in the directory and generate checksums
     find "$directory" -type f -exec md5sum {} + > "$output_file"
-    
+
     if [ $? -eq 0 ]; then
         log "INFO" "Generated file list with checksums at $output_file."
     else
@@ -257,152 +257,6 @@ function cleanup_service_key() {
 }
 # -----------------------------------------------------------------------------
 
-
-# -----------------------------------------------------------------------------
-# Service binding functions
-# -----------------------------------------------------------------------------
-# Wait for service binding to complete change
-function waitForServiceBindingChange {
-    local service_name="$1"
-    local app_name="$2"
-    local operation="$3"
-    local timeout="${4:-300}"
-    local start_time
-    start_time=$(date +%s)
-
-    local service_info
-    local cf_exit_code
-    local service_status
-    local bound_apps
-    local current_time
-
-    log "INFO" "Waiting for service '$service_name' to be $operation with app '$app_name'..."
-
-    while :; do
-        service_info=$(cf service "$service_name" 2>&1)
-        cf_exit_code=$?
-
-        if [ $cf_exit_code -ne 0 ]; then
-            log "ERROR" "Failed to fetch service information: $service_info"
-            return $cf_exit_code
-        fi
-
-        service_status=$(echo "$service_info" | grep "status:" | awk '{print $2}')
-        bound_apps=$(echo "$service_info" | grep -o "\b$app_name\b")
-
-        if [[ "$service_status" == "succeeded" ]]; then
-            if [[ "$operation" == "bind" && -n "$bound_apps" ]]; then
-                log "INFO" "Service '$service_name' is successfully bound to app '$app_name'."
-                return 0
-            elif [[ "$operation" == "unbind" && -z "$bound_apps" ]]; then
-                log "INFO" "Service '$service_name' is successfully unbound from app '$app_name'."
-                return 0
-            fi
-        elif [[ "$service_status" == "failed" ]]; then
-            log "ERROR" "Service operation failed."
-            return 1
-        fi
-
-        current_time=$(date +%s)
-        if (( current_time - start_time >= timeout )); then
-            log "ERROR" "Timeout waiting for service '$service_name' to be $operation with app '$app_name'."
-            return 1
-        fi
-
-        sleep 10
-    done
-}
-
-# Perform the (un)bind and wait for the change to take effect
-function manage_service_binding {
-    local operation=$1
-    local app_name=$2
-    local service_instance_name=$3
-    validate_parameters "$operation"
-    validate_parameters "$app_name"
-    validate_parameters "$service_instance_name"
-
-    if [[ "$operation" == "bind" ]]; then
-        cf bind-service "$app_name" "$service_instance_name"
-    elif [[ "$operation" == "unbind" ]]; then
-        cf unbind-service "$app_name" "$service_instance_name"
-    fi
-
-    local result=$?
-    if [ $result -ne 0 ]; then
-        log "ERROR" "Failed to $operation service $service_instance_name from/to $app_name with error code $result"
-        exit $result
-    else
-        log "INFO" "Service $service_instance_name $operation to/from $app_name successfully."
-        waitForServiceBindingChange "$service_instance_name" "$app_name" "$operation"
-    fi
-}
-
-# Trigger the (un)bind and associated other steps based on the service type
-function service_binding_manager() {
-  local operation_flag="$1"  # 'up' (bind) or 'down' (unbind)
-  local app_name="$2"
-  local service_instance="$3"
-  local credentials="$4"
-
-  local service_name
-  local service_type
-  service_name=$(echo "$service_instance" | jq -r '.name')
-  service_type=$(echo "$service_instance" | jq -r '.type')
-  log "INFO" "Operation: $operation_flag"
-  log "INFO" "App Name: $app_name"
-  log "INFO" "Service Name: $service_name"
-  log "INFO" "Service Type: $service_type"
-
-  # Case statement to handle different service types for binding/unbinding
-  case "$service_type" in
-    "rds")
-      if [[ "$operation_flag" == "up" ]]; then
-        log "INFO" "Binding RDS service: $service_name to $app_name"
-        manage_service_binding bind "$app_name" "$service_name"
-      else
-        log "INFO" "Unbinding RDS service: $service_name from $app_name"
-        manage_service_binding unbind "$app_name" "$service_name"
-      fi
-      ;;
-    "s3")
-      if [[ "$operation_flag" == "up" ]]; then
-        log "INFO" "Binding S3 bucket: $service_name to $app_name"
-        manage_service_binding bind "$app_name" "$service_name"
-        local new_credentials
-        new_credentials=$(prepare_s3_service_key "$service_name")
-        credentials=$(append_to_json_array "$credentials" "$new_credentials")
-      else
-        log "INFO" "Unbinding S3 bucket: $service_name from $app_name"
-        manage_service_binding unbind "$app_name" "$service_name"
-        local credentials_json
-        credentials_json=$(find_json_object "$credentials" "service_name" "$service_name")
-        cleanup_service_key "$service_name" "$credentials_json"
-      fi
-      ;;
-    *)
-      log "ERROR" "Unknown service type: $service_type"
-      return 1
-      ;;
-  esac
-}
-
-function process_service_instances() {
-  local operation="$1"  # 'up' or 'down'
-  local json_data="$2"
-  local service_instances
-  service_instances=$(echo "$json_data" | jq -c '.service_instances[]')
-  local service_credentials="[]"
-
-  for service_instance in $service_instances; do
-    credentials=$(service_binding_manager "$operation" "$APP_NAME" "$service_instance" "$service_credentials")
-  done
-
-  echo "$service_credentials"
-}
-# -----------------------------------------------------------------------------
-
-
 # -----------------------------------------------------------------------------
 # App management functions
 # -----------------------------------------------------------------------------
@@ -450,25 +304,39 @@ function check_app_running {
     fi
 }
 
-# Function to push the app using a manifest from a specific directory
+# Push the app using a manifest from a specific directory
 function push_app {
+    local original_dir=$(pwd)  # Save the original directory
     local directory=$1
     local manifest_file=$2
     validate_parameters "$directory"
     validate_parameters "$manifest_file"
 
     # Change to the specified directory
-    cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; exit 1; }
+    cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
 
+    # Extract app name from the manifest file
+    local app_name=$(grep 'name:' "$manifest_file" | awk '{print $2}' | tr -d '"')
+
+    # Push the app without routing or starting it
     cf push -f "$manifest_file" --no-route --no-start
     local result=$?
     if [ $result -ne 0 ]; then
         log "ERROR" "Failed to push application with error code $result"
+        cd "$original_dir"  # Restore the original directory
         exit $result
     else
         log "INFO" "Application pushed successfully."
     fi
+
+    # Restore the original directory
+    cd "$original_dir"
+
+    # Log and return the app name
+    log "INFO" "The app name is: $app_name"
+    echo $app_name
 }
+
 
 
 # Function to manage the state of the application (start, restage, stop)
@@ -565,35 +433,39 @@ function delete_app {
 }
 # -----------------------------------------------------------------------------
 
-# Main execution flow
-# Check dependencies first
-check_dependencies cf awk date grep jq sleep uuidgen
+main() {
+  # Check dependencies first
+  check_dependencies cf awk date grep jq sleep uuidgen
 
-JSON_INPUT="$1"
+  local json_input="$1"
 
-# Parse JSON and assign to variables
-APP_NAME=$(echo "$JSON_INPUT" | jq -r '.APP_NAME // "tta-automation"')
-AUTOMATION_DIR=$(echo "$JSON_INPUT" | jq -r '.AUTOMATION_DIR // "./automation"')
-MANIFEST=$(echo "$JSON_INPUT" | jq -r '.MANIFEST // "manifest.yml"')
-service_instances=$(echo "$JSON_INPUT" | jq -c '.service_instances[]')
-TASK_NAME=$(echo "$JSON_INPUT" | jq -r '.TASK_NAME // "default-task-name"')
-COMMAND=$(echo "$JSON_INPUT" | jq -r '.COMMAND // "bash /path/to/default-script.sh"')
-ARGS=$(echo "$JSON_INPUT" | jq -r '.ARGS // "default-arg1 default-arg2"')
+  validate_parameters "$json_input"
+  validate_json "$json_input"
 
-local service_credentials
+  # Parse JSON and assign to variables
+  local automation_dir manifest task_name command args
+  automation_dir=$(echo "$json_input" | jq -r '.AUTOMATION_DIR // "./automation"')
+  manifest=$(echo "$json_input" | jq -r '.MANIFEST // "manifest.yml"')
+  task_name=$(echo "$json_input" | jq -r '.TASK_NAME // "default-task-name"')
+  command=$(echo "$json_input" | jq -r '.command // "bash /path/to/default-script.sh"')
+  args=$(echo "$json_input" | jq -r '.ARGS // "default-arg1 default-arg2"')
 
-push_app "$AUTOMATION_DIR" "$MANIFEST"
-service_credentials=$(process_service_instances "up" "$JSON_INPUT")
-start_app "$APP_NAME"
+  local service_credentials
 
-if run_task "$APP_NAME" "$TASK_NAME" "$COMMAND" "$ARGS" && monitor_task "$APP_NAME" "$TASK_NAME"; then
-    log "INFO" "Task execution succeeded."
-else
-    log "ERROR" "Task execution failed."
-    exit 1
-fi
+  app_name=$(push_app "$automation_dir" "$manifest")
+  start_app "$app_name"
 
-# Clean up
-stop_app "$APP_NAME"
-process_service_instances "down" "$JSON_INPUT"
-delete_app "$APP_NAME"
+  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
+      log "INFO" "Task execution succeeded."
+  else
+      log "ERROR" "Task execution failed."
+      exit 1
+  fi
+
+  # Clean up
+  stop_app "$app_name"
+  # Currently only turing off to aid in speeding up cycle time
+  # delete_app "$app_name"
+}
+
+main "$@"

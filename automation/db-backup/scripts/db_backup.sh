@@ -22,6 +22,7 @@ function parameters_validate() {
     local param="$1"
     if [[ -z "${param}" ]]; then
         log "ERROR" "Parameter is unset or empty."
+        set -e
         exit 1
     fi
 }
@@ -29,13 +30,18 @@ function parameters_validate() {
 # Export Validation
 function export_validate() {
     local param="$1"
-    
-    # Check if the parameter is set and exported
+
+    # Check if the parameter is set
     if ! declare -p "$param" &>/dev/null; then
         log "ERROR" "Parameter '$param' is unset."
+        set -e
         exit 1
-    elif [[ "$(declare -p "$param")" != *"export"* ]]; then
+    fi
+
+    # Check if the parameter is exported
+    if [[ "$(declare -p "$param")" != *" -x "* ]]; then
         log "ERROR" "Parameter '$param' is not exported."
+        set -e
         exit 1
     fi
 }
@@ -46,6 +52,7 @@ function check_dependencies() {
     for dep in "${dependencies[@]}"; do
         if ! type "${dep}" > /dev/null 2>&1; then
             log "ERROR" "Dependency ${dep} is not installed."
+            set -e
             exit 1
         fi
     done
@@ -67,12 +74,17 @@ function add_to_path() {
 function monitor_memory() {
     local pid=$1
     local interval=${2-0.5}
-    local max_mem=0
-    local max_system_mem=0
-    local mem
-    local system_mem
+    local max_mem_mb=0
+    local max_system_mem_mb=0
+    local mem_kb
+    local mem_mb
+    local system_mem_bytes
+    local system_mem_mb
     local start_time
     start_time=$(date +%s)  # Record start time in seconds
+
+    # Path to the container's memory cgroup
+    local MEM_CGROUP_PATH="/sys/fs/cgroup/memory"
 
     # Trap to handle script exits and interruptions
     local exit_code duration end_time
@@ -80,8 +92,8 @@ function monitor_memory() {
       end_time=$(date +%s); \
       duration=$((end_time - start_time)); \
       log "STAT" "Exit code: $exit_code"; \
-      log "STAT" "Maximum memory used by the process: $max_mem kB"; \
-      log "STAT" "Maximum system memory used: $max_system_mem kB"; \
+      log "STAT" "Maximum memory used by the process: $max_mem_mb MB"; \
+      log "STAT" "Maximum container memory used: $max_system_mem_mb MB"; \
       log "STAT" "Duration of the run: $duration seconds from $start_time to $end_time"; \
       exit $exit_code' EXIT SIGINT SIGTERM
 
@@ -91,16 +103,18 @@ function monitor_memory() {
         if [ ! -e "/proc/$pid" ]; then
             break
         fi
-        # Process-specific memory
-        mem=$(awk '/VmRSS/{print $2}' "/proc/$pid/status" 2>/dev/null)
-        if [[ "$mem" -gt "$max_mem" ]]; then
-            max_mem=$mem
+        # Process-specific memory in kilobytes, then convert to megabytes
+        mem_kb=$(awk '/VmRSS/{print $2}' "/proc/$pid/status" 2>/dev/null)
+        mem_mb=$((mem_kb / 1024))
+        if [[ "$mem_mb" -gt "$max_mem_mb" ]]; then
+            max_mem_mb=$mem_mb
         fi
-        
-        # System-wide memory (used memory)
-        system_mem=$(awk '/MemTotal/{total=$2} /MemAvailable/{available=$2} END{print total-available}' /proc/meminfo)
-        if [[ "$system_mem" -gt "$max_system_mem" ]]; then
-            max_system_mem=$system_mem
+
+        # Container-specific memory (used memory) in bytes, then convert to megabytes
+        system_mem_bytes=$(cat $MEM_CGROUP_PATH/memory.usage_in_bytes)
+        system_mem_mb=$((system_mem_bytes / 1024 / 1024))
+        if [[ "$system_mem_mb" -gt "$max_system_mem_mb" ]]; then
+            max_system_mem_mb=$system_mem_mb
         fi
 
         sleep "$interval"
@@ -117,6 +131,7 @@ function validate_json() {
     log "INFO" "Validating JSON..."
     if ! echo "${json_data}" | jq empty 2>/dev/null; then
         log "ERROR" "Invalid JSON format."
+        set -e
         exit 6
     fi
 }
@@ -135,6 +150,7 @@ function append_to_json_array() {
     # Check if the update was successful
     if ! updated_json=$(jq --argjson obj "$new_json" '. += [$obj]' <<< "$existing_json"); then
         log "ERROR" "Failed to append JSON object."
+        set -e
         return 1
     fi
 
@@ -158,9 +174,10 @@ function find_json_object() {
     # Check if an object was found
     if [ -z "$found_object" ]; then
         log "INFO" "No object found with $key = $value."
+        set -e
         return 1
     else
-        log "INFO" "Object found: $found_object"
+        log "INFO" "Object found"
     fi
 
     echo "$found_object"
@@ -170,25 +187,29 @@ function find_json_object() {
 process_json() {
     local json_string="$1"
     local jq_query="$2"
+    local jq_flag="${3-}"
 
     # Use jq to process the JSON string with the provided jq query
     # Capture stderr in a variable to handle jq errors
     local result
-    result=$(echo "$json_string" | jq "$jq_query" 2>&1)
+    result=$(echo "$json_string" | jq $jq_flag "$jq_query" 2>&1)
     local jq_exit_status=$?
 
     # Check jq execution status
     if [ $jq_exit_status -ne 0 ]; then
         log "ERROR" "jq execution failed: $result"
+        set -e
         return $jq_exit_status  # Return with an error status
     fi
 
     # Check if the result is empty or null (jq returns 'null' if no data matches the query)
     if [[ -z $result || $result == "null" ]]; then
         log "ERROR" "No value found for the provided jq query."
+        set -e
         return 1  # Return with an error status
     else
         echo "$result"
+        set -e
         return 0
     fi
 }
@@ -197,42 +218,54 @@ process_json() {
 # -----------------------------------------------------------------------------
 # File & Script helper functions
 # -----------------------------------------------------------------------------
-# Function to run an adjacent script and return its output if successful
-run_adjacent_script() {
+# run an script and return its output if successful
+run_script() {
     local script_name="$1"
+    local script_dir="$2"
+    shift 2  # Shift the first two arguments out, leaving any additional arguments
 
     parameters_validate "${script_name}"
-    
-    log "INFO" "Get the absolute directory of the current script"
-    local current_script_dir
-    current_script_dir=$(realpath "$(dirname "$0")")
-    local adjacent_script_path="$current_script_dir/$script_name"
-    
-    log "INFO" "Check if the adjacent script exists"
-    if [ ! -f "$adjacent_script_path" ]; then
-        log "ERROR" "The script $script_name does not exist."
-        return 1  # Return with an error status
-    fi
-    
-    log "INFO" "Check if the script is executable"
-    if [ ! -x "$adjacent_script_path" ]; then
-        log "ERROR" "The script $script_name is not executable."
+
+    log "INFO" "Resolve the full path of the script"
+    local script_path
+    if [[ -d "$script_dir" ]]; then
+        script_path="$(cd "$script_dir" && pwd)/$script_name"
+    else
+        log "ERROR" "The specified directory $script_dir does not exist."
+        set -e
         return 1  # Return with an error status
     fi
 
-    log "INFO" "Execute the adjacent script and capture its output"
-    script_output=$("${adjacent_script_path}")
+    log "INFO" "Check if the script exists"
+    if [ ! -f "$script_path" ]; then
+        log "ERROR" "The script $script_name does not exist at $script_path."
+        set -e
+        return 1  # Return with an error status
+    fi
+
+    log "INFO" "Check if the script is executable"
+    if [ ! -x "$script_path" ]; then
+        log "ERROR" "The script $script_name is not executable."
+        set -e
+        return 1  # Return with an error status
+    fi
+
+    log "INFO" "Execute the script with any passed arguments and capture its output"
+    script_output=$("$script_path" "$@")
     local script_exit_status=$?
 
     log "INFO" "Check the exit status of the script"
     if [ $script_exit_status -ne 0 ]; then
         log "ERROR" "Script execution failed with exit status $script_exit_status. Output: $script_output"
+        set -e
         return $script_exit_status
     else
         echo "$script_output"
+        set -e
         return 0
     fi
 }
+
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -262,19 +295,19 @@ function rds_prep() {
   server_data=$(find_json_object "${rds_data}" "name" "${db_server}")
   parameters_validate "${server_data}"
   local db_host
-  db_host=$(process_json "${server_data}" ".credentials.host")
+  db_host=$(process_json "${server_data}" ".credentials.host" "-r")
   parameters_validate "${db_host}"
   local db_port
-  db_port=$(process_json "${server_data}" ".credentials.port")
+  db_port=$(process_json "${server_data}" ".credentials.port" "-r")
   parameters_validate "${db_port}"
   local db_username
-  db_username=$(process_json "${server_data}" ".credentials.username")
+  db_username=$(process_json "${server_data}" ".credentials.username" "-r")
   parameters_validate "${db_username}"
   local db_password
-  db_password=$(process_json "${server_data}" ".credentials.db_password")
+  db_password=$(process_json "${server_data}" ".credentials.password" "-r")
   parameters_validate "${db_password}"
   local db_name
-  db_name=$(process_json "${server_data}" ".credentials.name")
+  db_name=$(process_json "${server_data}" ".credentials.name" "-r")
   parameters_validate "${db_name}"
 
   log "INFO" "Configuring PostgreSQL client environment."
@@ -304,6 +337,7 @@ function rds_test_connectivity() {
         log "INFO" "RDS database is ready and accepting connections."
     else
         log "ERROR" "Failed to connect to RDS database. Check server status, credentials, and network settings."
+        set -e
         return 1
     fi
 }
@@ -342,16 +376,16 @@ function aws_s3_prep() {
   server_data=$(find_json_object "${s3_data}" "name" "${s3_server}")
   parameters_validate "${server_data}"
   local s3_access_key_id
-  s3_access_key_id=$(process_json "${server_data}" ".credentials.access_key_id")
+  s3_access_key_id=$(process_json "${server_data}" ".credentials.access_key_id" "-r")
   parameters_validate "${s3_access_key_id}"
   local s3_secret_access_key
-  s3_secret_access_key=$(process_json "${server_data}" ".credentials.secret_access_key")
+  s3_secret_access_key=$(process_json "${server_data}" ".credentials.secret_access_key" "-r")
   parameters_validate "${s3_secret_access_key}"
   local s3_bucket
-  s3_bucket=$(process_json "${server_data}" ".credentials.bucket")
+  s3_bucket=$(process_json "${server_data}" ".credentials.bucket" "-r")
   parameters_validate "${s3_bucket}"
   local s3_region
-  s3_region=$(process_json "${server_data}" ".credentials.region")
+  s3_region=$(process_json "${server_data}" ".credentials.region" "-r")
   parameters_validate "${s3_region}"
 
   log "INFO" "Setting AWS CLI environment variables."
@@ -375,10 +409,11 @@ function s3_test_connectivity() {
 
     log "INFO" "Testing AWS S3 connectivity..."
 
-    if aws s3 ls > /dev/null 2>&1; then
+    if aws s3 ls "s3://$AWS_DEFAULT_BUCKET" > /dev/null 2>&1; then
         log "INFO" "Successfully connected to AWS S3."
     else
         log "ERROR" "Failed to connect to AWS S3. Check credentials and network settings."
+        set -e
         return 1
     fi
 }
@@ -387,7 +422,7 @@ function s3_test_connectivity() {
 function aws_s3_copy_file_prep() {
   local file_name=$1
   local sub_dir=$2
-  
+
   parameters_validate "${file_name}"
   parameters_validate "${sub_dir}"
   aws_s3_validate
@@ -412,9 +447,11 @@ function aws_s3_check_file_exists() {
   local s3_bucket=$AWS_DEFAULT_BUCKET
   if aws s3 ls "s3://${s3_bucket}/${file_name}" > /dev/null; then
       log "INFO" "File found in S3."
+      set -e
       return 0
   else
       log "ERROR" "File not found in S3: ${file_name}"
+      set -e
       return 1
   fi
 }
@@ -432,6 +469,7 @@ function aws_s3_safe_remove_file() {
       log "INFO" "Removing ${file_name} from s3..."
       if ! aws s3 rm "s3://${s3_bucket}/${file_name}"; then
         log "ERROR" "Failed to remove ${file_name}"
+        set -e
         return 1
       fi
       log "INFO" "Removed ${file_name} from s3"
@@ -439,9 +477,9 @@ function aws_s3_safe_remove_file() {
 }
 
 aws_s3_verify_file_integrity() {
-  local zip_file_path="$2"
-  local md5_file_path="$3"
-  local sha256_file_path="$4"
+  local zip_file_path="$1"
+  local md5_file_path="$2"
+  local sha256_file_path="$3"
 
   log "INFO" "Stream the expected hashes directly from S3"
   local expected_md5 expected_sha256
@@ -449,49 +487,52 @@ aws_s3_verify_file_integrity() {
   expected_sha256=$(aws s3 cp "s3://${sha256_file_path}" -)
 
   log "INFO" "Prepare the command to stream the S3 file and calculate hashes"
-  local full_cmd="aws s3 cp \"s3://${zip_file_path}\" - |\
-      tee \
-        >(sha256sum | awk '{print \$1}' > /tmp/computed_sha256 & echo \$! > /tmp/sha256_pid) \
-        >(md5sum | awk '{print \$1}' > /tmp/computed_md5 & echo \$! > /tmp/md5_pid) \
-      >/dev/null"
-
+  set +e
   log "INFO" "Execute the command and capture its exit status"
-  eval "$full_cmd"
+  aws s3 cp "s3://${zip_file_path}" - |\
+      tee \
+        >(sha256sum |\
+          awk '{print $1}' > /tmp/computed_sha256 &\
+          echo $? > /tmp/md5_status \
+        ) \
+        >(md5sum |\
+          awk '{print $1}' > /tmp/computed_md5 &\
+          echo $? > /tmp/sha256_status \
+        ) \
+      >/dev/null
   local main_exit_status=$?
 
   log "INFO" "Wait for all subprocesses and check their exit statuses"
-  local md5_pid sha256_pid md5_exit_status sha256_exit_status
-  md5_pid=$(< /tmp/md5_pid)
-  sha256_pid=$(< /tmp/sha256_pid)
-
-  wait "$md5_pid"
-  md5_exit_status=$?
-  wait "$sha256_pid"
-  sha256_exit_status=$?
-
-  log "INFO" "Clean up temporary PID and hash files"
-  rm /tmp/md5_pid /tmp/sha256_pid /tmp/computed_md5 /tmp/computed_sha256
+  local md5_exit_status sha256_exit_status
+  read md5_exit_status < /tmp/md5_status
+  read sha256_exit_status < /tmp/sha256_status
+  rm -f /tmp/md5_status /tmp/sha256_status
 
   log "INFO" "Check if any of the hash calculations failed"
   if [ "$md5_exit_status" -ne 0 ] || [ "$sha256_exit_status" -ne 0 ] || [ "$main_exit_status" -ne 0 ]; then
       log "ERROR" "Error during file verification."
+      set -e
       return 1
   fi
 
   log "INFO" "Read computed hash values from temporary storage"
   local computed_md5 computed_sha256
-  computed_md5=$(< /tmp/computed_md5)
-  computed_sha256=$(< /tmp/computed_sha256)
+  read computed_md5 < /tmp/computed_md5
+  read computed_sha256 < /tmp/computed_sha256
+  rm -f /tmp/computed_md5 /tmp/computed_sha256
 
   log "INFO" "Verify hashes"
   if [ "$computed_md5" != "$expected_md5" ] || [ "$computed_sha256" != "$expected_sha256" ]; then
       log "ERROR" "File verification failed."
       log "ERROR" "Expected MD5: $expected_md5, Computed MD5: $computed_md5"
       log "ERROR" "Expected SHA256: $expected_sha256, Computed SHA256: $computed_sha256"
+      set -e
       return 1
   fi
 
   log "INFO" "File hashes verified"
+  set -e
+  return 0
 }
 # -----------------------------------------------------------------------------
 
@@ -551,39 +592,44 @@ perform_backup_and_upload() {
   aws_s3_copy_latest_backup_file_cmd=$(aws_s3_copy_file_prep "$latest_backup_filename" "${backup_filename_prefix}")
   parameters_validate "${aws_s3_copy_latest_backup_file_cmd}"
 
-  # Prepare the full command string
-  local full_cmd="$rds_dump_cmd |\
-      $zip_cmd |\
-      tee \
-        >(md5sum | awk '{print \$1}' | $aws_s3_copy_md5_file_cmd & echo \$! > /tmp/md5_pid) \
-        >(sha256sum | awk '{print \$1}' | $aws_s3_copy_sha256_file_cmd & echo \$! > /tmp/sha256_pid) |\
-      $aws_s3_copy_zip_file_cmd"
-
   log "INFO" "Execute the command and capture its exit status"
-  eval "$full_cmd"
+  set +e
+  pg_dump |\
+    zip -P "${zip_password}" - - |\
+    tee \
+      >(md5sum |\
+        awk '{print $1}' |\
+        aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${md5_filename}" ;\
+        echo $? > /tmp/md5_status \
+      ) \
+      >(sha256sum |\
+        awk '{print $1}' |\
+        aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${sha256_filename}" ;\
+        echo $? > /tmp/sha256_status \
+      ) |\
+    aws s3 cp - "s3://${s3_bucket}/${backup_filename_prefix}/${zip_filename}"
   local main_exit_status=$?
 
   log "INFO" "Wait for all subprocesses and check their exit statuses"
-  local md5_pid sha256_pid md5_exit_status sha256_exit_status
-  md5_pid=$(< /tmp/md5_pid)
-  sha256_pid=$(< /tmp/sha256_pid)
+  local md5_exit_status sha256_exit_status
 
-  wait "$md5_pid"
-  md5_exit_status=$?
-  wait "$sha256_pid"
-  sha256_exit_status=$?
+  # Read from FIFOs to get the exit statuses
+  read md5_exit_status < /tmp/md5_status
+  read sha256_exit_status < /tmp/sha256_status
+
+  # Clean up named pipes
+  rm -f /tmp/md5_status /tmp/sha256_status
 
   log "INFO" "Check if any of the backup uploads or integrity checks failed"
   if [ "$md5_exit_status" -ne 0 ] || [ "$sha256_exit_status" -ne 0 ] || [ "$main_exit_status" -ne 0 ]; then
-      log "ERROR" "Backup upload or integrity check failed."
+      log "ERROR" "Backup upload failed."
       aws_s3_safe_remove_file "${zip_filename}"
       aws_s3_safe_remove_file "${md5_filename}"
       aws_s3_safe_remove_file "${sha256_filename}"
+      set -e
       return 1
   fi
 
-  log "INFO" "Backup and integrity checks successfully uploaded."
-  
   log "INFO" "Upload the ZIP password"
   if ! echo -n "${zip_password}" |\
     eval "$aws_s3_copy_password_file_cmd"; then
@@ -592,22 +638,33 @@ perform_backup_and_upload() {
     aws_s3_safe_remove_file "${zip_filename}"
     aws_s3_safe_remove_file "${md5_filename}"
     aws_s3_safe_remove_file "${sha256_filename}"
+    set -e
     return 1
   fi
-  
+
   local zip_file_path="${s3_bucket}/${backup_filename_prefix}/${zip_filename}"
   local md5_file_path="${s3_bucket}/${backup_filename_prefix}/${md5_filename}"
   local sha256_file_path="${s3_bucket}/${backup_filename_prefix}/${sha256_filename}"
   local password_file_path="${s3_bucket}/${backup_filename_prefix}/${password_filename}"
 
-  aws_s3_verify_file_integrity "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}"
+  if ! aws_s3_verify_file_integrity "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}"; then
+    log "ERROR" "Verification of file integrity check failed"
+    aws_s3_safe_remove_file "${password_filename}"
+    aws_s3_safe_remove_file "${zip_filename}"
+    aws_s3_safe_remove_file "${md5_filename}"
+    aws_s3_safe_remove_file "${sha256_filename}"
+    set -e
+    return 1
+  fi
 
   log "INFO" "Update the latest backup file list"
   if ! printf "%s\n%s\n%s\n%s" "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}" "${password_file_path}" |\
     eval "${aws_s3_copy_latest_backup_file_cmd}"; then
     log "ERROR" "Latest backup file list upload failed."
+    set -e
     return 1
   fi
+  set -e
 }
 # -----------------------------------------------------------------------------
 
@@ -621,12 +678,12 @@ function main() {
   parameters_validate "${rds_server}"
   parameters_validate "${aws_s3_server}"
 
-  exports_validate "VCAP_SERVICES"
+  export_validate "VCAP_SERVICES"
 
   log "INFO" "Verify or install awscli"
-  run_adjacent_script 'awscli_install.sh'
+  run_script 'awscli_install.sh' '../../common/scripts/'
   log "INFO" "Verify or install postgrescli"
-  run_adjacent_script 'postgrescli_install.sh'
+  run_script 'postgrescli_install.sh' '../../common/scripts/'
 
   log "INFO" "add the bin dir for the new cli tools to PATH"
   add_to_path '/tmp/local/bin'
