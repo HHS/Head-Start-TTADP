@@ -34,7 +34,7 @@ describe('ObjectiveForm', () => {
     ],
     id: 123,
     status: 'Not started',
-    supportType: 'Coaching',
+    supportType: 'Maintaining',
   };
 
   const index = 1;
@@ -181,6 +181,7 @@ describe('ObjectiveForm', () => {
     );
 
     expect(screen.getByText('Support type')).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
     expect(screen.queryAllByRole('combobox', { name: /support type/i }).length).toBe(0);
   });
 
@@ -199,6 +200,7 @@ describe('ObjectiveForm', () => {
     );
 
     expect(screen.getByText('Support type')).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
     expect(screen.queryAllByRole('combobox', { name: /support type/i }).length).toBe(0);
   });
 
@@ -217,6 +219,8 @@ describe('ObjectiveForm', () => {
     );
 
     expect(screen.getByText('Support type')).toBeVisible();
-    expect(screen.getByRole('combobox', { name: /support type/i })).toBeVisible();
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    expect(supportType).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
   });
 });
