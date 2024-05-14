@@ -1,12 +1,17 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useMemo, useContext } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useContext,
+  useEffect,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
 import { useHistory } from 'react-router-dom';
-import StatusDropdown from './components/StatusDropdown';
+import GoalStatusDropdown from './components/GoalStatusDropdown';
 import ContextMenu from '../ContextMenu';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
 import ObjectiveCard from './ObjectiveCard';
@@ -21,10 +26,18 @@ import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
+import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
+import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 
 const SESSION_TYPE = 'session';
 
-export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
+export const ObjectiveSwitch = ({
+  objective,
+  objectivesExpanded,
+  regionId,
+  goalStatus,
+  dispatchStatusChange,
+}) => {
   if (objective.type === SESSION_TYPE) {
     return (
       <SessionObjectiveCard
@@ -38,6 +51,9 @@ export const ObjectiveSwitch = ({ objective, objectivesExpanded }) => {
     <ObjectiveCard
       objective={objective}
       objectivesExpanded={objectivesExpanded}
+      goalStatus={goalStatus}
+      regionId={regionId}
+      dispatchStatusChange={dispatchStatusChange}
     />
   );
 };
@@ -48,6 +64,9 @@ ObjectiveSwitch.propTypes = {
     type: PropTypes.string,
   }).isRequired,
   objectivesExpanded: PropTypes.bool.isRequired,
+  regionId: PropTypes.number.isRequired,
+  goalStatus: PropTypes.string.isRequired,
+  dispatchStatusChange: PropTypes.func.isRequired,
 };
 
 function GoalCard({
@@ -81,8 +100,20 @@ function GoalCard({
     isReopenedGoal,
   } = goal;
 
+  const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
+
+  const {
+    atLeastOneObjectiveIsNotCompletedOrSuspended,
+    dispatchStatusChange,
+  } = useObjectiveStatusMonitor(objectives);
+
+  useEffect(() => {
+    if (invalidStatusChangeAttempted === true && !atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(false);
+    }
+  }, [atLeastOneObjectiveIsNotCompletedOrSuspended, invalidStatusChangeAttempted]);
 
   const [deleteError, setDeleteError] = useState(false);
   const isMerged = createdVia === 'merge';
@@ -95,7 +126,20 @@ function GoalCard({
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
+  const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
+
   const onUpdateGoalStatus = (newStatus) => {
+    const statusesThatNeedObjectivesFinished = [
+      'Closed',
+      'Suspended',
+    ];
+
+    if (statusesThatNeedObjectivesFinished.includes(newStatus)
+        && atLeastOneObjectiveIsNotCompletedOrSuspended) {
+      setInvalidStatusChangeAttempted(true);
+      return;
+    }
+    setInvalidStatusChangeAttempted(false);
     if (newStatus === 'Completed' || newStatus === 'Closed' || newStatus === 'Ceased/Suspended' || newStatus === 'Suspended') {
       // Must provide reason for Close or Suspend.
       showCloseSuspendGoalModal(newStatus, ids, goalStatus);
@@ -121,7 +165,7 @@ function GoalCard({
     {
       label: goalStatus === 'Closed' ? 'View' : 'Edit',
       onClick: () => {
-        history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`);
+        history.push(editLink);
       },
     },
   ];
@@ -153,7 +197,6 @@ function GoalCard({
   }
 
   const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
-
   const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
   return (
@@ -175,7 +218,7 @@ function GoalCard({
             data-testid="selectGoalTestId"
           />
           )}
-          <StatusDropdown
+          <GoalStatusDropdown
             showReadOnlyStatus={showReadOnlyStatus}
             goalId={id}
             status={goalStatus}
@@ -192,6 +235,11 @@ function GoalCard({
         />
         )}
       </div>
+      <GoalStatusChangeAlert
+        internalLeftMargin={internalLeftMargin}
+        editLink={editLink}
+        invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+      />
       <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
           <h3 className="usa-prose usa-prose margin-y-0">
@@ -266,6 +314,9 @@ function GoalCard({
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
+          goalStatus={goalStatus}
+          regionId={parseInt(regionId, DECIMAL_BASE)}
+          dispatchStatusChange={dispatchStatusChange}
         />
       ))}
 

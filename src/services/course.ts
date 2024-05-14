@@ -18,7 +18,7 @@ interface DecodedCSV {
 export async function getAllCourses(where: WhereOptions = {}) {
   return Course.findAll({
     where,
-    order: [['name', 'ASC']],
+    order: [['persistsOnUpload', 'ASC'], ['name', 'ASC']],
     attributes: ['name', 'id'],
   });
 }
@@ -131,6 +131,7 @@ export async function csvImport(buffer: Buffer | string) {
           [Op.notIn]: importedCourseIds,
         },
         deletedAt: null,
+        persistsOnUpload: false,
       },
       returning: true,
     });
