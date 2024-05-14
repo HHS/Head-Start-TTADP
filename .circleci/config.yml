@@ -359,6 +359,7 @@ commands:
       - run:
           name: cf_lambda - script to trigger backup
           command: |
+            set -x
             json_object=$(jq -n \
               --arg automation_dir "./automation" \
               --arg manifest "manifest.yml" \
