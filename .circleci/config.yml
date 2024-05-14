@@ -373,6 +373,10 @@ commands:
                 command: $command,
                 args: $args
               }')
+
+            # Set execute permission
+            chmod +x ./automation/ci/scripts/cf_lambda.sh
+
             ./automation/ci/scripts/cf_lambda.sh "$json_data"
           environment:
             CF_RDS_SERVICE_NAME: ttahub-prod
