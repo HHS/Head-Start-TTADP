@@ -18,9 +18,17 @@ import db, {
   Recipient,
   OtherEntity,
 } from '../models';
-import { FILE_STATUSES } from '../constants';
+import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 
-import { saveObjectivesForReport, getObjectiveById, getObjectivesByReportId } from './objectives';
+import {
+  saveObjectivesForReport,
+  getObjectiveById,
+  getObjectivesByReportId,
+  updateObjectiveStatusByIds,
+  getObjectiveRegionAndGoalStatusByIds,
+  verifyObjectiveStatusTransition,
+} from './objectives';
+import { createGrant, createRecipient } from '../testUtils';
 
 jest.mock('bull');
 
@@ -503,6 +511,152 @@ describe('Objectives DB service', () => {
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);
       expect(foundObj.title).toBe('there are many titles but this one is mine');
       expect(foundObj.status).toBe('Not Started');
+    });
+  });
+
+  describe('updateObjectiveStatusByIds', () => {
+    let objective1;
+    let objective2;
+
+    beforeAll(async () => {
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        otherEntityId: 1,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+    });
+
+    it('updates status of objectives', async () => {
+      await updateObjectiveStatusByIds(
+        [objective1.id, objective2.id],
+        OBJECTIVE_STATUS.COMPLETE,
+      );
+
+      await objective1.reload();
+      await objective2.reload();
+
+      expect(objective1.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+      expect(objective2.status).toBe(OBJECTIVE_STATUS.COMPLETE);
+    });
+  });
+
+  describe('getObjectiveRegionAndGoalStatusByIds', () => {
+    let objective1;
+    let objective2;
+    let goal;
+    let grant;
+    let recipient;
+
+    beforeAll(async () => {
+      recipient = await createRecipient();
+      grant = await createGrant({ recipientId: recipient.id });
+      goal = await Goal.create({
+        name: 'goal',
+        grantId: grant.id,
+      });
+
+      objective1 = await Objective.create({
+        title: 'objective 1',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+
+      objective2 = await Objective.create({
+        title: 'objective 2',
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        goalId: goal.id,
+      });
+    });
+
+    afterAll(async () => {
+      await Objective.destroy({
+        where: {
+          id: [objective1.id, objective2.id],
+        },
+        force: true,
+      });
+
+      await Goal.destroy({
+        where: {
+          id: goal.id,
+        },
+        force: true,
+      });
+
+      await Grant.destroy({
+        where: {
+          id: grant.id,
+        },
+        force: true,
+      });
+
+      await Recipient.destroy({
+        where: {
+          id: recipient.id,
+        },
+        force: true,
+      });
+    });
+
+    it('retrieves region and goal status of objectives', async () => {
+      const x = await getObjectiveRegionAndGoalStatusByIds([
+        objective1.id,
+        objective2.id,
+      ]);
+
+      expect(x.length).toBe(2);
+      expect(x[0].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[0].goal.status).toBe(goal.status);
+
+      expect(x[1].goal.grant.regionId).toBe(grant.regionId);
+      expect(x[1].goal.status).toBe(goal.status);
+    });
+  });
+
+  describe('verifyObjectiveStatusTransition', () => {
+    it('returns true if status transition is valid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(true);
+    });
+
+    it('returns false if status transition is invalid', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.IN_PROGRESS,
+        },
+        status: OBJECTIVE_STATUS.COMPLETE,
+      }, OBJECTIVE_STATUS.NOT_STARTED);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if the goal is closed', () => {
+      const result = verifyObjectiveStatusTransition({
+        goal: {
+          status: GOAL_STATUS.CLOSED,
+        },
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      }, OBJECTIVE_STATUS.COMPLETE);
+      expect(result).toBe(false);
     });
   });
 });

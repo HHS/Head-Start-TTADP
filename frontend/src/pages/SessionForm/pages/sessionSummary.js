@@ -495,14 +495,25 @@ const SessionSummary = ({ datePickerKey }) => {
           />
         </FormItem>
       </div>
-
-      <div>
-        <p className="usa-prose margin-bottom-0">
-          Link to TTA resources used
+      <IpdCourseSelect
+        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-y-3"
+      />
+      <Fieldset>
+        <legend>
+          Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
           />
-        </p>
+        </legend>
         <div className="ttahub-resource-repeater">
           {resources.map((r, i) => {
             const fieldErrors = errors.objectiveResources ? errors.objectiveResources[i] : null;
@@ -521,24 +532,14 @@ const SessionSummary = ({ datePickerKey }) => {
           })}
         </div>
 
-        <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
+        <div className="ttahub-resource-repeater--add-new margin-top-1">
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
-      </div>
-      <IpdCourseSelect
-        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
-        inputName={objectiveIpdCoursesInputName}
-        onChange={onChangeIpdCourses}
-        onBlur={onBlurIpdCourses}
-        value={objectiveIpdCourses}
-        onChangeUseIpdCourses={onChangeUseIpdCourses}
-        onBlurUseIpdCourses={onBlurUseIpdCourses}
-        useIpdCourse={objectiveUseIpdCourses}
-        useCoursesInputName={objectiveUseIpdCoursesInputName}
-      />
+      </Fieldset>
+
       <Fieldset className="ttahub-objective-files margin-top-3">
         <legend>
-          Did you use any TTA resources that aren&apos;t available as a link?
+          Did you use any other TTA resources that aren&apos;t available as a link?
           {' '}
           <QuestionTooltip
             text={(

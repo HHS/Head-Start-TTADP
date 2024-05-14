@@ -38,6 +38,22 @@ export default (sequelize, DataTypes) => {
           as: 'grantNumberLink',
         },
       );
+
+      models.MonitoringGranteeLink.hasMany(
+        models.MonitoringReviewGrantee,
+        {
+          foreignKey: 'granteeId',
+          as: 'monitoringReviewGrantees',
+        },
+      );
+
+      models.MonitoringReviewGrantee.belongsTo(
+        models.MonitoringGranteeLink,
+        {
+          foreignKey: 'granteeId',
+          as: 'monitoringGranteeLink',
+        },
+      );
     }
   }
   MonitoringReviewGrantee.init({

@@ -263,7 +263,6 @@ describe('create goal:nudge', () => {
       isCurated: false,
       status: 'Suspended',
       name: 'A long goal name, it must be really long, most of them are',
-      closeSuspendReasons: ['Not enough time', 'Not enough money'],
     }]);
     renderForm();
 
@@ -304,7 +303,6 @@ describe('create goal:nudge', () => {
       isCurated: false,
       status: 'Suspended',
       name: 'A long goal name, it must be really long, most of them are',
-      closeSuspendReasons: ['Not enough time', 'Not enough money'],
     }]);
     renderForm();
 
@@ -343,7 +341,6 @@ describe('create goal:nudge', () => {
       isCurated: false,
       status: 'Suspended',
       name: 'A long goal name, it must be really long, most of them are',
-      closeSuspendReasons: ['Not enough time', 'Not enough money'],
     }]);
     renderForm();
 
