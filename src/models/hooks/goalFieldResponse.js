@@ -56,19 +56,41 @@ const syncActivityReportGoalFieldResponses = async (sequelize, instance, _option
       }],
     });
 
-    const activityReportIds = activityReportGoals.map((item) => item.activityReportId);
-    const activityReportGoalIds = activityReportGoals.map((item) => item.id);
+    const activityReportIds = [
+      ...new Set(activityReportGoals.map((item) => item.activityReportId)),
+    ];
+    const activityReportGoalIds = [...new Set(activityReportGoals.map((item) => item.id))];
 
     // Perform the update.
-    await sequelize.models.ActivityReportGoalFieldResponse.update(
+    const updatedResponses = await sequelize.models.ActivityReportGoalFieldResponse.update(
       { response: instance.response },
       {
         where: {
           activityReportGoalId: activityReportGoalIds,
           goalTemplateFieldPromptId,
         },
+        returning: true,
       },
     );
+
+    // Get all the ActivityReportGoal ids that were updated.
+    const updatedResponseIds = [
+      ...new Set(updatedResponses[1].map((item) => item.activityReportGoalId)),
+    ];
+
+    // If the activityReportGoal exists but wasn't updated we know its missing a response.
+    const argsToCreate = activityReportGoalIds.filter(
+      (id) => !updatedResponseIds.includes(id),
+    );
+
+    // Create the missing ActivityReportGoalFieldResponses.
+    await Promise.all(argsToCreate.map(async (argId) => {
+      await sequelize.models.ActivityReportGoalFieldResponse.create({
+        goalTemplateFieldPromptId,
+        activityReportGoalId: argId,
+        response: instance.response,
+      });
+    }));
 
     // We need to update the AR createdAt so we don't pull from outdated local storage.
     if (activityReportIds.length > 0) {
