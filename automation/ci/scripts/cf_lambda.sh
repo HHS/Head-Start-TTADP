@@ -397,11 +397,17 @@ function run_task {
     local task_name=$2
     local command=$3
     local args=$4
+
     validate_parameters "$app_name"
     validate_parameters "$command"
     validate_parameters "$task_name"
-    log "INFO" "Running task: $task_name with args: $args"
-    local full_command="$command $args"
+
+    # Deserialize JSON array into individual arguments
+    local arg_array
+    IFS=' ' read -r -a arg_array <<< "$(echo "$args" | jq -r '.[]')"
+
+    log "INFO" "Running task: $task_name with args: ${arg_array[*]}"
+    local full_command="$command ${arg_array[*]}"
     cf run-task "$app_name" --command "$full_command" --name "$task_name"
     local result=$?
     if [ $result -ne 0 ]; then
@@ -409,6 +415,7 @@ function run_task {
         exit $result
     fi
 }
+
 
 # Function to monitor task
 function monitor_task {

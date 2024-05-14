@@ -365,7 +365,7 @@ commands:
               --arg manifest "manifest.yml" \
               --arg task_name "backup" \
               --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
-              --argjson args '["${<< parameters.backup_prefix >>}", "${<< parameters.rds_service_name >>}", "${<< parameters.s3_service_name >>}"]' \
+              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
               '{
                 automation_dir: $automation_dir,
                 manifest: $manifest,
