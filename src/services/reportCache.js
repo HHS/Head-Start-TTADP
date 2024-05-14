@@ -13,10 +13,13 @@ const {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   Objective,
   ObjectiveFile,
   ObjectiveResource,
   ObjectiveTopic,
+  sequelize,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
@@ -450,22 +453,40 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  if (!isMultiRecipientReport && prompts && prompts.length) {
+  if (isMultiRecipientReport) {
+    // Check for fei goal prompts we need to update on the activity report goal.
+    const goalPrompts = await GoalFieldResponse.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        [sequelize.col('prompt."title"'), 'title'],
+        'response',
+      ],
+      where: { goalId: goal.id },
+      raw: true,
+      include: [
+        {
+          model: GoalTemplateFieldPrompt,
+          as: 'prompt',
+          required: true,
+          attributes: [],
+          where: {
+            title: 'FEI root cause',
+          },
+        },
+      ],
+    });
+
+    // if we have goal prompts call cache prompts with the goals prompts
+    if (goalPrompts && goalPrompts.length) {
+      finalPromises.push(
+        cachePrompts(goal.id, arg.id, goalPrompts),
+      );
+    }
+  } else if (prompts && prompts.length) {
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );
   }
-
-  if (isMultiRecipientReport) {
-    finalPromises.push(
-      ActivityReportGoalFieldResponse.destroy({
-        where: { activityReportGoalId: arg.id },
-        individualHooks: true,
-        hookMetadata: { goalId: goal.id },
-      }),
-    );
-  }
-
   return Promise.all(finalPromises);
 };
 
