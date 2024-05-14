@@ -22,7 +22,7 @@ import { goalPropTypes } from './constants';
 import colors from '../../colors';
 import SessionObjectiveCard from './SessionObjectiveCard';
 import Tooltip from '../Tooltip';
-import isAdmin, { hasApproveActivityReportInRegion } from '../../permissions';
+import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import UserContext from '../../UserContext';
 import { deleteGoal } from '../../fetchers/goals';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -154,22 +154,33 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  const contextMenuLabel = `Actions for goal ${id}`;
-  const menuItems = [
-    ...(goalStatus === 'Closed' ? [{
-      label: 'Reopen',
-      onClick: () => {
-        showReopenGoalModal(id);
-      },
-    }] : []),
-    {
-      label: goalStatus === 'Closed' ? 'View' : 'Edit',
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
+  const determineMenuItems = () => {
+    // Add reopen button if user has permissions and the goal is closed.
+    const createdMenuItems = [];
+
+    if (goalStatus === 'Closed' && hasEditButtonPermissions) {
+      createdMenuItems.push({
+        label: 'Reopen',
+        onClick: () => {
+          showReopenGoalModal(id);
+        },
+      });
+    }
+
+    // Add edit button if user has permissions or if the goal is closed.
+    createdMenuItems.push({
+      label: goalStatus === 'Closed' || !hasEditButtonPermissions ? 'View' : 'Edit',
       onClick: () => {
         history.push(editLink);
       },
-    },
-  ];
+    });
 
+    return createdMenuItems;
+  };
+  const menuItems = determineMenuItems();
+
+  const contextMenuLabel = `Actions for goal ${id}`;
   const canDeleteQualifiedGoals = (() => {
     if (isAdmin(user)) {
       return true;
