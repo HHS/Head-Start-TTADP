@@ -3,8 +3,48 @@ import moment from 'moment';
 import { auditLogger } from '../logger';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
+interface IPrompt {
+  dataValues?: {
+    promptId: number;
+  };
+  responses?: {
+    response: string[];
+  }[];
+  promptId?: number;
+  ordinal: number;
+  title: string;
+  prompt: string;
+  hint: string;
+  fieldType: string;
+  options: string;
+  validations: string;
+  response: string[];
+  reportResponse: string[];
+  allGoalsHavePromptResponse: boolean;
+}
+
+interface IAR {
+  id: number
+}
+
+interface IObjectiveModel {
+  getDataValue?: (key: string) => number | string | boolean | null;
+  dataValues?: {
+    id: number;
+    value: number;
+    title: string;
+    status: string;
+    otherEntityId: number;
+  };
+  id?: number;
+  title?: string;
+  status?: string;
+  otherEntityId?: number;
+  activityReports?: IAR[];
+}
+
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
-export function reduceObjectives(newObjectives, currentObjectives = []) {
+export function reduceObjectives(newObjectives: IObjectiveModel[], currentObjectives = []) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
@@ -226,7 +266,11 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
    * @param {Array} promptsToReduce
    * @returns Array of reduced prompts
    */
-function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
+function reducePrompts(
+  forReport: boolean,
+  newPrompts: IPrompt[] = [],
+  promptsToReduce: IPrompt[] = [],
+) {
   return newPrompts
     ?.reduce((previousPrompts, currentPrompt) => {
       const promptId = currentPrompt.promptId
@@ -275,6 +319,8 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         options: currentPrompt.options,
         validations: currentPrompt.validations,
         allGoalsHavePromptResponse: false,
+        response: [],
+        reportResponse: [],
       };
 
       if (forReport) {
@@ -316,7 +362,7 @@ export function reduceGoals(goals, forReport = false) {
     : g.name === currentValue.dataValues.name
         && g.status === currentValue.dataValues.status);
 
-  function getGoalCollaboratorDetails(collabType, dataValues) {
+  function getGoalCollaboratorDetails(collabType: string, dataValues) {
     // eslint-disable-next-line max-len
     const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
     return {
@@ -395,18 +441,22 @@ export function reduceGoals(goals, forReport = false) {
       })();
 
       let { source } = currentValue.dataValues;
-      let prompts = reducePrompts(
+      const prompts = reducePrompts(
         forReport,
         currentValue.dataValues.prompts || [],
         [],
       );
 
+      let promptsIfNotForReport = {};
+
       if (!forReport) {
         source = {
           [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
         };
-        prompts = {
+        promptsIfNotForReport = {
           [currentValue.grant.numberWithProgramTypes]: prompts,
+        } as {
+          [key: string]: IPrompt[];
         };
       }
 
@@ -427,7 +477,7 @@ export function reduceGoals(goals, forReport = false) {
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
-        prompts,
+        prompts: forReport ? prompts : promptsIfNotForReport,
         isNew: false,
         endDate,
         source,
@@ -443,7 +493,7 @@ export function reduceGoals(goals, forReport = false) {
       ];
 
       goal.collaborators = goal.collaborators.filter(
-        (c) => c.goalCreatorName !== null,
+        (c: { goalCreatorName: string }) => c.goalCreatorName !== null,
       );
 
       return [...previousValues, goal];
