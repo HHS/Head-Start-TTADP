@@ -37,7 +37,7 @@ function validate_parameters() {
 # Export Validation
 function validate_exports() {
     local param="$1"
-    
+
     # Check if the parameter is set and exported
     if ! declare -p "$param" &>/dev/null; then
         log "ERROR" "Parameter '$param' is unset."
@@ -110,34 +110,51 @@ function install_pg_tools() {
     local deb_file="$1"
     local bin_dir="$2"
     local tools=("${@:3}")
-    
+
+    # Validate parameters
     validate_parameters "$deb_file"
     validate_parameters "$bin_dir"
 
+    # Starting in the current directory
+    local start_dir=$(pwd)
+
+    # Trap to ensure returning to the starting directory on any exit
+    cd "$(dirname "${deb_file}")"
+
     log "INFO" "Extracting PostgreSQL tools from deb package..."
     mkdir -p extract-deb
-    cd extract-deb || exit 3
+    # Safely change directory
+    if ! cd extract-deb; then
+        log "ERROR" "Failed to change directory to extract-deb."
+        cd "$start_dir"
+        exit 3
+    fi
+
     ar x "$deb_file"
-    tar -xf data.tar.*
+    tar -xf data.tar.xz
     for tool in "${tools[@]}"; do
         if [ -f "./usr/lib/postgresql/15/bin/$tool" ]; then
             cp "./usr/lib/postgresql/15/bin/$tool" "$bin_dir"
             log "INFO" "$tool installation completed successfully."
         else
             log "ERROR" "$tool not found in the deb package."
+            cd "$start_dir"
             exit 4
         fi
     done
-    cd - || exit 5
+
+    cd "$start_dir"
 }
+
+
 
 # Function to verify installation of tools
 function verify_installation() {
     local bin_dir="$1"
     local tools=("${@:2}")
-    
+
     validate_parameters "$bin_dir"
-    
+
     log "INFO" "Verifying installation of tools..."
     local tool_version
     for tool in "${tools[@]}"; do
@@ -154,22 +171,38 @@ function verify_installation() {
 function cleanup() {
     local deb_file="$1"
 
+    # Validate the parameter
     validate_parameters "$deb_file"
 
     log "INFO" "Cleanup install files and temporary directories"
+
+    # Derive the directory where the deb file is located
+    local deb_dir=$(dirname "$deb_file")
+    local deb_basename=$(basename "$deb_file")
+
+    # Use the directory path to check and remove the deb file
     if [ -f "$deb_file" ]; then
         rm "$deb_file"
         log "INFO" "The deb file has been deleted."
     else
         log "INFO" "The deb file does not exist."
     fi
-    if [ -d "extract-deb" ]; then
-        rm -r "extract-deb"
-        log "INFO" "Temporary extraction directory has been deleted."
+
+    # Change to the directory of the deb file before removing the extract-deb directory
+    if pushd "$deb_dir" > /dev/null 2>&1; then
+        if [ -d "extract-deb" ]; then
+            rm -r "extract-deb"
+            log "INFO" "Temporary extraction directory has been deleted."
+        else
+            log "INFO" "No temporary extraction directory to delete."
+        fi
+        popd > /dev/null 2>&1
     else
-        log "INFO" "No temporary extraction directory to delete."
+        log "ERROR" "Failed to change directory to where the deb file is located."
     fi
 }
+
+
 
 # Main function to control workflow
 function main() {

@@ -77,11 +77,14 @@ function install_aws_cli() {
     validate_parameters "$bin_dir"
 
     log "INFO" "Installing AWS CLI..."
-    if ! unzip "$zip_file" -d "/tmp/local"; then
+    if ! unzip -l "$zip_file" |\
+      grep -vE 'examples|docutils' |\
+      awk 'NR>3 {print $4}' |\
+      xargs -I {} unzip -o "$zip_file" {} -d "/tmp/local"; then
         log "ERROR" "Failed to unzip AWS CLI package."
         exit 3
     fi
-    if ! ./aws/install -i "$install_dir" -b "$bin_dir"; then
+    if ! /tmp/local/aws/install -i "$install_dir" -b "$bin_dir"; then
         log "ERROR" "Failed to install AWS CLI."
         exit 4
     fi
@@ -131,7 +134,7 @@ function cleanup() {
 main() {
     local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
     local install_dir="/tmp/local/aws-cli"
-    local zip_file="/tmp/local/awscliv2.zip"
+    local zip_file="/tmp/awscliv2.zip"
     local bin_dir="/tmp/local/bin"
     local aws_dir="/tmp/local/aws"
 
