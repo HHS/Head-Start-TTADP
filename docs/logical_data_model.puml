@@ -240,6 +240,7 @@ class Courses{
  mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
  * name : text
+ * persistsOnUpload : boolean : false
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }
@@ -422,25 +423,12 @@ class Goals{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
- closeSuspendContext : text
- closeSuspendReason : enum
  createdVia : enum
  deletedAt : timestamp with time zone
  endDate : date
- firstCeasedSuspendedAt : timestamp with time zone
- firstClosedAt : timestamp with time zone
- firstCompletedAt : timestamp with time zone
- firstInProgressAt : timestamp with time zone
- firstNotStartedAt : timestamp with time zone
  isFromSmartsheetTtaPlan : boolean
  isRttapa : enum
- lastCeasedSuspendedAt : timestamp with time zone
- lastClosedAt : timestamp with time zone
- lastCompletedAt : timestamp with time zone
- lastInProgressAt : timestamp with time zone
- lastNotStartedAt : timestamp with time zone
  name : text
- previousStatus : text
  rtrOrder : integer : 1
  source : enum
  status : varchar(255)
@@ -587,8 +575,29 @@ class MonitoringClassSummaries{
  sourceDeletedAt : timestamp with time zone
 }
 
+class MonitoringFindingGrants{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
 class MonitoringFindingHistories{
  * id : integer : <generated>
+ findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
  * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * findingHistoryId : text
@@ -596,17 +605,106 @@ class MonitoringFindingHistories{
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
+ determination : text
  hash : text
+ narrative : text
+ ordinal : integer
  sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * findingId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStandards{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindings{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringGranteeLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * granteeId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
 }
 
 class MonitoringReviewGrantees{
  * id : integer : <generated>
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
  * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
  * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * createTime : timestamp with time zone
- * granteeId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updateBy : text
@@ -656,11 +754,38 @@ class MonitoringReviews{
  deletedAt : timestamp with time zone
  endDate : date
  hash : text
+ name : text
  outcome : text
+ reportAttachmentId : text
  reportDeliveryDate : timestamp with time zone
  reviewType : text
  sourceDeletedAt : timestamp with time zone
  startDate : date
+}
+
+class MonitoringStandardLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * standardId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringStandards{
+ * id : integer : <generated>
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * citable : integer
+ * contentId : text
+ * createdAt : timestamp with time zone
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ citation : text
+ deletedAt : timestamp with time zone
+ guidance : text
+ sourceDeletedAt : timestamp with time zone
+ text : text
 }
 
 class NationalCenterUsers{
@@ -1729,7 +1854,133 @@ class ZALMonitoringClassSummaries{
  session_sig : text
 }
 
+class ZALMonitoringFindingGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALMonitoringFindingHistories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistoryStatusLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistoryStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStandards{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStatusLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindings{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringGranteeLinks{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1800,6 +2051,34 @@ class ZALMonitoringReviewStatuses{
 }
 
 class ZALMonitoringReviews{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringStandardLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringStandards{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2417,12 +2696,25 @@ Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrant
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
 Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFiles
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingStatusLink, monitoringFindingHistories
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistoryStatuses : monitoringFindingHistoryStatuses, statusLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : findingLink, monitoringFindingGrants
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingLink, monitoringFindingHistories
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : monitoringFindingStandards, findingLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, findingLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : statusLink, monitoringFindingGrants
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStatuses : monitoringFindingStatuses, statusLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, statusLink
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : granteeLink, monitoringFindingGrants
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, monitoringGranteeLink
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewLink, monitoringReviewGrantees
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters

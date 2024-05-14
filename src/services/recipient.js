@@ -332,6 +332,20 @@ function reduceTopicsOfDifferingType(topics) {
   return newTopics;
 }
 
+function combineObjectiveIds(existing, objective) {
+  let ids = [...existing.ids];
+
+  if (objective.ids && Array.isArray(objective.ids)) {
+    ids = [...ids, ...objective.ids];
+  }
+
+  if (objective.id) {
+    ids.push(objective.id);
+  }
+
+  return ids;
+}
+
 /**
  *
  * @param {Object} currentModel
@@ -398,6 +412,7 @@ export function reduceObjectivesForRecipientRecord(
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
         existing.grantNumbers = grantNumbers;
+        existing.ids = combineObjectiveIds(existing, objective);
 
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
@@ -418,6 +433,7 @@ export function reduceObjectivesForRecipientRecord(
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
         supportType: supportType || null,
+        ids: combineObjectiveIds({ ids: [] }, objective),
       };
 
       formattedObjective.topics.sort();
@@ -451,10 +467,6 @@ export function reduceObjectivesForRecipientRecord(
 }
 
 function wasGoalPreviouslyClosed(goal) {
-  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
-    return true;
-  }
-
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
@@ -463,12 +475,7 @@ function wasGoalPreviouslyClosed(goal) {
 }
 
 function calculatePreviousStatus(goal) {
-  // if we have a previous status recorded, return that
-  if (goal.previousStatus) {
-    return goal.previousStatus;
-  }
-
-  if (goal.statusChanges) {
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
     // statusChanges is an array of { oldStatus, newStatus }.
     const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
     if (lastStatusChange) {

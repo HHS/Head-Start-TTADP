@@ -6,11 +6,21 @@ import {
 } from './course';
 
 describe('Course', () => {
+  let foreverCourse;
+
   afterAll(async () => {
+    await foreverCourse.destroy();
     await db.sequelize.close();
   });
 
   describe('csvImport', () => {
+    beforeAll(async () => {
+      foreverCourse = await Course.create({
+        name: 'Forever course',
+        persistsOnUpload: true,
+      });
+    });
+
     const headings = ['course name'];
     const courseNamesToCleanup = [];
 
@@ -56,7 +66,7 @@ describe('Course', () => {
       expect(course.name).toBe(newCourseName);
 
       // test our find all
-      const courses = await getAllCourses();
+      const courses = await getAllCourses({ persistsOnUpload: false });
       expect(courses.length).toBe(1);
       expect(courses[0].name).toBe(newCourseName);
     });
@@ -259,6 +269,19 @@ describe('Course', () => {
       expect(updateCourse).toBeTruthy();
       expect(updateCourse.name).toBe(courseToAdd);
       expect(new Date(updateCourse.updatedAt) > afterCreateDate).toBe(true);
+
+      // find foreverCourse
+
+      const foreverCourseFromDb = await Course.findOne({
+        where: {
+          name: 'Forever course',
+        },
+      });
+
+      expect(foreverCourseFromDb).toBeTruthy();
+
+      // confirm deletedAt is null
+      expect(foreverCourseFromDb.deletedAt).toBeNull();
     });
   });
 });
