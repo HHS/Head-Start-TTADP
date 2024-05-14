@@ -424,7 +424,7 @@ export default function MergeGoals({
               <GoalCard
                 key={goal.id}
                 goal={goal}
-                regionId={regionId}
+                regionId={parseInt(regionId, DECIMAL_BASE)}
                 isRadio
                 register={register}
                 selectedGoalsIncludeCurated={selectedGoalsIncludeCurated}
