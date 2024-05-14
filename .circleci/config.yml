@@ -360,7 +360,7 @@ commands:
           name: cf_lambda - script to trigger backup
           command: |
             set -x
-            json_object=$(jq -n \
+            json_data=$(jq -n \
               --arg automation_dir "./automation" \
               --arg manifest "manifest.yml" \
               --arg task_name "backup" \
