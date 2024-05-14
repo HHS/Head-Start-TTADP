@@ -34,6 +34,7 @@ describe('ObjectiveForm', () => {
     ],
     id: 123,
     status: 'Not started',
+    supportType: 'Maintaining',
   };
 
   const index = 1;
@@ -44,6 +45,7 @@ describe('ObjectiveForm', () => {
     setObjectiveError = jest.fn(),
     setObjective = jest.fn(),
     goalStatus = 'Draft',
+    userCanEdit = true,
   ) => {
     render((
       <UserContext.Provider value={{ user: { flags: [] } }}>
@@ -70,7 +72,7 @@ describe('ObjectiveForm', () => {
             'Curriculum (Instructional or Parenting)',
             'Data and Evaluation',
           ].map((name, id) => ({ id, name }))}
-          userCanEdit
+          userCanEdit={userCanEdit}
         />
       </UserContext.Provider>
     ));
@@ -162,5 +164,63 @@ describe('ObjectiveForm', () => {
 
     const label = await screen.findByText('Did you use any other TTA resources that are available as a link?');
     expect(label).toBeVisible();
+  });
+
+  it('displays support type as read only when user cannot edit', async () => {
+    const removeObjective = jest.fn();
+    const setObjectiveError = jest.fn();
+    const setObjective = jest.fn();
+
+    renderObjectiveForm(
+      defaultObjective,
+      removeObjective,
+      setObjectiveError,
+      setObjective,
+      'In Progress',
+      false,
+    );
+
+    expect(screen.getByText('Support type')).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
+    expect(screen.queryAllByRole('combobox', { name: /support type/i }).length).toBe(0);
+  });
+
+  it('displays support type as read only when goal is closed', async () => {
+    const removeObjective = jest.fn();
+    const setObjectiveError = jest.fn();
+    const setObjective = jest.fn();
+
+    renderObjectiveForm(
+      defaultObjective,
+      removeObjective,
+      setObjectiveError,
+      setObjective,
+      'Closed',
+      true,
+    );
+
+    expect(screen.getByText('Support type')).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
+    expect(screen.queryAllByRole('combobox', { name: /support type/i }).length).toBe(0);
+  });
+
+  it('displays support type when goal is not closed and user has permission', async () => {
+    const removeObjective = jest.fn();
+    const setObjectiveError = jest.fn();
+    const setObjective = jest.fn();
+
+    renderObjectiveForm(
+      defaultObjective,
+      removeObjective,
+      setObjectiveError,
+      setObjective,
+      'In Progress',
+      true,
+    );
+
+    expect(screen.getByText('Support type')).toBeVisible();
+    const supportType = await screen.findByRole('combobox', { name: /support type/i });
+    expect(supportType).toBeVisible();
+    expect(screen.getByText('Maintaining')).toBeVisible();
   });
 });
