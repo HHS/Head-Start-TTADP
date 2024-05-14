@@ -404,7 +404,7 @@ function run_task {
     validate_parameters "$args_json"
 
     # Convert JSON array to space-separated list of arguments
-    local args=$(echo "$args_json" | jq -r '.[]' | tr '\n' ' ' | sed 's/ $/\n/' | sed 's/\(.*\)/"\1"/')
+    local args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
 
 
     log "INFO" "Running task: $task_name with args: $args"
