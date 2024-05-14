@@ -33,6 +33,7 @@ export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
   'status',
   'goalId',
   'onApprovedAR',
+  'onAR',
   'rtrOrder',
 ];
 
@@ -59,23 +60,22 @@ interface IActivityReportObjectivesFromDB {
   files: IFileFromDB[];
 }
 
-interface IObjectiveFromDB {
+interface IObjective {
   id: number;
   title: string;
   status: string;
   goalId: number;
   onApprovedAR: boolean;
+  onAR: boolean;
   rtrOrder: number;
   activityReportObjectives: IActivityReportObjectivesFromDB[];
 }
 
-interface IReducedObjective {
-  id: number;
-  title: string;
-  status: string;
-  goalId: number;
-  onApprovedAR: boolean;
-  rtrOrder: number;
+interface IObjectiveFromDB extends IObjective {
+  toJSON: () => IObjective;
+}
+
+type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
   topics: {
     name: string
   }[];
@@ -87,9 +87,9 @@ interface IReducedObjective {
     originalFileName: string;
     key: string;
   }[];
-}
+};
 
-interface IGoalForForm {
+interface IGoal {
   id: number;
   endDate: string;
   name: string;
@@ -144,28 +144,27 @@ interface IGoalForForm {
   }[];
 }
 
-type IReducedGoal = Omit <IGoalForForm, 'objectives'> & {
+interface IGoalForForm extends IGoal {
+  toJSON: () => IGoal;
+}
+
+type IGoalWithReducedObjectives = Omit <IGoal, 'objectives'> & {
   isReopenedGoal: boolean;
   objectives: IReducedObjective[];
 };
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number) => ({
   attributes: [
-    'id',
     'endDate',
     'name',
     'status',
+    'source',
+    'onAR',
+    'onApprovedAR',
+    'id',
     [sequelize.col('grant.regionId'), 'regionId'],
     [sequelize.col('grant.recipient.id'), 'recipientId'],
-    'goalNumber',
-    'createdVia',
     'goalTemplateId',
-    'source',
-    [
-      'onAR',
-      'onAnyReport',
-    ],
-    'onApprovedAR',
     [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
     'rtrOrder',
   ],
@@ -225,22 +224,31 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
         {
           model: ActivityReportObjective,
           as: 'activityReportObjectives',
-          attributes: [],
+          attributes: ['id', 'objectiveId'],
           include: [
             {
               model: Topic,
               as: 'topics',
               attributes: ['name'],
+              through: {
+                attributes: [],
+              },
             },
             {
               model: Resource,
               as: 'resources',
               attributes: ['url', 'title'],
+              through: {
+                attributes: [],
+              },
             },
             {
               model: File,
               as: 'files',
               attributes: ['originalFileName', 'key'],
+              through: {
+                attributes: [],
+              },
             },
           ],
         },
@@ -335,7 +343,7 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => ({
-        ...OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR.map((field) => objective[field]),
+        ...objective.toJSON(),
         topics: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
           'topics',
@@ -349,7 +357,7 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
           'files',
         ),
       } as unknown as IReducedObjective)), // Convert to 'unknown' first
-  })) as IReducedGoal[];
+  })) as IGoalWithReducedObjectives[];
 
   return reduceGoals(reformattedGoals);
 }

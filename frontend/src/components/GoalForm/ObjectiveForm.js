@@ -1,6 +1,5 @@
-import React, { useMemo, useContext } from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import { REPORT_STATUSES } from '@ttahub/common';
 import { Button } from '@trussworks/react-uswds';
 import ObjectiveTitle from './ObjectiveTitle';
 import {
@@ -21,17 +20,12 @@ export default function ObjectiveForm({
   userCanEdit,
 }) {
   // the parent objective data from props
-  const { title, status } = objective;
-
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length > 0
-  ), [objective.activityReports]);
-
-  const isOnApprovedReport = useMemo(() => (
-    (objective.activityReports && objective.activityReports.some((report) => (
-      report.status === REPORT_STATUSES.APPROVED
-    )))
-  ), [objective.activityReports]);
+  const {
+    title,
+    status,
+    onAR,
+    onApprovedAR,
+  } = objective;
 
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -55,14 +49,14 @@ export default function ObjectiveForm({
     <div className="margin-top-5 ttahub-create-goals-objective-form">
       <div className="display-flex flex-justify maxw-mobile-lg">
         <h3 className="margin-bottom-0">Objective summary</h3>
-        { !isOnReport
+        { !onAR && userCanEdit
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
 
       <ObjectiveTitle
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        isOnApprovedReport={isOnApprovedReport || false}
-        isOnReport={isOnReport || false}
+        isOnApprovedReport={onApprovedAR || false}
+        isOnReport={onAR || false}
         title={title}
         onChangeTitle={onChangeTitle}
         validateObjectiveTitle={validateObjectiveTitle}
@@ -81,6 +75,8 @@ ObjectiveForm.propTypes = {
   setObjectiveError: PropTypes.func.isRequired,
   setObjective: PropTypes.func.isRequired,
   objective: PropTypes.shape({
+    onAR: PropTypes.bool.isRequired,
+    onApprovedAR: PropTypes.bool.isRequired,
     closeSuspendReason: PropTypes.string,
     closeSuspendContext: PropTypes.string,
     isNew: PropTypes.bool,
