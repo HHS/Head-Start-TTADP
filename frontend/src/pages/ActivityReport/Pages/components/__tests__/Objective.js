@@ -251,7 +251,7 @@ describe('Objective', () => {
     const context = await screen.findByLabelText(/Additional context/i);
     userEvent.type(context, 'This is the context');
 
-    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls="modal-suspend-objective--"]' }));
+    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls^="modal-suspend-objective-"]' }));
 
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/not started/i)).toBeVisible();

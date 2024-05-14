@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
+const { GOAL_STATUS, GOAL_COLLABORATORS, OBJECTIVE_STATUS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
@@ -268,6 +268,27 @@ const updateTrainingReportGoalText = async (sequelize, instance, options) => {
   }
 };
 
+const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
+  const changed = instance.changed();
+  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
+  if (Array.isArray(changed)
+    && changed.includes('status')
+    && NO_GOOD_STATUSES.includes(instance.status)) {
+    const objectives = await sequelize.models.Objective.findAll({
+      where: {
+        goalId: instance.id,
+        status: {
+          [Op.not]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+        },
+      },
+    });
+
+    if (objectives.length > 0) {
+      throw new Error('Cannot close a goal with open objectives.');
+    }
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -280,6 +301,7 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
+  await preventCloseIfObjectivesOpen(sequelize, instance, options);
   onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
@@ -307,6 +329,7 @@ export {
   findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
+  preventCloseIfObjectivesOpen,
   propagateName,
   beforeValidate,
   beforeUpdate,

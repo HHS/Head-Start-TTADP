@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import { ObjectiveSwitch } from '../GoalCard';
+import UserContext from '../../../UserContext';
 
 describe('ObjectiveSwitch', () => {
   const history = createMemoryHistory();
@@ -28,9 +29,11 @@ describe('ObjectiveSwitch', () => {
       ],
     };
     render(
-      <Router history={history}>
-        <ObjectiveSwitch objective={objective} objectivesExpanded />
-      </Router>,
+      <UserContext.Provider value={{ user: {} }}>
+        <Router history={history}>
+          <ObjectiveSwitch objective={objective} objectivesExpanded />
+        </Router>
+      </UserContext.Provider>,
     );
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
     expect(screen.getByText('2020-01-01')).toBeInTheDocument();
@@ -51,9 +54,11 @@ describe('ObjectiveSwitch', () => {
       type: 'session',
     };
     render(
-      <Router history={history}>
-        <ObjectiveSwitch objective={objective} objectivesExpanded />
-      </Router>,
+      <UserContext.Provider value={{ user: {} }}>
+        <Router history={history}>
+          <ObjectiveSwitch objective={objective} objectivesExpanded />
+        </Router>
+      </UserContext.Provider>,
     );
     expect(screen.getByText(/we will get together and learn stuff/i)).toBeInTheDocument();
     expect(screen.getByText(/brand new session: learning stuff/i)).toBeInTheDocument();
