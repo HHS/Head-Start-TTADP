@@ -211,18 +211,19 @@ export default function GoalCard({
         }
       },
     });
+  }
 
-    const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
-    const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
+  const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
+  const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
-    return (
-      <article
-        className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
-        data-testid="goalCard"
-      >
-        <div className="display-flex flex-justify">
-          <div className="display-flex flex-align-start flex-row">
-            { !hideCheckbox && (
+  return (
+    <article
+      className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
+      data-testid="goalCard"
+    >
+      <div className="display-flex flex-justify">
+        <div className="display-flex flex-align-start flex-row">
+          { !hideCheckbox && (
             <Checkbox
               id={`goal-select-${id}`}
               label=""
@@ -233,112 +234,111 @@ export default function GoalCard({
               className="margin-right-1"
               data-testid="selectGoalTestId"
             />
-            )}
-            <GoalStatusDropdown
-              showReadOnlyStatus={showReadOnlyStatus}
-              goalId={id}
-              status={goalStatus}
-              onUpdateGoalStatus={onUpdateGoalStatus}
-              previousStatus={previousStatus || 'Not Started'} // Open the escape hatch!
-              regionId={regionId}
-            />
-          </div>
-          { !hideGoalOptions && (
+          )}
+          <GoalStatusDropdown
+            showReadOnlyStatus={showReadOnlyStatus}
+            goalId={id}
+            status={goalStatus}
+            onUpdateGoalStatus={onUpdateGoalStatus}
+            previousStatus={previousStatus || 'Not Started'} // Open the escape hatch!
+            regionId={regionId}
+          />
+        </div>
+        { !hideGoalOptions && (
           <ContextMenu
             label={contextMenuLabel}
             menuItems={menuItems}
             menuWidthOffset={100}
           />
-          )}
-        </div>
-        <GoalStatusChangeAlert
-          internalLeftMargin={internalLeftMargin}
-          editLink={editLink}
-          invalidStatusChangeAttempted={invalidStatusChangeAttempted}
-        />
-        <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
-          <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
-            <h3 className="usa-prose usa-prose margin-y-0">
-              Goal
-              {' '}
-              {goalNumbers}
-              {isMerged && (
+        )}
+      </div>
+      <GoalStatusChangeAlert
+        internalLeftMargin={internalLeftMargin}
+        editLink={editLink}
+        invalidStatusChangeAttempted={invalidStatusChangeAttempted}
+      />
+      <div className={`display-flex flex-wrap margin-y-2 ${internalLeftMargin}`}>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-text padding-right-3">
+          <h3 className="usa-prose usa-prose margin-y-0">
+            Goal
+            {' '}
+            {goalNumbers}
+            {isMerged && (
               <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
                 Merged
               </Tag>
-              )}
-            </h3>
-            <p className="text-wrap usa-prose margin-y-0">
-              {goalText}
-              {' '}
-              <FlagStatus
-                reasons={reasons}
-                goalNumbers={goalNumbers}
-              />
-            </p>
-          </div>
-          <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Goal source</p>
-            <p className="usa-prose margin-y-0">{goal.source}</p>
-          </div>
-          <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
-            <p className="usa-prose text-bold  margin-y-0">Created on</p>
-            <p className="usa-prose margin-y-0">{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
-          </div>
-          <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Last TTA</p>
-            <p className="usa-prose margin-y-0">{lastTTA}</p>
-          </div>
-          <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Entered by</p>
-            {collaborators.map((c) => {
-              if (!c.goalCreatorName) return null;
+            )}
+          </h3>
+          <p className="text-wrap usa-prose margin-y-0">
+            {goalText}
+            {' '}
+            <FlagStatus
+              reasons={reasons}
+              goalNumbers={goalNumbers}
+            />
+          </p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Goal source</p>
+          <p className="usa-prose margin-y-0">{goal.source}</p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__created-on padding-right-3">
+          <p className="usa-prose text-bold  margin-y-0">Created on</p>
+          <p className="usa-prose margin-y-0">{moment(createdOn, 'YYYY-MM-DD').format(DATE_DISPLAY_FORMAT)}</p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__last-tta padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Last TTA</p>
+          <p className="usa-prose margin-y-0">{lastTTA}</p>
+        </div>
+        <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__entered-by padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Entered by</p>
+          {collaborators.map((c) => {
+            if (!c.goalCreatorName) return null;
 
-              return (
-                <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
-                  {collaborators.length > 1 && (
+            return (
+              <p key={c.goalNumber} className="usa-prose margin-top-0 margin-bottom-1 bg-base-lightest radius-md padding-x-1 display-inline-flex flex-align-center flex-justify-between text-decoration-underline">
+                {collaborators.length > 1 && (
                   <>
                     <strong className="margin-right-1 text-no-wrap">{c.goalNumber}</strong>
                     {' '}
                   </>
-                  )}
-                  <Tooltip
-                    displayText={c.goalCreatorRoles}
-                    screenReadDisplayText={false}
-                    buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
-                    tooltipText={c.goalCreatorName}
-                    underlineStyle="solid"
-                    className="ttahub-goal-card__entered-by-tooltip"
-                  />
-                </p>
-              );
-            })}
-          </div>
+                )}
+                <Tooltip
+                  displayText={c.goalCreatorRoles}
+                  screenReadDisplayText={false}
+                  buttonLabel={`reveal the full name of the creator of this goal: ${c.goalNumber}`}
+                  tooltipText={c.goalCreatorName}
+                  underlineStyle="solid"
+                  className="ttahub-goal-card__entered-by-tooltip"
+                />
+              </p>
+            );
+          })}
         </div>
+      </div>
 
-        <div className={internalLeftMargin}>
-          <ExpanderButton
-            type="objective"
-            ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
-            closeOrOpen={closeOrOpenObjectives}
-            count={objectiveCount}
-            expanded={objectivesExpanded}
-          />
-        </div>
-        {sortedObjectives.map((obj) => (
-          <ObjectiveSwitch
-            key={`objective_${uuidv4()}`}
-            objective={obj}
-            objectivesExpanded={objectivesExpanded}
-            goalStatus={goalStatus}
-            regionId={parseInt(regionId, DECIMAL_BASE)}
-            dispatchStatusChange={dispatchStatusChange}
-          />
-        ))}
+      <div className={internalLeftMargin}>
+        <ExpanderButton
+          type="objective"
+          ariaLabel={`objectives for goal ${goal.goalNumbers.join('')}`}
+          closeOrOpen={closeOrOpenObjectives}
+          count={objectiveCount}
+          expanded={objectivesExpanded}
+        />
+      </div>
+      {sortedObjectives.map((obj) => (
+        <ObjectiveSwitch
+          key={`objective_${uuidv4()}`}
+          objective={obj}
+          objectivesExpanded={objectivesExpanded}
+          goalStatus={goalStatus}
+          regionId={parseInt(regionId, DECIMAL_BASE)}
+          dispatchStatusChange={dispatchStatusChange}
+        />
+      ))}
 
-      </article>
-    );
-  }
+    </article>
+  );
 }
 
 GoalCard.propTypes = {

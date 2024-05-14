@@ -2,6 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 export default function ReadOnlyField({ label, children }) {
+  if (!children) {
+    return null;
+  }
+
   return (
     <>
       <p className="usa-prose margin-bottom-0 text-bold">{label}</p>

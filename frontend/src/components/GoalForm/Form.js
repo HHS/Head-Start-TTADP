@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { uniq } from 'lodash';
 import {
-  Alert, FormGroup,
+  Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
@@ -16,11 +16,12 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import ReadOnlyField from '../ReadOnlyField';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import RTRGoalPrompts from './RTRGoalPrompts';
+import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
+import GoalFormTitle from './GoalFormTitle';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -99,14 +100,16 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}` : 'Recipient TTA goal';
   const showAlert = isOnReport && status !== 'Closed';
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
-        <h2 className="margin-0">{formTitle}</h2>
+        <GoalFormTitle
+          goalNumbers={goalNumbers}
+          isReopenedGoal={isReopenedGoal}
+        />
         { status.toLowerCase() === 'draft'
         && (
           <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
@@ -129,22 +132,9 @@ export default function Form({
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
-      {collaborators.length > 0 ? collaborators.map((collaborator) => {
-        const {
-          goalCreatorName,
-          goalCreatorRoles,
-          goalNumber,
-        } = collaborator;
-        if (!goalCreatorName) return null;
-        return (
-          <FormGroup key={goalNumber}>
-            <ReadOnlyField label={`Entered by${collaborators.length > 1 ? ` (${goalNumber})` : ''}`}>
-              {goalCreatorName}
-              {goalCreatorRoles ? `, ${goalCreatorRoles}` : ''}
-            </ReadOnlyField>
-          </FormGroup>
-        );
-      }) : null}
+      <ReadOnlyGoalCollaborators
+        collaborators={collaborators}
+      />
 
       <GrantSelect
         selectedGrants={selectedGrants}
