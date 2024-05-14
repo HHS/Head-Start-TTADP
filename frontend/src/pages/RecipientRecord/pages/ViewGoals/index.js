@@ -4,6 +4,7 @@ import React, {
   useContext,
 } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { uniq, uniqueId } from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link } from 'react-router-dom';
@@ -14,18 +15,56 @@ import { goalsByIdAndRecipient } from '../../../../fetchers/recipient';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
+import GoalFormTitle from '../../../../components/GoalForm/GoalFormTitle';
+import ReadOnlyGoalCollaborators from '../../../../components/ReadOnlyGoalCollaborators';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
+
+export function ResourceLink({ resource }) {
+  const { url, title } = resource;
+  const linkText = title || url;
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer">{linkText}</a>
+  );
+}
+
+export function FileLink({ file }) {
+  const { url, originalFileName } = file;
+
+  return (
+    <ResourceLink resource={{
+      url: url.url,
+      title: originalFileName,
+    }}
+    />
+  );
+}
+
+FileLink.propTypes = {
+  file: PropTypes.shape({
+    url: PropTypes.shape({
+      url: PropTypes.string,
+    }).isRequired,
+    originalFileName: PropTypes.string.isRequired,
+  }).isRequired,
+};
+
+ResourceLink.propTypes = {
+  resource: PropTypes.shape({
+    url: PropTypes.string.isRequired,
+    title: PropTypes.string,
+  }).isRequired,
+};
 
 export default function ViewGoals({
   recipient,
   regionId,
 }) {
-  const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
-
   const goalDefaults = {
     name: '',
     endDate: null,
     status: 'Draft',
-    grants: possibleGrants.length === 1 ? [possibleGrants[0]] : [],
+    grants: [],
     objectives: [],
     id: 'new',
     onApprovedAR: false,
@@ -40,11 +79,12 @@ export default function ViewGoals({
 
   const [fetchError, setFetchError] = useState('');
   const [fetchAttempted, setFetchAttempted] = useState(false);
-  const [, setGoal] = useState(goalDefaults);
+  const [goal, setGoal] = useState(goalDefaults);
 
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
 
+  // this is checked on the backend as well but we can save a fetch by checking here
   const canView = user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
   ).length > 0;
@@ -94,6 +134,17 @@ export default function ViewGoals({
     );
   }
 
+  const {
+    collaborators,
+    isReopenedGoal,
+    goalNumbers,
+    source,
+    objectives,
+    endDate,
+    name: goalName,
+    grants,
+  } = goal;
+
   return (
     <>
 
@@ -116,7 +167,62 @@ export default function ViewGoals({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        <h2>Goal summary</h2>
+        <div className="margin-bottom-5">
+          <GoalFormTitle
+            goalNumbers={goalNumbers}
+            isReopenedGoal={isReopenedGoal}
+          />
+          <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
+          <ReadOnlyGoalCollaborators
+            collaborators={collaborators}
+          />
+          <ReadOnlyField label="Recipient grant numbers">
+            {grants
+              .map((grant) => `${grant.recipient.name} ${grant.numberWithProgramTypes}`)
+              .join('\n')}
+          </ReadOnlyField>
+          <ReadOnlyField label="Recipient's goal">
+            {goalName}
+          </ReadOnlyField>
+
+          <ReadOnlyField label="Goal source">
+            {uniq(Object.values(source || {})).join(', ') || ''}
+          </ReadOnlyField>
+
+          <ReadOnlyField label="Anticipated close date (mm/dd/yyyy)">
+            {endDate}
+          </ReadOnlyField>
+        </div>
+
+        {objectives.map((objective) => (
+          <div key={uniqueId('objective-collection-')} className="margin-bottom-5">
+            <h3>Objective summary</h3>
+            <ReadOnlyField label="TTA objective">
+              {objective.title}
+            </ReadOnlyField>
+            {objective.topics.length > 0 && (
+            <ReadOnlyField label="Topics">
+              {objective.topics.map((topic) => topic.name).join(', ')}
+            </ReadOnlyField>
+            )}
+            {objective.courses.length > 0 && (
+            <ReadOnlyField label="iPD course names">
+              {objective.courses.map((course) => course.name).join(', ')}
+            </ReadOnlyField>
+            )}
+            {objective.resources.length > 0 && (
+            <ReadOnlyField label="Resources">
+              {objective.resources.map((resource) => <ResourceLink resource={resource} />)}
+            </ReadOnlyField>
+            )}
+            {objective.files.length > 0 && (
+            <ReadOnlyField label="Files">
+              {objective.files.map((file) => <FileLink file={file} />)}
+            </ReadOnlyField>
+            )}
+          </div>
+        ))}
+
       </Container>
     </>
   );

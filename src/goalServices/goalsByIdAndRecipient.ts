@@ -25,6 +25,7 @@ const {
   UserRole,
   Role,
   CollaboratorType,
+  Course,
 } = db;
 
 export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
@@ -100,7 +101,7 @@ interface IGoal {
   createdVia: string;
   goalTemplateId: number;
   source: string;
-  onAnyReport: boolean;
+  onAR: boolean;
   onApprovedAR: boolean;
   isCurated: boolean;
   rtrOrder: number;
@@ -245,7 +246,15 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
             {
               model: File,
               as: 'files',
-              attributes: ['originalFileName', 'key'],
+              attributes: ['originalFileName', 'key', 'url'],
+              through: {
+                attributes: [],
+              },
+            },
+            {
+              model: Course,
+              as: 'courses',
+              attributes: ['name'],
               through: {
                 attributes: [],
               },
@@ -271,7 +280,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
           as: 'programs',
         },
         {
-          attributes: ['id'],
+          attributes: ['id', 'name'],
           model: Recipient,
           as: 'recipient',
           where: {
@@ -329,7 +338,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
 
 function extractObjectiveAssociationsFromActivityReportObjectives(
   activityReportObjectives: IActivityReportObjectivesFromDB[],
-  associationName: 'topics' | 'resources' | 'files',
+  associationName: 'topics' | 'resources' | 'files' | 'courses',
 ) {
   return activityReportObjectives.map((aro) => aro[associationName].map((a:
   ITopicFromDB | IResourceFromDB | IFileFromDB) => a.toJSON())).flat();
@@ -347,6 +356,10 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
         topics: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
           'topics',
+        ),
+        courses: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'courses',
         ),
         resources: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,

@@ -7,7 +7,7 @@ import {
   within,
   waitFor,
 } from '@testing-library/react';
-import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS } from '@ttahub/common';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
@@ -722,7 +722,7 @@ describe('create goal', () => {
       isRttapa: 'No',
       prompts: [],
       sources: [],
-      onAnyReport: true,
+      onAR: true,
       onApprovedAR: false,
       grants: [{
         id: 1,
@@ -737,11 +737,7 @@ describe('create goal', () => {
           id: 1238474,
           title: 'This is an objective',
           status: 'Not Started',
-          activityReports: [
-            {
-              status: REPORT_STATUSES.SUBMITTED,
-            },
-          ],
+          onAR: true,
         },
       ],
     }]);

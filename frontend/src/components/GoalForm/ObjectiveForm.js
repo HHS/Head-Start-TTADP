@@ -7,6 +7,7 @@ import {
   OBJECTIVE_ERROR_MESSAGES,
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -18,13 +19,13 @@ export default function ObjectiveForm({
   setObjective,
   errors,
   userCanEdit,
+  goalStatus,
 }) {
   // the parent objective data from props
   const {
     title,
     status,
     onAR,
-    onApprovedAR,
   } = objective;
 
   const { isAppLoading } = useContext(AppLoadingContext);
@@ -53,17 +54,27 @@ export default function ObjectiveForm({
           && (<Button type="button" unstyled onClick={() => removeObjective(index)} aria-label={`Remove objective ${index + 1}`}>Remove this objective</Button>)}
       </div>
 
-      <ObjectiveTitle
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
-        isOnApprovedReport={onApprovedAR || false}
-        isOnReport={onAR || false}
-        title={title}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={validateObjectiveTitle}
-        status={status}
-        isLoading={isAppLoading}
-        userCanEdit={userCanEdit}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA objective"
+        permissions={[
+          userCanEdit,
+          status !== 'Closed',
+          status !== 'Suspended',
+          !onAR,
+          goalStatus !== 'Closed',
+          goalStatus !== 'Suspended',
+        ]}
+        value={title}
+      >
+        <ObjectiveTitle
+          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.TITLE]}
+          title={title}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={validateObjectiveTitle}
+          isLoading={isAppLoading}
+          userCanEdit={userCanEdit}
+        />
+      </FormFieldThatIsSometimesReadOnly>
     </div>
   );
 }
@@ -112,6 +123,7 @@ ObjectiveForm.propTypes = {
     status: PropTypes.string,
   }),
   userCanEdit: PropTypes.bool.isRequired,
+  goalStatus: PropTypes.string.isRequired,
 };
 
 ObjectiveForm.defaultProps = {
