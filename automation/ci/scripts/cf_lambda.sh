@@ -337,7 +337,33 @@ function push_app {
     echo $app_name
 }
 
+# Function to start an app
+function start_app {
+    local app_name=$1
+    validate_parameters "$app_name"
 
+    log "INFO" "Starting application '$app_name'..."
+    if ! cf start "$app_name"; then
+        log "ERROR" "Failed to start application '$app_name'."
+        exit 1
+    else
+        log "INFO" "Application '$app_name' started successfully."
+    fi
+}
+
+# Function to stop an app
+function stop_app {
+    local app_name=$1
+    validate_parameters "$app_name"
+
+    log "INFO" "Stopping application '$app_name'..."
+    if ! cf stop "$app_name"; then
+        log "ERROR" "Failed to stop application '$app_name'."
+        exit 1
+    else
+        log "INFO" "Application '$app_name' stopped successfully."
+    fi
+}
 
 # Function to manage the state of the application (start, restage, stop)
 function manage_app {
@@ -444,11 +470,11 @@ main() {
 
   # Parse JSON and assign to variables
   local automation_dir manifest task_name command args
-  automation_dir=$(echo "$json_input" | jq -r '.AUTOMATION_DIR // "./automation"')
-  manifest=$(echo "$json_input" | jq -r '.MANIFEST // "manifest.yml"')
-  task_name=$(echo "$json_input" | jq -r '.TASK_NAME // "default-task-name"')
+  automation_dir=$(echo "$json_input" | jq -r '.automation_dir // "./automation"')
+  manifest=$(echo "$json_input" | jq -r '.manifest // "manifest.yml"')
+  task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
   command=$(echo "$json_input" | jq -r '.command // "bash /path/to/default-script.sh"')
-  args=$(echo "$json_input" | jq -r '.ARGS // "default-arg1 default-arg2"')
+  args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
 
   local service_credentials
 
