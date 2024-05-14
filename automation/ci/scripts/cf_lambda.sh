@@ -319,13 +319,12 @@ function push_app {
     # Extract app name from the manifest file
     local app_name=$(grep 'name:' "$manifest_file" | awk '{print $2}' | tr -d '"')
 
-    # Push the app without routing or starting it
-    cf push -f "$manifest_file" --no-route --no-start
-    local result=$?
-    if [ $result -ne 0 ]; then
-        log "ERROR" "Failed to push application with error code $result"
+    # Push the app without routing or starting it, capturing output
+    local push_output
+    if ! push_output=$(cf push -f "$manifest_file" --no-route --no-start 2>&1); then
+        log "ERROR" "Failed to push application with error: $push_output"
         cd "$original_dir"  # Restore the original directory
-        exit $result
+        exit 1
     else
         log "INFO" "Application pushed successfully."
     fi
@@ -337,6 +336,7 @@ function push_app {
     log "INFO" "The app name is: $app_name"
     echo $app_name
 }
+
 
 # Function to start an app
 function start_app {
