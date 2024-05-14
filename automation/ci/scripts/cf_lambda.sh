@@ -317,7 +317,7 @@ function push_app {
     cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
 
     # Extract app name from the manifest file
-    local app_name=$(grep 'name:' "$manifest_file" | awk '{print $2}' | tr -d '"')
+    local app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
 
     # Push the app without routing or starting it, capturing output
     local push_output
