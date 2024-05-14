@@ -6,9 +6,117 @@ import isAdmin, {
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
   canSeeBehindFeatureFlag,
+  canChangeObjectiveStatus,
+  canChangeGoalStatus,
+  canEditOrCreateGoals,
 } from '../permissions';
 
 describe('permissions', () => {
+  describe('canCreateOrEditGoals', () => {
+    it('returns true if the user has read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canEditOrCreateGoals(user, 1)).toBeTruthy();
+    });
+    it('returns false if the user does not have read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canEditOrCreateGoals(user, 1)).toBeFalsy();
+    });
+    it('returns true if the user has approve in a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canEditOrCreateGoals(user, 1)).toBeTruthy();
+    });
+  });
+  describe('canChangeObjectiveStatus', () => {
+    it('returns true if the user has read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeObjectiveStatus(user, 1)).toBeTruthy();
+    });
+    it('returns false if the user does not have read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeObjectiveStatus(user, 1)).toBeFalsy();
+    });
+    it('returns true if the user has approve in a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeObjectiveStatus(user, 1)).toBeTruthy();
+    });
+  });
+  describe('canChangeGoalStatus', () => {
+    it('returns true if the user has read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeGoalStatus(user, 1)).toBeTruthy();
+    });
+    it('returns false if the user does not have read/write to a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeGoalStatus(user, 1)).toBeFalsy();
+    });
+    it('returns true if the user has approve in a region', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(canChangeGoalStatus(user, 1)).toBeTruthy();
+    });
+  });
   describe('isAdmin', () => {
     it('returns true if the user is an admin', () => {
       const user = {
