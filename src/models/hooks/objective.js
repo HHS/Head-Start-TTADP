@@ -1,7 +1,7 @@
 import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS, GOAL_STATUS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
 import {

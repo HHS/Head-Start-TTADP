@@ -33,6 +33,7 @@ import communicationLogRouter from './communicationLog';
 import monitoringRouter from './monitoring';
 import coursesRouter from './courses';
 import { currentUserId } from '../services/currentUser';
+import objectiveRouter from './objectives';
 
 export const loginPath = '/login';
 
@@ -65,6 +66,7 @@ router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
+router.use('/objectives', objectiveRouter);
 router.use('/topic', topicsRouter);
 router.use('/role', rolesRouter);
 router.use('/search', search);
