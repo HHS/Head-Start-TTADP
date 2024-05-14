@@ -47,6 +47,33 @@ executors:
     docker:
       - image: cimg/aws:2024.03
 commands:
+  sparse_checkout:
+    description: "Checkout a sparse directory from a specific branch."
+    parameters:
+      directory:
+        type: string
+        description: "Directory to checkout sparsely"
+      branch:
+        type: string
+        description: "Branch to checkout"
+    steps:
+      - run:
+          name: Install Git
+          command: |
+            sudo apt-get update && sudo apt-get install -y git
+      - run:
+          name: Clone Repository
+          command: |
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+      - run:
+          name: Setup Sparse Checkout
+          command: |
+            git config core.sparseCheckout true
+            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
+      - run:
+          name: Checkout Branch
+          command: |
+            git checkout << parameters.branch >>
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
       File is used as checksum source for part of caching key."
@@ -259,14 +286,6 @@ commands:
   cf_backup:
     description: "Login to cloud foundry space with service account credentials, Connect to DB & S3, backup DB to S3"
     parameters:
-      app_name:
-        description: "Name of Cloud Foundry cloud.gov application; must match
-          application name specified in manifest"
-        type: string
-      auth_client_id:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client id, a required application variable"
-        type: env_var_name
       auth_client_secret:
         description: "Name of CircleCi project environment variable that
           holds authentication client secret, a required application variable"
@@ -283,6 +302,15 @@ commands:
         description: "Name of CircleCi project environment variable that
           holds name of cloudgov space to target for application deployment"
         type: env_var_name
+      rds_service_name:
+        description: "Name of the rds service to backup"
+        type: string
+      s3_service_name:
+        description: "Name of the s3 service access"
+        type: string
+      backup_prefix:
+        description: "prefix name to use for backups"
+        type: string
     steps:
       - run:
           name: Install Dependencies
@@ -293,21 +321,11 @@ commands:
             set -o noglob
             set -o noclobber
 
-
             # update
             sudo apt-get update
-            # Install PostgreSQL Client to have access to pg_dump
-            sudo apt-get install -y postgresql-client
-            # Install jq
-            sudo apt-get install -y jq
-            # Install zip
-            sudo apt-get install -y zip
             # Install uuid-runtime to have access to uuidgen
-            sudo apt-get install uuid-runtime
-            # Install pv
-            sudo apt-get install pv
-            # Install wget
-            sudo apt-get install wget
+            # Install pv wget
+            sudo apt-get install pv uuid-runtime wget
             # Install Cloud Foundry CLI
             wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
             echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
@@ -339,456 +357,28 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
-          name: Prep S3 Connection
+          name: cf_lambda - script to trigger backup
           command: |
-            set -e
-            set -u
-            set -o pipefail
-            set -o noglob
-            set -o noclobber
-
-            # Functions definition
-            function check_dependencies() {
-                local dependencies=("jq" "aws" "cf" "uuidgen")
-                for dep in "${dependencies[@]}"; do
-                    if ! type "${dep}" > /dev/null; then
-                        echo "Dependency ${dep} is not installed." >&2
-                        exit 1
-                    fi
-                done
-            }
-
-            # Generate a unique service key name using uuidgen
-            KEY_NAME="${CF_S3_SERVICE_NAME}-key-$(uuidgen)"
-
-            # Function to check if a service key exists
-            function check_service_key_exists() {
-                echo "Checking if service key ${KEY_NAME} exists..."
-                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${KEY_NAME}"; then
-                    echo "Service key ${KEY_NAME} exists."
-                    return 0
-                else
-                    echo "Service key ${KEY_NAME} does not exist."
-                    return 2
-                fi
-            }
-
-            # Create a service key
-            function create_service_key() {
-                if check_service_key_exists; then
-                  echo "Service key with name ${KEY_NAME} already exists"
-                else
-                  echo "Creating service key with name ${KEY_NAME}..."
-                  if ! cf create-service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}"; then
-                      echo "Failed to create service key." >&2
-                      exit 3
-                  elif ! check_service_key_exists; then
-                      echo "Failed to create service key, even thou it returned." >&2
-                      exit 4
-                  fi
-                fi
-            }
-
-            # Fetch the service key credentials and filter out the JSON part
-            function fetch_service_key() {
-                # Capture the entire output of the command, without echo commands affecting it
-                full_output=$(cf service-key "${CF_S3_SERVICE_NAME}" "${KEY_NAME}" 2>&1)
-
-                # Use awk to capture lines starting from the first '{' until the end of the file
-                credentials_json=$(echo "${full_output}" | awk '/\{/,0')
-                if [ -z "${credentials_json}" ]; then
-                    echo "No JSON data found." >&2
-                    exit 5
-                fi
-
-                # Output the filtered JSON, removing any extraneous output before it
-                echo "${credentials_json}"
-            }
-
-            # Validate JSON
-            function validate_json() {
-                echo "Validating JSON..."
-                if ! echo "$1" | jq empty 2>/dev/null; then
-                    echo "Invalid JSON format." >&2
-                    exit 6
-                fi
-            }
-
-            # Main execution
-            check_dependencies
-
-            create_service_key
-            credentials_json=$(fetch_service_key)
-
-            # Validate JSON before parsing
-            validate_json "${credentials_json}"
-
-            # Extract credentials using jq
-            access_key=$(echo "${credentials_json}" | jq -r '.credentials.access_key_id')
-            secret_key=$(echo "${credentials_json}" | jq -r '.credentials.secret_access_key')
-            bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
-            region=$(echo "${credentials_json}" | jq -r '.credentials.region')
-
-            if [[ -z "${access_key}" || -z "${secret_key}" || -z "${bucket_name}" || -z "${region}" ]]; then
-                echo "Failed to extract all necessary credentials." >&2
-                exit 7
-            fi
-
-            # Export credentials and the service key name for use in this script and potentially others
-            echo "export CF_S3_ACCESS_KEY=${access_key}" >> ${BASH_ENV}
-            echo "export CF_S3_SECRET_KEY=${secret_key}" >> ${BASH_ENV}
-            echo "export CF_S3_BUCKET_NAME=${bucket_name}" >> ${BASH_ENV}
-            echo "export CF_S3_REGION=${region}" >> ${BASH_ENV}
-            echo "export CF_S3_SERVICE_KEY_NAME=${KEY_NAME}" >> ${BASH_ENV}
+            json_object=$(jq -n \
+              --arg automation_dir "./automation" \
+              --arg manifest "manifest.yml" \
+              --arg task_name "backup" \
+              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
+              --argjson args '[\
+                  "${<< parameters.backup_prefix >>}",\
+                  "${<< parameters.rds_service_name >>}",\
+                  "${<< parameters.s3_service_name >>}"\
+                ]' \
+              '{
+                automation_dir: $automation_dir,
+                manifest: $manifest,
+                task_name: $task_name,
+                command: $command,
+                args: $args
+              }')
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
           environment:
-            auth_client_id: PROD_AUTH_CLIENT_ID
-            auth_client_secret: PROD_AUTH_CLIENT_SECRET
-            CF_APP_NAME: tta-smarthub-prod
-            CF_S3_SERVICE_NAME: ttahub-db-backups
-      - run:
-          name: Connect to DB, dump, zip, upload, disconnect from DB
-          command: |
-            set -e
-            set -u
-            set -o pipefail
-            set -o noglob
-
-            # Function to check for required dependencies
-            function check_dependencies() {
-                for dep in "$@"; do
-                    if ! type "${dep}" > /dev/null; then
-                        echo "Dependency ${dep} is not installed." >&2
-                        exit 1
-                    fi
-                done
-            }
-
-            # Function to check and set the state of ssh access for CF_APP_NAME
-            function manageAppSSH() {
-                # Check if CF_APP_NAME is set and not empty
-                if [[ -z "${CF_APP_NAME}" ]]; then
-                    echo "Error: CF_APP_NAME is not set or empty."
-                    return 1
-                fi
-
-                # Determine the action to take based on the argument
-                local action="$1"
-                local command=""
-                local current_state_output=$(cf ssh-enabled "${CF_APP_NAME}" 2>&1)
-                local status=$?
-
-                # Error handling for retrieving the current SSH state
-                if [[ $status -ne 0 ]]; then
-                    echo "Error retrieving current SSH status for ${CF_APP_NAME}: $current_state_output"
-                    return $status
-                fi
-
-                # Parsing the current state, assuming the command outputs "enabled" or "disabled"
-                local current_state=$(echo "$current_state_output" | grep -o 'enabled\|disabled')
-
-                # Determine the desired command based on the action
-                if [[ "$action" == "enable" && "$current_state" != "enabled" ]]; then
-                    command="enable-ssh"
-                elif [[ "$action" == "disable" && "$current_state" != "disabled" ]]; then
-                    command="disable-ssh"
-                elif [[ "$current_state" == "enabled" && "$action" == "enable" ]] || [[ "$current_state" == "disabled" && "$action" == "disable" ]]; then
-                    echo "SSH is already ${action}d for the app: ${CF_APP_NAME}"
-                    return 0
-                else
-                    echo "Invalid action specified. Use 'enable' or 'disable'."
-                    return 3
-                fi
-
-                # Execute the cf command if necessary
-                if [[ -n "$command" ]]; then
-                    cf $command "${CF_APP_NAME}"
-                    local execute_status=$?
-
-                    # Check the exit status of the cf command
-                    if [ $execute_status -ne 0 ]; then
-                        echo "Failed to ${action} SSH for the app: ${CF_APP_NAME}"
-                        return $execute_status
-                    else
-                        echo "SSH successfully ${action}d for the app: ${CF_APP_NAME}"
-                    fi
-                fi
-            }
-
-
-            # Function to check if file size has stabilized for both output and error files
-            function check_file_stabilization() {
-                local output_file=${1}
-                local error_file=${2}
-                local last_output_size=0
-                local last_error_size=0
-                local current_output_size
-                local current_error_size
-                local max_checks=6 # Max checks at every 5 seconds gives us 30 seconds total
-
-                for (( i=0; i<$max_checks; i++ )); do
-                    current_output_size=$(stat --format=%s "${output_file}" 2>/dev/null || echo 0)
-                    current_error_size=$(stat --format=%s "${error_file}" 2>/dev/null || echo 0)
-
-                    # Check if both files have stopped changing and are not empty
-                    if [[ "$last_output_size" -eq "${current_output_size}" && "${last_error_size}" -eq "${current_error_size}" && "${current_output_size}" -ne 0 ]]; then
-                        echo "Both output and error file sizes have stabilized."
-                        return 0
-                    fi
-
-                    last_output_size=${current_output_size}
-                    last_error_size=${current_error_size}
-                    sleep 5
-                done
-
-                echo "Timeout reached without stabilization."
-                return 1
-            }
-
-            function setup_cf_db_connection() {
-                local cf_output=$(mktemp)
-                local cf_error=$(mktemp)
-
-                echo "Starting the connection setup..."
-                # Execute cf connect-to-service and redirect output to a file, run in the background
-                cf connect-to-service --no-client "${CF_APP_NAME}" "${CF_SERVICE_NAME}" > "${cf_output}" 2> "${cf_error}" &
-
-                # Capture the PID of the cf connect-to-service process
-                local CF_DB_CONNECTION_PID=$!
-                echo "CF Connect to Service Process ID: ${CF_DB_CONNECTION_PID}"
-
-                # Give some time for the process to start and produce output
-                sleep 2
-
-                # Wait for the output and error file sizes to stabilize
-                if ! check_file_stabilization "${cf_output}" "${cf_error}"; then
-                    echo "Failed to verify file stabilization." >&2
-                    rm "${cf_output}" "${cf_error}"
-                    exit 1
-                fi
-
-                # Check if the process is still running
-                if ! ps -p "${CF_DB_CONNECTION_PID}" > /dev/null 2>/dev/null; then
-                    echo "cf connect-to-service process has unexpectedly terminated." >&2
-                    if [ -s "${cf_error}" ]; then
-                        echo "Error output from cf connect-to-service:"
-                        cat "${cf_error}" >&2
-                    fi
-                    rm "${cf_output}" "${cf_error}"
-                    exit 1
-                fi
-
-                # Ensure the output file exists and is not empty before attempting to parse it
-                if [ ! -f "${cf_output}" ] || [ ! -s "${cf_output}" ]; then
-                    echo "No output file found or file is empty, cannot proceed with parsing." >&2
-                    rm "${cf_output}" "${cf_error}"
-                    exit 1
-                fi
-
-                # Extract credentials from the output file
-                local HOST=$(grep 'Host:' "${cf_output}" | awk '{print $2}')
-                local PORT=$(grep 'Port:' "${cf_output}" | awk '{print $2}')
-                local USERNAME=$(grep 'Username:' "${cf_output}" | awk '{print $2}')
-                local PASSWORD=$(grep 'Password:' "${cf_output}" | awk '{print $2}')
-                local DB_NAME=$(grep 'Name:' "${cf_output}" | awk '{print $2}')
-
-                # Check if any variable was not properly assigned
-                if [[ -z "$HOST" || -z "$PORT" || -z "$USERNAME" || -z "$PASSWORD" || -z "$DB_NAME" ]]; then
-                    echo "Failed to extract all necessary database connection credentials." >&2
-                    rm "${cf_output}" "${cf_error}"
-                    exit 2
-                fi
-
-                # Export them for use in this script
-                echo "export CF_DB_HOST=${HOST}" >> "${BASH_ENV}"
-                echo "export CF_DB_PORT=${PORT}" >> "${BASH_ENV}"
-                echo "export CF_DB_USERNAME=${USERNAME}" >> "${BASH_ENV}"
-                echo "export CF_DB_PASSWORD=${PASSWORD}" >> "${BASH_ENV}"
-                echo "export CF_DB_NAME=${DB_NAME}" >> "${BASH_ENV}"
-
-                # Store the PID in an environment variable for later use
-                echo "export CF_DB_CONNECTION_PID=${CF_DB_CONNECTION_PID}" >> "${BASH_ENV}"
-
-                # Clean up temporary files
-                rm "${cf_output}" "${cf_error}"
-
-                # Source the BASH_ENV to make the exported variables available immediately
-                source "${BASH_ENV}"
-            }
-
-            # Terminate the database connection process if it's running
-            function terminate_db_connection() {
-                if ps -p ${CF_DB_CONNECTION_PID} > /dev/null 2>/dev/null; then
-                    kill ${CF_DB_CONNECTION_PID}
-                    echo "Database connection process terminated."
-                else
-                    echo "Database connection process was not running."
-                fi
-            }
-
-            # Function to check if a file exists on S3
-            file_exists_on_s3() {
-                local file_name=${1}
-                if aws s3 ls s3://${CF_S3_BUCKET_NAME}/${file_name} > /dev/null; then
-                    return 0
-                else
-                    return 1
-                fi
-            }
-
-            # Function to safely remove a file from S3 if it exists
-            safe_remove_s3_file() {
-                local file_name=${1}
-                if file_exists_on_s3 ${file_name}; then
-                    aws s3 rm s3://${CF_S3_BUCKET_NAME}/${file_name}
-                fi
-            }
-
-            function setup_backup_environment() {
-                # Define S3 file names with precision down to the second, in UTC
-                local TS="$(date --utc +%Y-%m-%d-%H-%M-%S)-UTC"
-                local S3_FILE_NAME="production-${TS}.sql.zip"
-                local PASSWORD_FILE_NAME="production-${TS}.sql.pwd"
-                local LATEST_BACKUP_FILE_NAME="latest-backup.txt"
-
-                # Generate UUID as the password
-                local ZPASSWORD=$(uuidgen)
-
-                # Export the ZIP password for external use
-                echo "export ZIP_PASSWORD=${ZPASSWORD}" >> "${BASH_ENV}"
-
-                # Configure AWS CLI
-                export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
-                export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
-                export AWS_DEFAULT_REGION=${CF_S3_REGION}
-
-                # Export filename values for external use
-                echo "export S3_FILE_NAME=\"${S3_FILE_NAME}\"" >> "${BASH_ENV}"
-                echo "export PASSWORD_FILE_NAME=\"${PASSWORD_FILE_NAME}\"" >> "${BASH_ENV}"
-                echo "export LATEST_BACKUP_FILE_NAME=\"${LATEST_BACKUP_FILE_NAME}\"" >> "${BASH_ENV}"
-            }
-
-            function perform_backup_and_upload() {
-                source "${BASH_ENV}"
-
-                # Configure AWS CLI
-                export AWS_ACCESS_KEY_ID=${CF_S3_ACCESS_KEY}
-                export AWS_SECRET_ACCESS_KEY=${CF_S3_SECRET_KEY}
-                export AWS_DEFAULT_REGION=${CF_S3_REGION}
-
-                # Check required environment variables
-                local required_vars=("CF_DB_PASSWORD" "CF_DB_USERNAME" "CF_DB_HOST" "CF_DB_PORT" "CF_DB_NAME" "CF_S3_BUCKET_NAME" "ZIP_PASSWORD" "S3_FILE_NAME" "PASSWORD_FILE_NAME" "LATEST_BACKUP_FILE_NAME")
-                for var in "${required_vars[@]}"; do
-                    if [ -z "${!var}" ]; then
-                        echo "Error: Environment variable $var is not set."
-                        return 1
-                    fi
-                done
-
-                # Perform the backup and compress with the generated password
-                PGPASSWORD=$CF_DB_PASSWORD pg_dump -U "${CF_DB_USERNAME}" -h "${CF_DB_HOST}" -p "${CF_DB_PORT}" "${CF_DB_NAME}" |\
-                zip -P "${ZIP_PASSWORD}" - - |\
-                tee >(pv -n -brt --interval 30 > /dev/null) |\
-                aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}"
-
-                # Evaluate the result of the backup and upload process
-                if [ $? -ne 0 ]; then
-                    echo "Backup upload failed."
-                    safe_remove_s3_file "${S3_FILE_NAME}"
-                    return 1
-                fi
-
-                echo -n "${ZIP_PASSWORD}" |\
-                    aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}"
-
-                if [ $? -ne 0 ]; then
-                    echo "Password file upload failed."
-                    safe_remove_s3_file "${PASSWORD_FILE_NAME}"
-                    return 1
-                fi
-
-                echo -e -n "${CF_S3_BUCKET_NAME}/${S3_FILE_NAME}\n${CF_S3_BUCKET_NAME}/${PASSWORD_FILE_NAME}" |\
-                    aws s3 cp - "s3://${CF_S3_BUCKET_NAME}/${LATEST_BACKUP_FILE_NAME}"
-
-                if [ $? -ne 0 ]; then
-                    echo "Latest backup file list upload failed."
-                    return 1
-                fi
-
-                echo "All files successfully uploaded."
-            }
-
-            # -----------------------------------------------------------------------------
-
-            check_dependencies cf awk grep stat aws pg_dump zip uuidgen pv
-
-            manageAppSSH enable
-            setup_cf_db_connection
-
-            setup_backup_environment
-
-            perform_backup_and_upload
-
-            terminate_db_connection
-            manageAppSSH disable
-          background: false
-          environment:
-            auth_client_id: PROD_AUTH_CLIENT_ID
-            auth_client_secret: PROD_AUTH_CLIENT_SECRET
-            CF_APP_NAME: tta-smarthub-prod
-            CF_SERVICE_NAME: ttahub-prod
-      - run:
-          name: Cleanup and Terminate Connection
-          command: |
-            set -e
-            set -u
-            set -o pipefail
-            set -o noglob
-            set -o noclobber
-
-            source ${BASH_ENV}
-
-            # Function to check for required dependencies
-            function check_dependencies() {
-                local dependencies=("cf")
-                for dep in "${dependencies[@]}"; do
-                    if ! type "$dep" > /dev/null; then
-                        echo "Dependency $dep is not installed." >&2
-                        exit 1
-                    fi
-                done
-            }
-
-            # Function to check if a service key exists
-            function check_service_key_exists() {
-                echo "Checking if service key ${CF_S3_SERVICE_KEY_NAME} exists..."
-                if cf service-keys "${CF_S3_SERVICE_NAME}" | grep -q "${CF_S3_SERVICE_KEY_NAME}"; then
-                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} exists."
-                    return 0
-                else
-                    echo "Service key ${CF_S3_SERVICE_KEY_NAME} does not exist."
-                    return 1
-                fi
-            }
-
-            # Delete the S3 service key if deletion is allowed and the key exists
-            function delete_service_key() {
-                if check_service_key_exists; then
-                    echo "Deleting service key ${CF_S3_SERVICE_KEY_NAME}..."
-                    if ! cf delete-service-key "$CF_S3_SERVICE_NAME" "${CF_S3_SERVICE_KEY_NAME}" -f; then
-                        echo "Failed to delete service key ${CF_S3_SERVICE_KEY_NAME}." >&2
-                        exit 2
-                    fi
-                else
-                    echo "No service key ${CF_S3_SERVICE_KEY_NAME} to delete."
-                fi
-            }
-
-            # Main execution
-            check_dependencies
-            delete_service_key
-          when: always
-          environment:
-            CF_APP_NAME: tta-smarthub-prod
+            CF_RDS_SERVICE_NAME: ttahub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
           name: Logout of service account
@@ -1432,16 +1022,21 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
-  backup_upload:
-    executor: aws-executor
+  backup_upload_production:
+    docker:
+      - image: cimg/base:2024.05
     steps:
-      - cf_backup:
-          app_name: tta-smarthub-prod
-          auth_client_id: PROD_AUTH_CLIENT_ID
+    - sparse_checkout:
+          directory: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_backup:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
           cloudgov_username: CLOUDGOV_PROD_USERNAME
           cloudgov_password: CLOUDGOV_PROD_PASSWORD
           cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 workflows:
   build_test_deploy:
     when:
@@ -1524,7 +1119,7 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
-  daily_backup_upload:
+  daily_backup_upload_production:
     triggers:
       - schedule:
           cron: "0 10 * * 1-5"
@@ -1533,9 +1128,9 @@ workflows:
               only:
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
-      - backup_upload
-  manual_backup_upload:
+      - backup_upload_production
+  manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
-      - backup_upload
+      - backup_upload_production
