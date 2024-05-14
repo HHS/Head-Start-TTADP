@@ -58,7 +58,7 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
-    onAnyReport: false,
+    onAR: false,
     prompts: {},
     isCurated: false,
     source: {},
@@ -84,7 +84,7 @@ export default function GoalForm({
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
-  const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
+  const [goalOnAR, setGoalonAR] = useState(goalDefaults.onAR);
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
   const [isReopenedGoal, setIsReopenedGoal] = useState(goalDefaults.isReopenedGoal);
   // we need to set this key to get the component to re-render (uncontrolled input)
@@ -149,7 +149,7 @@ export default function GoalForm({
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
-        setGoalOnAnyReport(goal.onAnyReport);
+        setGoalonAR(goal.onAR);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
         setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
@@ -880,7 +880,7 @@ export default function GoalForm({
               setObjectives={setObjectives}
               setObjectiveError={setObjectiveError}
               clearEmptyObjectiveError={clearEmptyObjectiveError}
-              isOnReport={goalOnAnyReport}
+              isOnReport={goalOnAR}
               isOnApprovedReport={goalOnApprovedAR}
               isCurated={isCurated}
               status={status || 'Needs status'}

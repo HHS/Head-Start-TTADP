@@ -127,6 +127,7 @@ function GoalCard({
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids.map((d) => `id[]=${d}`).join('&')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
     const statusesThatNeedObjectivesFinished = [
@@ -155,20 +156,31 @@ function GoalCard({
   };
 
   const contextMenuLabel = `Actions for goal ${id}`;
-  const menuItems = [
-    ...(goalStatus === 'Closed' ? [{
+
+  const menuItems = [];
+
+  if (goalStatus === 'Closed') {
+    menuItems.push({
       label: 'Reopen',
       onClick: () => {
         showReopenGoalModal(id);
       },
-    }] : []),
-    {
-      label: goalStatus === 'Closed' ? 'View' : 'Edit',
+    });
+
+    menuItems.push({
+      label: 'View',
+      onClick: () => {
+        history.push(viewLink);
+      },
+    });
+  } else {
+    menuItems.push({
+      label: 'Edit',
       onClick: () => {
         history.push(editLink);
       },
-    },
-  ];
+    });
+  }
 
   const canDeleteQualifiedGoals = (() => {
     if (isAdmin(user)) {
