@@ -117,12 +117,12 @@ export default function ViewGoals({
       }
     }
 
-    if (!fetchAttempted && !isAppLoading) {
+    if (!fetchAttempted && !isAppLoading && canView) {
       setAppLoadingText('Loading goal');
       setIsAppLoading(true);
       fetchGoal();
     }
-  }, [fetchAttempted, isAppLoading, recipient.id, setAppLoadingText, setIsAppLoading]);
+  }, [fetchAttempted, isAppLoading, recipient.id, setAppLoadingText, setIsAppLoading, canView]);
 
   if (!canView) {
     return (
