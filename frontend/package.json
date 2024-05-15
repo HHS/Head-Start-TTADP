@@ -180,6 +180,7 @@
     "eslint-plugin-react": "^7.20.5",
     "eslint-plugin-react-hooks": "^4.0.8",
     "eslint-plugin-testing-library": "^3.10.1",
+    "focus-trap-react": "^10.2.3",
     "fetch-mock": "^9.11.0",
     "history": "4.10.1",
     "jest-fetch-mock": "^3.0.3",
