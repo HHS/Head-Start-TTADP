@@ -205,7 +205,8 @@ test.describe('get /recipient', () => {
           regionId: Joi.number(),
           recipientId: Joi.number(),
           recipient: Joi.object({
-            id: Joi.number()
+            id: Joi.number(),
+            name: Joi.string(),
           }),
           programs: Joi.array().items(
             Joi.object({
@@ -222,7 +223,8 @@ test.describe('get /recipient', () => {
             regionId: Joi.number(),
             recipientId: Joi.number(),
             recipient: Joi.object({
-              id: Joi.number()
+              id: Joi.number(),
+              name: Joi.number
             }),
             programs: Joi.array().items(
               Joi.object({
