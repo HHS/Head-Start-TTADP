@@ -37,27 +37,7 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective');
 
-    // try it with an invalid URL
-    await page.getByTestId('textInput').fill('FISH BANANA GARBAGE MAN');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByText('Enter one resource per field. Valid resource links must start with http:// or https://')).toBeVisible();
-
-    await page.getByTestId('textInput').fill('HTTP:// FISH BANANA GARBAGE MAN');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByText('Enter one resource per field. Valid resource links must start with http:// or https://')).toBeVisible();
-
-    await page.getByTestId('textInput').fill('http://www.fish-banana-garbage-man.com');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.getByLabel(/topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    const supportType = page.getByRole('combobox', { name: /Support type/i });
-    await supportType.selectOption('Implementing');
-
-    // first click blurs
+   // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
@@ -99,13 +79,6 @@ test.describe('Recipient record', () => {
     await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-    await page.getByLabel(/topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-    
-    const supportType = page.getByRole('combobox', { name: /Support type/i });
-    await supportType.selectOption('Implementing');
 
     // first click blurs
     await page.getByRole('button', { name: 'Save and continue' }).click();

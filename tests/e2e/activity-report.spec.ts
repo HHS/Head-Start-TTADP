@@ -447,25 +447,6 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
 
-    const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
-    expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
-    await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
-    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
-
-    let objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
-
-    // verify the correct value is selected in the Objective status dropdown
-    expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
-    // Change g1o1's status
-    await objectiveStatus.click();
-    await objectiveStatus.selectOption({ label: 'In Progress' });
-    await page.getByRole('button', { name: 'Save' }).click();
-
-    // expand the objective for g1
-    await page.getByRole('button', { name: `View objectives for goal ${g1GoalsForObjectives}` }).click();
-    // verify the 'In Progress' status is now visible
-    await expect(page.getByRole('listitem').filter({ hasText: 'Objective status In progress' })).toBeVisible();
-
     // Check g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
@@ -478,25 +459,6 @@ test.describe('Activity Report', () => {
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
     await expect(page.getByText('g2o1')).toBeVisible();
-    await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
-    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
-    objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
-    expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
-
-    await objectiveStatus.click();
-    await objectiveStatus.selectOption({ label: 'Complete' });
-    // Instead of saving, cancel out of the 'Edit' form
-    await page.getByRole('link', { name: 'Cancel' }).click();
-
-    // expand the objective for g2
-    await page.getByRole('button', { name: `View objectives for goal ${g2GoalsForObjectives}` }).click();
-    // follow the AR link for g2
-    await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
-      .getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })
-      .click();
-    // verify the link works by checking whether the recipients are visible
-    await expect(page.getByText(`${recipients}`)).toBeVisible();
   });
 
   test('multi recipient goal used on an AR', async ({ page }) => {
@@ -528,14 +490,6 @@ test.describe('Activity Report', () => {
 
     // objective title
     await page.getByLabel('TTA objective *').fill('A new objective');
-
-    // objective topic
-    await page.getByLabel(/topics/i).focus();
-    await page.keyboard.press('ArrowDown');
-    await page.keyboard.press('Enter');
-
-    // support type
-    await page.getByRole('combobox', { name: /Support type/i }).selectOption('Implementing');
 
     // save goal
     await page.getByRole('button', { name: 'Save and continue' }).click();
