@@ -6,11 +6,11 @@ import moment from 'moment';
 import { DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import ObjectiveCard from '../../../../../components/GoalCards/ObjectiveCard';
 import ExpanderButton from '../../../../../components/ExpanderButton';
-import '../../../../../components/GoalCards/GoalCard.scss';
 import { goalPropTypes } from '../../../../../components/GoalCards/constants';
 import FlagStatus from '../../../../../components/GoalCards/FlagStatus';
-import { STATUSES } from '../../../../../components/GoalCards/components/StatusDropdown';
+import STATUSES from '../../../../../components/GoalCards/components/StatusDropdownStatuses';
 import './GoalCard.css';
+import '../../../../../components/GoalCards/GoalCard.scss';
 import UserContext from '../../../../../UserContext';
 import isAdmin from '../../../../../permissions';
 
@@ -19,6 +19,7 @@ function GoalCard({
   register,
   isRadio,
   selectedGoalsIncludeCurated,
+  regionId,
   final,
 }) {
   const {
@@ -171,6 +172,9 @@ function GoalCard({
           key={`objective_${uuidv4()}`}
           objective={obj}
           objectivesExpanded={objectivesExpanded}
+          goalStatus={goal.status}
+          regionId={regionId}
+          forceReadOnly
         />
       ))}
     </article>
@@ -183,6 +187,7 @@ GoalCard.propTypes = {
   isRadio: PropTypes.bool,
   selectedGoalsIncludeCurated: PropTypes.bool,
   final: PropTypes.bool,
+  regionId: PropTypes.number.isRequired,
 };
 
 GoalCard.defaultProps = {

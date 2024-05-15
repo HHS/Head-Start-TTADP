@@ -22,6 +22,36 @@ export default (sequelize, DataTypes) => {
           as: 'monitoringReviewLink',
         },
       );
+      models.MonitoringFindingLink.hasMany(
+        models.MonitoringFindingHistory,
+        {
+          foreignKey: 'findingId',
+          as: 'monitoringFindingHistories',
+        },
+      );
+
+      models.MonitoringFindingHistory.belongsTo(
+        models.MonitoringFindingLink,
+        {
+          foreignKey: 'findingId',
+          as: 'monitoringFindingLink',
+        },
+      );
+      models.MonitoringFindingHistoryStatusLink.hasMany(
+        models.MonitoringFindingHistory,
+        {
+          foreignKey: 'statusId',
+          as: 'monitoringFindingHistories',
+        },
+      );
+
+      models.MonitoringFindingHistory.belongsTo(
+        models.MonitoringFindingHistoryStatusLink,
+        {
+          foreignKey: 'statusId',
+          as: 'monitoringFindingStatusLink',
+        },
+      );
     }
   }
   MonitoringFindingHistory.init({
@@ -44,6 +74,26 @@ export default (sequelize, DataTypes) => {
     findingHistoryId: {
       type: DataTypes.TEXT,
       allowNull: false,
+    },
+    findingId: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    statusId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    narrative: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    ordinal: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    determination: {
+      type: DataTypes.TEXT,
+      allowNull: true,
     },
     hash: {
       type: DataTypes.TEXT,
