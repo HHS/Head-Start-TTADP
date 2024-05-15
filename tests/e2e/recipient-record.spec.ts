@@ -77,8 +77,6 @@ test.describe('Recipient record', () => {
     await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
-
-    await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
   
     // verify the goal appears in the table
