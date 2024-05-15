@@ -66,6 +66,21 @@ function download_aws_cli() {
     log "INFO" "Download completed successfully."
 }
 
+function verify_file_hash() {
+    local file_name="$1"
+    local expected_hash="$2"
+
+    log "INFO" "Verifying hash of the downloaded file..."
+    local computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
+
+    if [ "$computed_hash" == "$expected_hash" ]; then
+        log "INFO" "Hash verification successful."
+    else
+        log "ERROR" "Hash verification failed. Computed hash: $computed_hash, expected hash: $expected_hash."
+        exit 3
+    fi
+}
+
 # Function to install AWS CLI
 function install_aws_cli() {
     local zip_file="$1"
@@ -135,11 +150,13 @@ main() {
     local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
     local install_dir="/tmp/local/aws-cli"
     local zip_file="/tmp/awscliv2.zip"
+    local zip_sha256="b5f5c31aac4cfd7a6eca58bd6f54ff4ebf4417dc70dc77e8db44ce52aa0723c4"
     local bin_dir="/tmp/local/bin"
     local aws_dir="/tmp/local/aws"
 
     check_install_dir "${install_dir}"
     download_aws_cli "${aws_cli_url}" "${zip_file}"
+    verify_file_hash "${zip_file}" "${zip_sha256}"
     install_aws_cli "${zip_file}" "${install_dir}" "${bin_dir}"
     verify_installation "${bin_dir}"
     cleanup "${zip_file}" "${aws_dir}"
