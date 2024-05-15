@@ -89,6 +89,21 @@ function check_install_dir_and_verify_tools() {
     fi
 }
 
+function verify_file_hash() {
+    local file_name="$1"
+    local expected_hash="$2"
+
+    log "INFO" "Verifying hash of the downloaded file..."
+    local computed_hash=$(sha256sum "$file_name" | awk '{print $1}')
+
+    if [ "$computed_hash" == "$expected_hash" ]; then
+        log "INFO" "Hash verification successful."
+    else
+        log "ERROR" "Hash verification failed. Computed hash: $computed_hash, expected hash: $expected_hash."
+        exit 3
+    fi
+}
+
 # Function to download the PostgreSQL deb package
 function download_postgresql_deb() {
     local deb_url="$1"
@@ -208,12 +223,14 @@ function cleanup() {
 function main() {
     local deb_url="http://security.debian.org/debian-security/pool/updates/main/p/postgresql-15/postgresql-client-15_15.6-0+deb12u1_amd64.deb"
     local deb_file="/tmp/postgresql.deb"
+    local deb_sha256="c7143d12f17403821fe7111ff8ac3de3884cf96e"
     local bin_dir="/tmp/local/bin"
     local tools=("pg_dump" "pg_isready" "pg_restore" "psql" "reindexdb" "vacuumdb")
 
     check_dependencies wget tar ar cp rm date
     check_install_dir_and_verify_tools "$bin_dir" "${tools[@]}"
     download_postgresql_deb "$deb_url" "$deb_file"
+    verify_file_hash "$deb_file" "$deb_sha256"
     install_pg_tools "$deb_file" "$bin_dir" "${tools[@]}"
     verify_installation "$bin_dir" "${tools[@]}"
     cleanup "$deb_file"
