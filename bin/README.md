@@ -16,7 +16,11 @@ This script, named `latest_backup.sh`, is designed to interact with Cloud Foundr
 - Cloud Foundry CLI (cf CLI) version 8.0.0 or higher.
 - AWS CLI installed and configured on the machine where the script will be run.
 - JQ for parsing JSON output. It must be installed on the machine running the script.
-- You must be logged into the Cloud Foundary production environment using the following command before running the script: cf login -a api.fr.cloud.gov --sso
+- You must be logged into the Cloud Foundary production environment using the following command before running the script:
+
+```BASH
+cf login -a api.fr.cloud.gov --sso
+```
 
 ## Usage
 
