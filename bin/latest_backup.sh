@@ -195,5 +195,3 @@ fi
 
 # Fetch the latest backup information, generate URLs, and clean up the service key
 fetch_latest_backup_info_and_cleanup "$1" "$2" "$3"
-
-echo 'To download using curl:    curl -v -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" -H "Accept: */*" -H "Accept-Language: en-US,en;q=0.9" "<presigned-url>"'
