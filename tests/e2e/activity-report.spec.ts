@@ -216,6 +216,7 @@ test.describe('Activity Report', () => {
     await supportType.selectOption('Implementing');
 
     await page.getByRole('button', { name: 'Save draft' }).click();
+    await page.waitForTimeout(5000);
 
     // navigate away
     await page.getByRole('button', { name: 'Supporting attachments' }).click();
@@ -447,6 +448,8 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g1', { exact: true })).toBeVisible();
     await expect(page.getByText('g1o1')).toBeVisible();
 
+    await page.getByRole('link', { name: 'Back to RTTAPA' }).click();
+
     // Check g2
     await page.getByText('g2', { exact: true }).locator('..').locator('..').locator('..')
       .getByRole('button', { name: 'Actions for goal' })
@@ -529,6 +532,11 @@ test.describe('Activity Report', () => {
     await page.getByRole('textbox', { name: /TTA provided for objective/i }).focus();
     await page.keyboard.type('This is a TTA provided for objective');
 
+    await page.getByText('Topics *').click()
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');    
+    await blur(page);
+    
     const supportType = page.getByRole('combobox', { name: /Support type/i });
     await supportType.selectOption('Implementing');
 
