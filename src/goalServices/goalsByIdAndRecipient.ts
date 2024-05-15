@@ -168,6 +168,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     'goalTemplateId',
     [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
     'rtrOrder',
+    'createdVia',
   ],
   order: [['rtrOrder', 'asc']],
   where: {
