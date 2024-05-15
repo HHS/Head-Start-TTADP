@@ -420,10 +420,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al/ttahub-2570/flat-resource-sql"
+    default: "mb/TTAHUB-2857/update-goal-status-logic"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2793/reopen-frontend"
+    default: "mb/TTAHUB-2609/move-components"
     type: string
   prod_new_relic_app_id:
     default: "877570491"

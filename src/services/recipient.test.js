@@ -1084,6 +1084,8 @@ describe('Recipient DB service', () => {
 
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
+      expect(objective.ids).toHaveLength(3);
+      expect(objective.ids.every(Boolean)).toBeTruthy();
       expect(objective.topics.length).toBe(4);
       expect(objective.supportType).toBe('Planning');
     });

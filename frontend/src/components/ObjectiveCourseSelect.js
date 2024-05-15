@@ -19,6 +19,7 @@ export default function ObjectiveCourseSelect({
   onBlurUseIpdCourses,
   useIpdCourse,
   useCoursesInputName,
+  className,
 }) {
   const [options, setOptions] = useState(null);
 
@@ -40,7 +41,7 @@ export default function ObjectiveCourseSelect({
   }
 
   return (
-    <div className="ttahub-ipd-course-select--container">
+    <div className={`ttahub-ipd-course-select--container ${className}`}>
       <Fieldset>
         <legend>
           Did you use an iPD course as a resource?
@@ -120,6 +121,7 @@ ObjectiveCourseSelect.propTypes = {
   onBlurUseIpdCourses: PropTypes.func.isRequired,
   useIpdCourse: PropTypes.bool,
   useCoursesInputName: PropTypes.string,
+  className: PropTypes.string,
 };
 
 ObjectiveCourseSelect.defaultProps = {
@@ -128,4 +130,5 @@ ObjectiveCourseSelect.defaultProps = {
   useIpdCourse: null,
   inputName: 'ipdCourseSelect',
   isLoading: false,
+  className: '',
 };

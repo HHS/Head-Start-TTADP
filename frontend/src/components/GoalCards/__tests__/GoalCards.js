@@ -130,6 +130,7 @@ const goalWithObjectives = [{
     reasons: ['Monitoring | Deficiency'],
     status: 'In Progress',
     id: 345345345,
+    ids: [345345345],
     ttaProvided: '',
     grantNumbers: ['1'],
     topics: ['Human Resources'],
@@ -146,6 +147,7 @@ const goalWithObjectives = [{
     reasons: ['Below Competitive Threshold (CLASS)'],
     status: 'Not Started',
     id: 234234253,
+    ids: [234234253],
     ttaProvided: '',
     topics: ['Human Resources'],
     grantNumbers: ['1'],
@@ -162,6 +164,7 @@ const goalWithObjectives = [{
     reasons: ['COVID-19 response'],
     status: 'Complete',
     id: 2938234,
+    ids: [2938234],
     ttaProvided: '',
     grantNumbers: ['1'],
     topics: ['Human Resources'],
@@ -178,6 +181,7 @@ const goalWithObjectives = [{
     reasons: ['New Staff / Turnover'],
     status: 'In Progress',
     id: 255384234,
+    ids: [255384234],
     ttaProvided: '',
     grantNumbers: ['200342cat'],
     topics: ['Human Resources'],
@@ -194,6 +198,7 @@ const goalWithObjectives = [{
     reasons: ['Complaint'],
     status: 'Unknown Status',
     id: 298398934834,
+    ids: [298398934834],
     topics: ['Human Resources'],
     ttaProvided: '',
     grantNumbers: ['1'],
@@ -598,6 +603,97 @@ describe('Goals Table', () => {
       userEvent.click(printButton);
 
       expect(history.push).toHaveBeenCalled();
+    });
+  });
+
+  describe('Context Menu with Different User Permissions', () => {
+    it('Hides the edit button if the user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable({ goals: [baseGoals[0]], goalsCount: 1 }, user);
+
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = screen.queryByRole('button', { name: /Edit/i });
+      expect(editGoal).toBe(null);
+
+      // Find the View button.
+      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      expect(viewGoal).toBeVisible();
+
+      // Hides the Reopen button.
+      const reopenOptions = screen.queryAllByRole('button', { name: 'Reopen' });
+      expect(reopenOptions.length).toBe(0);
+    });
+
+    it('Shows the edit button if the user has permissions', async () => {
+      renderTable({ goals: [baseGoals[0]], goalsCount: 1 }, defaultUser);
+
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
+      userEvent.click(menuToggle);
+
+      const editGoal = await screen.findByRole('button', { name: /Edit/i });
+      expect(editGoal).toBeVisible();
+
+      // hides the reopen button.
+      const reopenOptions = screen.queryAllByRole('button', { name: 'Reopen' });
+      expect(reopenOptions.length).toBe(0);
+    });
+
+    it('Hides the reopen button if the user doesn\'t have permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable({ goals: [{ ...baseGoals[2], goalStatus: 'Closed' }], goalsCount: 1 }, user);
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
+      userEvent.click(menuToggle);
+
+      // Verify the button Reopen is not visible.
+      const reopenOptions = screen.queryAllByRole('button', { name: 'Reopen' });
+      expect(reopenOptions.length).toBe(0);
+
+      // Shows the view button.
+      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      expect(viewGoal).toBeVisible();
+    });
+
+    it('Shows the reopen button if the user has permissions', async () => {
+      const user = {
+        ...defaultUser,
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+
+      renderTable({ goals: [{ ...baseGoals[2], goalStatus: 'Closed' }], goalsCount: 1 }, user);
+      const menuToggle = await screen.findByRole('button', { name: /Actions for goal 65478/i });
+      userEvent.click(menuToggle);
+
+      // Verify the button Reopen is not visible.
+      expect(await screen.findByRole('button', { name: 'Reopen' })).toBeVisible();
+
+      // Shows the view button.
+      const viewGoal = await screen.findByRole('button', { name: 'View' });
+      expect(viewGoal).toBeVisible();
     });
   });
 });

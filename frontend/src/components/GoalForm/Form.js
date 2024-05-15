@@ -107,7 +107,6 @@ export default function Form({
   const showAlert = isOnReport && status !== 'Closed';
 
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
-
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
@@ -197,6 +196,7 @@ export default function Form({
           !isCurated,
           status !== 'Closed',
           createdVia !== 'tr',
+          userCanEdit,
         ]}
         label="Goal source"
         value={uniq(Object.values(source || {})).join(', ') || ''}
