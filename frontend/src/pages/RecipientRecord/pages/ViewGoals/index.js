@@ -103,6 +103,11 @@ export default function ViewGoals({
           ids, recipient.id.toString(),
         );
 
+        if (!fetchedGoal) {
+          setFetchError(true);
+          return;
+        }
+
         // for these, the API sends us back things in a format we expect
         setGoal(fetchedGoal);
       } catch (err) {
