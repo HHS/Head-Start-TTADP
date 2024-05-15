@@ -194,7 +194,7 @@ test.describe('get /recipient', () => {
         recipientId: Joi.number(),
         createdVia: Joi.any().allow(null),
         isRttapa: Joi.any().allow(null),
-        onAnyReport: Joi.boolean(),
+        onAR: Joi.boolean(),
         onApprovedAR: Joi.boolean(),
         rtrOrder: Joi.number(),
         objectives: Joi.array().items(),
