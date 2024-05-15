@@ -151,13 +151,10 @@ fetch_latest_backup_info_and_cleanup() {
     export AWS_DEFAULT_REGION="$aws_default_region"
     verify_aws_credentials
 
-    re_verify_aws_credentials
     local latest_backup_file_path=$(find_latest_backup_file_path "$bucket_name" "$s3_folder")
 
     # Download and read the latest-backup.txt file using the full path
     aws s3 cp "s3://${bucket_name}/${latest_backup_file_path}" /tmp/latest-backup.txt
-
-    cat /tmp/latest-backup.txt
 
     # Extract the names of the latest backup and password files
     local backup_file_name=$(awk 'NR==1' /tmp/latest-backup.txt)
