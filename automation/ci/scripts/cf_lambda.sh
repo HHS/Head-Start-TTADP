@@ -495,6 +495,7 @@ main() {
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
+      stop_app "$app_name"
       exit 1
   fi
 
