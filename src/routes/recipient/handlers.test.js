@@ -50,9 +50,7 @@ jest.mock('../../services/recipient', () => ({
   allArUserIdsByRecipientAndRegion: jest.fn(),
 }));
 
-jest.mock('../../goalServices/goals', () => ({
-  goalsByIdAndRecipient: jest.fn(),
-}));
+jest.mock('../../goalServices/goalsByIdAndRecipient');
 
 jest.mock('../../services/accessValidation');
 
