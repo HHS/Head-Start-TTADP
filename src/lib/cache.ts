@@ -1,4 +1,4 @@
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
 
@@ -17,7 +17,7 @@ interface CacheOptions {
 export default async function getCachedResponse(
   key: string,
   responseCallback: () => Promise<string>,
-  outputCallback: ((foo: string) => string) | JSON['parse'] = (foo: string) => foo,
+  outputCallback: ((response: string) => string) | JSON['parse'] = (response: string) => response,
   options: CacheOptions = {
     EX: 600,
   },
@@ -31,21 +31,7 @@ export default async function getCachedResponse(
   // for debugging and testing purposes
   const ignoreCache = process.env.IGNORE_CACHE === 'true';
 
-  if (ignoreCache) {
-    auditLogger.info(`Ignoring cache for ${key}`);
-  }
-
-  // we create a fake redis client because we don't want to fail the request if redis is down
-  // or if we can't connect to it, or whatever else might go wrong
-  let redisClient = {
-    connect: () => Promise.resolve(),
-    get: (_k: string) => Promise.resolve(null),
-    set: (_k: string, _r: string | null, _o: CacheOptions) => Promise.resolve(''),
-    quit: () => Promise.resolve(),
-  };
-
-  let clientConnected = false;
-  let response: string | null = null;
+  let redisClient: RedisClientType | null = null;
 
   try {
     if (!ignoreCache) {
@@ -56,23 +42,42 @@ export default async function getCachedResponse(
         },
       });
       await redisClient.connect();
-      response = await redisClient.get(key);
-      clientConnected = true;
     }
   } catch (err) {
     auditLogger.error('Error creating & connecting to redis client', { err });
+    // Using a simpler fallback type that mimics the client without added types for modules/scripts
+    redisClient = {
+      async connect() {
+        return this; // Ensure this dummy implementation returns 'this' for chainability
+      },
+      async get(_k: string) {
+        return null; // Simulate no data found
+      },
+      async set(_k: string, _v: string, _o: CacheOptions) {
+        return 'OK'; // Simulate successful set
+      },
+      async quit() {
+        return 'OK'; // Simulate successful quit
+      },
+    } as RedisClientType;
   }
 
-  // if we do not have a response, we need to call the callback
-  if (!response) {
-    response = await responseCallback();
-    // and then, if we have a response and we are connected to redis, we need to set the cache
-    if (response && clientConnected) {
-      try {
-        await redisClient.set(key, response, options);
+  let response: string | null = null;
+
+  if (redisClient) {
+    try {
+      response = await redisClient.get(key);
+      if (!response) {
+        response = await responseCallback();
+        if (response) {
+          await redisClient.set(key, response, options);
+        }
+      }
+    } catch (err) {
+      auditLogger.error('Error retrieving or setting cache', { err });
+    } finally {
+      if (redisClient) {
         await redisClient.quit();
-      } catch (err) {
-        auditLogger.error('Error setting cache response', { err });
       }
     }
   }
