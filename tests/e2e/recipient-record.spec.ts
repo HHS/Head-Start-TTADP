@@ -37,8 +37,6 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Add new objective' }).click();
     await page.getByLabel('TTA objective *').fill('A new objective');
 
-   // first click blurs
-    await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
 
@@ -80,8 +78,6 @@ test.describe('Recipient record', () => {
     await page.getByRole('button', { name: 'Save draft' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
 
-    // first click blurs
-    await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Save and continue' }).click();
     await page.getByRole('button', { name: 'Submit goal' }).click();
   
