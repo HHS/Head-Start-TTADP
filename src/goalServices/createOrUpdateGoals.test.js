@@ -1,18 +1,12 @@
 /* eslint-disable jest/no-disabled-tests */
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
-import { OBJECTIVE_STATUS } from '../constants';
 import { createOrUpdateGoals } from './goals';
 import db, {
   Goal,
   Grant,
   Recipient,
-  Topic,
   Objective,
-  ObjectiveResource,
-  ObjectiveTopic,
-  Resource,
 } from '../models';
 import { processObjectiveForResourcesById } from '../services/resource';
 
@@ -22,7 +16,6 @@ describe('createOrUpdateGoals', () => {
   });
 
   let goal;
-  let topic;
   let objective;
   let recipient;
   let newGoals;
@@ -58,51 +51,23 @@ describe('createOrUpdateGoals', () => {
       grantId: grants[0].id,
       source: GOAL_SOURCES[0],
     });
-    topic = await Topic.findOne({ where: { mapsTo: { [Op.eq]: null } } });
 
     objective = await Objective.create({
       goalId: goal.id,
       title: 'This is some serious goal text',
       status: 'Not Started',
-      supportType: 'Maintaining',
     });
 
     await Objective.create({
       goalId: goal.id,
       title: 'This objective will be deleted',
       status: 'Not Started',
-      supportType: 'Maintaining',
     });
 
     await processObjectiveForResourcesById(objective.id, [fakeUrl]);
   });
 
   afterAll(async () => {
-    const urlResource = await Resource.findOne({
-      where: {
-        url: fakeUrl,
-      },
-    });
-
-    await ObjectiveResource.destroy({
-      where: {
-        resourceId: urlResource.id,
-      },
-      individualHooks: true,
-    });
-
-    await Resource.destroy({
-      where: { url: fakeUrl },
-      individualHooks: true,
-    });
-
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-
     const goals = await Goal.findAll({
       where: {
         grantId: grants.map((g) => g.id),
@@ -165,30 +130,12 @@ describe('createOrUpdateGoals', () => {
             id: objective.id,
             status: 'Not Started',
             title: 'This is an objective',
-            supportType: 'Maintaining',
-            resources: [
-              {
-                value: fakeUrl,
-              },
-            ],
-            topics: [
-              {
-                id: topic.id,
-              },
-            ],
           },
           {
             id: 'new-0',
             isNew: true,
             status: 'Not Started',
             title: 'This is another objective',
-            supportType: 'Maintaining',
-            resources: [],
-            topics: [
-              {
-                id: topic.id,
-              },
-            ],
           },
         ],
       },
@@ -246,7 +193,7 @@ describe('createOrUpdateGoals', () => {
     expect(order).toStrictEqual([1, 2]);
 
     const objectiveOnTheGoalWithCreatedVias = await Objective.findAll({
-      attributes: ['id', 'createdVia', 'supportType'],
+      attributes: ['id', 'createdVia'],
       where: {
         id: objectivesOnUpdatedGoal.map((obj) => obj.id),
       },
@@ -255,37 +202,10 @@ describe('createOrUpdateGoals', () => {
     const objectiveCreatedVias = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.createdVia);
     expect(objectiveCreatedVias).toStrictEqual([null, 'rtr']);
 
-    const objectiveSupportTypes = objectiveOnTheGoalWithCreatedVias.map((obj) => obj.supportType);
-    expect(objectiveSupportTypes).toStrictEqual(['Maintaining', 'Maintaining']);
-
     const objectiveOnUpdatedGoal = await Objective.findByPk(objective.id, { raw: true });
     expect(objectiveOnUpdatedGoal.id).toBe(objective.id);
     expect(objectiveOnUpdatedGoal.title).toBe('This is an objective');
     expect(objectiveOnUpdatedGoal.status).toBe(objective.status);
-
-    const objectiveTopics = await ObjectiveTopic.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      raw: true,
-    });
-
-    expect(objectiveTopics.length).toBe(1);
-    expect(objectiveTopics[0].topicId).toBe(topic.id);
-
-    const resource = await ObjectiveResource.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-      }],
-    });
-
-    expect(resource.length).toBe(1);
-    expect(resource[0].resource.dataValues.url).toBe(fakeUrl);
 
     const newGoal = newGoals.find((g) => g.id !== goal.id);
     expect(newGoal.status).toBe('Draft');

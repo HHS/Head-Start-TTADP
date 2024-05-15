@@ -185,6 +185,7 @@ describe('createGoals', () => {
         goals: [{
           goalId: 2,
           recipientId: 2,
+          regionId: 2,
         }],
       },
       session: {
@@ -213,6 +214,7 @@ describe('createGoals', () => {
         goals: [{
           goalId: 2,
           recipientId: 2,
+          regionId: 2,
         }],
       },
       session: {
