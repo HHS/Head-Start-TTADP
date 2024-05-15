@@ -224,7 +224,7 @@ test.describe('get /recipient', () => {
             recipientId: Joi.number(),
             recipient: Joi.object({
               id: Joi.number(),
-              name: Joi.number
+              name: Joi.string(),
             }),
             programs: Joi.array().items(
               Joi.object({
