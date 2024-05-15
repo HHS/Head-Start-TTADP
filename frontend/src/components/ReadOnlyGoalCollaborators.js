@@ -28,7 +28,7 @@ ReadOnlyGoalCollaborators.propTypes = {
   collaborators: PropTypes.arrayOf(PropTypes.shape({
     goalCreatorName: PropTypes.string,
     goalCreatorRoles: PropTypes.string,
-    goalNumber: PropTypes.number,
+    goalNumber: PropTypes.string,
   })),
 };
 

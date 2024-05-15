@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 export default function ReadOnlyField({ label, children }) {
-  if (!children) {
+  if (!children || !label) {
     return null;
   }
 
@@ -15,6 +15,11 @@ export default function ReadOnlyField({ label, children }) {
 }
 
 ReadOnlyField.propTypes = {
-  label: PropTypes.string.isRequired,
-  children: PropTypes.node.isRequired,
+  label: PropTypes.string,
+  children: PropTypes.node,
+};
+
+ReadOnlyField.defaultProps = {
+  label: undefined,
+  children: undefined,
 };
