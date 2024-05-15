@@ -10,7 +10,7 @@
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@hookform/error-message": "^0.0.5",
     "@react-hook/resize-observer": "^1.2.6",
-    "@trussworks/react-uswds": "4.1.1",
+    "@trussworks/react-uswds": "9.0.0",
     "@ttahub/common": "^2.1.3",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
