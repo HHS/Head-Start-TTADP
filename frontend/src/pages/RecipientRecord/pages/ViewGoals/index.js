@@ -18,6 +18,7 @@ import UserContext from '../../../../UserContext';
 import GoalFormTitle from '../../../../components/GoalForm/GoalFormTitle';
 import ReadOnlyGoalCollaborators from '../../../../components/ReadOnlyGoalCollaborators';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
+import RTRGoalPrompts from '../../../../components/GoalForm/RTRGoalPrompts';
 
 export function ResourceLink({ resource }) {
   const { url, title } = resource;
@@ -147,7 +148,6 @@ export default function ViewGoals({
 
   return (
     <>
-
       <Link
         className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
         to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
@@ -185,6 +185,17 @@ export default function ViewGoals({
             {goalName}
           </ReadOnlyField>
 
+          <RTRGoalPrompts
+            userCanEdit={false}
+            value={goal.prompts}
+            onChange={() => {}}
+            validate={() => {}}
+            errors={{}}
+            selectedGrants={grants}
+            isCurated={goal.isCurated}
+            goalTemplateId={goal.goalTemplateId}
+          />
+
           <ReadOnlyField label="Goal source">
             {uniq(Object.values(source || {})).join(', ') || ''}
           </ReadOnlyField>
@@ -212,12 +223,22 @@ export default function ViewGoals({
             )}
             {objective.resources.length > 0 && (
             <ReadOnlyField label="Resources">
-              {objective.resources.map((resource) => <ResourceLink resource={resource} />)}
+              {objective.resources.map((resource) => (
+                <React.Fragment key={uniqueId('objective-resource-')}>
+                  <ResourceLink resource={resource} />
+                  <br />
+                </React.Fragment>
+              ))}
             </ReadOnlyField>
             )}
             {objective.files.length > 0 && (
             <ReadOnlyField label="Files">
-              {objective.files.map((file) => <FileLink file={file} />)}
+              {objective.files.map((file) => (
+                <React.Fragment key={uniqueId('objective-file-')}>
+                  <FileLink file={file} />
+                  <br />
+                </React.Fragment>
+              ))}
             </ReadOnlyField>
             )}
           </div>
