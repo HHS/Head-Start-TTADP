@@ -124,6 +124,7 @@ describe('GoalPicker', () => {
         title: 'Objective 1',
         resources: [],
         ttaProvided: '',
+        objectiveCreatedHere: true,
       }],
       goalIds: [],
     };
@@ -167,6 +168,7 @@ describe('GoalPicker', () => {
         title: 'Objective 1',
         resources: [],
         ttaProvided: '',
+        objectiveCreatedHere: true,
       }],
       goalIds: [],
     };

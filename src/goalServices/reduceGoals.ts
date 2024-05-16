@@ -2,26 +2,11 @@ import { uniq, uniqBy } from 'lodash';
 import moment from 'moment';
 import { auditLogger } from '../logger';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
-
-interface IPrompt {
-  dataValues?: {
-    promptId: number;
-  };
-  responses?: {
-    response: string[];
-  }[];
-  promptId?: number;
-  ordinal: number;
-  title: string;
-  prompt: string;
-  hint: string;
-  fieldType: string;
-  options: string;
-  validations: string;
-  response: string[];
-  reportResponse: string[];
-  allGoalsHavePromptResponse: boolean;
-}
+import {
+  IGoalModelInstance,
+  IPromptModelInstance,
+  IGoal,
+} from './types';
 
 interface IAR {
   id: number
@@ -268,8 +253,8 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
    */
 function reducePrompts(
   forReport: boolean,
-  newPrompts: IPrompt[] = [],
-  promptsToReduce: IPrompt[] = [],
+  newPrompts: IPromptModelInstance[] = [],
+  promptsToReduce: IPromptModelInstance[] = [],
 ) {
   return newPrompts
     ?.reduce((previousPrompts, currentPrompt) => {
@@ -353,16 +338,15 @@ function reducePrompts(
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-export function reduceGoals(goals, forReport = false) {
+export function reduceGoals(goals: IGoalModelInstance[], forReport = false) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
-  const where = (g, currentValue) => (forReport
+  const where = (g: IGoalModelInstance, currentValue) => (forReport
     ? g.name === currentValue.dataValues.name
-        && g.status === currentValue.dataValues.status
     : g.name === currentValue.dataValues.name
         && g.status === currentValue.dataValues.status);
 
-  function getGoalCollaboratorDetails(collabType: string, dataValues) {
+  function getGoalCollaboratorDetails(collabType: string, dataValues: IGoal) {
     // eslint-disable-next-line max-len
     const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
     return {
@@ -452,11 +436,13 @@ export function reduceGoals(goals, forReport = false) {
       if (!forReport) {
         source = {
           [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+        } as {
+          [key: string]: string;
         };
         promptsIfNotForReport = {
           [currentValue.grant.numberWithProgramTypes]: prompts,
         } as {
-          [key: string]: IPrompt[];
+          [key: string]: IPromptModelInstance[];
         };
       }
 
