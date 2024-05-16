@@ -5,7 +5,7 @@ import {
   Button,
   TextInput,
   Label,
-  Dropdown,
+  Select,
   Textarea,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
@@ -103,7 +103,7 @@ const Log = ({ datePickerKey }) => {
           label="How was the communication conducted? "
           name="method"
         >
-          <Dropdown
+          <Select
             required
             id="method"
             name="method"
@@ -112,7 +112,7 @@ const Log = ({ datePickerKey }) => {
             {COMMUNICATION_METHODS.map((option) => (
               <option key={`methodoptions${option}`}>{option}</option>
             ))}
-          </Dropdown>
+          </Select>
         </FormItem>
       </div>
       <div className="margin-top-2">
@@ -120,7 +120,7 @@ const Log = ({ datePickerKey }) => {
           label="Purpose of communication "
           name="purpose"
         >
-          <Dropdown
+          <Select
             required
             id="purpose"
             name="purpose"
@@ -129,7 +129,7 @@ const Log = ({ datePickerKey }) => {
             {COMMUNICATION_PURPOSES.map((option) => (
               <option key={`purposeoptions${option}`}>{option}</option>
             ))}
-          </Dropdown>
+          </Select>
         </FormItem>
       </div>
       <div className="margin-top-2">
@@ -148,7 +148,7 @@ const Log = ({ datePickerKey }) => {
           name="result"
           required={false}
         >
-          <Dropdown
+          <Select
             id="result"
             name="result"
             inputRef={register()}
@@ -158,7 +158,7 @@ const Log = ({ datePickerKey }) => {
             {COMMUNICATION_RESULTS.map((option) => (
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
-          </Dropdown>
+          </Select>
         </FormItem>
       </div>
     </>

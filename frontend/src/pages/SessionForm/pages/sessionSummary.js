@@ -18,7 +18,7 @@ import {
   Fieldset,
   Label,
   Textarea,
-  Dropdown,
+  Select,
   Radio,
   Button,
   ErrorMessage,
@@ -626,7 +626,7 @@ const SessionSummary = ({ datePickerKey }) => {
             Get help choosing a support type
           </button>
         </div>
-        <Dropdown
+        <Select
           id="objectiveSupportType"
           name="objectiveSupportType"
           inputRef={register({ required: 'Select a support type' })}
@@ -635,7 +635,7 @@ const SessionSummary = ({ datePickerKey }) => {
         >
           <option disabled hidden value="">Select one</option>
           {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
-        </Dropdown>
+        </Select>
       </div>
 
     </>

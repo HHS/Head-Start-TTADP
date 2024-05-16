@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
-  Dropdown, Form, Label, Fieldset, Button,
+  Select, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
 import { useHistory } from 'react-router-dom';
@@ -120,7 +120,7 @@ const Review = ({
               label="Choose approval status"
               className="margin-bottom-3"
             >
-              <Dropdown
+              <Select
                 id="status"
                 name="status"
                 defaultValue={hasBeenReviewed
@@ -131,7 +131,7 @@ const Review = ({
                 {managerReportStatuses.map((status) => (
                   <option key={status} value={status}>{_.startCase(status)}</option>
                 ))}
-              </Dropdown>
+              </Select>
             </FormItem>
 
           </>

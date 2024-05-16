@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useHistory } from 'react-router-dom';
 import {
-  Alert, Button, Table, Dropdown, ErrorMessage,
+  Alert, Button, Table, Select, ErrorMessage,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -227,7 +227,7 @@ const CompleteEvent = ({
           name="status"
           required
         >
-          <Dropdown
+          <Select
             label="Event status"
             name="status"
             id="status"
@@ -238,7 +238,7 @@ const CompleteEvent = ({
             }}
           >
             {options}
-          </Dropdown>
+          </Select>
         </FormItem>
       </div>
       )}

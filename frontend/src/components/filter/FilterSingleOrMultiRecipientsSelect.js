@@ -1,7 +1,7 @@
 import React from 'react';
 import { isArray } from 'lodash';
 import PropTypes from 'prop-types';
-import { Dropdown } from '@trussworks/react-uswds';
+import { Select } from '@trussworks/react-uswds';
 
 export function mapDisplayValue(value) {
   const valueToMape = isArray(value) ? value[0] : value;
@@ -29,14 +29,14 @@ export default function FilterSingleOrMultiRecipientsSelect({
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
       <label className="sr-only" htmlFor={inputId}>Select single or multiple recipients to filter by</label>
-      <Dropdown name={inputId} id={inputId} value={query} onChange={onApplySingleOrMulti}>
+      <Select name={inputId} id={inputId} value={query} onChange={onApplySingleOrMulti}>
         <option value="single-recipient">
           Single recipient reports
         </option>
         <option value="multi-recipients">
           Multiple recipient reports
         </option>
-      </Dropdown>
+      </Select>
     </>
   );
 }

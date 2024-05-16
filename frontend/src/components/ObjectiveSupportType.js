@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import { SUPPORT_TYPES } from '@ttahub/common';
-import { FormGroup, Label, Dropdown } from '@trussworks/react-uswds';
+import { FormGroup, Label, Select } from '@trussworks/react-uswds';
 import Req from './Req';
 import SupportTypeDrawer from './SupportTypeDrawer';
 import DrawerTriggerButton from './DrawerTriggerButton';
@@ -30,7 +30,7 @@ export default function ObjectiveSupportType({
           Get help choosing a support type
         </DrawerTriggerButton>
       </div>
-      <Dropdown
+      <Select
         onChange={(e) => onChangeSupportType(e.target.value)}
         id={inputName}
         name={inputName}
@@ -39,7 +39,7 @@ export default function ObjectiveSupportType({
       >
         <option disabled hidden value="">Select one</option>
         {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
-      </Dropdown>
+      </Select>
     </FormGroup>
 
   );

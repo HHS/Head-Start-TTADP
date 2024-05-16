@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
-  Checkbox, Button, Dropdown, Alert,
+  Checkbox, Button, Select, Alert,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
@@ -112,7 +112,7 @@ export default function GoalCardsHeader({
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-          <Dropdown
+          <Select
             onChange={setSortBy}
             value={`${sortConfig.sortBy}-${sortConfig.direction}`}
             className="margin-top-0"
@@ -124,7 +124,7 @@ export default function GoalCardsHeader({
             <option value="createdOn-asc">creation date (oldest to newest) </option>
             <option value="goalStatus-asc">goal status (drafts first)</option>
             <option value="goalStatus-desc">goal status (closed first) </option>
-          </Dropdown>
+          </Select>
         </div>
         {!hidePagination && (
         <div className="smart-hub--table-nav">

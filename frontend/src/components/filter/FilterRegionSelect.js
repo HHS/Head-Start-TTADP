@@ -1,6 +1,6 @@
 import React, { useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Dropdown } from '@trussworks/react-uswds';
+import { Select } from '@trussworks/react-uswds';
 import UserContext from '../../UserContext';
 import { getUserRegions } from '../../permissions';
 
@@ -34,7 +34,7 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
     <>
       { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
       <label className="sr-only" htmlFor="region">Select region to filter by</label>
-      <Dropdown name="region" id="region" value={appliedRegion} onChange={onApplyRegion}>
+      <Select name="region" id="region" value={appliedRegion} onChange={onApplyRegion}>
         {regions.map((region) => (
           <option key={region} value={region}>
             Region
@@ -42,7 +42,7 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
             {region}
           </option>
         ))}
-      </Dropdown>
+      </Select>
     </>
   );
 }

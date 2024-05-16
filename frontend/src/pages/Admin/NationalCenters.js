@@ -4,7 +4,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import { Link, useHistory } from 'react-router-dom';
 import {
   Alert,
-  Button, Form, Label, ModalToggleButton, TextInput, Dropdown, SideNav,
+  Button, Form, Label, ModalToggleButton, TextInput, Select, SideNav,
 } from '@trussworks/react-uswds';
 import Req from '../../components/Req';
 import Modal from '../../components/VanillaModal';
@@ -209,14 +209,14 @@ export default function NationalCenters({ match }) {
                 {' '}
                 <Req />
               </Label>
-              <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
+              <Select id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
                 <option value="0" selected hidden>- Select -</option>
                 {userOptions.map((u) => (
                   <option key={`user${u.id}`} value={u.id}>
                     {u.name}
                   </option>
                 ))}
-              </Dropdown>
+              </Select>
               <div className="display-flex">
                 <Button type="submit">Save</Button>
                 { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
