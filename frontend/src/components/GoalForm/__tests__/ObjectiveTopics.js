@@ -19,14 +19,10 @@ describe('ObjectiveTopics', () => {
     {
       id: 1,
       name: 'Dancing but too fast',
-      isOnApprovedReport: true,
-      onAnyReport: true,
     },
     {
       id: 2,
       name: 'Dancing but too slow',
-      isOnApprovedReport: false,
-      onAnyReport: false,
     },
   ];
 
@@ -53,47 +49,11 @@ describe('ObjectiveTopics', () => {
   it('displays the correct label', async () => {
     renderObjectiveTopics();
     const label = screen.queryAllByText(/topics/i);
-    // we expect a result of 3 elements
-    // 1) existing topics, which have a <p> header reading "Topics"
-    // 2) the <label> for the topics <Select>
-    // 3) The button to open the drawer that reads "Get help choosing topics"
-    expect(label).toHaveLength(3);
-    const fastDancing = await screen.findByRole('listitem');
-    expect(fastDancing).toHaveTextContent('Dancing but too fast');
+    // we expect a result of 2 elements
+    // 1) the <label> for the topics <Select>
+    // 2) The button to open the drawer that reads "Get help choosing topics"
+    expect(label).toHaveLength(2);
+    expect(screen.getByText(/Dancing but too fast/i)).toBeVisible();
     expect(screen.getByText(/dancing but too slow/i)).toBeVisible();
-  });
-
-  it('shows the read only view when goal is not started and on a report', async () => {
-    renderObjectiveTopics(
-      true,
-      defaultTopicSelection,
-      'Not Started',
-      'Not Started',
-    );
-
-    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
-    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
-    expect(document.querySelector('input')).toBeNull();
-  });
-
-  it('shows the read only view when a user can\'t edit', async () => {
-    renderObjectiveTopics(
-      false,
-      defaultTopicSelection,
-      'Not Started',
-      'Not Started',
-      false,
-    );
-
-    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
-    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
-    expect(document.querySelector('input')).toBeNull();
-  });
-
-  it('in the read only view, it distinguises between used data and unused data', async () => {
-    renderObjectiveTopics(false, defaultTopicSelection, 'Complete', 'Closed');
-    expect(await screen.findByText(/dancing but too fast/i)).toBeVisible();
-    expect(await screen.findByText(/dancing but too slow/i)).toBeVisible();
-    expect(document.querySelectorAll('.ttahub-objective-list-item--unused-data').length).toBe(1);
   });
 });

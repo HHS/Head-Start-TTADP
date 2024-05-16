@@ -21,7 +21,7 @@ export default function ObjectiveCourseSelect({
   useCoursesInputName,
   className,
 }) {
-  const [options, setOptions] = useState(null);
+  const [options, setOptions] = useState([]);
 
   useEffect(() => {
     async function fetchCourses() {
@@ -35,10 +35,6 @@ export default function ObjectiveCourseSelect({
 
     fetchCourses();
   }, []);
-
-  if (!options || options.length === 0) {
-    return null;
-  }
 
   return (
     <div className={`ttahub-ipd-course-select--container ${className}`}>

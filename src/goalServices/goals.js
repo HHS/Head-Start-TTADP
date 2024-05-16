@@ -1249,6 +1249,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       courses,
       closeSuspendReason,
       closeSuspendContext,
+      createdHere: objectiveCreatedHere,
       ...updatedFields
     } = objective;
 
@@ -1312,6 +1313,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       closeSuspendContext,
       index,
       supportType,
+      objectiveCreatedHere,
     };
   }));
 }
@@ -1440,6 +1442,7 @@ export async function saveGoalsForReport(goals, report) {
       ttaProvided,
       supportType,
       courses,
+      objectiveCreatedHere,
     } = savedObjective;
 
     // this will save all our objective join table data
@@ -1470,6 +1473,7 @@ export async function saveGoalsForReport(goals, report) {
         ttaProvided,
         order: index,
         supportType,
+        objectiveCreatedHere,
       },
     );
   }));

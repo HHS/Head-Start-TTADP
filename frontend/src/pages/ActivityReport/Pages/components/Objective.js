@@ -56,9 +56,8 @@ export default function Objective({
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues, setError, clearErrors } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
-
   const { objectiveCreatedHere } = initialObjective;
-  const [createdHere, setCreatedHere] = useState(objectiveCreatedHere);
+  const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
 
   /**
    * add controllers for all the controlled fields
@@ -228,7 +227,16 @@ export default function Objective({
     rules: { required: true },
     defaultValue: objective.closeSuspendContext || '',
   });
-  const isOnApprovedReport = objective.onApprovedAR;
+
+  const {
+    field: {
+      value: createdHere,
+      onChange: onChangeCreatedHere,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].createdHere`,
+    defaultValue: objectiveCreatedHere || null,
+  });
 
   const isOnReport = objective.onAR;
 
@@ -257,7 +265,11 @@ export default function Objective({
     onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
     onChangeIpdCourses(newObjective.courses);
 
-    setCreatedHere(newObjective.objectiveCreatedHere);
+    // was objective created on this report?
+    onChangeCreatedHere(newObjective.objectiveCreatedHere);
+
+    // keep track of whether the objective is on an approved report
+    setOnApprovedAR(newObjective.onApprovedAR);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -289,14 +301,6 @@ export default function Objective({
       setIsAppLoading(false);
     }
   };
-
-  let savedTopics = [];
-  let savedResources = [];
-
-  if (isOnApprovedReport) {
-    savedTopics = objective.topics;
-    savedResources = objective.resources;
-  }
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
   const onRemove = () => remove(index);
@@ -339,6 +343,7 @@ export default function Objective({
         permissions={[
           createdHere,
           statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          !onApprovedAR,
         ]}
       >
         <ObjectiveTitle
@@ -356,17 +361,11 @@ export default function Objective({
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
-        savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
         topics={objectiveTopics}
-        isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
       />
 
       <IpdCourseSelect
@@ -392,11 +391,8 @@ export default function Objective({
           ? ERROR_FORMAT(errors.resources.message)
           : NO_ERROR}
         validateResources={onBlurResources}
-        savedResources={savedResources}
         inputName={objectiveResourcesInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
         userCanEdit
-        editingFromActivityReport
       />
 
       <ObjectiveFiles
