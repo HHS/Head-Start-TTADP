@@ -13,7 +13,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckCircle, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import {
   Button,
-  Select,
+  Select as uswdsSelect,
   Fieldset,
   FormGroup,
   Label,
@@ -240,7 +240,7 @@ export default function Close() {
                 {' '}
                 <Req />
               </Label>
-              <Select id="region" name="region" inputRef={register({ required: true })} required>
+              <uswdsSelect id="region" name="region" inputRef={register({ required: true })} required>
                 <option value="" disabled selected hidden>Select</option>
                 {REGIONS.map((r) => (
                   <option key={`region${r}`} value={r}>
@@ -249,7 +249,7 @@ export default function Close() {
                     {r}
                   </option>
                 ))}
-              </Select>
+              </uswdsSelect>
             </FormGroup>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="group">
@@ -257,14 +257,14 @@ export default function Close() {
                 {' '}
                 <Req />
               </Label>
-              <Select id="group" name="group" inputRef={register({ required: true })} required>
+              <uswdsSelect id="group" name="group" inputRef={register({ required: true })} required>
                 <option value="" disabled selected hidden>Select</option>
                 {groupOptions.map((g) => (
                   <option key={`group${g.id}`} value={g.id}>
                     {g.name}
                   </option>
                 ))}
-              </Select>
+              </uswdsSelect>
               {(group && selectedGroup) && (
                 <details className="border border-base-light padding-1 margin-y-1 radius-md">
                   <summary>
