@@ -341,6 +341,11 @@ describe('Resources dashboard', () => {
       activityReportObjectiveId: aroMatchingB.id,
       courseId: courseOne.id,
     });
+    // Report 2 Course 3.
+    await ActivityReportObjectiveCourse.create({
+      activityReportObjectiveId: aroMatchingB.id,
+      courseId: courseTwo.id,
+    });
 
     // Report 3.
     const reportThree = await ActivityReport.create({
@@ -488,8 +493,8 @@ describe('Resources dashboard', () => {
       {
         course: 'Widget Course 2',
         rollUpDate: 'Jan-21',
-        count: '1',
-        total: '1',
+        count: '2',
+        total: '2',
       },
       {
         course: 'Widget Course 3',
