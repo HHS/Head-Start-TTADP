@@ -14,7 +14,7 @@ import {
 import { useFormContext, Controller } from 'react-hook-form';
 import {
   Label,
-  Select,
+  UswdsSelect,
   Fieldset,
   Radio,
   TextInput,
@@ -383,9 +383,9 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
           Training type
           <Req />
         </Label>
-        <Select required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
+        <UswdsSelect required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
           <option>Series</option>
-        </Select>
+        </UswdsSelect>
       </div>
 
       <div className="margin-top-2">
