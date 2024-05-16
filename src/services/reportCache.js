@@ -271,6 +271,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     supportType,
     closeSuspendContext,
     closeSuspendReason,
+    objectiveCreatedHere,
   } = metadata;
 
   const objectiveId = objective.dataValues
@@ -301,6 +302,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     arOrder: order + 1,
     closeSuspendContext: closeSuspendContext || null,
     closeSuspendReason: closeSuspendReason || null,
+    objectiveCreatedHere,
   }, {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
