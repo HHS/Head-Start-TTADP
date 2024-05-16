@@ -1,5 +1,5 @@
 import { Sequelize }  from 'sequelize';
-import { Umzug, SequelizeStorage, MigrationError } from 'umzug';
+import { Umzug, SequelizeStorage } from 'umzug';
 import { calledFromTestFileOrDirectory } from './testOnly';
 import { auditLogger } from '../../src/logger';
 import configs from '../../config/config';
@@ -56,9 +56,6 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
 
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
-    if (error instanceof MigrationError) {
-      auditLogger.error('Error executing migrations:', error?.cause, '\n', error);
-    }
     auditLogger.error('Error executing migrations:', error);
     throw error;
   }
