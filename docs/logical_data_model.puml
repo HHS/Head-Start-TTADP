@@ -137,6 +137,7 @@ class ActivityReportObjectives{
  arOrder : integer : 1
  closeSuspendContext : text
  closeSuspendReason : enum
+ objectiveCreatedHere : boolean
  status : varchar(255)
  supportType : enum
  title : text
