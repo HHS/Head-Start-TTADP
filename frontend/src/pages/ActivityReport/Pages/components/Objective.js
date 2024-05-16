@@ -27,6 +27,7 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function Objective({
   objective,
@@ -55,6 +56,9 @@ export default function Objective({
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues, setError, clearErrors } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+
+  const { objectiveCreatedHere } = initialObjective;
+  const [createdHere, setCreatedHere] = useState(objectiveCreatedHere);
 
   /**
    * add controllers for all the controlled fields
@@ -252,6 +256,8 @@ export default function Objective({
     // ipd course
     onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
     onChangeIpdCourses(newObjective.courses);
+
+    setCreatedHere(newObjective.objectiveCreatedHere);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -327,18 +333,25 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
-      <ObjectiveTitle
-        error={errors.title
-          ? ERROR_FORMAT(errors.title.message)
-          : NO_ERROR}
-        isOnApprovedReport={isOnApprovedReport || false}
-        title={objectiveTitle}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={onBlurTitle}
-        inputName={objectiveTitleInputName}
-        parentGoal={parentGoal}
-        initialObjectiveStatus={statusForCalculations}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA Objective"
+        value={objectiveTitle}
+        permissions={[
+          createdHere,
+          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+        ]}
+      >
+        <ObjectiveTitle
+          error={errors.title
+            ? ERROR_FORMAT(errors.title.message)
+            : NO_ERROR}
+          title={objectiveTitle}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={onBlurTitle}
+          inputName={objectiveTitleInputName}
+          initialObjectiveStatus={statusForCalculations}
+        />
+      </FormFieldThatIsSometimesReadOnly>
       <ObjectiveTopics
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
@@ -413,7 +426,6 @@ export default function Objective({
           : NO_ERROR}
         validateTta={onBlurTta}
       />
-
       <ObjectiveSupportType
         onBlurSupportType={onBlurSupportType}
         supportType={supportType}

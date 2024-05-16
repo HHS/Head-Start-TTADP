@@ -1,8 +1,6 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
-import {
-  getGoalsForReport,
-} from './goals';
+import getGoalsForReport from './getGoalsForReport';
 import {
   Goal,
   Objective,

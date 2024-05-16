@@ -20,10 +20,6 @@ import {
   ObjectiveFile,
   ObjectiveTopic,
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
-  ActivityReportObjectiveFile,
-  ActivityReportObjectiveResource,
-  ActivityReportObjectiveCourse,
   sequelize,
   Resource,
   ActivityReport,
@@ -63,6 +59,7 @@ import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
 import { reduceGoals } from './reduceGoals';
+import getGoalsForReport from './getGoalsForReport';
 
 const namespace = 'SERVICE:GOALS';
 const logContext = {
@@ -1020,42 +1017,27 @@ async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
   return Promise.resolve();
 }
 
-async function removeObjectives(objectivesToRemove, reportId) {
+async function removeObjectives(objectivesToRemove) {
   if (!objectivesToRemove.length) {
     return Promise.resolve();
   }
 
   // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
-  const objectivesToPossiblyDestroy = await Objective.findAll({
+  const objectivesToDestroy = await Objective.findAll({
     where: {
       createdVia: 'activityReport',
       id: objectivesToRemove,
       onApprovedAR: false,
+      onAR: false,
     },
-    include: [
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        required: false,
-        where: {
-          id: {
-            [Op.not]: reportId,
-          },
-        },
-      },
-    ],
   });
 
-  // see TODO above, but this can be removed when we have an "onAnyReport" flag
-  const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
-    .filter((o) => !o.activityReports.length);
-
-  if (!objectivesToDefinitelyDestroy.length) {
+  if (!objectivesToDestroy.length) {
     return Promise.resolve();
   }
 
   // Objectives to destroy.
-  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
+  const objectivesIdsToDestroy = objectivesToDestroy.map((o) => o.id);
 
   // cleanup any ObjectiveFiles that are no longer needed
   await ObjectiveFile.destroy({
@@ -1076,7 +1058,7 @@ async function removeObjectives(objectivesToRemove, reportId) {
   // Delete objective.
   return Objective.destroy({
     where: {
-      id: objectivesToDefinitelyDestroy.map((o) => o.id),
+      id: objectivesToDestroy.map((o) => o.id),
     },
   });
 }
@@ -1590,156 +1572,6 @@ export async function updateGoalStatusById(
     reason,
     context: closeSuspendContext,
   })));
-}
-
-export async function getGoalsForReport(reportId) {
-  const goals = await Goal.findAll({
-    attributes: {
-      include: [
-        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-        [sequelize.literal(`(
-          SELECT
-            jsonb_agg( DISTINCT jsonb_build_object(
-              'promptId', gtfp.id ,
-              'ordinal', gtfp.ordinal,
-              'title', gtfp.title,
-              'prompt', gtfp.prompt,
-              'hint', gtfp.hint,
-              'caution', gtfp.caution,
-              'fieldType', gtfp."fieldType",
-              'options', gtfp.options,
-              'validations', gtfp.validations,
-              'response', gfr.response,
-              'reportResponse', argfr.response
-            ))
-          FROM "GoalTemplateFieldPrompts" gtfp
-          LEFT JOIN "GoalFieldResponses" gfr
-          ON gtfp.id = gfr."goalTemplateFieldPromptId"
-          AND gfr."goalId" = "Goal".id
-          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-          ON gtfp.id = argfr."goalTemplateFieldPromptId"
-          AND argfr."activityReportGoalId" = "activityReportGoals".id
-          WHERE "goalTemplate".id = gtfp."goalTemplateId"
-          GROUP BY TRUE
-        )`), 'prompts'],
-      ],
-    },
-    include: [
-      {
-        model: GoalTemplate,
-        as: 'goalTemplate',
-        attributes: [],
-        required: false,
-      },
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        where: {
-          activityReportId: reportId,
-        },
-        required: true,
-      },
-      {
-        model: Grant,
-        as: 'grant',
-        required: true,
-      },
-      {
-        separate: true,
-        model: Objective,
-        as: 'objectives',
-        include: [
-          {
-            required: true,
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            where: {
-              activityReportId: reportId,
-            },
-            include: [
-              {
-                separate: true,
-                model: ActivityReportObjectiveTopic,
-                as: 'activityReportObjectiveTopics',
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: 'topic',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveFile,
-                as: 'activityReportObjectiveFiles',
-                required: false,
-                include: [
-                  {
-                    model: File,
-                    as: 'file',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveCourse,
-                as: 'activityReportObjectiveCourses',
-                required: false,
-                include: [
-                  {
-                    model: Course,
-                    as: 'course',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-                required: false,
-                attributes: [['id', 'key']],
-                include: [
-                  {
-                    model: Resource,
-                    as: 'resource',
-                    attributes: [['url', 'value']],
-                  },
-                ],
-                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
-              },
-            ],
-          },
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [['url', 'value']],
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-            required: false,
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-        ],
-      },
-    ],
-    order: [
-      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
-    ],
-  });
-
-  // dedupe the goals & objectives
-  const forReport = true;
-  return reduceGoals(goals, forReport);
 }
 
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
