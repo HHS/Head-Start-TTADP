@@ -191,15 +191,15 @@ describe('Resources dashboard', () => {
 
     // Create resources.
     resourceOne = await Resource.create({
-      url: 'http://course-resource1.gov',
+      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource1',
     });
 
     resourceTwo = await Resource.create({
-      url: 'http://course-resource2.gov',
+      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource2',
     });
 
     resourceThree = await Resource.create({
-      url: 'http://course-resource3.gov',
+      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource3',
     });
 
     /*
@@ -468,68 +468,14 @@ describe('Resources dashboard', () => {
     jest.clearAllMocks();
   });
 
-  it('retrieves course count for url case 1', async () => {
+  it('retrieves course count for ipd url\'s', async () => {
     const scopes = await filtersToScopes({
       'region.in': [REGION_ID],
       'startDate.win': '2021/01/01-2021/01/31',
       'reportId.in': reportIds,
     });
 
-    const result = await getCourseUrlWidgetData(resourceOne.url, scopes);
-    expect(result).not.toBeNull();
-
-    const expectedResults = [
-      {
-        course: 'Widget Course 1',
-        rollUpDate: 'Jan-21',
-        count: '2',
-        total: '2',
-      },
-      {
-        course: 'Widget Course 2',
-        rollUpDate: 'Jan-21',
-        count: '1',
-        total: '1',
-      },
-      {
-        course: 'Widget Course 3',
-        rollUpDate: 'Jan-21',
-        count: '1',
-        total: '1',
-      },
-    ];
-    expect(result).toEqual(expectedResults);
-  });
-
-  it('retrieves course count for url case 2', async () => {
-    const scopes = await filtersToScopes({
-      'region.in': [REGION_ID],
-      'startDate.win': '2021/01/01-2021/01/31',
-      'reportId.in': reportIds,
-    });
-
-    const result = await getCourseUrlWidgetData(resourceTwo.url, scopes);
-    expect(result).not.toBeNull();
-
-    const expectedResults = [
-      {
-        course: 'Widget Course 1',
-        rollUpDate: 'Jan-21',
-        count: '1',
-        total: '1',
-      },
-    ];
-    expect(result).toEqual(expectedResults);
-  });
-
-  it('retrieves course count for url case 3', async () => {
-    const scopes = await filtersToScopes({
-      'region.in': [REGION_ID],
-      'startDate.win': '2021/01/01-2021/01/31',
-      'reportId.in': reportIds,
-    });
-
-    const result = await getCourseUrlWidgetData(resourceThree.url, scopes);
+    const result = await getCourseUrlWidgetData(scopes);
     expect(result).not.toBeNull();
 
     const expectedResults = [
@@ -538,6 +484,12 @@ describe('Resources dashboard', () => {
         rollUpDate: 'Jan-21',
         count: '3',
         total: '3',
+      },
+      {
+        course: 'Widget Course 2',
+        rollUpDate: 'Jan-21',
+        count: '1',
+        total: '1',
       },
       {
         course: 'Widget Course 3',

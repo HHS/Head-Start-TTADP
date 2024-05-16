@@ -7,7 +7,7 @@ import {
   sequelize,
 } from '../../models';
 
-export async function getCourseUrlWidgetData(url, scopes) {
+export async function getCourseUrlWidgetData(scopes) {
   // Date to retrieve report data from.
   const reportCreatedAtDate = '2022-12-01';
 
@@ -55,7 +55,7 @@ export async function getCourseUrlWidgetData(url, scopes) {
         INNER JOIN "Courses" c
             ON aroc."courseId" = c.id
         WHERE
-            ar.id IN (${reportIds.map((r) => r.id).join(',')}) AND r.url = '${url}'
+            ar.id IN (${reportIds.map((r) => r.id).join(',')}) AND r.url ILIKE '%https://eclkc.ohs.acf.hhs.gov/ipd/%'
         GROUP BY c.name, to_char(ar."startDate", 'Mon-YY')
         ),
         totals AS (
