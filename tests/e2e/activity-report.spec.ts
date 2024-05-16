@@ -357,7 +357,7 @@ test.describe('Activity Report', () => {
     await page.keyboard.type('these are my manager notes');
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.getByTestId('Select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
@@ -612,7 +612,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` }).first().click();
 
     // set status to approved
-    await page.getByTestId('dropdown').selectOption('approved');
+    await page.getByTestId('Select').selectOption('approved');
 
     // submit approval
     await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
