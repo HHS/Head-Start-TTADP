@@ -57,8 +57,7 @@ const loadMigrations = async (migrationSet:string): Promise<void> => {
     auditLogger.log('info', `Successfully executed ${migrations.length} migrations.`);
   } catch (error) {
     if (error instanceof MigrationError) {
-      const original = error.cause;
-      auditLogger.error('Error executing migrations:', error.cause, '\n', error);
+      auditLogger.error('Error executing migrations:', error?.cause, '\n', error);
     }
     auditLogger.error('Error executing migrations:', error);
     throw error;
