@@ -6,30 +6,15 @@ import {
   IGoalModelInstance,
   IPromptModelInstance,
   IGoal,
+  IObjectiveModelInstance,
+  IFile,
+  ITopic,
+  IResource,
+  ICourse,
 } from './types';
 
-interface IAR {
-  id: number
-}
-
-interface IObjectiveModel {
-  getDataValue?: (key: string) => number | string | boolean | null;
-  dataValues?: {
-    id: number;
-    value: number;
-    title: string;
-    status: string;
-    otherEntityId: number;
-  };
-  id?: number;
-  title?: string;
-  status?: string;
-  otherEntityId?: number;
-  activityReports?: IAR[];
-}
-
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
-export function reduceObjectives(newObjectives: IObjectiveModel[], currentObjectives = []) {
+export function reduceObjectives(newObjectives: IObjectiveModelInstance[], currentObjectives = []) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
@@ -93,10 +78,11 @@ export function reduceObjectives(newObjectives: IObjectiveModel[], currentObject
    * @param {Object} [exists={}] - The existing relation object.
    * @returns {Array} - The reduced relation array.
    */
+type IAcceptableModelParameter = ITopic | IResource | ICourse;
 const reduceRelationThroughActivityReportObjectives = (
-  objective,
-  join,
-  relation,
+  objective: IObjectiveModelInstance,
+  join: string,
+  relation: string,
   exists = {},
   uniqueBy = 'id',
 ) => {
@@ -106,13 +92,16 @@ const reduceRelationThroughActivityReportObjectives = (
     ...(objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
       ? objective.activityReportObjectives[0][join]
-        .map((t) => t[relation].dataValues)
-        .filter((t) => t)
+        .map((t: IAcceptableModelParameter) => t[relation].dataValues)
+        .filter((t: IAcceptableModelParameter) => t)
       : []),
-  ], (e) => e[uniqueBy]);
+  ], (e: string) => e[uniqueBy]);
 };
 
-export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
+export function reduceObjectivesForActivityReport(
+  newObjectives: IObjectiveModelInstance[],
+  currentObjectives = [],
+) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
@@ -123,12 +112,19 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
     const objectiveSupportType = objective.activityReportObjectives
         && objective.activityReportObjectives[0]
         && objective.activityReportObjectives[0].supportType
-      ? objective.activityReportObjectives[0].supportType : objective.supportType;
+      ? objective.activityReportObjectives[0].supportType : null;
+
+    const objectiveCreatedHere = objective.activityReportObjectives
+        && objective.activityReportObjectives[0]
+        && objective.activityReportObjectives[0].objectiveCreatedHere
+      ? objective.activityReportObjectives[0].objectiveCreatedHere : null;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
     const exists = objectives.find((o) => (
-      o.title.trim() === objective.title.trim() && o.status === objectiveStatus
+      o.title.trim() === objective.title.trim()
+      && o.status === objectiveStatus
+      && o.objectiveCreatedHere === objectiveCreatedHere
     ));
 
     if (exists) {
@@ -165,7 +161,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
           ? objective.activityReportObjectives[0].activityReportObjectiveFiles
             .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
           : []),
-      ], (e) => e.key);
+      ], (e: IFile) => e.key);
       return objectives;
     }
 
@@ -203,6 +199,7 @@ export function reduceObjectivesForActivityReport(newObjectives, currentObjectiv
       arOrder,
       closeSuspendContext,
       closeSuspendReason,
+      objectiveCreatedHere,
 
       // for the associated models, we need to return not the direct associations
       // but those associated through an activity report since those reflect the state

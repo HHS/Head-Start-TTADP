@@ -1,4 +1,4 @@
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import db from '../models';
 import {
   SOURCE_FIELD,
@@ -27,8 +27,17 @@ const {
   File,
 } = db;
 
-export default async function getGoalsForReport(reportId: number) {
+export default async function getGoalsForReport(reportId: number, goalIds: number[] = []) {
+  let where = {} as WhereOptions<IGoalModelInstance>;
+
+  if (goalIds.length) {
+    where = {
+      id: goalIds,
+    };
+  }
+
   const goals = await Goal.findAll({
+    where,
     attributes: {
       exclude: ['rtrOrder', 'isRttapa', 'isFromSmartsheetTtaPlan', 'timeframe'],
       include: [

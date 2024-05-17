@@ -54,7 +54,7 @@ export default function ResourceRepeater({
       <FormGroup error={error.props.children}>
         <div>
           <Fieldset>
-            <legend className={resources.length ? 'text-bold' : ''}>
+            <legend>
               Did you use any other TTA resources that are available as a link?
               <QuestionTooltip
                 text={toolTipText}
