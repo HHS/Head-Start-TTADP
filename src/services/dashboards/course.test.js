@@ -8,9 +8,7 @@ import db, {
   Goal,
   Objective,
   ActivityReportObjective,
-  ActivityReportObjectiveResource,
   Course,
-  Resource,
   ActivityReportObjectiveCourse,
 } from '../../models';
 import filtersToScopes from '../../scopes';
@@ -79,7 +77,7 @@ const reportObject = {
   version: 2,
 };
 
-const reportWithResourcesA = {
+const reportWithCourseA = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 1,
@@ -88,7 +86,7 @@ const reportWithResourcesA = {
   topics: ['Coaching', 'ERSEA'],
 };
 
-const reportWithResourcesB = {
+const reportWithCourseB = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 2,
@@ -97,7 +95,7 @@ const reportWithResourcesB = {
   topics: ['Oral Health'],
 };
 
-const reportWithNonMatchingResources = {
+const reportWithCourseOne = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 3,
@@ -125,22 +123,16 @@ let aroMatchingA;
 let aroMatchingATwo;
 let aroMatchingAGoalTwo;
 let aroMatchingB;
-let aroNotMatching;
-let aroNoResources;
+let aroOnlyCourseOne;
+let aroNoCourses;
 
 // Courses.
 let courseOne;
 let courseTwo;
 let courseThree;
-
-// Resources.
-let resourceOne;
-let resourceTwo;
-let resourceThree;
-
 let reportIds;
 
-describe('Resources dashboard', () => {
+describe('Course dashboard', () => {
   beforeAll(async () => {
     await User.create(mockUser);
     await Recipient.create(mockRecipient);
@@ -158,20 +150,20 @@ describe('Resources dashboard', () => {
     });
 
     objective = await Objective.create({
-      title: 'Course Resource Widget Objective 1',
+      title: 'Course Widget Objective 1',
       goalId: goal.id,
       status: 'Draft',
     });
 
     objectiveTwo = await Objective.create({
-      title: 'Course Resource Widget Objective 1 B',
+      title: 'Course Widget Objective 1 B',
       goalId: goal.id,
       status: 'Draft',
     });
 
     // This is on a different goal.
     objectiveThree = await Objective.create({
-      title: 'Course Resource Widget Goal 2 Objective 1',
+      title: 'Course Widget Goal 2 Objective 1',
       goalId: goalTwo.id,
       status: 'Draft',
     });
@@ -189,29 +181,15 @@ describe('Resources dashboard', () => {
       name: 'Widget Course 3',
     });
 
-    // Create resources.
-    resourceOne = await Resource.create({
-      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource1',
-    });
-
-    resourceTwo = await Resource.create({
-      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource2',
-    });
-
-    resourceThree = await Resource.create({
-      url: 'https://eclkc.ohs.acf.hhs.gov/ipd/resource3',
-    });
-
     /*
         * Start: Create Report 1
-        * Note: Report 1 is a complex case to ensure we don\'t double count per Activity Report.
+        * Note: Report 1 ensure\'s we don\'t double count courses per Activity Report.
         * Goal 1 has 2 objectives (course 1, course 2, course 3).
         * Goal 2 has 1 objective (course 1 and course 3).
-        * All have the same course and resource.
       */
-    // Report 1 with matching resources.
+    // Report 1.
     const reportOne = await ActivityReport.create({
-      ...reportWithResourcesA,
+      ...reportWithCourseA,
     }, {
       individualHooks: true,
     });
@@ -220,7 +198,7 @@ describe('Resources dashboard', () => {
     aroMatchingA = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: reportOne.id,
-      ttaProvided: 'course resource widget 1',
+      ttaProvided: 'course widget 1',
       status: 'In Progress',
     });
 
@@ -228,20 +206,8 @@ describe('Resources dashboard', () => {
     aroMatchingATwo = await ActivityReportObjective.create({
       objectiveId: objectiveTwo.id,
       activityReportId: reportOne.id,
-      ttaProvided: 'course resource widget 1B',
+      ttaProvided: 'course widget 1B',
       status: 'In Progress',
-    });
-
-    // Report 1 ARO 1 Resource 1.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingA.id,
-      resourceId: resourceOne.id,
-    });
-
-    // Report 1 ARO 2 Resource 1.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingATwo.id,
-      resourceId: resourceOne.id,
     });
 
     // Report 1 ARO 1 Course 1.
@@ -272,20 +238,8 @@ describe('Resources dashboard', () => {
     aroMatchingAGoalTwo = await ActivityReportObjective.create({
       objectiveId: objectiveThree.id,
       activityReportId: reportOne.id,
-      ttaProvided: 'course resource widget 1',
+      ttaProvided: 'course widget 1',
       status: 'In Progress',
-    });
-
-    // Report 1 Goal 2 ARO 1 Resource 2.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingAGoalTwo.id,
-      resourceId: resourceOne.id,
-    });
-
-    // Report 1 Goal 2 ARO 1 Resource 3.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingAGoalTwo.id,
-      resourceId: resourceThree.id,
     });
 
     // Report 1 Goal 2 ARO 1 Course 1.
@@ -305,7 +259,7 @@ describe('Resources dashboard', () => {
      */
     // Crete Report 2.
     const reportTwo = await ActivityReport.create({
-      ...reportWithResourcesB,
+      ...reportWithCourseB,
     }, {
       individualHooks: true,
     });
@@ -314,26 +268,8 @@ describe('Resources dashboard', () => {
     aroMatchingB = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: reportTwo.id,
-      ttaProvided: 'course resource widget 2',
+      ttaProvided: 'course widget 2',
       status: 'In Progress',
-    });
-
-    // Report 2 Resource 1.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingB.id,
-      resourceId: resourceOne.id,
-    });
-
-    // Report 2 Resource 3.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingB.id,
-      resourceId: resourceThree.id,
-    });
-
-    // Report 2 Resource 2.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroMatchingB.id,
-      resourceId: resourceTwo.id,
     });
 
     // Report 2 Course 2.
@@ -347,64 +283,32 @@ describe('Resources dashboard', () => {
       courseId: courseTwo.id,
     });
 
-    // Report 3.
+    // Report without courses.
     const reportThree = await ActivityReport.create({
-      ...reportWithNonMatchingResources,
+      ...reportWithoutCourses,
     }, {
       individualHooks: true,
     });
 
-    // Report 3 ARO 1.
-    aroNotMatching = await ActivityReportObjective.create({
+    // Report 4 with only course one.
+    const reportFour = await ActivityReport.create({
+      ...reportWithCourseOne,
+    }, {
+      individualHooks: true,
+    });
+
+    // Report 4 ARO 1.
+    aroOnlyCourseOne = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: reportThree.id,
       ttaProvided: 'course resource widget 3',
       status: 'In Progress',
     });
 
-    // Report 3 Resource 3.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroNotMatching.id,
-      resourceId: resourceThree.id,
-    });
-
-    // Report 3 Course 1.
+    // Report 4 Course 1.
     await ActivityReportObjectiveCourse.create({
-      activityReportObjectiveId: aroNotMatching.id,
+      activityReportObjectiveId: aroOnlyCourseOne.id,
       courseId: courseOne.id,
-    });
-
-    // Report 4.
-    const reportFour = await ActivityReport.create({
-      ...reportWithoutCourses,
-    }, {
-      individualHooks: true,
-    });
-
-    // Report 4 ARO 1.
-    aroNoResources = await ActivityReportObjective.create({
-      objectiveId: objective.id,
-      activityReportId: reportFour.id,
-      ttaProvided: 'course resource widget 4',
-      status: 'In Progress',
-    });
-
-    // Report 4 resource 1.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroNoResources.id,
-      resourceId: resourceOne.id,
-    });
-
-    // Report 4 resource 2.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroNoResources.id,
-      resourceId: resourceTwo.id,
-    });
-
-    // Report 4 resource 3.
-    await ActivityReportObjectiveResource.create({
-      activityReportObjectiveId: aroNoResources.id,
-      resourceId: resourceThree.id,
     });
 
     reportIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id];
@@ -415,19 +319,6 @@ describe('Resources dashboard', () => {
       .findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
 
-    await ActivityReportObjectiveResource.destroy({
-      where: {
-        activityReportObjectiveId: [
-          aroMatchingA.id,
-          aroMatchingATwo.id,
-          aroMatchingAGoalTwo.id,
-          aroMatchingB.id,
-          aroNotMatching.id,
-          aroNoResources.id,
-        ],
-      },
-    });
-
     await ActivityReportObjectiveCourse.destroy({
       where: {
         activityReportObjectiveId: [
@@ -435,8 +326,8 @@ describe('Resources dashboard', () => {
           aroMatchingATwo.id,
           aroMatchingAGoalTwo.id,
           aroMatchingB.id,
-          aroNotMatching.id,
-          aroNoResources.id,
+          aroOnlyCourseOne.id,
+          aroNoCourses.id,
         ],
       },
     });
@@ -465,7 +356,6 @@ describe('Resources dashboard', () => {
     await User.destroy({ where: { id: [mockUser.id] } });
     await Recipient.destroy({ where: { id: RECIPIENT_ID } });
     await Course.destroy({ where: { id: [courseOne.id, courseTwo.id, courseThree.id] } });
-    await Resource.destroy({ where: { id: [resourceOne.id, resourceTwo.id, resourceThree.id] } });
     await db.sequelize.close();
   });
 
