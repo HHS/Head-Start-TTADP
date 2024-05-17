@@ -362,7 +362,10 @@ export function reduceGoals(
     : g.name === currentValue.dataValues.name
         && g.status === currentValue.dataValues.status);
 
-  function getGoalCollaboratorDetails(collabType: string, dataValues: IGoal) {
+  function getGoalCollaboratorDetails(
+    collabType: string,
+    dataValues: IGoal | IGoalForRTRQueryWithReducedObjectives,
+  ) {
     // eslint-disable-next-line max-len
     const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
     return {
@@ -400,8 +403,8 @@ export function reduceGoals(
           ...existingGoal.collaborators,
           {
             goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
-            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues as IGoal),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues as IGoal),
           },
         ], 'goalCreatorName');
 
