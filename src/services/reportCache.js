@@ -399,7 +399,7 @@ export const cachePrompts = async (
 const cacheGoalMetadata = async (
   goal,
   reportId,
-  isActivelyBeingEditing,
+  isActivelyEdited,
   prompts,
   isMultiRecipientReport = false,
 ) => {
@@ -422,7 +422,7 @@ const cacheGoalMetadata = async (
       closeSuspendContext: goal.closeSuspendContext,
       endDate: goal.endDate,
       isRttapa: null,
-      isActivelyEdited: isActivelyBeingEditing || false,
+      isActivelyEdited: isActivelyEdited || false,
       source: goal.source,
     }, {
       where: { id: activityReportGoalId },
@@ -441,13 +441,22 @@ const cacheGoalMetadata = async (
       endDate: goal.endDate,
       source: goal.source,
       isRttapa: null,
-      isActivelyEdited: isActivelyBeingEditing || false,
+      isActivelyEdited: isActivelyEdited || false,
     }, {
       individualHooks: true,
       returning: true,
       plain: true,
     });
   }
+
+  // cleanup any stray ARGs for that goal/report combo
+  await ActivityReportGoal.destroy({
+    where: {
+      goalId: goal.id,
+      activityReportId: reportId,
+      id: { [Op.ne]: arg.id },
+    },
+  });
 
   const finalPromises = [
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
