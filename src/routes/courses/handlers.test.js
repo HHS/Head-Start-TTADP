@@ -1,10 +1,17 @@
 import db from '../../models';
-import { allCourses } from './handlers';
+import { allCourses, getCourseUrlWidgetDataWithCache } from './handlers';
 import { getAllCourses } from '../../services/course';
 import handleErrors from '../../lib/apiErrorHandler';
+import { getUserReadRegions } from '../../services/accessValidation';
+import { getCourseUrlWidgetData } from '../../services/dashboards/course';
 
 jest.mock('../../services/course');
 jest.mock('../../lib/apiErrorHandler');
+
+jest.mock('../../services/dashboards/course', () => ({
+  getCourseUrlWidgetData: jest.fn(),
+}));
+jest.mock('../../services/accessValidation');
 
 const mockResponse = {
   json: jest.fn(),
@@ -36,5 +43,33 @@ describe('Courses handlers', () => {
     getAllCourses.mockRejectedValue(new Error('Test error'));
     await allCourses(mockRequest, mockResponse);
     expect(handleErrors).toHaveBeenCalled();
+  });
+
+  describe('getCourseUrlsWidgetData', () => {
+    it('should return all course url widget data', async () => {
+      const responseData = [
+        {
+          course: 'Widget Course 1',
+          rollUpDate: 'Jan-21',
+          count: '3',
+          total: '3',
+        },
+      ];
+
+      getCourseUrlWidgetData.mockResolvedValue(responseData);
+      getUserReadRegions.mockResolvedValue([1]);
+      const req = {
+        session: { userId: 1 },
+        query: {
+          sortBy: 'id',
+          direction: 'asc',
+          limit: 10,
+          offset: 0,
+        },
+      };
+      const res = { json: jest.fn() };
+      await getCourseUrlWidgetDataWithCache(req, res);
+      expect(res.json).toHaveBeenCalledWith(responseData);
+    });
   });
 });
