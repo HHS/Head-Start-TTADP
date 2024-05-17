@@ -25,8 +25,8 @@ import db, {
 } from '../models';
 import {
   mergeGoals,
-  getGoalsForReport,
 } from './goals';
+import getGoalsForReport from './getGoalsForReport';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
 import { createSimilarityGroup } from '../services/goalSimilarityGroup';
 import {
