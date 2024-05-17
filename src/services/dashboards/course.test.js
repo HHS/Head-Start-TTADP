@@ -12,7 +12,7 @@ import db, {
   ActivityReportObjectiveCourse,
 } from '../../models';
 import filtersToScopes from '../../scopes';
-import { getCourseUrlWidgetData } from './course';
+import { getCourseUrlWidgetData, rollUpCourseUrlData } from './course';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -181,12 +181,6 @@ describe('Course dashboard', () => {
       name: 'Widget Course 3',
     });
 
-    /*
-        * Start: Create Report 1
-        * Note: Report 1 ensure\'s we don\'t double count courses per Activity Report.
-        * Goal 1 has 2 objectives (course 1, course 2, course 3).
-        * Goal 2 has 1 objective (course 1 and course 3).
-      */
     // Report 1.
     const reportOne = await ActivityReport.create({
       ...reportWithCourseA,
@@ -254,9 +248,6 @@ describe('Course dashboard', () => {
       courseId: courseThree.id,
     });
 
-    /*
-        * End: Create Report 1
-     */
     // Crete Report 2.
     const reportTwo = await ActivityReport.create({
       ...reportWithCourseB,
@@ -375,16 +366,73 @@ describe('Course dashboard', () => {
 
     const expectedResults = [
       {
+        heading: 'Widget Course 1',
+        url: 'Widget Course 1',
+        course: 'Widget Course 1',
+        title: 'Widget Course 1',
+        sortBy: 'Widget Course 1',
+        total: '3',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '3' },
+          { title: 'Total', value: '3' },
+        ],
+      },
+      {
+        heading: 'Widget Course 2',
+        url: 'Widget Course 2',
+        course: 'Widget Course 2',
+        title: 'Widget Course 2',
+        sortBy: 'Widget Course 2',
+        total: '2',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '2' },
+          { title: 'Total', value: '2' },
+        ],
+      },
+      {
+        heading: 'Widget Course 3',
+        url: 'Widget Course 3',
+        course: 'Widget Course 3',
+        title: 'Widget Course 3',
+        sortBy: 'Widget Course 3',
+        total: '1',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '1' },
+          { title: 'Total', value: '1' },
+        ],
+      },
+    ];
+    expect(result).toEqual(expectedResults);
+  });
+
+  it('rolls up course data', async () => {
+    const data = [
+      {
         course: 'Widget Course 1',
         rollUpDate: 'Jan-21',
         count: '3',
-        total: '3',
+        total: '4',
+      },
+      {
+        course: 'Widget Course 1',
+        rollUpDate: 'Feb-21',
+        count: '1',
+        total: '4',
       },
       {
         course: 'Widget Course 2',
         rollUpDate: 'Jan-21',
         count: '2',
-        total: '2',
+        total: '5',
+      },
+      {
+        course: 'Widget Course 2',
+        rollUpDate: 'Feb-21',
+        count: '3',
+        total: '5',
       },
       {
         course: 'Widget Course 3',
@@ -392,7 +440,67 @@ describe('Course dashboard', () => {
         count: '1',
         total: '1',
       },
+      {
+        course: 'Widget Course 3',
+        rollUpDate: 'Feb-21',
+        count: '0',
+        total: '1',
+      },
     ];
-    expect(result).toEqual(expectedResults);
+
+    const rolledUpData = await rollUpCourseUrlData(data);
+
+    expect(rolledUpData).not.toBeNull();
+    expect(rolledUpData.length).toBe(3);
+    expect(rolledUpData[0].data.length).toBe(3);
+    expect(rolledUpData[1].data.length).toBe(3);
+    expect(rolledUpData[2].data.length).toBe(3);
+
+    const expectedResults = [
+      {
+        heading: 'Widget Course 2',
+        url: 'Widget Course 2',
+        course: 'Widget Course 2',
+        title: 'Widget Course 2',
+        sortBy: 'Widget Course 2',
+        total: '5',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '2' },
+          { title: 'Feb-21', value: '3' },
+          { title: 'Total', value: '5' },
+        ],
+      },
+      {
+        heading: 'Widget Course 1',
+        url: 'Widget Course 1',
+        course: 'Widget Course 1',
+        title: 'Widget Course 1',
+        sortBy: 'Widget Course 1',
+        total: '4',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '3' },
+          { title: 'Feb-21', value: '1' },
+          { title: 'Total', value: '4' },
+        ],
+      },
+      {
+        heading: 'Widget Course 3',
+        url: 'Widget Course 3',
+        course: 'Widget Course 3',
+        title: 'Widget Course 3',
+        sortBy: 'Widget Course 3',
+        total: '1',
+        isUrl: false,
+        data: [
+          { title: 'Jan-21', value: '1' },
+          { title: 'Feb-21', value: '0' },
+          { title: 'Total', value: '1' },
+        ],
+      },
+    ];
+
+    expect(rolledUpData).toEqual(expectedResults);
   });
 });
