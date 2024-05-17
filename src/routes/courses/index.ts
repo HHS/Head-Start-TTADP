@@ -7,5 +7,5 @@ import transactionWrapper from '../transactionWrapper';
 
 const router = express.Router();
 router.get('/', transactionWrapper(allCourses));
-router.get('/courseurls', transactionWrapper(getCourseUrlWidgetDataWithCache));
+router.get('/dashboard', transactionWrapper(getCourseUrlWidgetDataWithCache));
 export default router;
