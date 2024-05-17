@@ -16,41 +16,41 @@ import {
         total: '1',
       },
   */
-/*
+
 export async function rollUpCourseUrlData(data) {
-  const rolledUpResourceUse = data.resourceUseResult.reduce((accumulator, resource) => {
-    const exists = accumulator.find((r) => r.url === resource.url);
+  const rolledUpCourseData = data.reduce((accumulator, c) => {
+    const exists = accumulator.find((e) => e.course === c.course);
     if (!exists) {
       // Add a property with the resource's URL.
       return [
         ...accumulator,
         {
-          heading: resource.url,
-          url: resource.url,
-          title: resource.title,
-          sortBy: resource.title || resource.url,
-          total: resource.totalCount,
-          isUrl: true,
-          data: [{ title: resource.rollUpDate, value: resource.resourceCount }],
+          heading: c.course,
+          url: c.course,
+          course: c.course,
+          title: c.course,
+          sortBy: c.course,
+          total: c.total,
+          isUrl: false,
+          data: [{ title: c.rollUpDate, value: c.count }],
         },
       ];
     }
 
     // Add the resource to the accumulator.
-    exists.data.push({ title: resource.rollUpDate, value: resource.resourceCount });
+    exists.data.push({ title: c.rollUpDate, value: c.count });
     return accumulator;
   }, []);
 
   // Loop through the rolled up resources and add a total.
-  rolledUpResourceUse.forEach((resource) => {
-    resource.data.push({ title: 'Total', value: resource.total });
+  rolledUpCourseData.forEach((course) => {
+    course.data.push({ title: 'Total', value: course.total });
   });
 
-  // Sort by total and name or url.
-  // rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
-  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.url.localeCompare(r2.url));
-  return rolledUpResourceUse;
-} */
+  // Sort by total and course name.
+  rolledUpCourseData.sort((r1, r2) => r2.total - r1.total || r1.course.localeCompare(r2.course));
+  return rolledUpCourseData;
+}
 
 export async function getCourseUrlWidgetData(scopes) {
   // Date to retrieve report data from.
@@ -127,12 +127,13 @@ export async function getCourseUrlWidgetData(scopes) {
   `;
 
   // Execute the query.
-  const courseData = sequelize.query(
+  const courseData = await sequelize.query(
     flatCourseSql,
     {
       type: QueryTypes.SELECT,
     },
   );
-  return courseData;
-  // return rollUpCourseUrlData(courseData);
+
+  // Return rollup.
+  return rollUpCourseUrlData(courseData);
 }
