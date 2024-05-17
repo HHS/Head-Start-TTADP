@@ -7,16 +7,6 @@ import {
   sequelize,
 } from '../../models';
 
-/*
-
-    {
-        course: 'Widget Course 3',
-        rollUpDate: 'Jan-21',
-        count: '1',
-        total: '1',
-      },
-  */
-
 export async function rollUpCourseUrlData(data) {
   const headers = [];
   const rolledUpCourseData = data.reduce((accumulator, c) => {
@@ -145,7 +135,6 @@ export async function getCourseUrlWidgetData(scopes) {
         ORDER BY COALESCE(t.total, 0) DESC, c."name" ASC, d."date" ASC;
   `;
 
-  console.time('courseData');
   // Execute the query.
   const courseData = await sequelize.query(
     flatCourseSql,
@@ -153,7 +142,6 @@ export async function getCourseUrlWidgetData(scopes) {
       type: QueryTypes.SELECT,
     },
   );
-  console.timeEnd('courseData');
 
   // Return rollup.
   return {
