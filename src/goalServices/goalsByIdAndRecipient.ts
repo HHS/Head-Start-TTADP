@@ -2,6 +2,15 @@ import db from '../models';
 import { CREATION_METHOD } from '../constants';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { reduceGoals } from './reduceGoals';
+import {
+  IActivityReportObjectivesFromDB,
+  ITopicModelInstance,
+  IResourceModelInstance,
+  IFileModelInstance,
+  IGoalForRTRForm,
+  IReducedObjective,
+  IGoalForRTRQueryWithReducedObjectives,
+} from './types';
 
 const {
   Goal,
@@ -37,122 +46,6 @@ export const OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR = [
   'onAR',
   'rtrOrder',
 ];
-
-interface ITopicFromDB {
-  name: string;
-  toJSON: () => { name: string };
-}
-
-interface IResourceFromDB {
-  url: string;
-  title: string;
-  toJSON: () => { url: string; title: string }
-}
-
-interface IFileFromDB {
-  originalFileName: string;
-  key: string;
-  toJSON: () => { originalFileName: string; key: string }
-}
-
-interface IActivityReportObjectivesFromDB {
-  topics: ITopicFromDB[];
-  resources: IResourceFromDB[];
-  files: IFileFromDB[];
-}
-
-interface IObjective {
-  id: number;
-  title: string;
-  status: string;
-  goalId: number;
-  onApprovedAR: boolean;
-  onAR: boolean;
-  rtrOrder: number;
-  activityReportObjectives: IActivityReportObjectivesFromDB[];
-}
-
-interface IObjectiveFromDB extends IObjective {
-  toJSON: () => IObjective;
-}
-
-type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
-  topics: {
-    name: string
-  }[];
-  resources: {
-    url: string;
-    title: string;
-  }[];
-  files: {
-    originalFileName: string;
-    key: string;
-  }[];
-};
-
-interface IGoal {
-  id: number;
-  endDate: string;
-  name: string;
-  status: string;
-  regionId: number;
-  recipientId: number;
-  goalNumber: string;
-  createdVia: string;
-  goalTemplateId: number;
-  source: string;
-  onAR: boolean;
-  onApprovedAR: boolean;
-  isCurated: boolean;
-  rtrOrder: number;
-  statusChanges: { oldStatus: string }[];
-  objectives: IObjectiveFromDB[];
-  goalCollaborators: {
-    id: number;
-    collaboratorType: { name: string };
-    user: {
-      name: string;
-      userRoles: {
-        role: { name: string };
-      }[];
-    };
-  }[];
-  grant: {
-    id: number;
-    number: string;
-    regionId: number;
-    recipientId: number;
-    numberWithProgramTypes: string;
-    programs: { programType: string }[];
-  };
-  goalTemplateFieldPrompts: {
-    promptId: number;
-    ordinal: number;
-    title: string;
-    prompt: string;
-    hint: string;
-    fieldType: string;
-    options: string;
-    validations: string;
-    responses: { response: string }[];
-    reportResponses: {
-      response: string;
-      activityReportGoal: {
-        activityReportId: number;
-        activityReportGoalId: number;
-      };
-    }[];
-  }[];
-}
-
-interface IGoalForForm extends IGoal {
-  toJSON: () => IGoal;
-}
-
-type IGoalWithReducedObjectives = Omit <IGoal, 'objectives'> & {
-  isReopenedGoal: boolean;
-  objectives: IReducedObjective[];
-};
 
 const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number) => ({
   attributes: [
@@ -341,14 +234,16 @@ function extractObjectiveAssociationsFromActivityReportObjectives(
   activityReportObjectives: IActivityReportObjectivesFromDB[],
   associationName: 'topics' | 'resources' | 'files' | 'courses',
 ) {
-  return activityReportObjectives.map((aro) => aro[associationName].map((a:
-  ITopicFromDB | IResourceFromDB | IFileFromDB) => a.toJSON())).flat();
+  return activityReportObjectives.map((aro) => aro[associationName].map((
+    a: ITopicModelInstance | IResourceModelInstance | IFileModelInstance,
+  ) => a.toJSON())).flat();
 }
 
 export default async function goalsByIdAndRecipient(ids: number | number[], recipientId: number) {
-  const goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)) as IGoalForForm[];
+  const goals = await Goal
+    .findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)) as IGoalForRTRForm[];
 
-  const reformattedGoals = goals.map((goal: IGoalForForm) => ({
+  const reformattedGoals = goals.map((goal: IGoalForRTRForm) => ({
     ...goal,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
@@ -371,7 +266,7 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
           'files',
         ),
       } as unknown as IReducedObjective)), // Convert to 'unknown' first
-  })) as IGoalWithReducedObjectives[];
+  })) as IGoalForRTRQueryWithReducedObjectives[];
 
   return reduceGoals(reformattedGoals);
 }

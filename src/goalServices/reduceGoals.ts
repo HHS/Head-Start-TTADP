@@ -11,25 +11,37 @@ import {
   ITopic,
   IResource,
   ICourse,
+  IGoalForRTRQueryWithReducedObjectives,
+  IReducedObjective,
 } from './types';
 
+type ObjectivesForReducer = IObjectiveModelInstance[] | IReducedObjective[];
+
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
-export function reduceObjectives(newObjectives: IObjectiveModelInstance[], currentObjectives = []) {
+export function reduceObjectives(
+  newObjectives: ObjectivesForReducer,
+  currentObjectives = [],
+) {
   // objectives = accumulator
   // we pass in the existing objectives as the accumulator
-  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
+  const objectivesToSort = newObjectives.reduce((
+    objectives: ObjectivesForReducer,
+    objective,
+  ) => {
     const exists = objectives.find((o) => (
       o.title.trim() === objective.title.trim() && o.status === objective.status
-    ));
-      // eslint-disable-next-line no-nested-ternary
-    const id = objective.getDataValue
-      ? objective.getDataValue('id')
-        ? objective.getDataValue('id')
-        : objective.getDataValue('value')
-      : objective.id;
-    const otherEntityId = objective.getDataValue
-      ? objective.getDataValue('otherEntityId')
-      : objective.otherEntityId;
+    )) as IReducedObjective | undefined;
+
+    const {
+      id,
+      otherEntityId,
+      title,
+      status,
+      topics,
+      resources,
+      files,
+      courses,
+    } = objective;
 
     if (exists) {
       exists.ids = [...exists.ids, id];
@@ -45,10 +57,14 @@ export function reduceObjectives(newObjectives: IObjectiveModelInstance[], curre
     }
 
     return [...objectives, {
-      ...(objective.dataValues
-        ? objective.dataValues
-        : objective),
-      title: objective.title.trim(),
+      id,
+      otherEntityId,
+      title,
+      status,
+      topics,
+      resources,
+      files,
+      courses,
       value: id,
       ids: [id],
       // Make sure we pass back a list of recipient ids for subsequent saves.
@@ -335,7 +351,10 @@ function reducePrompts(
  * @param {Object[]} goals
  * @returns {Object[]} array of deduped goals
  */
-export function reduceGoals(goals: IGoalModelInstance[], forReport = false) {
+export function reduceGoals(
+  goals: IGoalModelInstance[] | IGoalForRTRQueryWithReducedObjectives[],
+  forReport = false,
+) {
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
   const where = (g: IGoalModelInstance, currentValue) => (forReport
