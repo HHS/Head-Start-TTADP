@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  FormGroup, Label, Button,
+  FormGroup, Label, Button, Fieldset,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -25,6 +25,7 @@ export default function ResourceRepeater({
   userCanEdit,
   editingFromActivityReport,
   toolTipText,
+  validateOnRemove,
 }) {
   const readOnly = !editingFromActivityReport
   && ((goalStatus === 'Not Started' && isOnReport) || goalStatus === 'Closed' || !userCanEdit);
@@ -70,6 +71,15 @@ export default function ResourceRepeater({
     const newResources = [...editableResources];
     newResources.splice(i, 1);
     setResources(newResources);
+
+    // This is an attempt to handle on remove validation for resources.
+    // the AR and RTR use two different approaches to validation.
+    // This works around it by allowing the parent component to pass in a validation function.
+    if (validateOnRemove) {
+      validateOnRemove(newResources);
+    } else {
+      validateResources();
+    }
   };
 
   const updateResource = (value, i) => {
@@ -95,15 +105,17 @@ export default function ResourceRepeater({
       { userCanEdit ? (
         <FormGroup error={error.props.children}>
           <div>
-            <Label htmlFor="resources" className={fixedResources.length ? 'text-bold' : ''}>
-              {!fixedResources.length ? 'Link to TTA resource' : 'Add resource link'}
-              <QuestionTooltip
-                text={toolTipText}
-              />
-            </Label>
-            <span className="usa-hint">
-              Enter one resource per field. To enter more resources, select “Add new resource”
-            </span>
+            <Fieldset>
+              <legend className={fixedResources.length ? 'text-bold' : ''}>
+                {!fixedResources.length ? 'Did you use any other TTA resources that are available as a link?' : 'Add resource link'}
+                <QuestionTooltip
+                  text={toolTipText}
+                />
+              </legend>
+              <span className="usa-hint">
+                Enter one resource per field. To enter more resources, select “Add new resource”
+              </span>
+            </Fieldset>
             {error.props.children ? OBJECTIVE_LINK_ERROR : null}
             <div className="ttahub-resource-repeater">
               { editableResources.map((r, i) => (
@@ -161,10 +173,12 @@ ResourceRepeater.propTypes = {
   userCanEdit: PropTypes.bool.isRequired,
   editingFromActivityReport: PropTypes.bool,
   toolTipText: PropTypes.string,
+  validateOnRemove: PropTypes.func,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
   editingFromActivityReport: false,
   toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
+  validateOnRemove: null,
 };

@@ -9,6 +9,7 @@ const {
   afterCreate,
   afterUpdate,
   beforeValidate,
+  afterDestroy,
 } = require('./hooks/activityReport');
 
 const generateCreatorNameWithRole = (ar) => {
@@ -307,6 +308,7 @@ export default (sequelize, DataTypes) => {
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
+      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
     },
     sequelize,
     modelName: 'ActivityReport',

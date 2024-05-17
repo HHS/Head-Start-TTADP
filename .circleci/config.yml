@@ -5,13 +5,13 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:15.6
+      - image: circleci/postgres:12.4-ram
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -21,10 +21,10 @@ executors:
       - image: cimg/python:3.9.18
   docker-postgres-elasticsearch-executor:
     docker:
-      - image: cimg/node:18.18.2-browsers
+      - image: cimg/node:18.19.1-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: cimg/postgres:15.6
+      - image: circleci/postgres:12.4-ram
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -91,6 +91,34 @@ commands:
                 \"description\": \"<< parameters.env_name >> Successfully Deployed\"
               }
             }"
+  notify_slack:
+    description: "Notify slack of a deploy to production"
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+    steps:
+    - run:
+        name: Notify Slack of Deployment
+        command: |
+          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
+          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+          else
+            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+          fi
+
+          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+          -H 'Content-type: application/json;charset=utf-8' \
+          --data "{
+            \"channel\": \"<< parameters.slack_channel >>\",
+            \"text\": \"$MESSAGE_TEXT\"
+          }" https://slack.com/api/chat.postMessage
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -173,6 +201,18 @@ commands:
       suppress_error_logging:
         description: "Stop logging of non-sequelize errors to the db"
         type: env_var_name
+      itams_md_host:
+        description: "host url for itams monitoring data"
+        type: env_var_name
+      itams_md_port:
+        description: "port for itams monitoring data"
+        type: env_var_name
+      itams_md_username:
+        description: "username for itams monitoring data"
+        type: env_var_name
+      itams_md_password:
+        description: "password for itams monitoring data"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -204,7 +244,11 @@ commands:
               --var SMTP_SECURE=${<< parameters.smtp_secure >>} \
               --var SMTP_IGNORE_TLS=${<< parameters.smtp_ignore_tls >>} \
               --var FROM_EMAIL_ADDRESS=${<< parameters.from_email_address >>} \
-              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>}
+              --var SUPPRESS_ERROR_LOGGING=${<< parameters.suppress_error_logging >>} \
+              --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
+              --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
+              --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -244,10 +288,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "TTAHUB-1828/group-by-true"
+    default: "mb/TTAHUB-2857/update-goal-status-logic"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2391/curated-merge-status"
+    default: "mb/TTAHUB-2609/move-components"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -337,11 +381,12 @@ jobs:
         AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
         AWS_ELASTICSEARCH_ACCESS_KEY: admin
         AWS_ELASTICSEARCH_SECRET_KEY: admin
+        SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Audit vulnerability of backend node_modules
           command: |
@@ -379,7 +424,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Syft SBOM
           environment:
@@ -451,7 +496,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -492,7 +537,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -533,7 +578,7 @@ jobs:
       - attach_workspace:
           at: .
       - setup_remote_docker:
-          version: 20.10.14
+          version: default
       - run:
           name: Start server
           command: |
@@ -599,7 +644,7 @@ jobs:
           command: ./bin/ping-server 8080
       - run:
           name: Pull OWASP ZAP docker image
-          command: docker pull owasp/zap2docker-stable:latest
+          command: docker pull softwaresecurityproject/zap-stable:latest
       - run:
           name: Make reports directory group writeable
           command: chmod g+w reports
@@ -668,8 +713,12 @@ jobs:
                 smtp_ignore_tls: STAGING_SMTP_IGNORE_TLS
                 from_email_address: FROM_EMAIL_ADDRESS
                 smtp_user: SMTP_USER
-                smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                smtp_password: SMTP_PASSWORD
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -719,6 +768,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Migrate database
                 command: |
@@ -768,6 +821,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -815,6 +872,10 @@ jobs:
                 smtp_user: SMTP_USER
                 smtp_password: SMTP_PASSWORD
                 suppress_error_logging: SUPPRESS_ERROR_LOGGING
+                itams_md_host: ITAMS_MD_HOST
+                itams_md_port: ITAMS_MD_PORT
+                itams_md_username: ITAMS_MD_USERNAME
+                itams_md_password: ITAMS_MD_PASSWORD
             - run:
                 name: Run database migrations
                 command: |
@@ -823,6 +884,9 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
 workflows:
   build_test_deploy:

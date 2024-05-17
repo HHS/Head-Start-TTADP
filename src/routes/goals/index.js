@@ -2,12 +2,14 @@ import express from 'express';
 import {
   createGoals,
   changeGoalStatus,
+  reopenGoal,
   retrieveGoalsByIds,
   retrieveGoalByIdAndRecipient,
   deleteGoal,
   mergeGoalHandler,
   getSimilarGoalsForRecipient,
   getSimilarGoalsByText,
+  getMissingDataForActivityReport,
 } from './handlers';
 import transactionWrapper from '../transactionWrapper';
 import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -36,5 +38,13 @@ router.get(
   checkRecipientIdParam,
   transactionWrapper(getSimilarGoalsForRecipient),
 );
+
+router.get(
+  '/region/:regionId/incomplete',
+  checkRegionIdParam,
+  transactionWrapper(getMissingDataForActivityReport),
+);
+
+router.put('/reopen', transactionWrapper(reopenGoal));
 
 export default router;

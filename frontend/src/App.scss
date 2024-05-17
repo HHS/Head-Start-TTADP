@@ -1,6 +1,8 @@
 @use 'colors.scss' as *;
 @use './Grid.scss';
 
+@use './widgets/widgets.scss';
+
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
@@ -13,6 +15,10 @@ a {
 
 a:visited {
   color: $text-visited
+}
+
+summary {
+  cursor: pointer;
 }
 
 /*|||||| Table resets |||||||*/
@@ -98,6 +104,9 @@ body {
   border-color: $error-dark;
 }
 
+.smart-hub-maxw-form-field {
+  max-width: 30rem;
+}
 
 .smart-hub-maxw-placard {
   max-width: 34.25rem;
@@ -396,4 +405,9 @@ fill: #1B1B1B;
   .desktop\:maxw-6 {
     max-width: 3rem;
   }
+}
+
+.smart-hub--vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
 }

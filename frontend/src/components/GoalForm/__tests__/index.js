@@ -137,11 +137,19 @@ describe('create goal', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', topicsFromApi);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20a%20goal%20name&grantNumbers=1', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
   });
 
   it('you cannot add objectives before filling in basic goal info', async () => {
@@ -177,6 +185,8 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('path:/nudge', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     const saveDraft = await screen.findByRole('button', { name: /save draft/i });
     userEvent.click(saveDraft);
@@ -225,11 +235,15 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('path:/nudge?', []);
+    fetchMock.get('/api/goal-templates?grantIds=2', []);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
     userEvent.click(submit);
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastOptions('/api/goals').body).toContain('ids');
     expect(fetchMock.called('/api/goals')).toBeTruthy();
   });
 
@@ -315,6 +329,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -336,6 +351,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', postResponse);
 
     const newObjective = await screen.findByRole('button', { name: 'Add new objective' });
@@ -368,6 +384,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', 500);
 
     const submit = await screen.findByRole('button', { name: /submit goal/i });
@@ -461,6 +478,8 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
 
     let goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -492,7 +511,8 @@ describe('create goal', () => {
     let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
-    expect(fetchMock.called('/api/goals')).toBeTruthy();
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
 
     // restore our fetch mock
     fetchMock.restore();
@@ -502,6 +522,8 @@ describe('create goal', () => {
   <subtitle>Confluence Syndication Feed</subtitle>
   <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
     expect(fetchMock.called('/api/goals')).toBe(false);
 
     await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
@@ -590,7 +612,7 @@ describe('create goal', () => {
     const resourceOne = await screen.findByRole('textbox', { name: 'Resource 1' });
     userEvent.type(resourceOne, 'https://search.marginalia.nu/');
 
-    const save = await screen.findByRole('button', { name: /save and continue/i });
+    let save = await screen.findByRole('button', { name: /save and continue/i });
     userEvent.click(save);
 
     const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
@@ -602,11 +624,39 @@ describe('create goal', () => {
     const editButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /edit/i });
     userEvent.click(editButton);
 
+    fetchMock.restore();
+    fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <title>Whats New</title>
+    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+    <subtitle>Confluence Syndication Feed</subtitle>
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text%20and%20I%20want%20to%20meet%20my%20goals&grantNumbers=undefined', []);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20texts&grantNumbers=undefined', []);
+    fetchMock.get('/api/goal-templates?grantIds=1', []);
+
     goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
 
     expect(goalText.value).toBe('This is goal text');
+
     userEvent.type(goalText, ' and I want to meet my goals');
+    save = await screen.findByRole('button', { name: /save and continue/i });
+
     userEvent.click(save);
+
+    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
+    // Assert fetch mock contains the correct ids.
+    const { body } = fetchMock.lastCall('/api/goals')[1];
+    const parsed = JSON.parse(body);
+    const [goal] = parsed.goals;
+
+    // should be this:
+    expect(goal.ids).toEqual([64175]);
   });
 
   it('can add and validate objectives', async () => {
@@ -630,6 +680,7 @@ describe('create goal', () => {
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
   <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
     fetchMock.post('/api/goals', postResponse);
     expect(fetchMock.called('/api/goals')).toBe(false);
 
@@ -697,6 +748,7 @@ describe('create goal', () => {
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -796,6 +848,7 @@ describe('create goal', () => {
     <subtitle>Confluence Syndication Feed</subtitle>
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', postResponse);
+    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
     const goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
     userEvent.type(goalText, 'This is goal text');
@@ -815,6 +868,7 @@ describe('create goal', () => {
     await waitFor(() => userEvent.click(saveDraft));
 
     const fieldset = document.querySelector('.ttahub-objective-files');
+    expect(fieldset).not.toBe(null);
 
     const yes = await within(fieldset).findByRole('radio', { name: 'Yes' });
     const no = await within(fieldset).findByRole('radio', { name: 'No' });

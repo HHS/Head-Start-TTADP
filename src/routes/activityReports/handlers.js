@@ -522,9 +522,20 @@ export async function resetToDraft(req, res) {
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
-    if (!authorization.canReset()) {
+    const canReset = authorization.canReset();
+    const isApproverAndCreator = authorization.isApproverAndCreator();
+
+    if (!isApproverAndCreator && !canReset) {
       res.sendStatus(403);
       return;
+    }
+
+    if (isApproverAndCreator) {
+      // Reset all Approving Managers to null status.
+      await ActivityReportApprover.update({ status: null }, {
+        where: { activityReportId },
+        individualHooks: true,
+      });
     }
 
     const [
@@ -758,11 +769,18 @@ export async function getReportsByManyIds(req, res) {
   try {
     const userId = await currentUserId(req, res);
 
-    const { reportIds } = req.body;
+    const {
+      reportIds, offset, sortBy, sortDir, limit,
+    } = req.body;
 
     // this will return a query with region parameters based
     // on the req user's permissions
-    const query = await setReadRegions({}, userId);
+    const query = await setReadRegions({
+      offset,
+      sortBy,
+      sortDir,
+      limit,
+    }, userId);
 
     const reportsWithCount = await activityReports(query, false, userId, reportIds);
     if (!reportsWithCount) {

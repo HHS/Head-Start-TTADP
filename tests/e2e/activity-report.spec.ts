@@ -360,7 +360,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('dropdown').selectOption('approved');
 
     // submit approval
-    await page.getByTestId('form').getByTestId('button').click();
+    await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
 
     // this is in the 'approved activity reports' table
     await page.getByRole('rowheader', { name: `R0${regionNumber}-AR-${arNumber}` }).click();
@@ -450,7 +450,7 @@ test.describe('Activity Report', () => {
     const topic = page.locator('#main-content > div > div > form > div.ttahub-create-goals-form > div.margin-top-5.ttahub-create-goals-objective-form > ul:nth-child(4) > li');
     expect(await topic.textContent()).toBe('Behavioral / Mental Health / Trauma');
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
 
     let objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
 
@@ -480,7 +480,7 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('g2o1')).toBeVisible();
     await expect(page.getByRole('listitem').filter({ hasText: 'Behavioral / Mental Health / Trauma' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'https://banana.banana.com' })).not.toBeVisible();
-    await expect(page.getByRole('radio', { name: 'No' })).toBeChecked();
+    await expect(page.getByRole('group', { name: 'Do you plan to use any TTA resources that aren\'t available as a link? * Examples include: Presentation slides from PD events PDF\'s you created from multiple TTA resources Other OHS-provided resources' }).getByLabel('No')).toBeChecked();
     objectiveStatus = page.getByRole('combobox', { name: 'Objective status' });
     expect(await extractSelectedDisplayedValue(objectiveStatus)).toBe('Not Started');
 
@@ -615,7 +615,7 @@ test.describe('Activity Report', () => {
     await page.getByTestId('dropdown').selectOption('approved');
 
     // submit approval
-    await page.getByTestId('form').getByTestId('button').click();
+    await page.getByTestId('form').getByRole('button', { name: 'Submit' }).click();
 
     // check first recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -623,7 +623,7 @@ test.describe('Activity Report', () => {
     await page.getByRole('link', { name: 'RTTAPA' }).click();
 
     // confirm goal is in RTR
-    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
+    await expect(page.getByText('This is a goal for multiple grants').first()).toBeVisible();
 
     // check second recipient
     await page.getByRole('link', { name: 'Recipient TTA Records' }).click();
@@ -633,7 +633,7 @@ test.describe('Activity Report', () => {
     // check page title is updated (formerly TTAHUB-1322.spec.ts)
     expect(await page.title()).toBe('RTTAPA - Agency 2 in region 1, Inc. | TTA Hub');
 
-    await expect(page.getByText('This is a goal for multiple grants')).toBeVisible();
+    await expect(page.getByText('This is a goal for multiple grants').first()).toBeVisible();
     await page.getByRole('button', { name: /View objectives for goal G-(\d)/i }).click();
     await expect(page.getByText('A new objective')).toBeVisible();
     await expect(page.getByText(`Activity reports R01-AR-${arNumber}`)).toBeVisible();
@@ -731,6 +731,43 @@ test.describe('Activity Report', () => {
 
     // verify draft report in table
     await expect(page.getByRole('link', { name: `R0${regionNumber}-AR-${arNumber}` })).toBeVisible();
+  });
+
+  test('properly updates form state for other entity reports', async ({ page }) => {
+    await page.goto('http://localhost:3000/');
+    await page.getByRole('link', { name: 'Activity Reports' }).click();
+    await page.getByRole('button', { name: '+ New Activity Report' }).click();
+
+    await page.locator('label').filter({ hasText: 'Other entity' }).click();
+    await page.locator('#activityRecipients div').filter({ hasText: '- Select -' }).nth(1).click();
+    await page.locator('#react-select-3-option-0').click();
+    await page.locator('#react-select-3-option-1').click();
+    await page.getByRole('button', { name: 'Goals and objectives Not Started' }).click();
+    await page.waitForTimeout(5000);
+    await page.getByTestId('plusButton').click();
+    await page.getByTestId('form').getByTestId('textarea').fill('Objective for testing. avery specific thing');
+    await page.getByTestId('form').getByTestId('textarea').press('Tab');
+    await page.getByRole('button', { name: 'Get help choosing topics' }).press('Tab');
+    await page.getByLabel('Topics  *').press('ArrowDown');
+    await page.getByLabel('Topics  *').press('Enter');
+    await page.getByLabel('Topics  *').press('Tab');
+  
+    await blur(page);
+
+    await page.getByText('TTA provided *Normal').click();
+    await page.getByRole('textbox', { name: 'TTA provided for objective, required' }).press('Enter');
+    await page.getByText('Support type *').click();
+    await page.getByRole('combobox', { name: 'Support type' }).selectOption('Introducing');
+  
+    await page.getByRole('button', { name: 'Save objectives' }).click();
+    await page.getByRole('button', { name: 'Save and continue' }).click();
+    await page.getByRole('button', { name: 'Goals and objectives Complete' }).click();
+    await page.getByTestId('ellipsis-button').click();
+    await page.getByTestId('menu').getByTestId('button').click();
+    await page.getByRole('button', { name: 'Remove this objective' }).click();
+    await page.getByRole('button', { name: 'This button will remove the objective from the activity report' }).click();
+    await page.getByRole('button', { name: 'Supporting attachments Complete' }).click();
+    await page.getByRole('button', { name: 'Goals and objectives In Progress' }).click();
   });
 
   test('can remove objective', async ({ page }) => {
@@ -882,7 +919,7 @@ test.describe('Activity Report', () => {
 
     await p2;
 
-    await page.getByTestId('form').locator('div').filter({ hasText: 'Create new goal' }).nth(3).click();
+    await page.getByText('Select recipient\'s goal *Test goal for preserving objectives').click();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
     await page.getByRole('button', { name: 'Keep objective' }).click();

@@ -10,7 +10,8 @@ import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import { updateGoalStatus } from '../../fetchers/goals';
+import { reopenGoal, updateGoalStatus } from '../../fetchers/goals';
+import ReopenReasonModal from '../ReopenReasonModal';
 
 function GoalCards({
   recipientId,
@@ -46,12 +47,38 @@ function GoalCards({
   const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
 
+  // Reopen reason modal.
+  const [reopenGoalId, setReopenGoalId] = useState(null);
+  const [resetReopenModalValues, setResetReopenModalValues] = useState(false);
+  const reopenModalRef = useRef();
+
   const showCloseSuspendGoalModal = (status, goalIds, oldGoalStatus) => {
     setCloseSuspendGoalIds(goalIds);
     setCloseSuspendStatus(status);
     setCloseSuspendOldStatus(oldGoalStatus);
     setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
     closeSuspendModalRef.current.toggleModal(true);
+  };
+
+  const showReopenGoalModal = (goalId) => {
+    setReopenGoalId(goalId);
+    setResetReopenModalValues(!resetReopenModalValues);
+    reopenModalRef.current.toggleModal(true);
+  };
+
+  const onSubmitReopenGoal = async (goalId, reopenReason, reopenContext) => {
+    const updatedGoal = await reopenGoal(goalId, reopenReason, reopenContext);
+
+    const newGoals = goals.map((g) => (g.id === updatedGoal.id ? {
+      ...g,
+      goalStatus: 'In Progress',
+      previousStatus: 'Closed',
+      isReopenedGoal: true,
+    } : g));
+
+    setGoals(newGoals);
+
+    reopenModalRef.current.toggleModal(false);
   };
 
   const performGoalStatusUpdate = async (
@@ -182,6 +209,13 @@ function GoalCards({
           resetValues={resetModalValues}
           oldGoalStatus={closeSuspendOldStatus}
         />
+        <ReopenReasonModal
+          id="reopen-reason-modal"
+          modalRef={reopenModalRef}
+          goalId={reopenGoalId}
+          resetValues={resetReopenModalValues}
+          onSubmit={onSubmitReopenGoal}
+        />
         <GoalsCardsHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
@@ -219,6 +253,7 @@ function GoalCards({
               recipientId={recipientId}
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+              showReopenGoalModal={showReopenGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
@@ -238,7 +273,7 @@ GoalCards.propTypes = {
   goals: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
   })).isRequired,
-  error: PropTypes.string.isRequired,
+  error: PropTypes.string,
   goalsCount: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
@@ -254,12 +289,14 @@ GoalCards.propTypes = {
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
+  shouldDisplayMergeSuccess: false,
   perPage: 10,
+  error: '',
 };
 export default GoalCards;

@@ -59,6 +59,7 @@ describe('Change Goal Status', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     // Cleanup Recipient.
@@ -204,7 +205,8 @@ describe('Change Goal Status', () => {
     const reason = 'TTA complete';
     const context = 'This goal has been completed.';
     const updatedGoals = await updateGoalStatusById(
-      goal.id.toString(),
+      [goal.id],
+      5,
       oldStatus,
       newStatus,
       reason,
@@ -215,8 +217,5 @@ describe('Change Goal Status', () => {
     expect(updatedGoals.length).toEqual(1);
     const updatedGoal = updatedGoals[0];
     expect(updatedGoal.status).toEqual(newStatus);
-    expect(updatedGoal.closeSuspendReason).toEqual(reason);
-    expect(updatedGoal.closeSuspendContext).toEqual(context);
-    expect(updatedGoal.previousStatus).toEqual(oldStatus);
   });
 });

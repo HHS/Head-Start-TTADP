@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
 import { OBJECTIVE_STATUS, GOAL_STATUS } from '../constants';
@@ -109,7 +110,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
     const goalIds = goals.map((goal) => goal.id);
     await Objective.destroy({ where: { goalId: goalIds }, force: true });
     await Goal.destroy({ where: { id: goalIds }, force: true });
-    await Grant.destroy({ where: { id: grant.id }, force: true });
+    await Grant.destroy({ where: { id: grant.id }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id }, force: true });
     await Region.destroy({ where: { id: region.id }, force: true });
     await db.sequelize.close();
@@ -125,7 +126,17 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
     };
 
-    const response = await closeMultiRecipientGoalsFromAdmin(data);
+    // expect the first try to throw
+    await expect(closeMultiRecipientGoalsFromAdmin(data, 1)).rejects.toThrow();
+
+    // now we update all the objectives to be on an approved AR
+    await Objective.update(
+      { onApprovedAR: true },
+      { where: { goalId: goals.map((goal) => goal.id) } },
+    );
+
+    // then we try again
+    const response = await closeMultiRecipientGoalsFromAdmin(data, 1);
     expect(response.isError).toBe(false);
     expect(response.goals.length).toBe(2);
 
@@ -133,8 +144,6 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       attributes: [
         'id',
         'status',
-        'closeSuspendContext',
-        'closeSuspendReason',
       ],
       where: {
         id: response.goals.map((goal) => goal.id),
@@ -146,8 +155,8 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
             'status',
             'onApprovedAR',
             'goalId',
-            'closeSuspendContext',
             'closeSuspendReason',
+            'closeSuspendContext',
           ],
           model: Objective,
           as: 'objectives',
@@ -157,8 +166,6 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
 
     updatedGoals.forEach((updatedGoal) => {
       expect(updatedGoal.status).toBe(GOAL_STATUS.CLOSED);
-      expect(updatedGoal.closeSuspendContext).toBe(data.closeSuspendContext);
-      expect(updatedGoal.closeSuspendReason).toBe(data.closeSuspendReason);
       updatedGoal.objectives.forEach((objective) => {
         const expectedStatus = objective.onApprovedAR
           ? OBJECTIVE_STATUS.COMPLETE : objectiveNotOnApprovedAr.status;
@@ -172,7 +179,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       });
     });
 
-    // one objective should have survived as it was not on an approved AR
+    // no objectives should have survived as it was not on an approved AR
     const aloneObjective = await Objective.findOne({
       attributes: [
         'id',
@@ -183,14 +190,14 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
         'closeSuspendReason',
       ],
       where: {
-        id: objectiveNotOnApprovedAr.id,
-        onApprovedAR: false,
-        status: objectiveNotOnApprovedAr.status,
+        goalId: [goals[0].id, goals[1].id],
+        status: {
+          [Op.not]: OBJECTIVE_STATUS.COMPLETE,
+        },
       },
     });
 
-    expect(aloneObjective).not.toBe(null);
-    expect(aloneObjective.status).not.toBe(OBJECTIVE_STATUS.COMPLETE);
+    expect(aloneObjective).toBe(null);
 
     // we left goal 2 alone
     const goal2 = await Goal.findOne({
