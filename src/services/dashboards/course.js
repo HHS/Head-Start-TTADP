@@ -18,7 +18,13 @@ import {
   */
 
 export async function rollUpCourseUrlData(data) {
+  const headers = [];
   const rolledUpCourseData = data.reduce((accumulator, c) => {
+    // Add the header to the headers array if it doesn't exist.
+    const existsHeader = headers.find((h) => h.rollUpDate === c.rollUpDate);
+    if (!existsHeader) {
+      headers.push({ rollUpDate: c.rollUpDate, date: new Date(c.date) });
+    }
     const exists = accumulator.find((e) => e.course === c.course);
     if (!exists) {
       // Add a property with the resource's URL.
@@ -49,7 +55,14 @@ export async function rollUpCourseUrlData(data) {
 
   // Sort by total and course name.
   rolledUpCourseData.sort((r1, r2) => r2.total - r1.total || r1.course.localeCompare(r2.course));
-  return rolledUpCourseData;
+
+  // Sort headers by date and return an array of rollUpDate.
+  headers.sort((h1, h2) => h1.date - h2.date);
+
+  // Return the headers and rolled up data.
+  const sortedHeaders = headers.map((h) => h.rollUpDate);
+
+  return { headers: sortedHeaders, courses: rolledUpCourseData };
 }
 
 export async function getCourseUrlWidgetData(scopes) {
@@ -96,7 +109,7 @@ export async function getCourseUrlWidgetData(scopes) {
         INNER JOIN "Courses" c
             ON aroc."courseId" = c.id
         WHERE
-            ar.id IN (${reportIds.map((r) => r.id).join(',')}) 
+            ar.id IN (${reportIds.map((r) => r.id).join(',')})
         GROUP BY c.name, to_char(ar."startDate", 'Mon-YY')
         ),
         totals AS (
@@ -113,19 +126,26 @@ export async function getCourseUrlWidgetData(scopes) {
                 date_trunc('month', (SELECT MAX("maxStartDate") FROM "counts")),
                 interval '1 month'
             )::date AS "date"
+        ),
+        distinctcourses AS (
+          SELECT distinct "name" FROM "counts"
         )
         SELECT
-            c."name" AS "course",
+            cor."name" AS "course",
             to_char(d."date", 'Mon-YY') AS "rollUpDate",
-            c."count" AS "count",
+            d."date",
+            COALESCE(c."count", 0) AS "count",
             COALESCE(t.total, 0) AS "total"
-            FROM "counts" c
+            FROM "distinctcourses" cor
         CROSS JOIN dates d
         LEFT JOIN "totals" t
-            ON c."name" = t."name"
-        ORDER BY COALESCE(t.total, 0) DESC, c."name" ASC;
+            ON cor."name" = t."name"
+        LEFT JOIN "counts" c
+          ON cor."name" = c."name" AND to_char(d."date", 'Mon-YY')  = c."rollUpDate"
+        ORDER BY COALESCE(t.total, 0) DESC, c."name" ASC, d."date" ASC;
   `;
 
+  console.time('courseData');
   // Execute the query.
   const courseData = await sequelize.query(
     flatCourseSql,
@@ -133,7 +153,10 @@ export async function getCourseUrlWidgetData(scopes) {
       type: QueryTypes.SELECT,
     },
   );
+  console.timeEnd('courseData');
 
   // Return rollup.
-  return rollUpCourseUrlData(courseData);
+  return {
+    coursesAssociatedWithActivityReports: await rollUpCourseUrlData(courseData),
+  };
 }
