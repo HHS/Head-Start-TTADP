@@ -57,10 +57,15 @@ interface IResource {
 }
 
 interface IFile {
+  key: string;
   originalFileName: string;
   url: {
     url: string;
   }
+}
+
+interface IFileModelInstance extends IFile {
+  dataValues?: IFile
 }
 
 interface IActivityReportGoal {
@@ -88,6 +93,11 @@ interface IActivityReportObjective {
   isActivelyEdited: boolean;
   source: string;
   arOrder: number;
+  objectiveCreatedHere: boolean | null;
+  supportType: string;
+  ttaProvided: string;
+  closeSuspendReason: string;
+  closeSuspendContext: string;
   activityReportObjectiveTopics: {
     topic: ITopic;
   }[];
@@ -96,7 +106,7 @@ interface IActivityReportObjective {
     resource: IResource;
   }[];
   activityReportObjectiveFiles: {
-    file: IFile;
+    file: IFileModelInstance;
   }[];
   activityReportObjectiveCourses: {
     course: ICourse;
@@ -105,7 +115,7 @@ interface IActivityReportObjective {
 
 interface IObjective {
   id: number;
-  goalId: number;
+  goalId: number | null;
   title: string;
   status: string;
   onApprovedAR: boolean;
@@ -114,6 +124,15 @@ interface IObjective {
   topics: ITopic[];
   resources: IResource[];
   files: IFile[];
+  otherEntityId: number | null;
+  activityReports?: {
+    id: number
+  }[];
+}
+
+interface IObjectiveModelInstance extends IObjective {
+  dataValues?: IObjective
+  getDataValue?: (key: string) => number | string | boolean | null;
 }
 
 interface IGoal {
@@ -172,4 +191,5 @@ export {
   IGoalModelInstance,
   IGrantModelInstance,
   IPromptModelInstance,
+  IObjectiveModelInstance,
 };

@@ -4,7 +4,6 @@ import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
-  goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   destroyGoal,
   mergeGoals,
@@ -18,6 +17,7 @@ import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import { validateMergeGoalPermissions } from '../utils';
+import getGoalsForReport from '../../goalServices/getGoalsForReport';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -240,7 +240,7 @@ export async function retrieveGoalsByIds(req, res) {
     }
 
     const gIds = goalIds.map((g) => parseInt(g, 10));
-    const retrievedGoal = await goalsByIdsAndActivityReport(gIds, reportId);
+    const retrievedGoal = await getGoalsForReport(reportId, gIds);
 
     if (!retrievedGoal || !retrievedGoal.length) {
       res.sendStatus(404);
