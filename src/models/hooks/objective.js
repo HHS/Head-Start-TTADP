@@ -1,6 +1,7 @@
+import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS, GOAL_STATUS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
 import {
@@ -201,12 +202,16 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
 
       // and if so, we update it (storing the previous status so we can revert if needed)
       if (atLeastOneInProgress) {
-        await goal.update({
-          status: 'In Progress',
-          previousStatus: 'Not Started',
-        }, {
+        // eslint-disable-next-line global-require
+        const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: 'In Progress',
+          reason: 'Objective moved to In Progress',
+          context: null,
           transaction: options.transaction,
-          individualHooks: true,
         });
       }
     }

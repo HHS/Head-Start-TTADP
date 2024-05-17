@@ -1,12 +1,8 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import React, {
-  useEffect, useState, useMemo, useRef,
+  useEffect, useState,
 } from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import { GridContainer, Grid } from '@trussworks/react-uswds';
 import {
   faClock,
   faCalendarAlt,
@@ -20,17 +16,16 @@ import {
 import Container from '../../components/Container';
 import { Field } from '../../widgets/DashboardOverview';
 import { getStatistics } from '../../fetchers/users';
-
-import './Llama.css';
-import celebratoryLlama from './celebratory-llama.png';
+import celebratoryLlama from './heart-logo.jpg';
 import colors from '../../colors';
 import Loader from '../../components/Loader';
+import './Llama.css';
 
 export default function Llama({ user }) {
   const [loading, setLoading] = useState(true);
-  const userCanWrite = useMemo(() => user.permissions.some((permission) => (
+  const userCanWrite = user.permissions.some((permission) => (
     permission.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS)
-    || permission.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS), [user.permissions]);
+    || permission.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS);
 
   const [statistics, setStatistics] = useState({
     daysSinceJoined: 0,
@@ -44,8 +39,6 @@ export default function Llama({ user }) {
     objectivesApproved: 0,
   });
 
-  const llamaImage = useRef(null);
-
   useEffect(() => {
     async function fetchStatistics() {
       try {
@@ -56,39 +49,39 @@ export default function Llama({ user }) {
         console.error(err);
       } finally {
         setLoading(false);
-        llamaImage.current.classList.add('celebratory-llama');
       }
     }
 
     fetchStatistics();
   }, [user.id]);
 
-  const addWiggler = () => {
-    if (llamaImage.current.classList.contains('the-wiggler')) return;
-    llamaImage.current.classList.add('the-wiggler');
-  };
-
   const bannerMessage = userCanWrite ? 'To celebrate, let\'s look back on all the work you\'ve done:' : 'To celebrate, let\'s look back on all the work we\'ve done:';
+  const statisticsContentClasses = ['statistics-content', 'position-relative'];
+
+  if (!loading) {
+    statisticsContentClasses.push('statistics-content--loaded');
+  }
 
   return (
     <Container>
-      <div className="position-relative bg-white margin-auto" onClick={addWiggler}>
+      <div className="position-relative bg-white margin-auto">
         <Loader loadingLabel="Crunching some numbers and loading your statistics..." loading={loading} />
-        <img
-          className="display-none bottom-0"
-          src={celebratoryLlama}
-          height="330"
-          alt="hey folks, it's me, llawrence the llama, and I'm just here to tell you that you've done a great job here on the ttahub"
-          ref={llamaImage}
-        />
-
-        <div className="statistics-content position-relative">
-          <h2 className="width-tablet-lg margin-x-auto">The TTA hub is two years old!</h2>
-          <p className="usa-prose width-tablet-lg margin-x-auto">{bannerMessage}</p>
-
-          <GridContainer containerSize="tablet-lg" className="desktop:bg-base-lighter padding-2">
-            {userCanWrite ? (
-              <Grid row gap={1} className="margin-bottom-2">
+        <div className={statisticsContentClasses.join(' ')}>
+          <h2 className="margin-0">
+            <span aria-hidden="true">🎉</span>
+            The TTA Hub is three years old!
+            <span aria-hidden="true">🎉</span>
+          </h2>
+          <p className="usa-prose">{bannerMessage}</p>
+          <div className="statistics-content-heart-logo">
+            <img
+              src={celebratoryLlama}
+              alt="You've done a great job on the ttahub!"
+            />
+          </div>
+          {userCanWrite ? (
+            <>
+              <div className="statistics-content--two-fer">
                 <Field
                   label="since you joined"
                   data={`${statistics.daysSinceJoined} days`}
@@ -96,71 +89,77 @@ export default function Llama({ user }) {
                   iconColor={colors.ttahubMagenta}
                   backgroundColor={colors.ttahubMagentaLight}
                 />
-                <Field
-                  label="ARs created"
-                  data={String(statistics.arsCreated)}
-                  icon={faClipboardUser}
-                  iconColor={colors.ttahubMediumBlue}
-                  backgroundColor={colors.ttahubBlueLight}
-                />
-                <Field
-                  label="ARs collaborated on"
-                  data={String(statistics.arsCollaboratedOn)}
-                  icon={faUserFriends}
-                  iconColor={colors.ttahubMediumDeepTeal}
-                  backgroundColor={colors.ttahubDeepTealLight}
-                />
-              </Grid>
-            ) : null }
-            <Grid row gap={1} className="margin-bottom-2">
+              </div>
+
               <Field
-                label="of TTA provided"
-                data={String(statistics.ttaProvided)}
-                icon={faClock}
-                iconColor={colors.ttahubOrange}
-                backgroundColor={colors.ttahubOrangeLight}
+                label="ARs created"
+                data={String(statistics.arsCreated)}
+                icon={faClipboardUser}
+                iconColor={colors.ttahubMediumBlue}
+                backgroundColor={colors.ttahubBlueLight}
               />
+
               <Field
-                label="recipients reached"
-                data={String(statistics.recipientsReached)}
-                icon={faChartColumn}
-                iconColor={colors.ttahubMagenta}
-                backgroundColor={colors.ttahubMagentaLight}
-              />
-              <Field
-                label="grants served"
-                data={String(statistics.grantsServed)}
-                icon={faBuilding}
+                label="ARs collaborated on"
+                data={String(statistics.arsCollaboratedOn)}
+                icon={faUserFriends}
                 iconColor={colors.ttahubMediumDeepTeal}
                 backgroundColor={colors.ttahubDeepTealLight}
               />
-            </Grid>
-            <Grid row gap={1}>
-              <Field
-                label="participants reached"
-                data={String(statistics.participantsReached)}
-                icon={faUserFriends}
-                iconColor={colors.ttahubBlue}
-                backgroundColor={colors.ttahubBlueLighter}
-              />
-              <Field
-                label="goals approved"
-                data={String(statistics.goalsApproved)}
-                icon={faCheck}
-                iconColor={colors.ttahubOrange}
-                backgroundColor={colors.ttahubOrangeLight}
-              />
-              <Field
-                label="objectives approved"
-                data={String(statistics.objectivesApproved)}
-                icon={faGear}
-                iconColor={colors.ttahubOrange}
-                backgroundColor={colors.ttahubOrangeLight}
-              />
-            </Grid>
-          </GridContainer>
+            </>
+          ) : null }
+
+          <Field
+            label="of TTA provided"
+            data={String(statistics.ttaProvided)}
+            icon={faClock}
+            iconColor={colors.ttahubOrange}
+            backgroundColor={colors.ttahubOrangeLight}
+          />
+
+          <Field
+            label="recipients reached"
+            data={String(statistics.recipientsReached)}
+            icon={faChartColumn}
+            iconColor={colors.ttahubMagenta}
+            backgroundColor={colors.ttahubMagentaLight}
+          />
+
+          <Field
+            label="grants served"
+            data={String(statistics.grantsServed)}
+            icon={faBuilding}
+            iconColor={colors.ttahubMediumDeepTeal}
+            backgroundColor={colors.ttahubDeepTealLight}
+          />
+
+          <Field
+            label="participants reached"
+            data={String(statistics.participantsReached)}
+            icon={faUserFriends}
+            iconColor={colors.ttahubBlue}
+            backgroundColor={colors.ttahubBlueLighter}
+          />
+
+          <Field
+            label="goals approved"
+            data={String(statistics.goalsApproved)}
+            icon={faCheck}
+            iconColor={colors.ttahubOrange}
+            backgroundColor={colors.ttahubOrangeLight}
+          />
+
+          <Field
+            label="objectives approved"
+            data={String(statistics.objectivesApproved)}
+            icon={faGear}
+            iconColor={colors.ttahubOrange}
+            backgroundColor={colors.ttahubOrangeLight}
+          />
+
         </div>
       </div>
+
     </Container>
   );
 }

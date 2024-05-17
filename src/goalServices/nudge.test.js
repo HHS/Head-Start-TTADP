@@ -27,7 +27,7 @@ describe('nudge', () => {
 
   afterAll(async () => {
     await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await db.sequelize.close();
   });
@@ -90,7 +90,6 @@ describe('nudge', () => {
         isCuratedTemplate: true,
         endDate: '',
         source: 'Regional office priority',
-        closeSuspendReasons: [null],
       },
       {
         ids: [goalId],
@@ -98,7 +97,6 @@ describe('nudge', () => {
         status: GOAL_STATUS.NOT_STARTED,
         isCuratedTemplate: false,
         goalTemplateId,
-        closeSuspendReasons: [null],
       },
     ]);
   });

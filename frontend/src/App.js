@@ -23,7 +23,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import isAdmin from './permissions';
+import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
 import './App.scss';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
@@ -188,6 +188,7 @@ function App() {
   };
 
   const admin = isAdmin(user);
+  const hasTrainingReportDashboard = canSeeBehindFeatureFlag(user, 'training_reports_dashboard');
 
   const renderAuthenticatedRoutes = () => (
     <>
@@ -253,12 +254,10 @@ function App() {
         />
         <Route
           exact
-          path="/resources-dashboard"
+          path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="resources_dashboard" renderNotFound>
-                <ResourcesDashboard user={user} />
-              </FeatureFlag>
+              <ResourcesDashboard user={user} />
             </AppWrapper>
           )}
         />
@@ -267,9 +266,7 @@ function App() {
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
-
               <TrainingReports user={user} match={match} />
-
             </AppWrapper>
           )}
         />
@@ -302,10 +299,26 @@ function App() {
         />
         <Route
           exact
-          path="/regional-dashboard"
-          render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <RegionalDashboard user={user} />
+          path="/dashboards/regional-dashboard/activity-reports"
+          render={({ match }) => (
+            <AppWrapper
+              padded={!(hasTrainingReportDashboard)}
+              authenticated
+              logout={logout}
+              hasAlerts={!!(alert)}
+            >
+              <RegionalDashboard match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
+          render={({ match }) => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
+              <FeatureFlag flag="training_reports_dashboard" renderNotFound>
+                <RegionalDashboard match={match} />
+              </FeatureFlag>
             </AppWrapper>
           )}
         />

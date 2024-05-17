@@ -42,6 +42,7 @@ describe('SessionReportForm', () => {
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/topic', [{ id: 1, name: 'Behavioral Health' }]);
     fetchMock.get('/api/users/statistics', {});
+    fetchMock.get('/api/courses', []);
     fetchMock.get('/api/national-center', [
       'DTL',
       'HBHS',
@@ -49,6 +50,7 @@ describe('SessionReportForm', () => {
       'PFMO',
     ].map((name, id) => ({ id, name })));
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
   });
 
   it('creates a new session if id is "new"', async () => {
@@ -330,6 +332,8 @@ describe('SessionReportForm', () => {
       specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
       recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
       language: ['English'],
+      isIstVisit: 'Yes',
+      regionalOfficeTta: ['DTL'],
     };
 
     fetchMock.get(url, formData);

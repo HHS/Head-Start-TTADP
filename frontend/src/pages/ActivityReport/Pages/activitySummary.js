@@ -13,7 +13,6 @@ import {
   TextInput,
   Checkbox,
   Label,
-  Alert as USWDSAlert,
   Dropdown,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
@@ -41,6 +40,7 @@ import { reportIsEditable } from '../../../utils';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
+import GroupAlert from '../../../components/GroupAlert';
 
 const ActivitySummary = ({
   recipients,
@@ -55,11 +55,13 @@ const ActivitySummary = ({
     setValue,
     control,
     getValues,
+    clearErrors,
   } = useFormContext();
 
   const [useGroup, setUseGroup] = useState(false);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
+  const [shouldValidateActivityRecipients, setShouldValidateActivityRecipients] = useState(false);
 
   const activityRecipientType = watch('activityRecipientType');
   const watchFormRecipients = watch('activityRecipients');
@@ -193,6 +195,16 @@ const ActivitySummary = ({
     />
   );
 
+  useEffect(() => {
+    if (!shouldValidateActivityRecipients) return;
+
+    if (disableRecipients) {
+      setValue('activityRecipients', [], { shouldValidate: true });
+    } else {
+      clearErrors('activityRecipients');
+    }
+  }, [disableRecipients, shouldValidateActivityRecipients, setValue, clearErrors]);
+
   const renderRecipients = (marginTop = 2, marginBottom = 0) => (
     <div className={`margin-top-${marginTop} margin-bottom-${marginBottom}`}>
       {!disableRecipients
@@ -211,9 +223,10 @@ const ActivitySummary = ({
           valueProperty="activityRecipientId"
           labelProperty="name"
           simple={false}
-          required="Select at least one"
+          required={disableRecipients ? 'You must first select who the activity is for' : 'Select at least one'}
           options={selectedRecipients}
           placeholderText={placeholderText}
+          onClick={() => setShouldValidateActivityRecipients(true)}
         />
       </FormItem>
     </div>
@@ -254,13 +267,7 @@ const ActivitySummary = ({
         </div>
         {
         showGroupInfo && (
-        <USWDSAlert type="info">
-          You&apos;ve successfully modified the Group&apos;s recipients for this
-          report. Changes here do not affect the Group itself.
-          <button type="button" className="smart-hub-activity-summary-group-info usa-button usa-button--unstyled" onClick={resetGroup}>
-            Reset or select a different group.
-          </button>
-        </USWDSAlert>
+          <GroupAlert resetGroup={resetGroup} />
         )
         }
         {

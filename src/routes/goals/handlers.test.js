@@ -7,6 +7,7 @@ import {
 } from 'http-codes';
 import { userById } from '../../services/users';
 import { similarGoalsForRecipient } from '../../services/similarity';
+import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
@@ -18,6 +19,7 @@ import {
   mergeGoalHandler,
   getSimilarGoalsForRecipient,
   getSimilarGoalsByText,
+  getMissingDataForActivityReport,
 } from './handlers';
 import {
   updateGoalStatusById,
@@ -57,7 +59,10 @@ jest.mock('../../goalServices/goals', () => ({
   goalRegionsById: jest.fn(),
   mergeGoals: jest.fn(),
   getGoalIdsBySimilarity: jest.fn(),
+  getGoalsMissingDataForActivityReportSubmission: jest.fn(),
 }));
+
+jest.mock('../../goalServices/getGoalsMissingDataForActivityReportSubmission', () => jest.fn());
 
 jest.mock('../../goalServices/nudge', () => jest.fn());
 
@@ -360,6 +365,99 @@ describe('createGoals', () => {
   });
 });
 
+describe('getMissingDataForActivityReport', () => {
+  afterAll(async () => {
+    jest.clearAllMocks();
+    userById.mockReset();
+  });
+
+  it('checks permissions', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
+    });
+
+    await getMissingDataForActivityReport(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
+  });
+
+  it('handles success', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    getGoalsMissingDataForActivityReportSubmission.mockResolvedValueOnce({});
+    await getMissingDataForActivityReport(req, mockResponse);
+
+    expect(mockResponse.json).toHaveBeenCalledWith({});
+  });
+
+  it('handles failures', async () => {
+    const req = {
+      params: {
+        regionId: 2,
+      },
+      query: {
+        goalIds: [1, 2],
+      },
+      session: {
+        userId: 1,
+      },
+    };
+
+    userById.mockResolvedValueOnce({
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
+    });
+
+    getGoalsMissingDataForActivityReportSubmission.mockImplementationOnce(() => {
+      throw new Error();
+    });
+
+    await getMissingDataForActivityReport(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
 describe('changeGoalStatus', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -394,7 +492,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -427,7 +524,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);

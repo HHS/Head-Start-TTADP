@@ -40,6 +40,9 @@ const Draft = ({
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
   const { connectionActive, localStorageAvailable } = useContext(NetworkContext);
   const promptsMissingResponses = [];
+  const goalsMissingResponses = [];
+
+  const regionId = watch('regionId');
 
   const allGoalsHavePromptResponses = (() => {
     const goalsAndObjectives = getValues('goalsAndObjectives');
@@ -51,6 +54,7 @@ const Draft = ({
       .every((prompt) => {
         if (!prompt.allGoalsHavePromptResponse) {
           promptsMissingResponses.push(prompt.title);
+          goalsMissingResponses.push(goal);
         }
 
         return prompt.allGoalsHavePromptResponse;
@@ -159,7 +163,11 @@ const Draft = ({
         </Fieldset>
         {hasIncompletePages && <IncompletePages incompletePages={incompletePages} />}
         {!allGoalsHavePromptResponses && (
-        <SomeGoalsHaveNoPromptResponse promptsMissingResponses={promptsMissingResponses} />
+        <SomeGoalsHaveNoPromptResponse
+          regionId={regionId}
+          promptsMissingResponses={promptsMissingResponses}
+          goalsMissingResponses={goalsMissingResponses}
+        />
         )}
         <div className="margin-top-3">
           <ApproverStatusList approverStatus={approverStatusList} />

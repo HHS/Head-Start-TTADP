@@ -13,11 +13,13 @@ const {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   Objective,
   ObjectiveFile,
   ObjectiveResource,
-  ObjectiveCourse,
   ObjectiveTopic,
+  sequelize,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
@@ -75,6 +77,7 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
 };
 
 const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
+  // Get resource urls.
   const resourceUrls = resources
     .map((r) => {
       if (r.resource && r.resource.url) return r.resource.url;
@@ -82,6 +85,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((url) => url);
+  // Get resource ids.
   const resourceIds = resources
     .map((r) => {
       if (r.resource && r.resource.id) return r.resource.id;
@@ -89,6 +93,7 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((id) => id);
+  // Get all existing ARO resources.
   const originalAROResources = await getResourcesForActivityReportObjectives(
     activityReportObjectiveId,
     true,
@@ -206,7 +211,9 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   });
   const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
     || [];
+  // Get topics for ARO we need to delete.
   const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
+  // Get topics to keep.
   const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
   const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
 
@@ -394,6 +401,7 @@ const cacheGoalMetadata = async (
   reportId,
   isActivelyBeingEditing,
   prompts,
+  isMultiRecipientReport = false,
 ) => {
   // first we check to see if the activity report -> goal link already exists
   let arg = await ActivityReportGoal.findOne({
@@ -441,12 +449,45 @@ const cacheGoalMetadata = async (
     });
   }
 
-  return Promise.all([
+  const finalPromises = [
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
-    prompts && prompts.length
-      ? cachePrompts(goal.id, arg.id, prompts)
-      : Promise.resolve(),
-  ]);
+  ];
+
+  if (isMultiRecipientReport) {
+    // Check for fei goal prompts we need to update on the activity report goal.
+    const goalPrompts = await GoalFieldResponse.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        [sequelize.col('prompt."title"'), 'title'],
+        'response',
+      ],
+      where: { goalId: goal.id },
+      raw: true,
+      include: [
+        {
+          model: GoalTemplateFieldPrompt,
+          as: 'prompt',
+          required: true,
+          attributes: [],
+          where: {
+            title: 'FEI root cause',
+          },
+        },
+      ],
+    });
+
+    // if we have goal prompts call cache prompts with the goals prompts
+    if (goalPrompts && goalPrompts.length) {
+      finalPromises.push(
+        cachePrompts(goal.id, arg.id, goalPrompts),
+      );
+    }
+  } else if (prompts && prompts.length) {
+    finalPromises.push(
+      cachePrompts(goal.id, arg.id, prompts),
+    );
+  }
+  return Promise.all(finalPromises);
 };
 
 async function destroyActivityReportObjectiveMetadata(

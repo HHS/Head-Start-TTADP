@@ -2,14 +2,19 @@ import { Op } from 'sequelize';
 import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
-  DECIMAL_BASE, REPORT_STATUSES, determineMergeGoalStatus, GOAL_SOURCES,
+  DECIMAL_BASE,
+  REPORT_STATUSES,
+  determineMergeGoalStatus,
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
+  CollaboratorType,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
+  GoalStatusChange,
   GoalTemplateFieldPrompt,
   Grant,
   Objective,
@@ -33,6 +38,9 @@ import {
   Course,
   Program,
   File,
+  User,
+  UserRole,
+  Role,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -58,6 +66,7 @@ import {
   setSimilarityGroupAsUserMerged,
 } from '../services/goalSimilarityGroup';
 import Users from '../policies/user';
+import changeGoalStatus from './changeGoalStatus';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -90,6 +99,48 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
     id,
   },
   include: [
+    {
+      model: GoalStatusChange,
+      as: 'statusChanges',
+      attributes: ['oldStatus'],
+      required: false,
+    },
+    {
+      model: GoalCollaborator,
+      as: 'goalCollaborators',
+      attributes: ['id'],
+      required: false,
+      include: [
+        {
+          model: CollaboratorType,
+          as: 'collaboratorType',
+          where: {
+            name: 'Creator',
+          },
+          attributes: ['name'],
+        },
+        {
+          model: User,
+          as: 'user',
+          attributes: ['name'],
+          required: true,
+          include: [
+            {
+              model: UserRole,
+              as: 'userRoles',
+              include: [
+                {
+                  model: Role,
+                  as: 'role',
+                  attributes: ['name'],
+                },
+              ],
+              attributes: ['id'],
+            },
+          ],
+        },
+      ],
+    },
     {
       attributes: [
         'title',
@@ -660,12 +711,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
             ],
           );
 
-          if (
-            existingPrompt.allGoalsHavePromptResponse
-            && (
-              (currentPrompt.response || []).length || (currentPrompt.reportResponse || []).length
-            )
-          ) {
+          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
             existingPrompt.allGoalsHavePromptResponse = true;
           } else {
             existingPrompt.allGoalsHavePromptResponse = false;
@@ -696,7 +742,7 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
         );
         newPrompt.reportResponse = (currentPrompt.reportResponse || []);
 
-        if (newPrompt.response.length || newPrompt.reportResponse.length) {
+        if (newPrompt.response.length) {
           newPrompt.allGoalsHavePromptResponse = true;
         }
       }
@@ -712,6 +758,14 @@ function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
     }, promptsToReduce);
 }
 
+function wasGoalPreviouslyClosed(goal) {
+  if (goal.statusChanges) {
+    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
+  }
+
+  return false;
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -725,6 +779,16 @@ function reduceGoals(goals, forReport = false) {
       && g.status === currentValue.dataValues.status
     : g.name === currentValue.dataValues.name
       && g.status === currentValue.dataValues.status);
+
+  function getGoalCollaboratorDetails(collabType, dataValues) {
+    // eslint-disable-next-line max-len
+    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    return {
+      [`goal${collabType}`]: collaborator,
+      [`goal${collabType}Name`]: collaborator?.user?.name,
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+    };
+  }
 
   const r = goals.reduce((previousValues, currentValue) => {
     try {
@@ -747,11 +811,40 @@ function reduceGoals(goals, forReport = false) {
           currentValue.objectives,
           existingGoal.objectives,
         );
-        existingGoal.prompts = reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          existingGoal.prompts || [],
-        );
+
+        existingGoal.collaborators = existingGoal.collaborators || [];
+
+        existingGoal.collaborators = uniqBy([
+          ...existingGoal.collaborators,
+          {
+            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+          },
+        ], 'goalCreatorName');
+
+        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
+
+        if (forReport) {
+          existingGoal.prompts = reducePrompts(
+            forReport,
+            currentValue.dataValues.prompts || [],
+            existingGoal.prompts || [],
+          );
+        } else {
+          existingGoal.prompts = {
+            ...existingGoal.prompts,
+            [currentValue.grant.numberWithProgramTypes]: reducePrompts(
+              forReport,
+              currentValue.dataValues.prompts || [],
+              [], // we don't want to combine existing prompts if reducing for the RTR
+            ),
+          };
+          existingGoal.source = {
+            ...existingGoal.source,
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+          };
+        }
         return previousValues;
       }
 
@@ -764,6 +857,22 @@ function reduceGoals(goals, forReport = false) {
 
         return date;
       })();
+
+      let { source } = currentValue.dataValues;
+      let prompts = reducePrompts(
+        forReport,
+        currentValue.dataValues.prompts || [],
+        [],
+      );
+
+      if (!forReport) {
+        source = {
+          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+        };
+        prompts = {
+          [currentValue.grant.numberWithProgramTypes]: prompts,
+        };
+      }
 
       const goal = {
         ...currentValue.dataValues,
@@ -782,15 +891,24 @@ function reduceGoals(goals, forReport = false) {
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
-        prompts: reducePrompts(
-          forReport,
-          currentValue.dataValues.prompts || [],
-          [],
-        ),
+        prompts,
         isNew: false,
         endDate,
-        source: currentValue.dataValues.source,
+        source,
+        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
       };
+
+      goal.collaborators = [
+        {
+          goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+          ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+          ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+        },
+      ];
+
+      goal.collaborators = goal.collaborators.filter(
+        (c) => c.goalCreatorName !== null,
+      );
 
       return [...previousValues, goal];
     } catch (err) {
@@ -1087,8 +1205,10 @@ export async function goalByIdAndRecipient(id, recipientId) {
 
 export async function goalsByIdAndRecipient(ids, recipientId) {
   let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
+
   goals = goals.map((goal) => ({
     ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
       .map((objective) => {
         const o = {
@@ -1136,18 +1256,23 @@ export async function goalsByIdAndRecipient(ids, recipientId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  return Goal.findOne({
+  const goal = Goal.findOne({
     attributes: [
       'name',
       'id',
       'status',
       'createdVia',
-      'previousStatus',
     ],
     where: {
       id: goalId,
     },
     include: [
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: Grant,
         as: 'grant',
@@ -1167,6 +1292,12 @@ export async function goalByIdWithActivityReportsAndRegions(goalId) {
       },
     ],
   });
+
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
+    goal.previousStatus = goal.statusChanges[goal.statusChanges.length - 1].oldStatus;
+  }
+
+  return goal;
 }
 
 async function cleanupObjectivesForGoal(goalId, currentObjectives) {
@@ -1282,27 +1413,16 @@ export async function createOrUpdateGoals(goals) {
     }
 
     if (!newGoal) {
-      newGoal = await Goal.findOne({
-        where: {
-          grantId,
-          status: {
-            [Op.not]: 'Closed',
-          },
-          name: options.name.trim(),
-        },
+      newGoal = await Goal.create({
+        grantId,
+        name: options.name.trim(),
+        status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
+        isFromSmartsheetTtaPlan: false,
+        rtrOrder: rtrOrder + 1,
       });
-      if (!newGoal) {
-        newGoal = await Goal.create({
-          grantId,
-          name: options.name.trim(),
-          status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
-          isFromSmartsheetTtaPlan: false,
-          rtrOrder: rtrOrder + 1,
-        });
-      }
     }
 
-    if (isCurated) {
+    if (isCurated && prompts) {
       await setFieldPromptsForCuratedTemplate([newGoal.id], prompts);
     }
 
@@ -1423,7 +1543,7 @@ export async function createOrUpdateGoals(goals) {
           rtrOrder: index + 1,
         });
 
-        if (objective.supportType && objective.supportType !== supportType) {
+        if (supportType && objective.supportType !== supportType) {
           objective.set({ supportType });
         }
 
@@ -2026,39 +2146,19 @@ async function createObjectivesForGoal(goal, objectives, report) {
         savedObjective = existingObjective;
       }
     }
-
-    // this will save all our objective join table data
-    // however, in the case of the Activity Report, we can't really delete
-    // unused join table data, so we'll just create any missing links
-    // so that the metadata is saved properly
-
-    const deleteUnusedAssociations = false;
-    const metadata = await saveObjectiveAssociations(
-      savedObjective,
-      resources,
+    return {
+      ...savedObjective.toJSON(),
+      status,
       topics,
+      resources,
       files,
       courses,
-      deleteUnusedAssociations,
-    );
-
-    // this will link our objective to the activity report through
-    // activity report objective and then link all associated objective data
-    // to the activity report objective to capture this moment in time
-    await cacheObjectiveMetadata(
-      savedObjective,
-      report.id,
-      {
-        ...metadata,
-        status,
-        closeSuspendContext,
-        closeSuspendReason,
-        ttaProvided: objective.ttaProvided,
-        order: index,
-        supportType,
-      },
-    );
-    return savedObjective;
+      ttaProvided: objective.ttaProvided,
+      closeSuspendReason,
+      closeSuspendContext,
+      index,
+      supportType,
+    };
   }));
 }
 
@@ -2083,6 +2183,8 @@ export async function saveGoalsForReport(goals, report) {
     const endDate = goal.endDate && goal.endDate.toLowerCase() !== 'invalid date' ? goal.endDate : null;
     const isActivelyBeingEditing = goal.isActivelyBeingEditing
       ? goal.isActivelyBeingEditing : false;
+
+    const isMultiRecipientReport = (goal.grantIds.length > 1);
 
     return Promise.all(goal.grantIds.map(async (grantId) => {
       let newOrUpdatedGoal;
@@ -2146,11 +2248,7 @@ export async function saveGoalsForReport(goals, report) {
         newOrUpdatedGoal.set({ endDate });
       }
 
-      if (status && status !== newOrUpdatedGoal.status) {
-        newOrUpdatedGoal.set({ status });
-      }
-
-      if (prompts) {
+      if (prompts && !isMultiRecipientReport) {
         await setFieldPromptsForCuratedTemplate([newOrUpdatedGoal.id], prompts);
       }
 
@@ -2164,6 +2262,7 @@ export async function saveGoalsForReport(goals, report) {
         report.id,
         isActivelyBeingEditing,
         prompts || null,
+        isMultiRecipientReport,
       );
 
       // and pass the goal to the objective creation function
@@ -2172,6 +2271,53 @@ export async function saveGoalsForReport(goals, report) {
 
       return newOrUpdatedGoal;
     }));
+  }));
+
+  const uniqueObjectives = uniqBy(currentObjectives, 'id');
+  await Promise.all(uniqueObjectives.map(async (savedObjective) => {
+    const {
+      status,
+      index,
+      topics,
+      files,
+      resources,
+      closeSuspendContext,
+      closeSuspendReason,
+      ttaProvided,
+      supportType,
+      courses,
+    } = savedObjective;
+
+    // this will save all our objective join table data
+    // however, in the case of the Activity Report, we can't really delete
+    // unused join table data, so we'll just create any missing links
+    // so that the metadata is saved properly
+    const deleteUnusedAssociations = false;
+    const metadata = await saveObjectiveAssociations(
+      savedObjective,
+      resources,
+      topics,
+      files,
+      courses,
+      deleteUnusedAssociations,
+    );
+
+    // this will link our objective to the activity report through
+    // activity report objective and then link all associated objective data
+    // to the activity report objective to capture this moment in time
+    return cacheObjectiveMetadata(
+      savedObjective,
+      report.id,
+      {
+        ...metadata,
+        status,
+        closeSuspendContext,
+        closeSuspendReason,
+        ttaProvided,
+        order: index,
+        supportType,
+      },
+    );
   }));
 
   const currentGoalIds = currentGoals.flat().map((g) => g.id);
@@ -2232,6 +2378,7 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
 /**
  * Updates a goal status by id
  * @param {number[]} goalIds
+ * @param {number} userId
  * @param {string} oldStatus
  * @param {string} newStatus
  * @param {string} closeSuspendReason
@@ -2241,12 +2388,17 @@ export function verifyAllowedGoalStatusTransition(oldStatus, newStatus, previous
  */
 export async function updateGoalStatusById(
   goalIds,
+  userId,
   oldStatus,
   newStatus,
   closeSuspendReason,
   closeSuspendContext,
   previousStatus,
 ) {
+  // Since reason cannot be null, but sometimes we just can't know the reason (or we don't ask),
+  // a default value of "Unknown" is used.
+  const reason = closeSuspendReason?.trim() || 'Unknown';
+
   // first, we verify that the transition is allowed
   const allowed = verifyAllowedGoalStatusTransition(
     oldStatus,
@@ -2259,22 +2411,13 @@ export async function updateGoalStatusById(
     return false;
   }
 
-  // finally, if everything is golden, we update the goal
-  const g = await Goal.update({
-    status: newStatus,
-    closeSuspendReason,
-    closeSuspendContext,
-    previousStatus: oldStatus,
-  }, {
-    where: {
-      id: goalIds,
-    },
-    returning: true,
-    individualHooks: true,
-  });
-
-  const [, updated] = g;
-  return updated;
+  return Promise.all(goalIds.map((goalId) => changeGoalStatus({
+    goalId,
+    userId,
+    newStatus,
+    reason,
+    context: closeSuspendContext,
+  })));
 }
 
 export async function getGoalsForReport(reportId) {
@@ -2580,10 +2723,6 @@ const fieldMappingForDeduplication = {
 export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.values(countObject)
   .some((grants) => Object.values(grants).some((c) => c > 1));
 
-function goalGroupContainsClosedCuratedGoal(goalGroup) {
-  return goalGroup.some((goal) => goal.containsClosedCuratedGoal);
-}
-
 /**
 * @param {Number} recipientId
 * @returns {
@@ -2597,11 +2736,11 @@ function goalGroupContainsClosedCuratedGoal(goalGroup) {
 *  ids: number[]
 * }[]
 */
-export async function getGoalIdsBySimilarity(recipientId, user = null) {
+export async function getGoalIdsBySimilarity(recipientId, regionId, user = null) {
   /**
    * if a user has the ability to merged closed curated goals, we will show them in the UI
    */
-  const allowClosedCuratedGoal = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
+  const hasClosedMergeGoalOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
   const similiarityWhere = {
     userHasInvalidated: false,
@@ -2612,7 +2751,8 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   const existingRecipientGroups = await getSimilarityGroupsByRecipientId(
     recipientId,
     similiarityWhere,
-    allowClosedCuratedGoal,
+    hasClosedMergeGoalOverride,
+    regionId,
   );
 
   if (existingRecipientGroups.length) {
@@ -2633,6 +2773,12 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     return uniq([id, ...matches.map((match) => match.id)]);
   });
 
+  const invalidStatusesForReportGoals = [
+    REPORT_STATUSES.SUBMITTED,
+    REPORT_STATUSES.DRAFT,
+    REPORT_STATUSES.NEEDS_ACTION,
+  ];
+
   // convert the ids to a big old database query
   const goalGroups = await Promise.all(goalIdGroups.map((group) => Goal.findAll({
     attributes: ['id', 'status', 'name', 'source', 'goalTemplateId', 'grantId'],
@@ -2641,10 +2787,25 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     },
     include: [
       {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus', 'newStatus'],
+        required: false,
+      },
+      {
         model: ActivityReportGoal,
         as: 'activityReportGoals',
         attributes: ['goalId', 'activityReportId'],
         required: false,
+        include: [{
+          model: ActivityReport,
+          as: 'activityReport',
+          required: false,
+          attributes: ['id', 'calculatedStatus'],
+          where: {
+            calculatedStatus: invalidStatusesForReportGoals,
+          },
+        }],
       },
       {
         model: Grant,
@@ -2688,18 +2849,22 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
     }
   });
 
-  // filter out goal groups that include multiple goals on the same report
-  const filteredGoalGroups = goalGroups.filter((group) => {
+  const filteredGoalGroups = goalGroups
+    .filter((group) => {
+    // filter out goals with weird FEI responses
     // eslint-disable-next-line max-len
-    const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
+      const uniqueFieldResponses = uniq(group.map((goal) => goal.responses.map((response) => response.response)).flat(2));
 
-    if (uniqueFieldResponses.length > 2) {
-      return false;
-    }
-    const reportCount = getReportCountForGoals(group);
+      if (uniqueFieldResponses.length > 2) {
+        return false;
+      }
 
-    return !hasMultipleGoalsOnSameActivityReport(reportCount);
-  });
+      // filter out goal groups that include multiple goals on the same report
+      const reportCount = getReportCountForGoals(group);
+      const goalsNotOnTheSameReport = !hasMultipleGoalsOnSameActivityReport(reportCount);
+
+      return goalsNotOnTheSameReport;
+    });
 
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
@@ -2707,11 +2872,26 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
         return previous;
       }
 
+      let closedCurated = false;
+      if (current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+        closedCurated = current.status === GOAL_STATUS.CLOSED;
+      }
+
+      // goal on an active report
+      let isOnActiveReport = false;
+      if (current.activityReportGoals.length) {
+        isOnActiveReport = current.activityReportGoals
+          .some((arg) => arg.activityReport);
+      }
+
+      const excludedIfNotAdmin = isOnActiveReport || closedCurated;
+
       // see if we can find an existing goal
       const existingGoal = findOrFailExistingGoal(current, previous, fieldMappingForDeduplication);
       // if we found an existing goal,
       // we'll add the current goal's ID to the existing goal's ID array
-      if (existingGoal) {
+
+      if (existingGoal && existingGoal.excludedIfNotAdmin === excludedIfNotAdmin) {
         existingGoal.ids.push(current.id);
         return previous;
       }
@@ -2724,11 +2904,17 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
           status: current.status,
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
+          excludedIfNotAdmin,
+          grantId: grantLookup[current.grantId],
         },
       ];
     }, []));
 
-  const groupsWithMoreThanOneGoal = goalGroupsDeduplicated.filter((group) => group.length > 1);
+  const groupsWithMoreThanOneGoalAndMoreGoalsThanGrants = goalGroupsDeduplicated
+    .filter((group) => {
+      const grantIds = uniq(group.map((goal) => goal.grantId));
+      return group.length > 1 && group.length !== grantIds.length;
+    });
 
   // save the groups to the database
   // there should also always be an empty group
@@ -2736,15 +2922,20 @@ export async function getGoalIdsBySimilarity(recipientId, user = null) {
   // and that we've run these computations
 
   await Promise.all(
-    [...groupsWithMoreThanOneGoal, []]
+    [...groupsWithMoreThanOneGoalAndMoreGoalsThanGrants, []]
       .map((gg) => (
         createSimilarityGroup(
           recipientId,
-          uniq(gg.map((g) => g.ids).flat()),
+          gg,
         ))),
   );
 
-  return getSimilarityGroupsByRecipientId(recipientId, similiarityWhere, allowClosedCuratedGoal);
+  return getSimilarityGroupsByRecipientId(
+    recipientId,
+    similiarityWhere,
+    hasClosedMergeGoalOverride,
+    regionId,
+  );
 }
 
 /**
@@ -2860,8 +3051,6 @@ export function determineFinalGoalValues(selectedGoals, finalGoal) {
     source: finalGoal.source,
     isFromSmartsheetTtaPlan: finalGoal.isFromSmartsheetTtaPlan,
     status: finalStatus,
-    closeSuspendReason: finalGoal.closeSuspendReason,
-    closeSuspendContext: finalGoal.closeSuspendContext,
   };
 }
 
@@ -2982,6 +3171,12 @@ export async function mergeGoals(
     ...finalGoalValues,
     grantId,
   }));
+
+  // record the merge as complete
+  await setSimilarityGroupAsUserMerged(
+    goalSimiliarityGroupId,
+    finalGoalId,
+  );
 
   const newGoals = await Goal.bulkCreate(
     goalsToBulkCreate,
@@ -3112,12 +3307,6 @@ export async function mergeGoals(
     return u;
   }));
 
-  // record the merge as complete
-  await setSimilarityGroupAsUserMerged(
-    goalSimiliarityGroupId,
-    finalGoalId,
-  );
-
   return newGoals;
 }
 
@@ -3224,8 +3413,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   }
 
   if (goalsForNameCheck.length) {
+    message = `A goal with that name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+  }
+
+  if (goalsForNameCheck.length && !data.createMissingGoals) {
     isError = true;
-    message = `Goal name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
   }
 
   if (isError) {
@@ -3242,7 +3434,11 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     endDate = data.goalDate;
   }
 
-  const goals = await Goal.bulkCreate(grantIds.map((grantId) => ({
+  const grantsToCreateGoalsFor = grantIds.filter(
+    (g) => !grantsForWhomGoalAlreadyExists.includes(g),
+  );
+
+  const goals = await Goal.bulkCreate(grantsToCreateGoalsFor.map((grantId) => ({
     name,
     grantId,
     source: data.goalSource || null,
@@ -3303,7 +3499,10 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport = await ActivityReport.create(reportData);
 
     await Promise.all([
-      ActivityReportGoal.bulkCreate(goalIds.map((goalId) => ({
+      ActivityReportGoal.bulkCreate([
+        ...goalIds,
+        ...goalsForNameCheck.map((g) => g.id),
+      ].map((goalId) => ({
         activityReportId: activityReport.id,
         goalId,
         isActivelyEdited: true,
@@ -3324,8 +3523,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
     activityReport,
     isError,
     message,
-    grantsForWhomGoalAlreadyExists: [],
-    grantsForWhichGoalWillBeCreated: [],
+    grantsForWhomGoalAlreadyExists,
   };
 }
 
@@ -3356,7 +3554,7 @@ Exampled request body, the data param:
   }
 }
  */
-export async function closeMultiRecipientGoalsFromAdmin(data) {
+export async function closeMultiRecipientGoalsFromAdmin(data, userId) {
   const {
     selectedGoal,
     closeSuspendContext,
@@ -3390,11 +3588,12 @@ export async function closeMultiRecipientGoalsFromAdmin(data) {
     isError: false,
     goals: await updateGoalStatusById(
       goalIds,
+      userId,
       status,
       GOAL_STATUS.CLOSED,
       closeSuspendReason,
       closeSuspendContext,
-      GOAL_STATUS.CLOSED,
+      [GOAL_STATUS.CLOSED],
     ),
   };
 }

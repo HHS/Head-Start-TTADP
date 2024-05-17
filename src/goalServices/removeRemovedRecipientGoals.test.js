@@ -90,7 +90,6 @@ describe('removeRemovedRecipientsGoals', () => {
       name: 'This is an existing goal',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -116,7 +115,6 @@ describe('removeRemovedRecipientsGoals', () => {
       name: 'This is an existing goal',
       status: 'In Progress',
       grantId: grantTwo.id,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -142,7 +140,6 @@ describe('removeRemovedRecipientsGoals', () => {
       name: 'This is another existing goal',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
       createdVia: 'activityReport',
     });
 
@@ -156,7 +153,6 @@ describe('removeRemovedRecipientsGoals', () => {
       name: 'This is another existing goal',
       status: 'In Progress',
       grantId: grantTwo.id,
-      previousStatus: 'Not Started',
       onApprovedAR: false,
       createdVia: 'activityReport',
     });
@@ -238,7 +234,7 @@ describe('removeRemovedRecipientsGoals', () => {
     });
 
     await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id } })),
+      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
     );
 
     await Promise.all(

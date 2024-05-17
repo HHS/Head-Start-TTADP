@@ -17,6 +17,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 import ObjectiveStatusSuspendReason from '../ObjectiveStatusSuspendReason';
 import ObjectiveSupportType from '../ObjectiveSupportType';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 
 const [
   objectiveTitleError,
@@ -120,18 +121,27 @@ export default function ObjectiveForm({
       setObjectiveError(index, newErrors);
     }
   };
-  const validateResources = () => {
-    let error = <></>;
 
-    const validated = validateListOfResources(resources);
-
+  const validateResourcesPassed = (newResources) => {
+    const validated = validateListOfResources(newResources);
+    let error;
     if (!validated) {
       error = <span className="usa-error-message">{objectiveResourcesError}</span>;
+    } else {
+      error = <></>;
     }
 
     const newErrors = [...errors];
     newErrors.splice(OBJECTIVE_FORM_FIELD_INDEXES.RESOURCES, 1, error);
     setObjectiveError(index, newErrors);
+  };
+
+  const validateResources = () => {
+    validateResourcesPassed(resources);
+  };
+
+  const validateResourcesOnRemove = (newResources) => {
+    validateResourcesPassed(newResources);
   };
 
   const setSuspendReasonError = () => {
@@ -182,6 +192,7 @@ export default function ObjectiveForm({
         isLoading={isAppLoading}
         userCanEdit={userCanEdit}
         toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
+        validateOnRemove={validateResourcesOnRemove}
       />
       { title && (
       <ObjectiveFiles
@@ -217,13 +228,22 @@ export default function ObjectiveForm({
         error={errors[OBJECTIVE_FORM_FIELD_INDEXES.STATUS_SUSPEND_REASON]}
       />
 
-      <ObjectiveSupportType
-        onBlurSupportType={validateSupportType}
-        supportType={supportType}
-        onChangeSupportType={onChangeSupportType}
-        inputName={`objective-support-type-${index}`}
-        error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          userCanEdit,
+          goalStatus !== 'Closed',
+        ]}
+        label="Support type"
+        value={supportType}
+      >
+        <ObjectiveSupportType
+          onBlurSupportType={validateSupportType}
+          supportType={supportType || ''}
+          onChangeSupportType={onChangeSupportType}
+          inputName={`objective-support-type-${index}`}
+          error={errors[OBJECTIVE_FORM_FIELD_INDEXES.SUPPORT_TYPE]}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <ObjectiveStatus
         status={status}

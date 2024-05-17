@@ -38,6 +38,8 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4598'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
+    collaborators: [],
+    ids: [4598],
   },
   ];
 
@@ -51,9 +53,12 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4599'],
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
+    collaborators: [],
+    ids: [4599],
   },
   {
     id: 4600,
+    ids: [4600],
     goalStatus: 'Not Started',
     createdOn: '2021-07-15',
     goalText: 'This is goal text 2.',
@@ -62,12 +67,14 @@ describe('Goals and Objectives', () => {
     goalNumbers: ['G-4600'],
     reasons: ['Monitoring | Deficiency'],
     objectives: [],
+    collaborators: [],
   },
   ];
 
   const filterStatusGoals = [
     {
       id: 4601,
+      ids: [4601],
       goalStatus: 'Not Started',
       createdOn: '2021-07-15',
       goalText: 'This is goal text 2.',
@@ -76,6 +83,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4601'],
       reasons: ['Monitoring | Deficiency'],
       objectives: [],
+      collaborators: [],
     },
   ];
 
@@ -104,12 +112,6 @@ describe('Goals and Objectives', () => {
     const userForContext = {
       ...user,
     };
-
-    if (canMergeGoals) {
-      userForContext.flags = [
-        'merge_goals',
-      ];
-    }
 
     render(
       <Router history={memoryHistory}>
@@ -255,6 +257,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
+      collaborators: [],
     },
     ];
 
@@ -297,9 +300,9 @@ describe('Goals and Objectives', () => {
     fetchMock.get(newGoalsUrl, {
       count: 3,
       goalRows: [
-        { id: 1, ...goals[0] },
-        { id: 2, ...goals[0] },
-        { id: 3, ...goals[0] },
+        { ...goals[0], id: 1 },
+        { ...goals[0], id: 2 },
+        { ...goals[0], id: 3 },
       ],
       statuses: defaultStatuses,
     });
@@ -331,7 +334,8 @@ describe('Goals and Objectives', () => {
       { rows: [], count: 0 },
     );
     const goalToUse = {
-      id: 0,
+      id: 1,
+      ids: [1, 2],
       goalStatus: 'Not Started',
       createdOn: '2021-06-15',
       goalText: '',
@@ -340,6 +344,7 @@ describe('Goals and Objectives', () => {
       goalNumbers: ['G-4598'],
       reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
       objectives: [],
+      collaborators: [],
     };
     const goalCount = 60;
     const goalsToDisplay = [];

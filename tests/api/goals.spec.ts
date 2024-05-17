@@ -21,7 +21,7 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     updatedAt: Joi.date(),
     deleted: Joi.any().allow(null),
   });
-  
+
   const grantSchema = Joi.object({
     goalId: Joi.number(),
     programTypes: Joi.array(),
@@ -49,12 +49,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     recipient: recipientSchema,
     inactivationDate: Joi.any().allow(null),
     inactivationReason: Joi.any().allow(null),
-    deleted: Joi.any().allow(null)
-  });
-
-  const promptsSchema = Joi.object({
-    title: Joi.string(),
-    response: Joi.array().items(Joi.string()),
+    deleted: Joi.any().allow(null),
+    recipientNameWithPrograms: Joi.string()
   });
 
   const schema = Joi.array().items(Joi.object({
@@ -71,10 +67,17 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     grants: Joi.array().items(grantSchema),
     grantIds: Joi.array().items(Joi.number()),
     isNew: Joi.boolean(),
-    prompts: Joi.array().items(promptsSchema),
+    collaborators: Joi.array().items(Joi.any().allow(null)),
+    prompts: Joi.object(),
+    source: Joi.any(),
+    statusChanges: Joi.array().items(Joi.object({
+      oldStatus: Joi.string(),
+      newStatus: Joi.string(),
+    })),
+    isReopenedGoal: Joi.boolean(),
   }));
-  await validateSchema(response, schema, expect);
 
+  await validateSchema(response, schema, expect);
 });
 
 test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
@@ -88,11 +91,11 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
   const recipientSchema = Joi.object({
     id: Joi.number()
   });
-  
+
   const programSchema = Joi.object({
     programType: Joi.string()
   });
-  
+
   const grantSchema = Joi.object({
     numberWithProgramTypes: Joi.string(),
     id: Joi.number(),
@@ -102,7 +105,7 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
     recipient: recipientSchema,
     programs: Joi.array().items(programSchema)
   });
-  
+
   const schema = Joi.object({
     goalTemplateId: Joi.number().allow(null),
     endDate: Joi.string().allow(null),
@@ -128,9 +131,14 @@ test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
         response: Joi.array().items(
           Joi.string()
         ),
-        prompt: Joi.string(),     
-       }),
-      ),  
+        prompt: Joi.string(),
+      }),
+    ),
+    goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+    statusChanges: Joi.array().items(Joi.object({
+      oldStatus: Joi.string(),
+      newStatus: Joi.string(),
+    })),
   });
 
   await validateSchema(response, schema, expect);
@@ -141,7 +149,7 @@ test('put /goals/changeStatus', async ({ request }) => {
     `${root}/goals/changeStatus`,
     {
       data: {
-        goalIds: [3], 
+        goalIds: [3],
         oldStatus: GOAL_STATUS.NOT_STARTED,
         newStatus: GOAL_STATUS.CLOSED,
         closeSuspendReason: CLOSE_SUSPEND_REASONS[0],
@@ -202,15 +210,15 @@ test('post /', async ({ request }) => {
 // ----------------------------------------
 // test('delete /', async ({ request }) => {
 //   let validId = 5;
-// 
+//
 //   // So this test fails when it's run too quickly after the previous /post
 //   // because it hasn't finished committing the new goal to the
 //   // database?
 //   await new Promise((res) => setTimeout(res, 1000));
-// 
+//
 //   // This is an attempt to ensure these tests can be run locally
 //   // without having to drop and reseed the database between each run.
-//   // It shouldn't ever run infinitely because if we made it to this test, 
+//   // It shouldn't ever run infinitely because if we made it to this test,
 //   // it means we actually created a goal in the previous test, so there *should*
 //   // be something to find.
 //   while(true) {
@@ -218,23 +226,23 @@ test('post /', async ({ request }) => {
 //       `${root}/goals/${validId}/recipient/11`,
 //       { headers: { 'playwright-user-id': '1' } },
 //     );
-// 
+//
 //     if (response.status() === 200) {
 //       break;
 //     }
-// 
+//
 //     validId++;
-// 
+//
 //     // Okay, maybe just reseed your local database at this point.
 //     if (validId > 100) {
 //       throw new Error('Could not find goal id to delete');
 //     }
 //   }
-// 
+//
 //   const response = await request.delete(
 //     `${root}/goals?goalIds[]=${validId}`,
 //     { headers: { 'playwright-user-id': '1' } },
 //   );
-// 
+//
 //   expect(response.status()).toBe(200);
 // });

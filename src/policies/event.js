@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class EventReport {
@@ -84,6 +85,15 @@ export default class EventReport {
   }
 
   canDelete() {
+    const ALLOWED_DELETED_STATUS = [
+      TRAINING_REPORT_STATUSES.NOT_STARTED,
+      TRAINING_REPORT_STATUSES.SUSPENDED,
+    ];
+
+    if (!ALLOWED_DELETED_STATUS.includes(this.eventReport.data.status)) {
+      return false;
+    }
+
     return this.isAdmin() || this.isAuthor();
   }
 
@@ -94,6 +104,15 @@ export default class EventReport {
     return !!this.permissions.find((p) => [
       SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS,
     ].includes(p.scopeId) && p.regionId === regionId);
+  }
+
+  canGetGroupsForEditingSession() {
+    if (this.isAdmin()) { return true; }
+
+    return !!this.permissions.find((p) => [
+      SCOPES.READ_WRITE_TRAINING_REPORTS,
+      SCOPES.POC_TRAINING_REPORTS,
+    ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
   }
 
   isAdmin() {
@@ -115,7 +134,6 @@ export default class EventReport {
   }
 
   // some handy & fun aliases
-
   canEditEvent() {
     return this.isAdmin() || this.isAuthor() || this.isPoc();
   }

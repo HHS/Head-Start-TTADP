@@ -23,7 +23,6 @@ import siteAlertsRouter from './siteAlerts';
 import transactionWrapper from './transactionWrapper';
 import search from './search';
 import settingsRouter from './settings';
-import rttapaRouter from './rttapaReports';
 import groupsRouter from './groups';
 import goalTemplatesRouter from './goalTemplates';
 import eventRouter from './events';
@@ -34,6 +33,7 @@ import communicationLogRouter from './communicationLog';
 import monitoringRouter from './monitoring';
 import coursesRouter from './courses';
 import { currentUserId } from '../services/currentUser';
+import objectiveRouter from './objectives';
 
 export const loginPath = '/login';
 
@@ -66,11 +66,11 @@ router.use('/widgets', widgetsRouter);
 router.use('/files', filesRouter);
 router.use('/recipient', recipientRouter);
 router.use('/goals', goalsRouter);
+router.use('/objectives', objectiveRouter);
 router.use('/topic', topicsRouter);
 router.use('/role', rolesRouter);
 router.use('/search', search);
 router.use('/settings', settingsRouter);
-router.use('/rttapa', rttapaRouter);
 router.use('/groups', groupsRouter);
 router.use('/alerts', siteAlertsRouter);
 router.use('/feeds', feedRouter);

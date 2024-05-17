@@ -6,6 +6,7 @@ import db, {
   Recipient,
   Grant,
   Goal,
+  GoalFieldResponse,
   File,
   Role,
   Objective,
@@ -20,6 +21,8 @@ import db, {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCourse,
+  ActivityReportGoalFieldResponse,
+  GoalTemplateFieldPrompt,
   CollaboratorRole,
   Resource,
   Topic,
@@ -122,7 +125,7 @@ describe('cacheCourses', () => {
     await Objective.destroy({ where: { id: objective.id }, force: true });
     await Goal.destroy({ where: { id: goal.id }, force: true });
     await destroyReport(activityReport);
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
   });
 
@@ -143,6 +146,9 @@ describe('cacheCourses', () => {
 describe('cacheGoalMetadata', () => {
   let activityReport;
   let goal;
+
+  let multiRecipientActivityReport;
+  let multiRecipientGoal;
 
   const mockUser = {
     id: faker.datatype.number(),
@@ -166,7 +172,27 @@ describe('cacheGoalMetadata', () => {
       userId: mockUser.id,
     });
 
+    multiRecipientActivityReport = await createReport({
+      activityRecipients: [
+        {
+          grantId,
+        },
+      ],
+      userId: mockUser.id,
+    });
+
     goal = await Goal.create({
+      grantId,
+      name: faker.lorem.sentence(20),
+      status: GOAL_STATUS.DRAFT,
+      timeframe: 'Short Term',
+      endDate: null,
+      isRttapa: null,
+      isActivelyEdited: false,
+      source: GOAL_SOURCES[0],
+    });
+
+    multiRecipientGoal = await Goal.create({
       grantId,
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.DRAFT,
@@ -178,12 +204,56 @@ describe('cacheGoalMetadata', () => {
       isActivelyEdited: false,
       source: GOAL_SOURCES[0],
     });
+
+    // Get GoalTemplateFieldPrompts where title = 'FEI root cause'.
+    const fieldPrompt = await GoalTemplateFieldPrompt.findOne({
+      where: {
+        title: 'FEI root cause',
+      },
+    });
+
+    // Create a GoalFieldResponse for the goal.
+    await GoalFieldResponse.create({
+      goalId: multiRecipientGoal.id,
+      goalTemplateFieldPromptId: fieldPrompt.id,
+      response: ['Family Circumstance', 'Facilities', 'Other ECE Care Options'],
+      onAr: true,
+      onApprovedAR: false,
+    });
   });
 
   afterAll(async () => {
-    await ActivityReportGoal.destroy({ where: { activityReportId: activityReport.id } });
+    // Get all ActivityReportGoals ids for our goals.
+    const activityReportGoalIds = await ActivityReportGoal.findAll({
+      where: {
+        goalId: [goal.id, multiRecipientGoal.id],
+      },
+    });
+
+    // Destroy all ActivityReportGoalFieldResponses for the activityReportGoalIds.
+    await ActivityReportGoalFieldResponse.destroy({
+      where: {
+        activityReportGoalId: activityReportGoalIds.map((arg) => arg.id),
+      },
+    });
+
+    await ActivityReportGoal.destroy({
+      where: {
+        activityReportId:
+      [
+        activityReport.id,
+        multiRecipientActivityReport.id,
+      ],
+      },
+    });
     await destroyReport(activityReport);
-    await Goal.destroy({ where: { id: goal.id }, force: true });
+    await destroyReport(multiRecipientActivityReport);
+    await GoalFieldResponse.destroy({
+      where: {
+        goalId: [goal.id, multiRecipientGoal.id],
+      },
+    });
+    await Goal.destroy({ where: { id: [goal.id, multiRecipientGoal.id] }, force: true });
     await User.destroy({ where: { id: mockUser.id } });
   });
 
@@ -212,8 +282,6 @@ describe('cacheGoalMetadata', () => {
       name: goal.name,
       status: GOAL_STATUS.DRAFT,
       timeframe: 'Short Term',
-      closeSuspendReason: null,
-      closeSuspendContext: null,
       endDate: null,
       isRttapa: null,
       isActivelyEdited: false,
@@ -222,7 +290,7 @@ describe('cacheGoalMetadata', () => {
 
     expect(arg[0].dataValues).toMatchObject(data);
 
-    await cacheGoalMetadata(goal, activityReport.id, true);
+    await cacheGoalMetadata(goal, activityReport.id, true, [], true);
 
     arg = await ActivityReportGoal.findAll({
       where: {
@@ -237,6 +305,78 @@ describe('cacheGoalMetadata', () => {
     };
     expect(arg).toHaveLength(1);
     expect(arg[0].dataValues).toMatchObject(updatedData);
+  });
+
+  it('correctly handles multi recipient prompts', async () => {
+    let arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientActivityReport.id,
+      },
+    });
+
+    expect(arg).toHaveLength(0);
+
+    await cacheGoalMetadata(
+      multiRecipientGoal,
+      multiRecipientActivityReport.id,
+      false,
+      [], // Don't pass prompts should come from goal.
+      true,
+    );
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientGoal.id,
+      },
+    });
+
+    expect(arg).toHaveLength(1);
+
+    // Get the ActivityReportGoalFieldResponses for the arg.id.
+    const fieldResponses = await ActivityReportGoalFieldResponse.findAll({
+      where: {
+        activityReportGoalId: arg[0].id,
+      },
+    });
+
+    expect(fieldResponses).toHaveLength(1);
+    expect(fieldResponses[0].dataValues.response).toEqual(['Family Circumstance', 'Facilities', 'Other ECE Care Options']);
+
+    // Update goal field reposone for the goal..
+    await GoalFieldResponse.update({
+      response: ['Family Circumstance UPDATED', 'New Response'],
+    }, {
+      where: {
+        goalId: multiRecipientGoal.id,
+      },
+    });
+
+    await cacheGoalMetadata(
+      multiRecipientGoal,
+      multiRecipientActivityReport.id,
+      false,
+      [], // Don't pass prompts should come from goal.
+      true,
+    );
+
+    arg = await ActivityReportGoal.findAll({
+      where: {
+        activityReportId: multiRecipientActivityReport.id,
+        goalId: multiRecipientGoal.id,
+      },
+    });
+    expect(arg).toHaveLength(1);
+
+    const updatedFieldResponses = await ActivityReportGoalFieldResponse.findAll({
+      where: {
+        activityReportGoalId: arg[0].id,
+      },
+    });
+
+    expect(updatedFieldResponses).toHaveLength(1);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
   });
 });
 
@@ -448,7 +588,7 @@ describe('cacheObjectiveMetadata', () => {
     await ActivityReport.destroy({ where: { id: report.id } });
     await Objective.destroy({ where: { id: objective.id }, force: true });
     await Goal.destroy({ where: { id: goal.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Course.destroy({ where: { id: [courseOne.id, courseTwo.id] } });
     await Recipient.destroy({ where: { id: recipient.id } });
     await Promise.all(roles.map(async (role) => CollaboratorRole.destroy({
