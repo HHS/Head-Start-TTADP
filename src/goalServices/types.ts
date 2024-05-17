@@ -142,7 +142,7 @@ interface IObjective {
   onApprovedAR: boolean;
   onAR: boolean;
   rtrOrder: number;
-  activityReportObjectives: IActivityReportObjectivesFromDB[];
+  activityReportObjectives?: IActivityReportObjectivesFromDB[];
   topics: ITopic[];
   resources: IResource[];
   files: IFile[];
@@ -186,6 +186,9 @@ interface IGoalForRTRQuery {
   rtrOrder: number;
   statusChanges: { oldStatus: string }[]
   objectives: IObjectiveModelInstance[];
+  collaborators?:{
+    [key: string]: string;
+  }[];
   goalCollaborators: {
     id: number;
     collaboratorType: { name: string };
@@ -226,6 +229,8 @@ interface IGoalForRTRForm extends IGoalForRTRQuery {
 type IGoalForRTRQueryWithReducedObjectives = Omit <IGoalForRTRForm, 'objectives'> & {
   isReopenedGoal: boolean;
   objectives: IReducedObjective[];
+  toJSON: () => IGoalForRTRQueryWithReducedObjectives;
+  dataValues: IGoalForRTRQueryWithReducedObjectives;
 };
 
 interface IGoal {
@@ -267,6 +272,7 @@ interface IGoal {
 
 interface IGoalModelInstance extends IGoal {
   dataValues?: IGoal
+  toJSON?: () => IGoal;
 }
 
 export {
