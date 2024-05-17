@@ -354,7 +354,7 @@ describe('Course dashboard', () => {
     jest.clearAllMocks();
   });
 
-  it('retrieves course count for ipd url\'s', async () => {
+  it('retrieves course count', async () => {
     const scopes = await filtersToScopes({
       'region.in': [REGION_ID],
       'startDate.win': '2021/01/01-2021/01/31',
@@ -363,6 +363,13 @@ describe('Course dashboard', () => {
 
     const result = await getCourseUrlWidgetData(scopes);
     expect(result).not.toBeNull();
+
+    const { coursesAssociatedWithActivityReports } = result;
+    const { headers, courses } = coursesAssociatedWithActivityReports;
+
+    expect(headers).not.toBeNull();
+    expect(headers.length).toBe(1);
+    expect(headers[0]).toBe('Jan-21');
 
     const expectedResults = [
       {
@@ -405,7 +412,7 @@ describe('Course dashboard', () => {
         ],
       },
     ];
-    expect(result).toEqual(expectedResults);
+    expect(courses).toEqual(expectedResults);
   });
 
   it('rolls up course data', async () => {
@@ -448,13 +455,20 @@ describe('Course dashboard', () => {
       },
     ];
 
-    const rolledUpData = await rollUpCourseUrlData(data);
+    const result = await rollUpCourseUrlData(data);
 
-    expect(rolledUpData).not.toBeNull();
-    expect(rolledUpData.length).toBe(3);
-    expect(rolledUpData[0].data.length).toBe(3);
-    expect(rolledUpData[1].data.length).toBe(3);
-    expect(rolledUpData[2].data.length).toBe(3);
+    const { headers, courses } = result;
+
+    expect(headers).not.toBeNull();
+    expect(headers.length).toBe(2);
+    expect(headers[0]).toBe('Jan-21');
+    expect(headers[1]).toBe('Feb-21');
+
+    expect(courses).not.toBeNull();
+    expect(courses.length).toBe(3);
+    expect(courses[0].data.length).toBe(3);
+    expect(courses[1].data.length).toBe(3);
+    expect(courses[2].data.length).toBe(3);
 
     const expectedResults = [
       {
@@ -501,6 +515,6 @@ describe('Course dashboard', () => {
       },
     ];
 
-    expect(rolledUpData).toEqual(expectedResults);
+    expect(courses).toEqual(expectedResults);
   });
 });
