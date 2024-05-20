@@ -46,20 +46,6 @@ export default (sequelize, DataTypes) => {
         otherKey: 'goalTemplateId',
         as: 'goalTemplates',
       });
-      Resource.hasMany(models.ObjectiveResource, { foreignKey: 'resourceId', as: 'objectiveResources' });
-      Resource.belongsToMany(models.Objective, {
-        through: models.ObjectiveResource,
-        foreignKey: 'resourceId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
-      });
-      Resource.hasMany(models.ObjectiveTemplateResource, { foreignKey: 'resourceId', as: 'objectiveTemplateResources' });
-      Resource.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateResource,
-        foreignKey: 'resourceId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
-      });
     }
   }
   Resource.init({
