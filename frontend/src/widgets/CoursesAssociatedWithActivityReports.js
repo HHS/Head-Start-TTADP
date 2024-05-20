@@ -14,7 +14,7 @@ export const parseValue = (value) => {
   }
   return parsedValue;
 };
-function CoursesAssociatedWIthActivityReports({
+function CoursesAssociatedWithActivityReports({
   data,
   loading,
   resetPagination,
@@ -135,7 +135,7 @@ function CoursesAssociatedWIthActivityReports({
   );
 }
 
-CoursesAssociatedWIthActivityReports.propTypes = {
+CoursesAssociatedWithActivityReports.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.shape({
       headers: PropTypes.arrayOf(PropTypes.string),
@@ -154,11 +154,11 @@ CoursesAssociatedWIthActivityReports.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-CoursesAssociatedWIthActivityReports.defaultProps = {
+CoursesAssociatedWithActivityReports.defaultProps = {
   data: { headers: [], courseUse: [] },
   resetPagination: false,
   setResetPagination: () => {},
   perPageNumber: COURSES_PER_PAGE,
 };
 
-export default CoursesAssociatedWIthActivityReports;
+export default CoursesAssociatedWithActivityReports;
