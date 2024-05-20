@@ -1,0 +1,7 @@
+# Ignore everything
+*
+
+!cf/scripts/*
+!common/scripts/*
+!db-backup/scripts/*
+!.cfignore
