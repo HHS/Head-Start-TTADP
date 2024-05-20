@@ -80,6 +80,8 @@ export default async function getCachedResponse(
         await redisClient.quit();
       }
     }
+  } else {
+    response = await responseCallback();
   }
 
   if (outputCallback) {
