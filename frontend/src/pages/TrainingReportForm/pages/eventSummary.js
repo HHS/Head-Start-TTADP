@@ -14,7 +14,7 @@ import {
 import { useFormContext, Controller } from 'react-hook-form';
 import {
   Label,
-  UswdsSelect,
+  Select as UswdsSelect,
   Fieldset,
   Radio,
   TextInput,

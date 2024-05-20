@@ -18,7 +18,7 @@ import {
   Fieldset,
   Label,
   Textarea,
-  UswdsSelect,
+  Select as UswdsSelect,
   Radio,
   Button,
   ErrorMessage,
