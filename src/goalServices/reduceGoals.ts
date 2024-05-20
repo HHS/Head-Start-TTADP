@@ -474,6 +474,7 @@ export function reduceGoals(
       }
 
       const goal = {
+        ...currentValue.dataValues,
         isCurated: currentValue.dataValues.isCurated,
         goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
         grantId: currentValue.grant.id,
