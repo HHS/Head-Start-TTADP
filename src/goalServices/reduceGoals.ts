@@ -265,14 +265,16 @@ export function reduceObjectivesForActivityReport(
 }
 
 /**
-   *
-   * @param {Array} newPrompts
-   * @param {Array} promptsToReduce
-   * @returns Array of reduced prompts
-   */
+ *
+ * @param {Boolean} forReport
+ * @param {Array} newPrompts
+ * @param {Array} promptsToReduce
+ * @returns Array of reduced prompts
+ */
 function reducePrompts(
-  newPrompts: IPrompt[] = [],
-  promptsToReduce: IPrompt[] = [],
+  forReport: boolean,
+  newPrompts:IPrompt[] = [],
+  promptsToReduce:IPrompt[] = [],
 ) {
   return newPrompts
     ?.reduce((previousPrompts, currentPrompt) => {
@@ -281,24 +283,32 @@ function reducePrompts(
 
       const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
       if (existingPrompt) {
-        existingPrompt.response = uniq(
-          [
-            ...existingPrompt.response,
-            ...(currentPrompt.response || []),
-            ...(currentPrompt.reportResponse || []),
-          ],
-        );
-        existingPrompt.reportResponse = uniq(
-          [
-            ...(existingPrompt.reportResponse || []),
-            ...(currentPrompt.reportResponse || []),
-          ],
-        );
+        if (!forReport) {
+          existingPrompt.response = uniq(
+            [...existingPrompt.response, ...currentPrompt.responses.flatMap((r) => r.response)],
+          );
+        }
 
-        if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
-          existingPrompt.allGoalsHavePromptResponse = true;
-        } else {
-          existingPrompt.allGoalsHavePromptResponse = false;
+        if (forReport) {
+          existingPrompt.response = uniq(
+            [
+              ...existingPrompt.response,
+              ...(currentPrompt.response || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
+          );
+          existingPrompt.reportResponse = uniq(
+            [
+              ...(existingPrompt.reportResponse || []),
+              ...(currentPrompt.reportResponse || []),
+            ],
+          );
+
+          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
+            existingPrompt.allGoalsHavePromptResponse = true;
+          } else {
+            existingPrompt.allGoalsHavePromptResponse = false;
+          }
         }
 
         return previousPrompts;
@@ -314,20 +324,24 @@ function reducePrompts(
         options: currentPrompt.options,
         validations: currentPrompt.validations,
         allGoalsHavePromptResponse: false,
-        response: [],
-        reportResponse: [],
       } as IPrompt;
 
-      newPrompt.response = uniq(
-        [
-          ...(currentPrompt.response || []),
-          ...(currentPrompt.reportResponse || []),
-        ],
-      );
-      newPrompt.reportResponse = (currentPrompt.reportResponse || []);
+      if (forReport) {
+        newPrompt.response = uniq(
+          [
+            ...(currentPrompt.response || []),
+            ...(currentPrompt.reportResponse || []),
+          ],
+        );
+        newPrompt.reportResponse = (currentPrompt.reportResponse || []);
 
-      if (newPrompt.response.length) {
-        newPrompt.allGoalsHavePromptResponse = true;
+        if (newPrompt.response.length) {
+          newPrompt.allGoalsHavePromptResponse = true;
+        }
+      }
+
+      if (!forReport) {
+        newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
       }
 
       return [
@@ -404,19 +418,29 @@ export function reduceGoals(
         ], 'goalCreatorName');
 
         existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
-
-        existingGoal.prompts = {
-          ...existingGoal.prompts,
-          [currentValue.grant.numberWithProgramTypes]: reducePrompts(
+        if (forReport) {
+          existingGoal.prompts = existingGoal.prompts || [];
+          existingGoal.prompts = reducePrompts(
+            forReport,
             currentValue.dataValues.prompts || [],
-            [], // we don't want to combine existing prompts if reducing for the RTR
-          ),
-        };
-        existingGoal.source = {
-          ...existingGoal.source,
-          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-        };
-
+            (existingGoal.prompts || []) as IPrompt[],
+          );
+        } else {
+          existingGoal.prompts = {
+            ...existingGoal.prompts,
+            [currentValue.grant.numberWithProgramTypes]: reducePrompts(
+              forReport,
+              currentValue.dataValues.prompts || [],
+              [], // we don't want to combine existing prompts if reducing for the RTR
+            ),
+          };
+          existingGoal.source = {
+            ...existingGoal.source as {
+              [key: string]: string;
+            },
+            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
+          };
+        }
         return previousValues;
       }
 
@@ -430,20 +454,24 @@ export function reduceGoals(
         return date;
       })();
 
-      const prompts = reducePrompts(
+      const { source: sourceForReport } = currentValue.dataValues;
+      const promptsForReport = reducePrompts(
+        forReport,
         currentValue.dataValues.prompts || [],
         [],
       );
 
-      const updatedSource = {
-        [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-      } as {
-        [key: string]: string;
-      };
+      let sourceForRTR: { [key: string]: string };
+      let sourceForPrompts: { [key: string]: IPrompt[] };
 
-      const updatedPrompts = {
-        [currentValue.grant.numberWithProgramTypes]: prompts,
-      };
+      if (!forReport) {
+        sourceForRTR = {
+          [currentValue.grant.numberWithProgramTypes]: sourceForReport,
+        };
+        sourceForPrompts = {
+          [currentValue.grant.numberWithProgramTypes]: promptsForReport,
+        };
+      }
 
       const goal = {
         isCurated: currentValue.isCurated,
@@ -458,8 +486,8 @@ export function reduceGoals(
         recipientId: currentValue.grant.recipientId,
         goalTemplateId: currentValue.goalTemplateId,
         createdVia: currentValue.createdVia,
-        source: updatedSource,
-        prompts: updatedPrompts,
+        source: forReport ? sourceForReport : sourceForRTR,
+        prompts: forReport ? promptsForReport : sourceForPrompts,
         isNew: false,
         onAR: currentValue.onAR,
         onApprovedAR: currentValue.onApprovedAR,

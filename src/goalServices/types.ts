@@ -243,7 +243,7 @@ interface IReducedGoal {
   createdVia: string;
   source: {
     [key: string]: string;
-  };
+  } | string;
   onAR: boolean;
   onApprovedAR: boolean;
   isCurated: boolean;
@@ -252,7 +252,7 @@ interface IReducedGoal {
   objectives: IReducedObjective[];
   prompts : {
     [x: string]: IPrompt[];
-  };
+  } | IPrompt[];
   statusChanges?: { oldStatus: string }[];
   goalNumber: string;
   goalNumbers: string[];

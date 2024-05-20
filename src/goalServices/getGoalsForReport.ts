@@ -20,9 +20,6 @@ const {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveCourse,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-  ActivityReportGoalFieldResponse,
   sequelize,
   Resource,
   ActivityReportGoal,
@@ -58,71 +55,33 @@ export default async function getGoalsForReport(reportId: number, goalIds: numbe
       [sequelize.col('grant.regionId'), 'regionId'],
       [sequelize.col('grant.recipient.id'), 'recipientId'],
       [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-      // [sequelize.literal(`(
-      //       SELECT
-      //         jsonb_agg( DISTINCT jsonb_build_object(
-      //           'promptId', gtfp.id ,
-      //           'ordinal', gtfp.ordinal,
-      //           'title', gtfp.title,
-      //           'prompt', gtfp.prompt,
-      //           'hint', gtfp.hint,
-      //           'caution', gtfp.caution,
-      //           'fieldType', gtfp."fieldType",
-      //           'options', gtfp.options,
-      //           'validations', gtfp.validations,
-      //           'response', gfr.response,
-      //           'reportResponse', argfr.response
-      //         ))
-      //       FROM "GoalTemplateFieldPrompts" gtfp
-      //       LEFT JOIN "GoalFieldResponses" gfr
-      //       ON gtfp.id = gfr."goalTemplateFieldPromptId"
-      //       AND gfr."goalId" = "Goal".id
-      //       LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-      //       ON gtfp.id = argfr."goalTemplateFieldPromptId"
-      //       AND argfr."activityReportGoalId" = "activityReportGoals".id
-      //       WHERE "goalTemplate".id = gtfp."goalTemplateId"
-      //       GROUP BY TRUE
-      //     )`), 'prompts'],
+      [sequelize.literal(`(
+            SELECT
+              jsonb_agg( DISTINCT jsonb_build_object(
+                'promptId', gtfp.id ,
+                'ordinal', gtfp.ordinal,
+                'title', gtfp.title,
+                'prompt', gtfp.prompt,
+                'hint', gtfp.hint,
+                'caution', gtfp.caution,
+                'fieldType', gtfp."fieldType",
+                'options', gtfp.options,
+                'validations', gtfp.validations,
+                'response', gfr.response,
+                'reportResponse', argfr.response
+              ))
+            FROM "GoalTemplateFieldPrompts" gtfp
+            LEFT JOIN "GoalFieldResponses" gfr
+            ON gtfp.id = gfr."goalTemplateFieldPromptId"
+            AND gfr."goalId" = "Goal".id
+            LEFT JOIN "ActivityReportGoalFieldResponses" argfr
+            ON gtfp.id = argfr."goalTemplateFieldPromptId"
+            AND argfr."activityReportGoalId" = "activityReportGoals".id
+            WHERE "goalTemplate".id = gtfp."goalTemplateId"
+            GROUP BY TRUE
+          )`), 'prompts'],
     ],
     include: [
-      {
-        model: GoalTemplateFieldPrompt,
-        as: 'prompts',
-        attributes: [
-          ['id', 'promptId'],
-          'ordinal',
-          'title',
-          'prompt',
-          'hint',
-          'fieldType',
-          'options',
-          'validations',
-        ],
-        required: false,
-        include: [
-          {
-            model: GoalFieldResponse,
-            as: 'responses',
-            attributes: ['response'],
-            required: false,
-          },
-          {
-            model: ActivityReportGoalFieldResponse,
-            as: 'reportResponses',
-            attributes: ['response'],
-            required: false,
-            include: [{
-              model: ActivityReportGoal,
-              as: 'activityReportGoal',
-              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
-              required: true,
-              where: {
-                reportId,
-              },
-            }],
-          },
-        ],
-      },
       {
         model: GoalStatusChange,
         as: 'statusChanges',
