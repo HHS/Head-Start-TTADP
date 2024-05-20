@@ -17,7 +17,8 @@ export async function getCourses() {
 }
 
 export const fetchCourseDashboardData = async (query) => {
-  const res = await get(join('/', 'api', 'courses', 'dashboard', `?${query}`));
+  const request = join('/', 'api', 'courses', 'dashboard', `?${query}`);
+  const res = await get(request);
   const data = await res.json();
 
   return {

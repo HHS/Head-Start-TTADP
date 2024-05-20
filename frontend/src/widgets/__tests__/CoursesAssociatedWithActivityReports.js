@@ -8,7 +8,7 @@ import {
   fireEvent,
   act,
 } from '@testing-library/react';
-import CoursesAssociatedWithActivityReports, { parseValue } from '../CoursesAssociatedWIthActivityReports';
+import CoursesAssociatedWithActivityReports, { parseValue } from '../CoursesAssociatedWithActivityReports';
 
 const emptyData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
