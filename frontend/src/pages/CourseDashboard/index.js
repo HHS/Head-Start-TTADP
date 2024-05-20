@@ -23,7 +23,7 @@ import { fetchCourseDashboardData } from '../../fetchers/courses';
 import UserContext from '../../UserContext';
 import { COURSE_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
-import CoursesAssociatedWIthActivityReports from '../../widgets/CoursesAssociatedWIthActivityReports';
+import CoursesAssociatedWithActivityReports from '../../widgets/CoursesAssociatedWIthActivityReports';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -181,7 +181,7 @@ export default function CourseDashboard() {
           allUserRegions={regions}
         />
       </Grid>
-      <CoursesAssociatedWIthActivityReports
+      <CoursesAssociatedWithActivityReports
         data={courseData.coursesAssociatedWithActivityReports}
         loading={isLoading}
         resetPagination={resetPagination}
