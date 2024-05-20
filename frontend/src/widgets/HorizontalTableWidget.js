@@ -1,19 +1,21 @@
 /* eslint-disable react/no-array-index-key */
 import React from 'react';
+import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import colors from '../colors';
 import './HorizontalTableWidget.scss';
 
-/*
 const trimLongURLs = (url) => {
   let newUrl = url;
-  if (newUrl.length >= 35) {
-    newUrl = newUrl.substring(0, 35);
+  if (newUrl.length >= 55) {
+    newUrl = newUrl.substring(0, 55);
     newUrl += '...';
   }
   return newUrl;
 };
-*/
 
 export default function HorizontalTableWidget(
   {
@@ -59,6 +61,29 @@ export default function HorizontalTableWidget(
     );
   };
 
+  const handleUrl = (url) => {
+    if (url.internalRedirect) {
+      return (
+        <Link to={url.internalRedirect}>
+          {url.heading}
+        </Link>
+      );
+    }
+    return (
+      <>
+        <a href={url.link} target="_blank" rel="noreferrer">
+          {trimLongURLs(url.heading)}
+        </a>
+        {' '}
+        <FontAwesomeIcon
+          color={colors.ttahubBlue}
+          icon={faArrowUpRightFromSquare}
+          size="xs"
+        />
+      </>
+    );
+  };
+
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
@@ -96,11 +121,7 @@ export default function HorizontalTableWidget(
                 <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
                   {
                     r.isUrl
-                      ? (
-                        <a href={r.link} target="_blank" rel="noreferrer">
-                          {r.heading}
-                        </a>
-                      )
+                      ? handleUrl(r)
                       : r.heading
                       }
                 </td>

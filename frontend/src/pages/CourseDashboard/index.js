@@ -6,6 +6,9 @@ import React, {
   useState,
   useCallback,
 } from 'react';
+import { Link } from 'react-router-dom';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
@@ -24,6 +27,7 @@ import UserContext from '../../UserContext';
 import { COURSE_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import CoursesAssociatedWithActivityReports from '../../widgets/CoursesAssociatedWithActivityReports';
+import colors from '../../colors';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -31,7 +35,7 @@ const defaultDate = formatDateRange({
   withSpaces: false,
 });
 
-const FILTER_KEY = 'course-dashboard-filters';
+const FILTER_KEY = 'regional-resources-dashboard-filters';
 
 export default function CourseDashboard() {
   const { user } = useContext(UserContext);
@@ -161,7 +165,11 @@ export default function CourseDashboard() {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
-      <h1 className="landing">
+      <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="resources-dashboard">
+        Back to Resource Dashboard
+      </Link>
+      <h1 className="landing margin-top-0">
         iPD Courses
       </h1>
       <Grid row>
