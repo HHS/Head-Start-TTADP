@@ -265,7 +265,7 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
           objective.activityReportObjectives,
           'files',
         ),
-      })), // Convert to 'unknown' first
+      })),
   }));
 
   return reduceGoals(reformattedGoals);

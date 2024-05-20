@@ -25,6 +25,9 @@ import {
   ActivityReportGoal,
   ActivityRecipient,
   Topic,
+  Course,
+  GoalTemplateFieldPrompt,
+  ActivityReportGoalFieldResponse,
   File,
 } from '../models';
 import {
@@ -56,6 +59,7 @@ import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
 import getGoalsForReport from './getGoalsForReport';
+import reduceGoals from './reduceGoals';
 
 const namespace = 'SERVICE:GOALS';
 const logContext = {
@@ -207,6 +211,166 @@ export async function saveObjectiveAssociations(
     files: objectiveFiles,
     courses: objectiveCourses,
   };
+}
+
+/**
+ *
+ * @param {number} id
+ * @returns {Promise{Object}}
+ */
+export async function goalsByIdsAndActivityReport(id, activityReportId) {
+  const goals = await Goal.findAll({
+    attributes: [
+      'endDate',
+      'status',
+      ['id', 'value'],
+      ['name', 'label'],
+      'id',
+      'name',
+    ],
+    where: {
+      id,
+    },
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+      },
+      {
+        model: Objective,
+        as: 'objectives',
+        where: {
+          [Op.and]: [
+            {
+              title: {
+                [Op.ne]: '',
+              },
+            },
+            {
+              status: {
+                [Op.notIn]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+              },
+            },
+          ],
+        },
+        attributes: [
+          'id',
+          ['title', 'label'],
+          'title',
+          'status',
+          'goalId',
+          'supportType',
+          'onApprovedAR',
+          'onAR',
+        ],
+        required: false,
+        include: [
+          {
+            model: Resource,
+            as: 'resources',
+            attributes: [
+              ['url', 'value'],
+              ['id', 'key'],
+            ],
+            required: false,
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
+          },
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: [
+              'ttaProvided',
+              'closeSuspendReason',
+              'closeSuspendContext',
+            ],
+            required: false,
+            where: {
+              activityReportId,
+            },
+          },
+          {
+            model: File,
+            as: 'files',
+          },
+          {
+            model: Topic,
+            as: 'topics',
+            required: false,
+          },
+          {
+            model: Course,
+            as: 'courses',
+            required: false,
+          },
+          {
+            model: ActivityReport,
+            as: 'activityReports',
+            where: {
+              calculatedStatus: {
+                [Op.not]: REPORT_STATUSES.DELETED,
+              },
+            },
+            required: false,
+          },
+        ],
+      },
+      {
+        model: GoalTemplateFieldPrompt,
+        as: 'prompts',
+        attributes: [
+          'id',
+          'ordinal',
+          'title',
+          'prompt',
+          'hint',
+          'fieldType',
+          'options',
+          'validations',
+        ],
+        required: false,
+        include: [
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: [
+              'response',
+            ],
+            required: false,
+            where: { goalId: id },
+          },
+          {
+            model: ActivityReportGoalFieldResponse,
+            as: 'reportResponses',
+            attributes: ['response'],
+            required: false,
+            include: [{
+              model: ActivityReportGoal,
+              as: 'activityReportGoal',
+              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+              required: true,
+              where: { goalId: id, activityReportId },
+            }],
+          },
+        ],
+      },
+    ],
+  });
+
+  const reducedGoals = reduceGoals(goals);
+
+  // sort reduced goals by rtr order
+  reducedGoals.sort((a, b) => {
+    if (a.rtrOrder < b.rtrOrder) {
+      return -1;
+    }
+    return 1;
+  });
+
+  return reducedGoals;
 }
 
 /**
@@ -853,27 +1017,42 @@ async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
   return Promise.resolve();
 }
 
-async function removeObjectives(objectivesToRemove) {
+async function removeObjectives(objectivesToRemove, reportId) {
   if (!objectivesToRemove.length) {
     return Promise.resolve();
   }
 
   // TODO - when we have an "onAnyReport" flag, we can use that here instead of two SQL statements
-  const objectivesToDestroy = await Objective.findAll({
+  const objectivesToPossiblyDestroy = await Objective.findAll({
     where: {
       createdVia: 'activityReport',
       id: objectivesToRemove,
       onApprovedAR: false,
-      onAR: false,
     },
+    include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: false,
+        where: {
+          id: {
+            [Op.not]: reportId,
+          },
+        },
+      },
+    ],
   });
 
-  if (!objectivesToDestroy.length) {
+  // see TODO above, but this can be removed when we have an "onAnyReport" flag
+  const objectivesToDefinitelyDestroy = objectivesToPossiblyDestroy
+    .filter((o) => !o.activityReports.length);
+
+  if (!objectivesToDefinitelyDestroy.length) {
     return Promise.resolve();
   }
 
   // Objectives to destroy.
-  const objectivesIdsToDestroy = objectivesToDestroy.map((o) => o.id);
+  const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
 
   // cleanup any ObjectiveFiles that are no longer needed
   await ObjectiveFile.destroy({
@@ -894,7 +1073,7 @@ async function removeObjectives(objectivesToRemove) {
   // Delete objective.
   return Objective.destroy({
     where: {
-      id: objectivesToDestroy.map((o) => o.id),
+      id: objectivesToDefinitelyDestroy.map((o) => o.id),
     },
   });
 }
