@@ -80,7 +80,7 @@ export function reduceObjectives(
       ...objectives,
       newObjective,
     ];
-  }, currentObjectives);
+  }, currentObjectives || []);
 
   objectivesToSort.sort((o1, o2) => {
     if (o1.rtrOrder < o2.rtrOrder) {
@@ -474,24 +474,25 @@ export function reduceGoals(
       }
 
       const goal = {
-        isCurated: currentValue.isCurated,
+        isCurated: currentValue.dataValues.isCurated,
         goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
         grantId: currentValue.grant.id,
         collaborators: currentValue.collaborators,
-        id: currentValue.id,
-        name: currentValue.name,
+        id: currentValue.dataValues.id,
+        name: currentValue.dataValues.name,
         endDate,
-        status: currentValue.status,
+        activityReportGoals: currentValue.activityReportGoals,
+        status: currentValue.dataValues.status,
         regionId: currentValue.grant.regionId,
         recipientId: currentValue.grant.recipientId,
-        goalTemplateId: currentValue.goalTemplateId,
-        createdVia: currentValue.createdVia,
+        goalTemplateId: currentValue.dataValues.goalTemplateId,
+        createdVia: currentValue.dataValues.createdVia,
         source: forReport ? sourceForReport : sourceForRTR,
         prompts: forReport ? promptsForReport : sourceForPrompts,
         isNew: false,
-        onAR: currentValue.onAR,
-        onApprovedAR: currentValue.onApprovedAR,
-        rtrOrder: currentValue.rtrOrder,
+        onAR: currentValue.dataValues.onAR,
+        onApprovedAR: currentValue.dataValues.onApprovedAR,
+        rtrOrder: currentValue.dataValues.rtrOrder,
         isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
         goalCollaborators: currentValue.goalCollaborators,
         objectives: objectivesReducer(
@@ -499,6 +500,7 @@ export function reduceGoals(
         ),
         goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
         goalIds: [currentValue.dataValues.id],
+        grant: currentValue.grant.dataValues,
         grants: [
           {
             ...currentValue.grant.dataValues,

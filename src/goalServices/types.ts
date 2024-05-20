@@ -257,6 +257,7 @@ interface IReducedGoal {
   goalNumber: string;
   goalNumbers: string[];
   goalIds: number[];
+  grant: IGrant;
   grants: IGrant[];
   grantId: number;
   grantIds: number[];
