@@ -3,13 +3,12 @@ import { CREATION_METHOD } from '../constants';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { reduceGoals } from './reduceGoals';
 import {
-  IActivityReportObjectivesFromDB,
   ITopicModelInstance,
   IResourceModelInstance,
   IFileModelInstance,
-  IGoalForRTRForm,
-  IReducedObjective,
-  IGoalForRTRQueryWithReducedObjectives,
+  IGoalModelInstance,
+  IObjectiveModelInstance,
+  IActivityReportObjectivesModelInstance,
 } from './types';
 
 const {
@@ -62,6 +61,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
     'rtrOrder',
     'createdVia',
+    'goalTemplateId',
   ],
   order: [['rtrOrder', 'asc']],
   where: {
@@ -231,7 +231,7 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
 });
 
 function extractObjectiveAssociationsFromActivityReportObjectives(
-  activityReportObjectives: IActivityReportObjectivesFromDB[],
+  activityReportObjectives: IActivityReportObjectivesModelInstance[],
   associationName: 'topics' | 'resources' | 'files' | 'courses',
 ) {
   return activityReportObjectives.map((aro) => aro[associationName].map((
@@ -241,13 +241,13 @@ function extractObjectiveAssociationsFromActivityReportObjectives(
 
 export default async function goalsByIdAndRecipient(ids: number | number[], recipientId: number) {
   const goals = await Goal
-    .findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)) as IGoalForRTRForm[];
+    .findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId)) as IGoalModelInstance[];
 
-  const reformattedGoals = goals.map((goal: IGoalForRTRForm) => ({
+  const reformattedGoals = goals.map((goal) => ({
     ...goal,
     isReopenedGoal: wasGoalPreviouslyClosed(goal),
     objectives: goal.objectives
-      .map((objective) => ({
+      .map((objective: IObjectiveModelInstance) => ({
         ...objective.toJSON(),
         topics: extractObjectiveAssociationsFromActivityReportObjectives(
           objective.activityReportObjectives,
@@ -265,8 +265,8 @@ export default async function goalsByIdAndRecipient(ids: number | number[], reci
           objective.activityReportObjectives,
           'files',
         ),
-      } as unknown as IReducedObjective)), // Convert to 'unknown' first
-  })) as IGoalForRTRQueryWithReducedObjectives[];
+      })), // Convert to 'unknown' first
+  }));
 
   return reduceGoals(reformattedGoals);
 }

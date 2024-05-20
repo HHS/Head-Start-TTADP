@@ -14,11 +14,15 @@ const {
   GoalTemplate,
   Grant,
   Objective,
+  GoalStatusChange,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveCourse,
+  GoalTemplateFieldPrompt,
+  GoalFieldResponse,
+  ActivityReportGoalFieldResponse,
   sequelize,
   Resource,
   ActivityReportGoal,
@@ -38,38 +42,93 @@ export default async function getGoalsForReport(reportId: number, goalIds: numbe
 
   const goals = await Goal.findAll({
     where,
-    attributes: {
-      exclude: ['rtrOrder', 'isRttapa', 'isFromSmartsheetTtaPlan', 'timeframe'],
-      include: [
-        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-        [sequelize.literal(`(
-            SELECT
-              jsonb_agg( DISTINCT jsonb_build_object(
-                'promptId', gtfp.id ,
-                'ordinal', gtfp.ordinal,
-                'title', gtfp.title,
-                'prompt', gtfp.prompt,
-                'hint', gtfp.hint,
-                'caution', gtfp.caution,
-                'fieldType', gtfp."fieldType",
-                'options', gtfp.options,
-                'validations', gtfp.validations,
-                'response', gfr.response,
-                'reportResponse', argfr.response
-              ))
-            FROM "GoalTemplateFieldPrompts" gtfp
-            LEFT JOIN "GoalFieldResponses" gfr
-            ON gtfp.id = gfr."goalTemplateFieldPromptId"
-            AND gfr."goalId" = "Goal".id
-            LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-            ON gtfp.id = argfr."goalTemplateFieldPromptId"
-            AND argfr."activityReportGoalId" = "activityReportGoals".id
-            WHERE "goalTemplate".id = gtfp."goalTemplateId"
-            GROUP BY TRUE
-          )`), 'prompts'],
-      ],
-    },
+    attributes: [
+      'id',
+      'name',
+      'endDate',
+      'status',
+      'grantId',
+      'createdVia',
+      'source',
+      'onAR',
+      'onApprovedAR',
+      'goalNumber',
+      'goalTemplateId',
+      'rtrOrder',
+      [sequelize.col('grant.regionId'), 'regionId'],
+      [sequelize.col('grant.recipient.id'), 'recipientId'],
+      [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+      // [sequelize.literal(`(
+      //       SELECT
+      //         jsonb_agg( DISTINCT jsonb_build_object(
+      //           'promptId', gtfp.id ,
+      //           'ordinal', gtfp.ordinal,
+      //           'title', gtfp.title,
+      //           'prompt', gtfp.prompt,
+      //           'hint', gtfp.hint,
+      //           'caution', gtfp.caution,
+      //           'fieldType', gtfp."fieldType",
+      //           'options', gtfp.options,
+      //           'validations', gtfp.validations,
+      //           'response', gfr.response,
+      //           'reportResponse', argfr.response
+      //         ))
+      //       FROM "GoalTemplateFieldPrompts" gtfp
+      //       LEFT JOIN "GoalFieldResponses" gfr
+      //       ON gtfp.id = gfr."goalTemplateFieldPromptId"
+      //       AND gfr."goalId" = "Goal".id
+      //       LEFT JOIN "ActivityReportGoalFieldResponses" argfr
+      //       ON gtfp.id = argfr."goalTemplateFieldPromptId"
+      //       AND argfr."activityReportGoalId" = "activityReportGoals".id
+      //       WHERE "goalTemplate".id = gtfp."goalTemplateId"
+      //       GROUP BY TRUE
+      //     )`), 'prompts'],
+    ],
     include: [
+      {
+        model: GoalTemplateFieldPrompt,
+        as: 'prompts',
+        attributes: [
+          ['id', 'promptId'],
+          'ordinal',
+          'title',
+          'prompt',
+          'hint',
+          'fieldType',
+          'options',
+          'validations',
+        ],
+        required: false,
+        include: [
+          {
+            model: GoalFieldResponse,
+            as: 'responses',
+            attributes: ['response'],
+            required: false,
+          },
+          {
+            model: ActivityReportGoalFieldResponse,
+            as: 'reportResponses',
+            attributes: ['response'],
+            required: false,
+            include: [{
+              model: ActivityReportGoal,
+              as: 'activityReportGoal',
+              attributes: ['activityReportId', ['id', 'activityReportGoalId']],
+              required: true,
+              where: {
+                reportId,
+              },
+            }],
+          },
+        ],
+      },
+      {
+        model: GoalStatusChange,
+        as: 'statusChanges',
+        attributes: ['oldStatus'],
+        required: false,
+      },
       {
         model: GoalTemplate,
         as: 'goalTemplate',
@@ -154,25 +213,6 @@ export default async function getGoalsForReport(reportId: number, goalIds: numbe
                 where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
               },
             ],
-          },
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [['url', 'value']],
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-            required: false,
-          },
-          {
-            model: File,
-            as: 'files',
           },
         ],
       },
