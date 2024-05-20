@@ -1,13 +1,32 @@
-interface ICourse {
-  name: string;
+interface IPrompt {
+  ordinal: number;
+  title: string;
+  prompt: string;
+  hint: string;
+  fieldType: string;
+  options: string;
+  validations: string;
+  promptId?: number;
+  response?: string[];
+  responses?: {
+    response: string[];
+  }[];
+  reportResponse?: string[];
+  reportResponses?: {
+    response: string[];
+  }[];
+  dataValues?: IPrompt;
+  toJSON?: () => IPrompt;
+  allGoalsHavePromptResponse?: boolean;
 }
 
 interface ITopic {
   name: string;
 }
 
-interface IResource {
-  value: string;
+interface ITopicModelInstance extends ITopic {
+  dataValues?: ITopic;
+  toJSON?: () => ITopic;
 }
 
 interface IFile {
@@ -18,23 +37,22 @@ interface IFile {
   }
 }
 
-interface IPromptModelInstance extends IPrompt {
-  dataValues?: IPrompt;
-  toJSON?: () => IPrompt;
-}
-
-interface ITopicModelInstance extends ITopic {
-  dataValues?: ITopic;
-  toJSON?: () => ITopic;
-}
 interface IFileModelInstance extends IFile {
   dataValues?: IFile
   toJSON?: () => IFile;
 }
 
+interface IResource {
+  value: string;
+}
+
 interface IResourceModelInstance extends IResource {
   dataValues?: IResource;
   toJSON?: () => IResource;
+}
+
+interface ICourse {
+  name: string;
 }
 
 interface ICourseModelInstance extends ICourse {
@@ -74,7 +92,7 @@ interface IActivityReportObjective {
   }[];
 }
 
-interface IActivityReportObjectivesFromDB extends IActivityReportObjective {
+interface IActivityReportObjectivesModelInstance extends IActivityReportObjective {
   toJSON: () => IActivityReportObjective;
   dataValues?: IActivityReportObjective;
 }
@@ -98,27 +116,11 @@ interface IGrant {
       id: number;
     }
   }
+  goalId?: number;
 }
 
 interface IGrantModelInstance extends IGrant {
   dataValues?: IGrant
-}
-
-interface IPrompt {
-  responses?: {
-    response: string[];
-  }[];
-  promptId?: number;
-  ordinal: number;
-  title: string;
-  prompt: string;
-  hint: string;
-  fieldType: string;
-  options: string;
-  validations: string;
-  response: string[];
-  reportResponse: string[];
-  allGoalsHavePromptResponse: boolean;
 }
 
 interface IActivityReportGoal {
@@ -131,7 +133,12 @@ interface IActivityReportGoal {
   status: string;
   endDate: string;
   isActivelyEdited: boolean;
-  source: string;
+  source: string | {
+    [key: string]: string;
+  };
+  closeSuspendReason: string;
+  closeSuspendContext: string;
+  originalGoalId: number;
 }
 
 interface IObjective {
@@ -142,15 +149,20 @@ interface IObjective {
   onApprovedAR: boolean;
   onAR: boolean;
   rtrOrder: number;
-  activityReportObjectives?: IActivityReportObjectivesFromDB[];
-  topics: ITopic[];
-  resources: IResource[];
-  files: IFile[];
-  courses: ICourse[];
+  activityReportObjectives?: IActivityReportObjectivesModelInstance[];
   otherEntityId: number | null;
   activityReports?: {
     id: number
   }[];
+  grantId?: number;
+  supportType?: string;
+  onAnyReport?: boolean;
+  closeSuspendReason?: string;
+  closeSuspendContext?: string;
+  topics: ITopic[];
+  resources: IResource[];
+  files: IFile[];
+  courses: ICourse[];
 }
 
 interface IObjectiveModelInstance extends IObjective {
@@ -169,69 +181,22 @@ type IReducedObjective = Omit <IObjective, 'activityReportObjectives'> & {
   otherEntityId?: number;
 };
 
-interface IGoalForRTRQuery {
+interface IGoalCollaborator {
   id: number;
-  endDate: string;
-  name: string;
-  status: string;
-  regionId: number;
-  recipientId: number;
-  goalNumber: string;
-  createdVia: string;
-  goalTemplateId: number;
-  source: string;
-  onAR: boolean;
-  onApprovedAR: boolean;
-  isCurated: boolean;
-  rtrOrder: number;
-  statusChanges: { oldStatus: string }[]
-  objectives: IObjectiveModelInstance[];
-  collaborators?:{
-    [key: string]: string;
-  }[];
-  goalCollaborators: {
-    id: number;
-    collaboratorType: { name: string };
-    user: {
-      name: string;
-      userRoles: {
-        role: { name: string };
-      }[];
-    };
-  }[];
-  grant: IGrantModelInstance;
-  prompts: IPromptModelInstance[];
-  goalTemplateFieldPrompts: {
-    promptId: number;
-    ordinal: number;
-    title: string;
-    prompt: string;
-    hint: string;
-    fieldType: string;
-    options: string;
-    validations: string;
-    responses: { response: string }[];
-    reportResponses: {
-      response: string;
-      activityReportGoal: {
-        activityReportId: number;
-        activityReportGoalId: number;
+  collaboratorType: {
+    name: string;
+    mapsToCollaboratorType: string;
+  };
+  user: {
+    name: string;
+    userRoles: {
+      id: number;
+      role: {
+        name: string;
       };
     }[];
-  }[];
+  };
 }
-
-interface IGoalForRTRForm extends IGoalForRTRQuery {
-  toJSON: () => IGoalForRTRQuery;
-  dataValues: IGoalForRTRQuery;
-}
-
-type IGoalForRTRQueryWithReducedObjectives = Omit <IGoalForRTRForm, 'objectives'> & {
-  isReopenedGoal: boolean;
-  objectives: IReducedObjective[];
-  toJSON: () => IGoalForRTRQueryWithReducedObjectives;
-  dataValues: IGoalForRTRQueryWithReducedObjectives;
-};
 
 interface IGoal {
   id: number;
@@ -240,34 +205,69 @@ interface IGoal {
   isCurated: boolean;
   grantId: number;
   createdVia: string;
-  source: string | {
-    [key: string]: string,
-  };
+  source: string;
+  goalTemplateId: number;
   onAR: boolean;
   onApprovedAR: boolean;
-  prompts: IPromptModelInstance[];
+  prompts: IPrompt[];
   activityReportGoals: IActivityReportGoal[];
   objectives: IObjective[];
   grant: IGrantModelInstance;
   status: string;
   goalNumber: string;
-  statusChanges?: { oldStatus: string }[]
-  goalCollaborators?: {
-    collaboratorType: {
-      name: string;
-    };
-    user: {
-      name: string;
-      userRoles: {
-        role: {
-          name: string;
-        }
-      }[]
-    }
+  statusChanges?: { oldStatus: string }[];
+  rtrOrder: number;
+  goalCollaborators: IGoalCollaborator[];
+  goalNumbers: string[];
+  goalIds: number[];
+  grants: IGrant[];
+  grantIds: number[];
+  isNew: boolean;
+  isReopenedGoal: boolean;
+  collaborators: {
+    goalNumber: string;
+    goalCreator: IGoalCollaborator;
+    goalCreatorName: string;
+    goalCreatorRoles: string;
   }[];
-  collaborators?: {
+}
+
+interface IReducedGoal {
+  id: number;
+  name: string;
+  endDate: string;
+  status: string;
+  regionId: number;
+  recipientId: number;
+  goalTemplateId: number;
+  createdVia: string;
+  source: {
     [key: string]: string;
+  };
+  onAR: boolean;
+  onApprovedAR: boolean;
+  isCurated: boolean;
+  rtrOrder: number;
+  goalCollaborators: IGoalCollaborator[];
+  objectives: IReducedObjective[];
+  prompts : {
+    [x: string]: IPrompt[];
+  };
+  statusChanges?: { oldStatus: string }[];
+  goalNumber: string;
+  goalNumbers: string[];
+  goalIds: number[];
+  grants: IGrant[];
+  grantId: number;
+  grantIds: number[];
+  isNew: boolean;
+  isReopenedGoal: boolean;
+  collaborators: {
+    goalNumber?: string;
+    goalCreatorName: string;
+    goalCreatorRoles: string;
   }[];
+  activityReportGoals?: IActivityReportGoal[];
 }
 
 interface IGoalModelInstance extends IGoal {
@@ -289,15 +289,13 @@ export {
   // -- model version of the above -- //
   IGoalModelInstance,
   IGrantModelInstance,
-  IPromptModelInstance,
   ICourseModelInstance,
   ITopicModelInstance,
   IResourceModelInstance,
   IFileModelInstance,
   IObjectiveModelInstance,
-  IActivityReportObjectivesFromDB,
-  // -- for the rtr query, slightly distinct types are used -- //
-  IGoalForRTRQueryWithReducedObjectives,
-  IGoalForRTRForm,
+  IActivityReportObjectivesModelInstance,
+  // -- after going through reduceGoals -- //
   IReducedObjective,
+  IReducedGoal,
 };

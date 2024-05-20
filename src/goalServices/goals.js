@@ -12,7 +12,6 @@ import {
   GoalTemplate,
   GoalResource,
   GoalStatusChange,
-  GoalTemplateFieldPrompt,
   Grant,
   Objective,
   ObjectiveCourse,
@@ -25,9 +24,7 @@ import {
   ActivityReport,
   ActivityReportGoal,
   ActivityRecipient,
-  ActivityReportGoalFieldResponse,
   Topic,
-  Course,
   File,
 } from '../models';
 import {
@@ -58,7 +55,6 @@ import changeGoalStatus from './changeGoalStatus';
 import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
-import { reduceGoals } from './reduceGoals';
 import getGoalsForReport from './getGoalsForReport';
 
 const namespace = 'SERVICE:GOALS';
