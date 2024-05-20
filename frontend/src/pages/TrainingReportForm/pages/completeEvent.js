@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { useHistory } from 'react-router-dom';
 import {
-  Alert, Button, Table, UswdsSelect, ErrorMessage,
+  Alert, Button, Table, Select as UswdsSelect, ErrorMessage,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
