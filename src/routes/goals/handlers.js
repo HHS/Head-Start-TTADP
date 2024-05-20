@@ -4,11 +4,11 @@ import {
   updateGoalStatusById,
   createOrUpdateGoalsForActivityReport,
   createOrUpdateGoals,
+  goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
   destroyGoal,
   mergeGoals,
   getGoalIdsBySimilarity,
-  goalsByIdsAndActivityReport,
 } from '../../goalServices/goals';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
@@ -18,7 +18,6 @@ import Goal from '../../policies/goals';
 import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
 import { validateMergeGoalPermissions } from '../utils';
-// import getGoalsForReport from '../../goalServices/getGoalsForReport';
 
 const namespace = 'SERVICE:GOALS';
 

@@ -26,10 +26,10 @@ import {
   destroyGoal,
   goalByIdWithActivityReportsAndRegions,
   createOrUpdateGoalsForActivityReport,
+  goalsByIdsAndActivityReport,
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
-import getGoalsForReport from '../../goalServices/getGoalsForReport';
 import nudge from '../../goalServices/nudge';
 import { currentUserId } from '../../services/currentUser';
 import { validateMergeGoalPermissions } from '../utils';
@@ -46,8 +46,6 @@ jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../goalServices/getGoalsForReport');
-
 jest.mock('../../goalServices/goals', () => ({
   updateGoalStatusById: jest.fn(),
   createOrUpdateGoals: jest.fn(),
@@ -55,6 +53,7 @@ jest.mock('../../goalServices/goals', () => ({
   goalByIdAndRecipient: jest.fn(),
   destroyGoal: jest.fn(),
   createOrUpdateGoalsForActivityReport: jest.fn(),
+  goalsByIdsAndActivityReport: jest.fn(),
   goalRegionsById: jest.fn(),
   mergeGoals: jest.fn(),
   getGoalIdsBySimilarity: jest.fn(),
@@ -743,7 +742,7 @@ describe('retrieveGoalsByIds', () => {
       grant: { regionId: 2 },
     });
 
-    getGoalsForReport.mockResolvedValueOnce([
+    goalsByIdsAndActivityReport.mockResolvedValueOnce([
       {
         id: 1,
         name: 'Goal 1',
@@ -817,7 +816,7 @@ describe('retrieveGoalsByIds', () => {
       grant: { regionId: 2 },
     });
 
-    getGoalsForReport.mockResolvedValueOnce([
+    goalsByIdsAndActivityReport.mockResolvedValueOnce([
       {
         id: 1,
         name: 'Goal 1',
@@ -895,7 +894,7 @@ describe('retrieveGoalsByIds', () => {
       grant: { regionId: 2 },
     });
 
-    getGoalsForReport.mockResolvedValueOnce([]);
+    goalsByIdsAndActivityReport.mockResolvedValueOnce([]);
 
     await retrieveGoalsByIds(req, mockResponse, true);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
@@ -926,7 +925,7 @@ describe('retrieveGoalsByIds', () => {
       grant: { regionId: 2 },
     });
 
-    getGoalsForReport.mockResolvedValueOnce(null);
+    goalsByIdsAndActivityReport.mockResolvedValueOnce(null);
 
     await retrieveGoalsByIds(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
@@ -957,7 +956,7 @@ describe('retrieveGoalsByIds', () => {
       grant: { regionId: 2 },
     });
 
-    getGoalsForReport.mockImplementationOnce(() => {
+    goalsByIdsAndActivityReport.mockImplementationOnce(() => {
       throw new Error('a test error for the goals handler');
     });
 
