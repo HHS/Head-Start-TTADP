@@ -31,7 +31,7 @@ export default function HorizontalTableWidget(
 ) {
   // State for check boxes.
   const [checkboxes, setCheckboxes] = useState({});
-  const [allCheckBoxesChecked, seAllCheckBoxesChecked] = useState(false);
+  const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
 
@@ -97,7 +97,7 @@ export default function HorizontalTableWidget(
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
-    seAllCheckBoxesChecked(false);
+    setAllCheckBoxesChecked(false);
     setCheckboxes(makeCheckboxes(data, false));
   }, [data]);
 
@@ -106,10 +106,10 @@ export default function HorizontalTableWidget(
 
     if (checked === true) {
       setCheckboxes(makeCheckboxes(data, true));
-      seAllCheckBoxesChecked(true);
+      setAllCheckBoxesChecked(true);
     } else {
       setCheckboxes(makeCheckboxes(data, false));
-      seAllCheckBoxesChecked(false);
+      setAllCheckBoxesChecked(false);
     }
   };
 
@@ -118,6 +118,9 @@ export default function HorizontalTableWidget(
     if (checked === true) {
       setCheckboxes({ ...checkboxes, [value]: true });
     } else {
+      if (allCheckBoxesChecked) {
+        setAllCheckBoxesChecked(false);
+      }
       setCheckboxes({ ...checkboxes, [value]: false });
     }
   };

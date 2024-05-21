@@ -18,6 +18,7 @@ const emptyData = {
 const mockData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
   courses: [{
+    id: 1,
     link: 'Sample Course 1',
     heading: 'Sample Course 1',
     isUrl: true,
@@ -47,6 +48,7 @@ const mockSortData = {
   headers: ['Feb-22'],
   courses: [
     {
+      id: 1,
       link: 'Sample Course 2',
       heading: 'Sample Course 2',
       isUrl: true,
@@ -62,6 +64,7 @@ const mockSortData = {
       ],
     },
     {
+      id: 2,
       link: 'Sample Course 1',
       heading: 'Sample Course 1',
       isUrl: true,
@@ -339,6 +342,33 @@ describe('Resources Associated with Topics', () => {
 
     checkBoxes.forEach((checkBox) => {
       expect(checkBox).not.toBeChecked();
+    });
+  });
+
+  it('unchecks the all selected check box when one row is unchecked', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+
+    // get the check box with the id check-all-checkboxes
+    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
+
+    // check the check box
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are selected
+    const checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).toBeChecked();
+    });
+
+    // uncheck the first check box
+    const secondCheckBox = screen.getByRole('checkbox', { name: /select 2/i });
+
+    await act(async () => {
+      fireEvent.click(secondCheckBox);
+      await waitFor(async () => {
+        expect(secondCheckBox).not.toBeChecked();
+        expect(checkAllCheckBox).not.toBeChecked();
+      });
     });
   });
 
