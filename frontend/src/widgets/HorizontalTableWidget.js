@@ -1,8 +1,8 @@
 /* eslint-disable react/no-array-index-key */
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { Table } from '@trussworks/react-uswds';
+import { Table, Checkbox } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
@@ -26,8 +26,13 @@ export default function HorizontalTableWidget(
     lastHeading,
     sortConfig,
     requestSort,
+    enableCheckboxes,
   },
 ) {
+  // State for check boxes.
+  const [checkboxes, setCheckboxes] = useState({});
+  const [allCheckBoxesChecked, seAllCheckBoxesChecked] = useState(false);
+
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
   const renderSortableColumnHeader = (displayName, name, classValues) => {
     const sortClassName = getClassNamesFor(name);
@@ -44,7 +49,7 @@ export default function HorizontalTableWidget(
         break;
     }
     return (
-      <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left'} scope="col" aria-sort={fullAriaSort}>
+      <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left data-header'} scope="col" aria-sort={fullAriaSort}>
         <button
           type="button"
           tabIndex={0}
@@ -84,16 +89,59 @@ export default function HorizontalTableWidget(
     );
   };
 
+  const makeCheckboxes = (itemsArr, checked) => (
+    itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
+  );
+
+  // When reports are updated, make sure all checkboxes are unchecked
+  useEffect(() => {
+    setCheckboxes(makeCheckboxes(data, false));
+  }, [data]);
+
+  const toggleSelectAll = (event) => {
+    const { target: { checked = null } = {} } = event;
+
+    if (checked === true) {
+      setCheckboxes(makeCheckboxes(data, true));
+      seAllCheckBoxesChecked(true);
+    } else {
+      setCheckboxes(makeCheckboxes(data, false));
+      seAllCheckBoxesChecked(false);
+    }
+  };
+
+  const handleReportSelect = (event) => {
+    const { target: { checked = null, value = null } = {} } = event;
+    if (checked === true) {
+      setCheckboxes({ ...checkboxes, [value]: true });
+    } else {
+      setCheckboxes({ ...checkboxes, [value]: false });
+    }
+  };
+
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
             {
+            enableCheckboxes && (
+              <th className="width-8 checkbox-column">
+                <Checkbox
+                  id="check-all-checkboxes"
+                  label=""
+                  onChange={toggleSelectAll}
+                  checked={allCheckBoxesChecked}
+                  aria-label="Select or de-select all"
+                />
+              </th>
+            )
+            }
+            {
               enableSorting
                 ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-first-column')
                 : (
-                  <th className="smarthub-horizontal-table-first-column">
+                  <th className="smarthub-horizontal-table-first-column data-header">
                     {firstHeading}
                   </th>
                 )
@@ -101,13 +149,13 @@ export default function HorizontalTableWidget(
             {
             headers.map((h) => (enableSorting
               ? renderSortableColumnHeader(h, h.replaceAll(' ', '_'))
-              : <th key={h.replace(' ', '_')} scope="col" className="text-left">{h}</th>))
+              : <th key={h.replace(' ', '_')} scope="col" className="text-left data-header">{h}</th>))
             }
             {
             enableSorting
               ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
               : (
-                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0">
+                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
                   {lastHeading}
                 </th>
               )
@@ -118,7 +166,14 @@ export default function HorizontalTableWidget(
           {
             data.map((r, index) => (
               <tr className="bg-white border-bottom-0 text-bold" key={`horizontal_table_row_${index}`}>
-                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column">
+                {
+                  enableCheckboxes && (
+                    <td className="width-8 checkbox-column" data-label="Select report">
+                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.id}`} />
+                    </td>
+                  )
+                }
+                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column data-description">
                   {
                     r.isUrl
                       ? handleUrl(r)
@@ -159,6 +214,7 @@ HorizontalTableWidget.propTypes = {
   }),
   requestSort: PropTypes.func,
   enableSorting: PropTypes.bool,
+  enableCheckboxes: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -172,4 +228,5 @@ HorizontalTableWidget.defaultProps = {
   },
   requestSort: () => {},
   enableSorting: false,
+  enableCheckboxes: false,
 };
