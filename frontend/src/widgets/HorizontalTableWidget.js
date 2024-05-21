@@ -34,6 +34,11 @@ export default function HorizontalTableWidget(
   const [allCheckBoxesChecked, seAllCheckBoxesChecked] = useState(false);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+
+  const makeCheckboxes = (itemsArr, checked) => (
+    itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
+  );
+
   const renderSortableColumnHeader = (displayName, name, classValues) => {
     const sortClassName = getClassNamesFor(name);
     let fullAriaSort;
@@ -48,6 +53,7 @@ export default function HorizontalTableWidget(
         fullAriaSort = 'none';
         break;
     }
+
     return (
       <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left data-header'} scope="col" aria-sort={fullAriaSort}>
         <button
@@ -89,12 +95,9 @@ export default function HorizontalTableWidget(
     );
   };
 
-  const makeCheckboxes = (itemsArr, checked) => (
-    itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
-  );
-
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
+    seAllCheckBoxesChecked(false);
     setCheckboxes(makeCheckboxes(data, false));
   }, [data]);
 
@@ -129,6 +132,7 @@ export default function HorizontalTableWidget(
               <th className="width-8 checkbox-column">
                 <Checkbox
                   id="check-all-checkboxes"
+                  name="check-all-checkboxes"
                   label=""
                   onChange={toggleSelectAll}
                   checked={allCheckBoxesChecked}

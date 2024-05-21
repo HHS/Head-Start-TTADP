@@ -151,12 +151,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
-      expect(tableCells[0]).toHaveTextContent(/Sample Course 2/i);
-      expect(tableCells[1]).toHaveTextContent(/2/i);
-      expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
+      expect(tableCells[2]).toHaveTextContent(/2/i);
+      expect(tableCells[3]).toHaveTextContent(/4/i);
+      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[6]).toHaveTextContent(/1/i);
+      expect(tableCells[7]).toHaveTextContent(/3/i);
     });
 
     // Sort.
@@ -166,12 +166,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-      expect(tableCells[0]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[1]).toHaveTextContent(/1/i);
-      expect(tableCells[2]).toHaveTextContent(/3/i);
-      expect(tableCells[3]).toHaveTextContent(/Sample Course 2/i);
-      expect(tableCells[4]).toHaveTextContent(/2/i);
-      expect(tableCells[5]).toHaveTextContent(/4/i);
+      expect(tableCells[1]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[2]).toHaveTextContent(/1/i);
+      expect(tableCells[3]).toHaveTextContent(/3/i);
+      expect(tableCells[5]).toHaveTextContent(/Sample Course 2/i);
+      expect(tableCells[6]).toHaveTextContent(/2/i);
+      expect(tableCells[7]).toHaveTextContent(/4/i);
     });
   });
 
@@ -181,12 +181,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
-      expect(tableCells[0]).toHaveTextContent(/Sample Course 2/i);
-      expect(tableCells[1]).toHaveTextContent(/2/i);
-      expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
+      expect(tableCells[2]).toHaveTextContent(/2/i);
+      expect(tableCells[3]).toHaveTextContent(/4/i);
+      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[6]).toHaveTextContent(/1/i);
+      expect(tableCells[7]).toHaveTextContent(/3/i);
     });
 
     // Sort.
@@ -205,12 +205,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-      expect(tableCells[0]).toHaveTextContent(cellValues[0]);
-      expect(tableCells[1]).toHaveTextContent(cellValues[1]);
-      expect(tableCells[2]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[3]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[4]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[5]);
+      expect(tableCells[1]).toHaveTextContent(cellValues[0]);
+      expect(tableCells[2]).toHaveTextContent(cellValues[1]);
+      expect(tableCells[3]).toHaveTextContent(cellValues[2]);
+      expect(tableCells[5]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[7]).toHaveTextContent(cellValues[5]);
     });
 
     sortColBtn = await screen.findByRole('button', { name: /course\. activate to sort descending/i });
@@ -218,12 +218,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-      expect(tableCells[0]).toHaveTextContent(/Sample Course 2/i);
-      expect(tableCells[1]).toHaveTextContent(/2/i);
-      expect(tableCells[2]).toHaveTextContent(/4/i);
-      expect(tableCells[3]).toHaveTextContent(/Sample Course 1/i);
-      expect(tableCells[4]).toHaveTextContent(/1/i);
-      expect(tableCells[5]).toHaveTextContent(/3/i);
+      expect(tableCells[1]).toHaveTextContent(/Sample Course 2/i);
+      expect(tableCells[2]).toHaveTextContent(/2/i);
+      expect(tableCells[3]).toHaveTextContent(/4/i);
+      expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
+      expect(tableCells[6]).toHaveTextContent(/1/i);
+      expect(tableCells[7]).toHaveTextContent(/3/i);
     });
 
     sortColBtn = await screen.findByRole('button', { name: /course\. activate to sort ascending/i });
@@ -232,12 +232,12 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-      expect(tableCells[0]).toHaveTextContent(cellValues[0]);
-      expect(tableCells[1]).toHaveTextContent(cellValues[1]);
-      expect(tableCells[2]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[3]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[4]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[5]);
+      expect(tableCells[1]).toHaveTextContent(cellValues[0]);
+      expect(tableCells[2]).toHaveTextContent(cellValues[1]);
+      expect(tableCells[3]).toHaveTextContent(cellValues[2]);
+      expect(tableCells[5]).toHaveTextContent(cellValues[3]);
+      expect(tableCells[6]).toHaveTextContent(cellValues[4]);
+      expect(tableCells[7]).toHaveTextContent(cellValues[5]);
     });
   });
 
@@ -287,6 +287,58 @@ describe('Resources Associated with Topics', () => {
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Sample Course 2/i)).toBeInTheDocument();
+    });
+  });
+
+  it('clears all selected check boxes when sorting', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+
+    // get the check box with the id check-all-checkboxes
+    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
+
+    // check the check box
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are selected
+    let checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).toBeChecked();
+    });
+
+    // Sort.
+    const sortColBtn = screen.getByRole('button', { name: /feb-22\. activate to sort ascending/i });
+    act(() => fireEvent.click(sortColBtn));
+
+    // assert all check boxes are not selected
+    checkBoxes = screen.getAllByRole('checkbox');
+
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).not.toBeChecked();
+    });
+  });
+
+  it('clears all selected check boxes when paging', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData, 1);
+
+    // get the check box with the id check-all-checkboxes
+    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are selected
+    let checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).toBeChecked();
+    });
+
+    // Go to second page.
+    const pageTwoBtn = screen.getByRole('button', { name: /page 2/i });
+    act(() => fireEvent.click(pageTwoBtn));
+
+    // assert all check boxes are not selected
+    checkBoxes = screen.getAllByRole('checkbox');
+
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).not.toBeChecked();
     });
   });
 

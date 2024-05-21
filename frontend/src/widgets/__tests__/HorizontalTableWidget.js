@@ -3,7 +3,9 @@ import React from 'react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
 import HorizontalTableWidget from '../HorizontalTableWidget';
 
 const renderHorizontalTableWidget = (
@@ -14,6 +16,7 @@ const renderHorizontalTableWidget = (
   lastHeading = 'Last Heading',
   sortConfig = {},
   requestSort = () => {},
+  enableCheckboxes = false,
 ) => {
   const history = createMemoryHistory();
   return render(
@@ -26,6 +29,7 @@ const renderHorizontalTableWidget = (
         lastHeading={lastHeading}
         sortConfig={sortConfig}
         requestSort={requestSort}
+        enableCheckboxes={enableCheckboxes}
       />
     </Router>,
   );
@@ -254,5 +258,25 @@ describe('Horizontal Table Widget', () => {
 
     const sortElement = screen.getByLabelText('col1. Activate to sort ascending');
     expect(sortElement).toHaveClass('sortable desc');
+  });
+
+  it('shows checkboxes when enabled', async () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+        ],
+      },
+    ];
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, true);
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(2);
   });
 });
