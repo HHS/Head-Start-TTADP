@@ -39,11 +39,6 @@ import {
   syncResourcesForGoal,
   // processGoalForResources,
   processGoalForResourcesById,
-  // Objective Resource processing
-  calculateIsAutoDetectedForObjective,
-  syncResourcesForObjective,
-  // processObjectiveForResources,
-  processObjectiveForResourcesById,
   // ActivityReportObjective Resource Processing
   calculateIsAutoDetectedForActivityReportObjective,
   syncResourcesForActivityReportObjective,
@@ -2377,24 +2372,6 @@ describe('resource', () => {
             SOURCE_FIELD.GOAL.NAME,
           ].sort());
       });
-    });
-  });
-  describe('Objective Resource processing', () => {
-    describe('calculateIsAutoDetectedForObjective', () => {
-      let sourceFields;
-      it('expected usage, single', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
-      });
-      it('expected usage, multiple with only once auto-detected', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.TITLE, SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(true);
-      });
-      it('expected usage, non-auto-detected single', () => {
-        sourceFields = [SOURCE_FIELD.OBJECTIVE.RESOURCE];
-        expect(calculateIsAutoDetectedForObjective(sourceFields)).toEqual(false);
-      });
-      // Note all fail cases handled by helper function tests for calculateIsAutoDetected
     });
   });
   describe('ActivityReportObjective Resource Processing', () => {

@@ -11,7 +11,6 @@ import db, {
   ObjectiveFile,
   File,
 } from '../models';
-import { processObjectiveForResourcesById } from '../services/resource';
 import { auditLogger } from '../logger';
 import { FILE_STATUSES } from '../constants';
 
@@ -53,8 +52,6 @@ describe('destroyGoal handler', () => {
       status: 'Not Started',
       title: 'Make everything ok',
     });
-
-    await processObjectiveForResourcesById(objective.id, ['http://website.com']);
 
     file = await File.create({
       originalFileName: 'obj-file-cleanup.xlsx',
@@ -234,7 +231,7 @@ describe('destroyGoal handler', () => {
     expect(foundGoal).toBeTruthy();
 
     expect(result).toBe(0);
-    expect(spy).toBeCalledWith(
+    expect(spy).toHaveBeenCalledWith(
       'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
     );
     ActivityReport.findAll = oldFindAll;

@@ -20,7 +20,6 @@ import db, {
 } from '../models';
 import { saveGoalsForReport } from './goals';
 import { activityReportAndRecipientsById } from '../services/activityReports';
-import { processObjectiveForResourcesById } from '../services/resource';
 
 describe('saveGoalsForReport (more tests)', () => {
   const randomId = () => faker.datatype.number({ min: 75000, max: 100000 });
@@ -345,8 +344,6 @@ describe('saveGoalsForReport (more tests)', () => {
       topicId: topic.id,
     });
 
-    await processObjectiveForResourcesById(existingObjective.id, ['http://www.finally-a-url.com']);
-
     const objective2 = await Objective.create({
       goalId: goal.id,
       status: 'In Progress',
@@ -366,8 +363,6 @@ describe('saveGoalsForReport (more tests)', () => {
       objectiveId: addingRecipientObjective.id,
       topicId: topic.id,
     });
-
-    await processObjectiveForResourcesById(addingRecipientObjective.id, ['http://www.testgov.com']);
 
     await ActivityReportObjective.create({
       ttaProvided: 'Adding recipient tta',
