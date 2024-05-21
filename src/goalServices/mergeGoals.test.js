@@ -11,9 +11,6 @@ import db, {
   GoalResource,
   Objective,
   ObjectiveCollaborator,
-  ObjectiveResource,
-  ObjectiveFile,
-  ObjectiveTopic,
   ActivityReportGoal,
   ActivityReportObjective,
   Resource,
@@ -261,11 +258,6 @@ describe('mergeGoals', () => {
       status: OBJECTIVE_STATUS.IN_PROGRESS,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objectiveTwoForGoalOne.id,
-      resourceId: resource.id,
-    });
-
     objectiveThreeForGoalOne = await Objective.create({
       goalId: goalOne.id,
       title: faker.datatype.string(100),
@@ -284,25 +276,10 @@ describe('mergeGoals', () => {
       status: OBJECTIVE_STATUS.IN_PROGRESS,
     });
 
-    await ObjectiveTopic.create({
-      objectiveId: objectiveOneForGoalTwo.id,
-      topicId: topic.id,
-    });
-
-    await ObjectiveTopic.create({
-      objectiveId: dummyGoalObjective.id,
-      topicId: topic.id,
-    });
-
     objectiveOneForGoalThree = await Objective.create({
       goalId: goalThree.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
-    });
-
-    await ObjectiveFile.create({
-      objectiveId: objectiveOneForGoalThree.id,
-      fileId: file.id,
     });
 
     await GoalCollaborator.update(
@@ -507,18 +484,6 @@ describe('mergeGoals', () => {
               }],
             },
             {
-              model: ObjectiveFile,
-              as: 'objectiveFiles',
-            },
-            {
-              model: ObjectiveResource,
-              as: 'objectiveResources',
-            },
-            {
-              model: ObjectiveTopic,
-              as: 'objectiveTopics',
-            },
-            {
               model: ActivityReportObjective,
               as: 'activityReportObjectives',
             },
@@ -694,24 +659,6 @@ describe('mergeGoals', () => {
     await ActivityReportGoal.destroy({
       where: {
         goalId: allGoalIds,
-      },
-    });
-
-    await ObjectiveResource.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
-      },
-    });
-
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
-      },
-    });
-
-    await ObjectiveFile.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
       },
     });
 
