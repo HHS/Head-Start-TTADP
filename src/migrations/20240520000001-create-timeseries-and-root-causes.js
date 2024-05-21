@@ -318,6 +318,9 @@ module.exports = {
 
       -- Create GoalFieldResponses_timeseries
       SELECT create_timeseries_from_audit_log('GoalFieldResponses');
+      
+      -- Debugging wth is going on in CircleCI
+      SELECT * FROM "GoalFieldResponses_timeseries" LIMIT 1;
 
       -- Pull the data necessary to create an ARGFR from the historical
       -- state of the associated GFR
