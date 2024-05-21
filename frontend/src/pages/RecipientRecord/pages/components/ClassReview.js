@@ -25,7 +25,7 @@ const BadgeBelowQuality = () => (
 
 const BadgeBelowCompetetive = () => (
   <span className="ttahub-badge--error font-sans-2xs text-white text-bold">
-    Below competetive
+    Below competitive
   </span>
 );
 
