@@ -12,11 +12,11 @@ module.exports = {
       // This starts by creating a stored procedure that can be
       // used now and in the future to create a time series table with a
       // name of the form <source tablename>_timeseries, e.g. Goals_timeseries
-      
+
       // usage: SELECT create_timeseries_from_audit_log('<tablename>')
       // example: SELECT create_timeseries_from_audit_log('Goals')
       // creates Goals_timeseries
-      
+
       // Resulting tables are like their source tables except:
       // * id becomes data_id and is only unique when combined with the timeband
       // * timeband_start identifies the beginning of the timeband of a particular
@@ -311,7 +311,7 @@ module.exports = {
       $$
       ;
       `, { transaction });
-      
+
       // Putting this in a separate transaction because we want
       // create_timeseries_from_audit_log() created regardless
       await queryInterface.sequelize.query(/* sql */`
