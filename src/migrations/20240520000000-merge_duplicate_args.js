@@ -14,8 +14,9 @@ module.exports = {
       -- up until and unless all issues producing duplicate ARGs are addressed
 
       CREATE OR REPLACE FUNCTION dedupe_args()
-      RETURNS VOID LANGUAGE sql AS
+      RETURNS VOID LANGUAGE plpgsql AS
       $$
+      BEGIN
       -- There are some duplicate ARGs, meaning link records that connect the same
       -- AR-Goal pairs. This migration merges them down to the link record that was
       -- most recently updated and thus presumably has the latest status & etc.
@@ -140,6 +141,7 @@ module.exports = {
       --
       -- At time of writing this is all theoretical as there aren't
       -- any ARGRs at all but this could change by the time it runs
+      DROP TABLE IF EXISTS relinked_argrs;
       CREATE TEMP TABLE relinked_argrs
       AS
       WITH updater AS (
@@ -204,6 +206,13 @@ module.exports = {
           donor_arg
       ) SELECT * FROM updater
       ;
+
+      END
+      $$
+      ;
+      -- Actually call the function
+      SELECT dedupe_args();
+
       SELECT
         1 op_order,
         'relinked_argfrs' op_name,
@@ -213,13 +222,7 @@ module.exports = {
       UNION SELECT 3, 'relinked_argrs', COUNT(*) FROM relinked_argrs
       UNION SELECT 4, 'deleted_argrs', COUNT(*) FROM deleted_argrs
       UNION SELECT 5, 'deleted_args', COUNT(*) FROM deleted_args
-      ORDER BY 1
-      ;
-
-      $$
-      ;
-      -- Actually call the function
-      SELECT dedupe_args();
+      ORDER BY 1;
       `, { transaction });
     });
   },
