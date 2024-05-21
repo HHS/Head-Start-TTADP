@@ -78,7 +78,7 @@ module.exports = {
         SELECT * FROM clist ORDER BY cnum
       LOOP
         wtext := wtext || format('
-          SELECT cname, cnum, ctype, pg_typeof( %I ) pgtype FROM %I JOIN clist ON %L = cname UNION'
+          SELECT cname, cnum, ctype, pg_typeof( %I ) pgtype FROM clist LEFT JOIN %I ON %L = cname LIMIT 1 UNION'
         ,rec.cname
         ,tablename
         ,rec.cname);
@@ -317,11 +317,8 @@ module.exports = {
       await queryInterface.sequelize.query(/* sql */`
 
       -- Create GoalFieldResponses_timeseries
-      SELECT id, "goalId" from public."GoalFieldResponses" LIMIT 1;
-      BEGIN;
+    
       SELECT create_timeseries_from_audit_log('GoalFieldResponses');
-      COMMIT;
-      SELECT data_id, response, "goalId" from "GoalFieldResponses_timeseries";
 
       -- Pull the data necessary to create an ARGFR from the historical
       -- state of the associated GFR
@@ -367,6 +364,7 @@ module.exports = {
         NOW()
       FROM argfrs_to_insert
       ;
+      */
       `, { transaction });
     });
   },
