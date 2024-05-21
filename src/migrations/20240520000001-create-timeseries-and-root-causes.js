@@ -316,13 +316,8 @@ module.exports = {
       // create_timeseries_from_audit_log() created regardless
       await queryInterface.sequelize.query(/* sql */`
 
-      BEGIN;
       -- Create GoalFieldResponses_timeseries
-      SELECT create_timeseries_from_audit_log('GoalFieldResponses');
-      COMMIT;
-
-      -- Debugging wth is going on in CircleCI
-      SELECT id, "goalId" FROM "GoalFieldResponse_timeseries" LIMIT 1;
+      SELECT create_timeseries_from_audit_log('GoalFieldResponse');
 
       -- Pull the data necessary to create an ARGFR from the historical
       -- state of the associated GFR
