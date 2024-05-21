@@ -364,11 +364,8 @@ module.exports = {
         NOW()
       FROM argfrs_to_insert
       ;
-      */
       `, { transaction });
     });
   },
-  async down() {
-    // rolling back merges and deletes would be a mess
-  },
+  async down() {},
 };
