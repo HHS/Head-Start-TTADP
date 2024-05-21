@@ -317,6 +317,7 @@ module.exports = {
       await queryInterface.sequelize.query(/* sql */`
 
       -- Create GoalFieldResponses_timeseries
+      SELECT id, "goalId" from public."GoalFieldResponses" LIMIT 1;
       BEGIN;
       SELECT create_timeseries_from_audit_log('GoalFieldResponses');
       COMMIT;
