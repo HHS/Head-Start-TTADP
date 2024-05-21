@@ -49,7 +49,6 @@ module.exports = {
         wtext text := '';
         rec record;
       BEGIN
-
       -- Get the column list for the main table
       qry := format('
       DROP TABLE IF EXISTS clist;
@@ -64,33 +63,27 @@ module.exports = {
         AND table_name = %L'
       ,'public'
       ,tablename);
-
       EXECUTE qry;
       qry := '';
-
       -- Get the pg_typeof column datatypes for the main table
       -- these are more precise than the information schema types
       qry := 'DROP TABLE IF EXISTS ctypes;
       CREATE TEMP TABLE ctypes
       AS';
-
       FOR rec IN
         SELECT * FROM clist ORDER BY cnum
       LOOP
         wtext := wtext || format('
-          SELECT cname, cnum, ctype, pg_typeof( %I ) pgtype FROM clist LEFT JOIN %I ON %L = cname LIMIT 1 UNION'
+          SELECT cname, cnum, ctype, pg_typeof( %I ) pgtype FROM clist LEFT JOIN (SELECT * FROM %I LIMIT 1) a ON TRUE WHERE %L = cname UNION'
         ,rec.cname
         ,tablename
         ,rec.cname);
       END LOOP;
-
       qry := qry || LEFT(wtext,-6) || '
       ORDER BY cnum';
       wtext := '';
-
       EXECUTE qry;
       qry := '';
-
       -- set up the beginning and end of time
       qry := format('DROP TABLE IF EXISTS timeband;
       CREATE TEMP TABLE timeband
@@ -99,11 +92,9 @@ module.exports = {
         %L::timestamp timebegin,
         NOW() timeend'
       ,'2020-01-01');
-
       EXECUTE qry;
       qry := '';
       wtext := '';
-
       -- assemble flat_z, containing the typed columns with changed data
       -- there will be one record per audit log entry, plus one for the
       -- current value
@@ -119,7 +110,6 @@ module.exports = {
         ,dml_type = %L is_insert
         ,FALSE is_current_record'
       ,'INSERT');
-
       FOR rec IN
         SELECT * FROM ctypes WHERE cname != 'id' ORDER BY cnum
       LOOP
@@ -170,7 +160,6 @@ module.exports = {
         ,'null'
         ,rec.cname || '_isnull');
       END LOOP;
-
       qry := qry || wtext || format('
       FROM %I
       UNION ALL
@@ -182,7 +171,6 @@ module.exports = {
         ,TRUE'
       , 'ZAL' || tablename);
       wtext := '';
-
       FOR rec IN
         SELECT * FROM ctypes WHERE cname != 'id' ORDER BY cnum
       LOOP
@@ -204,17 +192,14 @@ module.exports = {
         ,rec.cname
         ,rec.cname || '_isnull');
       END LOOP;
-
       qry := qry || wtext || format('
       FROM %I
       CROSS JOIN timeband
       ORDER BY 2,1'
       ,tablename);
       wtext := '';
-
       EXECUTE qry;
       qry := '';
-
       -- create group ids for each column to identify which iteration
       -- of column value each record should have
       qry := 'DROP TABLE IF EXISTS group_z;
@@ -223,7 +208,6 @@ module.exports = {
       SELECT
         zid
         ,data_id';
-
       FOR rec IN
         SELECT * FROM ctypes WHERE cname != 'id' ORDER BY cnum
       LOOP
@@ -233,13 +217,10 @@ module.exports = {
         ,rec.cname
         ,rec.cname || '_group');
       END LOOP;
-
       qry := qry || wtext || E'\n' || 'FROM flat_z';
       wtext := '';
-
       EXECUTE qry;
       qry := '';
-
       -- spread the value from the records with update values throughout their respective groups
       -- also create the start and end timestamps using adjacent timestamps. Add one millisecond
       -- to the previous record's timestamp so it's not possible to match both with a BETWEEN.
@@ -256,7 +237,6 @@ module.exports = {
         ,(LAG(fz.dml_timestamp) OVER (PARTITION BY fz.data_id ORDER BY fz.zid)) + (1 * interval %L) timeband_start
         ,fz.dml_timestamp timeband_end'
         ,'1  ms');
-
       FOR rec IN
         SELECT * FROM ctypes WHERE cname != 'id' ORDER BY cnum
       LOOP
@@ -266,17 +246,14 @@ module.exports = {
         ,rec.cname || '_group'
         ,rec.cname);
       END LOOP;
-
       qry := qry || wtext || '
       FROM flat_z fz
       JOIN group_z gz
         ON fz.zid = gz.zid
         AND fz.data_id = gz.data_id';
       wtext := '';
-
       EXECUTE qry;
       qry := '';
-
       -- create the actual time series table
       qry := format('DROP TABLE IF EXISTS %I;
       CREATE TEMP TABLE %I
@@ -290,7 +267,6 @@ module.exports = {
         ,timeband_end'
         ,tablename || '_timeseries'
         ,tablename || '_timeseries');
-
       FOR rec IN
         SELECT * FROM ctypes WHERE cname != 'id' ORDER BY cnum
       LOOP
@@ -298,15 +274,12 @@ module.exports = {
         ,%I'
         ,rec.cname);
       END LOOP;
-
       qry := qry || wtext || '
       FROM banded_z
       CROSS JOIN timeband
       WHERE NOT is_insert';
       wtext := '';
-
       EXECUTE qry;
-
       END
       $$
       ;
