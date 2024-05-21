@@ -21,16 +21,13 @@ import db, {
   ActivityReportGoalFieldResponse,
   GoalTemplateFieldPrompt,
   CollaboratorRole,
-  // Resource,
   Topic,
   Course,
 } from '../models';
 import {
   cacheGoalMetadata,
-  // cacheObjectiveMetadata,
   cacheCourses,
 } from './reportCache';
-import { processObjectiveForResourcesById } from './resource';
 import {
   createReport,
   destroyReport,
@@ -489,11 +486,6 @@ describe('cacheObjectiveMetadata', () => {
       async (mockFile) => File.findOrCreate({ where: { ...mockFile } }),
     ));
     files = await File.findAll({ where: { id: mockFiles.map((mockFile) => mockFile.id) }, order: ['id'] });
-
-    objectiveResources.push(await processObjectiveForResourcesById(
-      objective.id,
-      [mockObjectiveResources[0]],
-    ));
 
     courseOne = await Course.create({
       name: faker.datatype.string(200),

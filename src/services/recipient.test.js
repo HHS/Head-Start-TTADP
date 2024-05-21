@@ -9,7 +9,6 @@ import db, {
   Region,
   User,
   Objective,
-  ObjectiveTopic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
@@ -976,11 +975,6 @@ describe('Recipient DB service', () => {
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
       ]);
-
-      await ObjectiveTopic.bulkCreate(
-        objectives.map((o, i) => ({ objectiveId: o.id, topicId: topics[i + 1].id })),
-      );
-
       const reason = faker.animal.cetacean();
 
       report = await createReport({
@@ -1031,12 +1025,6 @@ describe('Recipient DB service', () => {
         individualHooks: true,
       });
       await destroyReport(report);
-      await ObjectiveTopic.destroy({
-        where: {
-          objectiveId: objectives.map((o) => o.id),
-        },
-        individualHooks: true,
-      });
 
       await Topic.destroy({
         where: {
