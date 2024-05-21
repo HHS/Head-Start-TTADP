@@ -21,6 +21,7 @@ export async function rollUpCourseUrlData(data) {
       return [
         ...accumulator,
         {
+          id: c.id,
           heading: c.course,
           url: c.course,
           course: c.course,
@@ -86,7 +87,8 @@ export async function getCourseUrlWidgetData(scopes) {
   const flatCourseSql = /* sql */ `
       WITH counts AS (
         SELECT
-        c."name",
+            c.id,
+            c."name",
             MIN(ar."startDate") AS "minStartDate",
             MAX(ar."startDate") AS "maxStartDate",
             to_char(ar."startDate", 'Mon-YY') AS "rollUpDate",
@@ -100,7 +102,7 @@ export async function getCourseUrlWidgetData(scopes) {
             ON aroc."courseId" = c.id
         WHERE
             ar.id IN (${reportIds.map((r) => r.id).join(',')})
-        GROUP BY c.name, to_char(ar."startDate", 'Mon-YY')
+        GROUP BY c.id, c.name, to_char(ar."startDate", 'Mon-YY')
         ),
         totals AS (
             SELECT
@@ -118,9 +120,10 @@ export async function getCourseUrlWidgetData(scopes) {
             )::date AS "date"
         ),
         distinctcourses AS (
-          SELECT distinct "name" FROM "counts"
+          SELECT distinct "id", "name" FROM "counts"
         )
         SELECT
+            cor.id,
             cor."name" AS "course",
             to_char(d."date", 'Mon-YY') AS "rollUpDate",
             d."date",

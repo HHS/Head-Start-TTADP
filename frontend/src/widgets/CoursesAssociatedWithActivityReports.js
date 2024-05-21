@@ -130,6 +130,7 @@ function CoursesAssociatedWithActivityReports({
         enableSorting
         sortConfig={sortConfig}
         requestSort={requestSort}
+        enableCheckboxes
       />
     </WidgetContainer>
   );
