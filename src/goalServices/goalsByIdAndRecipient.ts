@@ -3,13 +3,10 @@ import { CREATION_METHOD } from '../constants';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { reduceGoals } from './reduceGoals';
 import {
-  ITopicModelInstance,
-  IResourceModelInstance,
-  IFileModelInstance,
   IGoalModelInstance,
   IObjectiveModelInstance,
-  IActivityReportObjectivesModelInstance,
 } from './types';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 
 const {
   Goal,
@@ -229,15 +226,6 @@ const OPTIONS_FOR_GOAL_FORM_QUERY = (id: number[] | number, recipientId: number)
     },
   ],
 });
-
-function extractObjectiveAssociationsFromActivityReportObjectives(
-  activityReportObjectives: IActivityReportObjectivesModelInstance[],
-  associationName: 'topics' | 'resources' | 'files' | 'courses',
-) {
-  return activityReportObjectives.map((aro) => aro[associationName].map((
-    a: ITopicModelInstance | IResourceModelInstance | IFileModelInstance,
-  ) => a.toJSON())).flat();
-}
 
 export default async function goalsByIdAndRecipient(ids: number | number[], recipientId: number) {
   const goals = await Goal

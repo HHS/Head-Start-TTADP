@@ -28,59 +28,40 @@ const {
   File,
 } = db;
 
-export default async function getGoalsForReport(reportId: number, goalIds: number[] = []) {
-  let where = {} as WhereOptions<IGoalModelInstance>;
-
-  if (goalIds.length) {
-    where = {
-      id: goalIds,
-    };
-  }
-
+export default async function getGoalsForReport(reportId: number) {
   const goals = await Goal.findAll({
-    where,
-    attributes: [
-      'id',
-      'name',
-      'endDate',
-      'status',
-      'grantId',
-      'createdVia',
-      'source',
-      'onAR',
-      'onApprovedAR',
-      'goalNumber',
-      'goalTemplateId',
-      'rtrOrder',
-      [sequelize.col('grant.regionId'), 'regionId'],
-      [sequelize.col('grant.recipient.id'), 'recipientId'],
-      [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-      [sequelize.literal(`(
-            SELECT
-              jsonb_agg( DISTINCT jsonb_build_object(
-                'promptId', gtfp.id ,
-                'ordinal', gtfp.ordinal,
-                'title', gtfp.title,
-                'prompt', gtfp.prompt,
-                'hint', gtfp.hint,
-                'caution', gtfp.caution,
-                'fieldType', gtfp."fieldType",
-                'options', gtfp.options,
-                'validations', gtfp.validations,
-                'response', gfr.response,
-                'reportResponse', argfr.response
-              ))
-            FROM "GoalTemplateFieldPrompts" gtfp
-            LEFT JOIN "GoalFieldResponses" gfr
-            ON gtfp.id = gfr."goalTemplateFieldPromptId"
-            AND gfr."goalId" = "Goal".id
-            LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-            ON gtfp.id = argfr."goalTemplateFieldPromptId"
-            AND argfr."activityReportGoalId" = "activityReportGoals".id
-            WHERE "goalTemplate".id = gtfp."goalTemplateId"
-            GROUP BY TRUE
-          )`), 'prompts'],
-    ],
+    attributes: {
+      include: [
+        [sequelize.col('grant.regionId'), 'regionId'],
+        [sequelize.col('grant.recipient.id'), 'recipientId'],
+        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [sequelize.literal(`(
+          SELECT
+            jsonb_agg( DISTINCT jsonb_build_object(
+              'promptId', gtfp.id ,
+              'ordinal', gtfp.ordinal,
+              'title', gtfp.title,
+              'prompt', gtfp.prompt,
+              'hint', gtfp.hint,
+              'caution', gtfp.caution,
+              'fieldType', gtfp."fieldType",
+              'options', gtfp.options,
+              'validations', gtfp.validations,
+              'response', gfr.response,
+              'reportResponse', argfr.response
+            ))
+          FROM "GoalTemplateFieldPrompts" gtfp
+          LEFT JOIN "GoalFieldResponses" gfr
+          ON gtfp.id = gfr."goalTemplateFieldPromptId"
+          AND gfr."goalId" = "Goal".id
+          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
+          ON gtfp.id = argfr."goalTemplateFieldPromptId"
+          AND argfr."activityReportGoalId" = "activityReportGoals".id
+          WHERE "goalTemplate".id = gtfp."goalTemplateId"
+          GROUP BY TRUE
+        )`), 'prompts'],
+      ],
+    },
     include: [
       {
         model: GoalStatusChange,
@@ -172,6 +153,25 @@ export default async function getGoalsForReport(reportId: number, goalIds: numbe
                 where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
               },
             ],
+          },
+          {
+            model: Topic,
+            as: 'topics',
+          },
+          {
+            model: Resource,
+            as: 'resources',
+            attributes: [['url', 'value']],
+            through: {
+              attributes: [],
+              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+              required: false,
+            },
+            required: false,
+          },
+          {
+            model: File,
+            as: 'files',
           },
         ],
       },
