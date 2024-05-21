@@ -317,7 +317,10 @@ module.exports = {
       await queryInterface.sequelize.query(/* sql */`
 
       -- Create GoalFieldResponses_timeseries
-      SELECT create_timeseries_from_audit_log('GoalFieldResponse');
+      BEGIN;
+      SELECT create_timeseries_from_audit_log('GoalFieldResponses');
+      COMMIT;
+      SELECT data_id, "goalId" from "GoalFieldResponses_timeseries";
 
       -- Pull the data necessary to create an ARGFR from the historical
       -- state of the associated GFR
