@@ -328,17 +328,23 @@ module.exports = {
         arg.id argid,
         gfrt."goalId" gid,
         gfrt.data_id gfrid,
-        gfrt."goalTemplateFieldPromptId",
-        gfrt.response
+        COALESCE(gfrt."goalTemplateFieldPromptId", gfr."goalTemplateFieldPromptId") "goalTemplateFieldPromptId",
+        COALESCE(gfrt.response, gfr.response) response
       FROM "ActivityReports" ar
       JOIN "ActivityReportGoals" arg
         ON ar.id = arg."activityReportId"
-      JOIN "GoalFieldResponses_timeseries" gfrt
+      JOIN "Goals" g
+        ON arg."goalId" = g.id
+      LEFT JOIN "GoalFieldResponses_timeseries" gfrt
         ON arg."goalId" = gfrt."goalId"
         AND ar."approvedAt" BETWEEN timeband_start AND timeband_end
       LEFT JOIN "ActivityReportGoalFieldResponses" argfr
         ON arg.id = argfr."activityReportGoalId"
+      LEFT JOIN "GoalFieldResponses" gfr
+        ON gfr."goalId" = arg."goalId"
       WHERE argfr.id IS NULL
+        AND g."goalTemplateId" = 19017
+        AND (gfrt.response IS NOT NULL OR gfr.response IS NOT NULL)
       ;
       
       -- Insert the records
