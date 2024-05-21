@@ -18,8 +18,8 @@ import {
 import { NO_ERROR, ERROR_FORMAT } from './constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { combinePrompts } from '../../../../components/condtionalFieldConstants';
-import GoalSource from '../../../../components/GoalForm/GoalSource';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
+import ReadOnlyField from '../../../../components/ReadOnlyField';
 
 export default function GoalForm({
   goal,
@@ -45,7 +45,6 @@ export default function GoalForm({
   const defaultEndDate = useMemo(() => (goal && goal.endDate ? goal.endDate : ''), [goal]);
   const defaultName = useMemo(() => (goal && goal.name ? goal.name : ''), [goal]);
   const status = useMemo(() => (goal && goal.status ? goal.status : ''), [goal]);
-  const defaultSource = useMemo(() => (goal && goal.source ? goal.source : ''), [goal]);
 
   const activityRecipientType = watch('activityRecipientType');
 
@@ -86,24 +85,6 @@ export default function GoalForm({
     defaultValue: defaultName,
   });
 
-  const {
-    field: {
-      onChange: onUpdateGoalSource,
-      onBlur: onBlurGoalSource,
-      value: goalSource,
-      name: goalSourceInputName,
-    },
-  } = useController({
-    name: 'goalSource',
-    rules: activityRecipientType === 'recipient' ? {
-      required: {
-        value: true,
-        message: 'Select a goal source',
-      },
-    } : {},
-    defaultValue: '',
-  });
-
   // when the goal is updated in the selection, we want to update
   // the fields via the useController functions
   useEffect(() => {
@@ -117,10 +98,6 @@ export default function GoalForm({
   useEffect(() => {
     onUpdateDate(goal.endDate ? goal.endDate : defaultEndDate);
   }, [defaultEndDate, goal.endDate, onUpdateDate]);
-
-  useEffect(() => {
-    onUpdateGoalSource(goal.source ? goal.source : defaultSource);
-  }, [goal.source, onUpdateGoalSource, defaultSource]);
 
   // objectives for the objective select, blood for the blood god, etc
   const [objectiveOptions, setObjectiveOptions] = useState([]);
@@ -179,29 +156,11 @@ export default function GoalForm({
         userCanEdit
       />
 
-      <FormFieldThatIsSometimesReadOnly
-        permissions={[
-          !isCurated,
-          goal.createdVia !== 'tr',
-          !goal.onApprovedAR,
-        ]}
+      <ReadOnlyField
         label="Goal source"
-        value={goalSource}
       >
-        <GoalSource
-          error={errors.goalSource ? ERROR_FORMAT(errors.goalSource.message) : NO_ERROR}
-          source={goalSource}
-          validateGoalSource={onBlurGoalSource}
-          onChangeGoalSource={onUpdateGoalSource}
-          inputName={goalSourceInputName}
-          goalStatus={status}
-          isLoading={isAppLoading}
-          userCanEdit={!isCurated}
-          isOnReport={false}
-          isMultiRecipientGoal={isMultiRecipientReport}
-          createdViaTr={goal.createdVia === 'tr'}
-        />
-      </FormFieldThatIsSometimesReadOnly>
+        {goal.source || ''}
+      </ReadOnlyField>
 
       <GoalDate
         error={errors.goalEndDate ? ERROR_FORMAT(errors.goalEndDate.message) : NO_ERROR}
