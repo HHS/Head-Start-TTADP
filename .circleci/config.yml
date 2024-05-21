@@ -43,7 +43,37 @@ executors:
   machine-executor:
     machine:
       image: ubuntu-2204:current
+  aws-executor:
+    docker:
+      - image: cimg/aws:2024.03
 commands:
+  sparse_checkout:
+    description: "Checkout a sparse directory from a specific branch."
+    parameters:
+      directory:
+        type: string
+        description: "Directory to checkout sparsely"
+      branch:
+        type: string
+        description: "Branch to checkout"
+    steps:
+      - run:
+          name: Install Git
+          command: |
+            sudo apt-get update && sudo apt-get install -y git
+      - run:
+          name: Clone Repository
+          command: |
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+      - run:
+          name: Setup Sparse Checkout
+          command: |
+            git config core.sparseCheckout true
+            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
+      - run:
+          name: Checkout Branch
+          command: |
+            git checkout << parameters.branch >>
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
       File is used as checksum source for part of caching key."
@@ -253,6 +283,108 @@ commands:
       #     name: Push maintenance application
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
+  cf_backup:
+    description: "Login to cloud foundry space with service account credentials, Connect to DB & S3, backup DB to S3"
+    parameters:
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client secret, a required application variable"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+      rds_service_name:
+        description: "Name of the rds service to backup"
+        type: string
+      s3_service_name:
+        description: "Name of the s3 service access"
+        type: string
+      backup_prefix:
+        description: "prefix name to use for backups"
+        type: string
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
+
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install pv uuid-runtime wget
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
+
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
+
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: cf_lambda - script to trigger backup
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg automation_dir "./automation" \
+              --arg manifest "manifest.yml" \
+              --arg task_name "backup" \
+              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
+              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
+              '{
+                automation_dir: $automation_dir,
+                manifest: $manifest,
+                task_name: $task_name,
+                command: $command,
+                args: $args
+              }')
+
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
+
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+          environment:
+            CF_RDS_SERVICE_NAME: ttahub-prod
+            CF_S3_SERVICE_NAME: ttahub-db-backups
+      - run:
+          name: Logout of service account
+          command: |
+            cf logout
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -305,6 +437,9 @@ parameters:
   sandbox_new_relic_app_id:
     default: "867346799"
     type: string
+  manual-trigger:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -888,8 +1023,25 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
+  backup_upload_production:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directory: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_backup:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 workflows:
   build_test_deploy:
+    when:
+      equal: [false, << pipeline.parameters.manual-trigger >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -968,3 +1120,18 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+  daily_backup_upload_production:
+    triggers:
+      - schedule:
+          cron: "0 10 * * 1-5"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - backup_upload_production
+  manual_backup_upload_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-trigger >>]
+    jobs:
+      - backup_upload_production
