@@ -59,7 +59,9 @@ import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
 import getGoalsForReport from './getGoalsForReport';
-import reduceGoals from './reduceGoals';
+import { reduceGoals } from './reduceGoals';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 const namespace = 'SERVICE:GOALS';
 const logContext = {
@@ -266,20 +268,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         required: false,
         include: [
           {
-            model: Resource,
-            as: 'resources',
-            attributes: [
-              ['url', 'value'],
-              ['id', 'key'],
-            ],
-            required: false,
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-          },
-          {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: [
@@ -291,20 +279,40 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             where: {
               activityReportId,
             },
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-          {
-            model: Topic,
-            as: 'topics',
-            required: false,
-          },
-          {
-            model: Course,
-            as: 'courses',
-            required: false,
+            include: [
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Resource,
+                as: 'resources',
+                attributes: ['url', 'title'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: File,
+                as: 'files',
+                attributes: ['originalFileName', 'key', 'url'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Course,
+                as: 'courses',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+            ],
           },
           {
             model: ActivityReport,
@@ -360,7 +368,32 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ],
   });
 
-  const reducedGoals = reduceGoals(goals);
+  const reformattedGoals = goals.map((goal) => ({
+    ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
+    objectives: goal.objectives
+      .map((objective) => ({
+        ...objective.toJSON(),
+        topics: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'topics',
+        ),
+        courses: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'courses',
+        ),
+        resources: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'resources',
+        ),
+        files: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'files',
+        ),
+      })),
+  }));
+
+  const reducedGoals = reduceGoals(reformattedGoals);
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
