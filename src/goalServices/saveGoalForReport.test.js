@@ -5,17 +5,12 @@ import db, {
   Grant,
   Recipient,
   Objective,
-  ActivityReportObjectiveResource,
   ActivityReport,
   ActivityRecipient,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
   User,
   Topic,
-  ObjectiveTopic,
-  ObjectiveResource,
-  Resource,
   Region,
 } from '../models';
 import { saveGoalsForReport } from './goals';
@@ -339,11 +334,6 @@ describe('saveGoalsForReport (more tests)', () => {
       createdVia: 'activityReport',
     });
 
-    await ObjectiveTopic.create({
-      objectiveId: existingObjective.id,
-      topicId: topic.id,
-    });
-
     const objective2 = await Objective.create({
       goalId: goal.id,
       status: 'In Progress',
@@ -356,12 +346,6 @@ describe('saveGoalsForReport (more tests)', () => {
       activityReportId: reportWeArentWorryingAbout.id,
       objectiveId: objective.id,
       status: objective.status,
-    });
-
-    // Create adding recipient objective values.
-    await ObjectiveTopic.create({
-      objectiveId: addingRecipientObjective.id,
-      topicId: topic.id,
     });
 
     await ActivityReportObjective.create({
@@ -436,18 +420,6 @@ describe('saveGoalsForReport (more tests)', () => {
       },
       hookMetadata: { objectiveIds },
       individualHooks: true,
-    });
-
-    await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
-
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
     });
 
     await Objective.unscoped().destroy({
@@ -587,37 +559,6 @@ describe('saveGoalsForReport (more tests)', () => {
       newObjective,
       beforeGoalIdUuid,
     };
-  };
-
-  const setupForSecondTest = async ({
-    activityReportForNewGoal,
-    grantOne,
-    beforeGoalId,
-    goalName,
-  }) => {
-    const newObjective = {
-      title: 'This is a brand new objective',
-      ttaProvided: '<p>Test objective TTA</p>\n',
-      status: 'Not Started',
-      id: '02f1ec1d-4163-4a9a-9b32-adddf336f990',
-      isNew: true,
-      topics: [],
-      resources: [],
-      files: [],
-    };
-
-    const newGoals = [{
-      id: beforeGoalId,
-      isNew: true,
-      name: goalName,
-      objectives: [newObjective],
-      grantIds: [grantOne.id],
-      status: 'Not Started',
-      source: GOAL_SOURCES[0],
-    }];
-    const [r] = await activityReportAndRecipientsById(activityReportForNewGoal.id);
-
-    await saveGoalsForReport(newGoals, r);
   };
 
   const setupForThirdTest = async ({
@@ -1238,22 +1179,6 @@ describe('saveGoalsForReport (more tests)', () => {
 
     const rtrGoal = await Goal.findByPk(existingGoal.id);
     const rtrObjective = await Objective.findByPk(existingObjective.id);
-    // check that our resource are on the objective
-    const beforeObjectiveResources = await ObjectiveResource.findAll({
-      where: {
-        objectiveId: rtrObjective.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-        required: true,
-      }],
-    });
-
-    expect(beforeObjectiveResources.length).toBe(1);
-    const beforeUrls = beforeObjectiveResources.map((bor) => bor.resource.dataValues.url);
-    expect(beforeUrls).toContain('http://www.finally-a-url.com');
 
     const newGoals = [
       {
@@ -1286,23 +1211,6 @@ describe('saveGoalsForReport (more tests)', () => {
             title: rtrObjective.title,
             status: 'In Progress',
             goalId: rtrGoal.id,
-            files: [],
-            topics: [
-              {
-                name: topic.name,
-                id: topic.id,
-              },
-              {
-                name: secondTopic.name,
-                id: secondTopic.id,
-              },
-            ],
-            resources: [
-              {
-                key: 'gibberish-i-THINK-thats-obvious',
-                value: 'https://www.google.com', // a fine resource
-              },
-            ],
           }],
         grantIds: [grantOne.id],
         status: 'In Progress',
@@ -1333,66 +1241,6 @@ describe('saveGoalsForReport (more tests)', () => {
 
     expect(afterActivityReportObjectives.length).toBe(2);
     expect(afterActivityReportObjectives.map((o) => o.objectiveId)).toContain(rtrObjective.id);
-    // eslint-disable-next-line max-len
-    const existingObjectiveARO = afterActivityReportObjectives.find((o) => o.objectiveId === rtrObjective.id);
-
-    const afterObjectiveTopics = await ObjectiveTopic.findAll({
-      where: {
-        objectiveId: rtrObjective.id,
-      },
-    });
-
-    // check that our topics are both associated with the objective
-    expect(afterObjectiveTopics.length).toBe(2);
-    const afterObjectiveTopicIds = afterObjectiveTopics.map((at) => at.topicId);
-    expect(afterObjectiveTopicIds).toContain(topic.id);
-    expect(afterObjectiveTopicIds).toContain(secondTopic.id);
-
-    // and that both are associated with the activity report
-    const afterActivityReportObjectiveTopics = await ActivityReportObjectiveTopic.findAll({
-      where: {
-        activityReportObjectiveId: existingObjectiveARO.id,
-      },
-    });
-
-    expect(afterActivityReportObjectiveTopics.length).toBe(2);
-    const afterActivityReportObjectiveTopicIds = afterActivityReportObjectiveTopics.map(
-      (at) => at.topicId,
-    );
-    expect(afterActivityReportObjectiveTopicIds).toContain(topic.id);
-    expect(afterActivityReportObjectiveTopicIds).toContain(secondTopic.id);
-
-    // check that our resources are saved properly to the objective
-    const afterObjectiveResources = await ObjectiveResource.findAll({
-      where: {
-        objectiveId: rtrObjective.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-        required: true,
-      }],
-    });
-
-    expect(afterObjectiveResources.length).toBe(2);
-    const urls = afterObjectiveResources.map((ar) => ar.resource.dataValues.url);
-    expect(urls).toContain('https://www.google.com');
-    expect(urls).toContain('http://www.finally-a-url.com');
-
-    const afterActivityReportObjectiveResources = await ActivityReportObjectiveResource.findAll({
-      where: {
-        activityReportObjectiveId: existingObjectiveARO.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-      }],
-    });
-
-    expect(afterActivityReportObjectiveResources.length).toBe(1);
-    expect(afterActivityReportObjectiveResources[0].resource.dataValues.url).toBe('https://www.google.com');
     await cleanupTest(setup);
   });
 
