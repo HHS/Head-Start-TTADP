@@ -4,6 +4,7 @@ import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
 import { removeUnusedGoalsObjectivesFromReport } from '../goalServices/goals';
 import { cacheObjectiveMetadata } from './reportCache';
+import extractObjectiveAssociationsFromActivityReportObjectives from '../goalServices/extractObjectiveAssociationsFromActivityReportObjectives';
 
 const {
   Objective,
@@ -158,6 +159,46 @@ export async function getObjectiveById(objectiveId: number) {
   });
 }
 
+function parseIdOrValue(objective: {
+  id?: number,
+  value?: number,
+  getDataValue?: (key: 'id' | 'value') => number,
+  dataValues?: {
+    id?: number,
+    value?: number,
+  },
+}) {
+  if (objective.id) {
+    return objective.id;
+  }
+
+  if (objective.value) {
+    return objective.value;
+  }
+
+  if (objective.getDataValue) {
+    if (objective.getDataValue('id')) {
+      return objective.getDataValue('id');
+    }
+
+    if (objective.getDataValue('value')) {
+      return objective.getDataValue('value');
+    }
+  }
+
+  if (objective.dataValues) {
+    if (objective.dataValues.id) {
+      return objective.dataValues.id;
+    }
+
+    if (objective.dataValues.value) {
+      return objective.dataValues.value;
+    }
+  }
+
+  return null;
+}
+
 function reduceOtherEntityObjectives(newObjectives) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
@@ -173,7 +214,7 @@ function reduceOtherEntityObjectives(newObjectives) {
     ));
 
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+      const id = parseIdOrValue(objective);
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
@@ -218,10 +259,11 @@ function reduceOtherEntityObjectives(newObjectives) {
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+    const id = parseIdOrValue(objective);
 
     return [...objectives, {
       ...objective.dataValues,
+      id,
       value: id,
       ids: [id],
       ttaProvided,
@@ -282,7 +324,26 @@ export async function getObjectivesByReportId(reportId) {
     ],
   });
 
-  return reduceOtherEntityObjectives(objectives);
+  return reduceOtherEntityObjectives(objectives
+    .map((objective) => ({
+      ...objective.toJSON(),
+      topics: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'topics',
+      ),
+      courses: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'courses',
+      ),
+      resources: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'resources',
+      ),
+      files: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'files',
+      ),
+    })));
 }
 
 /**
