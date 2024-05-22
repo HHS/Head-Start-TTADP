@@ -116,7 +116,7 @@ const SiteNav = ({
                     <NavLink
                       to="/dashboards/resources-dashboard"
                     >
-                      Resources Dashboard
+                      Resource Dashboard
                     </NavLink>
                   </li>
                   <li>
