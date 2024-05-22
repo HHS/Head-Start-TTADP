@@ -8,8 +8,10 @@ import {
   fireEvent,
   act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import CoursesAssociatedWithActivityReports, { parseValue } from '../CoursesAssociatedWithActivityReports';
 
+const origUrl = window.URL;
 const emptyData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
   courses: [],
@@ -112,6 +114,7 @@ const renderCoursesAssociatedWithActivityReports = (data, perPage = 10) => {
 describe('Resources Associated with Topics', () => {
   afterEach(() => {
     fetchMock.restore();
+    window.URL = origUrl;
   });
 
   it('renders correctly without data', async () => {
@@ -345,31 +348,44 @@ describe('Resources Associated with Topics', () => {
     });
   });
 
-  it('unchecks the all selected check box when one row is unchecked', async () => {
+  it('exports the selected rows', async () => {
+    window.URL = {
+      ...window.URL,
+      revokeObjectURL: jest.fn(),
+    };
     renderCoursesAssociatedWithActivityReports(mockSortData);
 
     // get the check box with the id check-all-checkboxes
-    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
-
-    // check the check box
-    fireEvent.click(checkAllCheckBox);
+    const allCb = screen.getByRole('checkbox', { name: /select or de-select all/i });
+    fireEvent.click(allCb);
 
     // assert all check boxes are selected
-    const checkBoxes = screen.getAllByRole('checkbox');
-    checkBoxes.forEach((checkBox) => {
-      expect(checkBox).toBeChecked();
+    const cBs = screen.getAllByRole('checkbox');
+    cBs.forEach((cb) => {
+      expect(cb).toBeChecked();
     });
 
-    // uncheck the first check box
-    const secondCheckBox = screen.getByRole('checkbox', { name: /select 2/i });
+    // Click the context menu button.
+    let contextMenuBtn = screen.getByTestId('ellipsis-button');
+    userEvent.click(contextMenuBtn);
 
-    await act(async () => {
-      fireEvent.click(secondCheckBox);
-      await waitFor(async () => {
-        expect(secondCheckBox).not.toBeChecked();
-        expect(checkAllCheckBox).not.toBeChecked();
-      });
-    });
+    // Export selected rows.
+    const exportTableBtn = screen.getByRole('button', { name: /export selected rows/i });
+    userEvent.click(exportTableBtn);
+
+    // Make sure there is a link with the name 'Download'.
+    expect(document.getElementsByName('download').length).toBe(1);
+
+    // Click the context menu button.
+    contextMenuBtn = screen.getByTestId('ellipsis-button');
+    userEvent.click(contextMenuBtn);
+
+    // Export all rows.
+    const exportAllBtn = screen.getByRole('button', { name: /export table/i });
+    userEvent.click(exportAllBtn);
+
+    // Make sure there is a link with the name 'Download'.
+    expect(document.getElementsByName('download').length).toBe(1);
   });
 
   describe('parseValue', () => {

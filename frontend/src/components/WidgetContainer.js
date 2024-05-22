@@ -25,6 +25,8 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
+    enableCheckboxes,
+    exportRows,
   },
 ) {
   return (
@@ -44,6 +46,8 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        enableCheckboxes={enableCheckboxes}
+        exportRows={exportRows}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -93,6 +97,8 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -111,4 +117,6 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
+  enableCheckboxes: false,
+  exportRows: () => {},
 };
