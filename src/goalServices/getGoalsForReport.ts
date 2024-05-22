@@ -154,25 +154,6 @@ export default async function getGoalsForReport(reportId: number) {
               },
             ],
           },
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [['url', 'value']],
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-            required: false,
-          },
-          {
-            model: File,
-            as: 'files',
-          },
         ],
       },
     ],

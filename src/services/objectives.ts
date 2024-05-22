@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
-import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
+import { removeUnusedGoalsObjectivesFromReport } from '../goalServices/goals';
 import { cacheObjectiveMetadata } from './reportCache';
 
 const {
@@ -114,17 +114,11 @@ export async function saveObjectivesForReport(objectives, report) {
 
       const deleteUnusedAssociations = false;
 
-      const metadata = await saveObjectiveAssociations(
-        savedObjective,
+      await cacheObjectiveMetadata(savedObjective, report.id, {
         resources,
         topics,
         files,
         courses,
-        deleteUnusedAssociations,
-      );
-
-      await cacheObjectiveMetadata(savedObjective, report.id, {
-        ...metadata,
         ttaProvided: objective.ttaProvided,
         supportType: objective.supportType,
         order: index,
@@ -266,24 +260,26 @@ export async function getObjectivesByReportId(reportId) {
           activityReportId: reportId,
         },
         required: true,
-      },
-      {
-        model: Topic,
-        as: 'topics',
-      },
-      {
-        model: Course,
-        as: 'courses',
-      },
-      {
-        model: Resource,
-        as: 'resources',
-        // these need to be renamed to match the frontend form names
-        attributes: [['url', 'value']],
-      },
-      {
-        model: File,
-        as: 'files',
+        include: [
+          {
+            model: Topic,
+            as: 'topics',
+          },
+          {
+            model: Course,
+            as: 'courses',
+          },
+          {
+            model: Resource,
+            as: 'resources',
+            // these need to be renamed to match the frontend form names
+            attributes: [['url', 'value']],
+          },
+          {
+            model: File,
+            as: 'files',
+          },
+        ],
       },
     ],
   });
