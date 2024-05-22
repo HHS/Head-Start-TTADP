@@ -4,13 +4,11 @@ import {
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
-  ObjectiveResource,
   Objective,
   File,
   ActivityReport,
   Topic,
 } from '..';
-
 import { draftObject } from './testHelpers';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy, afterCreate } from './activityReportObjective';
@@ -71,10 +69,6 @@ describe('activityReportObjective hooks', () => {
 
     await ActivityReportObjectiveResource.destroy({
       where: { activityReportObjectiveId: aro.id },
-    });
-
-    await ObjectiveResource.destroy({
-      where: { objectiveId: objective.id },
     });
 
     await ActivityReportObjectiveTopic.destroy({

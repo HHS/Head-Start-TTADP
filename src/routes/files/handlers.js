@@ -1,14 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
 import httpCodes from 'http-codes';
-import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
+import { DECIMAL_BASE } from '@ttahub/common';
 import handleErrors from '../../lib/apiErrorHandler';
 import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
 import addToScanQueue from '../../services/scanQueue';
 import {
   deleteFile,
   deleteActivityReportFile,
-  deleteObjectiveFile,
   deleteCommunicationLogFile,
   deleteSessionFile,
   deleteSessionSupportingAttachment,
@@ -16,9 +15,6 @@ import {
   updateStatus,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData,
-  createObjectiveTemplateFileMetaData,
-  createObjectivesFileMetaData,
   createCommunicationLogFileMetadata,
   createSessionSupportingAttachmentMetaData,
   createSessionObjectiveFileMetaData,
@@ -26,12 +22,10 @@ import {
 } from '../../services/files';
 import { ActivityReport, ActivityReportObjective } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
-import ObjectivePolicy from '../../policies/objective';
 import EventPolicy from '../../policies/event';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import { activityReportAndRecipientsById } from '../../services/activityReports';
 import { userById } from '../../services/users';
-import { getObjectiveById } from '../../services/objectives';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { auditLogger } from '../../logger';
 import { FILE_STATUSES } from '../../constants';
@@ -144,19 +138,6 @@ const deleteHandler = async (req, res) => {
       if (rf) {
         await deleteActivityReportFile(rf.id);
       }
-    } else if (objectiveId) {
-      const objective = await getObjectiveById(objectiveId);
-      const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpdate()) {
-        res.sendStatus(403);
-        return;
-      }
-      const of = file.objectiveFiles.find(
-        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
-      );
-      if (of) {
-        await deleteObjectiveFile(of.id);
-      }
     } else if (eventSessionId) {
       const session = await findSessionById(eventSessionId);
       const event = await findEventBySmartsheetIdSuffix(session.eventId);
@@ -232,7 +213,6 @@ const deleteHandler = async (req, res) => {
   }
 };
 
-// TODO: handle ActivityReportObjectiveFiles, ObjectiveFiles, and ObjectiveTemplateFiles
 const parseFormPromise = (req) => new Promise((resolve, reject) => {
   const form = new multiparty.Form();
   form.parse(req, (err, fields, files) => {
@@ -273,8 +253,6 @@ const uploadHandler = async (req, res) => {
   const {
     reportId,
     reportObjectiveId,
-    objectiveId,
-    objectiveTempleteId,
     sessionId,
     communicationLogId,
     sessionAttachmentId,
@@ -336,27 +314,6 @@ const uploadHandler = async (req, res) => {
         return res.sendStatus(403);
       }
       metadata = await createActivityReportObjectiveFileMetaData(
-        originalFilename,
-        fileName,
-        reportId,
-        size,
-      );
-    } else if (objectiveId) {
-      const objective = await getObjectiveById(objectiveId);
-      const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!(objectivePolicy.canUpload()
-      || (await validateUserAuthForAdmin(userId)))) {
-        return res.sendStatus(403);
-      }
-      metadata = await createObjectiveFileMetaData(
-        originalFilename,
-        fileName,
-        objectiveId,
-        size,
-      );
-    } else if (objectiveTempleteId) {
-      // TODO: Determine how to handle permissions for objective templates.
-      metadata = await createObjectiveTemplateFileMetaData(
         originalFilename,
         fileName,
         reportId,
@@ -432,136 +389,6 @@ const uploadHandler = async (req, res) => {
   }
 };
 
-const uploadObjectivesFile = async (req, res) => {
-  const [fields, files] = await parseFormPromise(req);
-  let { objectiveIds } = fields;
-
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-
-  objectiveIds = JSON.parse(objectiveIds);
-  const scanQueue = [];
-
-  if (!objectiveIds || !objectiveIds.length) {
-    return res.status(400).send({ error: 'objective ids are required' });
-  }
-  try {
-    if (!files.file) {
-      return res.status(400).send({ error: 'file required' });
-    }
-    await Promise.all(files.file.map(async (f) => {
-      const { path, originalFilename, size } = f;
-      if (!size) {
-        return res.status(400).send({ error: 'fileSize required' });
-      }
-      const buffer = fs.readFileSync(path);
-      const fileTypeToUse = await determineFileTypeFromPath(path);
-      if (!fileTypeToUse) {
-        return res.status(400).send('Could not determine file type');
-      }
-      const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
-      const authorizations = await Promise.all(objectiveIds.map(async (objectiveId) => {
-        const objective = await getObjectiveById(objectiveId);
-        const objectivePolicy = new ObjectivePolicy(objective, user);
-        if (!objective || !objectivePolicy.canUpload()) {
-          const admin = await validateUserAuthForAdmin(userId);
-          if (!admin) {
-            return false;
-          }
-        }
-        return true;
-      }));
-
-      if (!authorizations.every((auth) => auth)) {
-        return res.sendStatus(403);
-      }
-
-      const data = await createObjectivesFileMetaData(
-        originalFilename,
-        fileName,
-        objectiveIds.filter((i) => i !== 0), // Exclude unsaved objectives.
-        size,
-      );
-      try {
-        const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-        const url = getPresignedURL(uploadedFile.key);
-        await updateStatus(data.id, UPLOADED);
-        scanQueue.push({ ...data, url });
-
-        return data;
-      } catch (err) {
-        if (data) {
-          await updateStatus(data.id, UPLOAD_FAILED);
-        }
-        return handleErrors(req, res, err, logContext);
-      }
-    }));
-    if (!res.writableEnded) {
-      res.status(200).send(scanQueue);
-    }
-  } catch (err) {
-    return handleErrors(req, res, err, logContext);
-  }
-
-  return Promise.all(scanQueue.map(async (queueItem) => {
-    try {
-      if (!queueItem.key || !queueItem.id) {
-        throw new Error('Missing key or id for file status update');
-      }
-      await addToScanQueue({ key: queueItem.key });
-      return await updateStatus(queueItem.id, QUEUED);
-    } catch (err) {
-      auditLogger.error(`${logContext} ${logContext.namespace}:uploadObjectivesFile Failed to queue ${queueItem.originalFileName}. Error: ${err}`);
-      return updateStatus(queueItem.id, QUEUEING_FAILED);
-    }
-  }));
-};
-
-const deleteObjectiveFileHandler = async (req, res) => {
-  const { fileId } = req.params;
-  const { objectiveIds } = req.body;
-
-  const userId = await currentUserId(req, res);
-  const user = await userById(userId);
-
-  try {
-    let file = await getFileById(parseInt(fileId, DECIMAL_BASE));
-    let canUpdate = true;
-
-    await Promise.all(objectiveIds.map(async (objectiveId) => {
-      if (!canUpdate) {
-        return null;
-      }
-      const objective = await getObjectiveById(objectiveId);
-      const objectivePolicy = new ObjectivePolicy(objective, user);
-      if (!objectivePolicy.canUpdate()) {
-        canUpdate = false;
-        res.sendStatus(403);
-        return null;
-      }
-      const of = file.objectiveFiles.find(
-        (r) => r.objectiveId === parseInt(objectiveId, DECIMAL_BASE),
-      );
-      if (of) {
-        return deleteObjectiveFile(of.id);
-      }
-      return null;
-    }));
-
-    file = await getFileById(fileId);
-    if (file && file.reports.length
-      + file.reportObjectiveFiles.length
-      + file.objectiveFiles.length
-      + file.objectiveTemplateFiles.length === 0) {
-      await deleteFileFromS3(file.key);
-      await deleteFile(fileId);
-    }
-    res.status(204).send();
-  } catch (error) {
-    await handleErrors(req, res, error, logContext);
-  }
-};
-
 async function deleteActivityReportObjectiveFile(req, res) {
   const { fileId, reportId } = req.params;
   const { objectiveIds } = req.body;
@@ -603,7 +430,5 @@ export {
   deleteHandler,
   uploadHandler,
   deleteOnlyFile,
-  uploadObjectivesFile,
-  deleteObjectiveFileHandler,
   deleteActivityReportObjectiveFile,
 };

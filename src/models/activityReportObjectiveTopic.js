@@ -1,5 +1,4 @@
 const { Model } = require('sequelize');
-const { afterDestroy } = require('./hooks/activityReportObjectiveTopic');
 
 /**
    * ObjectiveTopic table. Junction table
@@ -36,9 +35,6 @@ export default (sequelize, DataTypes) => {
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveTopic',
-    hooks: {
-      afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-    },
   });
   return ActivityReportObjectiveTopic;
 };
