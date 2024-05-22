@@ -374,6 +374,7 @@ describe('Course dashboard', () => {
     const expectedResults = [
       {
         heading: 'Widget Course 1',
+        id: courseOne.id,
         url: 'Widget Course 1',
         course: 'Widget Course 1',
         title: 'Widget Course 1',
@@ -387,6 +388,7 @@ describe('Course dashboard', () => {
       },
       {
         heading: 'Widget Course 2',
+        id: courseTwo.id,
         url: 'Widget Course 2',
         course: 'Widget Course 2',
         title: 'Widget Course 2',
@@ -400,6 +402,7 @@ describe('Course dashboard', () => {
       },
       {
         heading: 'Widget Course 3',
+        id: courseThree.id,
         url: 'Widget Course 3',
         course: 'Widget Course 3',
         title: 'Widget Course 3',
@@ -419,36 +422,42 @@ describe('Course dashboard', () => {
     const data = [
       {
         course: 'Widget Course 1',
+        id: 1,
         rollUpDate: 'Jan-21',
         count: '3',
         total: '4',
       },
       {
         course: 'Widget Course 1',
+        id: 1,
         rollUpDate: 'Feb-21',
         count: '1',
         total: '4',
       },
       {
         course: 'Widget Course 2',
+        id: 2,
         rollUpDate: 'Jan-21',
         count: '2',
         total: '5',
       },
       {
         course: 'Widget Course 2',
+        id: 2,
         rollUpDate: 'Feb-21',
         count: '3',
         total: '5',
       },
       {
         course: 'Widget Course 3',
+        id: 3,
         rollUpDate: 'Jan-21',
         count: '1',
         total: '1',
       },
       {
         course: 'Widget Course 3',
+        id: 3,
         rollUpDate: 'Feb-21',
         count: '0',
         total: '1',
@@ -478,6 +487,7 @@ describe('Course dashboard', () => {
         title: 'Widget Course 2',
         sortBy: 'Widget Course 2',
         total: '5',
+        id: 2,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '2' },
@@ -492,6 +502,7 @@ describe('Course dashboard', () => {
         title: 'Widget Course 1',
         sortBy: 'Widget Course 1',
         total: '4',
+        id: 1,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '3' },
@@ -506,6 +517,7 @@ describe('Course dashboard', () => {
         title: 'Widget Course 3',
         sortBy: 'Widget Course 3',
         total: '1',
+        id: 3,
         isUrl: false,
         data: [
           { title: 'Jan-21', value: '1' },
