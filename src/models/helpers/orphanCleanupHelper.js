@@ -50,8 +50,6 @@ const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
                     WHERE f.id = ${fileId}
                     AND arf.id IS NULL
                     AND arof.id IS NULL
-                    AND "of".id IS NULL
-                    AND otf.id IS NULL
                     AND imf.id IS NULL
                     GROUP BY 1
                )`),

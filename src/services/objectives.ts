@@ -112,8 +112,6 @@ export async function saveObjectivesForReport(objectives, report) {
         });
       }
 
-      const deleteUnusedAssociations = false;
-
       await cacheObjectiveMetadata(savedObjective, report.id, {
         resources,
         topics,

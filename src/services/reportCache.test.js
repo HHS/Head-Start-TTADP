@@ -103,7 +103,7 @@ describe('cacheCourses', () => {
   });
 
   it('should cache courses', async () => {
-    await cacheCourses(objective.id, aro.id, [{ courseId: courseTwo.id }]);
+    await cacheCourses(objective.id, aro.id, [{ id: courseTwo.id }]);
 
     const aroCourses = await ActivityReportObjectiveCourse.findAll({
       where: {
