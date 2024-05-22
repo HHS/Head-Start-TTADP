@@ -70,7 +70,7 @@ function download_aws_cli() {
           exit 2
       fi
 
-      if ! gpg --verify "${sig_file}" "${file}"; then
+      if ! gpg --verify "${zip_file}.sig" "$zip_file"; then
           log "ERROR" "Sig verification failed for AWS CLI."
           exit 2
       fi
