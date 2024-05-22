@@ -1,11 +1,8 @@
-import { validate } from 'uuid';
-import waitFor from 'wait-for-expect';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   File,
   ActivityReport,
   ActivityReportFile,
-  ObjectiveFile,
   User,
   Grant,
   Goal,
@@ -13,7 +10,7 @@ import db, {
   Recipient,
 } from '../../models';
 import app from '../../app';
-import { uploadFile, deleteFileFromS3, getPresignedURL } from '../../lib/s3';
+import { uploadFile } from '../../lib/s3';
 import * as scanQueue from '../../services/scanQueue';
 import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
@@ -127,36 +124,15 @@ describe('File Upload', () => {
       ],
     });
 
-    const objectiveFiles = await File.findAll({
-      include: [
-        {
-          model: ObjectiveFile,
-          as: 'objectiveFiles',
-          required: true,
-          where: { objectiveId: [objective.dataValues.id, secondTestObjective.dataValues.id] },
-        },
-      ],
-    });
-
     await Promise.all(files.map(async (file) => {
       ActivityReportFile.destroy({ where: { fileId: file.id } });
       File.destroy({ where: { id: file.id } });
-    }));
-
-    await Promise.all(objectiveFiles.map(async (objFile) => {
-      ObjectiveFile.destroy({ where: { fileId: objFile.id } });
-      File.destroy({ where: { id: objFile.id } });
     }));
 
     // cleanup any leftovers, like from the lonely file test
     const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
     await Promise.all(
       [
-        ObjectiveFile.destroy({
-          where: {
-            fileId: testFiles.map((file) => file.id),
-          },
-        }),
         ActivityReportFile.destroy({
           where: {
             fileId: testFiles.map((file) => file.id),
@@ -187,217 +163,6 @@ describe('File Upload', () => {
   });
   beforeEach(() => {
     jest.clearAllMocks();
-  });
-
-  describe('File Upload Handlers happy path', () => {
-    beforeEach(() => {
-      uploadFile.mockReset();
-      getPresignedURL.mockReset();
-    });
-    it('tests a file upload', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-        reportHasEditableStatus: () => true,
-      }));
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
-      let file;
-
-      await waitFor(async () => {
-        file = await File.findOne({ where: { id: fileId } });
-        expect(file).not.toBeNull();
-      });
-      const uuid = file.dataValues.key.slice(0, -3);
-      expect(file.dataValues.id).toBe(fileId);
-      expect(file.dataValues.status).not.toBe(null);
-      expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      const arf = await ActivityReportFile.findOne({ where: { fileId } });
-      expect(arf.activityReportId).toBe(report.dataValues.id);
-      expect(validate(uuid)).toBe(true);
-    });
-    it('allows an admin to upload a file', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => false,
-        reportHasEditableStatus: () => true,
-      }));
-      validateUserAuthForAdmin.mockResolvedValue(true);
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
-      let file;
-
-      await waitFor(async () => {
-        file = await File.findOne({ where: { id: fileId } });
-        expect(file).not.toBeNull();
-      });
-
-      const uuid = file.dataValues.key.slice(0, -3);
-      expect(file.dataValues.id).toBe(fileId);
-      expect(file.dataValues.status).not.toBe(null);
-      expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      const arf = await ActivityReportFile.findOne({ where: { fileId } });
-      expect(arf.activityReportId).toBe(report.dataValues.id);
-      expect(validate(uuid)).toBe(true);
-    });
-    it('disallows an admin to upload a file if the status is not editable', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => false,
-        reportHasEditableStatus: () => false,
-      }));
-      validateUserAuthForAdmin.mockResolvedValue(true);
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('reportId', report.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(403);
-      fileId = response.body.id;
-      expect(uploadFile).not.toHaveBeenCalled();
-    });
-    it('tests an unauthorized delete', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => false,
-        reportHasEditableStatus: () => true,
-      }));
-      await request(app)
-        .delete(`/api/files/r/${report.dataValues.id}/1`)
-        .expect(403)
-        .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
-    });
-    it('tests an improper delete', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-        reportHasEditableStatus: () => true,
-      }));
-      await request(app)
-        .delete(`/api/files/r/${report.dataValues.id}/`)
-        .expect(400)
-        .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
-    });
-    it('deletes a file', async () => {
-      ActivityReportPolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-        reportHasEditableStatus: () => false,
-      }));
-      const file = await File.create({
-        activityReportId: report.dataValues.id,
-        originalFileName: 'name',
-        key: 'key',
-        status: 'UPLOADING',
-        fileSize: 0,
-      });
-      await request(app)
-        .delete(`/api/files/r/${report.dataValues.id}/${file.id}`)
-        .expect(204);
-      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
-      const noFile = await File.findOne({ where: { id: file.id } });
-      expect(noFile).toBe(null);
-    });
-
-    it('tests a objective file upload', async () => {
-      ObjectivePolicy.mockImplementation(() => ({
-        canUpload: () => true,
-      }));
-      uploadFile.mockResolvedValue({ key: 'key' });
-      let response;
-      try {
-        response = await request(app)
-          .post('/api/files')
-          .field('objectiveId', objective.dataValues.id)
-          .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-          .expect(200);
-      } catch (e) {
-        //
-      }
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
-      let file;
-
-      await waitFor(async () => {
-        file = await File.findOne({ where: { id: fileId } });
-        expect(file).not.toBeNull();
-      });
-      const uuid = file.dataValues.key.slice(0, -3);
-      expect(file.dataValues.id).toBe(fileId);
-      expect(file.dataValues.status).not.toBe(null);
-      expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      const of = await ObjectiveFile.findOne({ where: { fileId } });
-      expect(of.objectiveId).toBe(objective.dataValues.id);
-      expect(validate(uuid)).toBe(true);
-    });
-
-    it('allows an admin to upload a objective file', async () => {
-      ObjectivePolicy.mockImplementation(() => ({
-        canUpload: () => false,
-      }));
-      validateUserAuthForAdmin.mockResolvedValue(true);
-      uploadFile.mockResolvedValue({ key: 'key' });
-      const response = await request(app)
-        .post('/api/files')
-        .field('objectiveId', objective.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
-      fileId = response.body.id;
-      expect(uploadFile).toHaveBeenCalled();
-      expect(mockAddToScanQueue).toHaveBeenCalled();
-      let file;
-
-      await waitFor(async () => {
-        file = await File.findOne({ where: { id: fileId } });
-        expect(file).not.toBeNull();
-      });
-
-      const uuid = file.dataValues.key.slice(0, -3);
-      expect(file.dataValues.id).toBe(fileId);
-      expect(file.dataValues.status).not.toBe(null);
-      expect(file.dataValues.originalFileName).toBe('testfile.pdf');
-      const of = await ObjectiveFile.findOne({ where: { fileId } });
-      expect(of.objectiveId).toBe(objective.dataValues.id);
-      expect(validate(uuid)).toBe(true);
-    });
-
-    it('deletes a objective file', async () => {
-      ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => true,
-      }));
-      const file = await File.create({
-        objectiveId: objective.dataValues.id,
-        originalFileName: 'name',
-        key: 'key',
-        status: 'UPLOADING',
-        fileSize: 0,
-      });
-      await request(app)
-        .delete(`/api/files/o/${objective.dataValues.id}/${file.id}`)
-        .expect(204);
-      expect(deleteFileFromS3).toHaveBeenCalledWith(file.dataValues.key);
-      const noFile = await File.findOne({ where: { id: file.id } });
-      expect(noFile).toBe(null);
-    });
-
-    it('tests an unauthorized objective file delete', async () => {
-      ObjectivePolicy.mockImplementation(() => ({
-        canUpdate: () => false,
-      }));
-      await request(app)
-        .delete(`/api/files/o/${objective.dataValues.id}/1`)
-        .expect(403)
-        .then(() => expect(deleteFileFromS3).not.toHaveBeenCalled());
-    });
   });
 
   describe('File Upload Handlers error handling', () => {

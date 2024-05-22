@@ -20,10 +20,6 @@ const cleanupOrphanResources = async (sequelize, resourceId) => Promise.all([
             ON r.id = gtr."resourceId"
             LEFT JOIN "NextStepResources" nsr
             ON r.id = nsr."resourceId"
-            LEFT JOIN "ObjectiveResources" "or"
-            ON r.id = "or"."resourceId"
-            LEFT JOIN "ObjectiveTemplateResources" otr
-            ON r.id = otr."resourceId"
             WHERE r.id = ${resourceId}
             AND arr.id IS NULL
             AND argr.id IS NULL
@@ -51,11 +47,7 @@ const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
                     ON f.id = arf."fileId"
                     LEFT JOIN "ActivityReportObjectiveFiles" arof
                     ON f.id = arof."fileId"
-                    LEFT JOIN "ObjectiveFiles" "of"
-                    ON f.id = "of"."fileId"
-                    LEFT JOIN "ObjectiveTemplateFiles" otf
-                    ON f.id = otf."fileId"
-                    LEFT JOIN "ImportFiles" imf
+                      LEFT JOIN "ImportFiles" imf
                     ON f.id = imf."fileId"
                     WHERE f.id = ${fileId}
                     AND arf.id IS NULL

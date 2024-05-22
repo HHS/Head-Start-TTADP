@@ -5,9 +5,7 @@ import {
   ActivityReportObjectiveFile,
   File,
   Objective,
-  ObjectiveFile,
   ObjectiveTemplate,
-  ObjectiveTemplateFile,
   ActivityReportObjective,
   SessionReportPilotFile,
   CommunicationLogFile,
@@ -30,10 +28,6 @@ const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveF
   where: { id },
   individualHooks: true,
 });
-const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
-  where: { id },
-  individualHooks: true,
-});
 const deleteCommunicationLogFile = async (id) => CommunicationLogFile.destroy({
   where: { id },
   individualHooks: true,
@@ -45,11 +39,6 @@ const deleteSessionFile = async (id) => SessionReportPilotFile.destroy({
 
 // eslint-disable-next-line max-len
 const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSupportingAttachment.destroy({
-  where: { id },
-  individualHooks: true,
-});
-
-const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
   where: { id },
   individualHooks: true,
 });
@@ -83,18 +72,6 @@ const getFileById = async (id) => File.findOne({
       as: 'reportObjectiveFiles',
       required: false,
       attributes: ['id', 'activityReportObjectiveId'],
-    },
-    {
-      model: ObjectiveFile,
-      as: 'objectiveFiles',
-      required: false,
-      attributes: ['id', 'objectiveId'],
-    },
-    {
-      model: ObjectiveTemplateFile,
-      as: 'objectiveTemplateFiles',
-      required: false,
-      attributes: ['id', 'objectiveTemplateId'],
     },
     {
       model: SessionReportPilotFile,
@@ -131,26 +108,6 @@ const getActivityReportObjectiveFilesById = async (
   objectiveId,
 ) => ActivityReportObjectiveFile.findAll({
   where: { activityReportId: reportId, objectiveId },
-  include: [
-    {
-      model: File,
-      as: 'file',
-      required: true,
-    },
-  ],
-});
-const getObjectiveFilesById = async (objectiveId) => ObjectiveFile.findAll({
-  where: { objectiveId },
-  include: [
-    {
-      model: File,
-      as: 'file',
-      required: true,
-    },
-  ],
-});
-const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTemplateFile.findAll({
-  where: { objectiveTemplateId },
   include: [
     {
       model: File,
@@ -262,80 +219,6 @@ const createActivityReportObjectiveFileMetaData = async (
       activityReportObjectiveId: objectiveId,
       fileId: file.id,
     });
-  return file.dataValues;
-};
-
-const createObjectivesFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveIds,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await Promise.all(objectiveIds.map(
-    (objectiveId) => ObjectiveFile.create({ objectiveId, fileId: file.id }),
-  ));
-  return file.dataValues;
-};
-
-const createObjectiveFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveId,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await ObjectiveFile.create({ objectiveId, fileId: file.id });
-  return file.dataValues;
-};
-
-const createObjectiveTemplateFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveTemplateId,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await ObjectiveTemplateFile.create({ objectiveTemplateId, fileId: file.id });
   return file.dataValues;
 };
 
@@ -457,22 +340,15 @@ export {
   deleteActivityReportObjectiveFile,
   deleteCommunicationLogFile,
   deleteSessionSupportingAttachment,
-  deleteObjectiveFile,
   deleteSessionFile,
-  deleteObjectiveTemplateFile,
   getFileById,
   getActivityReportFilesById,
   getActivityReportObjectiveFilesById,
-  getObjectiveFilesById,
-  getObjectiveTemplateFilesById,
   updateStatus,
   updateStatusByKey,
   createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData, // for one objective
-  createObjectivesFileMetaData, // for more than one objective
-  createObjectiveTemplateFileMetaData,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
   createCommunicationLogFileMetadata,
