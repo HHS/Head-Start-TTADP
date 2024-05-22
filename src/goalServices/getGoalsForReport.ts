@@ -1,4 +1,4 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op } from 'sequelize';
 import db from '../models';
 import {
   SOURCE_FIELD,

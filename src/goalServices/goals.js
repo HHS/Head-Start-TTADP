@@ -109,7 +109,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'title',
           'status',
           'goalId',
-          'supportType',
           'onApprovedAR',
           'onAR',
         ],
