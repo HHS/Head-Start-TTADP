@@ -20,7 +20,7 @@ const {
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
-  const fileIds = files.map((file) => file.fileId);
+  const fileIds = files.map((file) => file.id);
   const filesSet = new Set(fileIds);
   const originalAROFiles = await ActivityReportObjectiveFile.findAll({
     where: { activityReportObjectiveId },
@@ -79,7 +79,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
 };
 
 export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
-  const courseIds = courses.map((course) => course.courseId);
+  const courseIds = courses.map((course) => course.id);
   const courseSet = new Set(courseIds);
   const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
     where: { activityReportObjectiveId },
@@ -110,11 +110,10 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic.topicId);
+  const topicIds = topics.map((topic) => topic.id);
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
-    raw: true,
   });
   const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
     || [];

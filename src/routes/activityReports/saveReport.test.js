@@ -484,11 +484,6 @@ describe('saveReport', () => {
             },
           ],
         },
-        {
-          model: Topic,
-          as: 'topics',
-          required: false,
-        },
       ],
     });
 
