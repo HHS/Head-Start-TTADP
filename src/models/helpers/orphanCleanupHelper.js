@@ -27,8 +27,6 @@ const cleanupOrphanResources = async (sequelize, resourceId) => Promise.all([
             AND gr.id IS NULL
             AND gtr.id IS NULL
             AND nsr.id IS NULL
-            AND "or".id IS NULL
-            AND otr.id IS NULL
             GROUP BY 1
          )`),
       },
