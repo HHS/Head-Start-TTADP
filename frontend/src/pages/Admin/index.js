@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Route } from 'react-router';
+import { Routes, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
 import User from './users';
 import Cdi from './cdi';
@@ -52,7 +52,7 @@ function Admin() {
           Redis info
         </NavLink>
       </div>
-      <Switch>
+      <Routes>
         <Route
           path="/admin/cdi/:grantId?"
           render={({ match }) => <Cdi match={match} />}
@@ -93,7 +93,7 @@ function Admin() {
           path="/admin/courses/"
           render={({ match }) => <Courses match={match} />}
         />
-      </Switch>
+      </Routes>
     </>
   );
 }

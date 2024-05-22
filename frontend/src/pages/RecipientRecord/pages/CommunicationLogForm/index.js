@@ -9,7 +9,7 @@ import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
 import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from './constants';
@@ -84,7 +84,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
   const reportId = useRef(communicationLogId);
 
   // for redirects if a page is not provided
-  const history = useHistory();
+  const history = useNavigate();
 
   /* ============
 
@@ -181,7 +181,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   if (!currentPage) {
     return (
-      <Redirect to={formatCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
+      <Navigate to={formatCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')} />
     );
   }
 

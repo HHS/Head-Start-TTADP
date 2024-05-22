@@ -8,7 +8,7 @@ import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
@@ -57,7 +57,7 @@ export default function SessionForm({ match }) {
   const reportId = useRef(sessionId);
 
   // for redirects if a page is not provided
-  const history = useHistory();
+  const history = useNavigate();
 
   /* ============
 
@@ -184,7 +184,7 @@ export default function SessionForm({ match }) {
 
   if (!currentPage) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
+      <Navigate to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
     );
   }
 
@@ -270,7 +270,7 @@ export default function SessionForm({ match }) {
 
   if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
     return (
-      <Redirect to={`/training-report/view/${trainingReportId}`} />
+      <Navigate to={`/training-report/view/${trainingReportId}`} />
     );
   }
 

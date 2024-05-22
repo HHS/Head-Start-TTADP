@@ -3,7 +3,7 @@ import React, {
   useState, useRef, useEffect,
 } from 'react';
 import PropTypes from 'prop-types';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
@@ -32,7 +32,7 @@ function GoalCards({
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
 }) {
-  const history = useHistory();
+  const history = useNavigate();
   const [rttapaValidation, setRttapaValidation] = useState(false);
 
   // Goal select check boxes.

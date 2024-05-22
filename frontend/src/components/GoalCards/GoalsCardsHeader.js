@@ -6,7 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -40,7 +40,7 @@ export default function GoalCardsHeader({
   dismissMergeSuccess,
 }) {
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
-  const history = useHistory();
+  const history = useNavigate();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 

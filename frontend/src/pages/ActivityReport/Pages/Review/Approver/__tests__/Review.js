@@ -3,12 +3,12 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Review from '../Review';
 import UserContext from '../../../../../../UserContext';
 
 jest.mock('react-router-dom', () => ({
-  useHistory: jest.fn(),
+  useNavigate: jest.fn(),
 }));
 
 describe('Review component', () => {
@@ -43,7 +43,7 @@ describe('Review component', () => {
   it('calls onResetToDraft and redirects to /activity-reports when onReset is called', async () => {
     const onResetToDraft = jest.fn();
     const historyPush = jest.fn();
-    useHistory.mockReturnValueOnce({
+    useNavigate.mockReturnValueOnce({
       push: historyPush,
     });
 
@@ -61,7 +61,7 @@ describe('Review component', () => {
       throw new Error('Error');
     });
     const historyPush = jest.fn();
-    useHistory.mockReturnValueOnce({
+    useNavigate.mockReturnValueOnce({
       push: historyPush,
     });
 

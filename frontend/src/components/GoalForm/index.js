@@ -10,7 +10,7 @@ import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import { isEqual, uniqueId } from 'lodash';
@@ -57,7 +57,7 @@ export default function GoalForm({
 }) {
   const unsuspendModalRef = useRef(null);
   const openExistingGoalModalRef = useRef(null);
-  const history = useHistory();
+  const history = useNavigate();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
   const goalDefaults = useMemo(() => ({

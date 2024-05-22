@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Alert,
   Button, Form, Label, ModalToggleButton, TextInput, Select, SideNav,
@@ -17,7 +17,7 @@ import {
 
 export default function NationalCenters({ match }) {
   const { params: { nationalCenterId } } = match;
-  const history = useHistory();
+  const history = useNavigate();
   const modalRef = useRef();
   const [nationalCenters, setNationalCenters] = useState();
   const [allUserOptions, setAllUserOptions] = useState([]);

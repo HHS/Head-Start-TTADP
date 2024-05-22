@@ -14,7 +14,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
@@ -85,7 +85,7 @@ function Landing() {
       : allRegionsFilters,
   );
 
-  const history = useHistory();
+  const history = useNavigate();
   const [alertsLoading, setAlertsLoading] = useState(true);
   const [reportAlerts, updateReportAlerts] = useState([]);
   const [error, updateError] = useState();

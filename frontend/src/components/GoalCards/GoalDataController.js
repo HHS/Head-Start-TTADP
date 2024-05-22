@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
@@ -85,7 +85,7 @@ function GoalDataController({
     }
   }, [isAppLoading, loading, logsLoaded, setIsAppLoading]);
 
-  const history = useHistory();
+  const history = useNavigate();
 
   const defaultSort = useMemo(() => (showNewGoals
     ? {

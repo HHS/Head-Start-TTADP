@@ -5,7 +5,7 @@ import {
   FormGroup, Button, Fieldset, Select, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import RichEditor from '../../../../../components/RichEditor';
 import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
@@ -31,7 +31,7 @@ const NeedsAction = ({
   const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
   const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
-  const history = useHistory();
+  const history = useNavigate();
   const { watch } = useFormContext();
 
   const approvers = watch('approvers');

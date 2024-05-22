@@ -2,7 +2,7 @@ import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -22,7 +22,7 @@ function EventCard({
 }) {
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
-  const history = useHistory();
+  const history = useNavigate();
 
   const hasAdminRights = isAdmin(user);
   const {

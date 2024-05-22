@@ -4,7 +4,7 @@ import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Switch, Route } from 'react-router';
+import { Routes, Route } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
@@ -154,7 +154,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
     <>
       <Helmet titleTemplate={`%s - ${recipientName} | TTA Hub`} defaultTitle="Recipient TTA Record | TTA Hub" />
 
-      <Switch>
+      <Routes>
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-history"
           render={() => (
@@ -347,7 +347,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
             </PageWithHeading>
           )}
         />
-      </Switch>
+      </Routes>
     </>
   );
 }

@@ -8,7 +8,7 @@ import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -65,7 +65,7 @@ export default function TrainingReportForm({ match }) {
   const reportId = useRef();
 
   // for redirects if a page is not provided
-  const history = useHistory();
+  const history = useNavigate();
 
   /* ============
 
@@ -211,7 +211,7 @@ export default function TrainingReportForm({ match }) {
 
   if (!currentPage) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/event-summary`} />
+      <Navigate to={`/training-report/${trainingReportId}/event-summary`} />
     );
   }
 

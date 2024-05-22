@@ -8,7 +8,7 @@ import {
   Select, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import IncompletePages from '../IncompletePages';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
@@ -37,7 +37,7 @@ const Review = ({
   const watchTextValue = watch('note');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
   const { user } = useContext(UserContext);
-  const history = useHistory();
+  const history = useNavigate();
 
   const onReset = async () => {
     try {

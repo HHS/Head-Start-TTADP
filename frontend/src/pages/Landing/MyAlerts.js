@@ -4,7 +4,7 @@ import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
@@ -52,7 +52,7 @@ ProperIcon.defaultProps = {
 };
 
 export function ReportsRow({ reports, removeAlert, message }) {
-  const history = useHistory();
+  const history = useNavigate();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
   const { user } = useContext(UserContext);

@@ -4,7 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Alert, Button, Table, Select as UswdsSelect, ErrorMessage,
 } from '@trussworks/react-uswds';
@@ -45,7 +45,7 @@ const CompleteEvent = ({
   const [showSubmissionError, setShowSubmissionError] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const history = useHistory();
+  const history = useNavigate();
 
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown

@@ -4,7 +4,7 @@ import { GROUP_SHARED_WITH } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -81,7 +81,7 @@ export default function MyGroups({ match }) {
   const [recipientOptions, setRecipientOptions] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
   const [error, setError] = useState(null);
-  const history = useHistory();
+  const history = useNavigate();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
   const [usersFetched, setUsersFetched] = useState(false);
   // see the comment above "onSubmit" for, well, context

@@ -11,7 +11,7 @@ import {
 } from 'lodash';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -163,7 +163,7 @@ function ActivityReport({
 }) {
   const { params: { currentPage, activityReportId } } = match;
 
-  const history = useHistory();
+  const history = useNavigate();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
 
@@ -410,7 +410,7 @@ function ActivityReport({
   // If no region was able to be found, we will re-reroute user to the main page
   // FIXME: when re-routing user show a message explaining what happened
   if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
-    return <Redirect to="/" />;
+    return <Navigate to="/" />;
   }
 
   // This error message is a catch all assuming that the network storage is working
@@ -424,19 +424,19 @@ function ActivityReport({
 
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+      <Navigate to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+      <Navigate to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage) {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Navigate to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 

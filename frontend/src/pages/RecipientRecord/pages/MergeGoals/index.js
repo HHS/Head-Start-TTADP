@@ -4,7 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   StepIndicatorStep,
@@ -133,7 +133,7 @@ export default function MergeGoals({
   const selectedGoalIds = watch('selectedGoalIds');
   const finalGoalId = watch('finalGoalId');
 
-  const history = useHistory();
+  const history = useNavigate();
 
   const {
     socket,

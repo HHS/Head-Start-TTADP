@@ -5,7 +5,7 @@ import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
@@ -87,7 +87,7 @@ export default function TrainingReports({ match }) {
     return '';
   };
 
-  const history = useHistory();
+  const history = useNavigate();
 
   let msg;
   const message = history.location.state && history.location.state.message;
