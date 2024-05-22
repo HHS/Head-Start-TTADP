@@ -388,6 +388,31 @@ describe('Resources Associated with Topics', () => {
     expect(document.getElementsByName('download').length).toBe(1);
   });
 
+  it('checking and then unchecking the select all checkbox', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+
+    // get the check box with the id check-all-checkboxes
+    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
+
+    // check the check box
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are selected
+    let checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).toBeChecked();
+    });
+
+    // uncheck the check box
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are not selected
+    checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).not.toBeChecked();
+    });
+  });
+
   describe('parseValue', () => {
     it('returns a number if the value is a number', () => {
       expect(parseValue('1')).toEqual(1);
