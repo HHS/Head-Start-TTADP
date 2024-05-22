@@ -27,10 +27,11 @@ export default function HorizontalTableWidget(
     sortConfig,
     requestSort,
     enableCheckboxes,
+    checkboxes,
+    setCheckboxes,
   },
 ) {
-  // State for check boxes.
-  const [checkboxes, setCheckboxes] = useState({});
+  // State for select all check box.
   const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
@@ -99,7 +100,7 @@ export default function HorizontalTableWidget(
   useEffect(() => {
     setAllCheckBoxesChecked(false);
     setCheckboxes(makeCheckboxes(data, false));
-  }, [data]);
+  }, [data, setCheckboxes]);
 
   const toggleSelectAll = (event) => {
     const { target: { checked = null } = {} } = event;
@@ -222,6 +223,8 @@ HorizontalTableWidget.propTypes = {
   requestSort: PropTypes.func,
   enableSorting: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
+  checkboxes: PropTypes.shape({}),
+  setCheckboxes: PropTypes.func,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -236,4 +239,6 @@ HorizontalTableWidget.defaultProps = {
   requestSort: () => {},
   enableSorting: false,
   enableCheckboxes: false,
+  checkboxes: {},
+  setCheckboxes: () => {},
 };

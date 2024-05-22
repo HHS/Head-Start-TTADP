@@ -30,6 +30,8 @@ function CoursesAssociatedWithActivityReports({
     direction: 'desc',
     activePage: 1,
   }, 'activityReportsTable');
+  const [coursesPerPage, setCoursesPerPage] = useState([]);
+  const [checkBoxes, setCheckBoxes] = useState({});
 
   const { activePage } = sortConfig;
 
@@ -110,6 +112,65 @@ function CoursesAssociatedWithActivityReports({
     setSortConfig({ sortBy, direction, activePage: 1 });
   };
 
+  const exportRows = (exportType) => {
+    let url = null;
+    try {
+      let coursesToExport = courseUse;
+      if (exportType === 'selected') {
+      // Get all the ids of the rowsToExport that have a value of true.
+        const selectedRowsStrings = Object.keys(checkBoxes).filter((key) => checkBoxes[key]);
+        // Loop all selected rows and parseInt to an array of integers.
+        const selectedRowsIds = selectedRowsStrings.map((s) => parseInt(s, DECIMAL_BASE));
+        // Filter the courses to export to only include the selected rows.
+        coursesToExport = courseUse.filter((row) => selectedRowsIds.includes(row.id));
+      }
+
+      // Create a header row.
+      const headerData = data.headers.map((h) => ({ title: h, value: h }));
+      headerData.push({ title: 'Total', value: 'Total' });
+      coursesToExport = [
+        {
+          heading: 'Course',
+          data: headerData,
+        },
+        ...coursesToExport,
+      ];
+
+      // create a csv file of all the rows.
+      const csvRows = coursesToExport.map((row) => {
+        const rowValues = row.data.map((d) => d.value);
+        // If the heading has a comma, wrap it in quotes.
+        const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
+        return `${rowHeadingToUse},${rowValues.join(',')}`;
+      });
+      // Create CSV.
+      const csvString = csvRows.join('\n');
+      const blob = new Blob([csvString], { type: 'text/csv' });
+
+      // Check if url exists with the attribute of download.
+      if (document.getElementsByName('download').length > 0) {
+        document.getElementsByName('download')[0].remove();
+      }
+      url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.setAttribute('name', 'download');
+      a.setAttribute('hidden', '');
+      a.setAttribute('href', url);
+      a.setAttribute('download', 'courses.csv');
+      document.body.appendChild(a);
+      a.click();
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error(error);
+    } finally {
+      window.URL.revokeObjectURL(url);
+    }
+  };
+
+  useEffect(() => {
+    setCoursesPerPage(courseUse.slice(offset, offset + perPage));
+  }, [offset, perPage, courseUse]);
+
   return (
     <WidgetContainer
       title="iPD Courses cited on Activity Reports"
@@ -122,15 +183,19 @@ function CoursesAssociatedWithActivityReports({
       offset={offset}
       perPage={perPageNumber}
       handlePageChange={handlePageChange}
+      enableCheckboxes
+      exportRows={exportRows}
     >
       <HorizontalTableWidget
         headers={data.headers || []}
-        data={courseUse.slice(offset, offset + perPage)}
+        data={coursesPerPage || []}
         firstHeading="Course"
         enableSorting
         sortConfig={sortConfig}
         requestSort={requestSort}
         enableCheckboxes
+        checkboxes={checkBoxes}
+        setCheckboxes={setCheckBoxes}
       />
     </WidgetContainer>
   );

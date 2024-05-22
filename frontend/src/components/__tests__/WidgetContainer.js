@@ -13,6 +13,8 @@ const renderWidgetContainer = (
   handlePageChange = () => {},
   error = null,
   showHeaderBorder = true,
+  enableCheckboxes = false,
+  exportRows = () => {},
 ) => {
   render(
     <>
@@ -29,6 +31,8 @@ const renderWidgetContainer = (
         handlePageChange={handlePageChange}
         error={error}
         showHeaderBorder={showHeaderBorder}
+        enableCheckboxes={enableCheckboxes}
+        exportRows={exportRows}
       >
         This widget has been contained.
       </WidgetContainer>
@@ -78,5 +82,26 @@ describe('Widget Container', () => {
     renderWidgetContainer('Widget container header', null, true, () => {}, null, false);
     const containerElement = screen.getByRole('heading', { name: /widget container header/i }).parentElement;
     expect(containerElement).not.toHaveClass('smart-hub-widget-container-header-border');
+  });
+
+  it('call exportRows with the correct values', async () => {
+    const exportRows = jest.fn();
+    renderWidgetContainer('Widget Container Title', null, true, () => {}, null, false, true, exportRows);
+
+    // Click the context menu button.
+    const contextMenuBtn = screen.getByTestId('ellipsis-button');
+    userEvent.click(contextMenuBtn);
+
+    // Export all rows.
+    const exportTableBtn = screen.getByRole('button', { name: /export table/i });
+    userEvent.click(exportTableBtn);
+    expect(exportRows).toHaveBeenCalledWith('all');
+
+    userEvent.click(contextMenuBtn);
+
+    // Export selected rows.
+    const exportSelectedBtn = screen.getByRole('button', { name: /export selected rows/i });
+    userEvent.click(exportSelectedBtn);
+    expect(exportRows).toHaveBeenCalledWith('selected');
   });
 });
