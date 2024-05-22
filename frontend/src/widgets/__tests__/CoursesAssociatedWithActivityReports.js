@@ -111,7 +111,7 @@ const renderCoursesAssociatedWithActivityReports = (data, perPage = 10) => {
   render(<TableMock data={data} perPage={perPage} />);
 };
 
-describe('Resources Associated with Topics', () => {
+describe('iPD Courses Associated with Activity Reports', () => {
   afterEach(() => {
     fetchMock.restore();
     window.URL = origUrl;
@@ -411,6 +411,32 @@ describe('Resources Associated with Topics', () => {
     checkBoxes.forEach((checkBox) => {
       expect(checkBox).not.toBeChecked();
     });
+  });
+
+  it('checking all checkboxes and then unchecking one', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+
+    // get the check box with the id check-all-checkboxes
+    const checkAllCheckBox = screen.getByRole('checkbox', { name: /select or de-select all/i });
+
+    // check the check box
+    fireEvent.click(checkAllCheckBox);
+
+    // assert all check boxes are selected
+    let checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).toBeChecked();
+    });
+
+    // uncheck the first check box
+    const firstCheckBox = checkBoxes[1];
+    fireEvent.click(firstCheckBox);
+
+    // assert all check boxes are not selected
+    checkBoxes = screen.getAllByRole('checkbox');
+    expect(checkBoxes[0]).not.toBeChecked();
+    expect(checkBoxes[1]).not.toBeChecked();
+    expect(checkBoxes[2]).toBeChecked();
   });
 
   describe('parseValue', () => {
