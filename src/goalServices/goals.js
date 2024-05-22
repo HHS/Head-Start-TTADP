@@ -293,7 +293,6 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
           'title',
           'title',
           'status',
-          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -1067,7 +1066,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectives(objectiveIdsToRemove, reportId);
 }
 
-async function createObjectivesForGoal(goal, objectives, report) {
+async function createObjectivesForGoal(goal, objectives) {
   /*
      Note: Objective Status
      We only want to set Objective status from here on initial Objective creation.
@@ -1141,7 +1140,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
-          supportType,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',

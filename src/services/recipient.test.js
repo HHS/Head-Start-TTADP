@@ -950,21 +950,18 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];

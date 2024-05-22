@@ -55,10 +55,11 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
     .map((r) => {
       if (r.resource && r.resource.url) return r.resource.url;
       if (r.url) return r.url;
+      if (r.value) return r.value;
       return null;
     })
     .filter((url) => url);
-  // Get resource ids.
+
   const resourceIds = resources
     .map((r) => {
       if (r.resource && r.resource.id) return r.resource.id;
@@ -66,11 +67,7 @@ const cacheResources = async (_objectiveId, activityReportObjectiveId, resources
       return null;
     })
     .filter((id) => id);
-  // Get all existing ARO resources.
-  await getResourcesForActivityReportObjectives(
-    activityReportObjectiveId,
-    true,
-  );
+
   return processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
@@ -189,6 +186,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
   });
+
   return Promise.all([
     Objective.update({ onAR: true }, {
       where: { id: objectiveId },

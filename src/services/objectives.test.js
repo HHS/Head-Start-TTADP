@@ -226,19 +226,17 @@ describe('Objectives DB service', () => {
       where: { activityReportObjectiveId: checkARO.id },
     });
 
-    await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, {
-        id: objective.id,
-        title: objective.title,
-        ttaProvided: 'tta provided',
-        status: objective.status,
-        recipientIds: [1],
-        ids: [objective.id],
-        files: [{ id: keepFile.id }],
-        resources: [{ value: 'https://keep-obj-resource.gov' }],
-        supportType: SUPPORT_TYPES[3],
-      }], report);
-    });
+    await saveObjectivesForReport([...objectives, {
+      id: objective.id,
+      title: objective.title,
+      ttaProvided: 'tta provided',
+      status: objective.status,
+      recipientIds: [1],
+      ids: [objective.id],
+      files: [{ id: keepFile.id }],
+      resources: [{ value: 'https://keep-obj-resource.gov' }],
+      supportType: SUPPORT_TYPES[3],
+    }], report);
 
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
