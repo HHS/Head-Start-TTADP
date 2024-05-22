@@ -25,6 +25,7 @@ import {
   Role,
   ActivityReportCollaborator,
   ActivityReportApprover,
+  ActivityReportObjective,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -362,7 +363,6 @@ export function reduceObjectivesForRecipientRecord(
   currentModel,
   goal,
   grantNumbers,
-
 ) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
@@ -377,7 +377,6 @@ export function reduceObjectivesForRecipientRecord(
     .reduce((acc, objective) => {
       // we grab the support types from the activity report objectives,
       // filtering out empty strings
-      const { supportType } = objective;
 
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
@@ -396,13 +395,13 @@ export function reduceObjectivesForRecipientRecord(
       const objectiveStatus = objective.status;
 
       // get our objective topics
-
-      const objectiveTopics = (objective.topics || []);
+      const objectiveTopics = (
+        objective.activityReportObjectives.flatMap((aro) => aro.topics) || []
+      );
 
       const existing = acc.objectives.find((o) => (
         o.title === objectiveTitle
         && o.status === objectiveStatus
-        && o.supportType === supportType
       ));
 
       if (existing) {
@@ -432,7 +431,6 @@ export function reduceObjectivesForRecipientRecord(
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
-        supportType: supportType || null,
         ids: combineObjectiveIds({ ids: [] }, objective),
       };
 
@@ -680,15 +678,23 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
-          'supportType',
+          // 'supportType',
         ],
         model: Objective,
         as: 'objectives',
         required: false,
         include: [
           {
-            model: Topic,
-            as: 'topics',
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: ['id', 'objectiveId'],
+            include: [
+              {
+                model: Topic,
+                through: [],
+                as: 'topics',
+              },
+            ],
           },
           {
             attributes: [

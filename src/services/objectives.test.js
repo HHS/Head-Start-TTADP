@@ -17,7 +17,6 @@ import db, {
   OtherEntity,
 } from '../models';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-
 import {
   saveObjectivesForReport,
   getObjectiveById,
