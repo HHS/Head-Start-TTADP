@@ -283,18 +283,15 @@ module.exports = {
       END
       $$
       ;
-      `, { transaction });
-
-      // Putting this in a separate transaction because we want
-      // create_timeseries_from_audit_log() created regardless
-      await queryInterface.sequelize.query(/* sql */`
 
       -- Create GoalFieldResponses_timeseries
     
       SELECT create_timeseries_from_audit_log('GoalFieldResponses');
 
       -- Pull the data necessary to create an ARGFR from the historical
-      -- state of the associated GFR
+      -- state of the associated GFR. If there is a historical state, use
+      -- it, if not, use the root cause currently on the goal. If there's
+      -- still no root cause, do nothing.
       DROP TABLE IF EXISTS argfrs_to_insert;
       CREATE TEMP TABLE argfrs_to_insert
       AS
