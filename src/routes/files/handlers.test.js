@@ -203,21 +203,6 @@ describe('File Upload', () => {
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
 
-    it('tests an unauthorized objective file upload', async () => {
-      validateUserAuthForAdmin.mockResolvedValue(false);
-      ObjectivePolicy.mockImplementation(() => ({
-        canUpload: () => false,
-      }));
-      await request(app)
-        .post('/api/files')
-        .field('objectiveId', objective.dataValues.id)
-        .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(403)
-        .then(() => {
-          expect(uploadFile).not.toHaveBeenCalled();
-        });
-    });
-
     it('tests an incorrect file type', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,

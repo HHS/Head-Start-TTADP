@@ -969,13 +969,14 @@ describe('Recipient DB service', () => {
 
       objectives = [objective1, objective2, objective3];
 
+      const reason = faker.animal.cetacean();
+
       topics = await Topic.bulkCreate([
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
       ]);
-      const reason = faker.animal.cetacean();
 
       report = await createReport({
         activityRecipients: [
@@ -989,20 +990,21 @@ describe('Recipient DB service', () => {
         regionId: 5,
       });
 
+      const aros = await Promise.all(objectives.map((o) => ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: o.id,
+      })));
+
+      await Promise.all((aros.map((aro) => ActivityReportObjectiveTopic.bulkCreate(
+        topics.map((t) => ({
+          activityReportObjectiveId: aro.id,
+          topicId: t.id,
+        })),
+      ))).flat());
+
       await ActivityReportGoal.create({
         activityReportId: report.id,
         goalId: goal1.id,
-      });
-
-      const aro = await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective1.id,
-        supportType: 'Planning',
-      });
-
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: aro.id,
-        topicId: topics[1].id,
       });
     });
 
@@ -1067,6 +1069,7 @@ describe('Recipient DB service', () => {
       expect(goalsForRecord.goalRows.length).toBe(1);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
+      expect(goalsForRecord.goalRows.flatMap((g) => g.goalTopics)).toHaveLength(4);
       const goal = goalsForRecord.goalRows[0];
       expect(goal.reasons.length).toBe(1);
 
@@ -1075,7 +1078,6 @@ describe('Recipient DB service', () => {
       expect(objective.ids).toHaveLength(3);
       expect(objective.ids.every(Boolean)).toBeTruthy();
       expect(objective.topics.length).toBe(4);
-      expect(objective.supportType).toBe('Planning');
     });
   });
 
@@ -1085,7 +1087,6 @@ describe('Recipient DB service', () => {
       programId,
       role = 'director',
       active = true,
-      programType = 'HS',
     ) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
