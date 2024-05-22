@@ -396,7 +396,7 @@ export function reduceObjectivesForRecipientRecord(
 
       // get our objective topics
       const objectiveTopics = (
-        objective.activityReportObjectives.flatMap((aro) => aro.topics) || []
+        objective.activityReportObjectives?.flatMap((aro) => aro.topics) || []
       );
 
       const existing = acc.objectives.find((o) => (
@@ -678,7 +678,6 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
-          // 'supportType',
         ],
         model: Objective,
         as: 'objectives',
