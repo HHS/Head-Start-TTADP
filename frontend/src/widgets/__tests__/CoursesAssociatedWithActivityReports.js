@@ -151,7 +151,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
   });
 
-  it.only('correctly handles value sort', async () => {
+  it('correctly handles value sort', async () => {
     renderCoursesAssociatedWithActivityReports(
       {
         headers: [...mockSortData.headers],

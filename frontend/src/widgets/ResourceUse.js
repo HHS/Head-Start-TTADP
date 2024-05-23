@@ -28,7 +28,6 @@ ResourceUse.propTypes = {
       headers: PropTypes.arrayOf(PropTypes.string),
       resources: PropTypes.arrayOf(
         PropTypes.shape({
-          internalRedirect: PropTypes.string,
           title: PropTypes.string,
           value: PropTypes.number,
         }),

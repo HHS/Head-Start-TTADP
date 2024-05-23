@@ -201,7 +201,6 @@ export default function ResourcesDashboard() {
           filterQuery,
         );
         setResourcesData(data);
-        console.log('res data: ', data.topicUse);
         updateError('');
       } catch (e) {
         updateError('Unable to fetch resources');
