@@ -23,9 +23,9 @@ const BadgeBelowQuality = () => (
   </span>
 );
 
-const BadgeBelowCompetetive = () => (
+const BadgeBelowCompetitive = () => (
   <span className="ttahub-badge--error font-sans-2xs text-white text-bold">
-    Below competetive
+    Below competitive
   </span>
 );
 
@@ -46,7 +46,7 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
   const getScoreBadge = (key, score, received) => {
     if (key === 'ES' || key === 'CO') {
       if (score >= 6) return BadgeAbove();
-      if (score < 5) return BadgeBelowCompetetive();
+      if (score < 5) return BadgeBelowCompetitive();
       return BadgeBelowQuality();
     }
 
@@ -58,12 +58,12 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
       const dt = moment(received, 'MM/DD/YYYY');
 
       if (dt.isAfter('2025-08-01')) {
-        if (score < 2.5) return BadgeBelowCompetetive();
+        if (score < 2.5) return BadgeBelowCompetitive();
         return BadgeBelowQuality();
       }
 
       if (dt.isAfter('2020-11-09') && dt.isBefore('2025-07-31')) {
-        if (score < 2.3) return BadgeBelowCompetetive();
+        if (score < 2.3) return BadgeBelowCompetitive();
         return BadgeBelowQuality();
       }
     }

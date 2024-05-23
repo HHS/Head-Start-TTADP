@@ -34,7 +34,7 @@ services:
     networks:
       - ttadp-test
   test-db:
-    image: postgres:12.4
+    image: postgres:15.6
     container_name: test-db
     env_file: .env
     ports:
