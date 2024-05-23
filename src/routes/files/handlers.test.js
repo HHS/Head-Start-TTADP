@@ -196,7 +196,7 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(403)
+        .expect(401)
         .then(() => expect(uploadFile).not.toHaveBeenCalled());
     });
 
@@ -212,7 +212,7 @@ describe('File Upload', () => {
         .attach('file', `${__dirname}/testfiles/test.log`)
         .expect(400)
         .then((res) => {
-          expect(res.text).toBe('Could not determine file type');
+          expect(res.text).toBe('{"error":"Could not determine file type"}');
         });
     });
     it('tests a queuing failure', async () => {
@@ -230,25 +230,26 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200);
+        .expect(200)
+        .then(() => {
+          expect(uploadFile).toHaveBeenCalled();
+          expect(addToScanQueue).toHaveBeenCalled();
 
-      expect(uploadFile).toHaveBeenCalled();
-      expect(addToScanQueue).toHaveBeenCalled();
-
-      const { calls } = updateStatus.mock;
-      const params = calls.flat();
-      // it was called twice
-      expect(params.length).toBe(4);
-      // file uploaded
-      expect(params).toContain(FILE_STATUSES.UPLOADED);
-      // but failed to queue for scan
-      expect(params).toContain(FILE_STATUSES.QUEUEING_FAILED);
-      // we also expect two numbers in addition to the statuses
-      expect(params.filter((param) => typeof param === 'number')).toHaveLength(2);
+          const { calls } = updateStatus.mock;
+          const params = calls.flat();
+          // it was called twice
+          expect(params.length).toBe(4);
+          // file uploaded
+          expect(params).toContain(FILE_STATUSES.UPLOADED);
+          // but failed to queue for scan
+          expect(params).toContain(FILE_STATUSES.QUEUEING_FAILED);
+          // we also expect two numbers in addition to the statuses
+          expect(params.filter((param) => typeof param === 'number')).toHaveLength(2);
+        });
     });
     it('tests an upload failure', async () => {
       const updateStatus = jest.spyOn(Files, 'updateStatus');
-      uploadFile.mockImplementationOnce(() => {
+      uploadFile.mockImplementation(() => {
         throw new Error('Warning! Failed to Upload! System terminating!');
       });
       ActivityReportPolicy.mockImplementation(() => ({
@@ -259,10 +260,12 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(500);
-      expect(uploadFile).toHaveBeenCalled();
-      expect(updateStatus)
-        .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
+        .expect(500)
+        .then(() => {
+          expect(uploadFile).toHaveBeenCalled();
+          expect(updateStatus)
+            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
+        });
     });
   });
 });

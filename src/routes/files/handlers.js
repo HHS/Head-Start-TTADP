@@ -247,8 +247,7 @@ const uploadHandlerRequiredFields = (fields) => [
   'sessionAttachmentId',
 ].some((field) => fields[field]);
 
-const uploadHandler = async (req, res) => {
-  const [fields, files] = await parseFormPromise(req);
+const getAuthorizationAndMetadataFn = async (user, fields) => {
   const {
     reportId,
     objectiveIds,
@@ -257,134 +256,246 @@ const uploadHandler = async (req, res) => {
     sessionAttachmentId,
   } = fields;
 
+  const userId = user.id;
+
+  let error;
+  let status;
+
+  if (reportId && objectiveIds) {
+    const activityReportObjectives = await ActivityReportObjective.findAll({
+      attributes: ['id'],
+      where: {
+        activityReportId: JSON.parse(reportId),
+        objectiveId: JSON.parse(objectiveIds),
+      },
+    });
+
+    if (activityReportObjectives.length === 0) {
+      return {
+        error: 'Bad request',
+        status: httpCodes.BAD_REQUEST,
+        metadataFn: null,
+      };
+    }
+
+    if (!(await hasReportAuthorization(
+      user,
+      reportId,
+    ) || (await validateUserAuthForAdmin(userId)))) {
+      error = 'Unauthorized';
+      status = httpCodes.UNAUTHORIZED;
+    }
+
+    if (error) {
+      return {
+        error: 'Bad request',
+        status: httpCodes.BAD_REQUEST,
+        metadataFn: null,
+      };
+    }
+
+    const activityReportObjectiveIds = activityReportObjectives.map((aro) => aro.id);
+
+    return {
+      error: null,
+      status: null,
+      // eslint-disable-next-line max-len
+      metadataFn: async (originalFileName, fileName, size) => createActivityReportObjectiveFileMetaData(
+        originalFileName,
+        fileName,
+        activityReportObjectiveIds,
+        size,
+      ),
+    };
+  }
+
+  if (reportId) {
+    const isAdmin = await validateUserAuthForAdmin(userId);
+    const editable = await reportIsInAnEditableState(user, reportId);
+    if (isAdmin && !editable) {
+      return {
+        error: 'Unauthorized',
+        status: httpCodes.UNAUTHORIZED,
+      };
+    }
+
+    if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
+      return {
+        error: 'Unauthorized',
+        status: httpCodes.UNAUTHORIZED,
+      };
+    }
+
+    return {
+      error: null,
+      status: null,
+      // eslint-disable-next-line max-len
+      metadataFn: async (originalFileName, fileName, size) => createActivityReportFileMetaData(
+        originalFileName,
+        fileName,
+        reportId,
+        size,
+      ),
+    };
+  }
+
+  if (sessionId) {
+    const session = await findSessionById(sessionId);
+    const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+    const eventPolicy = new EventPolicy(user, event);
+
+    if (!eventPolicy.canUploadFile()) {
+      error = 'Unauthorized';
+      status = httpCodes.UNAUTHORIZED;
+
+      if (error) {
+        return {
+          error,
+          status,
+        };
+      }
+    }
+
+    return {
+      error: null,
+      status: null,
+      // eslint-disable-next-line max-len
+      metadataFn: async (originalFileName, fileName, size) => createSessionObjectiveFileMetaData(
+        originalFileName,
+        fileName,
+        sessionId,
+        size,
+      ),
+    };
+  }
+
+  if (communicationLogId) {
+    const communicationLog = await logById(communicationLogId);
+    const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+    if (!logPolicy.canUploadFileToLog()) {
+      error = 'Unauthorized';
+      status = httpCodes.UNAUTHORIZED;
+
+      return {
+        error,
+        status,
+      };
+    }
+
+    return {
+      error: null,
+      status: null,
+      // eslint-disable-next-line max-len
+      metadataFn: async (originalFileName, fileName, size) => createCommunicationLogFileMetadata(
+        originalFileName,
+        fileName,
+        communicationLogId,
+        size,
+      ),
+    };
+  }
+  if (sessionAttachmentId) {
+    const session = await findSessionById(sessionAttachmentId);
+    const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+    const eventPolicy = new EventPolicy(user, event);
+
+    if (!eventPolicy.canUploadFile()) {
+      // error = 'Unauthorized';
+      // status = httpCodes.UNAUTHORIZED;
+      return {
+        error: 'Unauthorized',
+        status: httpCodes.UNAUTHORIZED,
+      };
+    }
+
+    return {
+      error: null,
+      status: null,
+      // eslint-disable-next-line max-len
+      metadataFn: async (originalFileName, fileName, size) => createSessionSupportingAttachmentMetaData(
+        originalFileName,
+        fileName,
+        sessionAttachmentId,
+        size,
+      ),
+    };
+  }
+
+  return {
+    error: 'Bad request',
+    status: httpCodes.BAD_REQUEST,
+  };
+};
+
+const uploadHandler = async (req, res) => {
+  const [fields, files] = await parseFormPromise(req);
+
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
   const fileResponse = [];
 
   if (!files.file) {
-    return res.status(400).send({ error: 'file required' });
+    return res.status(httpCodes.BAD_REQUEST).send({ error: 'file required' });
   }
 
   if (!uploadHandlerRequiredFields(fields)) {
-    return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+    return res.status(httpCodes.BAD_REQUEST).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+  }
+
+  let error;
+  let status;
+  let metadataFn;
+
+  try {
+    const authAndMetadata = await getAuthorizationAndMetadataFn(user, fields);
+    error = authAndMetadata.error;
+    status = authAndMetadata.status;
+    metadataFn = authAndMetadata.metadataFn;
+  } catch (err) {
+    return handleErrors(req, res, err, logContext);
+  }
+
+  if (error) {
+    return res.status(status).send({ error });
+  }
+
+  for (let index = 0; index < files.file.length; index += 1) {
+    const file = files.file[index];
+    const { size } = file;
+    if (!size) {
+      error = httpCodes.BAD_REQUEST;
+      status = 'fileSize required';
+      break;
+    }
+  }
+
+  if (error) {
+    return res.status(status).send({ error });
   }
 
   await Promise.all(files.file.map(async (file) => {
     const { path, originalFilename, size } = file;
     let metadata;
 
-    if (!size) {
-      return res.status(400).send({ error: 'fileSize required' });
-    }
-
     const buffer = fs.readFileSync(path);
 
     const fileTypeToUse = await determineFileTypeFromPath(path);
     if (!fileTypeToUse) {
-      return res.status(400).send('Could not determine file type');
+      error = 'Could not determine file type';
+      status = httpCodes.BAD_REQUEST;
+    }
+
+    if (error) {
+      return;
     }
 
     const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
-    try {
-      if (reportId && objectiveIds) {
-        const activityReportObjectives = await ActivityReportObjective.findAll({
-          attributes: ['id'],
-          where: {
-            activityReportId: JSON.parse(reportId),
-            objectiveId: JSON.parse(objectiveIds),
-          },
-        });
-
-        if (activityReportObjectives.length === 0) {
-          return res.sendStatus(httpCodes.BAD_REQUEST);
-        }
-
-        if (!(await hasReportAuthorization(
-          user,
-          reportId,
-        )
-        || (await validateUserAuthForAdmin(userId)))) {
-          return res.sendStatus(403);
-        }
-
-        const activityReportObjectiveIds = activityReportObjectives.map((aro) => aro.id);
-
-        metadata = await createActivityReportObjectiveFileMetaData(
-          originalFilename,
-          fileName,
-          activityReportObjectiveIds,
-          size,
-        );
-      } else if (reportId) {
-        const isAdmin = await validateUserAuthForAdmin(userId);
-        const editable = await reportIsInAnEditableState(user, reportId);
-
-        if (isAdmin && !editable) {
-          return res.sendStatus(403);
-        }
-
-        if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
-          return res.sendStatus(403);
-        }
-
-        metadata = await createActivityReportFileMetaData(
-          originalFilename,
-          fileName,
-          reportId,
-          size,
-        );
-      } else if (sessionId) {
-        const session = await findSessionById(sessionId);
-        const event = await findEventBySmartsheetIdSuffix(session.eventId);
-
-        const eventPolicy = new EventPolicy(user, event);
-
-        if (!eventPolicy.canUploadFile()) {
-          return res.sendStatus(403);
-        }
-
-        metadata = await createSessionObjectiveFileMetaData(
-          originalFilename,
-          fileName,
-          sessionId,
-          size,
-        );
-      } else if (communicationLogId) {
-        const communicationLog = await logById(communicationLogId);
-        const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
-
-        if (!logPolicy.canUploadFileToLog()) {
-          return res.sendStatus(403);
-        }
-
-        metadata = await createCommunicationLogFileMetadata(
-          originalFilename,
-          fileName,
-          communicationLogId,
-          size,
-        );
-      } else if (sessionAttachmentId) {
-        const session = await findSessionById(sessionAttachmentId);
-        const event = await findEventBySmartsheetIdSuffix(session.eventId);
-
-        const eventPolicy = new EventPolicy(user, event);
-
-        if (!eventPolicy.canUploadFile()) {
-          return res.sendStatus(403);
-        }
-
-        metadata = await createSessionSupportingAttachmentMetaData(
-          originalFilename,
-          fileName,
-          sessionAttachmentId,
-          size,
-        );
-      }
-    } catch (err) {
-      return handleErrors(req, res, err, logContext);
-    }
 
     try {
+      metadata = await metadataFn(originalFilename, fileName, size);
       const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
       const url = getPresignedURL(uploadedFile.Key);
       await updateStatus(metadata.id, UPLOADED);
@@ -393,21 +504,19 @@ const uploadHandler = async (req, res) => {
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);
       }
-      return handleErrors(req, res, err, logContext);
+      await handleErrors(req, res, err, logContext);
     }
-
-    return Promise.resolve();
   }));
 
-  // if we've already sent headers by now, then we need to exit this function
-  // because they were ERROR headers
-  if (res.headersSent) {
-    return Promise.reject();
+  if (!res.headersSent) {
+    if (error) {
+      res.status(status).send({ error });
+    } else {
+      res.status(httpCodes.OK).send(fileResponse);
+    }
   }
 
-  res.status(200).send(fileResponse);
-
-  await Promise.all(fileResponse.map(async (data) => {
+  return Promise.all(fileResponse.map(async (data) => {
     try {
       addToScanQueue({ key: data.key });
       await updateStatus(data.id, QUEUED);
@@ -416,8 +525,6 @@ const uploadHandler = async (req, res) => {
       await updateStatus(data.id, QUEUEING_FAILED);
     }
   }));
-
-  return Promise.resolve();
 };
 
 async function deleteActivityReportObjectiveFile(req, res) {
