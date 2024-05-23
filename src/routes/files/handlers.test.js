@@ -11,15 +11,15 @@ import db, {
 } from '../../models';
 import app from '../../app';
 import { uploadFile } from '../../lib/s3';
-import * as scanQueue from '../../services/scanQueue';
+import addToScanQueue from '../../services/scanQueue';
 import { FILE_STATUSES } from '../../constants';
 import ActivityReportPolicy from '../../policies/activityReport';
-import ObjectivePolicy from '../../policies/objective';
 import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
 import { generateRedisConfig } from '../../lib/queue';
 import * as s3Queue from '../../services/s3Queue';
 
+jest.mock('../../services/scanQueue', () => jest.fn());
 jest.mock('bull');
 jest.mock('../../policies/activityReport');
 jest.mock('../../policies/user');
@@ -48,7 +48,6 @@ const mockUser = {
 const mockSession = jest.fn();
 mockSession.userId = mockUser.id;
 
-const mockAddToScanQueue = jest.spyOn(scanQueue, 'default').mockImplementation(() => jest.fn());
 jest.spyOn(s3Queue, 'addDeleteFileToQueue').mockImplementation(() => jest.fn());
 
 const reportObject = {
@@ -87,7 +86,6 @@ const mockRecipient = {
 describe('File Upload', () => {
   let user;
   let report;
-  let fileId;
   let goal;
   let objective;
   let secondTestObjective;
@@ -166,7 +164,6 @@ describe('File Upload', () => {
   });
 
   describe('File Upload Handlers error handling', () => {
-    // eslint-disable-next-line jest/no-disabled-tests
     it('tests a file upload without a report id', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
@@ -176,7 +173,7 @@ describe('File Upload', () => {
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
         .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
-      await expect(uploadFile).not.toHaveBeenCalled();
+      expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {
       ActivityReportPolicy.mockImplementation(() => ({
@@ -187,7 +184,7 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .expect(400, { error: 'file required' });
-      await expect(uploadFile).not.toHaveBeenCalled();
+      expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests an unauthorized upload', async () => {
       validateUserAuthForAdmin.mockResolvedValue(false);
@@ -220,23 +217,34 @@ describe('File Upload', () => {
     });
     it('tests a queuing failure', async () => {
       const updateStatus = jest.spyOn(Files, 'updateStatus');
-      mockAddToScanQueue.mockImplementationOnce(() => Promise.reject());
+      addToScanQueue.mockImplementation(() => {
+        throw new Error('Scanning failed (mock error)');
+      });
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
         reportHasEditableStatus: () => true,
       }));
       uploadFile.mockResolvedValue({ key: 'key' });
+
       await request(app)
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(200)
-        .then(() => {
-          expect(uploadFile).toHaveBeenCalled();
-          expect(mockAddToScanQueue).toHaveBeenCalled();
-          expect(updateStatus)
-            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.QUEUEING_FAILED);
-        });
+        .expect(200);
+
+      expect(uploadFile).toHaveBeenCalled();
+      expect(addToScanQueue).toHaveBeenCalled();
+
+      const { calls } = updateStatus.mock;
+      const params = calls.flat();
+      // it was called twice
+      expect(params.length).toBe(4);
+      // file uploaded
+      expect(params).toContain(FILE_STATUSES.UPLOADED);
+      // but failed to queue for scan
+      expect(params).toContain(FILE_STATUSES.QUEUEING_FAILED);
+      // we also expect two numbers in addition to the statuses
+      expect(params.filter((param) => typeof param === 'number')).toHaveLength(2);
     });
     it('tests an upload failure', async () => {
       const updateStatus = jest.spyOn(Files, 'updateStatus');
@@ -249,12 +257,10 @@ describe('File Upload', () => {
         .post('/api/files')
         .field('reportId', report.dataValues.id)
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(500)
-        .then(async () => {
-          expect(uploadFile).toHaveBeenCalled();
-          expect(updateStatus)
-            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
-        });
+        .expect(500);
+      expect(uploadFile).toHaveBeenCalled();
+      expect(updateStatus)
+        .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
     });
   });
 });
