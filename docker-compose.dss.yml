@@ -24,7 +24,7 @@ services:
     volumes:
       - ".:/app:rw"
   db:
-    image: postgres:12.4
+    image: postgres:15.6
     container_name: postgres_docker
     environment:
       POSTGRES_USER: postgres
