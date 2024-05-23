@@ -248,7 +248,9 @@ describe('File Upload', () => {
     });
     it('tests an upload failure', async () => {
       const updateStatus = jest.spyOn(Files, 'updateStatus');
-      uploadFile.mockImplementationOnce(() => Promise.reject());
+      uploadFile.mockImplementationOnce(() => {
+        throw new Error('Warning! Failed to Upload! System terminating!');
+      });
       ActivityReportPolicy.mockImplementation(() => ({
         canUpdate: () => true,
         reportHasEditableStatus: () => true,

@@ -261,31 +261,31 @@ const uploadHandler = async (req, res) => {
   const user = await userById(userId);
   const fileResponse = [];
 
-  try {
-    if (!files.file) {
-      return res.status(400).send({ error: 'file required' });
+  if (!files.file) {
+    return res.status(400).send({ error: 'file required' });
+  }
+
+  if (!uploadHandlerRequiredFields(fields)) {
+    return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+  }
+
+  await Promise.all(files.file.map(async (file) => {
+    const { path, originalFilename, size } = file;
+    let metadata;
+
+    if (!size) {
+      return res.status(400).send({ error: 'fileSize required' });
     }
 
-    if (!uploadHandlerRequiredFields(fields)) {
-      return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+    const buffer = fs.readFileSync(path);
+
+    const fileTypeToUse = await determineFileTypeFromPath(path);
+    if (!fileTypeToUse) {
+      return res.status(400).send('Could not determine file type');
     }
 
-    await Promise.all(files.file.map(async (file) => {
-      const { path, originalFilename, size } = file;
-      let metadata;
-
-      if (!size) {
-        return res.status(400).send({ error: 'fileSize required' });
-      }
-
-      const buffer = fs.readFileSync(path);
-
-      const fileTypeToUse = await determineFileTypeFromPath(path);
-      if (!fileTypeToUse) {
-        return res.status(400).send('Could not determine file type');
-      }
-
-      const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+    const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+    try {
       if (reportId && objectiveIds) {
         const activityReportObjectives = await ActivityReportObjective.findAll({
           attributes: ['id'],
@@ -380,23 +380,30 @@ const uploadHandler = async (req, res) => {
           size,
         );
       }
+    } catch (err) {
+      return handleErrors(req, res, err, logContext);
+    }
 
-      try {
-        const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-        const url = getPresignedURL(uploadedFile.Key);
-        await updateStatus(metadata.id, UPLOADED);
-        fileResponse.push({ ...metadata, url });
-      } catch (err) {
-        if (metadata) {
-          await updateStatus(metadata.id, UPLOAD_FAILED);
-        }
-        return handleErrors(req, res, err, logContext);
+    try {
+      const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+      const url = getPresignedURL(uploadedFile.Key);
+      await updateStatus(metadata.id, UPLOADED);
+      fileResponse.push({ ...metadata, url });
+    } catch (err) {
+      if (metadata) {
+        await updateStatus(metadata.id, UPLOAD_FAILED);
       }
+      console.log(err);
+      return handleErrors(req, res, err, logContext);
+    }
 
-      return Promise.resolve();
-    }));
-  } catch (err) {
-    return handleErrors(req, res, err, logContext);
+    return Promise.resolve();
+  }));
+
+  // if we've already sent headers by now, then we need to exit this function
+  // because they were ERROR headers
+  if (res.headersSent) {
+    return Promise.reject();
   }
 
   res.status(200).send(fileResponse);
