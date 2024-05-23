@@ -1,5 +1,3 @@
-/* eslint-disable jest/no-commented-out-tests */
-/*
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
@@ -16,12 +14,12 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { getCourseUrlWidgetData, rollUpCourseUrlData } from './course';
 
-const RECIPIENT_ID = 46204400;
-const GRANT_ID_ONE = 107843;
+const RECIPIENT_ID = faker.datatype.number({ min: 9999 });
+const GRANT_ID_ONE = faker.datatype.number({ min: 9999 });
 const REGION_ID = 14;
 
 const mockUser = {
-  id: faker.datatype.number({ min: 1000 }),
+  id: faker.datatype.number({ min: 9999 }),
   homeRegionId: 1,
   name: 'user5426862',
   hsesUsername: 'user5426862',
@@ -283,6 +281,13 @@ describe('Course dashboard', () => {
       individualHooks: true,
     });
 
+    aroNoCourses = await ActivityReportObjective.create({
+      objectiveId: objective.id,
+      activityReportId: reportThree.id,
+      ttaProvided: 'course resource widget 3',
+      status: 'In Progress',
+    });
+
     // Report 4 with only course one.
     const reportFour = await ActivityReport.create({
       ...reportWithCourseOne,
@@ -532,4 +537,3 @@ describe('Course dashboard', () => {
     expect(courses).toEqual(expectedResults);
   });
 });
-*/
