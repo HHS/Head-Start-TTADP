@@ -127,7 +127,9 @@ WITH
     SELECT
       r.name,
       COUNT(DISTINCT gr."number") AS grant_count,
-      COUNT(DISTINCT gr."recipientId") AS recipient_count
+      COUNT(DISTINCT gr."recipientId") AS recipient_count,
+      ARRAY_AGG(DISTINCT gr."number") AS grant_numbers,
+      ARRAY_AGG(DISTINCT gr."recipientId") AS recipient_ids
     FROM "users_is_scope" u
     LEFT JOIN "UserRoles" ur
       ON u.id = ur."userId"
@@ -203,10 +205,12 @@ WITH
     SELECT
       'Total' AS "User Role",
       NULL AS "User",
-      SUM(gc.grant_count) AS grant_count,
-      ((SUM(gc.grant_count)::float / MAX(tg.grant_count)) * 100)::DECIMAL(5,2) AS grant_percentage,
-      ((SUM(gc.recipient_count)::float / MAX(tg.recipient_count)) * 100)::DECIMAL(5,2) AS recipient_percentage
+      COUNT(DISTINCT gn.number) AS grant_count,
+      ((COUNT(DISTINCT gn.number)::float / MAX(tg.grant_count)) * 100)::DECIMAL(5,2) AS grant_percentage,
+      ((COUNT(DISTINCT ri."recipientId")::float / MAX(tg.recipient_count)) * 100)::DECIMAL(5,2) AS recipient_percentage
     FROM grant_counts gc
+    CROSS JOIN UNNEST(gc.grant_numbers) gn(number)
+    CROSS JOIN UNNEST(gc.recipient_ids) ri("recipientId")
     CROSS JOIN total_grants tg
   ),
   collected AS (
