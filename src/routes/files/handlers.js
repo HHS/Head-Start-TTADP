@@ -259,6 +259,7 @@ const uploadHandler = async (req, res) => {
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
+  const fileResponse = [];
 
   try {
     if (!files.file) {
@@ -268,8 +269,6 @@ const uploadHandler = async (req, res) => {
     if (!uploadHandlerRequiredFields(fields)) {
       return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
     }
-
-    const fileResponse = [];
 
     await Promise.all(files.file.map(async (file) => {
       const { path, originalFilename, size } = file;
@@ -394,23 +393,23 @@ const uploadHandler = async (req, res) => {
         return handleErrors(req, res, err, logContext);
       }
 
-      return fs.unlinkSync(path);
-    }));
-
-    res.status(200).send(fileResponse);
-
-    await Promise.all(fileResponse.map(async (data) => {
-      try {
-        addToScanQueue({ key: data.key });
-        return await updateStatus(data.id, QUEUED);
-      } catch (err) {
-        auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`);
-        return updateStatus(data.id, QUEUEING_FAILED);
-      }
+      return Promise.resolve();
     }));
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
+
+  res.status(200).send(fileResponse);
+
+  await Promise.all(fileResponse.map(async (data) => {
+    try {
+      addToScanQueue({ key: data.key });
+      await updateStatus(data.id, QUEUED);
+    } catch (err) {
+      auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`);
+      await updateStatus(data.id, QUEUEING_FAILED);
+    }
+  }));
 
   return Promise.resolve();
 };
