@@ -5,6 +5,7 @@ import db from '../models';
 import { removeUnusedGoalsObjectivesFromReport } from '../goalServices/goals';
 import { cacheObjectiveMetadata } from './reportCache';
 import extractObjectiveAssociationsFromActivityReportObjectives from '../goalServices/extractObjectiveAssociationsFromActivityReportObjectives';
+import { IOtherEntityObjectiveModelInstance, IOtherEntityObjective } from '../goalServices/types';
 
 const {
   Objective,
@@ -159,47 +160,7 @@ export async function getObjectiveById(objectiveId: number) {
   });
 }
 
-function parseIdOrValue(objective: {
-  id?: number,
-  value?: number,
-  getDataValue?: (key: 'id' | 'value') => number,
-  dataValues?: {
-    id?: number,
-    value?: number,
-  },
-}) {
-  if (objective.id) {
-    return objective.id;
-  }
-
-  if (objective.value) {
-    return objective.value;
-  }
-
-  if (objective.getDataValue) {
-    if (objective.getDataValue('id')) {
-      return objective.getDataValue('id');
-    }
-
-    if (objective.getDataValue('value')) {
-      return objective.getDataValue('value');
-    }
-  }
-
-  if (objective.dataValues) {
-    if (objective.dataValues.id) {
-      return objective.dataValues.id;
-    }
-
-    if (objective.dataValues.value) {
-      return objective.dataValues.value;
-    }
-  }
-
-  return null;
-}
-
-function reduceOtherEntityObjectives(newObjectives) {
+function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
@@ -213,8 +174,9 @@ function reduceOtherEntityObjectives(newObjectives) {
       o.title === objective.title && o.status === objectiveStatus
     ));
 
+    const { id } = objective;
+
     if (exists) {
-      const id = parseIdOrValue(objective);
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
@@ -259,16 +221,20 @@ function reduceOtherEntityObjectives(newObjectives) {
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
 
-    const id = parseIdOrValue(objective);
+    const createdHere = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].objectiveCreatedHere
+      ? objective.activityReportObjectives[0].objectiveCreatedHere : false;
 
     return [...objectives, {
-      ...objective.dataValues,
+      ...objective,
       id,
       value: id,
       ids: [id],
       ttaProvided,
       supportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
+      objectiveCreatedHere: createdHere,
       isNew: false,
       arOrder,
     }];
@@ -285,9 +251,8 @@ function reduceOtherEntityObjectives(newObjectives) {
   return objectivesToSort;
 }
 
-export async function getObjectivesByReportId(reportId) {
+export async function getObjectivesByReportId(reportId: number) {
   const objectives = await Objective.findAll({
-    model: Objective,
     where: {
       goalId: { [Op.is]: null },
       otherEntityId: { [Op.not]: null },
@@ -322,7 +287,7 @@ export async function getObjectivesByReportId(reportId) {
         ],
       },
     ],
-  });
+  }) as IOtherEntityObjectiveModelInstance[];
 
   return reduceOtherEntityObjectives(objectives
     .map((objective) => ({
