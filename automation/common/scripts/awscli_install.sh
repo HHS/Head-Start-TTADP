@@ -63,6 +63,18 @@ function download_aws_cli() {
         log "ERROR" "Failed to download AWS CLI."
         exit 2
     fi
+
+    if command -v gpg > /dev/null 2>&1; then
+      if ! wget "$aws_cli_url.sig" -O "$zip_file.sig"; then
+          log "ERROR" "Failed to download AWS CLI."
+          exit 2
+      fi
+
+      if ! gpg --verify "${zip_file}.sig" "$zip_file"; then
+          log "ERROR" "Sig verification failed for AWS CLI."
+          exit 2
+      fi
+    fi
     log "INFO" "Download completed successfully."
 }
 
@@ -137,6 +149,12 @@ function cleanup() {
     else
         log "INFO" "The zip file does not exist."
     fi
+    if [ -f "$zip_file.sig" ]; then
+        rm "$zip_file.sig"
+        log "INFO" "The zip sig file has been deleted."
+    else
+        log "INFO" "The zip file does not exist."
+    fi
     if [ -d "$aws_dir" ]; then
         rm -r "$aws_dir"
         log "INFO" "The 'aws' directory has been deleted."
@@ -147,10 +165,10 @@ function cleanup() {
 
 # Main function to control workflow
 main() {
-    local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
+    local aws_cli_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.15.56.zip"
     local install_dir="/tmp/local/aws-cli"
     local zip_file="/tmp/awscliv2.zip"
-    local zip_sha256="b5f5c31aac4cfd7a6eca58bd6f54ff4ebf4417dc70dc77e8db44ce52aa0723c4"
+    local zip_sha256="f68d3cc42d08a346b55aa531bcc2a0320700e374d87a3282a0f7e48c0f75bff7"
     local bin_dir="/tmp/local/bin"
     local aws_dir="/tmp/local/aws"
 
