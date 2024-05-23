@@ -393,7 +393,6 @@ const uploadHandler = async (req, res) => {
       if (metadata) {
         await updateStatus(metadata.id, UPLOAD_FAILED);
       }
-      console.log(err);
       return handleErrors(req, res, err, logContext);
     }
 
