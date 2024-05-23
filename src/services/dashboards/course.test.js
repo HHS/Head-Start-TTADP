@@ -1,5 +1,3 @@
-/* eslint-disable jest/no-commented-out-tests */
-/*
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
@@ -532,4 +530,3 @@ describe('Course dashboard', () => {
     expect(courses).toEqual(expectedResults);
   });
 });
-*/
