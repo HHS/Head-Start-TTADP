@@ -52,16 +52,6 @@ const getFileById = async (id) => File.findOne({
       required: false,
     },
     {
-      model: Objective,
-      as: 'objectives',
-      required: false,
-    },
-    {
-      model: ObjectiveTemplate,
-      as: 'objectiveTemplates',
-      required: false,
-    },
-    {
       model: ActivityReportFile,
       as: 'reportFiles',
       required: false,
@@ -195,8 +185,7 @@ const createActivityReportFileMetaData = async (
 const createActivityReportObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
-  reportId,
-  objectiveId,
+  activityReportObjectiveIds,
   fileSize,
 ) => {
   const newFile = {
@@ -213,12 +202,11 @@ const createActivityReportObjectiveFileMetaData = async (
     },
     defaults: newFile,
   });
-  await ActivityReportObjectiveFile
-    .create({
-      activityReportId: reportId,
-      activityReportObjectiveId: objectiveId,
-      fileId: file.id,
-    });
+  await Promise.all(activityReportObjectiveIds.map((id) => ActivityReportObjectiveFile.create({
+    activityReportObjectiveId: id,
+    fileId: file.id,
+  })));
+
   return file.dataValues;
 };
 
@@ -298,13 +286,9 @@ const createCommunicationLogFileMetadata = async (
 };
 
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
-  // Get ARO files to delete (destroy does NOT support join's).
-  const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
-    raw: true,
-    attributes: [[
-      sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReportObjectiveFile"."id"'))),
-      'ids',
-    ]],
+  // Get ARO files to delete
+  const aroFilesToDelete = await ActivityReportObjectiveFile.findAll({
+    attributes: ['id'],
     where: {
       fileId: parseInt(fileId, DECIMAL_BASE),
     },
@@ -318,18 +302,16 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
           activityReportId: parseInt(reportId, DECIMAL_BASE),
           objectiveId: objectiveIds,
         },
-
       },
     ],
   });
 
   // Get ARO file ids.
-  const aroFileIdsToDelete = aroFileToDelete[0].ids;
+  const aroFileIdsToDelete = aroFilesToDelete.map((aroFile) => aroFile.id);
 
   // Delete ARO files.
   await ActivityReportObjectiveFile.destroy({
     where: { id: aroFileIdsToDelete },
-    hookMetadata: { objectiveIds },
     individualHooks: true,
   });
 };
