@@ -439,6 +439,25 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(checkBoxes[2]).toBeChecked();
   });
 
+  it('selects a single checkbox without checking other checkboxes', async () => {
+    renderCoursesAssociatedWithActivityReports(mockSortData);
+    // assert all check boxes are selected
+    let checkBoxes = screen.getAllByRole('checkbox');
+    checkBoxes.forEach((checkBox) => {
+      expect(checkBox).not.toBeChecked();
+    });
+
+    // uncheck the first check box
+    const firstCheckBox = checkBoxes[1];
+    fireEvent.click(firstCheckBox);
+
+    // assert all check boxes are not selected
+    checkBoxes = screen.getAllByRole('checkbox');
+    expect(checkBoxes[0]).not.toBeChecked();
+    expect(checkBoxes[1]).toBeChecked();
+    expect(checkBoxes[2]).not.toBeChecked();
+  });
+
   describe('parseValue', () => {
     it('returns a number if the value is a number', () => {
       expect(parseValue('1')).toEqual(1);
