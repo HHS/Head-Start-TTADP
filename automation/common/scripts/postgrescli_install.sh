@@ -223,7 +223,7 @@ function cleanup() {
 function main() {
     local deb_url="http://security.debian.org/debian-security/pool/updates/main/p/postgresql-15/postgresql-client-15_15.6-0+deb12u1_amd64.deb"
     local deb_file="/tmp/postgresql.deb"
-    local deb_sha256="c7143d12f17403821fe7111ff8ac3de3884cf96e"
+    local deb_sha256="f601421f0f075c78df0ee289fbe075f38f52d08362ff2907d1710c26d5e53c39"
     local bin_dir="/tmp/local/bin"
     local tools=("pg_dump" "pg_isready" "pg_restore" "psql" "reindexdb" "vacuumdb")
 
