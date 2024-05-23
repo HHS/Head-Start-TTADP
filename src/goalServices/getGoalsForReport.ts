@@ -58,7 +58,7 @@ export default async function getGoalsForReport(reportId: number) {
           ON gtfp.id = argfr."goalTemplateFieldPromptId"
           AND argfr."activityReportGoalId" = "activityReportGoals".id
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
-          GROUP BY TRUE
+          GROUP BY 1=1
         )`), 'prompts'],
       ],
     },
