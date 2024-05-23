@@ -136,7 +136,7 @@ describe('GoalForm', () => {
     expect(endDate).toBeVisible();
   });
 
-  it('Shows the goal source as read only on the AR', async () => {
+  it('disables goal source when created via tr', async () => {
     const trGoal = {
       id: 1,
       isNew: false,
@@ -152,5 +152,23 @@ describe('GoalForm', () => {
     // Expect to have the text "Training event source" in the goal source field.
     expect(screen.getByText(/goal source/i)).toBeVisible();
     expect(screen.getByText(/training event source/i)).toBeVisible();
+  });
+
+  it('enables goal source when created via is not tr', () => {
+    const trGoal = {
+      id: 1,
+      isNew: false,
+      goalIds: [123],
+      createdVia: 'activityReport',
+      source: 'Not training event',
+    };
+    const user = {
+      ...DEFAULT_USER,
+      permissions: [{ scopeId: SCOPE_IDS.ADMIN }],
+    };
+    renderGoalForm(1, trGoal, user);
+    // Expect the goal source to be disabled
+    const sourceSelect = screen.getByRole('combobox', { name: /goal source/i });
+    expect(sourceSelect).not.toBeDisabled();
   });
 });
