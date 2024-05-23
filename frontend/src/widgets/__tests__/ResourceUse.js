@@ -1,7 +1,5 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
 import ResourceUse from '../ResourceUse';
 
@@ -79,14 +77,10 @@ const testData = {
 };
 
 const renderResourceUse = (data) => {
-  const history = createMemoryHistory();
-
   render(
-    <Router history={history}>
-      <ResourceUse
-        data={data}
-      />
-    </Router>,
+    <ResourceUse
+      data={data}
+    />,
   );
 };
 
@@ -102,42 +96,6 @@ describe('Resource Use Widget', () => {
     expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
-  });
-
-  it('correctly renders the iPD link', async () => {
-    const data = {
-      headers: ['Jan-22', 'Feb-22', 'Mar-22'],
-      resources: [
-        {
-          heading: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-          title: 'Individualized Professional Development (iPD) Portfolio',
-          isUrl: true,
-          data: [
-            {
-              title: 'Jan-22',
-              value: '17',
-            },
-            {
-              title: 'Feb-22',
-              value: '18',
-            },
-            {
-              title: 'Mar-22',
-              value: '19',
-            },
-            {
-              title: 'total',
-              value: '20',
-            },
-          ],
-        },
-      ],
-    };
-    renderResourceUse(data);
-
-    const link = screen.getByRole('link', { name: /Individualized Professional Development \(iPD\) Portfolio/i });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/course-dashboard');
   });
 
   it('renders correctly with data', async () => {

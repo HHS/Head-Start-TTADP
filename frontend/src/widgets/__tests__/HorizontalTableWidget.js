@@ -1,7 +1,5 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor,
@@ -17,23 +15,18 @@ const renderHorizontalTableWidget = (
   sortConfig = {},
   requestSort = () => {},
   enableCheckboxes = false,
-) => {
-  const history = createMemoryHistory();
-  return render(
-    <Router history={history}>
-      <HorizontalTableWidget
-        headers={headers}
-        data={data}
-        firstHeading={firstHeading}
-        enableSorting={enableSorting}
-        lastHeading={lastHeading}
-        sortConfig={sortConfig}
-        requestSort={requestSort}
-        enableCheckboxes={enableCheckboxes}
-      />
-    </Router>,
-  );
-};
+) => render(
+  <HorizontalTableWidget
+    headers={headers}
+    data={data}
+    firstHeading={firstHeading}
+    enableSorting={enableSorting}
+    lastHeading={lastHeading}
+    sortConfig={sortConfig}
+    requestSort={requestSort}
+    enableCheckboxes={enableCheckboxes}
+  />,
+);
 
 describe('Horizontal Table Widget', () => {
   it('renders correctly with data', async () => {
@@ -77,37 +70,7 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
   });
 
-  it('correctly creates a url with an internal redirect', async () => {
-    const headers = ['col1', 'col2', 'col3'];
-    const data = [
-      {
-        heading: 'Row 1 Data',
-        internalRedirect: 'course-dashboard',
-        isUrl: true,
-        data: [
-          {
-            title: 'col1',
-            value: '17',
-          },
-          {
-            title: 'col2',
-            value: '18',
-          },
-          {
-            title: 'col3',
-            value: '19',
-          },
-        ],
-      },
-    ];
-
-    renderHorizontalTableWidget(headers, data);
-
-    const url = screen.getByText(/Row 1 Data/i);
-    expect(url).toHaveAttribute('href', '/course-dashboard');
-  });
-
-  it('correctly creates a url without an internal redirect', async () => {
+  it('correctly renders url icon', async () => {
     const headers = ['col1', 'col2', 'col3'];
     const data = [
       {

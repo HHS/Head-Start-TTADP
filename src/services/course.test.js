@@ -15,6 +15,14 @@ describe('Course', () => {
 
   describe('csvImport', () => {
     beforeAll(async () => {
+      // delete all courses that are not persisted on upload.
+      await Course.destroy({
+        where: {
+          persistsOnUpload: false,
+        },
+        force: true,
+      });
+
       foreverCourse = await Course.create({
         name: 'Forever course',
         persistsOnUpload: true,

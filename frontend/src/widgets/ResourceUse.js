@@ -3,16 +3,7 @@ import PropTypes from 'prop-types';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 
-const iPDLink = 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio';
-
 function ResourceUse({ data, loading }) {
-  const updatedData = { ...data };
-  const iPDIndex = updatedData.resources.findIndex((d) => d.heading === iPDLink);
-  if (iPDIndex > -1) {
-    const ipdLink = 'course-dashboard';
-    updatedData.resources[iPDIndex].internalRedirect = ipdLink;
-  }
-
   return (
     <WidgetContainer
       title="Resource use"
@@ -24,9 +15,7 @@ function ResourceUse({ data, loading }) {
       <HorizontalTableWidget
         id="resourceUse"
         headers={data.headers}
-        data={updatedData.resources.map(
-          (d) => ({ ...d, heading: d.title || d.heading, link: d.heading }),
-        )}
+        data={data.resources.map((d) => ({ ...d, heading: d.title || d.heading, link: d.heading }))}
         firstHeading="Resource URL"
       />
     </WidgetContainer>

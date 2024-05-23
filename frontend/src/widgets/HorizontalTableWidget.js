@@ -1,6 +1,5 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Table, Checkbox } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -73,28 +72,19 @@ export default function HorizontalTableWidget(
     );
   };
 
-  const handleUrl = (url) => {
-    if (url.internalRedirect) {
-      return (
-        <Link to={url.internalRedirect}>
-          {url.heading}
-        </Link>
-      );
-    }
-    return (
-      <>
-        <a href={url.link} target="_blank" rel="noreferrer">
-          {trimLongURLs(url.heading)}
-        </a>
-        {' '}
-        <FontAwesomeIcon
-          color={colors.ttahubBlue}
-          icon={faArrowUpRightFromSquare}
-          size="xs"
-        />
-      </>
-    );
-  };
+  const handleUrl = (url) => (
+    <>
+      <a href={url.link} target="_blank" rel="noreferrer">
+        {trimLongURLs(url.heading)}
+      </a>
+      {' '}
+      <FontAwesomeIcon
+        color={colors.ttahubBlue}
+        icon={faArrowUpRightFromSquare}
+        size="xs"
+      />
+    </>
+  );
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
