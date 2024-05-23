@@ -1413,7 +1413,6 @@ export async function updateGoalStatusById(
     context: closeSuspendContext,
   })));
 }
-
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);

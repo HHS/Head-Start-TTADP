@@ -16,6 +16,7 @@ const {
   File,
   Course,
   Resource,
+  sequelize,
 } = db;
 
 export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
@@ -58,7 +59,7 @@ export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const {
-        topics, files, resources, courses,
+        topics, files, resources, courses, objectiveCreatedHere,
       } = objective;
 
       // Determine if this objective already exists.
@@ -122,6 +123,7 @@ export async function saveObjectivesForReport(objectives, report) {
         ttaProvided: objective.ttaProvided,
         supportType: objective.supportType,
         order: index,
+        objectiveCreatedHere,
       });
 
       return savedObjective;
@@ -253,6 +255,11 @@ function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
 
 export async function getObjectivesByReportId(reportId: number) {
   const objectives = await Objective.findAll({
+    attributes: {
+      include: [
+        [sequelize.col('activityReportObjectives.objectiveCreatedHere'), 'objectiveCreatedHere'],
+      ],
+    },
     where: {
       goalId: { [Op.is]: null },
       otherEntityId: { [Op.not]: null },
