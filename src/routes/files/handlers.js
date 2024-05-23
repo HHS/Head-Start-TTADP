@@ -114,7 +114,6 @@ const deleteOnlyFile = async (req, res) => {
 const deleteHandler = async (req, res) => {
   const {
     reportId,
-    objectiveId,
     fileId,
     eventSessionId,
     communicationLogId,
@@ -252,15 +251,11 @@ const uploadHandler = async (req, res) => {
   const [fields, files] = await parseFormPromise(req);
   const {
     reportId,
-    reportObjectiveId,
+    objectiveIds,
     sessionId,
     communicationLogId,
     sessionAttachmentId,
   } = fields;
-  let buffer;
-  let metadata;
-  let fileName;
-  let fileTypeToUse;
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
@@ -269,124 +264,155 @@ const uploadHandler = async (req, res) => {
     if (!files.file) {
       return res.status(400).send({ error: 'file required' });
     }
-    const { path, originalFilename, size } = files.file[0];
-    if (!size) {
-      return res.status(400).send({ error: 'fileSize required' });
-    }
+
     if (!uploadHandlerRequiredFields(fields)) {
       return res.status(400).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
     }
-    buffer = fs.readFileSync(path);
 
-    fileTypeToUse = await determineFileTypeFromPath(path);
-    if (!fileTypeToUse) {
-      return res.status(400).send('Could not determine file type');
-    }
+    const fileResponse = [];
 
-    fileName = `${uuidv4()}${fileTypeToUse.ext}`;
-    if (reportId) {
-      const isAdmin = await validateUserAuthForAdmin(userId);
-      const editable = await reportIsInAnEditableState(user, reportId);
+    await Promise.all(files.file.map(async (file) => {
+      const { path, originalFilename, size } = file;
+      let metadata;
 
-      if (isAdmin && !editable) {
-        return res.sendStatus(403);
+      if (!size) {
+        return res.status(400).send({ error: 'fileSize required' });
       }
 
-      if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
-        return res.sendStatus(403);
+      const buffer = fs.readFileSync(path);
+
+      const fileTypeToUse = await determineFileTypeFromPath(path);
+      if (!fileTypeToUse) {
+        return res.status(400).send('Could not determine file type');
       }
 
-      metadata = await createActivityReportFileMetaData(
-        originalFilename,
-        fileName,
-        reportId,
-        size,
-      );
-    } else if (reportObjectiveId) {
-      const activityReportObjective = ActivityReportObjective.findOne(
-        { where: { id: reportObjectiveId } },
-      );
-      if (!(await hasReportAuthorization(
-        user,
-        activityReportObjective.activityReportId,
-      )
-      || (await validateUserAuthForAdmin(userId)))) {
-        return res.sendStatus(403);
+      const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+      if (reportId && objectiveIds) {
+        const activityReportObjectives = await ActivityReportObjective.findAll({
+          attributes: ['id'],
+          where: {
+            activityReportId: JSON.parse(reportId),
+            objectiveId: JSON.parse(objectiveIds),
+          },
+        });
+
+        if (activityReportObjectives.length === 0) {
+          return res.sendStatus(httpCodes.BAD_REQUEST);
+        }
+
+        if (!(await hasReportAuthorization(
+          user,
+          reportId,
+        )
+        || (await validateUserAuthForAdmin(userId)))) {
+          return res.sendStatus(403);
+        }
+
+        const activityReportObjectiveIds = activityReportObjectives.map((aro) => aro.id);
+
+        metadata = await createActivityReportObjectiveFileMetaData(
+          originalFilename,
+          fileName,
+          activityReportObjectiveIds,
+          size,
+        );
+      } else if (reportId) {
+        const isAdmin = await validateUserAuthForAdmin(userId);
+        const editable = await reportIsInAnEditableState(user, reportId);
+
+        if (isAdmin && !editable) {
+          return res.sendStatus(403);
+        }
+
+        if (!(await hasReportAuthorization(user, reportId)) && !isAdmin) {
+          return res.sendStatus(403);
+        }
+
+        metadata = await createActivityReportFileMetaData(
+          originalFilename,
+          fileName,
+          reportId,
+          size,
+        );
+      } else if (sessionId) {
+        const session = await findSessionById(sessionId);
+        const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+        const eventPolicy = new EventPolicy(user, event);
+
+        if (!eventPolicy.canUploadFile()) {
+          return res.sendStatus(403);
+        }
+
+        metadata = await createSessionObjectiveFileMetaData(
+          originalFilename,
+          fileName,
+          sessionId,
+          size,
+        );
+      } else if (communicationLogId) {
+        const communicationLog = await logById(communicationLogId);
+        const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+
+        if (!logPolicy.canUploadFileToLog()) {
+          return res.sendStatus(403);
+        }
+
+        metadata = await createCommunicationLogFileMetadata(
+          originalFilename,
+          fileName,
+          communicationLogId,
+          size,
+        );
+      } else if (sessionAttachmentId) {
+        const session = await findSessionById(sessionAttachmentId);
+        const event = await findEventBySmartsheetIdSuffix(session.eventId);
+
+        const eventPolicy = new EventPolicy(user, event);
+
+        if (!eventPolicy.canUploadFile()) {
+          return res.sendStatus(403);
+        }
+
+        metadata = await createSessionSupportingAttachmentMetaData(
+          originalFilename,
+          fileName,
+          sessionAttachmentId,
+          size,
+        );
       }
-      metadata = await createActivityReportObjectiveFileMetaData(
-        originalFilename,
-        fileName,
-        reportId,
-        size,
-      );
-    } else if (sessionId) {
-      const session = await findSessionById(sessionId);
-      const event = await findEventBySmartsheetIdSuffix(session.eventId);
 
-      const eventPolicy = new EventPolicy(user, event);
-
-      if (!eventPolicy.canUploadFile()) {
-        return res.sendStatus(403);
+      try {
+        const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+        const url = getPresignedURL(uploadedFile.Key);
+        await updateStatus(metadata.id, UPLOADED);
+        fileResponse.push({ ...metadata, url });
+      } catch (err) {
+        if (metadata) {
+          await updateStatus(metadata.id, UPLOAD_FAILED);
+        }
+        return handleErrors(req, res, err, logContext);
       }
 
-      metadata = await createSessionObjectiveFileMetaData(
-        originalFilename,
-        fileName,
-        sessionId,
-        size,
-      );
-    } else if (communicationLogId) {
-      const communicationLog = await logById(communicationLogId);
-      const logPolicy = new CommunicationLogPolicy(user, 0, communicationLog);
+      return fs.unlinkSync(path);
+    }));
 
-      if (!logPolicy.canUploadFileToLog()) {
-        return res.sendStatus(403);
+    res.status(200).send(fileResponse);
+
+    await Promise.all(fileResponse.map(async (data) => {
+      try {
+        addToScanQueue({ key: data.key });
+        return await updateStatus(data.id, QUEUED);
+      } catch (err) {
+        auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`);
+        return updateStatus(data.id, QUEUEING_FAILED);
       }
-
-      metadata = await createCommunicationLogFileMetadata(
-        originalFilename,
-        fileName,
-        communicationLogId,
-        size,
-      );
-    } else if (sessionAttachmentId) {
-      const session = await findSessionById(sessionAttachmentId);
-      const event = await findEventBySmartsheetIdSuffix(session.eventId);
-
-      const eventPolicy = new EventPolicy(user, event);
-
-      if (!eventPolicy.canUploadFile()) {
-        return res.sendStatus(403);
-      }
-
-      metadata = await createSessionSupportingAttachmentMetaData(
-        originalFilename,
-        fileName,
-        sessionAttachmentId,
-        size,
-      );
-    }
+    }));
   } catch (err) {
     return handleErrors(req, res, err, logContext);
   }
-  try {
-    const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-    const url = getPresignedURL(uploadedFile.Key);
-    await updateStatus(metadata.id, UPLOADED);
-    res.status(200).send({ ...metadata, url });
-  } catch (err) {
-    if (metadata) {
-      await updateStatus(metadata.id, UPLOAD_FAILED);
-    }
-    return handleErrors(req, res, err, logContext);
-  }
-  try {
-    await addToScanQueue({ key: metadata.key });
-    return await updateStatus(metadata.id, QUEUED);
-  } catch (err) {
-    auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${metadata.originalFileName}. Error: ${err}`);
-    return updateStatus(metadata.id, QUEUEING_FAILED);
-  }
+
+  return Promise.resolve();
 };
 
 async function deleteActivityReportObjectiveFile(req, res) {

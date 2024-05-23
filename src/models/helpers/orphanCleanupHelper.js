@@ -38,21 +38,21 @@ const cleanupOrphanFiles = async (sequelize, fileId) => Promise.all([
     where: {
       id: {
         [Op.in]: sequelize.literal(`(
-                    SELECT DISTINCT
-                        f.id
-                    FROM "Files" f
-                    LEFT JOIN "ActivityReportFiles" arf
-                    ON f.id = arf."fileId"
-                    LEFT JOIN "ActivityReportObjectiveFiles" arof
-                    ON f.id = arof."fileId"
-                      LEFT JOIN "ImportFiles" imf
-                    ON f.id = imf."fileId"
-                    WHERE f.id = ${fileId}
-                    AND arf.id IS NULL
-                    AND arof.id IS NULL
-                    AND imf.id IS NULL
-                    GROUP BY 1
-               )`),
+            SELECT DISTINCT
+                f.id
+            FROM "Files" f
+            LEFT JOIN "ActivityReportFiles" arf
+            ON f.id = arf."fileId"
+            LEFT JOIN "ActivityReportObjectiveFiles" arof
+            ON f.id = arof."fileId"
+              LEFT JOIN "ImportFiles" imf
+            ON f.id = imf."fileId"
+            WHERE f.id = ${fileId}
+            AND arf.id IS NULL
+            AND arof.id IS NULL
+            AND imf.id IS NULL
+            GROUP BY 1
+        )`),
       },
     },
   }),
