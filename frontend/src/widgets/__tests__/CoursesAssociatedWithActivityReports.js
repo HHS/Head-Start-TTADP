@@ -151,8 +151,28 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
   });
 
-  it('correctly handles value sort', async () => {
-    renderCoursesAssociatedWithActivityReports(mockSortData);
+  it.only('correctly handles value sort', async () => {
+    renderCoursesAssociatedWithActivityReports(
+      {
+        headers: [...mockSortData.headers],
+        courses: [...mockSortData.courses, {
+          id: 3,
+          link: 'Sample Course 3',
+          heading: 'Sample Course 3',
+          isUrl: true,
+          data: [
+            {
+              title: 'Feb-22',
+              value: '2',
+            },
+            {
+              title: 'total',
+              value: '5',
+            },
+          ],
+        }],
+      },
+    );
     expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -163,6 +183,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[5]).toHaveTextContent(/Sample Course 1/i);
       expect(tableCells[6]).toHaveTextContent(/1/i);
       expect(tableCells[7]).toHaveTextContent(/3/i);
+      expect(tableCells[9]).toHaveTextContent(/Sample Course 3/i);
+      expect(tableCells[10]).toHaveTextContent(/2/i);
+      expect(tableCells[11]).toHaveTextContent(/5/i);
     });
 
     // Sort.
@@ -178,6 +201,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[5]).toHaveTextContent(/Sample Course 2/i);
       expect(tableCells[6]).toHaveTextContent(/2/i);
       expect(tableCells[7]).toHaveTextContent(/4/i);
+      expect(tableCells[9]).toHaveTextContent(/Sample Course 3/i);
+      expect(tableCells[10]).toHaveTextContent(/2/i);
+      expect(tableCells[11]).toHaveTextContent(/5/i);
     });
   });
 
