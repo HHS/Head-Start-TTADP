@@ -4,13 +4,10 @@ import {
   ActivityReportFile,
   ActivityReportObjectiveFile,
   File,
-  Objective,
-  ObjectiveTemplate,
   ActivityReportObjective,
   SessionReportPilotFile,
   CommunicationLogFile,
   SessionReportPilotSupportingAttachment,
-  sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
 
@@ -139,24 +136,28 @@ const updateStatusByKey = async (key, fileStatus) => {
   return file?.toJSON();
 };
 
-const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
+const findOrCreateFileForMetadata = async (originalFileName, s3FileName, fileSize) => {
+  let file = await File.findOne({
     where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
+      originalFileName,
+      key: s3FileName,
+      fileSize,
     },
-    defaults: newFile,
   });
 
-  return file.dataValues;
+  if (!file) {
+    file = await File.create({
+      originalFileName,
+      key: s3FileName,
+      status: UPLOADING,
+      fileSize,
+    }, { individualHooks: true });
+  }
+  return file.toJSON();
 };
+
+// eslint-disable-next-line max-len
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
 
 const createActivityReportFileMetaData = async (
   originalFileName,
@@ -164,22 +165,9 @@ const createActivityReportFileMetaData = async (
   reportId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createActivityReportObjectiveFileMetaData = async (
@@ -188,26 +176,12 @@ const createActivityReportObjectiveFileMetaData = async (
   activityReportObjectiveIds,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await Promise.all(activityReportObjectiveIds.map((id) => ActivityReportObjectiveFile.create({
     activityReportObjectiveId: id,
     fileId: file.id,
   })));
-
-  return file.dataValues;
+  return file;
 };
 
 const createSessionObjectiveFileMetaData = async (
@@ -216,23 +190,9 @@ const createSessionObjectiveFileMetaData = async (
   sessionReportPilotId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await SessionReportPilotFile.create({ sessionReportPilotId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createSessionSupportingAttachmentMetaData = async (
@@ -241,23 +201,9 @@ const createSessionSupportingAttachmentMetaData = async (
   sessionReportPilotId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createCommunicationLogFileMetadata = async (
@@ -266,23 +212,9 @@ const createCommunicationLogFileMetadata = async (
   communicationLogId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await CommunicationLogFile.create({ communicationLogId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
