@@ -1,5 +1,6 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
