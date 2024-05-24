@@ -43,7 +43,10 @@ const WidgetContainerTitleGroup = ({
       <div>
         {
         (menuItems.length > 0 && (
-        <ContextMenu menuItems={menuItems} />
+        <ContextMenu
+          menuItems={menuItems}
+          label="Export actions for courses"
+        />
         ))
       }
       </div>

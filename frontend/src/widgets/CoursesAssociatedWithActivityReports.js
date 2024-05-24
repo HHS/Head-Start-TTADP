@@ -83,7 +83,7 @@ function CoursesAssociatedWithActivityReports({
     }
 
     // Set the value we want to sort by.
-    const valuesToSort = sortBy === 'Course'
+    const valuesToSort = sortBy === 'Course_name'
       ? courseUse.map((t) => ({
         ...t,
         sortBy: t.heading,
@@ -98,11 +98,15 @@ function CoursesAssociatedWithActivityReports({
     const sortValueA = direction === 'asc' ? 1 : -1;
     const sortValueB = direction === 'asc' ? -1 : 1;
     valuesToSort.sort((a, b) => {
-      if (a.sortBy > b.sortBy) {
+      const valueA = a.sortBy.toString().toLowerCase();
+      const valueB = b.sortBy.toString().toLowerCase();
+
+      if (valueA > valueB) {
         return sortValueA;
-      } if (b.sortBy > a.sortBy) {
+      } if (valueB > valueA) {
         return sortValueB;
       }
+
       return 0;
     });
 
@@ -171,8 +175,8 @@ function CoursesAssociatedWithActivityReports({
 
   return (
     <WidgetContainer
-      title="iPD Courses cited on Activity Reports"
-      subtitle="Unique iPD course links cited within Activity Reports."
+      title="iPD courses cited on Activity Reports"
+      subtitle="Unique iPD courses cited within Activity Reports."
       loading={loading || localLoading}
       loadingLabel="Courses associated with Activity Reports loading"
       showPagingBottom
@@ -187,7 +191,7 @@ function CoursesAssociatedWithActivityReports({
       <HorizontalTableWidget
         headers={data.headers || []}
         data={coursesPerPage || []}
-        firstHeading="Course"
+        firstHeading="Course name"
         enableSorting
         sortConfig={sortConfig}
         requestSort={requestSort}

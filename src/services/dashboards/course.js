@@ -29,15 +29,20 @@ export async function rollUpCourseUrlData(data) {
           sortBy: c.course,
           total: c.total,
           isUrl: false,
-          data: [{ title: c.rollUpDate, value: c.count }],
+          data: [{ title: c.rollUpDate, value: c.count, date: c.date }],
         },
       ];
     }
 
     // Add the resource to the accumulator.
-    exists.data.push({ title: c.rollUpDate, value: c.count });
+    exists.data.push({ title: c.rollUpDate, value: c.count, date: c.date });
     return accumulator;
   }, []);
+
+  // Sort each resource's data by date.
+  rolledUpCourseData.forEach((course) => {
+    course.data.sort((d1, d2) => new Date(d1.date) - new Date(d2.date));
+  });
 
   // Loop through the rolled up resources and add a total.
   rolledUpCourseData.forEach((course) => {
@@ -135,7 +140,7 @@ export async function getCourseUrlWidgetData(scopes) {
             ON cor."name" = t."name"
         LEFT JOIN "counts" c
           ON cor."name" = c."name" AND to_char(d."date", 'Mon-YY')  = c."rollUpDate"
-        ORDER BY COALESCE(t.total, 0) DESC, c."name" ASC, d."date" ASC;
+        ORDER BY c."name" ASC, d."date" ASC;
   `;
 
   // Execute the query.
