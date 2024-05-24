@@ -864,7 +864,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'report'
                   ))
               FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -958,7 +958,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'specialistNextStep'
                   ))
               FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1057,7 +1057,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'recipientNextStep'
                   ))
               FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1157,7 +1157,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'objective'
                   ))
               FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -1166,7 +1166,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1287,7 +1287,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'goals'
                   ))
               FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -1296,7 +1296,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
