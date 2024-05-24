@@ -776,7 +776,6 @@ function reduceGoals(goals, forReport = false) {
 
   const where = (g, currentValue) => (forReport
     ? g.name === currentValue.dataValues.name
-      && g.status === currentValue.dataValues.status
     : g.name === currentValue.dataValues.name
       && g.status === currentValue.dataValues.status);
 
@@ -2448,7 +2447,7 @@ export async function getGoalsForReport(reportId) {
           ON gtfp.id = argfr."goalTemplateFieldPromptId"
           AND argfr."activityReportGoalId" = "activityReportGoals".id
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
-          GROUP BY TRUE
+          GROUP BY 1=1
         )`), 'prompts'],
       ],
     },
