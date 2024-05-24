@@ -52,7 +52,7 @@ module.exports = {
       -- Get the column list for the main table
       -- The format() function works like C string interpolation except
       -- that by using %I and %L for (respectively) db object names and
-      -- string literals, it protects frm SQL injection attacks.
+      -- string literals, it protects from SQL injection attacks.
       -- It also means you don't need to manage the double quotes for
       -- db object names and the single quotes for string literals.
       -- %s also works for arbitrary string interpolation but doesn't
