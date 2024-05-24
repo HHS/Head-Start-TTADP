@@ -85,10 +85,15 @@
   }
 
   a {
-    white-space: nowrap;
-     width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+     white-space: nowrap;
+     max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
      overflow: hidden;
      text-overflow: ellipsis;
      display: inline-block;
      vertical-align: middle;
    }
+
+   // select the svg on the page and set the vertical-align to middle.
+   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
+      vertical-align: middle;
+    }
