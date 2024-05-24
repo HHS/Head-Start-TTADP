@@ -389,7 +389,7 @@ describe('Course dashboard', () => {
         total: '3',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '3' },
+          { title: 'Jan-21', value: '3', date: '2021-01-01' },
           { title: 'Total', value: '3' },
         ],
       },
@@ -403,7 +403,7 @@ describe('Course dashboard', () => {
         total: '2',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '2' },
+          { title: 'Jan-21', value: '2', date: '2021-01-01' },
           { title: 'Total', value: '2' },
         ],
       },
@@ -417,7 +417,7 @@ describe('Course dashboard', () => {
         total: '1',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '1' },
+          { title: 'Jan-21', value: '1', date: '2021-01-01' },
           { title: 'Total', value: '1' },
         ],
       },

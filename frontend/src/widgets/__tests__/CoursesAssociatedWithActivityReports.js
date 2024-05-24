@@ -121,7 +121,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     renderCoursesAssociatedWithActivityReports(emptyData);
 
     expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Courses/i)).toBeInTheDocument();
+    expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     renderCoursesAssociatedWithActivityReports(mockData);
 
     expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
-    expect(screen.getByText(/Courses/i)).toBeInTheDocument();
+    expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -222,9 +222,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     // Sort.
-    let sortColBtn = await screen.findByRole('button', { name: /course\. activate to sort ascending/i });
-    act(() => fireEvent.click(sortColBtn));
-
+    let sortColBtn = await screen.findByRole('button', { name: /Course name. activate to sort ascending/i });
     const cellValues = [
       /Sample Course 1/i,
       /1/i,
@@ -234,18 +232,21 @@ describe('iPD Courses Associated with Activity Reports', () => {
       /4/i,
     ];
 
-    await waitFor(() => {
-      const tableCells = screen.getAllByRole('cell');
-      expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
-      expect(tableCells[1]).toHaveTextContent(cellValues[0]);
-      expect(tableCells[2]).toHaveTextContent(cellValues[1]);
-      expect(tableCells[3]).toHaveTextContent(cellValues[2]);
-      expect(tableCells[5]).toHaveTextContent(cellValues[3]);
-      expect(tableCells[6]).toHaveTextContent(cellValues[4]);
-      expect(tableCells[7]).toHaveTextContent(cellValues[5]);
+    await act(async () => {
+      fireEvent.click(sortColBtn);
+      await waitFor(() => {
+        const tableCells = screen.getAllByRole('cell');
+        expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
+        expect(tableCells[1]).toHaveTextContent(cellValues[0]);
+        expect(tableCells[2]).toHaveTextContent(cellValues[1]);
+        expect(tableCells[3]).toHaveTextContent(cellValues[2]);
+        expect(tableCells[5]).toHaveTextContent(cellValues[3]);
+        expect(tableCells[6]).toHaveTextContent(cellValues[4]);
+        expect(tableCells[7]).toHaveTextContent(cellValues[5]);
+      });
     });
 
-    sortColBtn = await screen.findByRole('button', { name: /course\. activate to sort descending/i });
+    sortColBtn = await screen.findByRole('button', { name: /course name\. activate to sort descending/i });
     act(() => fireEvent.click(sortColBtn));
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -258,7 +259,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[7]).toHaveTextContent(/3/i);
     });
 
-    sortColBtn = await screen.findByRole('button', { name: /course\. activate to sort ascending/i });
+    sortColBtn = await screen.findByRole('button', { name: /course name\. activate to sort ascending/i });
     act(() => fireEvent.click(sortColBtn));
 
     await waitFor(() => {
