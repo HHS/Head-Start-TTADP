@@ -42,7 +42,7 @@ const WidgetContainerTitleGroup = ({
       </div>
       <div>
         {
-        (menuItems && menuItems.length > 0 && (
+        (menuItems.length > 0 && (
         <ContextMenu menuItems={menuItems} />
         ))
       }
@@ -71,7 +71,7 @@ WidgetContainerTitleGroup.defaultProps = {
   showHeaderBorder: false,
   className: 'padding-3 ',
   enableCheckboxes: false,
-  exportRows: () => {},
+  exportRows: null,
 };
 
 export default WidgetContainerTitleGroup;

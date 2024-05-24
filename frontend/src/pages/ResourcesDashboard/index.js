@@ -30,7 +30,7 @@ import {
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
-import { REPORTS_PER_PAGE } from '../../Constants';
+import { REPORTS_PER_PAGE, REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY } from '../../Constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
@@ -41,9 +41,6 @@ const defaultDate = formatDateRange({
   string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
   withSpaces: false,
 });
-
-const FILTER_KEY = 'regional-resources-dashboard-filters';
-
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
   const ariaLiveContext = useContext(AriaLiveContext);
@@ -109,7 +106,7 @@ export default function ResourcesDashboard() {
   }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
 
   const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
+    REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
     defaultFilters,
   );
 

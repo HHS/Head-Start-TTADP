@@ -99,7 +99,7 @@ describe('Resources Dashboard page', () => {
   };
 
   it('renders correctly', async () => {
-    fetchMock.get(`${coursesUrl}?${allRegions}&${defaultDateParam}`, coursesDefault, { overwriteRoutes: true });
+    fetchMock.get(`${coursesUrl}?${allRegions}`, coursesDefault, { overwriteRoutes: true });
 
     const user = {
       homeRegionId: 14,

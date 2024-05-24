@@ -267,7 +267,7 @@ function App() {
           path="/dashboards/course-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <CourseDashboard user={user} />
+              <CourseDashboard />
             </AppWrapper>
           )}
         />

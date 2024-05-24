@@ -83,3 +83,12 @@
   .smarthub-horizontal-table-widget .usa-checkbox__label {
     padding-left: 0;
   }
+
+  a {
+    white-space: nowrap;
+     width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+     overflow: hidden;
+     text-overflow: ellipsis;
+     display: inline-block;
+     vertical-align: middle;
+   }

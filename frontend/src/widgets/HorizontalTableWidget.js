@@ -7,15 +7,6 @@ import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import './HorizontalTableWidget.scss';
 
-const trimLongURLs = (url) => {
-  let newUrl = url;
-  if (newUrl.length >= 55) {
-    newUrl = newUrl.substring(0, 55);
-    newUrl += '...';
-  }
-  return newUrl;
-};
-
 export default function HorizontalTableWidget(
   {
     headers,
@@ -75,7 +66,7 @@ export default function HorizontalTableWidget(
   const handleUrl = (url) => (
     <>
       <a href={url.link} target="_blank" rel="noreferrer">
-        {trimLongURLs(url.heading)}
+        {url.heading}
       </a>
       {' '}
       <FontAwesomeIcon
