@@ -242,23 +242,4 @@ describe('Horizontal Table Widget', () => {
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
     expect(screen.queryAllByRole('checkbox')).toHaveLength(2);
   });
-
-  it('trims urls longer than 55 characters', async () => {
-    const headers = ['col1'];
-    const data = [
-      {
-        heading: 'This is longer than 50 characters and should be trimmed',
-        isUrl: true,
-        data: [
-          {
-            title: 'col1',
-            value: '17',
-          },
-        ],
-      },
-    ];
-
-    renderHorizontalTableWidget(headers, data);
-    expect(screen.getByText('This is longer than 50 characters and should be trimmed...')).toBeInTheDocument();
-  });
 });

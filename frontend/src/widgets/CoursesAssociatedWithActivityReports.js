@@ -24,7 +24,6 @@ function CoursesAssociatedWithActivityReports({
   const [courseUse, setCourseUse] = useState([]);
   const [courseCount, setCourseCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
-  const [perPage] = useState(perPageNumber);
   const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: '1',
     direction: 'desc',
@@ -35,7 +34,7 @@ function CoursesAssociatedWithActivityReports({
 
   const { activePage } = sortConfig;
 
-  const [offset, setOffset] = useState((activePage - 1) * perPage);
+  const [offset, setOffset] = useState((activePage - 1) * perPageNumber);
 
   useEffect(() => {
     try {
@@ -56,7 +55,7 @@ function CoursesAssociatedWithActivityReports({
       setOffset(0); // 0 times perpage = 0
       setResetPagination(false);
     }
-  }, [activePage, perPage, resetPagination, setResetPagination, setSortConfig, sortConfig, data]);
+  }, [activePage, resetPagination, setResetPagination, setSortConfig, sortConfig, data]);
 
   const handlePageChange = (pageNumber) => {
     if (!loading) {
@@ -68,7 +67,7 @@ function CoursesAssociatedWithActivityReports({
 
       // store it
       setSortConfig(sort);
-      setOffset((pageNumber - 1) * perPage);
+      setOffset((pageNumber - 1) * perPageNumber);
     }
   };
 
@@ -153,7 +152,6 @@ function CoursesAssociatedWithActivityReports({
       }
       url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.setAttribute('name', 'download');
       a.setAttribute('hidden', '');
       a.setAttribute('href', url);
       a.setAttribute('download', 'courses.csv');
@@ -168,8 +166,8 @@ function CoursesAssociatedWithActivityReports({
   };
 
   useEffect(() => {
-    setCoursesPerPage(courseUse.slice(offset, offset + perPage));
-  }, [offset, perPage, courseUse]);
+    setCoursesPerPage(courseUse.slice(offset, offset + perPageNumber));
+  }, [offset, perPageNumber, courseUse]);
 
   return (
     <WidgetContainer

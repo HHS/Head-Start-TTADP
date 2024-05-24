@@ -399,8 +399,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
     const exportTableBtn = screen.getByRole('button', { name: /export selected rows/i });
     userEvent.click(exportTableBtn);
 
-    // Make sure there is a link with the name 'Download'.
-    expect(document.getElementsByName('download').length).toBe(1);
+    // select the element '<a download="courses.csv" hidden="" href="undefined" />'
+    let downloadLink = document.querySelector('[download="courses.csv"]');
+    expect(downloadLink).not.toBeNull();
 
     // Click the context menu button.
     contextMenuBtn = screen.getByTestId('ellipsis-button');
@@ -411,7 +412,8 @@ describe('iPD Courses Associated with Activity Reports', () => {
     userEvent.click(exportAllBtn);
 
     // Make sure there is a link with the name 'Download'.
-    expect(document.getElementsByName('download').length).toBe(1);
+    downloadLink = document.querySelector('[download="courses.csv"]');
+    expect(downloadLink).not.toBeNull();
   });
 
   it('checking and then unchecking the select all checkbox', async () => {

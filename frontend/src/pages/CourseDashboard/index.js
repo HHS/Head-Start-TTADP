@@ -4,23 +4,17 @@ import React, {
   useContext,
   useMemo,
   useState,
-  useCallback,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import moment from 'moment';
-import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import FilterPanel from '../../components/filter/FilterPanel';
-import { allRegionsUserHasPermissionTo } from '../../permissions';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import AriaLiveContext from '../../AriaLiveContext';
-import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
+import { showFilterWithMyRegions } from '../regionHelpers';
+import { expandFilters, filtersToQueryString } from '../../utils';
 import './index.scss';
 import { fetchCourseDashboardData } from '../../fetchers/courses';
 import UserContext from '../../UserContext';
@@ -28,104 +22,31 @@ import { COURSE_DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import CoursesAssociatedWithActivityReports from '../../widgets/CoursesAssociatedWithActivityReports';
 import colors from '../../colors';
-
-const defaultDate = formatDateRange({
-  forDateTime: true,
-  string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
-  withSpaces: false,
-});
-
-const FILTER_KEY = 'regional-resources-dashboard-filters';
+import useFilters from '../../hooks/useFilters';
+import { REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY } from '../../Constants';
 
 export default function CourseDashboard() {
   const { user } = useContext(UserContext);
-  const ariaLiveContext = useContext(AriaLiveContext);
-  const regions = allRegionsUserHasPermissionTo(user);
-  const defaultRegion = user.homeRegionId || regions[0] || 0;
-  const allRegionsFilters = useMemo(() => buildDefaultRegionFilters(regions), [regions]);
   const [isLoading, setIsLoading] = useState(false);
   const [courseData, setCourseData] = useState({});
   const [error, updateError] = useState();
   const [resetPagination, setResetPagination] = useState(false);
 
-  const hasCentralOffice = useMemo(() => (
-    user && user.homeRegionId && user.homeRegionId === 14
-  ), [user]);
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+    allRegionsFilters,
 
-  const getFiltersWithAllRegions = () => {
-    const filtersWithAllRegions = [...allRegionsFilters];
-    return filtersWithAllRegions;
-  };
-  const centralOfficeWithAllRegionFilters = getFiltersWithAllRegions();
-
-  const defaultFilters = useMemo(() => {
-    if (hasCentralOffice) {
-      return [...centralOfficeWithAllRegionFilters,
-        {
-          id: uuidv4(),
-          topic: 'startDate',
-          condition: 'is within',
-          query: defaultDate,
-        }];
-    }
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      },
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
-
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
-    defaultFilters,
+    // filter functionality
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
+    REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
+    true,
   );
-
-  const setFilters = useCallback((newFilters) => {
-    setFiltersInHook(newFilters);
-    setResetPagination(true);
-  }, [setFiltersInHook]);
-
-  // Remove Filters.
-  const onRemoveFilter = (id, addBackDefaultRegions) => {
-    const newFilters = [...filters];
-    const index = newFilters.findIndex((item) => item.id === id);
-    if (index !== -1) {
-      newFilters.splice(index, 1);
-      if (addBackDefaultRegions) {
-        // We always want the regions to appear in the URL.
-        setFilters([...allRegionsFilters, ...newFilters]);
-      } else {
-        setFilters(newFilters);
-      }
-    }
-  };
-
-  // Apply filters.
-  const onApplyFilters = (newFilters, addBackDefaultRegions) => {
-    if (addBackDefaultRegions) {
-      // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
-    } else {
-      setFilters([
-        ...newFilters,
-      ]);
-    }
-
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to courses with activity reports `);
-  };
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -138,7 +59,6 @@ export default function CourseDashboard() {
         const data = await fetchCourseDashboardData(
           filterQuery,
         );
-        console.log('data', data);
         setCourseData(data);
         updateError('');
       } catch (e) {
