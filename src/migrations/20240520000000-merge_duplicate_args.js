@@ -88,10 +88,12 @@ module.exports = {
             argfr."goalTemplateFieldPromptId" promptid,
             argfr.id argfrid,
             ROW_NUMBER() OVER (
-              PARTITION BY target_arg, argfr."goalTemplateFieldPromptId"
-              ORDER BY argfr."activityReportGoalId" = target_arg, argfr."updatedAt" DESC, argfr.id
+              PARTITION BY arg."goalId", argfr."goalTemplateFieldPromptId"
+              ORDER BY argfr."activityReportGoalId" = target_arg DESC, argfr."updatedAt" DESC, argfr.id
             ) choice_rank
           FROM arg_merges am
+          JOIN "ActivityReportGoals" arg
+            ON donor_arg = arg.id
           JOIN "ActivityReportGoalFieldResponses" argfr
             ON am.donor_arg = argfr."activityReportGoalId"
         ), unmatched AS (
@@ -123,6 +125,7 @@ module.exports = {
         DELETE FROM "ActivityReportGoalFieldResponses"
         USING arg_merges
         WHERE "activityReportGoalId" = donor_arg
+          AND target_arg != donor_arg
         RETURNING
           id argfrid,
           donor_arg
@@ -153,10 +156,12 @@ module.exports = {
             argr."resourceId" resourceid,
             argr.id argrid,
             ROW_NUMBER() OVER (
-              PARTITION BY target_arg, argr."resourceId"
-              ORDER BY argr."activityReportGoalId" = target_arg, argr."updatedAt" DESC, argr.id
+              PARTITION BY arg."goalId", argr."resourceId"
+              ORDER BY argr."activityReportGoalId" = target_arg DESC, argr."updatedAt" DESC, argr.id
             ) choice_rank
           FROM arg_merges am
+          JOIN "ActivityReportGoals" arg
+            ON donor_arg = arg.id
           JOIN "ActivityReportGoalResources" argr
             ON am.donor_arg = argr."activityReportGoalId"
         ), unmatched AS (
