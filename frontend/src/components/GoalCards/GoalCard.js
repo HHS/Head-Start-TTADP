@@ -69,7 +69,7 @@ ObjectiveSwitch.propTypes = {
   dispatchStatusChange: PropTypes.func.isRequired,
 };
 
-function GoalCard({
+export default function GoalCard({
   goal,
   recipientId,
   regionId,
@@ -100,10 +100,12 @@ function GoalCard({
     isReopenedGoal,
   } = goal;
 
+  const { user } = useContext(UserContext);
+  const { setIsAppLoading } = useContext(AppLoadingContext);
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
   const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
-
+  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {
     atLeastOneObjectiveIsNotCompletedOrSuspended,
     dispatchStatusChange,
@@ -123,10 +125,8 @@ function GoalCard({
 
   const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
-  const { user } = useContext(UserContext);
-  const { setIsAppLoading } = useContext(AppLoadingContext);
-
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${ids.join(',')}`;
+  const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/view?${ids.map((d) => `id[]=${d}`).join('&')}`;
 
   const onUpdateGoalStatus = (newStatus) => {
     const statusesThatNeedObjectivesFinished = [
@@ -154,33 +154,39 @@ function GoalCard({
     setObjectivesExpanded(!objectivesExpanded);
   };
 
-  const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
-  const determineMenuItems = () => {
-    // Add reopen button if user has permissions and the goal is closed.
-    const createdMenuItems = [];
+  const contextMenuLabel = `Actions for goal ${id}`;
 
-    if (goalStatus === 'Closed' && hasEditButtonPermissions) {
-      createdMenuItems.push({
-        label: 'Reopen',
-        onClick: () => {
-          showReopenGoalModal(id);
-        },
-      });
-    }
+  const menuItems = [];
 
-    // Add edit button if user has permissions or if the goal is closed.
-    createdMenuItems.push({
-      label: goalStatus === 'Closed' || !hasEditButtonPermissions ? 'View' : 'Edit',
+  if (goalStatus === 'Closed' && hasEditButtonPermissions) {
+    menuItems.push({
+      label: 'Reopen',
+      onClick: () => {
+        showReopenGoalModal(id);
+      },
+    });
+    menuItems.push({
+      label: 'View',
+      onClick: () => {
+        history.push(viewLink);
+      },
+    });
+  } else if (hasEditButtonPermissions) {
+    menuItems.push({
+      label: 'Edit',
       onClick: () => {
         history.push(editLink);
       },
     });
+  } else {
+    menuItems.push({
+      label: 'View',
+      onClick: () => {
+        history.push(viewLink);
+      },
+    });
+  }
 
-    return createdMenuItems;
-  };
-  const menuItems = determineMenuItems();
-
-  const contextMenuLabel = `Actions for goal ${id}`;
   const canDeleteQualifiedGoals = (() => {
     if (isAdmin(user)) {
       return true;
@@ -218,16 +224,16 @@ function GoalCard({
       <div className="display-flex flex-justify">
         <div className="display-flex flex-align-start flex-row">
           { !hideCheckbox && (
-          <Checkbox
-            id={`goal-select-${id}`}
-            label=""
-            value={id}
-            checked={isChecked}
-            onChange={handleGoalCheckboxSelect}
-            aria-label={`Select goal ${goalText}`}
-            className="margin-right-1"
-            data-testid="selectGoalTestId"
-          />
+            <Checkbox
+              id={`goal-select-${id}`}
+              label=""
+              value={id}
+              checked={isChecked}
+              onChange={handleGoalCheckboxSelect}
+              aria-label={`Select goal ${goalText}`}
+              className="margin-right-1"
+              data-testid="selectGoalTestId"
+            />
           )}
           <GoalStatusDropdown
             showReadOnlyStatus={showReadOnlyStatus}
@@ -239,11 +245,11 @@ function GoalCard({
           />
         </div>
         { !hideGoalOptions && (
-        <ContextMenu
-          label={contextMenuLabel}
-          menuItems={menuItems}
-          menuWidthOffset={100}
-        />
+          <ContextMenu
+            label={contextMenuLabel}
+            menuItems={menuItems}
+            menuWidthOffset={100}
+          />
         )}
       </div>
       <GoalStatusChangeAlert
@@ -258,9 +264,9 @@ function GoalCard({
             {' '}
             {goalNumbers}
             {isMerged && (
-            <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
-              Merged
-            </Tag>
+              <Tag className="margin-left-1 text-ink text-normal" background={colors.baseLighter}>
+                Merged
+              </Tag>
             )}
           </h3>
           <p className="text-wrap usa-prose margin-y-0">
@@ -356,5 +362,3 @@ GoalCard.defaultProps = {
   hideGoalOptions: false,
   erroneouslySelected: false,
 };
-
-export default GoalCard;

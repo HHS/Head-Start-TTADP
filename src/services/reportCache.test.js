@@ -700,6 +700,7 @@ describe('cacheObjectiveMetadata', () => {
           courses: coursesForThisObjective,
           ttaProvided: null,
           order: 1,
+          objectiveCreatedHere: true,
         };
         await cacheObjectiveMetadata(objective, report.id, metadata);
         const aro = await ActivityReportObjective.findOne({
@@ -731,6 +732,7 @@ describe('cacheObjectiveMetadata', () => {
         expect(aro.activityReportObjectiveResources[0].resource.dataValues.url)
           .toEqual(mockObjectiveResources[0]);
 
+        expect(aro.objectiveCreatedHere).toBe(true);
         expect(aro.activityReportObjectiveTopics.length).toEqual(1);
         expect(aro.activityReportObjectiveCourses.length).toEqual(2);
         expect(aro.arOrder).toEqual(2);
