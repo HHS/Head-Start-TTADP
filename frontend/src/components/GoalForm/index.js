@@ -772,6 +772,20 @@ export default function GoalForm({
     );
   }
 
+  const createdGoalsForReadOnly = createdGoals.map((goal) => {
+    const { objectives: goalObjectives } = goal;
+    const newObjectives = goalObjectives.map((obj) => {
+      const copy = { ...obj };
+      delete copy.status;
+      return copy;
+    });
+
+    return {
+      ...goal,
+      objectives: newObjectives,
+    };
+  });
+
   return (
     <>
       { showRTRnavigation ? (
@@ -794,10 +808,10 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        { createdGoals.length ? (
+        { createdGoalsForReadOnly.length ? (
           <>
             <ReadOnly
-              createdGoals={createdGoals}
+              createdGoals={createdGoalsForReadOnly}
               onRemove={onRemove}
               onEdit={onEdit}
             />
