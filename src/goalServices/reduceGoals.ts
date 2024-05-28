@@ -358,7 +358,6 @@ export function reduceGoals(goals, forReport = false) {
 
   const where = (g, currentValue) => (forReport
     ? g.name === currentValue.dataValues.name
-        && g.status === currentValue.dataValues.status
     : g.name === currentValue.dataValues.name
         && g.status === currentValue.dataValues.status);
 
