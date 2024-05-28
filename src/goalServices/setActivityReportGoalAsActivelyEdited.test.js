@@ -2,8 +2,8 @@ import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   setActivityReportGoalAsActivelyEdited,
-  getGoalsForReport,
 } from './goals';
+import getGoalsForReport from './getGoalsForReport';
 import {
   Goal,
   ActivityReport,

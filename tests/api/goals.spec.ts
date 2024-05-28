@@ -62,9 +62,11 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     name: Joi.string(),
     grant: grantSchema,
     objectives: Joi.array(),
+    goalNumber: Joi.string(),
     goalNumbers: Joi.array().items(Joi.string()),
     goalIds: Joi.array().items(Joi.number()),
     grants: Joi.array().items(grantSchema),
+    grantId: Joi.number(),
     grantIds: Joi.array().items(Joi.number()),
     isNew: Joi.boolean(),
     collaborators: Joi.array().items(Joi.any().allow(null)),
@@ -75,6 +77,8 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
       newStatus: Joi.string(),
     })),
     isReopenedGoal: Joi.boolean(),
+    regionId: Joi.number(),
+    recipientId: Joi.number(),
   }));
 
   await validateSchema(response, schema, expect);

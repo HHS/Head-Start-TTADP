@@ -159,6 +159,11 @@ describe('createOrUpdateGoals', () => {
     expect(statuses).toContain('Not Started');
     expect(statuses).toContain('Draft');
 
+    const isCurateds = newGoals.map((g) => g.isCurated);
+    isCurateds.forEach((isCurated) => {
+      expect(isCurated).toBeDefined();
+    });
+
     const createdVias = newGoals.map((g) => g.createdVia);
     expect(createdVias.length).toBe(2);
     expect(createdVias).toContain('activityReport');

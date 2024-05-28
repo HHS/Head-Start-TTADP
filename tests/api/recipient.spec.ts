@@ -214,8 +214,10 @@ test.describe('get /recipient', () => {
             })
           )
         }),
+        goalNumber: Joi.string(),
         goalNumbers: Joi.array().items(Joi.string()),
         goalIds: Joi.array().items(Joi.number()),
+        grantId: Joi.number(),
         grants: Joi.array().items(
           Joi.object({
             id: Joi.number(),

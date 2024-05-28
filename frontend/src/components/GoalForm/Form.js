@@ -182,6 +182,7 @@ export default function Form({
           status !== 'Closed',
           createdVia !== 'tr',
           userCanEdit,
+          !isOnApprovedReport,
         ]}
         label="Goal source"
         value={uniq(Object.values(source || {})).join(', ') || ''}

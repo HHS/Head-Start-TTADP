@@ -405,7 +405,7 @@ const ActivityReportNavigator = ({
       };
 
       if (allowUpdateFormData) {
-        updateFormData(data, true);
+        updateFormData(data, false);
       }
 
       updateErrorMessage('');

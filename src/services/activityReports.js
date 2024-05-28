@@ -36,8 +36,8 @@ import {
   removeUnusedGoalsObjectivesFromReport,
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
-  getGoalsForReport,
 } from '../goalServices/goals';
+import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
