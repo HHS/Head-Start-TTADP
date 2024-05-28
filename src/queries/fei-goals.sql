@@ -1,21 +1,21 @@
 /**
 * This query collects all the FEI and near FEI goals based on several criteria.
 *
-* The query results are filterable by the JDI flags. All JDI flags are passed as an array of values
+* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
-* - jdi.regionIds - one or more values for 1 through 12
-* - jdi.recipients - one or more verbatium recipient names
-* - jdi.grantNumbers - one or more verbatium grant numbers
-* - jdi.goals - one or more verbatium goal text
-* - jdi.status - one or more verbatium statuses
-* - jdi.createdVia - one or more verbatium created via values
-* - jdi.onApprovedAR - true or false
-* - jdi.response - one or more verbatium response values
-* - jdi.createdbetween - two dates defining a range for the createdAt to be within
+* - ssdi.regionIds - one or more values for 1 through 12
+* - ssdi.recipients - one or more verbatium recipient names
+* - ssdi.grantNumbers - one or more verbatium grant numbers
+* - ssdi.goals - one or more verbatium goal text
+* - ssdi.status - one or more verbatium statuses
+* - ssdi.createdVia - one or more verbatium created via values
+* - ssdi.onApprovedAR - true or false
+* - ssdi.response - one or more verbatium response values
+* - ssdi.createdbetween - two dates defining a range for the createdAt to be within
 *
-* zero or more JDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a JDI flag:
-* SELECT SET_CONFIG('jdi.createdbetween','["2023-10-01","2023-10-15"]',TRUE);
+* zero or more SSDI flags can be set within the same transaction as the query is executed.
+* The following is an example of how to set a SSDI flag:
+* SELECT SET_CONFIG('ssdi.createdbetween','["2023-10-01","2023-10-15"]',TRUE);
 */
 WITH bad AS (
 	SELECT *
@@ -60,66 +60,66 @@ ON b."grantId" = gr.id
 JOIN "Recipients" r
 ON gr."recipientId" = r.id
 WHERE
--- Filter for regionIds if jdi.regionIds is defined
-(NULLIF(current_setting('jdi.regionIds', true), '') IS NULL
+-- Filter for regionIds if ssdi.regionIds is defined
+(NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
       OR gr."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for recipients if jdi.recipients is defined
-(NULLIF(current_setting('jdi.recipients', true), '') IS NULL
+-- Filter for recipients if ssdi.recipients is defined
+(NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
       OR r.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.recipients', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for grantNumbers if jdi.grantNumbers is defined
-(NULLIF(current_setting('jdi.grantNumbers', true), '') IS NULL
+-- Filter for grantNumbers if ssdi.grantNumbers is defined
+(NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
       OR gr.number in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.grantNumbers', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for goals if jdi.goals is defined
-(NULLIF(current_setting('jdi.goals', true), '') IS NULL
+-- Filter for goals if ssdi.goals is defined
+(NULLIF(current_setting('ssdi.goals', true), '') IS NULL
       OR b.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.goals', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.goals', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for status if jdi.status is defined
-(NULLIF(current_setting('jdi.status', true), '') IS NULL
+-- Filter for status if ssdi.status is defined
+(NULLIF(current_setting('ssdi.status', true), '') IS NULL
       OR b.status in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.status', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.status', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for createdVia if jdi.createdVia is defined
-(NULLIF(current_setting('jdi.createdVia', true), '') IS NULL
+-- Filter for createdVia if ssdi.createdVia is defined
+(NULLIF(current_setting('ssdi.createdVia', true), '') IS NULL
       OR b."createdVia" in (
         SELECT value::"enum_Goals_createdVia" AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.createdVia', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.createdVia', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for onApprovedAR if jdi.onApprovedAR is defined
-(NULLIF(current_setting('jdi.onApprovedAR', true), '') IS NULL
+-- Filter for onApprovedAR if ssdi.onApprovedAR is defined
+(NULLIF(current_setting('ssdi.onApprovedAR', true), '') IS NULL
       OR b."onApprovedAR" in (
         SELECT value::BOOLEAN AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.onApprovedAR', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for response if jdi.response is defined
-(NULLIF(current_setting('jdi.response', true), '') IS NULL
+-- Filter for response if ssdi.response is defined
+(NULLIF(current_setting('ssdi.response', true), '') IS NULL
       OR gfr."response" && (
         SELECT ARRAY_AGG(value::text) AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.response', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.response', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for createdAt dates between two values if jdi.createdbetween is defined
-(NULLIF(current_setting('jdi.createdbetween', true), '') IS NULL
+-- Filter for createdAt dates between two values if ssdi.createdbetween is defined
+(NULLIF(current_setting('ssdi.createdbetween', true), '') IS NULL
       OR b."createdAt"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.createdbetween', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.createdbetween', true), ''),'[]')::json) AS value
       ))
 order by 3,1,2,4
