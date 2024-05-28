@@ -50,13 +50,16 @@ module.exports = {
         rec record;
       BEGIN
       -- Get the column list for the main table
+      -- NOTE regarding string formatting used to assemble the queries that the
+      -- function uses to do its work:
       -- The format() function works like C string interpolation except
-      -- that by using %I and %L for (respectively) db object names and
-      -- string literals, it protects from SQL injection attacks.
-      -- It also means you don't need to manage the double quotes for
-      -- db object names and the single quotes for string literals.
-      -- %s also works for arbitrary string interpolation but doesn't
-      -- provide the same protections and utility.
+      -- that it protects from SQL injection attacks. Like C string interpolation,
+      -- the %<character> is replaced by the comma-separated values following the
+      -- base string.
+      -- %I is formatted as a database object name and manages double quotes
+      -- %L is formatted as a string literal and manages single quotes
+      -- %s can be used for arbitrary string interpolation but doesn't
+      -- provide any protections or quote management.
       qry := format('
       DROP TABLE IF EXISTS clist;
       CREATE TEMP TABLE clist
@@ -132,7 +135,16 @@ module.exports = {
             ,rec.cname
             ,'text'
             ,rec.cname);
-          WHEN rec.ctype = 'ARRAY' THEN -- for string arrays
+          WHEN rec.ctype = 'ARRAY' THEN
+            -- Because the arrays are stored as strings, they need to be parsed
+            -- back into arrays. They look like:
+            -- ["element1", "element2", "", "element4"]
+            -- The X-X-X is a string very unlikely to be present
+            -- in the internal text and replaces the internal element separators (", ")
+            -- before the start ([") and end ("]) are stripped off. That step probably
+            -- isn't strictly necessary, but is in place because the end also trims
+            -- double quotes, so it's safest to already have the internal separators
+            -- containing the double quotes replaced with an alternative separator.
             wtext := wtext || format('
             ,(
               string_to_array(
@@ -154,6 +166,7 @@ module.exports = {
             ,rec.pgtype
             ,rec.cname);
           ELSE -- for everything else
+            -- All of these values can be cast as-is into their original types
             wtext := wtext || format('
             ,(old_row_data->>%L)::%s AS %I'
             ,rec.cname
@@ -170,6 +183,7 @@ module.exports = {
       qry := qry || wtext || format('
       FROM %I
       UNION ALL
+      -- Add in the current value from the live table as a final record
       SELECT
         9223372036854775807 --max bigint so these always sort last
         ,id
