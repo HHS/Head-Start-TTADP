@@ -197,7 +197,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
-          render={({ location }) => (
+          element={({ location }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -230,7 +230,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
-          render={({ location }) => (
+          element={({ location }) => (
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -251,7 +251,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
-          render={({ location, match: routeMatch }) => (
+          element={({ location, match: routeMatch }) => (
             <>
               <Helmet>
                 <title>These Goals Might Be Duplicates</title>
@@ -295,7 +295,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
-          render={({ match: routerMatch }) => (
+          element={({ match: routerMatch }) => (
             <ViewCommunicationLog
               recipientName={recipientName}
               match={routerMatch}
@@ -304,7 +304,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
-          render={({ match: routerMatch }) => (
+          element={({ match: routerMatch }) => (
             <CommunicationLogForm
               recipientName={recipientName}
               match={routerMatch}
