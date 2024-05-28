@@ -264,7 +264,7 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/course-dashboard"
+          path="/dashboards/ipd-courses"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <CourseDashboard />

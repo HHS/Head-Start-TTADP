@@ -82,8 +82,10 @@ function CoursesAssociatedWithActivityReports({
       direction = 'desc';
     }
 
+    const sortingCourseName = sortBy === 'Course_name';
+
     // Set the value we want to sort by.
-    const valuesToSort = sortBy === 'Course_name'
+    const valuesToSort = sortingCourseName
       ? courseUse.map((t) => ({
         ...t,
         sortBy: t.heading,
@@ -98,8 +100,8 @@ function CoursesAssociatedWithActivityReports({
     const sortValueA = direction === 'asc' ? 1 : -1;
     const sortValueB = direction === 'asc' ? -1 : 1;
     valuesToSort.sort((a, b) => {
-      const valueA = a.sortBy.toString().toLowerCase();
-      const valueB = b.sortBy.toString().toLowerCase();
+      const valueA = sortingCourseName ? a.sortBy.toString().toLowerCase() : a.sortBy;
+      const valueB = sortingCourseName ? b.sortBy.toString().toLowerCase() : b.sortBy;
 
       if (valueA > valueB) {
         return sortValueA;
@@ -109,7 +111,6 @@ function CoursesAssociatedWithActivityReports({
 
       return 0;
     });
-
     setCourseUse(valuesToSort);
     setOffset(0);
     setSortConfig({ sortBy, direction, activePage: 1 });
