@@ -22,6 +22,7 @@ import CommunicationLog from './pages/CommunicationLog';
 import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
+import ViewGoals from './pages/ViewGoals';
 
 export function PageWithHeading({
   children,
@@ -281,6 +282,15 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 isNew
               />
             </>
+          )}
+        />
+        <Route
+          path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
+          render={() => (
+            <ViewGoals
+              regionId={regionId}
+              recipient={recipientData}
+            />
           )}
         />
         <Route

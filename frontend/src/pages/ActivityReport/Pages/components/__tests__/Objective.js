@@ -11,6 +11,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
+import { mockRSSData } from '../../../../../testHelpers';
 
 const defaultObjective = {
   id: 1,
@@ -20,6 +21,7 @@ const defaultObjective = {
   ttaProvided: '<p><ul><li>What</li></ul></p>',
   status: 'Not started',
   ids: [1],
+  objectiveCreatedHere: true,
 };
 
 const mockData = (files) => ({
@@ -98,6 +100,7 @@ const RenderObjective = ({
                 title: '',
                 courses: [],
                 supportType: '',
+                objectiveCreatedHere: true,
               },
               {
                 courses: [],
@@ -109,6 +112,7 @@ const RenderObjective = ({
                 files: [],
                 status: 'Complete',
                 title: 'Existing objective',
+                objectiveCreatedHere: false,
               }]}
             index={1}
             remove={onRemove}
@@ -136,12 +140,8 @@ const RenderObjective = ({
 describe('Objective', () => {
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <title>Whats New</title>
-  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-  <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
-
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
   });
 
