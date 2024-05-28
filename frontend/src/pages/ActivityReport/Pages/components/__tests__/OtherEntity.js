@@ -43,6 +43,7 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
+    objectiveCreatedHere: true,
   },
   {
     title: 'title two',
@@ -50,6 +51,7 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
+    objectiveCreatedHere: true,
   },
 ];
 

@@ -341,12 +341,6 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
-      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
-        return [
-          ...OBJECTIVE_DEFAULT_ERRORS,
-        ];
-      }
-
       if (!objective.title) {
         isValid = false;
         return [
@@ -416,6 +410,7 @@ export default function GoalForm({
   const onSubmit = async (e) => {
     e.preventDefault();
     setAppLoadingText('Submitting');
+    setAlert({ message: '', type: 'success' });
     setIsAppLoading(true);
     try {
       // if the goal is a draft, submission should move it to "not started"
@@ -546,6 +541,7 @@ export default function GoalForm({
   };
 
   const onSaveAndContinue = async (redirect = false) => {
+    setAlert({ message: '', type: 'success' });
     if (!isValidNotStarted()) {
       // attempt to focus on the first invalid field
       const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
@@ -598,9 +594,7 @@ export default function GoalForm({
         ...goal,
         ids: goal.goalIds,
         grants: goal.grants,
-        objectives: goal.objectives.map((objective) => ({
-          ...objective,
-        })),
+        objectives: goal.objectives,
       })));
 
       if (redirect) {
@@ -772,6 +766,20 @@ export default function GoalForm({
     );
   }
 
+  const createdGoalsForReadOnly = createdGoals.map((goal) => {
+    const { objectives: goalObjectives } = goal;
+    const newObjectives = goalObjectives.map((obj) => {
+      const copy = { ...obj };
+      delete copy.status;
+      return copy;
+    });
+
+    return {
+      ...goal,
+      objectives: newObjectives,
+    };
+  });
+
   return (
     <>
       { showRTRnavigation ? (
@@ -794,10 +802,10 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        { createdGoals.length ? (
+        { createdGoalsForReadOnly.length ? (
           <>
             <ReadOnly
-              createdGoals={createdGoals}
+              createdGoals={createdGoalsForReadOnly}
               onRemove={onRemove}
               onEdit={onEdit}
             />

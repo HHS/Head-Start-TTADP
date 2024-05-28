@@ -12,7 +12,6 @@ import {
   GoalTemplate,
   GoalResource,
   GoalStatusChange,
-  GoalTemplateFieldPrompt,
   Grant,
   Objective,
   ObjectiveCourse,
@@ -20,18 +19,15 @@ import {
   ObjectiveFile,
   ObjectiveTopic,
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
-  ActivityReportObjectiveFile,
-  ActivityReportObjectiveResource,
-  ActivityReportObjectiveCourse,
   sequelize,
   Resource,
   ActivityReport,
   ActivityReportGoal,
   ActivityRecipient,
-  ActivityReportGoalFieldResponse,
   Topic,
   Course,
+  GoalTemplateFieldPrompt,
+  ActivityReportGoalFieldResponse,
   File,
 } from '../models';
 import {
@@ -62,7 +58,10 @@ import changeGoalStatus from './changeGoalStatus';
 import goalsByIdAndRecipient, {
   OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
 } from './goalsByIdAndRecipient';
+import getGoalsForReport from './getGoalsForReport';
 import { reduceGoals } from './reduceGoals';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 const namespace = 'SERVICE:GOALS';
 const logContext = {
@@ -269,20 +268,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         required: false,
         include: [
           {
-            model: Resource,
-            as: 'resources',
-            attributes: [
-              ['url', 'value'],
-              ['id', 'key'],
-            ],
-            required: false,
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-          },
-          {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: [
@@ -294,20 +279,40 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             where: {
               activityReportId,
             },
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-          {
-            model: Topic,
-            as: 'topics',
-            required: false,
-          },
-          {
-            model: Course,
-            as: 'courses',
-            required: false,
+            include: [
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Resource,
+                as: 'resources',
+                attributes: ['url', 'title'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: File,
+                as: 'files',
+                attributes: ['originalFileName', 'key', 'url'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Course,
+                as: 'courses',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+            ],
           },
           {
             model: ActivityReport,
@@ -363,7 +368,32 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ],
   });
 
-  const reducedGoals = reduceGoals(goals);
+  const reformattedGoals = goals.map((goal) => ({
+    ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
+    objectives: goal.objectives
+      .map((objective) => ({
+        ...objective.toJSON(),
+        topics: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'topics',
+        ),
+        courses: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'courses',
+        ),
+        resources: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'resources',
+        ),
+        files: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'files',
+        ),
+      })),
+  }));
+
+  const reducedGoals = reduceGoals(reformattedGoals);
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
@@ -1267,6 +1297,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       courses,
       closeSuspendReason,
       closeSuspendContext,
+      createdHere: objectiveCreatedHere,
       ...updatedFields
     } = objective;
 
@@ -1330,6 +1361,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       closeSuspendContext,
       index,
       supportType,
+      objectiveCreatedHere,
     };
   }));
 }
@@ -1458,6 +1490,7 @@ export async function saveGoalsForReport(goals, report) {
       ttaProvided,
       supportType,
       courses,
+      objectiveCreatedHere,
     } = savedObjective;
 
     // this will save all our objective join table data
@@ -1488,6 +1521,7 @@ export async function saveGoalsForReport(goals, report) {
         ttaProvided,
         order: index,
         supportType,
+        objectiveCreatedHere,
       },
     );
   }));
@@ -1591,157 +1625,6 @@ export async function updateGoalStatusById(
     context: closeSuspendContext,
   })));
 }
-
-export async function getGoalsForReport(reportId) {
-  const goals = await Goal.findAll({
-    attributes: {
-      include: [
-        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-        [sequelize.literal(`(
-          SELECT
-            jsonb_agg( DISTINCT jsonb_build_object(
-              'promptId', gtfp.id ,
-              'ordinal', gtfp.ordinal,
-              'title', gtfp.title,
-              'prompt', gtfp.prompt,
-              'hint', gtfp.hint,
-              'caution', gtfp.caution,
-              'fieldType', gtfp."fieldType",
-              'options', gtfp.options,
-              'validations', gtfp.validations,
-              'response', gfr.response,
-              'reportResponse', argfr.response
-            ))
-          FROM "GoalTemplateFieldPrompts" gtfp
-          LEFT JOIN "GoalFieldResponses" gfr
-          ON gtfp.id = gfr."goalTemplateFieldPromptId"
-          AND gfr."goalId" = "Goal".id
-          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-          ON gtfp.id = argfr."goalTemplateFieldPromptId"
-          AND argfr."activityReportGoalId" = "activityReportGoals".id
-          WHERE "goalTemplate".id = gtfp."goalTemplateId"
-          GROUP BY 1=1
-        )`), 'prompts'],
-      ],
-    },
-    include: [
-      {
-        model: GoalTemplate,
-        as: 'goalTemplate',
-        attributes: [],
-        required: false,
-      },
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        where: {
-          activityReportId: reportId,
-        },
-        required: true,
-      },
-      {
-        model: Grant,
-        as: 'grant',
-        required: true,
-      },
-      {
-        separate: true,
-        model: Objective,
-        as: 'objectives',
-        include: [
-          {
-            required: true,
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            where: {
-              activityReportId: reportId,
-            },
-            include: [
-              {
-                separate: true,
-                model: ActivityReportObjectiveTopic,
-                as: 'activityReportObjectiveTopics',
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: 'topic',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveFile,
-                as: 'activityReportObjectiveFiles',
-                required: false,
-                include: [
-                  {
-                    model: File,
-                    as: 'file',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveCourse,
-                as: 'activityReportObjectiveCourses',
-                required: false,
-                include: [
-                  {
-                    model: Course,
-                    as: 'course',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-                required: false,
-                attributes: [['id', 'key']],
-                include: [
-                  {
-                    model: Resource,
-                    as: 'resource',
-                    attributes: [['url', 'value']],
-                  },
-                ],
-                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
-              },
-            ],
-          },
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [['url', 'value']],
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-            required: false,
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-        ],
-      },
-    ],
-    order: [
-      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
-    ],
-  });
-
-  // dedupe the goals & objectives
-  const forReport = true;
-  return reduceGoals(goals, forReport);
-}
-
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);
