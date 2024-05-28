@@ -1,5 +1,5 @@
 const { SUPPORT_TYPES } = require('@ttahub/common');
-const { prepMigration } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -8,20 +8,21 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       await queryInterface.removeColumn('Objectives', 'supportType', { transaction });
-      await queryInterface.dropTable('ZALObjectiveTemplateTopics', { transaction });
-      await queryInterface.dropTable('ZALObjectiveTemplateFiles', { transaction });
-      await queryInterface.dropTable('ZALObjectiveTemplateResources', { transaction });
-      await queryInterface.dropTable('ZALObjectiveCourses', { transaction });
-      await queryInterface.dropTable('ZALObjectiveTopics', { transaction });
-      await queryInterface.dropTable('ZALObjectiveFiles', { transaction });
-      await queryInterface.dropTable('ZALObjectiveResources', { transaction });
-      await queryInterface.dropTable('ObjectiveTemplateTopics', { transaction });
-      await queryInterface.dropTable('ObjectiveTemplateFiles', { transaction });
-      await queryInterface.dropTable('ObjectiveTemplateResources', { transaction });
-      await queryInterface.dropTable('ObjectiveCourses', { transaction });
-      await queryInterface.dropTable('ObjectiveTopics', { transaction });
-      await queryInterface.dropTable('ObjectiveFiles', { transaction });
-      await queryInterface.dropTable('ObjectiveResources', { transaction });
+      await removeTables(queryInterface, transaction, [
+        'ObjectiveTemplateTopics',
+        'ObjectiveTemplateFiles',
+        'ObjectiveTemplateResources',
+        'ObjectiveCourses',
+        'ObjectiveTopics',
+        'ObjectiveFiles',
+        'ObjectiveResources',
+      ]);
+
+      await queryInterface.sequelize.query(`
+        DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
+        DROP TYPE IF EXISTS "enum_ObjectiveResources_sourceFields";
+        DROP TYPE IF EXISTS "enum_ObjectiveTemplateResources_sourceFields";
+      `, { transaction });
     });
   },
 
