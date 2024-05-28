@@ -1,15 +1,15 @@
 /**
 * This query collects all the Monitoring goals used on approved reports within the defined time range.
 *
-* The query results are filterable by the JDI flags. All JDI flags are passed as an array of values
+* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
-* - jdi.regionIds - one or more values for 1 through 12
-* - jdi.startDate - two dates defining a range for the startDate to be within
+* - ssdi.regionIds - one or more values for 1 through 12
+* - ssdi.startDate - two dates defining a range for the startDate to be within
 *
-* zero or more JDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a JDI flag:
-* SELECT SET_CONFIG('jdi.regionIds','[11]',TRUE);
-* SELECT SET_CONFIG('jdi.startDate','["2024-04-01","2024-04-30"]',TRUE);
+* zero or more SSDI flags can be set within the same transaction as the query is executed.
+* The following is an example of how to set a SSDI flag:
+* SELECT SET_CONFIG('ssdi.regionIds','[11]',TRUE);
+* SELECT SET_CONFIG('ssdi.startDate','["2024-04-01","2024-04-30"]',TRUE);
 */
 WITH
   reports AS (
@@ -22,17 +22,17 @@ WITH
       a."startDate"
     FROM "ActivityReports" a
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if jdi.regionIds is defined
-    AND (NULLIF(current_setting('jdi.regionIds', true), '') IS NULL
+    -- Filter for regionIds if ssdi.regionIds is defined
+    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
         ))
-    -- Filter for startDate dates between two values if jdi.startDate is defined
-    AND (NULLIF(current_setting('jdi.startDate', true), '') IS NULL
+    -- Filter for startDate dates between two values if ssdi.startDate is defined
+    AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
         OR a."startDate"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.startDate', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
         ))
     UNION
 
@@ -47,17 +47,17 @@ WITH
     JOIN "ActivityReportCollaborators" arc
     ON a.id = arc."activityReportId"
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if jdi.regionIds is defined
-    AND (NULLIF(current_setting('jdi.regionIds', true), '') IS NULL
+    -- Filter for regionIds if ssdi.regionIds is defined
+    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
         ))
-    -- Filter for startDate dates between two values if jdi.startDate is defined
-    AND (NULLIF(current_setting('jdi.startDate', true), '') IS NULL
+    -- Filter for startDate dates between two values if ssdi.startDate is defined
+    AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
         OR a."startDate"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.startDate', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
         ))
   ),
   users_is_scope AS (
@@ -69,10 +69,10 @@ WITH
     LEFT JOIN "Permissions" p ON u.id = p."userId"
     LEFT JOIN "Scopes" s ON p."scopeId" = s.id
     LEFT JOIN "reports" a ON a."userId" = u.id
-    WHERE (NULLIF(current_setting('jdi.regionIds', true), '') IS NULL
+    WHERE (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
         OR u."homeRegionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
         ))
     GROUP BY 1,2,3
     HAVING COUNT(DISTINCT a.id) > 0 OR 'SITE_ACCESS' = ANY(ARRAY_AGG(s.name))
@@ -172,11 +172,11 @@ WITH
       COUNT(DISTINCT gr."recipientId") AS recipient_count
     FROM "Grants" gr
     WHERE gr.status = 'Active'
-      -- Filter for regionIds if jdi.regionIds is defined
-      AND (NULLIF(current_setting('jdi.regionIds', true), '') IS NULL
+      -- Filter for regionIds if ssdi.regionIds is defined
+      AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
           OR gr."regionId" in (
           SELECT value::integer AS my_array
-            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('jdi.regionIds', true), ''),'[]')::json) AS value
+            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
           ))
   ),
   recipient_data AS (
