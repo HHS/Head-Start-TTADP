@@ -15,6 +15,7 @@ const renderWidgetContainer = (
   showHeaderBorder = true,
   enableCheckboxes = false,
   exportRows = () => {},
+  footNote = null,
 ) => {
   render(
     <>
@@ -33,6 +34,7 @@ const renderWidgetContainer = (
         showHeaderBorder={showHeaderBorder}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
+        footNote={footNote}
       >
         This widget has been contained.
       </WidgetContainer>
@@ -103,5 +105,10 @@ describe('Widget Container', () => {
     const exportSelectedBtn = screen.getByRole('button', { name: /export selected rows/i });
     userEvent.click(exportSelectedBtn);
     expect(exportRows).toHaveBeenCalledWith('selected');
+  });
+
+  it('renders foot note', async () => {
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
+    expect(screen.getByText(/There are many footnotes but this one is mine./i)).toBeInTheDocument();
   });
 });

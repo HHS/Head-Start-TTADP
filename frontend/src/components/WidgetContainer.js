@@ -27,6 +27,7 @@ export default function WidgetContainer(
     className,
     enableCheckboxes,
     exportRows,
+    footNote,
   },
 ) {
   return (
@@ -61,7 +62,14 @@ export default function WidgetContainer(
       <div className="margin-top-0">
         {children}
       </div>
-      <div className="smart-hub-widget-container-footer">
+      <div className="smart-hub-widget-container-footer padding-3">
+        {
+        footNote && (
+        <div className={`display-flex flex-1 flex-align-center ${showPagingBottom ? 'margin-bottom-2' : ''}`}>
+          {footNote}
+        </div>
+        )
+        }
         {
           showPagingBottom
             ? (
@@ -99,6 +107,7 @@ WidgetContainer.propTypes = {
   className: PropTypes.string,
   enableCheckboxes: PropTypes.bool,
   exportRows: PropTypes.func,
+  footNote: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -119,4 +128,5 @@ WidgetContainer.defaultProps = {
   className: '',
   enableCheckboxes: false,
   exportRows: () => {},
+  footNote: null,
 };
