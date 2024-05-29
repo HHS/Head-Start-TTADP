@@ -181,7 +181,7 @@ export const grantsToGoals = ({
     endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
     regionId: parseInt(regionId, DECIMAL_BASE),
     recipientId: recipient.id,
-    objectives: objectivesWithValidResourcesOnly(objectives),
+    objectives,
     ids,
     prompts: goalPrompts,
   };

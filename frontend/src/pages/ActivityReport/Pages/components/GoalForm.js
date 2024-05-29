@@ -157,7 +157,6 @@ export default function GoalForm({
         permissions={[
           !(goal.onApprovedAR),
           !isCurated,
-          status !== 'Closed',
         ]}
         label="Recipient's goal"
         value={goalText}
@@ -183,8 +182,8 @@ export default function GoalForm({
       <FormFieldThatIsSometimesReadOnly
         permissions={[
           !isCurated,
-          status !== 'Closed',
           goal.createdVia !== 'tr',
+          !goal.onApprovedAR,
         ]}
         label="Goal source"
         value={goalSource}
