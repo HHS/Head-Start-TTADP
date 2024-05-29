@@ -62,28 +62,24 @@ export default function WidgetContainer(
       <div className="margin-top-0">
         {children}
       </div>
-      <div className="smart-hub-widget-container-footer padding-3">
-        {
-        footNote && (
-        <div className={`display-flex flex-1 flex-align-center ${showPagingBottom ? 'margin-bottom-2' : ''}`}>
-          {footNote}
+      {showPagingBottom || footNote ? (
+        <div className="smart-hub-widget-container-footer padding-3">
+          {footNote && (
+          <p className="usa-prose font-sans-3xs margin-top-0">
+            {footNote}
+          </p>
+          )}
+          {showPagingBottom && (
+            <PaginationCard
+              currentPage={currentPage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+            />
+          )}
         </div>
-        )
-        }
-        {
-          showPagingBottom
-            ? (
-              <PaginationCard
-                currentPage={currentPage}
-                totalCount={totalCount}
-                offset={offset}
-                perPage={perPage}
-                handlePageChange={handlePageChange}
-              />
-            )
-            : null
-        }
-      </div>
+      ) : null}
     </Container>
   );
 }
