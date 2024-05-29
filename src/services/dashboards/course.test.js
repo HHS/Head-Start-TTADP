@@ -81,7 +81,7 @@ const reportWithCourseA = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 1,
-  startDate: '2021-01-02T12:00:00Z',
+  startDate: '2025-01-02T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
   topics: ['Coaching', 'ERSEA'],
 };
@@ -90,7 +90,7 @@ const reportWithCourseB = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 2,
-  startDate: '2021-01-15T12:00:00Z',
+  startDate: '2025-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
   topics: ['Oral Health'],
 };
@@ -99,7 +99,7 @@ const reportWithCourseOne = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 3,
-  startDate: '2021-01-20T12:00:00Z',
+  startDate: '2025-01-20T12:00:00Z',
   endDate: '2021-02-28T12:00:00Z',
   topics: ['Nutrition'],
 };
@@ -108,7 +108,7 @@ const reportWithoutCourses = {
   ...reportObject,
   regionId: REGION_ID,
   duration: 3,
-  startDate: '2021-01-22T12:00:00Z',
+  startDate: '2025-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
   topics: ['Facilities', 'Fiscal / Budget', 'ERSEA'],
 };
@@ -364,7 +364,7 @@ describe('Course dashboard', () => {
   it('retrieves course count', async () => {
     const scopes = await filtersToScopes({
       'region.in': [REGION_ID],
-      'startDate.win': '2021/01/01-2021/01/31',
+      'startDate.win': '2025/01/01-2025/01/31',
       'reportId.in': reportIds,
     });
 
@@ -376,7 +376,7 @@ describe('Course dashboard', () => {
 
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(1);
-    expect(headers[0]).toBe('Jan-21');
+    expect(headers[0]).toBe('Jan-25');
 
     const expectedResults = [
       {
@@ -389,7 +389,7 @@ describe('Course dashboard', () => {
         total: '3',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '3', date: '2021-01-01' },
+          { title: 'Jan-25', value: '3', date: '2025-01-01' },
           { title: 'Total', value: '3' },
         ],
       },
@@ -403,7 +403,7 @@ describe('Course dashboard', () => {
         total: '2',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '2', date: '2021-01-01' },
+          { title: 'Jan-25', value: '2', date: '2025-01-01' },
           { title: 'Total', value: '2' },
         ],
       },
@@ -417,7 +417,7 @@ describe('Course dashboard', () => {
         total: '1',
         isUrl: false,
         data: [
-          { title: 'Jan-21', value: '1', date: '2021-01-01' },
+          { title: 'Jan-25', value: '1', date: '2025-01-01' },
           { title: 'Total', value: '1' },
         ],
       },
