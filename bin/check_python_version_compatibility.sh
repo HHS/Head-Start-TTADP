@@ -29,6 +29,7 @@ if [[ $version_found -eq 1 ]]; then
   exit 0  # Exit with success
 else
   echo "Required Python version $python_version_required is not supported."
-  echo "Supported Versions: $supported_versions"
+  echo "Supported Versions:"
+  echo "$supported_versions"
   exit 1  # Exit with error
 fi
