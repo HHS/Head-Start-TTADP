@@ -476,6 +476,10 @@ jobs:
             cd frontend
             chmod 744 ./run-yarn-audit.sh
             ./run-yarn-audit.sh;
+      - run:
+          name: Check nodejs version compatibility with buildpack
+          command: |
+            ./bin/check_node_version_compatibility.sh
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -508,6 +512,10 @@ jobs:
             source venv/bin/activate
             pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
+      - run:
+          name: Check python version compatibility  with buildpack
+          command: |
+            ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
             - similarity_api/src/venv
