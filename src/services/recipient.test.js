@@ -35,7 +35,12 @@ import {
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
 import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createRecipient,
+  createReport,
+  destroyReport,
+  createGrant,
+} from '../testUtils';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -900,31 +905,22 @@ describe('Recipient DB service', () => {
 
   describe('reduceObjectivesForRecipientRecord', () => {
     let recipient;
+    let grant;
     let goals;
     let objectives;
     let topics;
     let report;
 
     beforeAll(async () => {
-      recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        uei: faker.datatype.string(),
-        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      recipient = await createRecipient();
+
+      grant = await createGrant({
+        recipientId: recipient.id,
       });
 
       const goal = {
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       };
-
-      const grant = await Grant.create({
-        status: 'Active',
-        regionId: 5,
-        id: faker.datatype.number({ min: 1000 }),
-        number: faker.datatype.string(),
-        recipientId: recipient.id,
-        startDate: '2019-01-01',
-        endDate: '2024-01-01',
-      });
 
       const goal1 = await Goal.create({
         name: goal.name,
@@ -984,7 +980,7 @@ describe('Recipient DB service', () => {
         reason: [reason],
         calculatedStatus: REPORT_STATUSES.APPROVED,
         topics: [topics[0].name],
-        regionId: 5,
+        regionId: grant.regionId,
       });
 
       const aros = await Promise.all(objectives.map((o) => ActivityReportObjective.create({
@@ -1047,7 +1043,7 @@ describe('Recipient DB service', () => {
       });
       await Grant.destroy({
         where: {
-          id: goals.map((g) => g.grantId),
+          recipientId: recipient.id,
         },
         individualHooks: true,
       });
@@ -1060,7 +1056,7 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully reduces data without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
+      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
       expect(goalsForRecord.count).toBe(1);
       expect(goalsForRecord.goalRows.length).toBe(1);
