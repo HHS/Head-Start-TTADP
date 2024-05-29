@@ -11,7 +11,7 @@
 
   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
     position: sticky;
-    left: 0;
+    left: 46px;
     z-index: 1;
     max-width: 330px;
     min-width: 330px;
@@ -24,6 +24,7 @@
     right: 0;
     font-weight: bold;
     box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
+    min-width: 90px;
   }
 
   .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
@@ -33,7 +34,16 @@
 
 .smarthub-horizontal-table-widget .checkbox-column {
   vertical-align: top;
-  min-width: 20px;
+  min-width: 44px;
+  position: sticky;
+  left: 0;
+
+}
+
+.smarthub-horizontal-table-widget thead .checkbox-column {
+  z-index: 1;
+  background-color: white;
+  left: 0;
 }
 
   .smarthub-horizontal-table-widget .usa-table .data-header {

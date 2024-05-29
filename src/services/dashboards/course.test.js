@@ -536,4 +536,54 @@ describe('Course dashboard', () => {
 
     expect(courses).toEqual(expectedResults);
   });
+
+  it('shows dashes for dates less than or equal to the cut off date', async () => {
+    const data = [
+      {
+        course: 'Widget Course 1',
+        id: 1,
+        rollUpDate: 'Mar-24',
+        count: '0',
+        total: '2',
+        date: '2024-03-07',
+      },
+      {
+        course: 'Widget Course 1',
+        id: 2,
+        rollUpDate: 'Apr-24',
+        count: '2',
+        total: '2',
+        date: '2024-04-10',
+      },
+    ];
+
+    const result = await rollUpCourseUrlData(data);
+    const { headers, courses } = result;
+
+    expect(headers.length).toBe(2);
+    expect(headers[0]).toBe('Mar-24');
+    expect(headers[1]).toBe('Apr-24');
+
+    expect(courses).not.toBeNull();
+    expect(courses.length).toBe(1);
+
+    const expectedResults = [
+      {
+        heading: 'Widget Course 1',
+        url: 'Widget Course 1',
+        course: 'Widget Course 1',
+        title: 'Widget Course 1',
+        sortBy: 'Widget Course 1',
+        total: '2',
+        id: 1,
+        isUrl: false,
+        data: [
+          { title: 'Mar-24', value: '-', date: '2024-03-07' },
+          { title: 'Apr-24', value: '2', date: '2024-04-10' },
+          { title: 'Total', value: '2' },
+        ],
+      },
+    ];
+    expect(courses).toEqual(expectedResults);
+  });
 });

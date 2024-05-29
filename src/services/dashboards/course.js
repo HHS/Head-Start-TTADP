@@ -8,6 +8,7 @@ import {
 } from '../../models';
 
 export async function rollUpCourseUrlData(data) {
+  const cutOffDate = new Date('2024-03-07');
   const headers = [];
   const rolledUpCourseData = data.reduce((accumulator, c) => {
     // Add the header to the headers array if it doesn't exist.
@@ -16,6 +17,7 @@ export async function rollUpCourseUrlData(data) {
       headers.push({ rollUpDate: c.rollUpDate, date: new Date(c.date) });
     }
     const exists = accumulator.find((e) => e.course === c.course);
+    const beforeCutOff = new Date(c.date) <= cutOffDate;
     if (!exists) {
       // Add a property with the resource's URL.
       return [
@@ -29,13 +31,13 @@ export async function rollUpCourseUrlData(data) {
           sortBy: c.course,
           total: c.total,
           isUrl: false,
-          data: [{ title: c.rollUpDate, value: c.count, date: c.date }],
+          data: [{ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date }],
         },
       ];
     }
 
     // Add the resource to the accumulator.
-    exists.data.push({ title: c.rollUpDate, value: c.count, date: c.date });
+    exists.data.push({ title: c.rollUpDate, value: beforeCutOff ? '-' : c.count, date: c.date });
     return accumulator;
   }, []);
 
@@ -66,6 +68,7 @@ export async function getCourseUrlWidgetData(scopes) {
   const reportCreatedAtDate = '2022-12-01';
 
   // Get report ids using the scopes.
+  // TODO: We could speed this up by using utils.scopeToWhere to get the where clause.
   const reportIds = await ActivityReport.findAll({
     attributes: [
       'id',
@@ -90,7 +93,17 @@ export async function getCourseUrlWidgetData(scopes) {
 
   // Calculate widget data.
   const flatCourseSql = /* sql */ `
-      WITH counts AS (
+      WITH dates AS (
+            SELECT
+            generate_series(
+                date_trunc('month', MIN("startDate")),
+                date_trunc('month', MAX("startDate")),
+                interval '1 month'
+            )::date AS "date"
+            FROM "ActivityReports" ar
+            WHERE ar.id IN (${reportIds.map((r) => r.id).join(',')})
+        ),
+      counts AS (
         SELECT
             c.id,
             c."name",
@@ -115,14 +128,6 @@ export async function getCourseUrlWidgetData(scopes) {
                 sum("count") AS "total"
             FROM counts
             GROUP BY "name"
-        ),
-        dates AS (
-            SELECT
-            generate_series(
-                date_trunc('month', (SELECT MIN("minStartDate") FROM "counts")),
-                date_trunc('month', (SELECT MAX("maxStartDate") FROM "counts")),
-                interval '1 month'
-            )::date AS "date"
         ),
         distinctcourses AS (
           SELECT distinct "id", "name" FROM "counts"

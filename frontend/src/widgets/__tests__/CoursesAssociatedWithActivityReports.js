@@ -129,6 +129,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
+
+    // Displays the foot note.
+    expect(screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -149,6 +152,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
+
+    // Displays the foot note.
+    expect(screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')).toBeInTheDocument();
   });
 
   it('correctly handles value sort', async () => {
