@@ -11,7 +11,6 @@
 
   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
     position: sticky;
-    left: 46px;
     z-index: 1;
     max-width: 330px;
     min-width: 330px;
@@ -73,10 +72,7 @@
   }
 
   .smarthub-horizontal-table-widget .usa-table .data-description {
-    white-space: nowrap;
-    text-overflow: ellipsis;
     max-width: 500px;
-    overflow: hidden;
   }
 
   .smarthub-horizontal-table-widget .usa-table .data-description p {
@@ -94,11 +90,8 @@
     padding-left: 0;
   }
 
-  a {
-     white-space: nowrap;
+  .smarthub-horizontal-table-widget a {
      max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
-     overflow: hidden;
-     text-overflow: ellipsis;
      display: inline-block;
      vertical-align: middle;
    }
@@ -106,4 +99,8 @@
    // select the svg on the page and set the vertical-align to middle.
    .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
       vertical-align: middle;
+    }
+
+    .smarthub-horizontal-table-widget .left-with-checkbox {
+      left: 44px;
     }

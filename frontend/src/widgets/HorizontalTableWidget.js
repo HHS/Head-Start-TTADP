@@ -65,7 +65,7 @@ export default function HorizontalTableWidget(
 
   const handleUrl = (url) => (
     <>
-      <a href={url.link} target="_blank" rel="noreferrer">
+      <a href={url.link} target="_blank" rel="noreferrer" className="text-overflow-ellipsis">
         {url.heading}
       </a>
       {' '}
@@ -128,9 +128,9 @@ export default function HorizontalTableWidget(
             }
             {
               enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-first-column')
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), `smarthub-horizontal-table-first-column ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
                 : (
-                  <th className="smarthub-horizontal-table-first-column data-header">
+                  <th className={`smarthub-horizontal-table-first-column data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     {firstHeading}
                   </th>
                 )
@@ -162,7 +162,7 @@ export default function HorizontalTableWidget(
                     </td>
                   )
                 }
-                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className="smarthub-horizontal-table-first-column data-description">
+                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                   {
                     r.isUrl
                       ? handleUrl(r)
