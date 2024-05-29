@@ -20,7 +20,13 @@ module.exports = {
 
       await queryInterface.sequelize.query(`
         DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`
         DROP TYPE IF EXISTS "enum_ObjectiveResources_sourceFields";
+      `, { transaction });
+
+      await queryInterface.sequelize.query(`        
         DROP TYPE IF EXISTS "enum_ObjectiveTemplateResources_sourceFields";
       `, { transaction });
     });
