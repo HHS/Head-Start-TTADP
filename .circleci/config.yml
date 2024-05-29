@@ -463,8 +463,24 @@ jobs:
           name: Lint backend
           command: yarn lint:ci
       - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Check nodejs version compatibility with buildpack
+          command: |
+            chmod +x ./bin/check_node_version_compatibility.sh
+            ./bin/check_node_version_compatibility.sh
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -497,6 +513,11 @@ jobs:
             source venv/bin/activate
             pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
+      - run:
+          name: Check python version compatibility  with buildpack
+          command: |
+            chmod +x ./bin/check_python_version_compatibility.sh
+            ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
             - similarity_api/src/venv
@@ -522,11 +543,6 @@ jobs:
           at: .
       - setup_remote_docker:
           version: default
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -607,12 +623,6 @@ jobs:
           command: |
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
