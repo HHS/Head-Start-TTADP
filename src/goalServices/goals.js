@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
 import { uniqBy, uniq } from 'lodash';
 import {
   DECIMAL_BASE,
@@ -8,14 +7,11 @@ import {
 } from '@ttahub/common';
 import { processObjectiveForResourcesById } from '../services/resource';
 import {
-  CollaboratorType,
   Goal,
-  GoalCollaborator,
   GoalFieldResponse,
   GoalTemplate,
   GoalResource,
   GoalStatusChange,
-  GoalTemplateFieldPrompt,
   Grant,
   Objective,
   ObjectiveCourse,
@@ -23,24 +19,16 @@ import {
   ObjectiveFile,
   ObjectiveTopic,
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
-  ActivityReportObjectiveFile,
-  ActivityReportObjectiveResource,
-  ActivityReportObjectiveCourse,
   sequelize,
-  Recipient,
   Resource,
   ActivityReport,
   ActivityReportGoal,
   ActivityRecipient,
-  ActivityReportGoalFieldResponse,
   Topic,
   Course,
-  Program,
+  GoalTemplateFieldPrompt,
+  ActivityReportGoalFieldResponse,
   File,
-  User,
-  UserRole,
-  Role,
 } from '../models';
 import {
   OBJECTIVE_STATUS,
@@ -67,250 +55,18 @@ import {
 } from '../services/goalSimilarityGroup';
 import Users from '../policies/user';
 import changeGoalStatus from './changeGoalStatus';
+import goalsByIdAndRecipient, {
+  OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
+} from './goalsByIdAndRecipient';
+import getGoalsForReport from './getGoalsForReport';
+import { reduceGoals } from './reduceGoals';
+import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
 const namespace = 'SERVICE:GOALS';
-
 const logContext = {
   namespace,
 };
-
-const OPTIONS_FOR_GOAL_FORM_QUERY = (id, recipientId) => ({
-  attributes: [
-    'id',
-    'endDate',
-    'name',
-    'status',
-    [sequelize.col('grant.regionId'), 'regionId'],
-    [sequelize.col('grant.recipient.id'), 'recipientId'],
-    'goalNumber',
-    'createdVia',
-    'goalTemplateId',
-    'source',
-    [
-      'onAR',
-      'onAnyReport',
-    ],
-    'onApprovedAR',
-    [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-    'rtrOrder',
-  ],
-  order: [['rtrOrder', 'asc']],
-  where: {
-    id,
-  },
-  include: [
-    {
-      model: GoalStatusChange,
-      as: 'statusChanges',
-      attributes: ['oldStatus'],
-      required: false,
-    },
-    {
-      model: GoalCollaborator,
-      as: 'goalCollaborators',
-      attributes: ['id'],
-      required: false,
-      include: [
-        {
-          model: CollaboratorType,
-          as: 'collaboratorType',
-          where: {
-            name: 'Creator',
-          },
-          attributes: ['name'],
-        },
-        {
-          model: User,
-          as: 'user',
-          attributes: ['name'],
-          required: true,
-          include: [
-            {
-              model: UserRole,
-              as: 'userRoles',
-              include: [
-                {
-                  model: Role,
-                  as: 'role',
-                  attributes: ['name'],
-                },
-              ],
-              attributes: ['id'],
-            },
-          ],
-        },
-      ],
-    },
-    {
-      attributes: [
-        'title',
-        'id',
-        'status',
-        'onApprovedAR',
-        'rtrOrder',
-        'supportType',
-        [
-          'onAR',
-          'onAnyReport',
-        ],
-        'closeSuspendReason',
-        'closeSuspendContext',
-      ],
-      model: Objective,
-      as: 'objectives',
-      order: [['rtrOrder', 'ASC']],
-      include: [
-        {
-          model: ObjectiveResource,
-          as: 'objectiveResources',
-          attributes: [
-            [
-              'onAR',
-              'onAnyReport',
-            ],
-            [
-              'onApprovedAR',
-              'isOnApprovedReport',
-            ],
-          ],
-          include: [
-            {
-              model: Resource,
-              as: 'resource',
-              attributes: [
-                ['url', 'value'],
-                ['id', 'key'],
-              ],
-            },
-          ],
-          where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
-          required: false,
-        },
-        {
-          model: ObjectiveTopic,
-          as: 'objectiveTopics',
-          attributes: [
-            [
-              'onAR',
-              'onAnyReport',
-            ],
-            [
-              'onApprovedAR',
-              'isOnApprovedReport',
-            ],
-          ],
-          include: [
-            {
-              model: Topic,
-              as: 'topic',
-              attributes: ['id', 'name'],
-            },
-          ],
-        },
-        {
-          model: ObjectiveFile,
-          as: 'objectiveFiles',
-          attributes: [
-            [
-              'onAR',
-              'onAnyReport',
-            ],
-            [
-              'onApprovedAR',
-              'isOnApprovedReport',
-            ],
-          ],
-          include: [
-            {
-              model: File,
-              as: 'file',
-            },
-          ],
-        },
-        {
-          model: ActivityReport,
-          as: 'activityReports',
-          where: {
-            calculatedStatus: {
-              [Op.not]: REPORT_STATUSES.DELETED,
-            },
-          },
-          required: false,
-        },
-      ],
-    },
-    {
-      model: Grant,
-      as: 'grant',
-      attributes: [
-        'id',
-        'number',
-        'regionId',
-        'recipientId',
-        'numberWithProgramTypes',
-      ],
-      include: [
-        {
-          attributes: ['programType'],
-          model: Program,
-          as: 'programs',
-        },
-        {
-          attributes: ['id'],
-          model: Recipient,
-          as: 'recipient',
-          where: {
-            id: recipientId,
-          },
-          required: true,
-        },
-      ],
-    },
-    {
-      model: GoalTemplate,
-      as: 'goalTemplate',
-      attributes: [],
-      required: false,
-    },
-    {
-      model: GoalTemplateFieldPrompt,
-      as: 'prompts',
-      attributes: [
-        ['id', 'promptId'],
-        'ordinal',
-        'title',
-        'prompt',
-        'hint',
-        'fieldType',
-        'options',
-        'validations',
-      ],
-      required: false,
-      include: [
-        {
-          model: GoalFieldResponse,
-          as: 'responses',
-          attributes: ['response'],
-          required: false,
-          where: { goalId: id },
-        },
-        {
-          model: ActivityReportGoalFieldResponse,
-          as: 'reportResponses',
-          attributes: ['response'],
-          required: false,
-          include: [{
-            model: ActivityReportGoal,
-            as: 'activityReportGoal',
-            attributes: ['activityReportId', ['id', 'activityReportGoalId']],
-            required: true,
-            where: { goalId: id },
-          }],
-        },
-      ],
-    },
-  ],
-});
 
 export async function saveObjectiveAssociations(
   objective,
@@ -459,466 +215,6 @@ export async function saveObjectiveAssociations(
   };
 }
 
-// this is the reducer called when not getting objectives for a report, IE, the RTR table
-export function reduceObjectives(newObjectives, currentObjectives = []) {
-  // objectives = accumulator
-  // we pass in the existing objectives as the accumulator
-  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
-    const exists = objectives.find((o) => (
-      o.title.trim() === objective.title.trim() && o.status === objective.status
-    ));
-    // eslint-disable-next-line no-nested-ternary
-    const id = objective.getDataValue
-      ? objective.getDataValue('id')
-        ? objective.getDataValue('id')
-        : objective.getDataValue('value')
-      : objective.id;
-    const otherEntityId = objective.getDataValue
-      ? objective.getDataValue('otherEntityId')
-      : objective.otherEntityId;
-
-    if (exists) {
-      exists.ids = [...exists.ids, id];
-      // Make sure we pass back a list of recipient ids for subsequent saves.
-      exists.recipientIds = otherEntityId
-        ? [...exists.recipientIds, otherEntityId]
-        : [...exists.recipientIds];
-      exists.activityReports = [
-        ...(exists.activityReports || []),
-        ...(objective.activityReports || []),
-      ];
-      return objectives;
-    }
-
-    return [...objectives, {
-      ...(objective.dataValues
-        ? objective.dataValues
-        : objective),
-      title: objective.title.trim(),
-      value: id,
-      ids: [id],
-      // Make sure we pass back a list of recipient ids for subsequent saves.
-      recipientIds: otherEntityId
-        ? [otherEntityId]
-        : [],
-      isNew: false,
-    }];
-  }, currentObjectives);
-
-  objectivesToSort.sort((o1, o2) => {
-    if (o1.rtrOrder < o2.rtrOrder) {
-      return -1;
-    }
-    return 1;
-  });
-
-  return objectivesToSort;
-}
-
-/**
- * Reduces the relation through activity report objectives.
- *
- * @param {Object} objective - The objective object.
- * @param {string} join tablename that joins aro <> relation. e.g. activityReportObjectiveResources
- * @param {string} relation - The relation that will be returned. e.g. resource.
- * @param {Object} [exists={}] - The existing relation object.
- * @returns {Array} - The reduced relation array.
- */
-const reduceRelationThroughActivityReportObjectives = (
-  objective,
-  join,
-  relation,
-  exists = {},
-  uniqueBy = 'id',
-) => {
-  const existingRelation = exists[relation] || [];
-  return uniqBy([
-    ...existingRelation,
-    ...(objective.activityReportObjectives
-      && objective.activityReportObjectives.length > 0
-      ? objective.activityReportObjectives[0][join]
-        .map((t) => t[relation].dataValues)
-        .filter((t) => t)
-      : []),
-  ], (e) => e[uniqueBy]);
-};
-
-export function reduceObjectivesForActivityReport(newObjectives, currentObjectives = []) {
-  const objectivesToSort = newObjectives.reduce((objectives, objective) => {
-    // check the activity report objective status
-    const objectiveStatus = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : objective.status;
-
-    const objectiveSupportType = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].supportType
-      ? objective.activityReportObjectives[0].supportType : objective.supportType;
-
-    // objectives represent the accumulator in the find below
-    // objective is the objective as it is returned from the API
-    const exists = objectives.find((o) => (
-      o.title.trim() === objective.title.trim() && o.status === objectiveStatus
-    ));
-
-    if (exists) {
-      const { id } = objective;
-      exists.ids = [...exists.ids, id];
-
-      // we can dedupe these using lodash
-      exists.resources = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveResources',
-        'resource',
-        exists,
-        'value',
-      );
-
-      exists.topics = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveTopics',
-        'topic',
-        exists,
-      );
-
-      exists.courses = reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveCourses',
-        'course',
-        exists,
-      );
-
-      exists.files = uniqBy([
-        ...exists.files,
-        ...(objective.activityReportObjectives
-          && objective.activityReportObjectives.length > 0
-          ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-            .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-          : []),
-      ], (e) => e.key);
-      return objectives;
-    }
-
-    // since this method is used to rollup both objectives on and off activity reports
-    // we need to handle the case where there is TTA provided and TTA not provided
-    // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-        && objective.activityReportObjectives[0]
-        && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
-    const arOrder = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].arOrder
-      ? objective.activityReportObjectives[0].arOrder : null;
-    const closeSuspendContext = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].closeSuspendContext
-      ? objective.activityReportObjectives[0].closeSuspendContext : null;
-    const closeSuspendReason = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].closeSuspendReason
-      ? objective.activityReportObjectives[0].closeSuspendReason : null;
-
-    const { id } = objective;
-
-    return [...objectives, {
-      ...objective.dataValues,
-      title: objective.title.trim(),
-      value: id,
-      ids: [id],
-      ttaProvided,
-      supportType: objectiveSupportType,
-      status: objectiveStatus, // the status from above, derived from the activity report objective
-      isNew: false,
-      arOrder,
-      closeSuspendContext,
-      closeSuspendReason,
-
-      // for the associated models, we need to return not the direct associations
-      // but those associated through an activity report since those reflect the state
-      // of the activity report not the state of the objective, which is what
-      // we are getting at with this method (getGoalsForReport)
-
-      topics: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveTopics',
-        'topic',
-      ),
-      resources: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveResources',
-        'resource',
-        {},
-        'value',
-      ),
-      files: objective.activityReportObjectives
-      && objective.activityReportObjectives.length > 0
-        ? objective.activityReportObjectives[0].activityReportObjectiveFiles
-          .map((f) => ({ ...f.file.dataValues, url: f.file.url }))
-        : [],
-      courses: reduceRelationThroughActivityReportObjectives(
-        objective,
-        'activityReportObjectiveCourses',
-        'course',
-      ),
-    }];
-  }, currentObjectives);
-
-  // Sort by AR Order in place.
-  objectivesToSort.sort((o1, o2) => {
-    if (o1.arOrder < o2.arOrder) {
-      return -1;
-    }
-    return 1;
-  });
-  return objectivesToSort;
-}
-
-/**
- *
- * @param {Boolean} forReport
- * @param {Array} newPrompts
- * @param {Array} promptsToReduce
- * @returns Array of reduced prompts
- */
-function reducePrompts(forReport, newPrompts = [], promptsToReduce = []) {
-  return newPrompts
-    ?.reduce((previousPrompts, currentPrompt) => {
-      const promptId = currentPrompt.promptId
-        ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
-
-      const existingPrompt = previousPrompts.find((pp) => pp.promptId === currentPrompt.promptId);
-      if (existingPrompt) {
-        if (!forReport) {
-          existingPrompt.response = uniq(
-            [...existingPrompt.response, ...currentPrompt.responses.flatMap((r) => r.response)],
-          );
-        }
-
-        if (forReport) {
-          existingPrompt.response = uniq(
-            [
-              ...existingPrompt.response,
-              ...(currentPrompt.response || []),
-              ...(currentPrompt.reportResponse || []),
-            ],
-          );
-          existingPrompt.reportResponse = uniq(
-            [
-              ...(existingPrompt.reportResponse || []),
-              ...(currentPrompt.reportResponse || []),
-            ],
-          );
-
-          if (existingPrompt.allGoalsHavePromptResponse && (currentPrompt.response || []).length) {
-            existingPrompt.allGoalsHavePromptResponse = true;
-          } else {
-            existingPrompt.allGoalsHavePromptResponse = false;
-          }
-        }
-
-        return previousPrompts;
-      }
-
-      const newPrompt = {
-        promptId,
-        ordinal: currentPrompt.ordinal,
-        title: currentPrompt.title,
-        prompt: currentPrompt.prompt,
-        hint: currentPrompt.hint,
-        fieldType: currentPrompt.fieldType,
-        options: currentPrompt.options,
-        validations: currentPrompt.validations,
-        allGoalsHavePromptResponse: false,
-      };
-
-      if (forReport) {
-        newPrompt.response = uniq(
-          [
-            ...(currentPrompt.response || []),
-            ...(currentPrompt.reportResponse || []),
-          ],
-        );
-        newPrompt.reportResponse = (currentPrompt.reportResponse || []);
-
-        if (newPrompt.response.length) {
-          newPrompt.allGoalsHavePromptResponse = true;
-        }
-      }
-
-      if (!forReport) {
-        newPrompt.response = uniq(currentPrompt.responses.flatMap((r) => r.response));
-      }
-
-      return [
-        ...previousPrompts,
-        newPrompt,
-      ];
-    }, promptsToReduce);
-}
-
-function wasGoalPreviouslyClosed(goal) {
-  if (goal.statusChanges) {
-    return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
-  }
-
-  return false;
-}
-
-/**
- * Dedupes goals by name + status, as well as objectives by title + status
- * @param {Object[]} goals
- * @returns {Object[]} array of deduped goals
- */
-function reduceGoals(goals, forReport = false) {
-  const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
-
-  const where = (g, currentValue) => (forReport
-    ? g.name === currentValue.dataValues.name
-    : g.name === currentValue.dataValues.name
-      && g.status === currentValue.dataValues.status);
-
-  function getGoalCollaboratorDetails(collabType, dataValues) {
-    // eslint-disable-next-line max-len
-    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
-    return {
-      [`goal${collabType}`]: collaborator,
-      [`goal${collabType}Name`]: collaborator?.user?.name,
-      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
-    };
-  }
-
-  const r = goals.reduce((previousValues, currentValue) => {
-    try {
-      const existingGoal = previousValues.find((g) => where(g, currentValue));
-      if (existingGoal) {
-        existingGoal.goalNumbers = [...existingGoal.goalNumbers, currentValue.goalNumber || `G-${currentValue.dataValues.id}`];
-        existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
-        existingGoal.grants = [
-          ...existingGoal.grants,
-          {
-            ...currentValue.grant.dataValues,
-            recipient: currentValue.grant.recipient.dataValues,
-            name: currentValue.grant.name,
-            goalId: currentValue.dataValues.id,
-            numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
-          },
-        ];
-        existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
-        existingGoal.objectives = objectivesReducer(
-          currentValue.objectives,
-          existingGoal.objectives,
-        );
-
-        existingGoal.collaborators = existingGoal.collaborators || [];
-
-        existingGoal.collaborators = uniqBy([
-          ...existingGoal.collaborators,
-          {
-            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
-            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
-          },
-        ], 'goalCreatorName');
-
-        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
-
-        if (forReport) {
-          existingGoal.prompts = reducePrompts(
-            forReport,
-            currentValue.dataValues.prompts || [],
-            existingGoal.prompts || [],
-          );
-        } else {
-          existingGoal.prompts = {
-            ...existingGoal.prompts,
-            [currentValue.grant.numberWithProgramTypes]: reducePrompts(
-              forReport,
-              currentValue.dataValues.prompts || [],
-              [], // we don't want to combine existing prompts if reducing for the RTR
-            ),
-          };
-          existingGoal.source = {
-            ...existingGoal.source,
-            [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-          };
-        }
-        return previousValues;
-      }
-
-      const endDate = (() => {
-        const date = moment(currentValue.dataValues.endDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
-
-        if (date === 'Invalid date') {
-          return '';
-        }
-
-        return date;
-      })();
-
-      let { source } = currentValue.dataValues;
-      let prompts = reducePrompts(
-        forReport,
-        currentValue.dataValues.prompts || [],
-        [],
-      );
-
-      if (!forReport) {
-        source = {
-          [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
-        };
-        prompts = {
-          [currentValue.grant.numberWithProgramTypes]: prompts,
-        };
-      }
-
-      const goal = {
-        ...currentValue.dataValues,
-        goalNumbers: [currentValue.goalNumber || `G-${currentValue.dataValues.id}`],
-        goalIds: [currentValue.dataValues.id],
-        grants: [
-          {
-            ...currentValue.grant.dataValues,
-            numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
-            recipient: currentValue.grant.recipient.dataValues,
-            name: currentValue.grant.name,
-            goalId: currentValue.dataValues.id,
-          },
-        ],
-        grantIds: [currentValue.grant.id],
-        objectives: objectivesReducer(
-          currentValue.objectives,
-        ),
-        prompts,
-        isNew: false,
-        endDate,
-        source,
-        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
-      };
-
-      goal.collaborators = [
-        {
-          goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-          ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
-          ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
-        },
-      ];
-
-      goal.collaborators = goal.collaborators.filter(
-        (c) => c.goalCreatorName !== null,
-      );
-
-      return [...previousValues, goal];
-    } catch (err) {
-      auditLogger.error('Error reducing goal in services/goals reduceGoals, exiting reducer early', err);
-      return previousValues;
-    }
-  }, []);
-
-  return r;
-}
-
 /**
  *
  * @param {number} id
@@ -972,20 +268,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
         required: false,
         include: [
           {
-            model: Resource,
-            as: 'resources',
-            attributes: [
-              ['url', 'value'],
-              ['id', 'key'],
-            ],
-            required: false,
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-          },
-          {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: [
@@ -997,20 +279,40 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
             where: {
               activityReportId,
             },
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-          {
-            model: Topic,
-            as: 'topics',
-            required: false,
-          },
-          {
-            model: Course,
-            as: 'courses',
-            required: false,
+            include: [
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Resource,
+                as: 'resources',
+                attributes: ['url', 'title'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: File,
+                as: 'files',
+                attributes: ['originalFileName', 'key', 'url'],
+                through: {
+                  attributes: [],
+                },
+              },
+              {
+                model: Course,
+                as: 'courses',
+                attributes: ['name'],
+                through: {
+                  attributes: [],
+                },
+              },
+            ],
           },
           {
             model: ActivityReport,
@@ -1066,7 +368,32 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
     ],
   });
 
-  const reducedGoals = reduceGoals(goals);
+  const reformattedGoals = goals.map((goal) => ({
+    ...goal,
+    isReopenedGoal: wasGoalPreviouslyClosed(goal),
+    objectives: goal.objectives
+      .map((objective) => ({
+        ...objective.toJSON(),
+        topics: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'topics',
+        ),
+        courses: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'courses',
+        ),
+        resources: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'resources',
+        ),
+        files: extractObjectiveAssociationsFromActivityReportObjectives(
+          objective.activityReportObjectives,
+          'files',
+        ),
+      })),
+  }));
+
+  const reducedGoals = reduceGoals(reformattedGoals);
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
@@ -1168,90 +495,6 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
       },
     ],
   });
-}
-
-export async function goalByIdAndRecipient(id, recipientId) {
-  const goal = await Goal.findOne(OPTIONS_FOR_GOAL_FORM_QUERY(id, recipientId));
-  goal.objectives = goal.objectives
-    .map((objective) => ({
-      ...objective.dataValues,
-      topics: objective.objectiveTopics
-        .map((objectiveTopic) => ({
-          ...objectiveTopic.dataValues,
-          ...(
-            objectiveTopic.topic && objectiveTopic.topic.dataValues
-              ? objectiveTopic.topic.dataValues
-              : []
-          ),
-        }))
-        .map((o) => ({ ...o, topic: undefined })),
-      files: objective.objectiveFiles
-        .map((objectiveFile) => ({
-          ...objectiveFile.dataValues,
-          ...objectiveFile.file.dataValues,
-        }))
-        .map((f) => ({ ...f, file: undefined })),
-      resources: objective.objectiveResources
-        .map((objectiveResource) => ({
-          ...objectiveResource.dataValues,
-          ...objectiveResource.resource.dataValues,
-        }))
-        .map((r) => ({ ...r, resource: undefined })),
-    }))
-    .map((objective) => ({ ...objective, objectiveTopics: undefined, objectiveFiles: undefined }));
-  return goal;
-}
-
-export async function goalsByIdAndRecipient(ids, recipientId) {
-  let goals = await Goal.findAll(OPTIONS_FOR_GOAL_FORM_QUERY(ids, recipientId));
-
-  goals = goals.map((goal) => ({
-    ...goal,
-    isReopenedGoal: wasGoalPreviouslyClosed(goal),
-    objectives: goal.objectives
-      .map((objective) => {
-        const o = {
-          ...objective.dataValues,
-          topics: objective.objectiveTopics
-            .map((objectiveTopic) => {
-              const ot = {
-                ...objectiveTopic.dataValues,
-                ...(
-                  objectiveTopic.topic && objectiveTopic.topic.dataValues
-                    ? objectiveTopic.topic.dataValues
-                    : []
-                ),
-              };
-              delete ot.topic;
-              return ot;
-            }),
-          files: objective.objectiveFiles
-            .map((objectiveFile) => {
-              const of = {
-                ...objectiveFile.dataValues,
-                ...objectiveFile.file.dataValues,
-                // url: objectiveFile.file.url,
-              };
-              delete of.file;
-              return of;
-            }),
-          resources: objective.objectiveResources
-            .map((objectiveResource) => {
-              const oR = {
-                ...objectiveResource.dataValues,
-                ...objectiveResource.resource.dataValues,
-              };
-              delete oR.resource;
-              return oR;
-            }),
-        };
-        delete o.objectiveTopics;
-        delete o.objectiveFiles;
-        return o;
-      }),
-  }));
-
-  return reduceGoals(goals);
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
@@ -1459,15 +702,9 @@ export async function createOrUpdateGoals(goals) {
     const newObjectives = await Promise.all(
       objectives.map(async (o, index) => {
         const {
-          resources,
-          topics,
           title,
-          files,
           status: objectiveStatus,
           id: objectiveIdsMayContainStrings,
-          closeSuspendContext,
-          closeSuspendReason,
-          supportType,
         } = o;
 
         const objectiveIds = [objectiveIdsMayContainStrings]
@@ -1480,6 +717,7 @@ export async function createOrUpdateGoals(goals) {
         // we need to handle things a little differently
         if (objectiveStatus === OBJECTIVE_STATUS.COMPLETE && objectiveIds && objectiveIds.length) {
           objective = await Objective.findOne({
+            attributes: OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
             where: {
               id: objectiveIds,
               status: OBJECTIVE_STATUS.COMPLETE,
@@ -1488,12 +726,7 @@ export async function createOrUpdateGoals(goals) {
           });
 
           if (objective) {
-            return {
-              ...objective.dataValues,
-              topics,
-              resources,
-              files,
-            };
+            return objective.toJSON();
           }
         }
 
@@ -1501,6 +734,7 @@ export async function createOrUpdateGoals(goals) {
           // this needs to find "complete" objectives as well
           // since we could be moving the status back from the RTR
           objective = await Objective.findOne({
+            attributes: OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
             where: {
               id: objectiveIds,
               goalId: newGoal.id,
@@ -1513,6 +747,7 @@ export async function createOrUpdateGoals(goals) {
           // first we check to see if there is an objective with the same title
           // so we can reuse it (given it is not complete)
           objective = await Objective.findOne({
+            attributes: OBJECTIVE_ATTRIBUTES_TO_QUERY_ON_RTR,
             where: {
               status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
               title,
@@ -1526,60 +761,28 @@ export async function createOrUpdateGoals(goals) {
               title,
               goalId: newGoal.id,
               createdVia: 'rtr',
-              supportType,
             });
           }
         }
 
-        // here we update the objective, checking to see if the objective is on an approved AR
-        // and if the title has changed before we update the title specifically...
-        // otherwise, we only update the status and rtrOrder
+        // if the objective is not on an approved report
+        // and the title is different, update title
         objective.set({
-          ...(!objective.dataValues.onApprovedAR
+          ...(!objective.onApprovedAR
             && title.trim() !== objective.dataValues.title.trim()
             && { title }),
-          status: objectiveStatus,
           rtrOrder: index + 1,
         });
-
-        if (supportType && objective.supportType !== supportType) {
-          objective.set({ supportType });
-        }
-
-        // if the objective has been suspended, a reason and context should have been collected
-        if (objectiveStatus === OBJECTIVE_STATUS.SUSPENDED) {
-          objective.set({
-            closeSuspendContext,
-            closeSuspendReason,
-          });
-        }
 
         // save the objective to the database
         await objective.save({ individualHooks: true });
 
-        // save all our objective join tables (ObjectiveResource, ObjectiveTopic, ObjectiveFile)
-        const deleteUnusedAssociations = true;
-        await saveObjectiveAssociations(
-          objective,
-          resources,
-          topics,
-          files,
-          [],
-          deleteUnusedAssociations,
-        );
-
-        return {
-          ...objective.dataValues,
-          topics,
-          resources,
-          files,
-        };
+        return objective.toJSON();
       }),
     );
 
     // this function deletes unused objectives
     await cleanupObjectivesForGoal(newGoal.id, newObjectives);
-
     return newGoal.id;
   }));
 
@@ -2094,6 +1297,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       courses,
       closeSuspendReason,
       closeSuspendContext,
+      createdHere: objectiveCreatedHere,
       ...updatedFields
     } = objective;
 
@@ -2157,6 +1361,7 @@ async function createObjectivesForGoal(goal, objectives, report) {
       closeSuspendContext,
       index,
       supportType,
+      objectiveCreatedHere,
     };
   }));
 }
@@ -2285,6 +1490,7 @@ export async function saveGoalsForReport(goals, report) {
       ttaProvided,
       supportType,
       courses,
+      objectiveCreatedHere,
     } = savedObjective;
 
     // this will save all our objective join table data
@@ -2315,6 +1521,7 @@ export async function saveGoalsForReport(goals, report) {
         ttaProvided,
         order: index,
         supportType,
+        objectiveCreatedHere,
       },
     );
   }));
@@ -2418,157 +1625,6 @@ export async function updateGoalStatusById(
     context: closeSuspendContext,
   })));
 }
-
-export async function getGoalsForReport(reportId) {
-  const goals = await Goal.findAll({
-    attributes: {
-      include: [
-        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
-        [sequelize.literal(`(
-          SELECT
-            jsonb_agg( DISTINCT jsonb_build_object(
-              'promptId', gtfp.id ,
-              'ordinal', gtfp.ordinal,
-              'title', gtfp.title,
-              'prompt', gtfp.prompt,
-              'hint', gtfp.hint,
-              'caution', gtfp.caution,
-              'fieldType', gtfp."fieldType",
-              'options', gtfp.options,
-              'validations', gtfp.validations,
-              'response', gfr.response,
-              'reportResponse', argfr.response
-            ))
-          FROM "GoalTemplateFieldPrompts" gtfp
-          LEFT JOIN "GoalFieldResponses" gfr
-          ON gtfp.id = gfr."goalTemplateFieldPromptId"
-          AND gfr."goalId" = "Goal".id
-          LEFT JOIN "ActivityReportGoalFieldResponses" argfr
-          ON gtfp.id = argfr."goalTemplateFieldPromptId"
-          AND argfr."activityReportGoalId" = "activityReportGoals".id
-          WHERE "goalTemplate".id = gtfp."goalTemplateId"
-          GROUP BY 1=1
-        )`), 'prompts'],
-      ],
-    },
-    include: [
-      {
-        model: GoalTemplate,
-        as: 'goalTemplate',
-        attributes: [],
-        required: false,
-      },
-      {
-        model: ActivityReportGoal,
-        as: 'activityReportGoals',
-        where: {
-          activityReportId: reportId,
-        },
-        required: true,
-      },
-      {
-        model: Grant,
-        as: 'grant',
-        required: true,
-      },
-      {
-        separate: true,
-        model: Objective,
-        as: 'objectives',
-        include: [
-          {
-            required: true,
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            where: {
-              activityReportId: reportId,
-            },
-            include: [
-              {
-                separate: true,
-                model: ActivityReportObjectiveTopic,
-                as: 'activityReportObjectiveTopics',
-                required: false,
-                include: [
-                  {
-                    model: Topic,
-                    as: 'topic',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveFile,
-                as: 'activityReportObjectiveFiles',
-                required: false,
-                include: [
-                  {
-                    model: File,
-                    as: 'file',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveCourse,
-                as: 'activityReportObjectiveCourses',
-                required: false,
-                include: [
-                  {
-                    model: Course,
-                    as: 'course',
-                  },
-                ],
-              },
-              {
-                separate: true,
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-                required: false,
-                attributes: [['id', 'key']],
-                include: [
-                  {
-                    model: Resource,
-                    as: 'resource',
-                    attributes: [['url', 'value']],
-                  },
-                ],
-                where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE] } },
-              },
-            ],
-          },
-          {
-            model: Topic,
-            as: 'topics',
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [['url', 'value']],
-            through: {
-              attributes: [],
-              where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
-              required: false,
-            },
-            required: false,
-          },
-          {
-            model: File,
-            as: 'files',
-          },
-        ],
-      },
-    ],
-    order: [
-      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
-    ],
-  });
-
-  // dedupe the goals & objectives
-  const forReport = true;
-  return reduceGoals(goals, forReport);
-}
-
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = await ActivityReport.findByPk(activityReportId);

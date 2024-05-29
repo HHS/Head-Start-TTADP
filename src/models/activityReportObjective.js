@@ -76,6 +76,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(SUPPORT_TYPES),
       allowNull: true,
     },
+    objectiveCreatedHere: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
     originalObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: true,
