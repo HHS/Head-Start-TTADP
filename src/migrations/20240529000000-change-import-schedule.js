@@ -11,7 +11,7 @@ module.exports = {
       SET schedule = '30 8 * * *'
       WHERE name = 'ITAMS Monitoring Data'
       AND schedule = '0 7 * * *';
-      `, transaction );
+      `, transaction);
     });
   },
 
@@ -24,7 +24,7 @@ module.exports = {
       SET schedule = '0 7 * * *'
       WHERE name = 'ITAMS Monitoring Data'
       AND schedule = '30 8 * * *';
-      `, transaction );
+      `, transaction);
     });
   },
 };
