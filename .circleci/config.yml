@@ -463,8 +463,19 @@ jobs:
           name: Lint backend
           command: yarn lint:ci
       - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -522,11 +533,6 @@ jobs:
           at: .
       - setup_remote_docker:
           version: default
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -607,12 +613,6 @@ jobs:
           command: |
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
