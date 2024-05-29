@@ -1069,6 +1069,20 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - backup_upload_production:
+          requires:
+            - test_backend
+            - test_frontend
+            - test_e2e
+            - test_api
+            - test_similarity_api
+            - test_utils
+            - cucumber_test
+            - dynamic_security_scan
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
       - deploy:
           requires:
             - test_backend
