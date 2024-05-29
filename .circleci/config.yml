@@ -479,6 +479,7 @@ jobs:
       - run:
           name: Check nodejs version compatibility with buildpack
           command: |
+            chmod +x ./bin/check_node_version_compatibility.sh
             ./bin/check_node_version_compatibility.sh
       - store_artifacts:  # store backend lint reports
           path: reports
@@ -515,6 +516,7 @@ jobs:
       - run:
           name: Check python version compatibility  with buildpack
           command: |
+            chmod +x ./bin/check_python_version_compatibility.sh
             ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
