@@ -577,7 +577,7 @@ jobs:
       - run:
           name: Grype Docker image
           environment:
-            GRYPE_VERSION: v0.62.2
+            GRYPE_VERSION: v0.78.0
             OUTPUT_FORMAT: sarif
             OUTPUT_FILE: reports/grype.json
           command: |
