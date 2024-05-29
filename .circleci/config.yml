@@ -18,7 +18,7 @@ executors:
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/python:3.9.19
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:18.20.3-browsers
@@ -563,7 +563,7 @@ jobs:
       - run:
           name: Syft SBOM
           environment:
-            SYFT_VERSION: v0.82.0
+            SYFT_VERSION: v1.5.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
             OUTPUT_FILE:  reports/syft_sbom.json
@@ -577,7 +577,7 @@ jobs:
       - run:
           name: Grype Docker image
           environment:
-            GRYPE_VERSION: v0.62.2
+            GRYPE_VERSION: v0.78.0
             OUTPUT_FORMAT: sarif
             OUTPUT_FILE: reports/grype.json
           command: |
