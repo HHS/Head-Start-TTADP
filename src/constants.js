@@ -248,6 +248,7 @@ const FEATURE_FLAGS = [
   'regional_goal_dashboard',
   'closed_goal_merge_override',
   'training_reports_dashboard',
+  'quality_assurance_dashboard',
 ];
 
 const MAINTENANCE_CATEGORY = {
