@@ -260,15 +260,38 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
 
   let error;
   let status;
-
+  const activityReportObjectives = [];
   if (reportId && objectiveIds) {
-    const activityReportObjectives = await ActivityReportObjective.findAll({
-      attributes: ['id'],
-      where: {
-        activityReportId: JSON.parse(reportId),
-        objectiveId: JSON.parse(objectiveIds),
-      },
-    });
+    const parsedObjectiveIds = JSON.parse(objectiveIds);
+    const parsedReportId = parseInt(reportId, DECIMAL_BASE);
+
+    if (!(await hasReportAuthorization(
+      user,
+      parsedReportId,
+    ) || (await validateUserAuthForAdmin(userId)))) {
+      error = 'Unauthorized';
+      status = httpCodes.UNAUTHORIZED;
+    }
+
+    for (let i = 0; i < parsedObjectiveIds.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      let activityReportObjective = await ActivityReportObjective.findOne({
+        where: {
+          id: parsedObjectiveIds[i],
+          activityReportId: parsedReportId,
+        },
+      });
+
+      if (!activityReportObjective) {
+        // eslint-disable-next-line no-await-in-loop
+        activityReportObjective = await ActivityReportObjective.create({
+          activityReportId: parsedReportId,
+          objectiveId: parsedObjectiveIds[i],
+        });
+      }
+
+      activityReportObjectives.push(activityReportObjective);
+    }
 
     if (activityReportObjectives.length === 0) {
       return {
@@ -276,14 +299,6 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
         status: httpCodes.BAD_REQUEST,
         metadataFn: null,
       };
-    }
-
-    if (!(await hasReportAuthorization(
-      user,
-      reportId,
-    ) || (await validateUserAuthForAdmin(userId)))) {
-      error = 'Unauthorized';
-      status = httpCodes.UNAUTHORIZED;
     }
 
     if (error) {
