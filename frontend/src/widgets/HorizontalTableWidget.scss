@@ -1,7 +1,7 @@
 @use '../colors.scss' as *;
 
 @media(min-width: 60em) {
-  .smarthub-horizontal-table-widget .usa-table th {
+  .smarthub-horizontal-table-widget .data-header{
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -11,7 +11,6 @@
 
   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column {
     position: sticky;
-    left: 0;
     z-index: 1;
     max-width: 330px;
     min-width: 330px;
@@ -24,6 +23,7 @@
     right: 0;
     font-weight: bold;
     box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
+    min-width: 90px;
   }
 
   .smarthub-horizontal-table-widget .usa-table-container--scrollable th {
@@ -31,9 +31,22 @@
   }
 }
 
-  .smarthub-horizontal-table-widget .usa-table th {
-    min-width: 90px;
+.smarthub-horizontal-table-widget .checkbox-column {
+  vertical-align: top;
+  min-width: 44px;
+  position: sticky;
+  left: 0;
 
+}
+
+.smarthub-horizontal-table-widget thead .checkbox-column {
+  z-index: 1;
+  background-color: white;
+  left: 0;
+}
+
+  .smarthub-horizontal-table-widget .usa-table .data-header {
+    min-width: 90px;
   }
 
   .smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
@@ -58,14 +71,11 @@
     text-align: left;
   }
 
-  .smarthub-horizontal-table-widget .usa-table td:first-child {
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  .smarthub-horizontal-table-widget .usa-table .data-description {
     max-width: 500px;
-    overflow: hidden;
   }
 
-  .smarthub-horizontal-table-widget .usa-table p:first-child {
+  .smarthub-horizontal-table-widget .usa-table .data-description p {
     margin: 0px;
     padding: 0px;
   }
@@ -75,3 +85,22 @@
     font-weight: bold;
     color: $base-darkest;
   }
+
+  .smarthub-horizontal-table-widget .usa-checkbox__label {
+    padding-left: 0;
+  }
+
+  .smarthub-horizontal-table-widget a {
+     max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+     display: inline-block;
+     vertical-align: middle;
+   }
+
+   // select the svg on the page and set the vertical-align to middle.
+   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
+      vertical-align: middle;
+    }
+
+    .smarthub-horizontal-table-widget .left-with-checkbox {
+      left: 44px;
+    }
