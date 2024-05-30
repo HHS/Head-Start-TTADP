@@ -11,20 +11,20 @@ executors:
       - image: cimg/node:18.20.3-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:15.6
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/python:3.9.19
   docker-postgres-elasticsearch-executor:
     docker:
       - image: cimg/node:18.20.3-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:15.6
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
@@ -463,8 +463,24 @@ jobs:
           name: Lint backend
           command: yarn lint:ci
       - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Check nodejs version compatibility with buildpack
+          command: |
+            chmod +x ./bin/check_node_version_compatibility.sh
+            ./bin/check_node_version_compatibility.sh
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -497,6 +513,11 @@ jobs:
             source venv/bin/activate
             pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
+      - run:
+          name: Check python version compatibility  with buildpack
+          command: |
+            chmod +x ./bin/check_python_version_compatibility.sh
+            ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
             - similarity_api/src/venv
@@ -522,11 +543,6 @@ jobs:
           at: .
       - setup_remote_docker:
           version: default
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -563,7 +579,7 @@ jobs:
       - run:
           name: Syft SBOM
           environment:
-            SYFT_VERSION: v0.82.0
+            SYFT_VERSION: v1.5.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
             OUTPUT_FILE:  reports/syft_sbom.json
@@ -577,7 +593,7 @@ jobs:
       - run:
           name: Grype Docker image
           environment:
-            GRYPE_VERSION: v0.62.2
+            GRYPE_VERSION: v0.78.0
             OUTPUT_FORMAT: sarif
             OUTPUT_FILE: reports/grype.json
           command: |
@@ -607,12 +623,6 @@ jobs:
           command: |
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
-      - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
@@ -1069,6 +1079,20 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - backup_upload_production:
+          requires:
+            - test_backend
+            - test_frontend
+            - test_e2e
+            - test_api
+            - test_similarity_api
+            - test_utils
+            - cucumber_test
+            - dynamic_security_scan
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
       - deploy:
           requires:
             - test_backend
