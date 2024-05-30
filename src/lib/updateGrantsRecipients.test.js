@@ -16,7 +16,7 @@ jest.mock('./fileUtils', () => ({
 
 const SMALLEST_GRANT_ID = 1000;
 
-async function testStateCodeUpdate(grantId, incorrectStateCode, correctStateCode) {
+async function testStateCodeUpdate(grantId, incorrectStateCode) {
   await processFiles();
   const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
   await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });

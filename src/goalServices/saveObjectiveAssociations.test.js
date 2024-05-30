@@ -1,4 +1,4 @@
-import { processObjectiveForResourcesById, getResourcesForObjectives } from '../services/resource';
+import { processObjectiveForResourcesById } from '../services/resource';
 import db, {
   Objective,
   ObjectiveResource,
@@ -67,6 +67,7 @@ describe('saveObjectiveAssociations', () => {
           id: [topic1.id, topic2.id],
         },
         individualHooks: true,
+        force: true,
       });
 
       await db.sequelize.close();

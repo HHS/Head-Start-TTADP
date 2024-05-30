@@ -3,16 +3,17 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import {
   saveGoalsForReport,
 } from './goals';
-import {
+import db, {
   Goal,
   Grant,
-  ActivityReport,
+
   ActivityReportGoal,
   Recipient,
   GoalTemplateFieldPrompt,
   GoalFieldResponse,
   ActivityReportGoalFieldResponse,
 } from '../models';
+import { createReport, destroyReport } from '../testUtils';
 
 describe('saveGoalsForReport multi recipient', () => {
   // Recipients.
@@ -78,12 +79,19 @@ describe('saveGoalsForReport multi recipient', () => {
     });
 
     // Create activity report.
-    multiRecipientActivityReport = await ActivityReport.create({
-      submissionStatus: REPORT_STATUSES.DRAFT,
-      regionId: 1,
-      userId: 1,
-      activityRecipientType: 'recipient',
-      version: 2,
+    multiRecipientActivityReport = await createReport({
+      status: REPORT_STATUSES.DRAFT,
+      activityRecipients: [
+        {
+          grantId: multiRecipientGrantOneA.id,
+        },
+        {
+          grantId: multiRecipientGrantOneB.id,
+        },
+        {
+          grantId: multiRecipientGrantTwo.id,
+        },
+      ],
     });
 
     // Create goals.
@@ -152,6 +160,7 @@ describe('saveGoalsForReport multi recipient', () => {
       where: {
         activityReportGoalId: activityReportGoalIds,
       },
+      individualHooks: true,
     });
 
     // Delete ActivityReportGoals.
@@ -159,6 +168,7 @@ describe('saveGoalsForReport multi recipient', () => {
       where: {
         id: activityReportGoalIds,
       },
+      individualHooks: true,
     });
 
     // Delete GoalFieldResponses.
@@ -166,6 +176,7 @@ describe('saveGoalsForReport multi recipient', () => {
       where: {
         goalId: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
       },
+      individualHooks: true,
     });
 
     // Delete Goals.
@@ -173,20 +184,25 @@ describe('saveGoalsForReport multi recipient', () => {
       where: {
         id: [multiRecipientGoalOneA.id, multiRecipientGoalOneB.id, multiRecipientGoalTwo.id],
       },
+      individualHooks: true,
+      force: true,
     });
 
     // Delete ActivityReport.
-    await ActivityReport.destroy({
-      where: {
-        id: multiRecipientActivityReport.id,
-      },
-    });
+    // await ActivityReport.destroy({
+    //   where: {
+    //     id: multiRecipientActivityReport.id,
+    //   },
+    //   individualHooks: true,
+    // });
+    await destroyReport(multiRecipientActivityReport);
 
     // Delete Grants.
     await Grant.destroy({
       where: {
         id: [multiRecipientGrantOneA.id, multiRecipientGrantOneB.id, multiRecipientGrantTwo.id],
       },
+      individualHooks: true,
     });
 
     // Delete Recipients.
@@ -194,7 +210,10 @@ describe('saveGoalsForReport multi recipient', () => {
       where: {
         id: [multiRecipientRecipientA.id, multiRecipientRecipientB.id],
       },
+      individualHooks: true,
     });
+
+    await db.sequelize.close();
   });
 
   it('correctly updates multi recipient report root causes', async () => {

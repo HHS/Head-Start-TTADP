@@ -1043,6 +1043,7 @@ describe('Recipient DB service', () => {
           id: topics.map((t) => t.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Objective.destroy({
         where: {
