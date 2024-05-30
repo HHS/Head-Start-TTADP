@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  render, screen, waitFor,
+} from '@testing-library/react';
 import HorizontalTableWidget from '../HorizontalTableWidget';
 
 const renderHorizontalTableWidget = (
@@ -12,8 +14,9 @@ const renderHorizontalTableWidget = (
   lastHeading = 'Last Heading',
   sortConfig = {},
   requestSort = () => {},
-) => {
-  render(<HorizontalTableWidget
+  enableCheckboxes = false,
+) => render(
+  <HorizontalTableWidget
     headers={headers}
     data={data}
     firstHeading={firstHeading}
@@ -21,8 +24,9 @@ const renderHorizontalTableWidget = (
     lastHeading={lastHeading}
     sortConfig={sortConfig}
     requestSort={requestSort}
-  />);
-};
+    enableCheckboxes={enableCheckboxes}
+  />,
+);
 
 describe('Horizontal Table Widget', () => {
   it('renders correctly with data', async () => {
@@ -64,6 +68,38 @@ describe('Horizontal Table Widget', () => {
     renderHorizontalTableWidget();
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
+  });
+
+  it('correctly renders url icon', async () => {
+    const headers = ['col1', 'col2', 'col3'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        link: 'Row 1 Data',
+        isUrl: true,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+          {
+            title: 'col2',
+            value: '18',
+          },
+          {
+            title: 'col3',
+            value: '19',
+          },
+        ],
+      },
+    ];
+
+    const { container } = renderHorizontalTableWidget(headers, data);
+
+    const url = screen.getByText(/Row 1 Data/i);
+    expect(url).toHaveAttribute('href', 'Row 1 Data');
+
+    expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeInTheDocument();
   });
 
   it('renders with sorting', async () => {
@@ -185,5 +221,25 @@ describe('Horizontal Table Widget', () => {
 
     const sortElement = screen.getByLabelText('col1. Activate to sort ascending');
     expect(sortElement).toHaveClass('sortable desc');
+  });
+
+  it('shows checkboxes when enabled', async () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        isUrl: false,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+        ],
+      },
+    ];
+    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, true);
+    expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
+    expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(2);
   });
 });

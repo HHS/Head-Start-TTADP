@@ -25,6 +25,9 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
+    enableCheckboxes,
+    exportRows,
+    footNote,
   },
 ) {
   return (
@@ -44,6 +47,8 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        enableCheckboxes={enableCheckboxes}
+        exportRows={exportRows}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -57,21 +62,24 @@ export default function WidgetContainer(
       <div className="margin-top-0">
         {children}
       </div>
-      <div className="smart-hub-widget-container-footer">
-        {
-          showPagingBottom
-            ? (
-              <PaginationCard
-                currentPage={currentPage}
-                totalCount={totalCount}
-                offset={offset}
-                perPage={perPage}
-                handlePageChange={handlePageChange}
-              />
-            )
-            : null
-        }
-      </div>
+      {showPagingBottom || footNote ? (
+        <div className="smart-hub-widget-container-footer padding-3">
+          {footNote && (
+          <p className="usa-prose font-sans-3xs margin-top-0">
+            {footNote}
+          </p>
+          )}
+          {showPagingBottom && (
+            <PaginationCard
+              currentPage={currentPage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+            />
+          )}
+        </div>
+      ) : null}
     </Container>
   );
 }
@@ -93,6 +101,9 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
+  footNote: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -111,4 +122,7 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
+  enableCheckboxes: false,
+  exportRows: () => {},
+  footNote: null,
 };
