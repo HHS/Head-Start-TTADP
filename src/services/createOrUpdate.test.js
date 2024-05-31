@@ -279,6 +279,7 @@ describe('createOrUpdate', () => {
         id: topic.id,
       },
       individualHooks: true,
+      force: true,
     });
 
     await destroyReport(report);
