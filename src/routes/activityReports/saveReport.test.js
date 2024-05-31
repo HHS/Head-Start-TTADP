@@ -210,6 +210,7 @@ describe('saveReport', () => {
     await Topic.destroy({
       where: { id: [firstTopic.id, secondTopic.id] },
       individualHooks: true,
+      force: true,
     });
 
     await Permission.destroy({

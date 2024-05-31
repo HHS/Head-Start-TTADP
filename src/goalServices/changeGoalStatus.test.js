@@ -14,7 +14,6 @@ const mockUser = {
 
 describe('changeGoalStatus service', () => {
   let user;
-  let userRole;
   let role;
   let goal;
   let grant;
@@ -47,7 +46,7 @@ describe('changeGoalStatus service', () => {
       name: 'Astronaut',
       isSpecialist: true,
     });
-    userRole = await db.UserRole.create({
+    await db.UserRole.create({
       userId: user.id,
       roleId: role.id,
     });
@@ -61,6 +60,7 @@ describe('changeGoalStatus service', () => {
     await db.UserRole.destroy({ where: { userId: user.id } });
     await db.Role.destroy({ where: { id: role.id } });
     await db.User.destroy({ where: { id: mockUser.id } });
+    await db.sequelize.close();
   });
 
   it('should change the status of a goal and create a status change log', async () => {

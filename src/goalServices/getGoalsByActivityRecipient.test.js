@@ -726,6 +726,8 @@ describe('Goals by Recipient Test', () => {
       where: {
         id: topic.id,
       },
+      individualHooks: true,
+      force: true,
     });
 
     // Delete Objectives.

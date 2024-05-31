@@ -142,30 +142,36 @@ describe('frequency graph widget', () => {
       where: {
         topicId: topic.id,
       },
+      individualHooks: true,
     });
 
     await ActivityReportGoal.destroy({
       where: {
         goalId: [goal.id, olderGoal.id],
       },
+      individualHooks: true,
     });
 
     await ActivityReportObjective.destroy({
       where: {
         objectiveId: [objective.id, olderObjective.id],
       },
+      individualHooks: true,
     });
 
     await Objective.destroy({
       where: {
         id: [objective.id, olderObjective.id],
       },
+      individualHooks: true,
+      force: true,
     });
 
     await Goal.destroy({
       where: {
         id: [goal.id, olderGoal.id],
       },
+      individualHooks: true,
       force: true,
     });
 
@@ -173,6 +179,8 @@ describe('frequency graph widget', () => {
       where: {
         id: topic.id,
       },
+      individualHooks: true,
+      force: true,
     });
 
     await destroyReport(reportOne);
@@ -214,7 +222,6 @@ describe('frequency graph widget', () => {
 
     const { topics } = res;
     expect(topics.find((r) => r.category === 'Media Consumption').count).toBe(1);
-
     expect(topics.find((r) => r.category === 'Home Visiting').count).toBe(3);
     expect(topics.find((r) => r.category === 'Five-Year Grant').count).toBe(2);
     expect(topics.find((r) => r.category === 'Fiscal / Budget').count).toBe(2);
