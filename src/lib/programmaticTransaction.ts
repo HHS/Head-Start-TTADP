@@ -63,34 +63,40 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   try {
     switch (change.dml_type) {
       case 'INSERT':
-        await sequelize.query(/* sql */ `
+        {
+          await sequelize.query(/* sql */ `
             DELETE FROM "${tableName}"
             WHERE id = ${change.data_id};
-        `);
+          `);
+        }
         break;
       case 'DELETE':
-        const columns = Object.keys(change.old_row_data)
-          .map(key => `"${key}"`)  // Add double quotes around each key
+        {
+          const columns = Object.keys(change.old_row_data)
+          .map((key) => `"${key}"`)  // Add double quotes around each key
           .join(', ');  // Join them with a comma and a space
         const values = Object.values(change.old_row_data)
-          .map(val => `'${val}'`)
+          .map((val) => `'${val}'`)
           .join(', ');
         await sequelize.query(/* sql */ `
-            INSERT INTO "${tableName}"
-            (${columns})
-            VALUES
-            (${values});
+          INSERT INTO "${tableName}"
+          (${columns})
+          VALUES
+          (${values});
         `);
+        }
         break;
       case 'UPDATE':
-        const setClause = Object.entries(change.old_row_data)
-          .map(([key, val]) => `"${key}" = '${val}'`)
-          .join(', ');
-        await sequelize.query(/* sql */ `
+        {
+          const setClause = Object.entries(change.old_row_data)
+            .map(([key, val]) => `"${key}" = '${val}'`)
+            .join(', ');
+          await sequelize.query(/* sql */ `
             UPDATE "${tableName}"
             SET ${setClause}
             WHERE id = ${change.data_id};
-        `);
+          `);
+        }
         break;
       default:
         throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
@@ -107,10 +113,10 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
 const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
-    await revertChange([...allChanges]); // Clone the array if original should be preserved
+    await revertChange(allChanges);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);
-    throw err; // Transaction is automatically rolled back on error
+    throw err;
   }
 };
 
