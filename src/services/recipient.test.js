@@ -868,8 +868,10 @@ describe('Recipient DB service', () => {
     });
 
     it('properly de-duplicates based on responses', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(3);
+      expect(allGoalIds.length).toBe(3);
+      expect(allGoalIds).toContain(goals[3].id);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
@@ -890,8 +892,9 @@ describe('Recipient DB service', () => {
       goals[0].destroy();
       goals[3].destroy();
 
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(1);
+      expect(allGoalIds.length).toBe(1);
       // Verify goal 2 and 3 have empty creators/collaborators
       expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
       // Verify goal 2 and 3 are rolled up
@@ -1077,7 +1080,7 @@ describe('Recipient DB service', () => {
 
       expect(goalsForRecord.count).toBe(1);
       expect(goalsForRecord.goalRows.length).toBe(1);
-      expect(goalsForRecord.allGoalIds.length).toBe(2);
+      expect(goalsForRecord.allGoalIds.length).toBe(1);
 
       const goal = goalsForRecord.goalRows[0];
       expect(goal.reasons.length).toBe(1);
