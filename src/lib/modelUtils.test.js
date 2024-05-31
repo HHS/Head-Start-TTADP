@@ -1,7 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
 import db from '../models';
 import {
-  dataTypeMapping,
   modelForTable,
   getColumnInformation,
   getColumnNamesFromModelForType,
@@ -11,6 +10,7 @@ import {
 } from './modelUtils';
 
 describe('modelUtils', () => {
+  afterAll(() => db.sequelize.close());
   describe('modelForTable', () => {
     it('should return the correct model for a given table name', () => {
       const tableName = 'Users';
