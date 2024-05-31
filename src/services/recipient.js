@@ -889,12 +889,15 @@ export async function getGoalsByActivityRecipient(
     },
   });
 
+  // For checkbox selection we only need the primary goal id.
+  const rolledUpGoalIds = r.goalRows.map((goal) => goal.id);
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
       statuses,
-      allGoalIds,
+      allGoalIds: rolledUpGoalIds,
     };
   }
 
@@ -902,7 +905,7 @@ export async function getGoalsByActivityRecipient(
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
     statuses,
-    allGoalIds,
+    allGoalIds: rolledUpGoalIds,
   };
 }
 
