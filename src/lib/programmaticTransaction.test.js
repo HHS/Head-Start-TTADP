@@ -23,10 +23,10 @@ describe('Programmatic Transaction', () => {
   });
   it('Update', async () => {
     const snapshot = await captureSnapshot();
-    let grant = await Grant.findOne({
+    const grant = await Grant.findOne({
       where: { status: 'Active' },
       order: [['id', 'ASC']],
-      limit: 1
+      limit: 1,
     });
     await grant.update({ status: 'Inactive' });
     await grant.reload();

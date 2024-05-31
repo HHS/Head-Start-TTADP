@@ -1,5 +1,5 @@
 import { QueryTypes } from 'sequelize';
-import { sequelize } from '../models';
+import { sequelize } from '../models'; // Ensure this path is correct
 
 // Define the structure for maximum ID records
 interface MaxIdRecord {
@@ -26,7 +26,9 @@ const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRec
 interface ChangeRecord {
   source_table: string;
   dml_type: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   old_row_data: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   new_row_data: { [key: string]: any };
   dml_timestamp: Date;
   data_id: number;
@@ -34,7 +36,7 @@ interface ChangeRecord {
 
 // Fetch and aggregate changes from all audit tables based on fetched max IDs
 const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRecord[]> => {
-  let allChanges: ChangeRecord[] = await Promise.all(maxIds.flatMap( async ({
+  const allChanges: ChangeRecord[] = await Promise.all(maxIds.flatMap(async ({
     table_name,
     max_id,
   }) => sequelize.query<ChangeRecord>(/* sql */ `
@@ -52,58 +54,58 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
 const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   const change = changes.pop(); // Remove the last change from the array
   if (!change) {
-      console.log('All changes have been successfully reverted.');
-      return; // Base case: if there are no more changes, stop recursion
+    console.log('All changes have been successfully reverted.');
+    return; // Base case: if there are no more changes, stop recursion
   }
 
   const tableName = change.source_table.replace('ZAL', '');
   try {
-      switch (change.dml_type) {
-          case 'INSERT':
-              await sequelize.query(/* sql */ `
-                  DELETE FROM "${tableName}"
-                  WHERE id = ${change.new_row_data.id};
-              `);
-              break;
-          case 'DELETE':
-              const columns = Object.keys(change.old_row_data)
-                .join(', ');
-              const values = Object.values(change.old_row_data)
-                .map(val => `'${val}'`).join(', ');
-              await sequelize.query(/* sql */ `
-                  INSERT INTO "${tableName}"
-                  (${columns})
-                  VALUES
-                  (${values});
-              `);
-              break;
-          case 'UPDATE':
-              const setClause = Object.entries(change.old_row_data)
-                  .map(([key, val]) => `"${key}" = '${val}'`)
-                  .join(', ');
-              await sequelize.query(/* sql */ `
-                  UPDATE "${tableName}"
-                  SET ${setClause}
-                  WHERE id = ${change.data_id};
-              `);
-              break;
-      }
-      // Recursively call revertChange to process the next change
-      await revertChange(changes);
+    switch (change.dml_type) {
+      case 'INSERT':
+        await sequelize.query(/* sql */ `
+            DELETE FROM "${tableName}"
+            WHERE id = ${change.new_row_data.id};
+        `);
+        break;
+      case 'DELETE':
+        const columns = Object.keys(change.old_row_data)
+          .join(', ');
+        const values = Object.values(change.old_row_data)
+          .map(val => `'${val}'`).join(', ');
+        await sequelize.query(/* sql */ `
+            INSERT INTO "${tableName}"
+            (${columns})
+            VALUES
+            (${values});
+        `);
+        break;
+      case 'UPDATE':
+        const setClause = Object.entries(change.old_row_data)
+          .map(([key, val]) => `"${key}" = '${val}'`)
+          .join(', ');
+        await sequelize.query(/* sql */ `
+          UPDATE "${tableName}"
+          SET ${setClause}
+          WHERE id = ${change.data_id};
+      `);
+        break;
+    }
+    // Recursively call revertChange to process the next change
+    await revertChange(changes);
   } catch (err) {
-      console.error('Error during reversion of a change:', err);
-      throw err; // Rethrow the error to exit the recursion and handle it in the caller
+    console.error('Error during reversion of a change:', err);
+    throw err; // Rethrow the error to exit the recursion and handle it in the caller
   }
 };
 
 // Revert all changes based on the aggregated change records
 const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   try {
-      const allChanges = await fetchAndAggregateChanges(maxIds);
-      await revertChange([...allChanges]); // Clone the array if original should be preserved
+    const allChanges = await fetchAndAggregateChanges(maxIds);
+    await revertChange([...allChanges]); // Clone the array if original should be preserved
   } catch (err) {
-      console.error('Error during reversion:', err);
-      throw err; // Transaction is automatically rolled back on error
+    console.error('Error during reversion:', err);
+    throw err; // Transaction is automatically rolled back on error
   }
 };
 
