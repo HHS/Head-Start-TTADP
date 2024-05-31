@@ -213,13 +213,6 @@ describe('Groups service', () => {
       collaboratorTypeId: sharedWithCollaboratorType.id, // SharedWith.
     });
 
-    // Get all group collaborators for existingGroupToEdit id.
-    const groupCollaborators = await GroupCollaborator.findAll({
-      where: {
-        groupId: existingGroupToEdit.id,
-      },
-    });
-
     // Create GroupCollaborator.
     await GroupCollaborator.create({
       userId: mockUser.id,
@@ -922,12 +915,14 @@ describe('Groups service', () => {
         where: {
           userId: groupUser.id,
         },
+        individualHooks: true,
       });
       // Destroy the User record.
       await User.destroy({
         where: {
           id: groupUser.id,
         },
+        individualHooks: true,
       });
     });
 
@@ -1214,6 +1209,7 @@ describe('Groups service', () => {
         where: {
           id: savedGroup.id,
         },
+        individualHooks: true,
       });
 
       // Destroy the GroupCollaborator records.
@@ -1221,6 +1217,7 @@ describe('Groups service', () => {
         where: {
           groupId: savedGroup.id,
         },
+        individualHooks: true,
       });
 
       // Destroy the User permissions.
@@ -1228,6 +1225,7 @@ describe('Groups service', () => {
         where: {
           userId: testPotentialUsers,
         },
+        individualHooks: true,
       });
 
       // Destroy the User roles.
@@ -1235,6 +1233,7 @@ describe('Groups service', () => {
         where: {
           userId: testPotentialUsers,
         },
+        individualHooks: true,
       });
 
       // Destroy the User records.
@@ -1242,6 +1241,7 @@ describe('Groups service', () => {
         where: {
           id: testPotentialUsers,
         },
+        individualHooks: true,
       });
     });
     it('get potential co-owners for saved group', async () => {
@@ -1480,6 +1480,7 @@ describe('Groups service', () => {
         where: {
           id: [programOne.id, programTwo.id, programThree.id, programFour.id],
         },
+        individualHooks: true,
       });
 
       // Destroy the group grant.
@@ -1487,6 +1488,7 @@ describe('Groups service', () => {
         where: {
           groupId: savedGroup.id,
         },
+        individualHooks: true,
       });
 
       // Destroy the group.
@@ -1494,6 +1496,7 @@ describe('Groups service', () => {
         where: {
           id: savedGroup.id,
         },
+        individualHooks: true,
       });
 
       // Destroy the GroupCollaborator records.
@@ -1501,6 +1504,7 @@ describe('Groups service', () => {
         where: {
           groupId: savedGroup.id,
         },
+        individualHooks: true,
       });
 
       // Destroy the User permissions.
@@ -1508,6 +1512,7 @@ describe('Groups service', () => {
         where: {
           userId: usersToCleanup,
         },
+        individualHooks: true,
       });
 
       // Destroy the User roles.
@@ -1515,6 +1520,7 @@ describe('Groups service', () => {
         where: {
           userId: usersToCleanup,
         },
+        individualHooks: true,
       });
 
       // Destroy Grants.
@@ -1522,6 +1528,7 @@ describe('Groups service', () => {
         where: {
           recipientId: recipientIdsToClean,
         },
+        individualHooks: true,
       });
 
       // Destroy the Recipient records.
@@ -1529,6 +1536,7 @@ describe('Groups service', () => {
         where: {
           id: recipientIdsToClean,
         },
+        individualHooks: true,
       });
 
       // Destroy the User records.
@@ -1536,6 +1544,7 @@ describe('Groups service', () => {
         where: {
           id: usersToCleanup,
         },
+        individualHooks: true,
       });
     });
     it('get potential recipients for saved group', async () => {
