@@ -1,7 +1,7 @@
 import {
   captureSnapshot,
   rollbackToSnapshot,
-} from 'programmaticTransaction';
+} from './programmaticTransaction';
 
 import {
   Grant,

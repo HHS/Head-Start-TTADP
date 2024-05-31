@@ -1,5 +1,6 @@
 import { QueryTypes } from 'sequelize';
 import { sequelize } from '../models'; // Ensure this path is correct
+import { auditLogger } from '../logger';
 
 // Define the structure for maximum ID records
 interface MaxIdRecord {
@@ -54,7 +55,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
 const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   const change = changes.pop(); // Remove the last change from the array
   if (!change) {
-    console.log('All changes have been successfully reverted.');
+    auditLogger.log('All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion
   }
 
@@ -64,14 +65,16 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
       case 'INSERT':
         await sequelize.query(/* sql */ `
             DELETE FROM "${tableName}"
-            WHERE id = ${change.new_row_data.id};
+            WHERE id = ${change.data_id};
         `);
         break;
       case 'DELETE':
         const columns = Object.keys(change.old_row_data)
-          .join(', ');
+          .map(key => `"${key}"`)  // Add double quotes around each key
+          .join(', ');  // Join them with a comma and a space
         const values = Object.values(change.old_row_data)
-          .map(val => `'${val}'`).join(', ');
+          .map(val => `'${val}'`)
+          .join(', ');
         await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}"
             (${columns})
@@ -84,16 +87,18 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
           .map(([key, val]) => `"${key}" = '${val}'`)
           .join(', ');
         await sequelize.query(/* sql */ `
-          UPDATE "${tableName}"
-          SET ${setClause}
-          WHERE id = ${change.data_id};
-      `);
+            UPDATE "${tableName}"
+            SET ${setClause}
+            WHERE id = ${change.data_id};
+        `);
         break;
+      default:
+        throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
     }
     // Recursively call revertChange to process the next change
     await revertChange(changes);
   } catch (err) {
-    console.error('Error during reversion of a change:', err);
+    auditLogger.error('Error during reversion of a change:', err);
     throw err; // Rethrow the error to exit the recursion and handle it in the caller
   }
 };
@@ -104,7 +109,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
     const allChanges = await fetchAndAggregateChanges(maxIds);
     await revertChange([...allChanges]); // Clone the array if original should be preserved
   } catch (err) {
-    console.error('Error during reversion:', err);
+    auditLogger.error('Error during reversion:', err);
     throw err; // Transaction is automatically rolled back on error
   }
 };
