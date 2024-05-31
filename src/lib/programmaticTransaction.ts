@@ -71,8 +71,8 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
       case 'DELETE':
         {
           const columns = Object.keys(change.old_row_data)
-            .map((key) => `"${key}"`)  // Add double quotes around each key
-            .join(', ');  // Join them with a comma and a space
+            .map((key) => `"${key}"`)
+            .join(', ');
           const values = Object.values(change.old_row_data)
             .map((val) => `'${val}'`)
             .join(', ');
