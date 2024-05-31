@@ -63,27 +63,25 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   try {
     switch (change.dml_type) {
       case 'INSERT':
-        {
-          await sequelize.query(/* sql */ `
-            DELETE FROM "${tableName}"
-            WHERE id = ${change.data_id};
-          `);
-        }
+        await sequelize.query(/* sql */ `
+          DELETE FROM "${tableName}"
+          WHERE id = ${change.data_id};
+        `);
         break;
       case 'DELETE':
         {
           const columns = Object.keys(change.old_row_data)
           .map((key) => `"${key}"`)  // Add double quotes around each key
           .join(', ');  // Join them with a comma and a space
-        const values = Object.values(change.old_row_data)
-          .map((val) => `'${val}'`)
-          .join(', ');
-        await sequelize.query(/* sql */ `
-          INSERT INTO "${tableName}"
-          (${columns})
-          VALUES
-          (${values});
-        `);
+          const values = Object.values(change.old_row_data)
+            .map((val) => `'${val}'`)
+            .join(', ');
+          await sequelize.query(/* sql */ `
+            INSERT INTO "${tableName}"
+            (${columns})
+            VALUES
+            (${values});
+          `);
         }
         break;
       case 'UPDATE':
@@ -121,7 +119,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
 };
 
 const captureSnapshot = async (): Promise<MaxIdRecord[]> => fetchMaxIds();
-const rollbackToSnapshot  = async (maxIds: MaxIdRecord[]): Promise<void> => revertAllChanges(maxIds);
+const rollbackToSnapshot = async (maxIds: MaxIdRecord[]): Promise<void> => revertAllChanges(maxIds);
 
 export {
   MaxIdRecord,
