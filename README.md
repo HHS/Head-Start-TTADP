@@ -108,6 +108,16 @@ On the frontend, the lcov and HTML files are generated as normal, however on the
 
 Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
 
+### Helpful notes on writing (backend) tests
+It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary. 
+
+With that in mind, there a few "gotchas" to remember to help write sanitary tests.
+- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete.
+- ```Model.destroy``` should run  ```individualHooks: true``` by default in your tests. There may be times when this is undesirable; this should be indicated with a comment
+- Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped() 
+- There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.
+
+
 ## Yarn Commands
 
 | Docker Command | Description| Host Command | Local only Command |
@@ -416,6 +426,9 @@ Our project includes four deployed Postgres databases, one to interact with each
     ```bash
     cf disallow-space-ssh ttahub-prod
     ```
+
+### Taking a production backup via CircleCI
+We can quickly take a production backup via the CircleCI web interface. To do so, go to the ```production``` branch there and trigger a pipeline with the variable ```manual-trigger``` set to true. You can then retrieve this backup with the script ```bin/latest_backup.sh```.
 
 ### Refreshing data in non-production environments
 
