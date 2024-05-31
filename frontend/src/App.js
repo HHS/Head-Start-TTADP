@@ -17,6 +17,7 @@ import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
+import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -258,6 +259,15 @@ function App() {
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <ResourcesDashboard user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/ipd-courses"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <CourseDashboard />
             </AppWrapper>
           )}
         />

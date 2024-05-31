@@ -1260,6 +1260,8 @@ describe('filtersToScopes', () => {
       // Delete Topics.
       await Topic.destroy({
         where: { id: [topic1.id, topic2.id] },
+        individualHooks: true,
+        force: true,
       });
 
       // Delete aro.

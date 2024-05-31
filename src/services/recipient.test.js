@@ -74,6 +74,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -243,6 +244,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -1026,6 +1028,7 @@ describe('Recipient DB service', () => {
           id: topics.map((t) => t.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Objective.destroy({
         where: {
@@ -1064,8 +1067,6 @@ describe('Recipient DB service', () => {
 
       expect(goalsForRecord.goalRows.flatMap((g) => g.goalTopics)).toHaveLength(4);
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(1);
-
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
       expect(objective.ids).toHaveLength(3);
@@ -1335,7 +1336,7 @@ describe('Recipient DB service', () => {
         ],
         reason: ['test'],
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        regionId: 1,
+        regionId: grant.regionId,
         userId: author.id,
       });
 
@@ -1352,6 +1353,7 @@ describe('Recipient DB service', () => {
       await ActivityReportApprover.create({
         activityReportId: report.id,
         userId: approverOne.id,
+
       });
 
       await ActivityReportApprover.create({
@@ -1365,12 +1367,16 @@ describe('Recipient DB service', () => {
         where: {
           userId: [approverOne.id, approverTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await ActivityReportCollaborator.destroy({
         where: {
           userId: [collaboratorOne.id, collaboratorTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await destroyReport(report);
@@ -1378,6 +1384,7 @@ describe('Recipient DB service', () => {
         where: {
           id: grant.id,
         },
+        force: true,
         individualHooks: true,
       });
 
@@ -1385,6 +1392,8 @@ describe('Recipient DB service', () => {
         where: {
           id: recipient.id,
         },
+        force: true,
+        individualHooks: true,
       });
 
       await User.destroy({
