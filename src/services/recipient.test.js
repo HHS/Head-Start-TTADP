@@ -990,7 +990,7 @@ describe('Recipient DB service', () => {
         reason: [reason],
         calculatedStatus: REPORT_STATUSES.APPROVED,
         topics: [topics[0].name],
-        regionId: 5,
+        regionId: grant.regionId,
       });
 
       await ActivityReportGoal.create({
@@ -1352,7 +1352,7 @@ describe('Recipient DB service', () => {
         ],
         reason: ['test'],
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        regionId: 1,
+        regionId: grant.regionId,
         userId: author.id,
       });
 
