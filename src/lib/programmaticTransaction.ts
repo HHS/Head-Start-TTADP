@@ -80,16 +80,12 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
           const replacements = Object.entries(change.old_row_data)
             .reduce((acc, [key, value]) => ({
               ...acc,
-              [key]: value
+              [key]: value,
             }), {});
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
-            VALUES (${
-              Object.keys(replacements)
-                .map((key) => ':' + key)
-                .join(', ')
-            });
+            VALUES (${ Object.keys(replacements).map((key) => ':' + key).join(', ') });
           `, { replacements });
         }
         break;
