@@ -74,16 +74,22 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
         // Insert with parameterized query
         {
           const columns = Object.keys(change.old_row_data)
-            .map((key) => `"${key}"`).join(', ');
+            .map((key) => `"${key}"`)
+            .join(', ');
+
           const replacements = Object.entries(change.old_row_data)
-            .reduce((obj, [key, value]) => {
-              obj[key] = value;
-              return obj;
-            }, {});
+            .reduce((acc, [key, value]) => ({
+              ...acc,
+              [key]: value
+            }), {});
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
-            VALUES (${Object.keys(replacements).map(key => ':' + key).join(', ')});
+            VALUES (${
+              Object.keys(replacements)
+                .map((key) => ':' + key)
+                .join(', ')
+            });
           `, { replacements });
         }
         break;
