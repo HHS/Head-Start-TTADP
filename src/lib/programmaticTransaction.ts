@@ -72,30 +72,34 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
         break;
       case 'DELETE':
         // Insert with parameterized query
-        const columns = Object.keys(change.old_row_data)
-          .map((key) => `"${key}"`).join(', ');
-        const replacements = Object.entries(change.old_row_data)
-          .reduce((obj, [key, value]) => {
-            obj[key] = value;
-            return obj;
-          }, {});
+        {
+          const columns = Object.keys(change.old_row_data)
+            .map((key) => `"${key}"`).join(', ');
+          const replacements = Object.entries(change.old_row_data)
+            .reduce((obj, [key, value]) => {
+              obj[key] = value;
+              return obj;
+            }, {});
 
-        await sequelize.query(/* sql */ `
-          INSERT INTO "${tableName}" (${columns})
-          VALUES (${Object.keys(replacements).map(key => ':' + key).join(', ')});
-        `, { replacements });
+          await sequelize.query(/* sql */ `
+            INSERT INTO "${tableName}" (${columns})
+            VALUES (${Object.keys(replacements).map(key => ':' + key).join(', ')});
+          `, { replacements });
+        }
         break;
       case 'UPDATE':
         // Update with parameterized query
-        const setClause = Object.keys(change.old_row_data)
-          .map((key) => `"${key}" = :${key}`)
-          .join(', ');
+        {
+          const setClause = Object.keys(change.old_row_data)
+            .map((key) => `"${key}" = :${key}`)
+            .join(', ');
 
-        await sequelize.query(/* sql */ `
-          UPDATE "${tableName}"
-          SET ${setClause}
-          WHERE id = :id;
-        `, { replacements: { ...change.old_row_data, id: change.data_id } });
+          await sequelize.query(/* sql */ `
+            UPDATE "${tableName}"
+            SET ${setClause}
+            WHERE id = :id;
+          `, { replacements: { ...change.old_row_data, id: change.data_id } });
+        }
         break;
       default:
         throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
@@ -107,7 +111,6 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
     throw err; // Rethrow the error to exit the recursion and handle it in the caller
   }
 };
-
 
 // Revert all changes based on the aggregated change records
 const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
