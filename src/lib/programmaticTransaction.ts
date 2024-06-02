@@ -20,6 +20,7 @@ const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRec
   JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
   WHERE seq.relkind = 'S'
   AND cls.relname LIKE 'ZAL%'
+  AND cls.relname != 'ZALDDL'
   AND attr.attname = 'id'
   AND seq_data.schemaname = 'public';
 `, { type: QueryTypes.SELECT });
