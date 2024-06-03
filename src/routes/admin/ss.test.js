@@ -1,6 +1,6 @@
-import { auditLogger as logger } from '../../logger';
-import router, { listSheets, getSheet, route } from './ss';
 import * as smartClient from 'smartsheet';
+import { auditLogger as logger } from '../../logger';
+import { listSheets, getSheet } from './ss';
 
 const mockSheetsList = {
   data: [
@@ -10,7 +10,7 @@ const mockSheetsList = {
       accessLevel: 'admin',
       permalink: 'https://example.com/sheet1',
       createdAt: '2022-01-01',
-      modifiedAt: '2022-01-02'
+      modifiedAt: '2022-01-02',
     },
     {
       id: 2,
@@ -18,7 +18,7 @@ const mockSheetsList = {
       accessLevel: 'user',
       permalink: 'https://example.com/sheet2',
       createdAt: '2022-01-03',
-      modifiedAt: '2022-01-04'
+      modifiedAt: '2022-01-04',
     },
     {
       id: 3,
@@ -26,9 +26,9 @@ const mockSheetsList = {
       accessLevel: 'admin',
       permalink: 'https://example.com/sheet1a',
       createdAt: '2022-01-01',
-      modifiedAt: '2022-01-02'
+      modifiedAt: '2022-01-02',
     },
-  ]
+  ],
 };
 
 const mockSheetsListFiltered = {
@@ -39,7 +39,7 @@ const mockSheetsListFiltered = {
       accessLevel: 'admin',
       permalink: 'https://example.com/sheet1',
       createdAt: '2022-01-01',
-      modifiedAt: '2022-01-02'
+      modifiedAt: '2022-01-02',
     },
     {
       id: 2,
@@ -47,9 +47,9 @@ const mockSheetsListFiltered = {
       accessLevel: 'user',
       permalink: 'https://example.com/sheet2',
       createdAt: '2022-01-03',
-      modifiedAt: '2022-01-04'
-    }
-  ]
+      modifiedAt: '2022-01-04',
+    },
+  ],
 };
 
 jest.mock('axios');
@@ -59,15 +59,17 @@ jest.mock('smartsheet', () => ({
       listSheets: jest.fn().mockImplementationOnce(() => Promise.resolve(mockSheetsList))
         .mockImplementationOnce(() => Promise.resolve(mockSheetsList))
         .mockImplementationOnce(() => Promise.resolve(undefined))
-        .mockImplementationOnce(() => { throw new Error('Something went wrong') }),
+        .mockImplementationOnce(() => { throw new Error('Something went wrong'); }),
       getSheet: jest.fn().mockImplementationOnce(async () => Promise.resolve({ sheetData: 'sheetData' }))
         .mockImplementationOnce(async () => Promise.resolve({ sheetData: 'sheetData' })),
-    }
-  }))
+    },
+  })),
 }));
 
 describe('smartsheets', () => {
-  let req, res;
+  let req;
+  let res;
+
   beforeEach(() => {
     req = {
       session: {
@@ -75,7 +77,7 @@ describe('smartsheets', () => {
       },
       query: {
         pageSize: 18,
-        page: 89
+        page: 89,
       },
       params: {
         sheetId: '123',
@@ -113,7 +115,8 @@ describe('smartsheets', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mockSheetsListFiltered);
-    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets).toHaveBeenCalledWith({ queryParameters: { pageSize: 4400, page: 1 } });
+    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets)
+      .toHaveBeenCalledWith({ queryParameters: { pageSize: 4400, page: 1 } });
   });
 
   it('listSheets should return a 500 status code on error', async () => {
@@ -122,8 +125,7 @@ describe('smartsheets', () => {
     await listSheets(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("UNEXPECTED ERROR - Error: Failed to list sheets"));
-
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('UNEXPECTED ERROR - Error: Failed to list sheets'));
   });
 
   it('listSheets should handle an error', async () => {
@@ -131,66 +133,9 @@ describe('smartsheets', () => {
 
     await listSheets(req, res);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("UNEXPECTED ERROR - Error: Something went wrong"));
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('UNEXPECTED ERROR - Error: Something went wrong'));
   });
 
-  //   const req = {
-  //     query: {
-  //       pageSize: 18,
-  //       page: 89
-  //     }
-  //   };
-  //   const res = {
-  //     status: jest.fn().mockReturnThis(),
-  //     json: jest.fn().mockReturnThis(),
-  //     end: jest.fn(),
-  //   };
-  //   const error = new Error('Smartsheet API error');
-  //   // jest.clearAllMocks();
-  //   // Create a spy and mock the implementation to reject with an error
-  //   // jest.spyOn(smartsheet.createClient().sheets, 'listSheets').mockRejectedValueOnce(error);
-  //   smartsheet.createClient().sheets.listSheets.mockImplementationOnce(() => Promise.reject(error));
-  //   // Spy on logger.info
-  //   jest.spyOn(logger, 'info').mockImplementation(() => { });
-
-  //   await listSheets(req, res);
-
-  //   expect(res.status).toHaveBeenCalledWith(500);
-  //   expect(logger.info).toHaveBeenCalledWith(`Failed to list sheets ${error}`);
-  // });
-  // Successfully retrieves a sheet with a valid sheetId
-  // it('should successfully retrieve a sheet with a valid sheetId', async () => {
-  //   const req = { params: { sheetId: 'validSheetId' } };
-  //   const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-  //   const result = { sheetData: 'sheetData' };
-  //   smartsheetClient.sheets.getSheet = jest.fn().mockResolvedValue(result);
-
-  //   await getSheet(req, res);
-
-  //   expect(smartsheetClient.sheets.getSheet).toHaveBeenCalledWith({ id: 'validSheetId' });
-  //   expect(res.status).toHaveBeenCalledWith(200);
-  //   expect(res.json).toHaveBeenCalledWith(result);
-  // });
-  // Fetching a sheet with an empty ID throws an error
-
-  // it('should throw an error when fetching a sheet with an empty ID', async () => {
-  //   const sheetId = '';
-  //   const activeSheetUrl = `/api/admin/ss/sheet/${sheetId}`;
-  //   fetchMock.getOnce(activeSheetUrl, { throws: new Error('Empty ID') });
-
-  //   await expect(getSheetById(sheetId)).rejects.toThrow('Empty ID');
-  // });
-
-  // it('should log the returned sheet', async () => {
-  //   const mockSheet = { id: 1, name: 'Sheet1' };
-  //   const sheetId = '1';
-  //   const activeSheetUrl = `/api/admin/ss/sheet/${sheetId}`;
-  //   fetchMock.getOnce(activeSheetUrl, mockSheet);
-
-  //   const consoleSpy = jest.spyOn(console, 'log');
-  //   await getSheetById(sheetId);
-  //   expect(consoleSpy).toHaveBeenCalledWith(mockSheet);
-  // });
   it('getSheet should return a 200 status code', async () => {
     await getSheet(req, res);
 
@@ -207,7 +152,8 @@ describe('smartsheets', () => {
     };
     await getSheet(req, res);
 
-    expect(smartClient.createClient.mock.results[0].value.sheets.getSheet).toHaveBeenCalledWith({ "id": undefined });
+    expect(smartClient.createClient.mock.results[0].value.sheets.getSheet)
+      .toHaveBeenCalledWith({ id: undefined });
   });
 
   it('getSheet should return a 500 status code on error', async () => {
@@ -220,32 +166,34 @@ describe('smartsheets', () => {
   });
 
   describe('route function', () => {
-    let mockRouter, mockTransactionWrapper, mockListSheets, mockGetSheet;
+    let mockRouter; let mockTransactionWrapper; let mockListSheets; let
+      mockGetSheet;
 
     beforeEach(() => {
       jest.resetModules();
 
       mockRouter = {
-        get: jest.fn()
+        get: jest.fn(),
       };
       mockTransactionWrapper = jest.fn((fn) => fn);
       mockListSheets = jest.fn();
       mockGetSheet = jest.fn();
 
       jest.doMock('express', () => ({
-        Router: () => mockRouter
+        Router: () => mockRouter,
       }));
 
       jest.doMock('../transactionWrapper', () => mockTransactionWrapper);
       jest.doMock('../../lib/apiErrorHandler', () => jest.fn());
       jest.doMock('../../logger', () => ({
         auditLogger: {
-          error: jest.fn()
-        }
+          error: jest.fn(),
+        },
       }));
     });
 
     it('should register two GET routes with transactionWrapper middleware when environment variable is set to app.cloud.gov domain', () => {
+      // eslint-disable-next-line global-require
       const { route } = require('./ss');
 
       route('https://tta.app.cloud.gov');
@@ -256,6 +204,7 @@ describe('smartsheets', () => {
     });
 
     it('should register two GET routes returning 403 when environment variable is not set to app.cloud.gov domain', () => {
+      // eslint-disable-next-line global-require
       const { route } = require('./ss');
 
       route('https://tta.app.cloud.gov');
@@ -265,10 +214,10 @@ describe('smartsheets', () => {
       expect(mockRouter.get).toHaveBeenCalledWith('/sheet/:sheetId', expect.any(Function));
 
       // Check the 403 status functionality
-      const req = {};
-      const res = {
+      req = {};
+      res = {
         status: jest.fn().mockReturnThis(),
-        send: jest.fn()
+        send: jest.fn(),
       };
 
       const [firstRoutePath, firstRouteHandler] = mockRouter.get.mock.calls[0];
@@ -281,5 +230,4 @@ describe('smartsheets', () => {
       expect(res.send).toHaveBeenCalledWith('Feature not available');
     });
   });
-
 });
