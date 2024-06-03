@@ -10,7 +10,7 @@ const SomeGoalsHaveNoPromptResponse = ({
   goalsMissingResponses,
   regionId,
 }) => {
-  const [missingGoalData, setMissingGoalData] = useState([]);
+  const [missingGoalData, setMissingGoalData] = useState();
 
   async function fetchMissingData(goalIds) {
     try {
@@ -30,6 +30,10 @@ const SomeGoalsHaveNoPromptResponse = ({
     fetchMissingData(ids);
   }, [goalsMissingResponses, regionId]);
 
+  if (!missingGoalData || !missingGoalData.length) {
+    return null;
+  }
+
   return (
     <Alert validation noIcon slim type="error">
       <strong>Some goals are incomplete</strong>
@@ -44,34 +48,34 @@ const SomeGoalsHaveNoPromptResponse = ({
       </ul>
 
       { (missingGoalData.length > 0) && (
-      <details>
-        <summary>Complete your goals</summary>
-        <ul className="usa-list">
-          {missingGoalData.map((goal) => (
-            <li key={goal.id}>
-              <Link
-                aria-label={`Edit goal ${goal.id} in a new tab`}
-                to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
-                target="_blank"
-              >
-                {goal.recipientName}
-                {' '}
-                {goal.grantNumber}
-                {' '}
-                {goal.id}
-              </Link>
-            </li>
-          ))}
-        </ul>
-        <Button
-          unstyled
-          onClick={() => {
-            fetchMissingData(goalsMissingResponses.map((goal) => goal.goalIds).flat());
-          }}
-        >
-          Refresh list of goals
-        </Button>
-      </details>
+        <details>
+          <summary>Complete your goals</summary>
+          <ul className="usa-list">
+            {missingGoalData.map((goal) => (
+              <li key={goal.id}>
+                <Link
+                  aria-label={`Edit goal ${goal.id} in a new tab`}
+                  to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
+                  target="_blank"
+                >
+                  {goal.recipientName}
+                  {' '}
+                  {goal.grantNumber}
+                  {' '}
+                  {goal.id}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Button
+            unstyled
+            onClick={() => {
+              fetchMissingData(goalsMissingResponses.map((goal) => goal.goalIds).flat());
+            }}
+          >
+            Refresh list of goals
+          </Button>
+        </details>
       )}
 
     </Alert>
