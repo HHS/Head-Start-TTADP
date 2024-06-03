@@ -42,7 +42,7 @@ export async function sendHandler(req: Request, res: Response) {
       to,
       subject,
       text: message,
-      html: message
+      html: message,
     });
 
     logger.info(`Sent message to: ${to} with a subject: ${subject} and email text: ${message}`);
