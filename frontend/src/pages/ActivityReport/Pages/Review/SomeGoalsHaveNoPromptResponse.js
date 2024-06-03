@@ -47,7 +47,27 @@ const SomeGoalsHaveNoPromptResponse = ({
         ))}
       </ul>
 
-      { (missingGoalData.length > 0) && (
+      {(missingGoalData.length === 1) && (
+      <ul className="usa-list">
+        {missingGoalData.map((goal) => (
+          <li key={goal.id}>
+            <Link
+              aria-label={`Edit goal ${goal.id} in a new tab`}
+              to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
+              target="_blank"
+            >
+              {goal.recipientName}
+              {' '}
+              {goal.grantNumber}
+              {' '}
+              {goal.id}
+            </Link>
+          </li>
+        ))}
+      </ul>
+      )}
+
+      { (missingGoalData.length > 1) && (
         <details>
           <summary>Complete your goals</summary>
           <ul className="usa-list">

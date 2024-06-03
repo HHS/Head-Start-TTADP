@@ -50,6 +50,12 @@ describe('SomeGoalsHaveNoPromptResponse', () => {
     const link3 = await screen.findByText('recipient1 grant1 3');
     expect(link3).toBeVisible();
 
+    const summaryElement = document.querySelector('summary');
+    expect(summaryElement).toBeTruthy();
+
+    const detailsElement = document.querySelector('details');
+    expect(detailsElement).toBeTruthy();
+
     fetchMock.restore();
     expect(fetchMock.called(url)).toBeFalsy();
     fetchMock.get(url, [
@@ -65,6 +71,27 @@ describe('SomeGoalsHaveNoPromptResponse', () => {
       userEvent.click(reset);
     });
     expect(fetchMock.called(url)).toBeTruthy();
+  });
+
+  it('displays slightly differently for one result', async () => {
+    fetchMock.get(url, [
+      {
+        id: 1, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+      },
+    ]);
+    render(<RenderSomeGoalsHaveNoPromptResponse />);
+    const item = await screen.findByText('Some goals are incomplete');
+    expect(item).toBeVisible();
+    expect(fetchMock.called(url)).toBeTruthy();
+
+    const link = await screen.findByText('recipient1 grant1 1');
+    expect(link).toBeVisible();
+
+    const summaryElement = document.querySelector('summary');
+    expect(summaryElement).toBeFalsy();
+
+    const detailsElement = document.querySelector('details');
+    expect(detailsElement).toBeFalsy();
   });
 
   it('handles error to fetch', async () => {
