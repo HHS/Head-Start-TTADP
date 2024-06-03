@@ -52,6 +52,9 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   allChanges
     .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
 
+  // eslint-disable-next-line no-console
+  console.log(allChanges);
+  auditLogger.log('info', allChanges);
   return allChanges;
 };
 
