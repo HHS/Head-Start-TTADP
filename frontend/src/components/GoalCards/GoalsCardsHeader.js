@@ -38,6 +38,7 @@ export default function GoalCardsHeader({
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
+  goalBuckets,
 }) {
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
   const history = useHistory();
@@ -71,8 +72,16 @@ export default function GoalCardsHeader({
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
+    let goalIdsToPrint = selectedGoalIds;
+    if (!goalIdsToPrint.length) {
+      // Loop goalBuckets and get and flat array of all the goalIds.
+      goalIdsToPrint = goalBuckets.filter(
+        (bucket) => pageGoalIds.includes(bucket.id),
+      ).map((bucket) => bucket.goalIds).flat();
+    }
+
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: !selectedGoalIds.length ? pageGoalIds : selectedGoalIds,
+      sortConfig, selectedGoalIds: goalIdsToPrint,
     });
   };
 
@@ -297,6 +306,10 @@ GoalCardsHeader.propTypes = {
   canMergeGoals: PropTypes.bool.isRequired,
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
+  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    goals: PropTypes.arrayOf(PropTypes.number),
+  })).isRequired,
 };
 
 GoalCardsHeader.defaultProps = {

@@ -36,7 +36,7 @@ const defaultUser = {
 
 const baseGoals = [{
   id: 4598,
-  ids: [4598],
+  ids: [4598, 4599],
   goalStatus: 'In Progress',
   createdOn: '2021-06-15',
   goalText: 'This is goal text 1.',
@@ -220,6 +220,7 @@ const setGoals = jest.fn();
 const history = createMemoryHistory();
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
+  const goalBuckets = !goals ? [] : goals.map((g) => ({ id: g.id, goalIds: g.ids }));
   render(
     <Router history={history}>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -246,6 +247,7 @@ const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGr
             allGoalIds={allGoalIds || goals.map((g) => g.id)}
             shouldDisplayMergeSuccess={false}
             dismissMergeSuccess={jest.fn()}
+            goalBuckets={goalBuckets}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
@@ -603,6 +605,35 @@ describe('Goals Table', () => {
       userEvent.click(printButton);
 
       expect(history.push).toHaveBeenCalled();
+    });
+
+    it('calls print passing all goal ids on the page', async () => {
+      // print goals
+      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
+      userEvent.click(printButton);
+      expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
+        selectedGoalIds: [4598, 4599, 65479],
+        sortConfig: {
+          activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
+        },
+      });
+    });
+
+    it('calls print passing all selected goal ids', async () => {
+      // print goals
+      const printButton = await screen.findByRole('button', { name: /Preview and print/i });
+
+      // select the checkbox with the value of 4598.
+      const checkBox = screen.queryAllByTestId('selectGoalTestId')[0];
+      fireEvent.click(checkBox);
+
+      userEvent.click(printButton);
+      expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
+        selectedGoalIds: [4598, 4599],
+        sortConfig: {
+          activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
+        },
+      });
     });
   });
 
