@@ -890,7 +890,13 @@ export async function getGoalsByActivityRecipient(
   });
 
   // For checkbox selection we only need the primary goal id.
-  const rolledUpGoalIds = r.goalRows.map((goal) => goal.id);
+  const rolledUpGoalIds = r.goalRows.map((goal) => {
+    const bucket = {
+      id: goal.id,
+      goalIds: goal.ids,
+    };
+    return bucket;
+  });
 
   if (limitNum) {
     return {

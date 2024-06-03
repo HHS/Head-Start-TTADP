@@ -145,17 +145,37 @@ describe('Goals and Objectives', () => {
     fetchMock.reset();
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 1, goalRows: goals, statuses: defaultStatuses });
+    fetchMock.get(goalsUrl, {
+      count: 1,
+      goalRows: goals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: goals[0].id, goalIds: goals[0].ids },
+      ],
+    });
 
     // Filters Status.
     const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, {
-      count: 1, goalRows: filterStatusGoals, statuses: defaultStatuses,
+      count: 1,
+      goalRows: filterStatusGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: filterStatusGoals[0].id, goalIds: filterStatusGoals[0].ids },
+      ],
     });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: noFilterGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: noFilterGoals[0].id, goalIds: noFilterGoals[0].ids },
+        { id: noFilterGoals[1].id, goalIds: noFilterGoals[1].ids },
+      ],
+    });
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
@@ -243,7 +263,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
 
     const response = [{
@@ -262,7 +282,12 @@ describe('Goals and Objectives', () => {
     ];
 
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: response, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: response,
+      statuses: defaultStatuses,
+      allGoalIds: [{ id: 4598, goalIds: [4598] }],
+    });
 
     act(() => renderGoalsAndObjectives());
 
@@ -305,6 +330,19 @@ describe('Goals and Objectives', () => {
         { ...goals[0], id: 3 },
       ],
       statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      ],
     });
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
@@ -331,7 +369,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
     const goalToUse = {
       id: 1,
@@ -348,10 +386,12 @@ describe('Goals and Objectives', () => {
     };
     const goalCount = 60;
     const goalsToDisplay = [];
+    const allGoalIds = [];
     // eslint-disable-next-line no-plusplus
     for (let i = 1; i <= goalCount; i++) {
       const goalText = `This is goal text ${i}.`;
       goalsToDisplay.push({ ...goalToUse, id: i, goalText });
+      allGoalIds.push({ id: i, goalIds: [i] });
     }
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl,
@@ -359,6 +399,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 10),
         statuses: defaultStatuses,
+        allGoalIds,
       });
 
     // Render.
@@ -376,6 +417,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 25),
         statuses: defaultStatuses,
+        allGoalIds,
       });
     const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
     userEvent.selectOptions(perPageDropDown, '25');

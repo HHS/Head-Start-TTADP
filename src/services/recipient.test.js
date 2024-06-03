@@ -878,7 +878,10 @@ describe('Recipient DB service', () => {
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(3);
       expect(allGoalIds.length).toBe(3);
-      expect(allGoalIds).toContain(goals[3].id);
+
+      const goalWithMultipleIds = allGoalIds.find((g) => g.id === goals[2].id);
+      expect(goalWithMultipleIds).not.toBeNull();
+      expect(goalWithMultipleIds.goalIds).toStrictEqual([goals[2].id, goals[1].id]);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
