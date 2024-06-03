@@ -9,7 +9,7 @@ import {
 } from '..';
 import { OBJECTIVE_STATUS } from '../../constants';
 import { objectiveTemplateGenerator } from './testHelpers';
-import { beforeValidate, afterDestroy } from './objectiveResource';
+import { beforeValidate } from './objectiveResource';
 import { processObjectiveForResourcesById } from '../../services/resource';
 
 describe('objectiveResource hooks', () => {
@@ -18,7 +18,6 @@ describe('objectiveResource hooks', () => {
   let objective;
 
   let objectiveToDestroy;
-  let objectiveResourceToDestroy;
   let resourceToDestroy;
   const destroyUrl = faker.internet.url();
 
@@ -48,7 +47,7 @@ describe('objectiveResource hooks', () => {
 
     resourceToDestroy = await Resource.create({ url: destroyUrl });
 
-    objectiveResourceToDestroy = await ObjectiveResource.create({
+    await ObjectiveResource.create({
       objectiveId: objectiveToDestroy.id,
       resourceId: resourceToDestroy.id,
       sourceFields: ['resource'],
