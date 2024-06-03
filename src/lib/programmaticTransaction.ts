@@ -58,7 +58,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
 const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   const change = changes.pop(); // Remove the last change from the array
   if (!change) {
-    auditLogger.log('All changes have been successfully reverted.');
+    auditLogger.log('info', 'All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion
   }
 
