@@ -32,7 +32,7 @@ interface ChangeRecord {
   old_row_data: { [key: string]: any };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   new_row_data: { [key: string]: any };
-  dml_timestamp: Date;
+  dml_timestamp: string;
   data_id: number;
 }
 
@@ -49,7 +49,8 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   `, { type: QueryTypes.SELECT })));
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
-  allChanges.sort((a, b) => b.dml_timestamp.getTime() - a.dml_timestamp.getTime());
+  allChanges.sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
+
   return allChanges;
 };
 
