@@ -1,3 +1,4 @@
+import db from '../../models';
 import {
   deleteOnlyFile,
   deleteObjectiveFileHandler,
@@ -77,7 +78,11 @@ describe('file handlers, additional tests', () => {
   };
 
   describe('deleteHandler', () => {
-    afterEach(() => jest.clearAllMocks());
+    afterEach(async () => {
+      jest.clearAllMocks();
+
+      await db.sequelize.close();
+    });
 
     it('deletes a communication log file', async () => {
       const mockRequest = {
