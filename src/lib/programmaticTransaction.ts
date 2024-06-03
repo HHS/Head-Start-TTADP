@@ -46,7 +46,11 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
     FROM "${table_name}"
     WHERE data_id > ${max_id}
     ORDER BY dml_timestamp DESC
-  `, { type: QueryTypes.SELECT })));
+  `, {
+    type: QueryTypes.SELECT,
+    // eslint-disable-next-line no-console
+    logging: console.log,
+   })));
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
   allChanges
