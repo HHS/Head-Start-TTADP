@@ -66,7 +66,10 @@ export async function csvImport(buffer: Buffer | string) {
               Sequelize.fn('lower', Sequelize.fn('regexp_replace', Sequelize.col('name'), '[^a-zA-Z0-9]', '', 'g')),
               { [Op.like]: cleanCourseName },
             ),
-            { deletedAt: null },
+            {
+              deletedAt: null,
+              persistsOnUpload: false, // We don't want to delete courses that persist on import.
+            },
           ],
         },
       });
