@@ -268,6 +268,8 @@ describe('TR sessions by topic', () => {
       where: {
         id: [topic1.id, topic2.id],
       },
+      individualHooks: true,
+      force: true,
     });
 
     await db.sequelize.close();
