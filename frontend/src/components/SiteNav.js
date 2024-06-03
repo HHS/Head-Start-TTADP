@@ -124,7 +124,7 @@ const SiteNav = ({
                       <NavLink
                         to="/dashboards/qa-dashboard"
                       >
-                        Quality Assurance
+                        Quality Assurance Dashboard
                       </NavLink>
                     </li>
                   </FeatureFlag>
