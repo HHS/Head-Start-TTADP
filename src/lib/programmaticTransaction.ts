@@ -61,7 +61,9 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
     auditLogger.log('info', 'All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion
   }
-
+  // eslint-disable-next-line no-console
+  console.log(change);
+  auditLogger.log('info', change);
   const tableName = change.source_table.replace('ZAL', '');
   try {
     switch (change.dml_type) {
