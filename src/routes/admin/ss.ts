@@ -96,3 +96,5 @@ export function route(envi: string) {
 }
 
 route(process.env.TTA_SMART_HUB_URI);
+
+export default router;
