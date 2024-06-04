@@ -919,7 +919,7 @@ describe('ActivityReport', () => {
 
     const dropzone = container.querySelector('.dropzone');
 
-    fetchMock.post('/api/files/objectives', [{
+    fetchMock.post('/api/files', [{
       id: 25649, originalFileName: 'BSH_UE_SRD_1.0.2.docx', key: 'dc4b723f-f151-4934-a2b3-5f513c8254a2docx', status: 'UPLOADING', fileSize: 240736, updatedAt: '2023-07-05T18:40:06.130Z', createdAt: '2023-07-05T18:40:06.130Z', url: { url: 'http://minio:9000/ttadp-test/dc4b723f-f151-4934-a2b3-5f513c8254a2docx?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=EXAMPLEID%2F20230705%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20230705T184006Z&X-Amz-Expires=360&X-Amz-Signature=595be3d29630f8275d206300c7dfce6f5e3d7b16d506b7f47d64db04418cf982&X-Amz-SignedHeaders=host', error: null },
     }]);
 
@@ -927,7 +927,7 @@ describe('ActivityReport', () => {
 
     dispatchEvt(dropzone, 'drop', e);
 
-    await waitFor(() => expect(fetchMock.called('/api/files/objectives', { method: 'POST' })).toBeTruthy());
+    await waitFor(() => expect(fetchMock.called('/api/files', { method: 'POST' })).toBeTruthy());
 
     expect(await screen.findByText('BSH_UE_SRD_1.0.2.docx')).toBeInTheDocument();
   });

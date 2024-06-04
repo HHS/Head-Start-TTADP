@@ -12,8 +12,6 @@ export default (sequelize, DataTypes) => {
     static associate(models) {
       File.hasMany(models.ActivityReportFile, { foreignKey: 'fileId', as: 'reportFiles' });
       File.hasMany(models.ActivityReportObjectiveFile, { foreignKey: 'fileId', as: 'reportObjectiveFiles' });
-      File.hasMany(models.ObjectiveFile, { foreignKey: 'fileId', as: 'objectiveFiles' });
-      File.hasMany(models.ObjectiveTemplateFile, { foreignKey: 'fileId', as: 'objectiveTemplateFiles' });
       File.hasMany(models.SessionReportPilotFile, { foreignKey: 'fileId', as: 'sessionFiles' });
       File.hasMany(models.CommunicationLogFile, { foreignKey: 'fileId', as: 'communicationLogFiles' });
       File.hasMany(models.SessionReportPilotSupportingAttachment, { foreignKey: 'fileId', as: 'supportingAttachments' });
@@ -29,18 +27,6 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'fileId',
         otherKey: 'activityReportObjectiveId',
         as: 'reportObjectives',
-      });
-      File.belongsToMany(models.Objective, {
-        through: models.ObjectiveFile,
-        foreignKey: 'fileId',
-        otherKey: 'objectiveId',
-        as: 'objectives',
-      });
-      File.belongsToMany(models.ObjectiveTemplate, {
-        through: models.ObjectiveTemplateFile,
-        foreignKey: 'fileId',
-        otherKey: 'objectiveTemplateId',
-        as: 'objectiveTemplates',
       });
       File.belongsToMany(models.SessionReportPilot, {
         through: models.SessionReportPilotFile,
