@@ -80,12 +80,15 @@ describe('setFieldPromptsForCuratedTemplate', () => {
   });
 
   afterAll(async () => {
-    await GoalFieldResponse.destroy({ where: { goalId: goalIds } });
-    await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id } });
-    await Goal.destroy({ where: { goalTemplateId: template.id }, force: true });
-    await GoalTemplate.destroy({ where: { id: template.id } });
+    await GoalFieldResponse.destroy({ where: { goalId: goalIds }, individualHooks: true });
+    // eslint-disable-next-line max-len
+    await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+    await Goal.destroy({
+      where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true,
+    });
+    await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
-    await Recipient.destroy({ where: { id: recipient.id } });
+    await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
     await sequelize.close();
   });
 

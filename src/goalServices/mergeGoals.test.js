@@ -771,6 +771,8 @@ describe('mergeGoals', () => {
       where: {
         name: topic.name,
       },
+      individualHooks: true,
+      force: true,
     });
 
     await Grant.destroy({

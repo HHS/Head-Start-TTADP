@@ -17,6 +17,7 @@ import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
+import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
@@ -56,6 +57,7 @@ import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import useGaUserData from './hooks/useGaUserData';
+import QADashboard from './pages/QADashboard';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -263,6 +265,15 @@ function App() {
         />
         <Route
           exact
+          path="/dashboards/ipd-courses"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <CourseDashboard />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
           path="/training-reports/:status(not-started|in-progress|complete|suspended)"
           render={({ match }) => (
             <AppWrapper authenticated logout={logout}>
@@ -295,6 +306,24 @@ function App() {
             <AppWrapper authenticated logout={logout}>
               <SessionForm match={match} />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/qa-dashboard"
+          render={() => (
+            <FeatureFlag
+              renderNotFound
+              flag="quality_assurance_dashboard"
+            >
+              <AppWrapper
+                authenticated
+                logout={logout}
+                hasAlerts={!!(alert)}
+              >
+                <QADashboard />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route

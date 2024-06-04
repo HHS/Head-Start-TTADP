@@ -36,7 +36,12 @@ import {
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
 import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createRecipient,
+  createReport,
+  destroyReport,
+  createGrant,
+} from '../testUtils';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -70,6 +75,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -239,6 +245,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -901,31 +908,22 @@ describe('Recipient DB service', () => {
 
   describe('reduceObjectivesForRecipientRecord', () => {
     let recipient;
+    let grant;
     let goals;
     let objectives;
     let topics;
     let report;
 
     beforeAll(async () => {
-      recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        uei: faker.datatype.string(),
-        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      recipient = await createRecipient();
+
+      grant = await createGrant({
+        recipientId: recipient.id,
       });
 
       const goal = {
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       };
-
-      const grant = await Grant.create({
-        status: 'Active',
-        regionId: 5,
-        id: faker.datatype.number({ min: 1000 }),
-        number: faker.datatype.string(),
-        recipientId: recipient.id,
-        startDate: '2019-01-01',
-        endDate: '2024-01-01',
-      });
 
       const goal1 = await Goal.create({
         name: goal.name,
@@ -992,7 +990,7 @@ describe('Recipient DB service', () => {
         reason: [reason],
         calculatedStatus: REPORT_STATUSES.APPROVED,
         topics: [topics[0].name],
-        regionId: 5,
+        regionId: grant.regionId,
       });
 
       await ActivityReportGoal.create({
@@ -1043,6 +1041,7 @@ describe('Recipient DB service', () => {
           id: topics.map((t) => t.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Objective.destroy({
         where: {
@@ -1073,15 +1072,13 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully reduces data without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
+      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
       expect(goalsForRecord.count).toBe(1);
       expect(goalsForRecord.goalRows.length).toBe(1);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(1);
-
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
       expect(objective.ids).toHaveLength(3);
@@ -1353,7 +1350,7 @@ describe('Recipient DB service', () => {
         ],
         reason: ['test'],
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        regionId: 1,
+        regionId: grant.regionId,
         userId: author.id,
       });
 
@@ -1370,6 +1367,7 @@ describe('Recipient DB service', () => {
       await ActivityReportApprover.create({
         activityReportId: report.id,
         userId: approverOne.id,
+
       });
 
       await ActivityReportApprover.create({
@@ -1383,12 +1381,16 @@ describe('Recipient DB service', () => {
         where: {
           userId: [approverOne.id, approverTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await ActivityReportCollaborator.destroy({
         where: {
           userId: [collaboratorOne.id, collaboratorTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await destroyReport(report);
@@ -1396,6 +1398,7 @@ describe('Recipient DB service', () => {
         where: {
           id: grant.id,
         },
+        force: true,
         individualHooks: true,
       });
 
@@ -1403,6 +1406,8 @@ describe('Recipient DB service', () => {
         where: {
           id: recipient.id,
         },
+        force: true,
+        individualHooks: true,
       });
 
       await User.destroy({

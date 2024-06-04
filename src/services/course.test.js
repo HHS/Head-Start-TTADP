@@ -15,6 +15,14 @@ describe('Course', () => {
 
   describe('csvImport', () => {
     beforeAll(async () => {
+      // delete all courses that are not persisted on upload.
+      await Course.destroy({
+        where: {
+          persistsOnUpload: false,
+        },
+        force: true,
+      });
+
       foreverCourse = await Course.create({
         name: 'Forever course',
         persistsOnUpload: true,
@@ -36,7 +44,22 @@ describe('Course', () => {
       });
     });
 
+    const verifyPersistedCourse = async (courseName) => {
+      const course = await Course.findOne({
+        where: {
+          name: courseName,
+        },
+      });
+
+      expect(course).toBeTruthy();
+      expect(course.name).toBe(courseName);
+      expect(course.persistsOnUpload).toBe(true);
+    };
+
     it('creates a new course', async () => {
+      // get all courses.
+      const coursesBefore = await getAllCourses();
+
       const newCourseName = 'Sample Course Name to Create';
       courseNamesToCleanup.push(newCourseName);
       const importData = `${headings}
@@ -69,6 +92,9 @@ describe('Course', () => {
       const courses = await getAllCourses({ persistsOnUpload: false });
       expect(courses.length).toBe(1);
       expect(courses[0].name).toBe(newCourseName);
+
+      // ensure the forever course is still there and not modified or deleted.
+      verifyPersistedCourse('Forever course');
     });
 
     it('existing course with exact match', async () => {
@@ -115,6 +141,9 @@ describe('Course', () => {
       expect(updateCourse).toBeTruthy();
       expect(updateCourse.name).toBe(existingCourse1);
       expect(new Date(updateCourse.updatedAt) > afterCreateDate).toBe(true);
+
+      // ensure the forever course is still there and not modified or deleted.
+      verifyPersistedCourse('Forever course');
     });
 
     it('existing courses without exact match', async () => {
@@ -189,6 +218,9 @@ describe('Course', () => {
       expect(mapsToCourses[0].mapsTo).toBe(addedCourse.id);
       expect(mapsToCourses[1].mapsTo).toBe(addedCourse.id);
       expect(mapsToCourses[2].mapsTo).toBe(addedCourse.id);
+
+      // ensure the forever course is still there and not modified or deleted.
+      verifyPersistedCourse('Forever course');
     });
 
     it('deletes unused courses', async () => {
@@ -282,6 +314,9 @@ describe('Course', () => {
 
       // confirm deletedAt is null
       expect(foreverCourseFromDb.deletedAt).toBeNull();
+
+      // ensure the forever course is still there and not modified or deleted.
+      verifyPersistedCourse('Forever course');
     });
   });
 });

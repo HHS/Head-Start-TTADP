@@ -328,8 +328,6 @@ describe('Goals DB service', () => {
       });
     });
 
-    test.todo('can update an existing goal');
-
     it('can create new objectives', async () => {
       ActivityReportGoal.findOne.mockResolvedValue([
         {
