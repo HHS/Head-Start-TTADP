@@ -30,7 +30,7 @@ export default function GoalCardsHeader({
   allGoalsChecked,
   selectAllGoalCheckboxSelect,
   selectAllGoals,
-  selectedGoalIds,
+  pageSelectedGoalIds,
   perPageChange,
   pageGoalIds,
   showRttapaValidation,
@@ -38,6 +38,7 @@ export default function GoalCardsHeader({
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
+  allSelectedGoalIds,
   goalBuckets,
 }) {
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
@@ -72,16 +73,22 @@ export default function GoalCardsHeader({
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
-    let goalIdsToPrint = selectedGoalIds;
-    if (!goalIdsToPrint.length) {
-      // Loop goalBuckets and get and flat array of all the goalIds.
-      goalIdsToPrint = goalBuckets.filter(
-        (bucket) => pageGoalIds.includes(bucket.id),
-      ).map((bucket) => bucket.goalIds).flat();
+    // See if we have goals selected.
+    let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
+      (key) => allSelectedGoalIds[key],
+    ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // If we don't just print the page.
+    if (!goalsToPrint.length) {
+      goalsToPrint = pageGoalIds;
     }
+    // Get all the goals and associated goals from the buckets.
+    goalsToPrint = goalBuckets.filter(
+      (bucket) => goalsToPrint.includes(bucket.id),
+    ).map((bucket) => bucket.goalIds).flat();
 
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: goalIdsToPrint,
+      sortConfig, selectedGoalIds: goalsToPrint,
     });
   };
 
@@ -208,7 +215,7 @@ export default function GoalCardsHeader({
           className="display-flex flex-align-center margin-left-3 margin-y-0"
           onClick={onPrint}
         >
-          {`Preview and print ${selectedGoalIds.length > 0 ? 'selected' : ''}`}
+          {`Preview and print ${pageSelectedGoalIds.length > 0 ? 'selected' : ''}`}
         </Button>
       </div>
       <div>
@@ -234,7 +241,7 @@ export default function GoalCardsHeader({
           !showRttapaValidation && allGoalsChecked && (numberOfSelectedGoals !== count)
             ? (
               <Alert className="margin-top-3" type="info" slim>
-                {`All ${numberOfSelectedGoals} goals on this page are selected.`}
+                {`All ${pageSelectedGoalIds.length} goals on this page are selected.`}
                 <button
                   type="button"
                   className="usa-button usa-button--unstyled margin-left-1"
@@ -296,7 +303,7 @@ GoalCardsHeader.propTypes = {
   allGoalsChecked: PropTypes.bool,
   numberOfSelectedGoals: PropTypes.number,
   selectAllGoals: PropTypes.func,
-  selectedGoalIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+  pageSelectedGoalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   perPageChange: PropTypes.func.isRequired,
   pageGoalIds: PropTypes.oneOfType(
     [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
@@ -306,6 +313,7 @@ GoalCardsHeader.propTypes = {
   canMergeGoals: PropTypes.bool.isRequired,
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
+  allSelectedGoalIds: PropTypes.shape({ id: PropTypes.bool }).isRequired,
   goalBuckets: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
     goals: PropTypes.arrayOf(PropTypes.number),
