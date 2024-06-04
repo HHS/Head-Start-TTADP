@@ -54,7 +54,6 @@ describe('Programmatic Transaction', () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     await Topic.create({ name: 'Topic B' });
     const changes = await transactionModule.fetchAndAggregateChanges(snapshot);
-    console.log(changes);
     expect(changes[0].new_row_data.name).toBe('Topic B');
     expect(changes[1].new_row_data.name).toBe('Topic A');
     await transactionModule.rollbackToSnapshot(snapshot);

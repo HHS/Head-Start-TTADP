@@ -53,7 +53,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
   allChanges
-  .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
+    .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
   return allChanges;
 };
 
