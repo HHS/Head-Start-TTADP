@@ -79,12 +79,14 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       where: {
         goalId: goalOne.id,
       },
+      individualHooks: true,
     });
 
     await GoalTemplateFieldPrompt.destroy({
       where: {
         goalTemplateId: template.id,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
@@ -92,24 +94,28 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
         id: [goalOne.id, goalTwo.id],
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalTemplate.destroy({
       where: {
         id: template.id,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: activeGrant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await sequelize.close();

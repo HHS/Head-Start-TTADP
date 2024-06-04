@@ -1,4 +1,3 @@
-import Redis from 'ioredis';
 import LockManager from './lockManager';
 
 jest.mock('ioredis', () => jest.requireActual('ioredis-mock'));
