@@ -39,7 +39,6 @@ function GoalCards({
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
   const [allGoalsChecked, setAllGoalsChecked] = useState(false);
-  const [printAllGoals, setPrintAllGoals] = useState(false);
 
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
@@ -117,29 +116,35 @@ function GoalCards({
     goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
   );
 
-  useEffect(() => {
-    const checkValues = Object.values(selectedGoalCheckBoxes);
-    if (checkValues.length
-      && (checkValues.length === goals.length || checkValues.length === goalsCount)
-      && checkValues.every((v) => v === true)) {
-      setAllGoalsChecked(true);
-    } else if (printAllGoals === true) {
-      setPrintAllGoals(false);
-    }
-  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
-
   const selectAllGoalCheckboxSelect = (event) => {
     const { target: { checked = null } = {} } = event;
 
+    // Preserve checked goals on other pages.
+    const thisPagesGoalIds = goals.map((g) => g.id);
+    const preservedCheckboxes = Object.keys(selectedGoalCheckBoxes).reduce((obj, key) => {
+      if (!thisPagesGoalIds.includes(parseInt(key, DECIMAL_BASE))) {
+        return { ...obj, [key]: selectedGoalCheckBoxes[key] };
+      }
+      return { ...obj };
+    }, {});
+
     if (checked === true) {
-      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, true));
-      setAllGoalsChecked(true);
+      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, true), ...preservedCheckboxes });
     } else {
-      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
-      setAllGoalsChecked(false);
-      setPrintAllGoals(false);
+      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, false), ...preservedCheckboxes });
     }
   };
+
+  // Check if all goals on the page are checked.
+  useEffect(() => {
+    const goalIds = goals.map((g) => g.id);
+    const countOfCheckedOnThisPage = goalIds.filter((id) => selectedGoalCheckBoxes[id]).length;
+    if (goals.length === countOfCheckedOnThisPage) {
+      setAllGoalsChecked(true);
+    } else {
+      setAllGoalsChecked(false);
+    }
+  }, [goals, selectedGoalCheckBoxes]);
 
   const handleGoalCheckboxSelect = (event) => {
     const { target: { checked = null, value = null } = {} } = event;
@@ -153,7 +158,6 @@ function GoalCards({
   const checkAllGoals = () => {
     const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: true }), {});
     setSelectedGoalCheckBoxes(allIdCheckBoxes);
-    setPrintAllGoals(true);
   };
 
   const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
@@ -165,14 +169,14 @@ function GoalCards({
   const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
   const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
 
-  const allSelectedGoalIds = (() => {
+  const allSelectedPageGoalIds = (() => {
     const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
-    return selection.map((g) => g.ids).flat();
+    return selection.map((g) => g.id);
   })();
 
   const rttapaLink = (() => {
     if (selectedCheckBoxes && selectedCheckBoxes.length) {
-      const selectedGoalIdsQuery = allSelectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
+      const selectedGoalIdsQuery = allSelectedPageGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
       return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
     }
 
@@ -233,7 +237,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
-          selectedGoalIds={allSelectedGoalIds}
+          pageSelectedGoalIds={allSelectedPageGoalIds}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
           showRttapaValidation={showRttapaValidation}
@@ -243,6 +247,7 @@ function GoalCards({
           shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
           dismissMergeSuccess={dismissMergeSuccess}
           goalBuckets={goalBuckets}
+          allSelectedGoalIds={selectedGoalCheckBoxes}
         />
         <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
