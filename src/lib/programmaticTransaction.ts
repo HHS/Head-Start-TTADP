@@ -38,27 +38,21 @@ interface ChangeRecord {
 
 // Fetch and aggregate changes from all audit tables based on fetched max IDs
 const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRecord[]> => {
-  const allChanges: ChangeRecord[] = await Promise.all(maxIds.flatMap(async ({
+  const allChanges: ChangeRecord[] = (await Promise.all(maxIds.flatMap(async ({
     table_name,
     max_id,
   }) => sequelize.query<ChangeRecord>(/* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
-    WHERE data_id > ${max_id}
+    WHERE id > ${max_id}
     ORDER BY dml_timestamp DESC
   `, {
     type: QueryTypes.SELECT,
-    // eslint-disable-next-line no-console
-    logging: console.log,
-   })));
+  })))).flat();
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
   allChanges
     .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
-
-  // eslint-disable-next-line no-console
-  console.log(allChanges);
-  auditLogger.log('info', allChanges);
   return allChanges;
 };
 
@@ -68,9 +62,6 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
     auditLogger.log('info', 'All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion
   }
-  // eslint-disable-next-line no-console
-  console.log(change);
-  auditLogger.log('info', change);
   const tableName = change.source_table.replace('ZAL', '');
   try {
     switch (change.dml_type) {
