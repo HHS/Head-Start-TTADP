@@ -427,4 +427,146 @@ describe('Goals and Objectives', () => {
     goalsPerPage = screen.queryAllByTestId('goalCard');
     expect(goalsPerPage.length).toBe(25);
   });
+
+  it('respects select all on a per page basis', async () => {
+    const goalUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(goalUrl, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 1 },
+        { ...goals[0], id: 2 },
+        { ...goals[0], id: 3 },
+        { ...goals[0], id: 4 },
+        { ...goals[0], id: 5 },
+        { ...goals[0], id: 6 },
+        { ...goals[0], id: 7 },
+        { ...goals[0], id: 8 },
+        { ...goals[0], id: 9 },
+        { ...goals[0], id: 10 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      {
+        id: 4,
+        goalIds: [4],
+      },
+      {
+        id: 5,
+        goalIds: [5],
+      },
+      {
+        id: 6,
+        goalIds: [6],
+      },
+      {
+        id: 7,
+        goalIds: [7],
+      },
+      {
+        id: 8,
+        goalIds: [8],
+      },
+      {
+        id: 9,
+        goalIds: [9],
+      },
+      {
+        id: 10,
+        goalIds: [10],
+      },
+      ],
+    });
+    act(() => renderGoalsAndObjectives([1]));
+    expect(await screen.findByText(/1-10 of 12/i)).toBeVisible();
+
+    // Select All.
+    const selectAll = await screen.findByRole('checkbox', { name: /select all goals/i });
+    userEvent.click(selectAll);
+
+    // Assert all are selected.
+    const checkboxes = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxes.length).toBe(10);
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Change per page.
+    const goalUrlMore = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=10&limit=10';
+    fetchMock.get(goalUrlMore, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 11 },
+        { ...goals[0], id: 12 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 11,
+        goalIds: [11],
+      },
+      {
+        id: 12,
+        goalIds: [12],
+      },
+      ],
+    });
+
+    // Click page 2.
+    const pageTwo = await screen.findByRole('link', { name: /go to page number 2/i });
+    userEvent.click(pageTwo);
+
+    expect(await screen.findByText(/11-12 of 12/i)).toBeVisible();
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Assert all selected is NOT checked.
+    const selectAllNext = await screen.findByRole('checkbox', { name: /select all goals/i });
+    expect(selectAllNext).not.toBeChecked();
+
+    // Get all the checkboxes.
+    const checkboxesNext = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNext.length).toBe(2);
+
+    // Check the second one.
+    userEvent.click(checkboxesNext[1]);
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
+
+    // Select All.
+    userEvent.click(selectAllNext);
+
+    // Assert all are selected.
+    const checkboxesNextAll = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNextAll.length).toBe(2);
+    checkboxesNextAll.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 12 selected.
+    expect(await screen.findByText(/12 selected/i)).toBeVisible();
+
+    // Uncheck the second checkbox.
+    userEvent.click(checkboxesNext[1]);
+
+    // Assert the select all check box is not checked.
+    expect(selectAllNext).not.toBeChecked();
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
+  });
 });
