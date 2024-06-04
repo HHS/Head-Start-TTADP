@@ -31,6 +31,8 @@ jest.mock('../../services/accessValidation', () => ({
   validateUserAuthForAdmin: jest.fn().mockResolvedValue(false),
   validateUserAuthForAccess: jest.fn().mockResolvedValue(true),
 }));
+jest.mock('axios');
+jest.mock('smartsheet');
 
 const request = require('supertest');
 
