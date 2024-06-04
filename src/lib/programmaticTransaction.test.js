@@ -41,7 +41,7 @@ describe('Programmatic Transaction', () => {
     });
     const snapshot = await captureSnapshot();
     await Topic.destroy({ where: { name: 'Test Topic' }, force: true });
-    let topic = Topic.findOne({ where: { name: 'Test Topic' } });
+    let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
     expect(topic).toBeNull();
     await rollbackToSnapshot(snapshot);
     topic = Topic.findOne({ where: { name: 'Test Topic' } });
