@@ -44,15 +44,16 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   }) => sequelize.query<ChangeRecord>(/* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
-    WHERE id > ${max_id}
+    WHERE id > :maxId
     ORDER BY dml_timestamp DESC
   `, {
+    replacements: { maxId: max_id },
     type: QueryTypes.SELECT,
   })))).flat();
 
   // Sort changes in reverse chronological order to ensure correct order for reversion
   allChanges
-    .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
+  .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
   return allChanges;
 };
 
@@ -118,6 +119,10 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
 
 // Revert all changes based on the aggregated change records
 const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
+  if (process.env.NODE_ENV === 'production') {
+    auditLogger.error('Attempt to revert changes in production environment');
+    throw new Error('Revert operations are not allowed in production environment');
+  }
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
     await revertChange(allChanges);
