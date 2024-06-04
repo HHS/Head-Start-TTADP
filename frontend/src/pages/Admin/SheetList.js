@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { getSheets } from '../../fetchers/ss';
+import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import { getSheets } from '../../fetchers/ss';
 
 const SheetList = ({ onSelectSheet }) => {
   const [sheets, setSheets] = useState();
@@ -37,8 +38,14 @@ const SheetList = ({ onSelectSheet }) => {
       <ul>
         {(sheets && sheets.data) ? (
           sheets.data.map((sheet) => (
-            <li class="flag-label" key={sheet.id} onClick={() => onSelectSheet(sheet.permalink.split('/').pop())}>
-              <strong>{sheet.name}</strong>
+            <li key={sheet.id}>
+              <button
+                type="button"
+                className="flag-label"
+                onClick={() => onSelectSheet(sheet.permalink.split('/').pop())}
+              >
+                <strong>{sheet.name}</strong>
+              </button>
             </li>
           ))
         ) : (
@@ -47,6 +54,10 @@ const SheetList = ({ onSelectSheet }) => {
       </ul>
     </div>
   );
+};
+
+SheetList.propTypes = {
+  onSelectSheet: PropTypes.func.isRequired,
 };
 
 export default SheetList;
