@@ -170,7 +170,7 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.3';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.4';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;

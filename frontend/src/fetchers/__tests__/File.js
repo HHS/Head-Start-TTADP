@@ -47,12 +47,12 @@ describe('File fetcher', () => {
 
   describe('upload objectives file', () => {
     it('success', async () => {
-      fetchMock.postOnce(join(fileApiUrl, 'objectives'), { ok: true });
+      fetchMock.postOnce(fileApiUrl, { ok: true });
       const res = await uploadObjectivesFile(fakeFile);
       expect(res.ok).toBe(true);
     });
     it('failure', async () => {
-      fetchMock.postOnce(join(fileApiUrl, 'objectives'), 500);
+      fetchMock.postOnce(fileApiUrl, 500);
       await expect(uploadFile(uploadObjectivesFile)).rejects.toThrow();
     });
   });

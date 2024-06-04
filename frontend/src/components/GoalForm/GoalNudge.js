@@ -48,9 +48,10 @@ export default function GoalNudge({
 
   useEffect(() => {
     if (useOhsInitiativeGoal && initiativeRef.current) {
+      onUpdateText('');
       initiativeRef.current.focus();
     }
-  }, [useOhsInitiativeGoal]);
+  }, [onUpdateText, useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
   // as we have an object (selectedGrants) in the dependency array
