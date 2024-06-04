@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { getSheetById } from '../../fetchers/ss';
-import { ReactGrid } from "@silevis/reactgrid";
-import "@silevis/reactgrid/styles.css";
+import { ReactGrid } from '@silevis/reactgrid';
+import PropTypes from 'prop-types';
+import '@silevis/reactgrid/styles.css';
 import { Alert } from '@trussworks/react-uswds';
+import { getSheetById } from '../../fetchers/ss';
 
 const SheetDetails = ({ sheetId }) => {
   const [activeSheet, setActiveSheet] = useState(null);
@@ -29,20 +30,20 @@ const SheetDetails = ({ sheetId }) => {
   if (activeSheet) {
     const getCells = () => {
       const col = activeSheet.columns;
-      return col ? col.map((el) => ({ type: "header", text: el.title })) : [];
+      return col ? col.map((el) => ({ type: 'header', text: el.title })) : [];
     };
 
     const headerRow = {
-      rowId: "header",
-      cells: getCells()
+      rowId: 'header',
+      cells: getCells(),
     };
 
     const getSheetRows = (entries = []) => [
       headerRow,
       ...entries.map((entry, idx) => ({
         rowId: idx,
-        cells: entry.cells.map((el) => ({ type: "text", text: el.value ? el.value.toString() : '' }))
-      }))
+        cells: entry.cells.map((el) => ({ type: 'text', text: el.value ? el.value.toString() : '' })),
+      })),
     ];
 
     rows = getSheetRows(activeSheet.rows);
@@ -65,6 +66,10 @@ const SheetDetails = ({ sheetId }) => {
       )}
     </div>
   );
+};
+
+SheetDetails.propTypes = {
+  sheetId: PropTypes.string.isRequired,
 };
 
 export default SheetDetails;
