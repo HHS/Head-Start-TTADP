@@ -4,15 +4,10 @@ import {
   ActivityReportFile,
   ActivityReportObjectiveFile,
   File,
-  Objective,
-  ObjectiveFile,
-  ObjectiveTemplate,
-  ObjectiveTemplateFile,
   ActivityReportObjective,
   SessionReportPilotFile,
   CommunicationLogFile,
   SessionReportPilotSupportingAttachment,
-  sequelize,
 } from '../models';
 import { FILE_STATUSES } from '../constants';
 
@@ -27,10 +22,6 @@ const deleteActivityReportFile = async (id) => ActivityReportFile.destroy({
 });
 // TODO GH - need to pass hookMetadata
 const deleteActivityReportObjectiveFile = async (id) => ActivityReportObjectiveFile.destroy({
-  where: { id },
-  individualHooks: true,
-});
-const deleteObjectiveFile = async (id) => ObjectiveFile.destroy({
   where: { id },
   individualHooks: true,
 });
@@ -49,27 +40,12 @@ const deleteSessionSupportingAttachment = async (id) => SessionReportPilotSuppor
   individualHooks: true,
 });
 
-const deleteObjectiveTemplateFile = async (id) => ObjectiveTemplateFile.destroy({
-  where: { id },
-  individualHooks: true,
-});
-
 const getFileById = async (id) => File.findOne({
   where: { id },
   include: [
     {
       model: ActivityReport,
       as: 'reports',
-      required: false,
-    },
-    {
-      model: Objective,
-      as: 'objectives',
-      required: false,
-    },
-    {
-      model: ObjectiveTemplate,
-      as: 'objectiveTemplates',
       required: false,
     },
     {
@@ -83,18 +59,6 @@ const getFileById = async (id) => File.findOne({
       as: 'reportObjectiveFiles',
       required: false,
       attributes: ['id', 'activityReportObjectiveId'],
-    },
-    {
-      model: ObjectiveFile,
-      as: 'objectiveFiles',
-      required: false,
-      attributes: ['id', 'objectiveId'],
-    },
-    {
-      model: ObjectiveTemplateFile,
-      as: 'objectiveTemplateFiles',
-      required: false,
-      attributes: ['id', 'objectiveTemplateId'],
     },
     {
       model: SessionReportPilotFile,
@@ -139,26 +103,6 @@ const getActivityReportObjectiveFilesById = async (
     },
   ],
 });
-const getObjectiveFilesById = async (objectiveId) => ObjectiveFile.findAll({
-  where: { objectiveId },
-  include: [
-    {
-      model: File,
-      as: 'file',
-      required: true,
-    },
-  ],
-});
-const getObjectiveTemplateFilesById = async (objectiveTemplateId) => ObjectiveTemplateFile.findAll({
-  where: { objectiveTemplateId },
-  include: [
-    {
-      model: File,
-      as: 'file',
-      required: true,
-    },
-  ],
-});
 
 const updateStatus = async (fileId, fileStatus) => {
   /* TODO: If an error occurs make sure it bubbles up. */
@@ -192,24 +136,28 @@ const updateStatusByKey = async (key, fileStatus) => {
   return file?.toJSON();
 };
 
-const createFileMetaData = async (originalFileName, s3FileName, fileSize) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
+const findOrCreateFileForMetadata = async (originalFileName, s3FileName, fileSize) => {
+  let file = await File.findOne({
     where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
+      originalFileName,
+      key: s3FileName,
+      fileSize,
     },
-    defaults: newFile,
   });
 
-  return file.dataValues;
+  if (!file) {
+    file = await File.create({
+      originalFileName,
+      key: s3FileName,
+      status: UPLOADING,
+      fileSize,
+    }, { individualHooks: true });
+  }
+  return file.toJSON();
 };
+
+// eslint-disable-next-line max-len
+const createFileMetaData = async (originalFileName, s3FileName, fileSize) => findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
 
 const createActivityReportFileMetaData = async (
   originalFileName,
@@ -217,126 +165,23 @@ const createActivityReportFileMetaData = async (
   reportId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await ActivityReportFile.create({ activityReportId: reportId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createActivityReportObjectiveFileMetaData = async (
   originalFileName,
   s3FileName,
-  reportId,
-  objectiveId,
+  activityReportObjectiveIds,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await ActivityReportObjectiveFile
-    .create({
-      activityReportId: reportId,
-      activityReportObjectiveId: objectiveId,
-      fileId: file.id,
-    });
-  return file.dataValues;
-};
-
-const createObjectivesFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveIds,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await Promise.all(objectiveIds.map(
-    (objectiveId) => ObjectiveFile.create({ objectiveId, fileId: file.id }),
-  ));
-  return file.dataValues;
-};
-
-const createObjectiveFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveId,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await ObjectiveFile.create({ objectiveId, fileId: file.id });
-  return file.dataValues;
-};
-
-const createObjectiveTemplateFileMetaData = async (
-  originalFileName,
-  s3FileName,
-  objectiveTemplateId,
-  fileSize,
-) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.s3FileName,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-  await ObjectiveTemplateFile.create({ objectiveTemplateId, fileId: file.id });
-  return file.dataValues;
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
+  await Promise.all(activityReportObjectiveIds.map((id) => ActivityReportObjectiveFile.create({
+    activityReportObjectiveId: id,
+    fileId: file.id,
+  })));
+  return file;
 };
 
 const createSessionObjectiveFileMetaData = async (
@@ -345,23 +190,9 @@ const createSessionObjectiveFileMetaData = async (
   sessionReportPilotId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await SessionReportPilotFile.create({ sessionReportPilotId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createSessionSupportingAttachmentMetaData = async (
@@ -370,23 +201,9 @@ const createSessionSupportingAttachmentMetaData = async (
   sessionReportPilotId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await SessionReportPilotSupportingAttachment.create({ sessionReportPilotId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const createCommunicationLogFileMetadata = async (
@@ -395,33 +212,15 @@ const createCommunicationLogFileMetadata = async (
   communicationLogId,
   fileSize,
 ) => {
-  const newFile = {
-    originalFileName,
-    key: s3FileName,
-    status: UPLOADING,
-    fileSize,
-  };
-  const [file] = await File.findOrCreate({
-    where: {
-      originalFileName: newFile.originalFileName,
-      key: newFile.key,
-      fileSize: newFile.fileSize,
-    },
-    defaults: newFile,
-  });
-
+  const file = await findOrCreateFileForMetadata(originalFileName, s3FileName, fileSize);
   await CommunicationLogFile.create({ communicationLogId, fileId: file.id });
-  return file.dataValues;
+  return file;
 };
 
 const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
-  // Get ARO files to delete (destroy does NOT support join's).
-  const aroFileToDelete = await ActivityReportObjectiveFile.findAll({
-    raw: true,
-    attributes: [[
-      sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"ActivityReportObjectiveFile"."id"'))),
-      'ids',
-    ]],
+  // Get ARO files to delete
+  const aroFilesToDelete = await ActivityReportObjectiveFile.findAll({
+    attributes: ['id'],
     where: {
       fileId: parseInt(fileId, DECIMAL_BASE),
     },
@@ -435,18 +234,16 @@ const deleteSpecificActivityReportObjectiveFile = async (reportId, fileId, objec
           activityReportId: parseInt(reportId, DECIMAL_BASE),
           objectiveId: objectiveIds,
         },
-
       },
     ],
   });
 
   // Get ARO file ids.
-  const aroFileIdsToDelete = aroFileToDelete[0].ids;
+  const aroFileIdsToDelete = aroFilesToDelete.map((aroFile) => aroFile.id);
 
   // Delete ARO files.
   await ActivityReportObjectiveFile.destroy({
     where: { id: aroFileIdsToDelete },
-    hookMetadata: { objectiveIds },
     individualHooks: true,
   });
 };
@@ -457,22 +254,15 @@ export {
   deleteActivityReportObjectiveFile,
   deleteCommunicationLogFile,
   deleteSessionSupportingAttachment,
-  deleteObjectiveFile,
   deleteSessionFile,
-  deleteObjectiveTemplateFile,
   getFileById,
   getActivityReportFilesById,
   getActivityReportObjectiveFilesById,
-  getObjectiveFilesById,
-  getObjectiveTemplateFilesById,
   updateStatus,
   updateStatusByKey,
   createFileMetaData,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
-  createObjectiveFileMetaData, // for one objective
-  createObjectivesFileMetaData, // for more than one objective
-  createObjectiveTemplateFileMetaData,
   createSessionObjectiveFileMetaData,
   deleteSpecificActivityReportObjectiveFile,
   createCommunicationLogFileMetadata,
