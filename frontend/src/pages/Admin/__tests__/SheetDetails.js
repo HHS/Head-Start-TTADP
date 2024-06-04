@@ -43,14 +43,15 @@ describe('SheetDetails', () => {
   });
 
   it('should handle error', async () => {
-    getSheetById.mockResolvedValueOnce(new Error('Network error'));
+    getSheetById.mockRejectedValueOnce(new Error('Network error'));
 
     await act(async () => {
       render(<SheetDetails sheetId="1" />);
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Error fetching sheet')).toBeInTheDocument();
+      const errorText = screen.queryByText(/Error fetching sheet/);
+      expect(errorText).toBeInTheDocument();
     });
   });
 });
