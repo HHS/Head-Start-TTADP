@@ -9,9 +9,6 @@ const {
   updateSequence,
 } = require('./migration');
 
-// Mocking the FEATURE_FLAGS constant
-const FEATURE_FLAGS = ['FLAG_1', 'FLAG_2', 'FLAG_3'];
-
 describe('migration', () => {
   const queryInterface = {
     sequelize: {

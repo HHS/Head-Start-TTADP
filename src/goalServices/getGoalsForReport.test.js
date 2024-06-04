@@ -135,6 +135,12 @@ describe('getGoalsForReport', () => {
       },
     });
 
+    await User.destroy({
+      where: {
+        id: user.id,
+      },
+    });
+
     await sequelize.close();
   });
   it('returns the correct number of goals and objectives', async () => {
