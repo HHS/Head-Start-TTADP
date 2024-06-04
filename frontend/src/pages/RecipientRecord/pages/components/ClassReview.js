@@ -99,6 +99,8 @@ const ClassReview = ({ grantNumber, recipientId, regionId }) => {
             className="display-flex flex-align-center"
             href={`https://hses.ohs.acf.hhs.gov/grant-summary/?grant=${grantNumber}`}
             arial-label={`HSES CLASS scores for grant ${grantNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             HSES CLASS
             {' '}

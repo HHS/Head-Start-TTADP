@@ -1106,6 +1106,7 @@ class Users{
 enum enum_Users_flags {
  anv_statistics
  closed_goal_merge_override
+ quality_assurance_dashboard
  regional_goal_dashboard
  training_reports_dashboard
 }
