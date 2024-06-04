@@ -2,9 +2,7 @@ import express from 'express';
 import {
   uploadHandler,
   deleteHandler,
-  deleteObjectiveFileHandler,
   deleteOnlyFile,
-  uploadObjectivesFile,
   deleteActivityReportObjectiveFile,
 } from './handlers';
 import {
@@ -25,7 +23,6 @@ const context = 'files';
  * API for file uploads
  */
 router.post('/', transactionWrapper(uploadHandler));
-router.post('/objectives', transactionWrapper(uploadObjectivesFile));
 router.delete(
   '/s/:eventSessionId/:fileId',
   (req, res, next) => checkIdParam(req, res, next, 'eventSessionId'),
@@ -50,11 +47,6 @@ router.delete(
   checkSessionAttachmentIdParam,
   checkFileIdParam,
   transactionWrapper(deleteHandler, `${context} /ssa/:sessionAttachmentId/:fileId?`),
-);
-router.delete(
-  '/:fileId/objectives',
-  checkFileIdParam,
-  transactionWrapper(deleteObjectiveFileHandler, `${context} /:fileId/objectives`),
 );
 router.delete(
   '/o/:objectiveId?/:fileId?',
