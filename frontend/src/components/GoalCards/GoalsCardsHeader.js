@@ -105,6 +105,8 @@ export default function GoalCardsHeader({
     return null;
   })();
 
+  const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false;
+
   return (
     <div className="padding-x-3 position-relative">
       <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
@@ -215,7 +217,7 @@ export default function GoalCardsHeader({
           className="display-flex flex-align-center margin-left-3 margin-y-0"
           onClick={onPrint}
         >
-          {`Preview and print ${pageSelectedGoalIds.length > 0 ? 'selected' : ''}`}
+          {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
       </div>
       <div>
