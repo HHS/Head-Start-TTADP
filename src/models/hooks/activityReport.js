@@ -12,13 +12,6 @@ const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
-  scheduleUpdateIndexDocumentJob,
-  scheduleDeleteIndexDocumentJob,
-} = require('../../lib/awsElasticSearch/queueManager');
-const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
-const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
-const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
-const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
@@ -684,69 +677,6 @@ const beforeCreate = async (instance) => {
   copyStatus(instance);
 };
 
-const getActivityReportDocument = async (sequelize, instance) => {
-  const data = await collectModelData(
-    [instance.id],
-    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-    sequelize,
-  );
-  return formatModelForAwsElasticsearch(
-    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-    { ...data, ar: { ...instance.dataValues } },
-  );
-};
-
-const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
-  // AWS Elasticsearch: Determine if we queue delete or update index document.
-  const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
-    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
-        && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
-      // Delete Index Document for AWS Elasticsearch.
-      if (!process.env.CI) {
-        await scheduleDeleteIndexDocumentJob(
-          instance.id,
-          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-        );
-      } else {
-        // Create a job to run without worker.
-        const job = {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: instance.id,
-            preventRethrow: true,
-          },
-        };
-        await deleteIndexDocument(job);
-      }
-    } else if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
-      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-      || (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)) {
-      // Index for AWS Elasticsearch.
-      const document = await getActivityReportDocument(sequelize, instance);
-      if (!process.env.CI) {
-        await scheduleUpdateIndexDocumentJob(
-          instance.id,
-          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-          document,
-        );
-      } else {
-        // Create a job to run without worker.
-        const job = {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: instance.id,
-            document,
-            preventRethrow: true,
-          },
-        };
-        await addIndexDocument(job);
-      }
-    }
-  }
-};
-
 /**
  * This function is responsible for auto-populating collaborators for a utilizer when the
  * calculatedStatus of an instance changes to 'APPROVED'. It retrieves the collaborators
@@ -946,7 +876,6 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoCleanupUtilizer(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await updateAwsElasticsearchIndexes(sequelize, instance);
   await afterDestroy(sequelize, instance, options);
 };
 
