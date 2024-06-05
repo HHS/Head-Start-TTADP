@@ -52,6 +52,8 @@ const MonitoringReview = ({ grantNumber, regionId, recipientId }) => {
             className="display-flex flex-align-center"
             href={`https://hses.ohs.acf.hhs.gov/monitoring/grant?grant=${grantNumber}`}
             aria-label={`HSES monitoring for grant ${grantNumber}`}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             HSES monitoring
             {' '}
