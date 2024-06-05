@@ -6,7 +6,6 @@ import db, {
   Goal,
   Grant,
   Objective,
-  ObjectiveTopic,
   Recipient,
   Topic,
 } from '../models';
@@ -92,11 +91,6 @@ describe('frequency graph widget', () => {
       goalId: olderGoal.id,
     });
 
-    await ObjectiveTopic.create({
-      topicId: topic.id,
-      objectiveId: objective.id,
-    });
-
     const aro = await ActivityReportObjective.create({
       activityReportId: reportFive.id,
       objectiveId: objective.id,
@@ -161,13 +155,6 @@ describe('frequency graph widget', () => {
     await ActivityReportObjective.destroy({
       where: {
         objectiveId: [objective.id, olderObjective.id],
-      },
-      individualHooks: true,
-    });
-
-    await ObjectiveTopic.destroy({
-      where: {
-        topicId: topic.id,
       },
       individualHooks: true,
     });
