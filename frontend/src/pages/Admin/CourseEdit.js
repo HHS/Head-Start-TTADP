@@ -71,7 +71,7 @@ function CourseEdit({ match }) {
         type="text"
         id={`coursename-${course.id}`}
         key={`coursename-${course.id}`}
-        name="courseName"
+        name="coursename"
         value={newCourse.name}
         placeholder={course.name}
         onChange={onChange}
@@ -79,7 +79,7 @@ function CourseEdit({ match }) {
 
       <ButtonGroup type="default" style={{ marginTop: '8px' }}>
         <Button onClick={saveChanges}>Save changes</Button>
-        <Button onClick={askConfirmDelete} secondary>Delete course</Button>
+        <Button id="delete-course-button" onClick={askConfirmDelete} secondary>Delete course</Button>
       </ButtonGroup>
 
       <Modal

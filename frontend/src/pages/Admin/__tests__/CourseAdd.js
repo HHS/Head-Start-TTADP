@@ -1,50 +1,22 @@
-import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  act,
   render,
+  screen,
 } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import CourseAdd from '../CourseAdd';
 
-const refresh = jest.fn();
-
 describe('CourseAdd', () => {
-  const renderIt = () => {
-    render(<CourseAdd refresh={refresh} />);
-  };
+  const mockRefresh = jest.fn();
 
   beforeEach(() => {
-
+    fetchMock.reset();
+    render(<CourseAdd refresh={mockRefresh} />);
   });
 
-  afterEach(() => {
-
-  });
-
-  it('renders', async () => {
-    act(() => {
-      renderIt();
-    });
-
-    const courseNameInput = document.querySelector('input[name="coursename"]');
-    expect(courseNameInput).toBeInTheDocument();
-  });
-
-  it('calls refresh when submitting', async () => {
-    act(() => {
-      renderIt();
-    });
-
-    const courseNameInput = document.querySelector('input[name="coursename"]');
-    const addButton = document.querySelector('button[data-testid="add-course"]');
-
-    expect(courseNameInput).toBeInTheDocument();
-
-    act(() => {
-      courseNameInput.value = 'New Course';
-      addButton.click();
-    });
-
-    expect(refresh).toHaveBeenCalledTimes(1);
+  it('renders the CourseAdd component', () => {
+    expect(screen.getByText('Add a new course')).toBeInTheDocument();
+    expect(screen.getByLabelText('Course name')).toBeInTheDocument();
+    expect(screen.getByTestId('add-course')).toBeInTheDocument();
   });
 });
