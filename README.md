@@ -95,7 +95,7 @@ The guidance on using the `captureSnapshot` and `rollbackToSnapshot` functions  
 
 In this example, `captureSnapshot` and `rollbackToSnapshot` are used at the Jest suite level to manage database states before and after all tests run. This is useful when tests are not independent or when setup/teardown for each test would be too costly.
 
-```markdown
+```javascript
 describe('Database State Management', () => {
   let snapshot;
 
@@ -123,7 +123,7 @@ describe('Database State Management', () => {
 
 This approach uses `captureSnapshot` and `rollbackToSnapshot` at the start and end of each individual test. It is most effective when tests are meant to run independently, ensuring no residual data affects subsequent tests.
 
-```markdown
+```javascript
 describe('Individual Test Isolation', () => {
   it('Test Case 1', async () => {
     const snapshot = await transactionModule.captureSnapshot();
