@@ -23,6 +23,14 @@ export async function getAllCourses(where: WhereOptions = {}) {
   });
 }
 
+export async function getCourseById(id: number) {
+  return Course.findByPk(id);
+}
+
+export async function createCourseByName(name: string) {
+  return Course.create({ name });
+}
+
 export async function csvImport(buffer: Buffer | string) {
   const created = [];
   const replaced = [];
