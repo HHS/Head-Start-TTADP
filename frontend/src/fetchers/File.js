@@ -30,7 +30,7 @@ export const uploadFile = async (data) => {
 };
 
 export const uploadObjectivesFile = async (data) => {
-  const res = await fetch(join(fileUrl, 'objectives'), {
+  const res = await fetch(fileUrl, {
     method: 'POST',
     credentials: 'same-origin',
     body: data,

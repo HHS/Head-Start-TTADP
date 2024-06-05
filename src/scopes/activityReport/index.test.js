@@ -2962,8 +2962,7 @@ describe('filtersToScopes', () => {
       await createActivityReportObjectiveFileMetaData(
         'test.pdf',
         'very-unique-file-key',
-        99_998,
-        99_998,
+        [aro.id],
         12_345,
       );
     });

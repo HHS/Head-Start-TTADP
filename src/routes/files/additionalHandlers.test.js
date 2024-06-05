@@ -1,6 +1,5 @@
 import {
   deleteOnlyFile,
-  deleteObjectiveFileHandler,
   deleteHandler,
 } from './handlers';
 import { userById } from '../../services/users';
@@ -8,14 +7,12 @@ import { currentUserId } from '../../services/currentUser';
 import {
   getFileById,
   deleteFile,
-  deleteObjectiveFile,
   deleteCommunicationLogFile,
   deleteSessionSupportingAttachment,
 } from '../../services/files';
 import { logById } from '../../services/communicationLog';
 import { deleteFileFromS3 } from '../../lib/s3';
 import SCOPES from '../../middleware/scopeConstants';
-import { getObjectiveById } from '../../services/objectives';
 import { findSessionById } from '../../services/sessionReports';
 import { findEventBySmartsheetIdSuffix } from '../../services/event';
 
@@ -36,9 +33,6 @@ jest.mock('../../services/files', () => ({
   deleteFile: jest.fn(),
   createActivityReportFileMetaData: jest.fn(),
   createActivityReportObjectiveFileMetaData: jest.fn(),
-  createObjectiveFileMetaData: jest.fn(),
-  createObjectiveTemplateFileMetaData: jest.fn(),
-  createObjectivesFileMetaData: jest.fn(),
   deleteObjectiveFile: jest.fn(),
   deleteCommunicationLogFile: jest.fn(),
   deleteSessionSupportingAttachment: jest.fn(),
@@ -337,151 +331,6 @@ describe('file handlers, additional tests', () => {
       await deleteOnlyFile(mockRequest, mockResponse);
 
       expect(mockResponse.status).toHaveBeenCalledWith(500);
-    });
-  });
-
-  describe('deleteObjectiveFileHandler', () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
-    it('deletes a file', async () => {
-      const mockRequest = {
-        params: {
-          fileId: 123,
-        },
-        body: {
-          objectiveIds: [456],
-        },
-      };
-
-      currentUserId.mockResolvedValueOnce(456);
-      userById.mockResolvedValueOnce({
-        id: 456,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
-      });
-
-      getObjectiveById.mockResolvedValueOnce({
-        onApprovedAR: false,
-        otherEntityId: null,
-        goal: {
-          grant: {
-            regionId: 1,
-          },
-        },
-      });
-
-      getFileById.mockResolvedValue({
-        key: 'test.pdf',
-        reports: [],
-        reportObjectiveFiles: [],
-        objectiveFiles: [],
-        objectiveTemplateFiles: [],
-      });
-
-      await deleteObjectiveFileHandler(mockRequest, mockResponse);
-
-      expect(deleteObjectiveFile).not.toHaveBeenCalled();
-      expect(deleteFile).toHaveBeenCalled();
-      expect(deleteFileFromS3).toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(204);
-    });
-
-    it('doesn\'t delete if there are associations', async () => {
-      const mockRequest = {
-        params: {
-          fileId: 123,
-        },
-        body: {
-          objectiveIds: [456],
-        },
-      };
-
-      currentUserId.mockResolvedValueOnce(456);
-      userById.mockResolvedValueOnce({
-        id: 456,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
-      });
-
-      getObjectiveById.mockResolvedValueOnce({
-        onApprovedAR: false,
-        otherEntityId: null,
-        goal: {
-          grant: {
-            regionId: 1,
-          },
-        },
-      });
-
-      getFileById.mockResolvedValue({
-        key: 'test.pdf',
-        reports: [],
-        reportObjectiveFiles: [],
-        objectiveFiles: [{
-          objectiveId: 456,
-        }],
-        objectiveTemplateFiles: [],
-      });
-
-      await deleteObjectiveFileHandler(mockRequest, mockResponse);
-
-      expect(deleteObjectiveFile).toHaveBeenCalled();
-      expect(deleteFile).not.toHaveBeenCalled();
-      expect(deleteFileFromS3).not.toHaveBeenCalled();
-      expect(mockResponse.status).toHaveBeenCalledWith(204);
-    });
-
-    it('rejects based on permissions', async () => {
-      const mockRequest = {
-        params: {
-          fileId: 123,
-        },
-        body: {
-          objectiveIds: [456],
-        },
-      };
-
-      currentUserId.mockResolvedValueOnce(456);
-      userById.mockResolvedValueOnce({
-        id: 456,
-        permissions: [{
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-          regionId: 1,
-        }],
-      });
-
-      getObjectiveById.mockResolvedValueOnce({
-        onApprovedAR: false,
-        otherEntityId: null,
-        goal: {
-          grant: {
-            regionId: 2,
-          },
-        },
-      });
-
-      getFileById.mockResolvedValue({
-        key: 'test.pdf',
-        reports: [],
-        reportObjectiveFiles: [],
-        objectiveFiles: [{
-          objectiveId: 456,
-        }],
-        objectiveTemplateFiles: [],
-      });
-
-      await deleteObjectiveFileHandler(mockRequest, mockResponse);
-
-      expect(deleteObjectiveFile).not.toHaveBeenCalled();
-      expect(deleteFile).not.toHaveBeenCalled();
-      expect(deleteFileFromS3).not.toHaveBeenCalled();
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
 });
