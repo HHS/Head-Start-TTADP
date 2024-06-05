@@ -423,7 +423,7 @@ parameters:
     default: "mb/TTAHUB-2943/remove-models"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "mb/TTAHUB-2530/update-RTR-objective-form"
+    default: "al-ttahub-2942-fix-number-of-goals"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
