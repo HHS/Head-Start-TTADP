@@ -1,5 +1,9 @@
 import fs from 'fs';
-import logicalDataModel from './logicalDataModel';
+import logicalDataModel, {
+  isCamelCase,
+  processEnum,
+  processClassDefinition,
+} from './logicalDataModel';
 import { auditLogger } from '../logger';
 
 describe('logicalDataModel', () => {
@@ -38,5 +42,32 @@ describe('logicalDataModel', () => {
     expect(puml[0]).not.toBeNull();
     expect(puml[1]).not.toBeNull();
     expect(puml[0].mtime).not.toEqual(puml[1]?.mtime);
+  });
+
+  describe('isCamelCase', () => {
+    it('returns false when appropriate', () => {
+      expect(isCamelCase('1')).toBe(false);
+      expect(isCamelCase('A')).toBe(false);
+      expect(isCamelCase('foo bar')).toBe(false);
+    });
+  });
+
+  describe('processEnum', () => {
+    it('returns an issue when modelEnum is falsy', () => {
+      const issue = processEnum('foo', 'bar', [], false);
+      expect(issue).toContain('foo enum missing for table bar');
+    });
+  });
+
+  describe('processClassDefinition', () => {
+    it('returns an issue when a model is missing for a table', () => {
+      const schema = {
+        model: false,
+        attributes: [],
+      };
+
+      const issue = processClassDefinition(schema, 'foo');
+      expect(issue).toContain('model missing for table');
+    });
   });
 });
