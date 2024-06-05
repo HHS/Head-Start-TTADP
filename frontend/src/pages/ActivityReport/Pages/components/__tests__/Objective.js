@@ -156,7 +156,7 @@ describe('Objective', () => {
   });
 
   it('uploads a file', async () => {
-    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
+    fetchMock.post('/api/files', [{ objectiveIds: [] }]);
     const { rerender } = render(<RenderObjective />);
     const files = screen.getByText(/Did you use any other TTA resources that aren't available as link\?/i);
     const fieldset = files.parentElement;
@@ -164,14 +164,14 @@ describe('Objective', () => {
     userEvent.click(yes);
     const data = mockData([file('testFile', 1)]);
     const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
-    expect(fetchMock.called('/api/files/objectives')).toBe(false);
+    expect(fetchMock.called('/api/files')).toBe(false);
     dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, <RenderObjective />);
-    expect(fetchMock.called('/api/files/objectives')).toBe(true);
+    expect(fetchMock.called('/api/files')).toBe(true);
   });
 
   it('handles a file upload error', async () => {
-    fetchMock.post('/api/files/objectives', 500);
+    fetchMock.post('/api/files', 500);
     const { rerender } = render(<RenderObjective />);
     const files = screen.getByText(/Did you use any other TTA resources that aren't available as link?/i);
     const fieldset = files.parentElement;
@@ -179,10 +179,10 @@ describe('Objective', () => {
     userEvent.click(yes);
     const data = mockData([file('testFile', 1)]);
     const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
-    expect(fetchMock.called('/api/files/objectives')).toBe(false);
+    expect(fetchMock.called('/api/files')).toBe(false);
     dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, <RenderObjective />);
-    expect(fetchMock.called('/api/files/objectives')).toBe(true);
+    expect(fetchMock.called('/api/files')).toBe(true);
     await screen.findByText(/error uploading your file/i);
   });
 
