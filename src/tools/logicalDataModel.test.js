@@ -3,6 +3,7 @@ import logicalDataModel, {
   isCamelCase,
   processEnum,
   processClassDefinition,
+  processAssociations,
 } from './logicalDataModel';
 import { auditLogger } from '../logger';
 
@@ -57,6 +58,16 @@ describe('logicalDataModel', () => {
       const issue = processEnum('foo', 'bar', [], false);
       expect(issue).toContain('foo enum missing for table bar');
     });
+
+    it('alerts when value missing from model enum', () => {
+      const issue = processEnum('foo', 'bar', ['foo'], ['bar']);
+      expect(issue).toContain('value missing from model enum: foo');
+    });
+
+    it('alerts when value missing from schema enum', () => {
+      const issue = processEnum('foo', 'bar', ['foo'], ['bar']);
+      expect(issue).toContain('value missing from schema enum: bar');
+    });
   });
 
   describe('processClassDefinition', () => {
@@ -68,6 +79,56 @@ describe('logicalDataModel', () => {
 
       const issue = processClassDefinition(schema, 'foo');
       expect(issue).toContain('model missing for table');
+    });
+  });
+
+  describe('processAssociations', () => {
+    it('should correctly process associations and return UML', () => {
+      const associations = [
+        { source: { name: 'User' }, target: { name: 'Profile' }, associationType: 'hasOne' },
+        { source: { name: 'Profile' }, target: { name: 'User' }, associationType: 'belongsTo' },
+      ];
+      const tables = ['User', 'Profile'];
+      const schemas = [
+        { table: 'User', attributes: [{ name: 'id', reference: '"Profile"' }] },
+        { table: 'Profile', attributes: [{ name: 'userId', reference: '"User"' }] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('Associations');
+      expect(result).toContain('User o--[#yellow,bold,thickness=2]--o Profile : <color:#2491FF>missing-from-model</color>');
+    });
+
+    it('should handle "defined both directions" associations', () => {
+      const associations = [
+        { source: { name: 'Order' }, target: { name: 'Product' }, associationType: 'hasMany' },
+      ];
+      const tables = ['Order', 'Product'];
+      const schemas = [
+        { table: 'Order', attributes: [] },
+        { table: 'Product', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('associations need to be defined both directions');
+    });
+
+    it('should identify issues with associations', () => {
+      const associations = [
+        { source: { name: 'User' }, target: { name: 'Post' }, associationType: 'hasMany' },
+        { source: { name: 'Post' }, target: { name: 'User' }, associationType: 'belongsTo' },
+      ];
+      const tables = ['User', 'Post'];
+      const schemas = [
+        { table: 'User', attributes: [{ name: 'id', reference: '"Post"' }] },
+        { table: 'Post', attributes: [{ name: 'userId', reference: '"User"' }] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('!issue');
     });
   });
 });

@@ -179,7 +179,7 @@ export function processClassDefinition(schema, key) {
   return uml;
 }
 
-function processAssociations(associations, tables, schemas) {
+export function processAssociations(associations, tables, schemas) {
   let uml = '\n\' Associations\n\n';
 
   interface Association {
