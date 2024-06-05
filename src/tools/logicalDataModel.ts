@@ -74,11 +74,13 @@ export function processEnum(name, table, schemaEnum, modelEnum) {
     }
     uml += ` ${sEnum}\n`;
   });
-  modelEnum?.forEach((mEnum) => {
-    if (!schemaEnum?.includes(mEnum)) {
-      uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
-    }
-  });
+  if (Array.isArray(modelEnum)) {
+    modelEnum?.forEach((mEnum) => {
+      if (!schemaEnum?.includes(mEnum)) {
+        uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
+      }
+    });
+  }
   uml += '}\n\n';
   uml += `${name} <|-- ${table}\n\n`;
   return uml;
