@@ -54,11 +54,12 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   // Sort changes in reverse chronological order to ensure correct order for reversion
   allChanges
     .sort((a, b) => new Date(b.dml_timestamp).getTime() - new Date(a.dml_timestamp).getTime());
+
   return allChanges;
 };
 
 const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
-  const change = changes.pop(); // Remove the last change from the array
+  const change = changes.shift();
   if (!change) {
     auditLogger.log('info', 'All changes have been successfully reverted.');
     return; // Base case: if there are no more changes, stop recursion

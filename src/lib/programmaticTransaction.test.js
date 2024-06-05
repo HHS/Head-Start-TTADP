@@ -1,9 +1,15 @@
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import * as transactionModule from './programmaticTransaction';
 import {
   Grant,
   Topic,
+  ActivityReport,
+  ActivityReportApprover,
+  User,
   sequelize,
 } from '../models';
+import { upsertApprover } from '../services/activityReportApprovers';
+import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
 describe('Programmatic Transaction', () => {
@@ -105,5 +111,129 @@ describe('Programmatic Transaction', () => {
     // Restore the spy
     querySpy.mockRestore();
     auditLogger.error.mockRestore();
+  });
+  it('should prevent reversion in production environment', async () => {
+    // Mock the environment variable
+    const currentEnv = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+
+    // Mock auditLogger to verify it gets called
+    const logSpy = jest.spyOn(auditLogger, 'error');
+
+    // Prepare a dummy maxId array as expected by revertAllChanges
+    const mockMaxIds = [{ table_name: 'TestTable', max_id: 1 }];
+
+    // Expect the function to throw an error about production restrictions
+    await expect(transactionModule.revertAllChanges(mockMaxIds)).rejects.toThrow('Revert operations are not allowed in production environment');
+
+    // Ensure the error logger was called
+    expect(logSpy).toHaveBeenCalledWith('Attempt to revert changes in production environment');
+
+    // Clean up by restoring the original environment variable
+    process.env.NODE_ENV = currentEnv;
+
+    // Restore the spy
+    logSpy.mockRestore();
+  });
+  it('complex test - activityReportApprovers services - upsertApprover and ActivityReportApprover hooks - for submitted reports - calculatedStatus is "needs action" if any approver "needs_action"', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    const mockUser = {
+      id: 11184161,
+      homeRegionId: 1,
+      hsesUsername: 'user11184161',
+      hsesUserId: 'user11184161',
+      lastLogin: new Date(),
+    };
+
+    const mockUserTwo = {
+      id: 22261035,
+      homeRegionId: 1,
+      hsesUsername: 'user22261035',
+      hsesUserId: 'user22261035',
+      lastLogin: new Date(),
+    };
+
+    const mockManager = {
+      id: 22284981,
+      homeRegionId: 1,
+      hsesUsername: 'user22284981',
+      hsesUserId: 'user22284981',
+      lastLogin: new Date(),
+    };
+
+    const secondMockManager = {
+      id: 33384616,
+      homeRegionId: 1,
+      hsesUsername: 'user33384616',
+      hsesUserId: 'user33384616',
+      lastLogin: new Date(),
+    };
+
+    const submittedReport = {
+      userId: mockUser.id,
+      regionId: 1,
+      submissionStatus: REPORT_STATUSES.SUBMITTED,
+      numberOfParticipants: 1,
+      deliveryMethod: 'method',
+      duration: 0,
+      endDate: '2000-01-01T12:00:00Z',
+      startDate: '2000-01-01T12:00:00Z',
+      activityRecipientType: 'something',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      reason: ['reason'],
+      participants: ['participants'],
+      topics: ['topics'],
+      ttaType: ['type'],
+      version: 2,
+    };
+
+    const draftReport = {
+      ...submittedReport,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+    };
+    await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);
+    const report1 = await ActivityReport.create(submittedReport);
+    // One approved
+    await ActivityReportApprover.create({
+      activityReportId: report1.id,
+      userId: mockManager.id,
+      status: APPROVER_STATUSES.APPROVED,
+    });
+    // One pending
+    await ActivityReportApprover.create({
+      activityReportId: report1.id,
+      userId: secondMockManager.id,
+    });
+    // Works with managed transaction
+    await sequelize.transaction(async () => {
+      // Pending updated to needs_action
+      const approver = await upsertApprover({
+        status: APPROVER_STATUSES.NEEDS_ACTION,
+        activityReportId: report1.id,
+        userId: secondMockManager.id,
+      });
+      expect(approver.status).toEqual(APPROVER_STATUSES.NEEDS_ACTION);
+      expect(approver.user).toBeDefined();
+    });
+    const [updatedReport] = await activityReportAndRecipientsById(report1.id);
+    expect(updatedReport.approvedAt).toBeNull();
+    expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
+    expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
+
+    await transactionModule.rollbackToSnapshot(snapshot);
+    const report = await ActivityReport.findOne({ where: { id: report1.id } });
+    expect(report).toBeNull();
+    const users = await User.findAll({
+      where: {
+        id: [
+          mockUser.id,
+          mockUserTwo.id,
+          mockManager.id,
+          secondMockManager.id,
+        ],
+      },
+    });
+    expect(users).toEqual([]);
   });
 });
