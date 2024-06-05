@@ -13,6 +13,9 @@ import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
 describe('Programmatic Transaction', () => {
+  afterAll(async () => {
+    await sequelize.close();
+  });
   it('Insert', async () => {
     const snapshot = await transactionModule.captureSnapshot();
     await Topic.create({
@@ -65,8 +68,6 @@ describe('Programmatic Transaction', () => {
     await transactionModule.rollbackToSnapshot(snapshot);
   });
   it('should throw error for unknown dml_type', async () => {
-    const snapshot = await transactionModule.captureSnapshot();
-    const maxIds = await transactionModule.fetchMaxIds();
     const fakeChange = {
       source_table: 'Topic',
       dml_type: 'INVALID_TYPE',
@@ -91,14 +92,13 @@ describe('Programmatic Transaction', () => {
     jest.spyOn(auditLogger, 'error'); // Spy on auditLogger.error if not already done
 
     const snapshot = await transactionModule.captureSnapshot();
-    const maxIds = await transactionModule.fetchMaxIds();
 
     // Spy on sequelize.query and force it to throw an error
     const querySpy = jest.spyOn(sequelize, 'query').mockImplementationOnce(() => {
       throw new Error('Database error');
     });
 
-    await expect(transactionModule.revertAllChanges(maxIds))
+    await expect(transactionModule.revertAllChanges(snapshot))
       .rejects
       .toThrow('Database error');
 
@@ -188,10 +188,6 @@ describe('Programmatic Transaction', () => {
       version: 2,
     };
 
-    const draftReport = {
-      ...submittedReport,
-      submissionStatus: REPORT_STATUSES.DRAFT,
-    };
     await User.bulkCreate([mockUser, mockUserTwo, mockManager, secondMockManager]);
     const report1 = await ActivityReport.create(submittedReport);
     // One approved
