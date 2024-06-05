@@ -245,7 +245,7 @@ export default function GoalCardsHeader({
             ? (
               <Alert className="margin-top-3" type="info" slim>
                 {showClearAllAlert
-                  ? 'All 15 goals are selected.'
+                  ? `All ${count} goals are selected.`
                   : `All ${pageSelectedGoalIds.length} goals on this page are selected.`}
                 <button
                   type="button"
