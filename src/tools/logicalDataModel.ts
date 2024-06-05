@@ -63,18 +63,6 @@ function isCamelCase(str) {
   return true;
 }
 
-function toCamelCase(str) {
-  return str
-    // Replace any dashes or underscores with spaces
-    .replace(/[-_]/g, ' ')
-    // Split the string into an array of words
-    .split(' ')
-    // Capitalize the first letter of each word (except the first word)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    // Join the words back together with no spaces
-    .join('');
-}
-
 function processEnum(name, table, schemaEnum, modelEnum) {
   let uml = modelEnum
     ? `enum ${name} {\n`
