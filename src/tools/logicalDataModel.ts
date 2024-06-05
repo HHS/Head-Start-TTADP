@@ -363,7 +363,7 @@ export function processAssociations(associations, tables, schemas) {
   return uml;
 }
 
-function writeUml(uml, dbRoot) {
+export function writeUml(uml, dbRoot) {
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.puml'), uml);
   // update readme with uml
   let root = path.dirname((require.main || {}).filename || './');
