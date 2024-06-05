@@ -132,7 +132,9 @@ function GoalDataController({
           query,
           mergedGoals || [],
         );
-        setData(response);
+        const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
+        const goalBuckets = response.allGoalIds;
+        setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
         setError('');
         // display success message if we have merged goals
         setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
@@ -259,6 +261,7 @@ function GoalDataController({
           canMergeGoals={canMergeGoals}
           shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
           dismissMergeSuccess={dismissMergeSuccess}
+          goalBuckets={data.goalBuckets}
         />
       </FilterContext.Provider>
     </div>
