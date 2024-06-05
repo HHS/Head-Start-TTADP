@@ -46,8 +46,8 @@ describe('logicalDataModel', () => {
 
   describe('isCamelCase', () => {
     it('returns false when appropriate', () => {
-      expect(isCamelCase('1')).toBe(false);
       expect(isCamelCase('A')).toBe(false);
+      expect(isCamelCase('_')).toBe(false);
       expect(isCamelCase('foo bar')).toBe(false);
     });
   });
