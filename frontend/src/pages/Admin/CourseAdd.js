@@ -28,6 +28,7 @@ function CourseAdd({ refresh }) {
       />
       <Button
         type="button"
+        data-testid="add-course"
         onClick={create}
         className="margin-top-2"
       >
