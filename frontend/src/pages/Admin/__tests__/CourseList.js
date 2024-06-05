@@ -1,60 +1,41 @@
-import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  act,
   render,
+  screen,
+  fireEvent,
 } from '@testing-library/react';
 import CourseList from '../CourseList';
 
-const courses = [
-  { id: 1, name: 'Course 1' },
-  { id: 2, name: 'Course 2' },
-];
-
 describe('CourseList', () => {
-  const renderIt = () => {
+  const courses = [
+    { id: 1, name: 'Introduction to Dogs' },
+    { id: 2, name: 'Advanced Penguins' },
+    { id: 3, name: 'Data Structures and Kangaroos' },
+  ];
+
+  it('renders without courses', () => {
+    render(<CourseList courses={[]} />);
+    expect(screen.queryByLabelText('Filter courses by name')).toBeInTheDocument();
+  });
+
+  it('renders with courses and allows filtering', () => {
     render(<CourseList courses={courses} />);
-  };
+    expect(screen.getByLabelText('Filter courses by name')).toBeInTheDocument();
+    expect(screen.getByText('Introduction to Dogs')).toBeInTheDocument();
+    expect(screen.getByText('Advanced Penguins')).toBeInTheDocument();
+    expect(screen.getByText('Data Structures and Kangaroos')).toBeInTheDocument();
 
-  beforeEach(() => {
-
+    fireEvent.change(screen.getByLabelText('Filter courses by name'), { target: { value: 'dog' } });
+    expect(screen.getByText('Introduction to Dogs')).toBeInTheDocument();
+    expect(screen.queryByText('Advanced Penguins')).not.toBeInTheDocument();
+    expect(screen.queryByText('Data Structures and Kangaroos')).not.toBeInTheDocument();
   });
 
-  afterEach(() => {
-
-  });
-
-  it('renders and shows all courses', async () => {
-    act(() => {
-      renderIt();
-    });
-
-    const courseFilterInput = document.querySelector('input[name="courses-filter"]');
-    expect(courseFilterInput).toBeInTheDocument();
-
-    const course1Link = document.querySelector('a[href="/admin/course/1"]');
-    const course2Link = document.querySelector('a[href="/admin/course/2"]');
-
-    expect(course1Link).toBeInTheDocument();
-    expect(course2Link).toBeInTheDocument();
-  });
-
-  it('filters courses', async () => {
-    act(() => {
-      renderIt();
-    });
-
-    const courseFilterInput = document.querySelector('input[name="courses-filter"]');
-    expect(courseFilterInput).toBeInTheDocument();
-
-    act(() => {
-      courseFilterInput.value = '1';
-      courseFilterInput.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-
-    const course1Link = document.querySelector('a[href="/admin/course/1"]');
-    const course2Link = document.querySelector('a[href="/admin/course/2"]');
-    expect(course1Link).toBeInTheDocument();
-    expect(course2Link).not.toBeInTheDocument();
+  it('handles no matching filter results', () => {
+    render(<CourseList courses={courses} />);
+    fireEvent.change(screen.getByLabelText('Filter courses by name'), { target: { value: 'asdf' } });
+    expect(screen.queryByText('Introduction to Dogs')).not.toBeInTheDocument();
+    expect(screen.queryByText('Advanced Penguins')).not.toBeInTheDocument();
+    expect(screen.queryByText('Data Structures and Kangaroos')).not.toBeInTheDocument();
   });
 });
