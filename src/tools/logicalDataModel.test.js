@@ -1,11 +1,20 @@
 import fs from 'fs';
+import path from 'path';
 import logicalDataModel, {
   isCamelCase,
   processEnum,
   processClassDefinition,
   processAssociations,
+  writeUml,
 } from './logicalDataModel';
 import { auditLogger } from '../logger';
+
+jest.mock('fs', () => ({
+  ...jest.requireActual('fs'),
+  writeFileSync: jest.fn(),
+  readFileSync: jest.fn(),
+  existsSync: jest.fn(),
+}));
 
 describe('logicalDataModel', () => {
   it('logicalDataModel', async () => {
@@ -21,7 +30,7 @@ describe('logicalDataModel', () => {
       throw err;
     };
 
-    const getStats = (path, target) => fs.stat(path, (err, stats) => callBack(err, stats, target));
+    const getStats = (p, target) => fs.stat(p, (err, stats) => callBack(err, stats, target));
 
     getStats('./docs/logical_data_model.encoded', encoded);
     getStats('./docs/logical_data_model.puml', puml);
@@ -129,6 +138,41 @@ describe('logicalDataModel', () => {
       const result = processAssociations(associations, tables, schemas);
 
       expect(result).toContain('!issue');
+    });
+  });
+
+  describe('writeUml', () => {
+    const uml = '@startuml\nAlice -> Bob: Authentication Request\n@enduml';
+    const dbRoot = 'src/db';
+    // const readmePath = path.join(process.cwd(), 'README.md');
+    const readmePath = path.dirname((require.main || {}).filename || './');
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('writes UML to the specified file', () => {
+      writeUml(uml, dbRoot);
+      expect(fs.writeFileSync).toHaveBeenCalledWith(path.join(dbRoot, 'logical_data_model.puml'), uml);
+    });
+
+    it('updates README.md if it exists and contains a plantuml code block', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('```plantuml\noldUml\n\'db/uml.puml\n```');
+      writeUml(uml, dbRoot);
+      expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not update README.md if it does not contain a plantuml code block', () => {
+      fs.existsSync.mockReturnValue(true);
+      fs.readFileSync.mockReturnValue('No plantuml code block here.');
+      writeUml(uml, dbRoot);
+      expect(fs.writeFileSync).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not throw an error if README.md does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+      expect(() => writeUml(uml, dbRoot)).not.toThrow();
     });
   });
 });
