@@ -106,6 +106,7 @@ export default function GoalCardsHeader({
   })();
 
   const hasGoalsSelected = pageSelectedGoalIds ? pageSelectedGoalIds.length > 0 : false;
+  const showClearAllAlert = numberOfSelectedGoals === count;
 
   return (
     <div className="padding-x-3 position-relative">
@@ -240,16 +241,20 @@ export default function GoalCardsHeader({
           </Alert>
         )}
         {
-          !showRttapaValidation && allGoalsChecked && (numberOfSelectedGoals !== count)
+          !showRttapaValidation && allGoalsChecked
             ? (
               <Alert className="margin-top-3" type="info" slim>
-                {`All ${pageSelectedGoalIds.length} goals on this page are selected.`}
+                {showClearAllAlert
+                  ? 'All 15 goals are selected.'
+                  : `All ${pageSelectedGoalIds.length} goals on this page are selected.`}
                 <button
                   type="button"
                   className="usa-button usa-button--unstyled margin-left-1"
-                  onClick={selectAllGoals}
+                  onClick={() => selectAllGoals(showClearAllAlert)}
                 >
-                  {`Select all ${count} goals`}
+                  {showClearAllAlert
+                    ? 'Clear selection'
+                    : `Select all ${count} goals`}
                 </button>
               </Alert>
             )

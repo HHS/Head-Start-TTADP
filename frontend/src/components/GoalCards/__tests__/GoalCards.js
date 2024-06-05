@@ -491,6 +491,27 @@ describe('Goals Table', () => {
       expect(screen.queryByText(/7 selected/i)).toBeNull();
     });
 
+    it('Shows the clear selection button and clears when clicked', async () => {
+      const selectAll = await screen.findByRole('checkbox', { name: /deselect all goals/i });
+      fireEvent.click(selectAll);
+      expect(await screen.findByText(/6 selected/i)).toBeVisible();
+
+      const selectAllPages = await screen.findByRole('button', { name: /select all 7 goals/i });
+      fireEvent.click(selectAllPages);
+
+      expect(screen.queryByText(/7 selected/i)).toBeVisible();
+
+      const clearSelection = await screen.findByRole('button', { name: /clear selection/i });
+      fireEvent.click(clearSelection);
+
+      expect(screen.queryByText(/7 selected/i)).toBeNull();
+      // verify all check boxes are unchecked.
+      const checkBoxes = screen.queryAllByTestId('selectGoalTestId');
+      checkBoxes.forEach((checkBox) => {
+        expect(checkBox.checked).toBe(false);
+      });
+    });
+
     it('Deselect via pill', async () => {
       const selectAll = await screen.findByRole('checkbox', { name: /deselect all goals/i });
       fireEvent.click(selectAll);

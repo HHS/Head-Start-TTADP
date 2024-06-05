@@ -155,8 +155,8 @@ function GoalCards({
     }
   };
 
-  const checkAllGoals = () => {
-    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: true }), {});
+  const checkAllGoals = (isClear) => {
+    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: !isClear }), {});
     setSelectedGoalCheckBoxes(allIdCheckBoxes);
   };
 
