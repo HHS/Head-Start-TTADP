@@ -6,13 +6,14 @@ import { Link } from 'react-router-dom';
 import { missingDataForActivityReport } from '../../../../fetchers/goals';
 
 const MissingGoalDataList = ({ missingGoalData }) => (
-  <ul className="usa-list">
+  <ul className="usa-list margin-left-2">
     {missingGoalData.map((goal) => (
       <li key={goal.id}>
         <Link
           aria-label={`Edit goal ${goal.id} in a new tab`}
           to={`/recipient-tta-records/${goal.recipientId}/region/${goal.regionId}/goals?id[]=${goal.id}`}
           target="_blank"
+          rel="noopener noreferrer"
         >
           {goal.recipientName}
           {' '}
@@ -36,7 +37,7 @@ MissingGoalDataList.propTypes = {
 };
 
 const RefreshListOfGoalsButton = ({ onClick }) => (
-  <Button unstyled onClick={onClick}>
+  <Button outline onClick={onClick}>
     Refresh list of goals
   </Button>
 );
@@ -49,6 +50,7 @@ const SomeGoalsHaveNoPromptResponse = ({
   promptsMissingResponses,
   goalsMissingResponses,
   regionId,
+  onSaveDraft,
 }) => {
   const [missingGoalData, setMissingGoalData] = useState();
 
@@ -59,11 +61,15 @@ const SomeGoalsHaveNoPromptResponse = ({
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Error fetching missing data', error);
+      setMissingGoalData([]);
     }
   }
 
-  const onClickRefresh = async () => {
-    await fetchMissingData(goalsMissingResponses.map((goal) => goal.goalIds).flat());
+  const onClickRefresh = async (e) => {
+    e.preventDefault();
+    const forceUpdate = true;
+    const isAutoSave = false;
+    await onSaveDraft(isAutoSave, forceUpdate);
   };
 
   useDeepCompareEffect(() => {
@@ -74,7 +80,7 @@ const SomeGoalsHaveNoPromptResponse = ({
     fetchMissingData(ids);
   }, [goalsMissingResponses, regionId]);
 
-  if (!missingGoalData || !missingGoalData.length) {
+  if (!missingGoalData) {
     return null;
   }
 
@@ -83,7 +89,7 @@ const SomeGoalsHaveNoPromptResponse = ({
       <strong>Some goals are incomplete</strong>
       <br />
       Please check the Recipient TTA Record and complete the missing fields.
-      <ul>
+      <ul className="usa-list margin-left-2">
         {promptsMissingResponses.map((prompt) => (
           <li key={prompt}>
             {prompt}
@@ -91,19 +97,12 @@ const SomeGoalsHaveNoPromptResponse = ({
         ))}
       </ul>
 
-      {(missingGoalData.length === 1) && (
-        <>
-          <MissingGoalDataList missingGoalData={missingGoalData} />
-          <RefreshListOfGoalsButton onClick={onClickRefresh} />
-        </>
-      )}
-
-      { (missingGoalData.length > 1) && (
-        <details>
-          <summary>Complete your goals</summary>
-          <MissingGoalDataList missingGoalData={missingGoalData} />
-          <RefreshListOfGoalsButton onClick={onClickRefresh} />
-        </details>
+      { (missingGoalData.length > 0) && (
+      <details open>
+        <summary><strong>Incomplete goals</strong></summary>
+        <MissingGoalDataList missingGoalData={missingGoalData} />
+        <RefreshListOfGoalsButton onClick={onClickRefresh} />
+      </details>
       )}
 
     </Alert>
@@ -116,6 +115,7 @@ SomeGoalsHaveNoPromptResponse.propTypes = {
     goalIds: PropTypes.arrayOf(PropTypes.number),
   })).isRequired,
   regionId: PropTypes.number.isRequired,
+  onSaveDraft: PropTypes.func.isRequired,
 };
 
 export default SomeGoalsHaveNoPromptResponse;
