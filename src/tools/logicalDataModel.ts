@@ -43,7 +43,7 @@ const colors = {
   textVisited: '#8C39DB',
 };
 
-function isCamelCase(str) {
+export function isCamelCase(str) {
   // Check if the first character is lowercase
   if (str.charAt(0) !== str.charAt(0).toLowerCase()) {
     return false;
@@ -63,7 +63,7 @@ function isCamelCase(str) {
   return true;
 }
 
-function processEnum(name, table, schemaEnum, modelEnum) {
+export function processEnum(name, table, schemaEnum, modelEnum) {
   let uml = modelEnum
     ? `enum ${name} {\n`
     : `!issue='${name} enum missing for table ${table}'\nenum ${name} #pink;line:red;line.bold;text:red {\n`;
@@ -84,7 +84,7 @@ function processEnum(name, table, schemaEnum, modelEnum) {
   return uml;
 }
 
-function processClassDefinition(schema, key) {
+export function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
     : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
