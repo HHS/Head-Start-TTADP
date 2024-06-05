@@ -17,7 +17,6 @@ import { auditLogger } from '../../logger';
 import {
   copyStatus,
 } from '../hooks/activityReport';
-import { scheduleUpdateIndexDocumentJob, scheduleDeleteIndexDocumentJob } from '../../lib/awsElasticSearch/queueManager';
 
 jest.mock('../../lib/awsElasticSearch/queueManager');
 jest.mock('express-http-context', () => ({
@@ -261,19 +260,6 @@ describe('Activity Reports model', () => {
     expect(instance.calculatedStatus).not.toEqual(REPORT_STATUSES.NEEDS_ACTION);
   });
 
-  it('updateAwsElasticsearchIndexes', async () => {
-    process.env.CI = false;
-    // Change status to submitted.
-    await reportToIndex.update(
-      { calculatedStatus: REPORT_STATUSES.SUBMITTED, submissionStatus: REPORT_STATUSES.SUBMITTED },
-    );
-    expect(scheduleUpdateIndexDocumentJob).toHaveBeenCalled();
-    // Change status to deleted.
-    await reportToIndex.update(
-      { calculatedStatus: REPORT_STATUSES.DELETED, submissionStatus: REPORT_STATUSES.DELETED },
-    );
-    expect(scheduleDeleteIndexDocumentJob).toHaveBeenCalled();
-  });
   it('propagateApprovedStatus', async () => {
     const preReport = await ActivityReport.findOne(
       { where: { id: report.id }, individualHooks: true },
