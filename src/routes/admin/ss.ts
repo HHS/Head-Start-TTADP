@@ -86,7 +86,7 @@ export async function getSheet(req, res) {
 }
 
 export function route(envi: string) {
-  if (envi && envi.endsWith('app.cloud.gov')) {
+  if ((envi && envi.endsWith('app.cloud.gov') || process.env.SMARTSHEET_LOCAL)) {
     router.get('/', transactionWrapper(listSheets));
     router.get('/sheet/:sheetId', transactionWrapper(getSheet));
   } else {
