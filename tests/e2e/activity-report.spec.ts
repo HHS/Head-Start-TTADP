@@ -344,7 +344,11 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('Activity participants', { exact: true })).toBeVisible();
     await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
     await expect(page.getByText('Target populations addressed', { exact: true })).toBeVisible();
-    await expect(page.getByText('TTA provided', { exact: true })).toBeVisible();
+
+    // expect 'TTA provided' to have 3 entries.
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('TTA provided')).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('TTA provided').nth(1)).toBeVisible();
+    await expect(page.getByTestId('accordionItem_activity-summary').getByText('TTA provided').nth(2)).toBeVisible();
 
     await expect(page.getByText('Goal: g1')).toBeVisible();
     await expect(page.getByText('Objective: g1o1')).toBeVisible();
