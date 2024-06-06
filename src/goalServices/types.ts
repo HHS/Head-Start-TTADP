@@ -276,6 +276,43 @@ interface IGoalModelInstance extends IGoal {
   toJSON?: () => IGoal;
 }
 
+interface IOtherEntityObjective {
+  activityReportObjectives: IActivityReportObjectivesModelInstance[];
+  id: 9,
+  otherEntityId: number;
+  goalId: null,
+  title: string;
+  status: string;
+  objectiveTemplateId: null | number;
+  onAR: boolean;
+  onApprovedAR: boolean;
+  createdVia: 'activityReport';
+  firstNotStartedAt: string | null;
+  lastNotStartedAt: string | null;
+  firstInProgressAt: string | null;
+  lastInProgressAt: string | null;
+  firstSuspendedAt: string | null;
+  lastSuspendedAt: string | null;
+  firstCompleteAt: string | null;
+  lastCompleteAt: string | null;
+  rtrOrder: number;
+  closeSuspendReason: string | null;
+  closeSuspendContext: string | null;
+  mapsToParentObjectiveId: null | number;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+  courses?: ICourse[];
+  resources?: IResource[];
+  topics?: ITopic[];
+  files?: IFile[];
+}
+
+interface IOtherEntityObjectiveModelInstance extends IOtherEntityObjective {
+  dataValues: IOtherEntityObjective,
+  toJSON: () => IOtherEntityObjective,
+}
+
 export {
   IGrant,
   IPrompt,
@@ -299,4 +336,7 @@ export {
   // -- after going through reduceGoals -- //
   IReducedObjective,
   IReducedGoal,
+  // -- other entity objective -- //
+  IOtherEntityObjective,
+  IOtherEntityObjectiveModelInstance,
 };

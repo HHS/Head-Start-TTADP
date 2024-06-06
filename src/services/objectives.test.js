@@ -5,8 +5,6 @@ import db, {
   ActivityReport,
   User,
   Objective,
-  ObjectiveResource,
-  ObjectiveFile,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
@@ -19,7 +17,6 @@ import db, {
   OtherEntity,
 } from '../models';
 import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-
 import {
   saveObjectivesForReport,
   getObjectiveById,
@@ -185,30 +182,16 @@ describe('Objectives DB service', () => {
       fileSize: 1234,
     });
 
-    // Objective to delete files.
-    await ObjectiveFile.create({
-      objectiveId: thirdObjective.id,
-      fileId: file.id,
-    });
     await ActivityReportObjectiveFile.create({
       activityReportObjectiveId: thirdAro.id,
       fileId: file.id,
     });
 
-    await ObjectiveFile.create({
-      objectiveId: thirdObjective.id,
-      fileId: keepFile.id,
-    });
     await ActivityReportObjectiveFile.create({
       activityReportObjectiveId: thirdAro.id,
       fileId: keepFile.id,
     });
 
-    // Objective to keep files.
-    await ObjectiveFile.create({
-      objectiveId: objective.id,
-      fileId: keepFile.id,
-    });
     await ActivityReportObjectiveFile.create({
       activityReportObjectiveId: keepAro.id,
       fileId: keepFile.id,
@@ -218,17 +201,6 @@ describe('Objectives DB service', () => {
     resource = await Resource.create({ url: 'https://second-obj-resource.gov' });
     keepResource = await Resource.create({ url: 'https://keep-obj-resource.gov' });
 
-    // Create objective delete resource.
-    await ObjectiveResource.create({
-      objectiveId: thirdObjective.id,
-      resourceId: resource.id,
-      sourceFields: ['resource'],
-    });
-    await ObjectiveResource.create({
-      objectiveId: thirdObjective.id,
-      resourceId: keepResource.id,
-      sourceFields: ['resource'],
-    });
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: thirdAro.id,
       resourceId: resource.id,
@@ -240,12 +212,6 @@ describe('Objectives DB service', () => {
       sourceFields: ['resource'],
     });
 
-    // Create objective keep resource.
-    await ObjectiveResource.create({
-      objectiveId: objective.id,
-      resourceId: keepResource.id,
-      sourceFields: ['resource'],
-    });
     await ActivityReportObjectiveResource.create({
       activityReportObjectiveId: keepAro.id,
       resourceId: keepResource.id,
@@ -260,25 +226,17 @@ describe('Objectives DB service', () => {
       where: { activityReportObjectiveId: checkARO.id },
     });
 
-    // Clean up unused objective resource.
-    await ObjectiveResource.destroy({
-      where: { resourceId: [resource.id] },
-      individualHooks: true,
-    });
-
-    await sequelize.transaction(async () => {
-      await saveObjectivesForReport([...objectives, {
-        id: objective.id,
-        title: objective.title,
-        ttaProvided: 'tta provided',
-        status: objective.status,
-        recipientIds: [1],
-        ids: [objective.id],
-        files: [{ id: keepFile.id }],
-        resources: [{ value: 'https://keep-obj-resource.gov' }],
-        supportType: SUPPORT_TYPES[3],
-      }], report);
-    });
+    await saveObjectivesForReport([...objectives, {
+      id: objective.id,
+      title: objective.title,
+      ttaProvided: 'tta provided',
+      status: objective.status,
+      recipientIds: [1],
+      ids: [objective.id],
+      files: [{ id: keepFile.id }],
+      resources: [{ value: 'https://keep-obj-resource.gov' }],
+      supportType: SUPPORT_TYPES[3],
+    }], report);
 
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
@@ -316,7 +274,6 @@ describe('Objectives DB service', () => {
     await ActivityReportObjectiveFile.destroy({
       where: { activityReportObjectiveId: aroIds, fileId: [file.id, keepFile.id] },
     });
-    await ObjectiveFile.destroy({ where: { fileId: [file.id, keepFile.id] } });
     await File.destroy({
       where: { id: [file.id, keepFile.id] },
       individualHooks: true,
@@ -326,7 +283,6 @@ describe('Objectives DB service', () => {
     await ActivityReportObjectiveResource.destroy({
       where: { activityReportObjectiveId: aroIds, resourceId: [resource.id, keepResource.id] },
     });
-    await ObjectiveResource.destroy({ where: { resourceId: [resource.id, keepResource.id] } });
     await Resource.destroy({
       where: { id: [resource.id, keepResource.id] },
       individualHooks: true,
@@ -395,12 +351,6 @@ describe('Objectives DB service', () => {
       });
       expect(checkAROF).not.toBeNull();
 
-      // Check keep objective file wasn't deleted.
-      const keepObjectiveFile = await ObjectiveFile.findOne({
-        where: { objectiveId: objective.id },
-      });
-      expect(keepObjectiveFile).not.toBeNull();
-
       // Check keep file wasn't deleted.
       const keepFileExists = await File.findOne({
         where: { id: keepFile.id },
@@ -412,12 +362,6 @@ describe('Objectives DB service', () => {
         where: { activityReportObjectiveId: thirdAro.id },
       });
       expect(deletedActivityObjectiveFile).toBeNull();
-
-      // Check objective file was deleted.
-      const deletedObjectiveFile = await ObjectiveFile.findOne({
-        where: { objectiveId: thirdObjective.id },
-      });
-      expect(deletedObjectiveFile).toBeNull();
 
       // Check file was deleted.
       const deletedFile = await File.findOne({
@@ -433,12 +377,6 @@ describe('Objectives DB service', () => {
       });
       expect(checkAROR).not.toBeNull();
 
-      // Check keep objective resource wasn't deleted.
-      const keepObjectiveResource = await ObjectiveResource.findOne({
-        where: { objectiveId: objective.id },
-      });
-      expect(keepObjectiveResource).not.toBeNull();
-
       // Check keep resource wasn't deleted.
       const keepResourceExists = await Resource.findOne({
         where: { id: keepResource.id },
@@ -450,12 +388,6 @@ describe('Objectives DB service', () => {
         where: { activityReportObjectiveId: thirdAro.id },
       });
       expect(deletedActivityObjectiveResource).toBeNull();
-
-      // Check objective resource was deleted.
-      const deletedObjectiveResource = await ObjectiveResource.findOne({
-        where: { objectiveId: thirdObjective.id },
-      });
-      expect(deletedObjectiveResource).toBeNull();
 
       // Check resource was deleted.
       const deletedResource = await Resource.findOne({

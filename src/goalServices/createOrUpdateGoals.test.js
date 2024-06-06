@@ -8,7 +8,6 @@ import db, {
   Recipient,
   Objective,
 } from '../models';
-import { processObjectiveForResourcesById } from '../services/resource';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -19,7 +18,6 @@ describe('createOrUpdateGoals', () => {
   let objective;
   let recipient;
   let newGoals;
-  const fakeUrl = faker.internet.url();
   let grants = [
     {
       id: faker.datatype.number(),
@@ -63,8 +61,6 @@ describe('createOrUpdateGoals', () => {
       title: 'This objective will be deleted',
       status: 'Not Started',
     });
-
-    await processObjectiveForResourcesById(objective.id, [fakeUrl]);
   });
 
   afterAll(async () => {
