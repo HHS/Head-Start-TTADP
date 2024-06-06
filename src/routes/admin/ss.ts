@@ -1,14 +1,25 @@
 /* eslint-disable import/prefer-default-export */
+import {} from 'dotenv/config';
 import express, { Response, Request } from 'express';
 import smartsheet from 'smartsheet';
 import transactionWrapper from '../transactionWrapper';
 import handleErrors from '../../lib/apiErrorHandler';
-import { auditLogger as logger } from '../../logger';
+import { auditLogger } from '../../logger';
 
 const namespace = 'ADMIN:SMARTSHEET';
 const logContext = { namespace };
 
 const router = express.Router();
+
+auditLogger.info('Initializing Smartsheet router');
+
+function maskToken(token) {
+  if (!token) {
+    return 'Not Set';
+  }
+  const lastFour = token.slice(-4);
+  return `****${lastFour}`;
+}
 
 // PD23-24 b. Region 01 PD Plan WITH NCs
 // PD23-24 b. Region 02 PD Plan WITH NCs
@@ -25,6 +36,7 @@ const router = express.Router();
 
 // Function to create and return the Smartsheet client
 function createSmartsheetClient() {
+  auditLogger.info(`Creating Smartsheet client with baseUrl: ${process.env.SMARTSHEET_ENDPOINT}`);
   return smartsheet.createClient({
     accessToken: process.env.SMARTSHEET_ACCESS_TOKEN,
     baseUrl: process.env.SMARTSHEET_ENDPOINT,
@@ -63,7 +75,7 @@ export async function listSheets(req, res) {
 
     return res.status(200).json(result);
   } catch (error) {
-    logger.error('something went wrong');
+    auditLogger.error('something went wrong');
     return handleErrors(req, res, error, logContext);
   }
 }
@@ -80,12 +92,21 @@ export async function getSheet(req, res) {
 
     return res.status(200).json(result);
   } catch (error) {
-    logger.error(`Failed to get sheet: ${lastFourDigits}`, error);
+    auditLogger.error(`Failed to get sheet: ${lastFourDigits}`, error);
     return handleErrors(req, res, error, logContext);
   }
 }
 
 export function route(envi: string) {
+  auditLogger.info(`Setting up routes for environment: ${envi}`);
+
+  // Debug logging for environment variables
+  auditLogger.info('Environment Variables:');
+  auditLogger.info(`SMARTSHEET_ACCESS_TOKEN: ${maskToken(process.env.SMARTSHEET_ACCESS_TOKEN)}`);
+  auditLogger.info(`SMARTSHEET_ENDPOINT: ${process.env.SMARTSHEET_ENDPOINT}`);
+  auditLogger.info(`TTA_SMART_HUB_URI: ${process.env.TTA_SMART_HUB_URI}`);
+  auditLogger.info(`SMARTSHEET_LOCAL: ${process.env.SMARTSHEET_LOCAL}`);
+
   if ((envi && envi.endsWith('app.cloud.gov')) || process.env.SMARTSHEET_LOCAL) {
     router.get('/', transactionWrapper(listSheets));
     router.get('/sheet/:sheetId', transactionWrapper(getSheet));
