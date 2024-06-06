@@ -128,6 +128,15 @@ const SiteNav = ({
                       Resource Dashboard
                     </NavLink>
                   </li>
+                  <FeatureFlag flag="quality_assurance_dashboard">
+                    <li>
+                      <NavLink
+                        to="/dashboards/qa-dashboard"
+                      >
+                        Quality Assurance Dashboard
+                      </NavLink>
+                    </li>
+                  </FeatureFlag>
                   <li>
                     <NavLink
                       to="/recipient-tta-records"

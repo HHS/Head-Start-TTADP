@@ -10,9 +10,6 @@ const {
   ActivityRecipient,
   File,
   Objective,
-  ObjectiveFile,
-  ObjectiveTopic,
-  ObjectiveResource,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveFile,
@@ -138,24 +135,10 @@ describe('createOrUpdate', () => {
       status: FILE_STATUSES.APPROVED,
     });
 
-    await Promise.all((objectives.map((o) => (
-      ObjectiveFile.create({
-        objectiveId: o.id,
-        fileId: file.id,
-      })
-    ))));
-
     await Promise.all((aros.map((aro) => (
       ActivityReportObjectiveFile.create({
         activityReportObjectiveId: aro.id,
         fileId: file.id,
-      })
-    ))));
-
-    await Promise.all((objectives.map((o) => (
-      ObjectiveTopic.create({
-        objectiveId: o.id,
-        topicId: topic.id,
       })
     ))));
 
@@ -176,26 +159,10 @@ describe('createOrUpdate', () => {
         resourceId: resource.id,
       })
     ))));
-
-    await Promise.all((objectives.map((o) => (
-      ObjectiveResource.create({
-        objectiveId: o.id,
-        resourceId: resource.id,
-        onAR: true,
-        onApprovedAR: false,
-      })
-    ))));
   });
 
   afterAll(async () => {
     await ActivityReportObjectiveResource.destroy({
-      where: {
-        resourceId: resource.id,
-      },
-      individualHooks: true,
-    });
-
-    await ObjectiveResource.destroy({
       where: {
         resourceId: resource.id,
       },
@@ -216,21 +183,7 @@ describe('createOrUpdate', () => {
       individualHooks: true,
     });
 
-    await ObjectiveTopic.destroy({
-      where: {
-        topicId: topic.id,
-      },
-      individualHooks: true,
-    });
-
     await ActivityReportObjectiveFile.destroy({
-      where: {
-        fileId: file.id,
-      },
-      individualHooks: true,
-    });
-
-    await ObjectiveFile.destroy({
       where: {
         fileId: file.id,
       },
@@ -279,6 +232,7 @@ describe('createOrUpdate', () => {
         id: topic.id,
       },
       individualHooks: true,
+      force: true,
     });
 
     await destroyReport(report);

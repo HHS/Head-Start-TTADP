@@ -10,27 +10,21 @@ import db, {
   GoalResource,
   Objective,
   ObjectiveCollaborator,
-  ObjectiveResource,
-  ObjectiveFile,
-  ObjectiveTopic,
   ActivityReportGoal,
   ActivityReportObjective,
   Resource,
-  Topic,
-  File,
   CollaboratorType,
   GoalSimilarityGroup,
   GoalSimilarityGroupGoal,
 } from '../models';
 import {
   mergeGoals,
-  getGoalsForReport,
 } from './goals';
+import getGoalsForReport from './getGoalsForReport';
 import { createReport, destroyReport, createGoalTemplate } from '../testUtils';
 import { createSimilarityGroup } from '../services/goalSimilarityGroup';
 import {
   OBJECTIVE_STATUS,
-  FILE_STATUSES,
   GOAL_STATUS,
   GOAL_COLLABORATORS,
   OBJECTIVE_COLLABORATORS,
@@ -53,7 +47,6 @@ describe('mergeGoals', () => {
   let grantThree;
   let report;
   let template;
-  let topic;
   let goalOne;
   let goalTwo;
   let goalThree;
@@ -64,7 +57,6 @@ describe('mergeGoals', () => {
   let objectiveOneForGoalTwo;
   let objectiveOneForGoalThree;
 
-  const fileName = faker.system.fileName();
   const resourceUrl = faker.internet.url();
 
   let mergedGoals;
@@ -196,19 +188,8 @@ describe('mergeGoals', () => {
       }],
     });
 
-    topic = await Topic.create({
-      name: faker.datatype.string(100),
-    });
-
     const resource = await Resource.create({
       url: resourceUrl,
-    });
-
-    const file = await File.create({
-      originalFileName: fileName,
-      key: fileName,
-      status: FILE_STATUSES.APPROVED,
-      fileSize: 123445,
     });
 
     await GoalResource.create({
@@ -260,11 +241,6 @@ describe('mergeGoals', () => {
       status: OBJECTIVE_STATUS.IN_PROGRESS,
     });
 
-    await ObjectiveResource.create({
-      objectiveId: objectiveTwoForGoalOne.id,
-      resourceId: resource.id,
-    });
-
     objectiveThreeForGoalOne = await Objective.create({
       goalId: goalOne.id,
       title: faker.datatype.string(100),
@@ -283,25 +259,10 @@ describe('mergeGoals', () => {
       status: OBJECTIVE_STATUS.IN_PROGRESS,
     });
 
-    await ObjectiveTopic.create({
-      objectiveId: objectiveOneForGoalTwo.id,
-      topicId: topic.id,
-    });
-
-    await ObjectiveTopic.create({
-      objectiveId: dummyGoalObjective.id,
-      topicId: topic.id,
-    });
-
     objectiveOneForGoalThree = await Objective.create({
       goalId: goalThree.id,
       title: faker.datatype.string(100),
       status: OBJECTIVE_STATUS.IN_PROGRESS,
-    });
-
-    await ObjectiveFile.create({
-      objectiveId: objectiveOneForGoalThree.id,
-      fileId: file.id,
     });
 
     await GoalCollaborator.update(
@@ -506,18 +467,6 @@ describe('mergeGoals', () => {
               }],
             },
             {
-              model: ObjectiveFile,
-              as: 'objectiveFiles',
-            },
-            {
-              model: ObjectiveResource,
-              as: 'objectiveResources',
-            },
-            {
-              model: ObjectiveTopic,
-              as: 'objectiveTopics',
-            },
-            {
               model: ActivityReportObjective,
               as: 'activityReportObjectives',
             },
@@ -580,18 +529,6 @@ describe('mergeGoals', () => {
     expect(newlyMerged.originalObjectiveId).toBe(objectiveOneForGoalOne.id);
     expect(oldlyMerged.activityReportId).toBe(report.id);
 
-    const objectiveResourcesForGoalForGrantOne = goalForGrantOne.objectives
-      .map((o) => o.objectiveResources).flat();
-    expect(objectiveResourcesForGoalForGrantOne.length).toBe(1);
-
-    const objectiveTopicsForGoalForGrantOne = goalForGrantOne.objectives
-      .map((o) => o.objectiveTopics).flat();
-    expect(objectiveTopicsForGoalForGrantOne.length).toBe(1);
-
-    const objectiveFilesForGoalForGrantOne = goalForGrantOne.objectives
-      .map((o) => o.objectiveFiles).flat();
-    expect(objectiveFilesForGoalForGrantOne.length).toBe(0);
-
     const goalForGrantTwo = goalsWithData.find((g) => g.grantId === grantThree.id);
     expect(goalForGrantTwo.status).toBe(GOAL_STATUS.IN_PROGRESS);
     expect(goalForGrantTwo.objectives.length).toBe(1);
@@ -602,18 +539,6 @@ describe('mergeGoals', () => {
     const aroForGoalForGrantTwo = goalForGrantTwo.objectives
       .map((o) => o.activityReportObjectives).flat();
     expect(aroForGoalForGrantTwo.length).toBe(0);
-
-    const objectiveResourcesForGoalForGrantTwo = goalForGrantTwo.objectives
-      .map((o) => o.objectiveResources).flat();
-    expect(objectiveResourcesForGoalForGrantTwo.length).toBe(0);
-
-    const objectiveTopicsForGoalForGrantTwo = goalForGrantTwo.objectives
-      .map((o) => o.objectiveTopics).flat();
-    expect(objectiveTopicsForGoalForGrantTwo.length).toBe(0);
-
-    const objectiveFilesForGoalForGrantTwo = goalForGrantTwo.objectives
-      .map((o) => o.objectiveFiles).flat();
-    expect(objectiveFilesForGoalForGrantTwo.length).toBe(1);
   });
 
   it('leaves random goals and objectives alone', async () => {
@@ -696,24 +621,6 @@ describe('mergeGoals', () => {
       },
     });
 
-    await ObjectiveResource.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
-      },
-    });
-
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
-      },
-    });
-
-    await ObjectiveFile.destroy({
-      where: {
-        objectiveId: allObjectiveIds,
-      },
-    });
-
     await Objective.destroy({
       where: {
         id: allObjectiveIds,
@@ -757,18 +664,6 @@ describe('mergeGoals', () => {
     await Resource.destroy({
       where: {
         url: resourceUrl,
-      },
-    });
-
-    await File.destroy({
-      where: {
-        originalFileName: fileName,
-      },
-    });
-
-    await Topic.destroy({
-      where: {
-        name: topic.name,
       },
     });
 

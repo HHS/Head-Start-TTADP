@@ -1260,6 +1260,8 @@ describe('filtersToScopes', () => {
       // Delete Topics.
       await Topic.destroy({
         where: { id: [topic1.id, topic2.id] },
+        individualHooks: true,
+        force: true,
       });
 
       // Delete aro.
@@ -2960,8 +2962,7 @@ describe('filtersToScopes', () => {
       await createActivityReportObjectiveFileMetaData(
         'test.pdf',
         'very-unique-file-key',
-        99_998,
-        99_998,
+        [aro.id],
         12_345,
       );
     });

@@ -15,3 +15,13 @@ export async function getCourses() {
   //   { id: 7, name: 'Families and Home Visiting (BTS-P)' },
   // ];
 }
+
+export const fetchCourseDashboardData = async (query) => {
+  const request = join('/', 'api', 'courses', 'dashboard', `?${query}`);
+  const res = await get(request);
+  const data = await res.json();
+
+  return {
+    ...data,
+  };
+};

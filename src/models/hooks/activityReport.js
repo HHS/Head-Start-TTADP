@@ -441,91 +441,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               individualHooks: true,
             },
           ),
-          // update the onApprovedAR for files that will no longer be referenced on an approved AR
-          sequelize.query(`
-          WITH
-            "FilesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arof."fileId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveFiles" arof
-              ON aro.id = arof."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveFiles" arof2
-              ON aro2.id = arof2."activityReportObjectiveId"
-              AND arof."fileId" = arof2."fileId"
-              WHERE arof2."id" IS NULL
-            )
-            UPDATE "ObjectiveFiles" f
-            SET "onApprovedAR" = false
-            FROM "FilesOnReport" fr
-            WHERE f."onApprovedAR" = true
-            AND f."objectiveId" = fr."objectiveId"
-            AND f."fileId" = fr."fileId";
-          `, { transaction: options.transaction }),
-          // update the onApprovedAR for resources that will no longer be referenced on an
-          // approved AR
-          sequelize.query(`
-          WITH
-            "ResourcesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                aror."resourceId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveResources" aror
-              ON aro.id = aror."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveResources" aror2
-              ON aro2.id = aror2."activityReportObjectiveId"
-              AND aror."resourceId" = aror2."resourceId"
-              WHERE aror2."id" IS NULL
-            )
-            UPDATE "ObjectiveResources" r
-            SET "onApprovedAR" = false
-            FROM "ResourcesOnReport" rr
-            WHERE r."onApprovedAR" = true
-            AND r."objectiveId" = rr."objectiveId"
-            AND r."resourceId" = rr."resourceId";
-          `, { transaction: options.transaction }),
-          // update the onApprovedAR for topics that will no longer be referenced on an approved AR
-          sequelize.query(`
-          WITH
-            "TopicsOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arot."topicId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveTopics" arot
-              ON aro.id = arot."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveTopics" arot2
-              ON aro2.id = arot2."activityReportObjectiveId"
-              AND arot."topicId" = arot2."topicId"
-              WHERE arot2."id" IS NULL
-            )
-            UPDATE "ObjectiveTopics" t
-            SET "onApprovedAR" = false
-            FROM "TopicsOnReport" tr
-            WHERE t."onApprovedAR" = true
-            AND t."objectiveId" = tr."objectiveId"
-            AND t."topicId" = tr."topicId";
-          `, { transaction: options.transaction }),
         ]);
       }
 
@@ -642,63 +557,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               individualHooks: true,
             },
           ),
-          sequelize.query(`
-          WITH
-            "FilesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arof."fileId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveFiles" arof
-              ON aro.id = arof."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveFiles" f
-            SET "onApprovedAR" = true
-            FROM "FilesOnReport" fr
-            WHERE f."onApprovedAR" = false
-            AND f."objectiveId" = fr."objectiveId"
-            AND f."fileId" = fr."fileId";
-          `, { transaction: options.transaction }),
-          sequelize.query(`
-          WITH
-            "ResourcesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                aror."resourceId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveResources" aror
-              ON aro.id = aror."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveResources" r
-            SET "onApprovedAR" = true
-            FROM "ResourcesOnReport" rr
-            WHERE r."onApprovedAR" = false
-            AND r."objectiveId" = rr."objectiveId"
-            AND r."resourceId" = rr."resourceId";
-          `, { transaction: options.transaction }),
-          sequelize.query(`
-          WITH
-            "TopicsOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arot."topicId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveTopics" arot
-              ON aro.id = arot."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveTopics" t
-            SET "onApprovedAR" = true
-            FROM "TopicsOnReport" tr
-            WHERE t."onApprovedAR" = false
-            AND t."objectiveId" = tr."objectiveId"
-            AND t."topicId" = tr."topicId";
-          `, { transaction: options.transaction }),
         ]);
       }
       /*  Determine Objective Statuses (Other > Approved) */
@@ -1105,4 +963,5 @@ export {
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
+  afterDestroy,
 };

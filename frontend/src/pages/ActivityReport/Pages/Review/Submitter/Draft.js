@@ -167,6 +167,7 @@ const Draft = ({
           regionId={regionId}
           promptsMissingResponses={promptsMissingResponses}
           goalsMissingResponses={goalsMissingResponses}
+          onSaveDraft={onSaveForm}
         />
         )}
         <div className="margin-top-3">

@@ -2,8 +2,10 @@ import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db from '../models';
-import { removeUnusedGoalsObjectivesFromReport, saveObjectiveAssociations } from '../goalServices/goals';
+import { removeUnusedGoalsObjectivesFromReport } from '../goalServices/goals';
 import { cacheObjectiveMetadata } from './reportCache';
+import extractObjectiveAssociationsFromActivityReportObjectives from '../goalServices/extractObjectiveAssociationsFromActivityReportObjectives';
+import { IOtherEntityObjectiveModelInstance, IOtherEntityObjective } from '../goalServices/types';
 
 const {
   Objective,
@@ -14,6 +16,7 @@ const {
   File,
   Course,
   Resource,
+  sequelize,
 } = db;
 
 export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
@@ -56,7 +59,7 @@ export async function saveObjectivesForReport(objectives, report) {
   const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
     .all(objective.recipientIds.map(async (otherEntityId) => {
       const {
-        topics, files, resources, courses,
+        topics, files, resources, courses, objectiveCreatedHere,
       } = objective;
 
       // Determine if this objective already exists.
@@ -112,22 +115,15 @@ export async function saveObjectivesForReport(objectives, report) {
         });
       }
 
-      const deleteUnusedAssociations = false;
-
-      const metadata = await saveObjectiveAssociations(
-        savedObjective,
+      await cacheObjectiveMetadata(savedObjective, report.id, {
         resources,
         topics,
         files,
         courses,
-        deleteUnusedAssociations,
-      );
-
-      await cacheObjectiveMetadata(savedObjective, report.id, {
-        ...metadata,
         ttaProvided: objective.ttaProvided,
         supportType: objective.supportType,
         order: index,
+        objectiveCreatedHere,
       });
 
       return savedObjective;
@@ -166,7 +162,7 @@ export async function getObjectiveById(objectiveId: number) {
   });
 }
 
-function reduceOtherEntityObjectives(newObjectives) {
+function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
     const objectiveStatus = objective.activityReportObjectives
@@ -180,8 +176,9 @@ function reduceOtherEntityObjectives(newObjectives) {
       o.title === objective.title && o.status === objectiveStatus
     ));
 
+    const { id } = objective;
+
     if (exists) {
-      const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
@@ -226,15 +223,20 @@ function reduceOtherEntityObjectives(newObjectives) {
       && objective.activityReportObjectives[0].arOrder
       ? objective.activityReportObjectives[0].arOrder : null;
 
-    const id = objective.getDataValue('id') ? objective.getDataValue('id') : objective.getDataValue('value');
+    const createdHere = objective.activityReportObjectives
+      && objective.activityReportObjectives[0]
+      && objective.activityReportObjectives[0].objectiveCreatedHere
+      ? objective.activityReportObjectives[0].objectiveCreatedHere : false;
 
     return [...objectives, {
-      ...objective.dataValues,
+      ...objective,
+      id,
       value: id,
       ids: [id],
       ttaProvided,
       supportType,
       status: objectiveStatus, // the status from above, derived from the activity report objective
+      objectiveCreatedHere: createdHere,
       isNew: false,
       arOrder,
     }];
@@ -251,9 +253,13 @@ function reduceOtherEntityObjectives(newObjectives) {
   return objectivesToSort;
 }
 
-export async function getObjectivesByReportId(reportId) {
+export async function getObjectivesByReportId(reportId: number) {
   const objectives = await Objective.findAll({
-    model: Objective,
+    attributes: {
+      include: [
+        [sequelize.col('activityReportObjectives.objectiveCreatedHere'), 'objectiveCreatedHere'],
+      ],
+    },
     where: {
       goalId: { [Op.is]: null },
       otherEntityId: { [Op.not]: null },
@@ -266,29 +272,50 @@ export async function getObjectivesByReportId(reportId) {
           activityReportId: reportId,
         },
         required: true,
-      },
-      {
-        model: Topic,
-        as: 'topics',
-      },
-      {
-        model: Course,
-        as: 'courses',
-      },
-      {
-        model: Resource,
-        as: 'resources',
-        // these need to be renamed to match the frontend form names
-        attributes: [['url', 'value']],
-      },
-      {
-        model: File,
-        as: 'files',
+        include: [
+          {
+            model: Topic,
+            as: 'topics',
+          },
+          {
+            model: Course,
+            as: 'courses',
+          },
+          {
+            model: Resource,
+            as: 'resources',
+            // these need to be renamed to match the frontend form names
+            attributes: [['url', 'value']],
+          },
+          {
+            model: File,
+            as: 'files',
+          },
+        ],
       },
     ],
-  });
+  }) as IOtherEntityObjectiveModelInstance[];
 
-  return reduceOtherEntityObjectives(objectives);
+  return reduceOtherEntityObjectives(objectives
+    .map((objective) => ({
+      ...objective.toJSON(),
+      topics: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'topics',
+      ),
+      courses: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'courses',
+      ),
+      resources: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'resources',
+      ),
+      files: extractObjectiveAssociationsFromActivityReportObjectives(
+        objective.activityReportObjectives,
+        'files',
+      ),
+    })));
 }
 
 /**

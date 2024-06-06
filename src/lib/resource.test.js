@@ -37,46 +37,6 @@ test
 </html>
 `;
 
-const urlTitleOnly = `
-<!DOCTYPE html>
-<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-<head>
-<meta charset="utf-8" />
-<meta name="language" content="en" />
-<meta name="topic" content="Mental Health" />
-<meta name="resource-type" content="Article" />
-<meta name="node-id" content="7858" />
-<meta ="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
-<title>Title only</title>
-<body>
-test
-</body>
-</html>
-`;
-
-const urlNcOnly = `
-<!DOCTYPE html>
-<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-<head>
-<meta charset="utf-8" />
-<meta name="language" content="en" />
-<meta ="national-centers" content="NC only" />
-<meta name="topic" content="Mental Health" />
-<meta name="resource-type" content="Article" />
-<meta name="node-id" content="7858" />
-<meta ="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
-<body>
-test
-</body>
-</html>
-`;
-
 const metadata = {
   created: [{ value: '2020-04-21T15:20:23+00:00' }],
   changed: [{ value: '2023-05-26T18:57:15+00:00' }],

@@ -411,3 +411,9 @@ fill: #1B1B1B;
   writing-mode: vertical-lr;
   transform: rotate(180deg);
 }
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

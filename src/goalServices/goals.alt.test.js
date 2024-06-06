@@ -13,10 +13,9 @@ import db, {
   User,
 } from '../models';
 import {
-  reduceObjectives,
-  reduceObjectivesForActivityReport,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
+import { reduceObjectives, reduceObjectivesForActivityReport } from './reduceGoals';
 import {
   OBJECTIVE_STATUS,
   AUTOMATIC_CREATION,
@@ -450,8 +449,9 @@ describe('Goals DB service', () => {
     });
 
     it('objective reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = await reduceObjectives(
-        [objectiveOne,
+      const reducedObjectives = reduceObjectives(
+        [
+          objectiveOne,
           objectiveTwo,
           objectiveThree,
           objectiveFour,
@@ -463,7 +463,7 @@ describe('Goals DB service', () => {
     });
 
     it('ar reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = await reduceObjectivesForActivityReport(
+      const reducedObjectives = reduceObjectivesForActivityReport(
         [objectiveOne,
           objectiveTwo,
           objectiveThree,
