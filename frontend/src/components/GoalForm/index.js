@@ -47,7 +47,7 @@ export default function GoalForm({
 }) {
   const unsuspendModalRef = useRef(null);
   const openExistingGoalModalRef = useRef(null);
-  const history = useNavigate();
+  const navigate = useNavigate();
   const possibleGrants = recipient.grants.filter(((g) => g.status === 'Active'));
 
   const goalDefaults = useMemo(() => ({
@@ -397,8 +397,8 @@ export default function GoalForm({
   };
 
   const redirectToGoalsPage = (goals) => {
-    history.push(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/rttapa`, {
-      ids: goals.map((g) => g.id),
+    navigate(`/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/rttapa`, {
+      state: { ids: goals.map((g) => g.id) },
     });
   };
 
@@ -682,7 +682,7 @@ export default function GoalForm({
   const forwardToGoalWithIds = (goalIds) => {
     const urlFragment = `id[]=${goalIds.join(',')}`;
     const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
-    history.push(url);
+    navigate(url);
   };
 
   const onSelectNudgedGoal = async (goal) => {

@@ -31,7 +31,7 @@ const NeedsAction = ({
   const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
   const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
-  const history = useNavigate();
+  const navigate = useNavigate();
   const { watch } = useFormContext();
 
   const approvers = watch('approvers');
@@ -58,7 +58,7 @@ const NeedsAction = ({
         status: 'submitted',
       };
 
-      history.push('/activity-reports', { message });
+      navigate('/activity-reports', { state: { message } });
     }
   };
 

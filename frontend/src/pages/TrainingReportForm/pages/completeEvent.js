@@ -45,7 +45,7 @@ const CompleteEvent = ({
   const [showSubmissionError, setShowSubmissionError] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
@@ -146,7 +146,7 @@ const CompleteEvent = ({
     const onSuspend = async () => {
       await onSaveForm(updatedStatus);
       const newPath = '/training-reports/suspended';
-      history.push(newPath);
+      navigate(newPath);
     };
 
     if (isOwner && updatedStatus === 'Suspended') {

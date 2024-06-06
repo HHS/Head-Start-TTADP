@@ -80,7 +80,7 @@ export default function MyGroups() {
   const [recipientOptions, setRecipientOptions] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
   const [error, setError] = useState(null);
-  const history = useNavigate();
+  const navigate = useNavigate();
   const [recipientsFetched, setRecipientsFetched] = useState(false);
   const [usersFetched, setUsersFetched] = useState(false);
   // see the comment above "onSubmit" for, well, context
@@ -235,7 +235,7 @@ export default function MyGroups() {
         }));
       }
 
-      history.push('/account');
+      navigate('/account');
     } catch (err) {
       setError('There was an error saving your group');
     } finally {

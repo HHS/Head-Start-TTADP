@@ -36,7 +36,7 @@ function ReportRow({
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
-  const history = useNavigate();
+  const navigate = useNavigate();
   const recipients = activityRecipients && activityRecipients.map((ar) => (
     ar.name
   ));
@@ -51,7 +51,7 @@ function ReportRow({
   const menuItems = [
     {
       label: 'View',
-      onClick: () => { history.push(linkTarget); },
+      onClick: () => { navigate(linkTarget); },
     },
   ];
 

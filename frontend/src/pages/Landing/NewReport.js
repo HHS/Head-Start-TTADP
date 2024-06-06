@@ -9,7 +9,7 @@ import {
 import './index.scss';
 
 function NewReport() {
-  const history = useNavigate();
+  const navigate = useNavigate();
   const key = 'new';
   const onClick = () => {
     try {
@@ -21,7 +21,7 @@ function NewReport() {
       // eslint-disable-next-line no-console
       console.log(e);
     } finally {
-      history.push('/activity-reports/new/activity-summary');
+      navigate('/activity-reports/new/activity-summary');
     }
   }; return (
     <Button

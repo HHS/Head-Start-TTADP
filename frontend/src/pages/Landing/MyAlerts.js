@@ -53,7 +53,7 @@ ProperIcon.defaultProps = {
 };
 
 export function ReportsRow({ reports, removeAlert, message }) {
-  const history = useNavigate();
+  const navigate = useNavigate();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
   const { user } = useContext(UserContext);
@@ -144,7 +144,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const menuItems = [
       {
         label: 'View',
-        onClick: () => { history.push(idLink); },
+        onClick: () => { navigate(idLink); },
       },
     ];
 

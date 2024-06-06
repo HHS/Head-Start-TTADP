@@ -1,18 +1,9 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { useNavigate } from 'react-router';
 import { NavLink as Link } from 'react-router-dom';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
-
-const withRouter = (Component) => {
-  const Wrapper = (props) => {
-    const history = useNavigate();
-    return <Component history={history} {...props} />;
-  };
-  return Wrapper;
-};
 
 const navLinkClasses = [
   'display-block',
@@ -167,4 +158,4 @@ SiteNav.defaultProps = {
     email: '',
   },
 };
-export default withRouter(SiteNav);
+export default SiteNav;

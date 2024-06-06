@@ -65,7 +65,7 @@ export default function TrainingReportForm() {
   const reportId = useRef();
 
   // for redirects if a page is not provided
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   /* ============
 
@@ -206,7 +206,7 @@ export default function TrainingReportForm() {
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/training-report/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   if (!currentPage) {
@@ -305,7 +305,7 @@ export default function TrainingReportForm() {
       resetFormData(hookForm.reset, updatedEvent);
 
       updateLastSaveTime(moment(updatedEvent.updatedAt));
-      history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
+      navigate('/training-reports/complete', { message: 'You successfully submitted the event.' });
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {

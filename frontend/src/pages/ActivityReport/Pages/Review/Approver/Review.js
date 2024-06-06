@@ -37,12 +37,12 @@ const Review = ({
   const watchTextValue = watch('note');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
   const { user } = useContext(UserContext);
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const onReset = async () => {
     try {
       await onResetToDraft();
-      history.push('/activity-reports');
+      navigate('/activity-reports');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);

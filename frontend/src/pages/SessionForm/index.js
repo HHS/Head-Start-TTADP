@@ -56,7 +56,7 @@ export default function SessionForm() {
   const reportId = useRef(sessionId);
 
   // for redirects if a page is not provided
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   /* ============
 
@@ -133,7 +133,7 @@ export default function SessionForm() {
         setReportFetched(true);
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
-        history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
+        navigate(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`, { replace: true });
       } catch (e) {
         setError('Error creating session');
       } finally {
@@ -145,7 +145,7 @@ export default function SessionForm() {
     }
 
     createNewSession();
-  }, [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [currentPage, hookForm.reset, navigate, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
@@ -178,7 +178,7 @@ export default function SessionForm() {
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/training-report/${trainingReportId}/session/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   if (!currentPage) {
@@ -250,7 +250,7 @@ export default function SessionForm() {
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+      navigate('/training-reports/in-progress', { state: { message: 'You successfully submitted the session.' } });
     } catch (err) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {

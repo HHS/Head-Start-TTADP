@@ -11,10 +11,10 @@ import {
 } from 'lodash';
 import { Helmet } from 'react-helmet';
 import {
-  useNavigate,
   Navigate,
   useParams,
   useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
@@ -168,8 +168,8 @@ function ActivityReport({
 }) {
   const { currentPage, activityReportId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const history = useNavigate();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
 
@@ -218,12 +218,6 @@ function ActivityReport({
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
-
-  useEffect(() => {
-    // Clear history state once mounted and activityReportId changes. This prevents someone from
-    // seeing a save message if they refresh the page after creating a new report.
-    history.replace();
-  }, [activityReportId, history]);
 
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
@@ -458,7 +452,7 @@ function ActivityReport({
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/activity-reports/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   const onSave = async (data, forceUpdate = false) => {

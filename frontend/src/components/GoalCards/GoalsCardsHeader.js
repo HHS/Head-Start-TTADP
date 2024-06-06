@@ -33,8 +33,6 @@ export default function GoalCardsHeader({
   pageSelectedGoalIds,
   perPageChange,
   pageGoalIds,
-  showRttapaValidation,
-  draftSelectedRttapa,
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
@@ -223,26 +221,8 @@ export default function GoalCardsHeader({
         </Button>
       </div>
       <div>
-        {showRttapaValidation && (
-          <Alert type="error" className="margin-top-3">
-            <div>
-              { draftSelectedRttapa.length ? (
-                <p className="usa-prose margin-top-0">
-                  <strong>{draftSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'is a' : 'are'}
-                  {' '}
-                  draft
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'goal' : 'goals'}
-                  , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
-                </p>
-              ) : null}
-            </div>
-          </Alert>
-        )}
         {
-          !showRttapaValidation && allGoalsChecked
+          allGoalsChecked
             ? (
               <Alert className="margin-top-3" type="info" slim>
                 {showClearAllAlert
@@ -316,8 +296,6 @@ GoalCardsHeader.propTypes = {
   pageGoalIds: PropTypes.oneOfType(
     [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
   ).isRequired,
-  showRttapaValidation: PropTypes.bool.isRequired,
-  draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,

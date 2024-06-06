@@ -22,7 +22,7 @@ function EventCard({
 }) {
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const hasAdminRights = isAdmin(user);
   const {
@@ -60,7 +60,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/session/new/`);
+        navigate(`/training-report/${idForLink}/session/new/`);
       },
     });
   }
@@ -70,7 +70,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/event-summary`);
+        navigate(`/training-report/${idForLink}/event-summary`);
       },
     });
   }
@@ -79,7 +79,7 @@ function EventCard({
   menuItems.push({
     label: 'View event',
     onClick: () => {
-      history.push(`/training-report/view/${idForLink}`);
+      navigate(`/training-report/view/${idForLink}`);
     },
   });
 
