@@ -287,6 +287,7 @@ export default function Objective({
       setIsAppLoading(true);
       setAppLoadingText('Uploading');
       const data = new FormData();
+      data.append('reportId', JSON.stringify(reportId));
       data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);

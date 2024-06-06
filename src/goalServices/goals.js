@@ -5,7 +5,6 @@ import {
   REPORT_STATUSES,
   determineMergeGoalStatus,
 } from '@ttahub/common';
-import { processObjectiveForResourcesById } from '../services/resource';
 import {
   Goal,
   GoalFieldResponse,
@@ -14,10 +13,6 @@ import {
   GoalStatusChange,
   Grant,
   Objective,
-  ObjectiveCourse,
-  ObjectiveResource,
-  ObjectiveFile,
-  ObjectiveTopic,
   ActivityReportObjective,
   sequelize,
   Resource,
@@ -68,153 +63,6 @@ const logContext = {
   namespace,
 };
 
-export async function saveObjectiveAssociations(
-  objective,
-  resources = [],
-  topics = [],
-  files = [],
-  courses = [],
-  deleteUnusedAssociations = false,
-) {
-  // We need to know if the objectiveTemplateId is populated to know if we
-  // can disable the hooks on the ObjectiveTopic
-  const o = await Objective.findOne({
-    attributes: ['objectiveTemplateId'],
-    where: { id: objective.id },
-    raw: true,
-  });
-
-  // topics
-  const objectiveTopics = await Promise.all(
-    (topics.map(async (topic) => {
-      let otopic = await ObjectiveTopic.findOne({
-        where: {
-          objectiveId: objective.id,
-          topicId: topic.id,
-        },
-      });
-      if (!otopic) {
-        otopic = await ObjectiveTopic.create({
-          objectiveId: objective.id,
-          topicId: topic.id,
-        }, {
-          ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
-        });
-      }
-      return otopic;
-    })),
-  );
-
-  if (deleteUnusedAssociations) {
-    // cleanup objective topics
-    await ObjectiveTopic.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveTopics.length ? objectiveTopics.map((ot) => ot.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-  }
-
-  // resources
-  let objectiveResources = await processObjectiveForResourcesById(
-    objective.id,
-    resources
-      .filter(({ value }) => value)
-      .map(({ value }) => value),
-    [],
-    !deleteUnusedAssociations,
-  );
-
-  // filter the returned resources to only those passed to not falsely include prior resources.
-  if (!deleteUnusedAssociations) {
-    objectiveResources = objectiveResources
-      ?.filter((oR) => resources.map((r) => r.value).includes(oR.resource.dataValues.url));
-  }
-
-  const objectiveFiles = await Promise.all(
-    files.map(
-      async (file) => {
-        let ofile = await ObjectiveFile.findOne({
-          where: {
-            fileId: file.id,
-            objectiveId: objective.id,
-          },
-        });
-        if (!ofile) {
-          ofile = await ObjectiveFile.create({
-            fileId: file.id,
-            objectiveId: objective.id,
-          }, {
-            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
-          });
-        }
-        return ofile;
-      },
-    ),
-  );
-
-  if (deleteUnusedAssociations) {
-    // cleanup objective files
-    await ObjectiveFile.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveFiles.length
-            ? objectiveFiles.map((or) => or.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-  }
-
-  const objectiveCourses = await Promise.all(
-    courses.map(
-      async (course) => {
-        let ocourse = await ObjectiveCourse.findOne({
-          where: {
-            courseId: course.id,
-            objectiveId: objective.id,
-          },
-        });
-        if (!ocourse) {
-          ocourse = await ObjectiveCourse.create({
-            courseId: course.id,
-            objectiveId: objective.id,
-          }, {
-            // including this despite not really knowing why it's here
-            ...(!!o.objectiveTemplateId && { ignoreHooks: { name: 'ToTemplate', suffix: true } }),
-          });
-        }
-        return ocourse;
-      },
-    ),
-  );
-
-  if (deleteUnusedAssociations) {
-    // cleanup objective courses
-    await ObjectiveCourse.destroy({
-      where: {
-        id: {
-          [Op.notIn]: objectiveCourses && objectiveCourses.length
-            ? objectiveCourses.map((oc) => oc.id) : [],
-        },
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-  }
-
-  return {
-    topics: objectiveTopics,
-    resources: objectiveResources,
-    files: objectiveFiles,
-    courses: objectiveCourses,
-  };
-}
-
 /**
  *
  * @param {number} id
@@ -261,7 +109,6 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
           'title',
           'status',
           'goalId',
-          'supportType',
           'onApprovedAR',
           'onAR',
         ],
@@ -446,7 +293,6 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
           'title',
           'title',
           'status',
-          'supportType',
         ],
         model: Objective,
         as: 'objectives',
@@ -564,29 +410,6 @@ async function cleanupObjectivesForGoal(goalId, currentObjectives) {
   const orphanedObjectiveIds = orphanedObjectives
     .filter((objective) => !objective.activityReports || !objective.activityReports.length)
     .map((objective) => objective.id);
-
-  if (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0) {
-    await Promise.all([
-      ObjectiveFile.destroy({
-        where: {
-          objectiveId: orphanedObjectiveIds,
-        },
-        individualHooks: true,
-      }),
-      ObjectiveResource.destroy({
-        where: {
-          objectiveId: orphanedObjectiveIds,
-        },
-        individualHooks: true,
-      }),
-      ObjectiveTopic.destroy({
-        where: {
-          objectiveId: orphanedObjectiveIds,
-        },
-        individualHooks: true,
-      }),
-    ]);
-  }
 
   return (Array.isArray(orphanedObjectiveIds) && orphanedObjectiveIds.length > 0)
     ? Objective.destroy({
@@ -1087,22 +910,6 @@ async function removeObjectives(objectivesToRemove, reportId) {
   // Objectives to destroy.
   const objectivesIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
 
-  // cleanup any ObjectiveFiles that are no longer needed
-  await ObjectiveFile.destroy({
-    where: {
-      objectiveId: objectivesIdsToDestroy,
-    },
-    individualHooks: true,
-  });
-
-  // cleanup any ObjectiveResources that are no longer needed
-  await ObjectiveResource.destroy({
-    where: {
-      objectiveId: objectivesIdsToDestroy,
-    },
-    individualHooks: true,
-  });
-
   // Delete objective.
   return Objective.destroy({
     where: {
@@ -1216,13 +1023,6 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
     if (Array.isArray(objectivesToDefinitelyDestroy) && objectivesToDefinitelyDestroy.length > 0) {
       const objectiveIdsToDestroy = objectivesToDefinitelyDestroy.map((o) => o.id);
 
-      await ObjectiveFile.destroy({
-        where: {
-          objectiveId: objectiveIdsToDestroy,
-        },
-        individualHooks: true,
-      });
-
       await Objective.destroy({
         where: {
           id: objectiveIdsToDestroy,
@@ -1266,7 +1066,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectives(objectiveIdsToRemove, reportId);
 }
 
-async function createObjectivesForGoal(goal, objectives, report) {
+async function createObjectivesForGoal(goal, objectives) {
   /*
      Note: Objective Status
      We only want to set Objective status from here on initial Objective creation.
@@ -1340,7 +1140,6 @@ async function createObjectivesForGoal(goal, objectives, report) {
       if (!existingObjective) {
         savedObjective = await Objective.create({
           ...updatedObjective,
-          supportType,
           title: objectiveTitle,
           status: OBJECTIVE_STATUS.NOT_STARTED, // Only the hook should set status.
           createdVia: 'activityReport',
@@ -1493,20 +1292,6 @@ export async function saveGoalsForReport(goals, report) {
       objectiveCreatedHere,
     } = savedObjective;
 
-    // this will save all our objective join table data
-    // however, in the case of the Activity Report, we can't really delete
-    // unused join table data, so we'll just create any missing links
-    // so that the metadata is saved properly
-    const deleteUnusedAssociations = false;
-    const metadata = await saveObjectiveAssociations(
-      savedObjective,
-      resources,
-      topics,
-      files,
-      courses,
-      deleteUnusedAssociations,
-    );
-
     // this will link our objective to the activity report through
     // activity report objective and then link all associated objective data
     // to the activity report objective to capture this moment in time
@@ -1514,7 +1299,10 @@ export async function saveGoalsForReport(goals, report) {
       savedObjective,
       report.id,
       {
-        ...metadata,
+        resources,
+        topics,
+        files,
+        courses,
         status,
         closeSuspendContext,
         closeSuspendReason,
@@ -1682,33 +1470,6 @@ export async function destroyGoal(goalIds) {
 
     const objectiveIds = objectives.map((o) => o.id);
 
-    const objectiveTopicsDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
-      ? await ObjectiveTopic.destroy({
-        where: {
-          objectiveId: { [Op.in]: objectiveIds },
-        },
-        individualHooks: true,
-      })
-      : await Promise.resolve();
-
-    const objectiveResourcesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
-      ? await ObjectiveResource.destroy({
-        where: {
-          objectiveId: { [Op.in]: objectiveIds },
-        },
-        individualHooks: true,
-      })
-      : await Promise.resolve();
-
-    const objectiveFilesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
-      ? await ObjectiveFile.destroy({
-        where: {
-          objectiveId: { [Op.in]: objectiveIds },
-        },
-        individualHooks: true,
-      })
-      : await Promise.resolve();
-
     const objectivesDestroyed = (Array.isArray(objectiveIds) && objectiveIds.length)
       ? await Objective.destroy({
         where: {
@@ -1729,10 +1490,7 @@ export async function destroyGoal(goalIds) {
 
     return {
       goalsDestroyed,
-      objectiveResourcesDestroyed,
-      objectiveTopicsDestroyed,
       objectivesDestroyed,
-      objectiveFilesDestroyed,
     };
   } catch (error) {
     auditLogger.error(
@@ -2046,29 +1804,6 @@ export async function mergeObjectiveFromGoal(objective, parentGoalId) {
     );
   });
 
-  // for topics, resources, and files, we need to create new ones
-  // that copy the old
-  objective.objectiveTopics.forEach((ot) => {
-    updatesToRelatedModels.push(ObjectiveTopic.create({
-      objectiveId: newObjective.id,
-      topicId: ot.topicId,
-    }, { individualHooks: true }));
-  });
-
-  objective.objectiveResources.forEach((or) => {
-    updatesToRelatedModels.push(ObjectiveResource.create({
-      objectiveId: newObjective.id,
-      resourceId: or.resourceId,
-    }, { individualHooks: true }));
-  });
-
-  objective.objectiveFiles.forEach((of) => {
-    updatesToRelatedModels.push(ObjectiveFile.create({
-      objectiveId: newObjective.id,
-      fileId: of.fileId,
-    }, { individualHooks: true }));
-  });
-
   return Promise.all(updatesToRelatedModels);
 }
 
@@ -2154,21 +1889,6 @@ export async function mergeGoals(
         model: Objective,
         as: 'objectives',
         include: [
-          {
-            model: ObjectiveFile,
-            as: 'objectiveFiles',
-            attributes: ['id', 'fileId', 'objectiveId'],
-          },
-          {
-            model: ObjectiveResource,
-            as: 'objectiveResources',
-            attributes: ['id', 'resourceId', 'objectiveId'],
-          },
-          {
-            model: ObjectiveTopic,
-            as: 'objectiveTopics',
-            attributes: ['id', 'topicId', 'objectiveId'],
-          },
           {
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
