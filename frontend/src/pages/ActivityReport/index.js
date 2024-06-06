@@ -90,6 +90,7 @@ export const formatReportWithSaveBeforeConversion = async (
   userHasOneRole,
   reportId,
   approverIds,
+  forceUpdate,
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (formData)
   // and pass only the updated to save report
@@ -104,7 +105,7 @@ export const formatReportWithSaveBeforeConversion = async (
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
 
-  const updatedReport = isEmpty
+  const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
       reportId.current, {
@@ -455,7 +456,7 @@ function ActivityReport({
     history.push(newPath, state);
   };
 
-  const onSave = async (data) => {
+  const onSave = async (data, forceUpdate = false) => {
     const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
@@ -490,6 +491,7 @@ function ActivityReport({
           userHasOneRole,
           reportId,
           approverIds,
+          forceUpdate,
         );
 
         let reportData = updatedReport;

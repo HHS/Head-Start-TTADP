@@ -51,8 +51,9 @@ function purifyFields(instance, fields) {
 
   try {
     const changed = instance.changed();
+    if (!changed || !Array.isArray(changed)) return;
     fields.forEach((field) => {
-      if (changed.includes(field) && instance[field] !== null) {
+      if (changed.includes(field) && typeof instance[field] === 'string') {
         instance.set(field, purify.sanitize(instance[field]));
       }
     });
