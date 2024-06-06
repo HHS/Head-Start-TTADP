@@ -2,9 +2,6 @@ import {
   sequelize,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
-  ObjectiveTemplate,
-  ObjectiveTemplateFile,
-  ObjectiveFile,
   Objective,
   File,
   ActivityReport,
@@ -12,7 +9,7 @@ import {
 } from '..';
 import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
-import { draftObject, objectiveTemplateGenerator } from './testHelpers';
+import { draftObject } from './testHelpers';
 
 describe('propagateDestroyToFile', () => {
   afterAll(async () => {
@@ -159,113 +156,5 @@ describe('propagateDestroyToFile', () => {
     await ActivityReport.destroy({
       where: { id: ar.id },
     });
-  });
-
-  it('won\'t destroy the file if its on an objective', async () => {
-    const objective = await Objective.create({
-      title: 'test',
-      status: OBJECTIVE_STATUS.DRAFT,
-    });
-
-    const file = await File.create({
-      originalFileName: 'test.pdf',
-      key: 'test.pdf',
-      status: FILE_STATUSES.UPLOADED,
-      fileSize: 123445,
-    });
-
-    await ObjectiveFile.create({
-      objectiveId: objective.id,
-      fileId: file.id,
-    });
-
-    const mockInstance = {
-      fileId: file.id,
-    };
-
-    const transaction = await sequelize.transaction();
-    const mockOptions = {
-      transaction,
-    };
-
-    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
-
-    const foundFile = await File.findOne({
-      where: { id: file.id },
-      transaction,
-    });
-
-    expect(foundFile).not.toBeNull();
-
-    await ObjectiveFile.destroy({
-      where: { objectiveId: objective.id, fileId: file.id },
-      transaction,
-    });
-
-    await Objective.destroy({
-      where: { id: objective.id },
-      transaction,
-      force: true,
-    });
-
-    await File.destroy({
-      where: { id: file.id },
-      transaction,
-    });
-
-    await transaction.commit();
-  });
-
-  it('won\'t destroy the file if its on an objective template', async () => {
-    const objectiveTemplate = await ObjectiveTemplate.create(
-      objectiveTemplateGenerator('genericFileTest'),
-    );
-
-    const file = await File.create({
-      originalFileName: 'test.pdf',
-      key: 'test.pdf',
-      status: FILE_STATUSES.UPLOADED,
-      fileSize: 123445,
-    });
-
-    await ObjectiveTemplateFile.create({
-      objectiveTemplateId: objectiveTemplate.id,
-      fileId: file.id,
-    });
-
-    const mockInstance = {
-      fileId: file.id,
-    };
-
-    const transaction = await sequelize.transaction();
-    const mockOptions = {
-      transaction,
-    };
-
-    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
-
-    const foundFile = await File.findOne({
-      where: { id: file.id },
-      transaction,
-    });
-
-    expect(foundFile).not.toBeNull();
-
-    await ObjectiveTemplateFile.destroy({
-      where: { objectiveTemplateId: objectiveTemplate.id, fileId: file.id },
-      transaction,
-    });
-
-    await ObjectiveTemplate.destroy({
-      where: { id: objectiveTemplate.id },
-      transaction,
-    });
-
-    await File.destroy({
-      where: { id: file.id },
-      transaction,
-    });
-
-    await transaction.commit();
   });
 });

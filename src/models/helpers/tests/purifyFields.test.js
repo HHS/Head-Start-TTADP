@@ -41,7 +41,7 @@ describe('purifyFields', () => {
     expect(instance.set).not.toHaveBeenCalled();
   });
 
-  it('returns if the field value is not a string', () => {
+  test('returns if the field value is not a string', () => {
     const instance = {
       set: jest.fn(),
       changed: jest.fn().mockReturnValue(['field1']),
@@ -204,7 +204,7 @@ describe('purifyFields', () => {
       });
     });
 
-    it('properly escaped fields', async () => {
+    test('properly escaped fields', async () => {
       expect(report.context).toBe(safe);
       expect(approver.note).toBe(safe);
       expect(event.data.eventName).toBe(safe);
