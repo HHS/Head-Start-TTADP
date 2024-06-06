@@ -3,8 +3,7 @@ import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
@@ -14,14 +13,12 @@ import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
 
-export default function ViewCommunicationLog({ match, recipientName }) {
+export default function ViewCommunicationLog({ recipientName }) {
   const {
-    params: {
-      recipientId,
-      regionId,
-      communicationLogId,
-    },
-  } = match;
+    recipientId,
+    regionId,
+    communicationLogId,
+  } = useParams();
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
@@ -131,6 +128,5 @@ export default function ViewCommunicationLog({ match, recipientName }) {
 }
 
 ViewCommunicationLog.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
   recipientName: PropTypes.string.isRequired,
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
@@ -17,9 +16,10 @@ import ApprovedReportV1 from './components/ApprovedReportV1';
 import ApprovedReportV2 from './components/ApprovedReportV2';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 
-export default function ApprovedActivityReport({ match, user }) {
+export default function ApprovedActivityReport({ user }) {
   const [notAuthorized, setNotAuthorized] = useState(false);
   const [somethingWentWrong, setSomethingWentWrong] = useState(false);
+  const { activityReportId } = useParams();
 
   const [justUnlocked, updatedJustUnlocked] = useState(false);
 
@@ -74,14 +74,14 @@ export default function ApprovedActivityReport({ match, user }) {
   [report.id]);
 
   useEffect(() => {
-    if (!parseInt(match.params.activityReportId, 10)) {
+    if (!parseInt(activityReportId, 10)) {
       setSomethingWentWrong(true);
       return;
     }
 
     async function fetchReport() {
       try {
-        const data = await getReport(match.params.activityReportId);
+        const data = await getReport(activityReportId);
         // review and submit table
         setReport(data);
       } catch (err) {
@@ -97,7 +97,7 @@ export default function ApprovedActivityReport({ match, user }) {
     }
 
     fetchReport();
-  }, [match.params.activityReportId, user]);
+  }, [activityReportId, user]);
 
   if (notAuthorized) {
     return (
@@ -213,7 +213,6 @@ export default function ApprovedActivityReport({ match, user }) {
   );
 }
 ApprovedActivityReport.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

@@ -4,7 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import {
   StepIndicatorStep,
@@ -15,7 +15,6 @@ import {
 } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '@ttahub/common/src/constants';
 import Container from '../../../../components/Container';
 import StepIndicator from '../../../../components/StepIndicator';
@@ -96,7 +95,7 @@ const stepIndicatorStatus = (position, activePage) => {
 
 const INTERVAL_DELAY = 2500;
 
-export const navigate = (newPage, setActivePage) => {
+export const navigator = (newPage, setActivePage) => {
   if (!pages.includes(newPage)) {
     return;
   }
@@ -106,7 +105,6 @@ export const navigate = (newPage, setActivePage) => {
 };
 
 export default function MergeGoals({
-  match,
   recipientId,
   regionId,
   recipientNameWithRegion,
@@ -129,11 +127,13 @@ export default function MergeGoals({
     },
   });
 
+  const { goalGroupId } = useParams();
+
   const { register, watch } = hookForm;
   const selectedGoalIds = watch('selectedGoalIds');
   const finalGoalId = watch('finalGoalId');
 
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const {
     socket,
@@ -143,9 +143,9 @@ export default function MergeGoals({
   } = useSocket(user);
 
   useEffect(() => {
-    const newPath = `/merge-goals/${match.params.goalGroupId}`;
+    const newPath = `/merge-goals/${goalGroupId}`;
     setSocketPath(newPath);
-  }, [match.params, setSocketPath]);
+  }, [goalGroupId, setSocketPath]);
 
   usePublishWebsocketLocationOnInterval(
     socket,
@@ -157,7 +157,6 @@ export default function MergeGoals({
 
   useDeepCompareEffect(() => {
     async function fetchGoals() {
-      const { goalGroupId } = match.params;
       try {
         setError('');
         setIsAppLoading(true);
@@ -190,7 +189,7 @@ export default function MergeGoals({
     }
 
     fetchGoals();
-  }, [canMergeGoals, match.params, recipientId, regionId, setIsAppLoading]);
+  }, [canMergeGoals, recipientId, regionId, setIsAppLoading, goalGroupId]);
 
   const selectedGoals = goals.filter((g) => (
     selectedGoalIds.includes(g.ids.join(','))
@@ -253,7 +252,7 @@ export default function MergeGoals({
     }
 
     const newPage = activePage + 1;
-    navigate(newPage, setActivePage);
+    navigator(newPage, setActivePage);
   };
 
   const noneAreDuplicates = async (e) => {
@@ -264,10 +263,10 @@ export default function MergeGoals({
       await markRecipientGoalGroupInvalid(
         recipientId,
         regionId,
-        match.params.goalGroupId,
+        goalGroupId,
       );
 
-      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`);
+      navigate(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`);
     } catch (err) {
       setError('Unable to mark goals as not duplicates');
     }
@@ -276,7 +275,7 @@ export default function MergeGoals({
   const goBack = (e) => {
     e.preventDefault();
     const newPage = activePage - 1;
-    navigate(newPage, setActivePage);
+    navigator(newPage, setActivePage);
   };
 
   const MiddleButton = () => {
@@ -335,11 +334,11 @@ export default function MergeGoals({
         finalFinalGoalId,
         recipientId,
         regionId,
-        match.params.goalGroupId,
+        goalGroupId,
       );
       const goalIds = mergedGoals.map((g) => g.id);
       setIsAppLoading(false);
-      history.push(`${backPath}`, { mergedGoals: goalIds });
+      navigate(`${backPath}`, { mergedGoals: goalIds });
     } catch (e) {
       setValidation('Unable to merge goals');
       setIsAppLoading(false);
@@ -459,7 +458,6 @@ export default function MergeGoals({
 }
 
 MergeGoals.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
   recipientNameWithRegion: PropTypes.string.isRequired,

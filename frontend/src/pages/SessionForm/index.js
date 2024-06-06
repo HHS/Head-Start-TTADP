@@ -5,10 +5,9 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
@@ -51,8 +50,8 @@ const resetFormData = (reset, updatedSession) => {
   reset(form);
 };
 
-export default function SessionForm({ match }) {
-  const { params: { sessionId, currentPage, trainingReportId } } = match;
+export default function SessionForm() {
+  const { sessionId, currentPage, trainingReportId } = useParams();
 
   const reportId = useRef(sessionId);
 
@@ -332,7 +331,3 @@ export default function SessionForm({ match }) {
     </div>
   );
 }
-
-SessionForm.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

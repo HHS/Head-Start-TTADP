@@ -10,8 +10,12 @@ import {
   keyBy, mapValues, startCase,
 } from 'lodash';
 import { Helmet } from 'react-helmet';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { useNavigate, Navigate } from 'react-router-dom';
+import {
+  useNavigate,
+  Navigate,
+  useParams,
+  useLocation,
+} from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -160,9 +164,10 @@ export function cleanupLocalStorage(id, replacementKey) {
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 function ActivityReport({
-  match, location, region,
+  region,
 }) {
-  const { params: { currentPage, activityReportId } } = match;
+  const { currentPage, activityReportId } = useParams();
+  const location = useLocation();
 
   const history = useNavigate();
   const [error, updateError] = useState();
@@ -631,8 +636,6 @@ function ActivityReport({
 }
 
 ActivityReport.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-  location: ReactRouterPropTypes.location.isRequired,
   region: PropTypes.number,
 };
 

@@ -148,8 +148,12 @@
   },
   "babel": {
     "presets": [
-      "@babel/preset-react"
-    ]
+        "@babel/preset-react",
+        "react-app",
+        {
+          "absoluteRuntime": false
+        }
+    ]    
   },
   "browserslist": {
     "production": [

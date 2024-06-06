@@ -5,10 +5,9 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -60,8 +59,9 @@ const resetFormData = (reset, event) => {
   });
 };
 
-export default function TrainingReportForm({ match }) {
-  const { params: { currentPage, trainingReportId } } = match;
+export default function TrainingReportForm() {
+  const { currentPage, trainingReportId } = useParams();
+
   const reportId = useRef();
 
   // for redirects if a page is not provided
@@ -390,7 +390,3 @@ export default function TrainingReportForm({ match }) {
     </div>
   );
 }
-
-TrainingReportForm.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

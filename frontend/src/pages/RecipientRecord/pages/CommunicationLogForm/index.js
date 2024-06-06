@@ -6,10 +6,9 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useHookFormPageState from '../../../../hooks/useHookFormPageState';
 import { defaultValues, formatCommunicationLogUrl, recipientRecordRootUrl } from './constants';
@@ -71,20 +70,19 @@ const shouldFetch = (
   return true; // to
 }; // fetch
 
-export default function CommunicationLogForm({ match, recipientName }) {
+export default function CommunicationLogForm({ recipientName }) {
   const {
-    params: {
-      recipientId,
-      regionId,
-      currentPage,
-      communicationLogId,
-    },
-  } = match;
+    recipientId,
+    regionId,
+    currentPage,
+    communicationLogId,
+
+  } = useParams();
 
   const reportId = useRef(communicationLogId);
 
   // for redirects if a page is not provided
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   /* ============
 
@@ -176,7 +174,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
     const page = pages.find((p) => p.position === position);
     const newPath = `${formatCommunicationLogUrl(recipientId, regionId, reportId.current)}${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   if (!currentPage) {
@@ -274,9 +272,9 @@ export default function CommunicationLogForm({ match, recipientName }) {
         data,
       );
 
-      history.push(
+      navigate.push(
         `${recipientRecordRootUrl(recipientId, regionId)}/communication`,
-        { message: 'You successfully saved the communication log.' },
+        { state: { message: 'You successfully saved the communication log.' } },
       );
     } catch (err) {
       setError('There was an error saving the communication log. Please try again later.');
@@ -352,6 +350,5 @@ export default function CommunicationLogForm({ match, recipientName }) {
 }
 
 CommunicationLogForm.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
   recipientName: PropTypes.string.isRequired,
 };

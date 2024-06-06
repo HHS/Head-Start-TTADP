@@ -4,9 +4,9 @@ import React, {
   useState,
 } from 'react';
 import { capitalize } from 'lodash';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
+import { useParams } from 'react-router-dom';
 import { eventById } from '../../fetchers/event';
 import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -55,19 +55,20 @@ const formatNextSteps = (nextSteps, heading, striped) => {
 
 const FORBIDDEN = 403;
 
-export default function ViewTrainingReport({ match }) {
+export default function ViewTrainingReport() {
   const [event, setEvent] = useState(null);
   const [error, setError] = useState(null);
   const [eventCollaborators, setEventCollaborators] = useState([]);
   const [eventPoc, setEventPoc] = useState([]);
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { trainingReportId } = useParams();
 
   useEffect(() => {
     async function fetchEvent() {
       try {
         setIsAppLoading(true);
-        const e = await eventById(match.params.trainingReportId, true);
+        const e = await eventById(trainingReportId, true);
         setEvent(e);
       } catch (err) {
         let message = 'Sorry, something went wrong';
@@ -85,7 +86,7 @@ export default function ViewTrainingReport({ match }) {
     if (!event) {
       fetchEvent();
     }
-  }, [event, match.params.trainingReportId, setIsAppLoading]);
+  }, [event, trainingReportId, setIsAppLoading]);
 
   useEffect(() => {
     async function fetchCollaborators() {
@@ -238,7 +239,3 @@ export default function ViewTrainingReport({ match }) {
     </>
   );
 }
-
-ViewTrainingReport.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

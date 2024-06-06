@@ -3,7 +3,7 @@ import React, {
   useContext,
   useState,
 } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import { useParams } from 'react-router-dom';
 import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { hasApproveActivityReport } from '../../permissions';
@@ -58,11 +58,11 @@ const links = [
   */
 ];
 
-export default function RegionalDashboard({ match }) {
+export default function RegionalDashboard() {
   const { user } = useContext(UserContext);
   const [resetPagination, setResetPagination] = useState(false);
 
-  const { reportType } = match.params;
+  const { reportType } = useParams();
   const filterKey = useDashboardFilterKey('regional-dashboard', reportType || 'activityReports');
 
   const {
@@ -142,7 +142,3 @@ export default function RegionalDashboard({ match }) {
     </div>
   );
 }
-
-RegionalDashboard.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

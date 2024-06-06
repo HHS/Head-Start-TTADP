@@ -1,7 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import { useLocation } from 'react-router-dom';
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import { expandFilters } from '../../../utils';
@@ -14,11 +14,11 @@ export default function GoalsObjectives({
   recipientId,
   regionId,
   recipient,
-  location,
   canMergeGoals,
 }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
+  const location = useLocation();
   const showNewGoals = location.state && location.state.ids && location.state.ids.length > 0;
 
   const [filters, setFilters] = useSessionFiltersAndReflectInUrl(
@@ -80,6 +80,5 @@ GoalsObjectives.propTypes = {
       numberWithProgramTypes: PropTypes.string.isRequired,
     })).isRequired,
   }).isRequired,
-  location: ReactRouterPropTypes.location.isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
 };

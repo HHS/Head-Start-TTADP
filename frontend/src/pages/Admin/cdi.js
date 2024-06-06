@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import { useParams } from 'react-router-dom';
 import {
   Grid, SideNav, Alert, Checkbox, Label, TextInput,
 } from '@trussworks/react-uswds';
@@ -9,7 +9,8 @@ import Container from '../../components/Container';
 import { getCDIGrants, getRecipients, assignCDIGrant } from '../../fetchers/Admin';
 import Grant from './components/Grant';
 
-function Cdi({ match: { params: { grantId } } }) {
+function Cdi() {
+  const { grantId } = useParams();
   const [selectedGrant, updateSelectedGrant] = useState();
   const [recipients, updateRecipients] = useState([]);
   const [grants, updateGrants] = useState([]);
@@ -128,9 +129,5 @@ function Cdi({ match: { params: { grantId } } }) {
     </>
   );
 }
-
-Cdi.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};
 
 export default Cdi;

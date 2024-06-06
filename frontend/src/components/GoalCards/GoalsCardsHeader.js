@@ -6,7 +6,7 @@ import {
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -42,7 +42,8 @@ export default function GoalCardsHeader({
   goalBuckets,
 }) {
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
-  const history = useNavigate();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
@@ -87,8 +88,8 @@ export default function GoalCardsHeader({
       (bucket) => goalsToPrint.includes(bucket.id),
     ).map((bucket) => bucket.goalIds).flat();
 
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: goalsToPrint,
+    navigate(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
+      state: { sortConfig, selectedGoalIds: goalsToPrint },
     });
   };
 
@@ -98,8 +99,8 @@ export default function GoalCardsHeader({
   };
 
   const mergedGoals = (() => {
-    if (history.location && history.location.state) {
-      return history.location.state.mergedGoals;
+    if (location && location.state) {
+      return location.state.mergedGoals;
     }
 
     return null;

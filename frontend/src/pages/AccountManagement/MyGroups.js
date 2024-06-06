@@ -1,10 +1,9 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useEffect, useState, useContext } from 'react';
 import { GROUP_SHARED_WITH } from '@ttahub/common';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import {
@@ -54,7 +53,8 @@ export const GROUP_FIELD_NAMES = {
   SHARE_WITH_EVERYONE: 'share-with-everyone',
 };
 
-export default function MyGroups({ match }) {
+export default function MyGroups() {
+  const { groupId } = useParams();
   const {
     control,
     handleSubmit,
@@ -77,7 +77,6 @@ export default function MyGroups({ match }) {
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
   const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
 
-  const { groupId } = match.params;
   const [recipientOptions, setRecipientOptions] = useState([]);
   const [userOptions, setUserOptions] = useState([]);
   const [error, setError] = useState(null);
@@ -425,7 +424,3 @@ export default function MyGroups({ match }) {
     </>
   );
 }
-
-MyGroups.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

@@ -1,7 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Link, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+} from 'react-router-dom';
 import {
   Alert,
   Button, Form, Label, ModalToggleButton, TextInput, Select, SideNav,
@@ -15,9 +19,10 @@ import {
   updateNationalCenter,
 } from '../../fetchers/Admin';
 
-export default function NationalCenters({ match }) {
-  const { params: { nationalCenterId } } = match;
-  const history = useNavigate();
+export default function NationalCenters() {
+  const { nationalCenterId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const modalRef = useRef();
   const [nationalCenters, setNationalCenters] = useState();
   const [allUserOptions, setAllUserOptions] = useState([]);
@@ -114,11 +119,11 @@ export default function NationalCenters({ match }) {
       if (id === 'new') {
         const c = await createNationalCenter(data);
         // update our location
-        history.replace(`/admin/national-centers/${c.id}`, { message: 'Center created successfully' });
+        navigate(`/admin/national-centers/${c.id}`, { state: { message: 'Center created successfully' }, replace: true });
       } else {
         const c = await updateNationalCenter(id, data);
         // update our location
-        history.replace(`/admin/national-centers/${c.id}`, { message: 'Center updated successfully' });
+        navigate(`/admin/national-centers/${c.id}`, { state: { message: 'Center updated successfully' }, replace: true });
       }
 
       // trigger re-fetch
@@ -131,7 +136,7 @@ export default function NationalCenters({ match }) {
   const onDelete = async (selection) => {
     try {
       await deleteNationalCenter(selection.id);
-      history.replace('/admin/national-centers/', { message: 'Center deleted successfully' });
+      navigate('/admin/national-centers/', { state: { message: 'Center deleted successfully' }, replace: true });
       // trigger re-fetch
       setNationalCenters(null);
     } catch (err) {
@@ -139,7 +144,7 @@ export default function NationalCenters({ match }) {
     }
   };
 
-  const message = history.location.state && history.location.state.message;
+  const message = location.state && location.state.message;
 
   const getCenterToDisplay = (center) => {
     let centerToDisplay = center.name;
@@ -229,7 +234,3 @@ export default function NationalCenters({ match }) {
     </div>
   );
 }
-
-NationalCenters.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

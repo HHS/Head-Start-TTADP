@@ -38,7 +38,6 @@ const NavLink = (props) => (
 const SiteNav = ({
   authenticated,
   user,
-  location,
   hasAlerts,
 }) => {
   const siteNavContent = useRef(null);
@@ -46,14 +45,14 @@ const SiteNav = ({
   const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
-    if (location.pathname === '/activity-reports' && authenticated) {
+    if (window.location.pathname === '/activity-reports' && authenticated) {
       setShowActivityReportSurveyButton(true);
     } else {
       setShowActivityReportSurveyButton(false);
     }
 
-    setShowSidebar(!(location.pathname === '/logout'));
-  }, [location.pathname, authenticated]);
+    setShowSidebar(!(window.location.pathname === '/logout'));
+  }, [authenticated]);
 
   // This resizes the site nav content's gap to account for the header if there is an alert
   useEffect(() => {
@@ -158,7 +157,6 @@ SiteNav.displayName = 'SiteNav';
 SiteNav.propTypes = {
   authenticated: PropTypes.bool,
   user: PropTypes.shape({ name: PropTypes.string, email: PropTypes.string }),
-  location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
   hasAlerts: PropTypes.bool.isRequired,
 };
 

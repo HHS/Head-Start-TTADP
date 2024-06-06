@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import _ from 'lodash';
 import { Helmet } from 'react-helmet';
+import { useParams } from 'react-router-dom';
 import {
   Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
 } from '@trussworks/react-uswds';
@@ -50,8 +50,8 @@ export const setFeatureFromURL = (location, setter) => {
  * permissions, etc...). This component handles fetching of users from the API and will
  * be responsible for sending updates/creates back to the API (not yet implemented).
  */
-function Admin(props) {
-  const { match: { params: { userId } } } = props;
+function Admin() {
+  const { userId } = useParams();
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, updateError] = useState();
   const [users, updateUsers] = useState([]);
@@ -292,9 +292,5 @@ function Admin(props) {
     </>
   );
 }
-
-Admin.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};
 
 export default Admin;

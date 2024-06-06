@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Routes, Route } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
@@ -76,9 +75,8 @@ PageWithHeading.defaultProps = {
   slug: '',
 };
 
-export default function RecipientRecord({ match, hasAlerts }) {
-  const { recipientId, regionId } = match.params;
-
+export default function RecipientRecord({ hasAlerts }) {
+  const { recipientId, regionId } = useParams();
   const [loading, setLoading] = useState(true);
   const [recipientData, setRecipientData] = useState({
     'grants.programSpecialistName': '',
@@ -142,7 +140,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
     const id = parseInt(recipientId, DECIMAL_BASE);
     const region = parseInt(regionId, DECIMAL_BASE);
     fetchRecipient(id, region);
-  }, [recipientData.recipientName, recipientId, match.params, regionId]);
+  }, [recipientData.recipientName, recipientId, regionId]);
 
   const { recipientName } = recipientData;
   const recipientNameWithRegion = `${recipientName} - Region ${regionId}`;
@@ -158,7 +156,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
       <Routes>
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/tta-history"
-          render={() => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -177,7 +175,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/profile"
-          render={() => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -198,7 +196,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
-          element={({ location }) => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -222,7 +220,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
                 <PrintGoals
                   recipientId={recipientId}
                   regionId={regionId}
-                  location={location}
                 />
               </FilterContext.Provider>
 
@@ -231,7 +228,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
-          element={({ location }) => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -240,7 +237,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
               hasAlerts={hasAlerts}
             >
               <GoalsObjectives
-                location={location}
                 recipientId={recipientId}
                 regionId={regionId}
                 recipient={recipientData}
@@ -252,7 +248,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
-          element={({ location, match: routeMatch }) => (
+          element={(
             <>
               <Helmet>
                 <title>These Goals Might Be Duplicates</title>
@@ -260,8 +256,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
               <MergeGoals
                 regionId={regionId}
                 recipientId={recipientId}
-                match={routeMatch}
-                location={location}
                 recipientNameWithRegion={recipientNameWithRegion}
                 canMergeGoals={canMergeGoals}
               />
@@ -270,7 +264,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
-          render={() => (
+          element={(
             <>
               <Helmet>
                 <title>Create a New Goal</title>
@@ -286,7 +280,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
-          render={() => (
+          element={(
             <ViewGoals
               regionId={regionId}
               recipient={recipientData}
@@ -295,7 +289,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/goals"
-          render={() => (
+          element={(
             <GoalForm
               regionId={regionId}
               recipient={recipientData}
@@ -305,25 +299,23 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
-          element={({ match: routerMatch }) => (
+          element={(
             <ViewCommunicationLog
               recipientName={recipientName}
-              match={routerMatch}
             />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
-          element={({ match: routerMatch }) => (
+          element={(
             <CommunicationLogForm
               recipientName={recipientName}
-              match={routerMatch}
             />
           )}
         />
         <Route
           path="/recipient-tta-records/:recipientId/region/:regionId/communication"
-          render={() => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -341,7 +333,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
         />
 
         <Route
-          render={() => (
+          element={(
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
@@ -364,5 +356,4 @@ export default function RecipientRecord({ match, hasAlerts }) {
 
 RecipientRecord.propTypes = {
   hasAlerts: PropTypes.bool.isRequired,
-  match: ReactRouterPropTypes.match.isRequired,
 };

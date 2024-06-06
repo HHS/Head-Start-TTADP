@@ -11,7 +11,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
 import GoalsTable from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
@@ -85,7 +85,7 @@ function GoalDataController({
     }
   }, [isAppLoading, loading, logsLoaded, setIsAppLoading]);
 
-  const history = useNavigate();
+  const location = useLocation();
 
   const defaultSort = useMemo(() => (showNewGoals
     ? {
@@ -109,8 +109,8 @@ function GoalDataController({
       setLoading(true);
       try {
         const mergedGoals = (() => {
-          if (history.location && history.location.state) {
-            return history.location.state.mergedGoals;
+          if (location && location.state) {
+            return location.state.mergedGoals;
           }
 
           return null;
@@ -154,7 +154,7 @@ function GoalDataController({
     showNewGoals,
     setSortConfig,
     goalsPerPage,
-    history.location,
+    location,
   ]);
 
   useEffect(() => {
@@ -213,8 +213,8 @@ function GoalDataController({
   const setGoals = (goals) => setData({ ...data, goalRows: goals });
 
   const dismissMergeSuccess = () => {
-    if (history.location.state && history.location.state.mergedGoals) {
-      history.location.state.mergedGoals = null;
+    if (location.state && location.state.mergedGoals) {
+      location.state.mergedGoals = null;
     }
 
     setSortConfig({

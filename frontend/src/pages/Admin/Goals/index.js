@@ -19,11 +19,11 @@ export default function Goals() {
         <Routes>
           <Route
             path="/admin/goals/create"
-            render={() => <Create />}
+            element={<Create />}
           />
           <Route
             path="/admin/goals/close"
-            render={() => <Close />}
+            element={<Close />}
           />
           <Route>
             <div>

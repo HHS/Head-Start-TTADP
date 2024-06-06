@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Alert } from '@trussworks/react-uswds';
@@ -11,8 +10,9 @@ import AppLoadingContext from '../../AppLoadingContext';
 import WidgetCard from '../../components/WidgetCard';
 import ReadOnlyField from '../../components/ReadOnlyField';
 
-export default function Group({ match }) {
-  const { groupId } = match.params;
+export default function Group() {
+  const { groupId } = useParams();
+
   const [error, setError] = useState(null);
 
   const [group, setGroup] = useState({
@@ -112,7 +112,3 @@ export default function Group({ match }) {
     </>
   );
 }
-
-Group.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

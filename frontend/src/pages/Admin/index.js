@@ -55,43 +55,43 @@ function Admin() {
       <Routes>
         <Route
           path="/admin/cdi/:grantId?"
-          element={({ match }) => <Cdi match={match} />}
+          element={<Cdi />}
         />
         <Route
           path="/admin/users/:userId?"
-          element={({ match }) => <User match={match} />}
+          element={<User />}
         />
         <Route
           path="/admin/diag/"
-          element={({ match }) => <Diag match={match} />}
+          element={<Diag />}
         />
         <Route
           path="/admin/flags/"
-          element={({ match }) => <Flags match={match} />}
+          element={<Flags />}
         />
         <Route
           path="/admin/site-alerts/"
-          element={({ match }) => <SiteAlerts match={match} />}
+          element={<SiteAlerts />}
         />
         <Route
           path="/admin/redis/"
-          element={({ match }) => <Redis match={match} />}
+          element={<Redis />}
         />
         <Route
           path="/admin/national-centers/:nationalCenterId?"
-          element={({ match }) => <NationalCenters match={match} />}
+          element={<NationalCenters />}
         />
         <Route
           path="/admin/goals/"
-          render={() => <Goals />}
+          render={<Goals />}
         />
         <Route
           path="/admin/training-reports/"
-          element={({ match }) => <TrainingReports match={match} />}
+          element={<TrainingReports />}
         />
         <Route
           path="/admin/courses/"
-          element={({ match }) => <Courses match={match} />}
+          element={<Courses />}
         />
       </Routes>
     </>
