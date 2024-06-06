@@ -237,48 +237,6 @@ const propagateTitle = async (sequelize, instance, options) => {
   }
 };
 
-const propagateMetadataToTemplate = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('objectiveTemplateId')) {
-    const files = await sequelize.models.ObjectiveFile.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(files.map(async (file) => sequelize.models.ObjectiveTemplateFile
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          fileid: file.fileId,
-        },
-      })));
-
-    const resources = await sequelize.models.ObjectiveResource.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(resources.map(async (resource) => sequelize.models.ObjectiveTemplateResource
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          resourceId: resource.resourceId,
-        },
-      })));
-
-    const topics = await sequelize.models.ObjectiveTopics.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(topics.map(async (topic) => sequelize.models.ObjectiveTemplateTopics
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          topicId: topic.topicId,
-        },
-      })));
-  }
-};
-
 const autoPopulateCreator = async (sequelize, instance, options) => {
   if (skipIf(options, 'autoPopulateCreator')) return Promise.resolve();
   const { id: goalId } = instance;
@@ -365,7 +323,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
-  await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);

@@ -9,7 +9,6 @@ import db, {
   Region,
   User,
   Objective,
-  ObjectiveTopic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
@@ -875,8 +874,13 @@ describe('Recipient DB service', () => {
     });
 
     it('properly de-duplicates based on responses', async () => {
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(3);
+      expect(allGoalIds.length).toBe(3);
+
+      const goalWithMultipleIds = allGoalIds.find((g) => g.id === goals[2].id);
+      expect(goalWithMultipleIds).not.toBeNull();
+      expect(goalWithMultipleIds.goalIds).toStrictEqual([goals[2].id, goals[1].id]);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
@@ -897,8 +901,9 @@ describe('Recipient DB service', () => {
       goals[0].destroy();
       goals[3].destroy();
 
-      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(1);
+      expect(allGoalIds.length).toBe(1);
       // Verify goal 2 and 3 have empty creators/collaborators
       expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
       // Verify goal 2 and 3 are rolled up
@@ -949,24 +954,23 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];
+
+      const reason = faker.animal.cetacean();
 
       topics = await Topic.bulkCreate([
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
@@ -974,12 +978,6 @@ describe('Recipient DB service', () => {
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
       ]);
-
-      await ObjectiveTopic.bulkCreate(
-        objectives.map((o, i) => ({ objectiveId: o.id, topicId: topics[i + 1].id })),
-      );
-
-      const reason = faker.animal.cetacean();
 
       report = await createReport({
         activityRecipients: [
@@ -993,20 +991,21 @@ describe('Recipient DB service', () => {
         regionId: grant.regionId,
       });
 
+      const aros = await Promise.all(objectives.map((o) => ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: o.id,
+      })));
+
+      await Promise.all((aros.map((aro) => ActivityReportObjectiveTopic.bulkCreate(
+        topics.map((t) => ({
+          activityReportObjectiveId: aro.id,
+          topicId: t.id,
+        })),
+      ))).flat());
+
       await ActivityReportGoal.create({
         activityReportId: report.id,
         goalId: goal1.id,
-      });
-
-      const aro = await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective1.id,
-        supportType: 'Planning',
-      });
-
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: aro.id,
-        topicId: topics[1].id,
       });
     });
 
@@ -1029,12 +1028,6 @@ describe('Recipient DB service', () => {
         individualHooks: true,
       });
       await destroyReport(report);
-      await ObjectiveTopic.destroy({
-        where: {
-          objectiveId: objectives.map((o) => o.id),
-        },
-        individualHooks: true,
-      });
 
       await Topic.destroy({
         where: {
@@ -1059,7 +1052,7 @@ describe('Recipient DB service', () => {
       });
       await Grant.destroy({
         where: {
-          id: goals.map((g) => g.grantId),
+          recipientId: recipient.id,
         },
         individualHooks: true,
       });
@@ -1076,15 +1069,15 @@ describe('Recipient DB service', () => {
 
       expect(goalsForRecord.count).toBe(1);
       expect(goalsForRecord.goalRows.length).toBe(1);
-      expect(goalsForRecord.allGoalIds.length).toBe(2);
+      expect(goalsForRecord.allGoalIds.length).toBe(1);
 
+      expect(goalsForRecord.goalRows.flatMap((g) => g.goalTopics)).toHaveLength(4);
       const goal = goalsForRecord.goalRows[0];
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
       expect(objective.ids).toHaveLength(3);
       expect(objective.ids.every(Boolean)).toBeTruthy();
       expect(objective.topics.length).toBe(4);
-      expect(objective.supportType).toBe('Planning');
     });
   });
 
@@ -1094,7 +1087,6 @@ describe('Recipient DB service', () => {
       programId,
       role = 'director',
       active = true,
-      programType = 'HS',
     ) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
