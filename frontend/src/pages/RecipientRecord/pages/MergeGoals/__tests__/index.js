@@ -9,7 +9,7 @@ import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import userEvent from '@testing-library/user-event';
-import MergeGoals, { navigate } from '..';
+import MergeGoals, { navigator as navigate } from '..';
 import UserContext from '../../../../../UserContext';
 import FilterContext from '../../../../../FilterContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
