@@ -3,9 +3,11 @@ import PropTypes from 'prop-types';
 import _ from 'lodash';
 import { Link } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
-
+import { Editor } from 'react-draft-wysiwyg';
 import ExternalLink from '../../../../components/ExternalResourceModal';
-import { isValidURL, isExternalURL, isInternalGovernmentLink } from '../../../../utils';
+import {
+  isValidURL, isExternalURL, isInternalGovernmentLink, getEditorState,
+} from '../../../../utils';
 
 export const mapUrlValue = (v) => {
   let result = v;
@@ -40,15 +42,35 @@ export const mapUrlValue = (v) => {
   return result;
 };
 
+const onHubFileLinkClick = (e) => {
+  e.preventDefault();
+  window.open(e.target.href, '_blank');
+};
+
 const ReviewItem = ({
-  label, name, path, sortValues,
+  label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText,
 }) => {
   const { watch } = useFormContext();
-  const value = watch(name);
-  let values = value;
+  let value = null;
+  let values = [];
+  let linkNameValues = [];
+  if (!customValue) {
+    value = watch(name);
+    values = value;
+  } else {
+    value = customValue[name];
+    values = value;
+  }
 
   if (!Array.isArray(value)) {
     values = [value];
+  }
+
+  if (linkNamePath) {
+    linkNameValues = values.map((v) => _.get(v, linkNamePath));
+    if (!Array.isArray(linkNameValues)) {
+      linkNameValues = [linkNameValues];
+    }
   }
 
   if (path) {
@@ -59,19 +81,36 @@ const ReviewItem = ({
     values.sort();
   }
 
-  values = values.map((v) => {
+  values = values.map((v, index) => {
     // If not a valid url, then its most likely just text, so leave it as is
     // except for several values
     if (!isValidURL(v)) {
+      if (isRichText) {
+        return (
+          <Editor
+            readOnly
+            toolbarHidden
+            defaultEditorState={getEditorState(v)}
+          />
+        );
+      }
       return mapUrlValue(v);
     }
 
+    const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
+    if (isFile) {
+      return (
+        <a href={v} onClick={onHubFileLinkClick}>
+          {linkNameToUse}
+        </a>
+      );
+    }
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {
-      return <ExternalLink to={v}>{v}</ExternalLink>;
+      return <ExternalLink to={v}>{linkNameToUse}</ExternalLink>;
     }
 
     const localLink = new URL(v);
-    return <Link to={localLink.pathname}>{v}</Link>;
+    return <Link to={localLink.pathname}>{linkNameToUse}</Link>;
   });
 
   const emptySelector = value && value.length > 0 ? '' : 'smart-hub-review-item--empty';
@@ -98,11 +137,19 @@ ReviewItem.propTypes = {
   name: PropTypes.string.isRequired,
   path: PropTypes.string,
   sortValues: PropTypes.bool,
+  customValue: PropTypes.arrayOf(PropTypes.string),
+  linkNamePath: PropTypes.string,
+  isFile: PropTypes.bool,
+  isRichText: PropTypes.bool,
 };
 
 ReviewItem.defaultProps = {
   path: '',
   sortValues: false,
+  customValue: null,
+  linkNamePath: null,
+  isFile: false,
+  isRichText: false,
 };
 
 export default ReviewItem;
