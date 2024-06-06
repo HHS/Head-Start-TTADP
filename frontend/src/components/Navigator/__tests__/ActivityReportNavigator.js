@@ -286,6 +286,7 @@ describe('Navigator', () => {
         },
         second: 'on',
       },
+      false,
     ));
   });
 
@@ -321,7 +322,7 @@ describe('Navigator', () => {
       ...initialData,
       pageState: { ...initialData.pageState, 2: IN_PROGRESS },
       second: 'on',
-    }));
+    }, false));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
