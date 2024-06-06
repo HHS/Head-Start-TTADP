@@ -345,10 +345,10 @@ test.describe('Activity Report', () => {
     await expect(page.getByText('Collaborating specialists', { exact: true })).toBeVisible();
     await expect(page.getByText('Target populations addressed', { exact: true })).toBeVisible();
 
-    await expect(page.getByText('Goal: g1')).toBeVisible();
-    await expect(page.getByText('Objective: g1o1')).toBeVisible();
-    await expect(page.getByText('Goal: g2')).toBeVisible();
-    await expect(page.getByText('Objective: g2o1')).toBeVisible();
+    await expect(page.getByText('Recipient\'s goal: g1')).toBeVisible();
+    await expect(page.getByText('TTA Objective: g1o1')).toBeVisible();
+    await expect(page.getByText('Recipient\'s goal: g2')).toBeVisible();
+    await expect(page.getByText('TTA Objective: g2o1')).toBeVisible();
     await expect(page.getByText(/these are my creator notes/i)).toBeVisible();
     // end review assertions
 
