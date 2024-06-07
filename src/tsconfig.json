@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "ESNext",
     "target": "esnext",
     "outDir": "../build/server",
     "esModuleInterop": true,
@@ -13,6 +13,7 @@
   "include": [
     "./**/*.js",
     "./**/*.ts"
-  ]
+  ],
+  "outExtension": { ".js": ".mjs" }
 }
 
