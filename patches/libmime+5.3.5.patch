@@ -1,0 +1,25 @@
+diff --git a/node_modules/libmime/lib/charset.js b/node_modules/libmime/lib/charset.js
+index 2f5686d..2ebf1d8 100644
+--- a/node_modules/libmime/lib/charset.js
++++ b/node_modules/libmime/lib/charset.js
+@@ -1,6 +1,6 @@
+ 'use strict';
+ 
+-const { Buffer } = require('node:buffer');
++const { Buffer } = require('buffer');
+ const iconv = require('iconv-lite');
+ const encodingJapanese = require('encoding-japanese');
+ const charsets = require('./charsets');
+diff --git a/node_modules/libmime/lib/libmime.js b/node_modules/libmime/lib/libmime.js
+index cfd5cb0..011bde0 100644
+--- a/node_modules/libmime/lib/libmime.js
++++ b/node_modules/libmime/lib/libmime.js
+@@ -1,7 +1,7 @@
+ /* eslint no-control-regex: 0, no-div-regex: 0, quotes: 0 */
+ 'use strict';
+ 
+-const { Buffer } = require('node:buffer');
++const { Buffer } = require('buffer');
+ const libcharset = require('./charset');
+ const libbase64 = require('libbase64');
+ const libqp = require('libqp');
