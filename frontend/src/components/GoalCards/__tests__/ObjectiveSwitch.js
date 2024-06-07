@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import { ObjectiveSwitch } from '../GoalCard';
 import UserContext from '../../../UserContext';
 
 describe('ObjectiveSwitch', () => {
-  const history = createMemoryHistory();
-
   it('renders goal objectives', async () => {
     const objective = {
       id: 123,
@@ -30,9 +27,9 @@ describe('ObjectiveSwitch', () => {
     };
     render(
       <UserContext.Provider value={{ user: {} }}>
-        <Router history={history}>
+        <MemoryRouter>
           <ObjectiveSwitch objective={objective} objectivesExpanded />
-        </Router>
+        </MemoryRouter>
       </UserContext.Provider>,
     );
     expect(screen.getByText('This is an objective')).toBeInTheDocument();
@@ -55,9 +52,9 @@ describe('ObjectiveSwitch', () => {
     };
     render(
       <UserContext.Provider value={{ user: {} }}>
-        <Router history={history}>
+        <MemoryRouter>
           <ObjectiveSwitch objective={objective} objectivesExpanded />
-        </Router>
+        </MemoryRouter>
       </UserContext.Provider>,
     );
     expect(screen.getByText(/we will get together and learn stuff/i)).toBeInTheDocument();

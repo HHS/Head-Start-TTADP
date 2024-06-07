@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
@@ -9,8 +10,7 @@ import {
 import { SCOPE_IDS } from '@ttahub/common';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
 import UserContext from '../../../UserContext';
@@ -62,11 +62,22 @@ describe('create goal:nudge', () => {
     ],
   };
 
-  const history = createMemoryHistory();
+  let location;
+
+  const Test = ({ recipient, goalId }) => {
+    location = useLocation();
+    return (
+      <CreateGoal
+        recipient={recipient}
+        regionId="1"
+        isNew={goalId === 'new'}
+      />
+    );
+  };
 
   function renderForm(recipient = defaultRecipient, goalId = 'new') {
     render((
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{
           user: {
             permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
@@ -81,14 +92,10 @@ describe('create goal:nudge', () => {
             }
           }
           >
-            <CreateGoal
-              recipient={recipient}
-              regionId="1"
-              isNew={goalId === 'new'}
-            />
+            <Test recipient={recipient} goalId={goalId} />
           </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </Router>
+      </MemoryRouter>
     ));
   }
 
@@ -112,7 +119,6 @@ describe('create goal:nudge', () => {
   });
 
   it('you can select a nudged goal', async () => {
-    const historySpy = jest.spyOn(history, 'push');
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
@@ -145,12 +151,12 @@ describe('create goal:nudge', () => {
     // No, create a new goal
 
     await waitFor(() => {
-      expect(historySpy).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+      expect(location.pathname).toBe('/recipient-tta-records/1/region/1/goals');
+      expect(location.search).toBe('?id[]=1,2');
     });
   });
 
   it('you can select a curated goal', async () => {
-    const historySpy = jest.spyOn(history, 'push');
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: true,
@@ -179,12 +185,12 @@ describe('create goal:nudge', () => {
 
     expect(fetchMock.called('/api/goals', { method: 'POST' })).toBe(true);
     await waitFor(() => {
-      expect(historySpy).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+      expect(location.pathname).toBe('/recipient-tta-records/1/region/1/goals');
+      expect(location.search).toBe('?id[]=1,2');
     });
   });
 
   it('you can decline to select a nudged goal', async () => {
-    const historySpy = jest.spyOn(history, 'push');
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
@@ -216,7 +222,8 @@ describe('create goal:nudge', () => {
     });
 
     await waitFor(() => {
-      expect(historySpy).not.toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+      expect(location.pathname).toBe('/');
+      expect(location.search).toBe('');
     });
 
     expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).not.toBe(true);
@@ -257,7 +264,6 @@ describe('create goal:nudge', () => {
   });
 
   it('you can unsuspend a suspended goal', async () => {
-    const historySpy = jest.spyOn(history, 'push');
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
@@ -293,7 +299,8 @@ describe('create goal:nudge', () => {
 
     expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).toBe(true);
     await waitFor(() => {
-      expect(historySpy).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+      expect(location.pathname).toBe('/recipient-tta-records/1/region/1/goals');
+      expect(location.search).toBe('?id[]=1,2');
     });
   });
 
@@ -335,7 +342,6 @@ describe('create goal:nudge', () => {
   });
 
   it('you can decline to unsuspend a suspended goal', async () => {
-    const historySpy = jest.spyOn(history, 'push');
     fetchMock.get('/api/goals/recipient/1/region/1/nudge?name=This%20is%20goal%20text%2C%20long%20enough%20to%20trigger%20the%20nudge&grantNumbers=turtle-2', [{
       ids: [1, 2],
       isCurated: false,
@@ -370,7 +376,8 @@ describe('create goal:nudge', () => {
 
     expect(fetchMock.called('/api/goals/changeStatus', { method: 'PUT' })).toBe(false);
     await waitFor(() => {
-      expect(historySpy).not.toHaveBeenCalledWith('/recipient-tta-records/1/region/1/goals?id[]=1,2');
+      expect(location.pathname).toBe('/');
+      expect(location.search).toBe('');
     });
   });
 });

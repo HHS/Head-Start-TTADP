@@ -1,8 +1,8 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { render, act, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import GoalDataController from '../GoalDataController';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -50,18 +50,21 @@ describe('GoalDataController', () => {
     showNewGoals: false,
     canMergeGoals: true,
   };
-  const history = createMemoryHistory();
 
-  const renderTest = (props = {}, locationState = undefined) => {
-    history.location.state = locationState;
+  let navigate;
 
+  const Test = (props) => {
+    navigate = useNavigate();
+    return <GoalDataController {...defaultProps} {...props} />;
+  };
+
+  const renderTest = (props = {}) => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
         <UserContext.Provider value={{ user: DEFAULT_USER }}>
-          <Router history={history}>
-            {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-            <GoalDataController {...defaultProps} {...props} />
-          </Router>
+          <MemoryRouter>
+            <Test {...props} />
+          </MemoryRouter>
         </UserContext.Provider>
       </AppLoadingContext.Provider>,
     );
@@ -99,12 +102,10 @@ describe('GoalDataController', () => {
     act(() => {
       renderTest(
         {}, // props
-        {
-          mergedGoals: [1, 2], // location state
-        },
       );
     });
 
+    act(() => navigate('/goals', { state: { mergedGoals: [1, 2] } }));
     expect(fetchMock.called(url)).toBe(true);
   });
 
