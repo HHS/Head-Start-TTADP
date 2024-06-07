@@ -42,11 +42,6 @@ export const mapUrlValue = (v) => {
   return result;
 };
 
-const onHubFileLinkClick = (e) => {
-  e.preventDefault();
-  window.open(e.target.href, '_blank');
-};
-
 const ReviewItem = ({
   label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText,
 }) => {
@@ -54,10 +49,15 @@ const ReviewItem = ({
   let value = null;
   let values = [];
   let linkNameValues = [];
+  // Typically we pull values from the form context.
+  // However, in some cases we may want to pass in a custom ordering of values
+  // to display like goals or objectives.
   if (!customValue) {
+    // Takes from form context.
     value = watch(name);
     values = value;
   } else {
+    // Use the custom value passed in.
     value = customValue[name];
     values = value;
   }
@@ -100,7 +100,11 @@ const ReviewItem = ({
     const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
     if (isFile) {
       return (
-        <a href={v} onClick={onHubFileLinkClick}>
+        <a
+          href={v}
+          target="_blank"
+          rel="noreferrer"
+        >
           {linkNameToUse}
         </a>
       );

@@ -706,7 +706,7 @@ const sections = [
     title: 'Other participants',
     anchor: 'other-participants',
     items: [
-      { label: 'Recipient participants123', name: 'participants', sort: true },
+      { label: 'Recipient participants', name: 'participants', sort: true },
       { label: 'Number of participants', name: 'numberOfParticipants' },
     ],
   },
