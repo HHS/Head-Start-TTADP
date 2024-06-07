@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link, useParams } from 'react-router-dom';
 import { Routes, Route } from 'react-router';
@@ -111,7 +110,7 @@ export default function RecipientRecord({ hasAlerts }) {
     fetchMergePermissions();
   }, [recipientId, regionId]);
 
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     async function fetchRecipient() {
       try {
         setLoading(true);
@@ -155,7 +154,7 @@ export default function RecipientRecord({ hasAlerts }) {
 
       <Routes>
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/tta-history"
+          path="tta-history"
           element={(
             <PageWithHeading
               regionId={regionId}
@@ -174,7 +173,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/profile"
+          path="profile"
           element={(
             <PageWithHeading
               regionId={regionId}
@@ -195,7 +194,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa/print"
+          path="rttapa/print"
           element={(
             <PageWithHeading
               regionId={regionId}
@@ -227,7 +226,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/rttapa"
+          path="rttapa"
           element={(
             <PageWithHeading
               regionId={regionId}
@@ -247,7 +246,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/merge/:goalGroupId"
+          path="goals/merge/:goalGroupId"
           element={(
             <>
               <Helmet>
@@ -263,7 +262,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/new"
+          path="goals/new"
           element={(
             <>
               <Helmet>
@@ -279,7 +278,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals/view"
+          path="goals/view"
           element={(
             <ViewGoals
               regionId={regionId}
@@ -288,7 +287,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/goals"
+          path="goals"
           element={(
             <GoalForm
               regionId={regionId}
@@ -298,7 +297,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId([0-9]*)/view"
+          path="communication/:communicationLogId/view"
           element={(
             <ViewCommunicationLog
               recipientName={recipientName}
@@ -306,7 +305,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/communication/:communicationLogId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="communication/:communicationLogId/:currentPage"
           element={(
             <CommunicationLogForm
               recipientName={recipientName}
@@ -314,7 +313,7 @@ export default function RecipientRecord({ hasAlerts }) {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId/communication"
+          path="communication"
           element={(
             <PageWithHeading
               regionId={regionId}
@@ -333,6 +332,7 @@ export default function RecipientRecord({ hasAlerts }) {
         />
 
         <Route
+          path="*"
           element={(
             <PageWithHeading
               regionId={regionId}
