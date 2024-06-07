@@ -160,4 +160,81 @@ describe('smartsheets', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error: Failed to get sheet: 123'));
   });
+
+  describe('route function', () => {
+    let mockRouter; let mockTransactionWrapper; let mockListSheets; let
+      mockGetSheet;
+
+    beforeEach(() => {
+      jest.resetModules();
+
+      mockRouter = {
+        get: jest.fn(),
+      };
+      mockTransactionWrapper = jest.fn((fn) => fn);
+      mockListSheets = jest.fn();
+      mockGetSheet = jest.fn();
+
+      jest.doMock('express', () => ({
+        Router: () => mockRouter,
+      }));
+
+      jest.doMock('../transactionWrapper', () => mockTransactionWrapper);
+      jest.doMock('../../lib/apiErrorHandler', () => jest.fn());
+      jest.doMock('../../logger', () => ({
+        auditLogger: {
+          error: jest.fn(),
+        },
+      }));
+
+      req = {
+        query: {
+          pageSize: 18,
+          page: 89,
+        },
+      };
+    });
+
+    it('should register two GET routes with transactionWrapper middleware when environment variable is set to app.cloud.gov domain', () => {
+      // eslint-disable-next-line global-require
+      const { route } = require('./ss');
+
+      route('https://tta.app.cloud.gov');
+
+      expect(mockRouter.get).toHaveBeenCalled();
+      expect(mockRouter.get).toHaveBeenCalledWith('/', expect.any(Function));
+      expect(mockRouter.get).toHaveBeenCalledWith('/sheet/:sheetId', expect.any(Function));
+    });
+
+    it('should register two GET routes returning 403 when environment variable is not set to app.cloud.gov domain', () => {
+      const originalSmartSheetLocal = process.env.SMARTSHEET_LOCAL;
+      delete process.env.SMARTSHEET_LOCAL;
+      // eslint-disable-next-line global-require
+      const { route } = require('./ss');
+
+      route('https://tta.app.cloud.gov');
+
+      expect(mockRouter.get).toHaveBeenCalled();
+      expect(mockRouter.get).toHaveBeenCalledWith('/', expect.any(Function));
+      expect(mockRouter.get).toHaveBeenCalledWith('/sheet/:sheetId', expect.any(Function));
+
+      // Check the 403 status functionality
+      res = {
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const [firstRoutePath, firstRouteHandler] = mockRouter.get.mock.calls[0];
+      const [secondRoutePath, secondRouteHandler] = mockRouter.get.mock.calls[1];
+
+      firstRouteHandler(req, res);
+      secondRouteHandler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(403);
+      expect(res.send).toHaveBeenCalledWith('Feature not available');
+
+      // Restore the original environment variable
+      process.env.SMARTSHEET_LOCAL = originalSmartSheetLocal;
+    });
+  });
 });
