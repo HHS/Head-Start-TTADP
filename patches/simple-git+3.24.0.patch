@@ -1,0 +1,13 @@
+diff --git a/node_modules/simple-git/dist/cjs/index.js b/node_modules/simple-git/dist/cjs/index.js
+index 8b569aa..6ff5956 100644
+--- a/node_modules/simple-git/dist/cjs/index.js
++++ b/node_modules/simple-git/dist/cjs/index.js
+@@ -1462,7 +1462,7 @@ var import_node_events, PluginStore;
+ var init_plugin_store = __esm({
+   "src/lib/plugins/plugin-store.ts"() {
+     "use strict";
+-    import_node_events = require("node:events");
++    import_node_events = require('events');
+     init_utils();
+     PluginStore = class {
+       constructor() {
