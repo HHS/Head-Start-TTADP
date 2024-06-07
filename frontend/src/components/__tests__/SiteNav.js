@@ -5,14 +5,29 @@ import {
   screen, render,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter, Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
 
-const history = createMemoryHistory();
-
 describe('SiteNav', () => {
+  const renderTest = (initialEntries = []) => {
+    const user = {
+      name: 'name',
+      id: 1,
+      flags: [],
+      roles: [],
+      permissions: [],
+    };
+
+    render(
+      <MemoryRouter initialEntries={initialEntries}>
+        <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+          <SiteNav authenticated admin user={user} hasAlerts={false} />
+        </UserContext.Provider>
+      </MemoryRouter>,
+    );
+  };
+
   describe('when authenticated & pathname = "activity-reports', () => {
     afterEach(() => fetchMock.restore());
 
@@ -27,19 +42,12 @@ describe('SiteNav', () => {
         roles: [],
         permissions: [],
       };
+
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
-
-      render(
-        <Router history={history}>
-          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
-            <SiteNav authenticated admin user={user} hasAlerts={false} />
-          </UserContext.Provider>
-        </Router>,
-      );
     });
     test('survey button is visible', async () => {
-      history.push('/activity-reports');
+      renderTest(['/activity-reports']);
       const surveyButton = await screen.findByText(/Please leave feedback/i);
       expect(surveyButton).toBeVisible();
     });

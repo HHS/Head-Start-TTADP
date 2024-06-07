@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -6,8 +7,7 @@ import {
 } from '@testing-library/react';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
@@ -217,41 +217,62 @@ const goalWithObjectives = [{
 const handlePageChange = jest.fn();
 const requestSort = jest.fn();
 const setGoals = jest.fn();
-const history = createMemoryHistory();
+
+let location;
+
+const Test = ({
+  goals,
+  goalsCount,
+  allGoalIds,
+  hasActiveGrants,
+  goalBuckets,
+}) => {
+  location = useLocation();
+
+  return (
+    <GoalCards
+      recipientId={recipientId}
+      regionId={regionId}
+      onUpdateFilters={() => { }}
+      hasActiveGrants={hasActiveGrants}
+      showNewGoals={false}
+      goals={goals}
+      error=""
+      goalsCount={goalsCount}
+      handlePageChange={handlePageChange}
+      requestSort={requestSort}
+      loading={false}
+      sortConfig={{
+        sortBy: 'goalStatus',
+        direction: 'asc',
+        activePage: 1,
+        offset: 0,
+      }}
+      setGoals={setGoals}
+      allGoalIds={allGoalIds || goals.map((g) => g.id)}
+      shouldDisplayMergeSuccess={false}
+      dismissMergeSuccess={jest.fn()}
+      goalBuckets={goalBuckets}
+    />
+  );
+};
 
 const renderTable = ({ goals, goalsCount, allGoalIds = null }, user, hasActiveGrants = true) => {
   const goalBuckets = !goals ? [] : goals.map((g) => ({ id: g.id, goalIds: g.ids }));
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
         <UserContext.Provider value={{ user }}>
-          <GoalCards
-            recipientId={recipientId}
-            regionId={regionId}
-            onUpdateFilters={() => { }}
-            hasActiveGrants={hasActiveGrants}
-            showNewGoals={false}
+          <Test
             goals={goals}
-            error=""
             goalsCount={goalsCount}
-            handlePageChange={handlePageChange}
-            requestSort={requestSort}
-            loading={false}
-            sortConfig={{
-              sortBy: 'goalStatus',
-              direction: 'asc',
-              activePage: 1,
-              offset: 0,
-            }}
-            setGoals={setGoals}
-            allGoalIds={allGoalIds || goals.map((g) => g.id)}
-            shouldDisplayMergeSuccess={false}
-            dismissMergeSuccess={jest.fn()}
+            allGoalIds={allGoalIds}
+            hasActiveGrants={hasActiveGrants}
             goalBuckets={goalBuckets}
           />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
 };
 
@@ -584,17 +605,16 @@ describe('Goals Table', () => {
     });
 
     it('allows goals to be edited', async () => {
-      history.push = jest.fn();
       const menuToggle = await screen.findByRole('button', { name: /Actions for goal 4598/i });
       userEvent.click(menuToggle);
 
       const editGoal = await screen.findByRole('button', { name: /Edit/i });
       userEvent.click(editGoal);
-      expect(history.push).toHaveBeenCalled();
+      expect(location.pathname).toBe('/recipient-tta-records/1000/region/1/goals');
+      expect(location.search).toBe('?id[]=4598,4599');
     });
 
     it('Sets goal status without reason', async () => {
-      history.push = jest.fn();
       fetchMock.reset();
       fetchMock.put('/api/goals/changeStatus', [{
         id: 65479,
@@ -625,14 +645,15 @@ describe('Goals Table', () => {
       const printButton = await screen.findByRole('button', { name: /Preview and print/i });
       userEvent.click(printButton);
 
-      expect(history.push).toHaveBeenCalled();
+      expect(location.pathname).toBe('/recipient-tta-records/1000/region/1/rttapa/print');
     });
 
     it('calls print passing all goal ids on the page', async () => {
       // print goals
       const printButton = await screen.findByRole('button', { name: /Preview and print/i });
       userEvent.click(printButton);
-      expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
+      expect(location.pathname).toBe('/recipient-tta-records/1000/region/1/rttapa/print');
+      expect(location.state).toStrictEqual({
         selectedGoalIds: [4598, 4599, 65479],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',
@@ -649,7 +670,9 @@ describe('Goals Table', () => {
       fireEvent.click(checkBox);
 
       userEvent.click(printButton);
-      expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1000/region/1/rttapa/print', {
+
+      expect(location.pathname).toBe('/recipient-tta-records/1000/region/1/rttapa/print');
+      expect(location.state).toStrictEqual({
         selectedGoalIds: [4598, 4599],
         sortConfig: {
           activePage: 1, direction: 'asc', offset: 0, sortBy: 'goalStatus',

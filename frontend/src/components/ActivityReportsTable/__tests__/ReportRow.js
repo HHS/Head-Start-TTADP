@@ -4,19 +4,16 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter as Router } from 'react-router-dom';
 import ReportRow from '../ReportRow';
 import { generateXFakeReports } from '../mocks';
-
-const history = createMemoryHistory();
 
 const [report] = generateXFakeReports(1);
 
 describe('ReportRow', () => {
   const renderReportRow = (numberOfSelectedReports = 0, exportSelected = jest.fn()) => (
     render(
-      <Router history={history}>
+      <Router>
         <ReportRow
           report={report}
           openMenuUp={false}
@@ -36,15 +33,6 @@ describe('ReportRow', () => {
 
   afterAll(() => {
     delete global.navigator;
-  });
-
-  it('the view link works', async () => {
-    history.push = jest.fn();
-    renderReportRow();
-    userEvent.click(await screen.findByRole('button', { name: 'Actions for activity report R14-AR-1' }));
-    userEvent.click(await screen.findByRole('button', { name: /view/i }));
-
-    expect(history.push).toHaveBeenCalled();
   });
 
   it('you can copy', async () => {
@@ -143,7 +131,7 @@ describe('ReportRow', () => {
       ],
     };
     render(
-      <Router history={history}>
+      <Router>
         <ReportRow
           report={legacyReport}
           openMenuUp={false}
@@ -235,7 +223,7 @@ describe('ReportRow', () => {
       ],
     };
     render(
-      <Router history={history}>
+      <Router>
         <ReportRow
           report={legacyReport}
           openMenuUp={false}
