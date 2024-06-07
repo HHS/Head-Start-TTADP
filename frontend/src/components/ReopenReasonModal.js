@@ -7,6 +7,8 @@ import {
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 
+const modalId = 'ReopenReasonModal';
+
 const ReopenReasonModal = ({
   modalRef, goalId, onSubmit, resetValues,
 }) => {
@@ -57,7 +59,7 @@ const ReopenReasonModal = ({
       <Modal
         modalRef={modalRef}
         onOk={validateSubmit}
-        modalId="ReopenReasonModal"
+        modalId={modalId}
         title="Why are you reopening this goal?"
         okButtonText="Submit"
         okButtonAriaLabel="Reopen goal"
@@ -65,6 +67,7 @@ const ReopenReasonModal = ({
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
         forceAction
+        describedBy={`${modalId}-heading`}
       >
         <Form
           key={`reopen-reason-form-goal-${goalId}`}

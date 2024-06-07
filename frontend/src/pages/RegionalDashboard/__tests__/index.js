@@ -1,8 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import join from 'url-join';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   act, render, screen,
 } from '@testing-library/react';
@@ -13,8 +12,6 @@ import RegionalDashboard from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
-
-const history = createMemoryHistory();
 
 const overViewUrl = join('api', 'widgets', 'overview');
 const overViewResponse = {
@@ -56,12 +53,16 @@ describe('Regional Dashboard page', () => {
   afterEach(() => fetchMock.restore());
 
   const renderDashboard = (user, reportType = '') => {
+    const initialEntries = reportType ? [`/dashboards/regional-dashboard/${reportType}`] : ['/dashboards/regional-dashboard'];
+
     render(
       <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
         <UserContext.Provider value={{ user }}>
-          <Router history={history}>
-            <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
-          </Router>
+          <MemoryRouter initialEntries={initialEntries}>
+            <Routes>
+              <Route path="/dashboards/regional-dashboard/:reportType?" element={<RegionalDashboard />} />
+            </Routes>
+          </MemoryRouter>
         </UserContext.Provider>
       </AriaLiveContext.Provider>,
     );

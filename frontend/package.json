@@ -148,12 +148,12 @@
   },
   "babel": {
     "presets": [
-        "@babel/preset-react",
-        "react-app",
-        {
-          "absoluteRuntime": false
-        }
-    ]    
+      "@babel/preset-react",
+      "react-app",
+      {
+        "absoluteRuntime": false
+      }
+    ]
   },
   "browserslist": {
     "production": [
@@ -168,6 +168,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",
