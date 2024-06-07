@@ -3,17 +3,14 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import Header from '../Header';
 import UserContext from '../../UserContext';
-
-const history = createMemoryHistory();
 
 describe('Header', () => {
   const renderHeader = (authenticated, alert) => {
     render((
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
           <Header
             authenticated={authenticated}
@@ -22,7 +19,7 @@ describe('Header', () => {
             setAreThereUnreadNotifications={jest.fn()}
           />
         </UserContext.Provider>
-      </Router>
+      </MemoryRouter>
     ));
   };
 
