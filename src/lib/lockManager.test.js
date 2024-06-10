@@ -76,7 +76,7 @@ describe('LockManager', () => {
 
   describe('startRenewal', () => {
     it('should start the renewal process', async () => {
-      jest.useFakeTimers();
+      jest.useFakeTimers({ enableGlobally: true });
       await lockManager.acquireLock();
       await lockManager.startRenewal();
 
@@ -88,7 +88,7 @@ describe('LockManager', () => {
 
   describe('stopRenewal', () => {
     it('should stop the renewal process', async () => {
-      jest.useFakeTimers();
+      jest.useFakeTimers({ enableGlobally: true });
       await lockManager.acquireLock();
       await lockManager.startRenewal();
 
