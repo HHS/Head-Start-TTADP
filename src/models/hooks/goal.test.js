@@ -178,12 +178,15 @@ describe('goal hooks', () => {
           grantId: grant.id,
         },
         force: true,
+        paranoid: true,
+        individualHooks: true,
       });
 
       await GrantModel.destroy({
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await GoalSimilarityGroupModel.destroy({
