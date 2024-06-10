@@ -92,7 +92,7 @@ describe('smartsheets', () => {
 
   afterAll(() => {
     jest.clearAllMocks();
-  });  
+  });
 
   it('listSheets should return a 200 status code', async () => {
     await listSheets(req, res);
