@@ -13,6 +13,20 @@ describe('files service', () => {
     await db.sequelize.close();
   });
 
+  test('Dummy test to satisfy Jest', () => {
+    /*
+    * Jest 27 Introduction:
+    *   The update to Jest 27 introduced stricter rules to prevent situations where beforeAll
+    *   and afterAll hooks are used in describe blocks that do not contain any tests. This
+    *   prevents potential confusion and ensures that all setup and teardown logic is tied to
+    *   specific tests
+    *   (GitHub: https://github.com/jestjs/jest/issues/11485)
+    *   (Jest: https://jestjs.io/blog/2021/05/25/jest-27)
+    */
+
+    expect(true).toBe(true);
+  });
+
   describe('updateStatusByKey', () => {
     const key = 'file123';
     const fileStatus = 'processed';
