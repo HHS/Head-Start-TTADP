@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import db from '../models';
 
 const {
@@ -29,6 +30,11 @@ export default async function getGoalsMissingDataForActivityReportSubmission(goa
         as: 'responses',
         required: false,
         attributes: [],
+        where: {
+          response: {
+            [Op.ne]: [],
+          },
+        },
       },
       {
         model: Grant,

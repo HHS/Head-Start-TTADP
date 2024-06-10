@@ -210,7 +210,7 @@ const ActivityReportNavigator = ({
 
     return newPageState;
   };
-  const onSaveForm = async (isAutoSave = false) => {
+  const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
       setIsAppLoading(false);
@@ -222,7 +222,7 @@ const ActivityReportNavigator = ({
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
-      await onSave(data);
+      await onSave(data, forceUpdate);
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');

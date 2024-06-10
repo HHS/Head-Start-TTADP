@@ -4,6 +4,7 @@ import {
   UNAUTHORIZED,
   BAD_REQUEST,
 } from 'http-codes';
+import db from '../../models';
 import { getUserReadRegions } from '../../services/accessValidation';
 import {
   getRecipient,
@@ -64,6 +65,7 @@ jest.mock('../../services/users', () => ({
 }));
 
 describe('getRecipient', () => {
+  afterAll(() => db.sequelize.close());
   const recipientWhere = { name: 'Mr Thaddeus Q Recipient', grants: [{ regionId: 1 }] };
 
   const mockResponse = {

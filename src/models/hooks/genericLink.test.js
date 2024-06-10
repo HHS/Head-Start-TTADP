@@ -3,8 +3,6 @@ import Semaphore from '../../lib/semaphore';
 import {
   syncLink,
   syncGrantNumberLink,
-  syncMonitoringReviewLink,
-  syncMonitoringReviewStatusLink,
 } from './genericLink';
 
 describe('syncLink', () => {
