@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Grid, GridContainer } from '@trussworks/react-uswds';
 import CsvImport from './components/CsvImport';
 import { getCourses } from '../../fetchers/courses';
@@ -13,15 +13,13 @@ function Courses() {
   const apiPathName = 'courses';
 
   const refresh = useCallback(async () => {
-    async function get() {
-      const response = await getCourses();
-      setCourses(response);
-    }
-
-    get();
+    const response = await getCourses();
+    setCourses(response);
   }, []);
 
-  refresh();
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const exportCourses = () => {
     // export courses as CSV
