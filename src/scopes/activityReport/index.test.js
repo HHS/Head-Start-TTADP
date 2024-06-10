@@ -3278,31 +3278,6 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('region id', () => {
-    let includedReport1;
-    let includedReport2;
-    let excludedReport;
-    let possibleIds;
-
-    beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        globallyExcludedReport.id,
-      ];
-    });
-
-    afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
-    });
-  });
-
   describe('delivery method', () => {
     let includedReport1;
     let includedReport2;
