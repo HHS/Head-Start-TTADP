@@ -5,7 +5,8 @@ import {
   HeadObjectCommand,
   DeleteObjectCommand,
   ListObjectsV2Command,
-  ListObjectsV2CommandOutput ,
+  ListObjectsV2CommandOutput,
+  GetObjectOutput,
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 import { generateS3Config } from '../s3';
@@ -18,12 +19,12 @@ class S3ClientWrapper {
 
   constructor(
     config: {
-      bucketName: string, // The name of the S3 bucket
+      bucketName: string; // The name of the S3 bucket
       s3Config: {
-        accessKeyId?: string, // Optional access key ID for authentication
-        endpoint?: string, // Optional endpoint URL for custom S3 service
-        region?: string, // Optional region for S3 service
-        secretAccessKey?: string, // Optional secret access key for authentication
+        accessKeyId?: string; // Optional access key ID for authentication
+        endpoint?: string; // Optional endpoint URL for custom S3 service
+        region?: string; // Optional region for S3 service
+        secretAccessKey?: string; // Optional secret access key for authentication
       }
     } = generateS3Config(), // Default configuration generator function
   ) {
@@ -74,7 +75,7 @@ class S3ClientWrapper {
    * @param key - The key (filename) of the file in the bucket.
    * @returns The metadata object of the file.
    */
-  async getFileMetadata(key: string): Promise<AWS.S3.GetObjectOutput> {
+  async getFileMetadata(key: string): Promise<GetObjectOutput> {
     try {
       const response = await this.s3.send(new HeadObjectCommand({
         Bucket: this.bucketName,
