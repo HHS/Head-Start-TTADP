@@ -18,7 +18,7 @@ import {
 
 jest.mock('@aws-sdk/client-s3');
 jest.mock('@aws-sdk/s3-request-presigner');
-jest.mock('../../../logger', () => ({
+jest.mock('../logger', () => ({
   auditLogger: {
     error: jest.fn(),
   },
