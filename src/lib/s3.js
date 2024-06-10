@@ -1,4 +1,12 @@
-import { S3 } from 'aws-sdk';
+import {
+  S3Client,
+  DeleteObjectCommand,
+  GetBucketVersioningCommand,
+  PutBucketVersioningCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
@@ -12,8 +20,6 @@ const generateS3Config = () => {
         endpoint: credentials.fips_endpoint,
         region: credentials.region,
         secretAccessKey: credentials.secret_access_key,
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
       },
     };
   }
@@ -23,21 +29,20 @@ const generateS3Config = () => {
       accessKeyId: process.env.AWS_ACCESS_KEY_ID,
       endpoint: process.env.S3_ENDPOINT,
       secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      signatureVersion: 'v4',
-      s3ForcePathStyle: true,
+      region: process.env.AWS_REGION,
     },
   };
 };
 
 const { bucketName, s3Config } = generateS3Config();
-const s3 = new S3(s3Config);
+const s3 = new S3Client(s3Config);
 
 const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
   const params = {
     Bucket: bucket,
     Key: key,
   };
-  return s3Client.deleteObject(params).promise();
+  return s3Client.send(new DeleteObjectCommand(params));
 };
 
 const deleteFileFromS3Job = async (job) => {
@@ -50,7 +55,11 @@ const deleteFileFromS3Job = async (job) => {
     return ({ status: 200, data: { fileId, fileKey, res } });
   } catch (error) {
     auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
-    return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
+    return {
+      data: job.data,
+      status: res ? res.$metadata.httpStatusCode : 500,
+      res: res || undefined,
+    };
   }
 };
 
@@ -62,26 +71,27 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   let params = {
     Bucket: bucket,
   };
-  const data = await s3Client.getBucketVersioning(params);
+  const data = await s3Client.send(new GetBucketVersioningCommand(params));
   if (!(data) || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
     };
-    return s3Client.putBucketVersioning(params);
+    return s3Client.send(new PutBucketVersioningCommand(params));
   }
   return data;
 };
 
-const downloadFile = (key) => {
+const downloadFile = async (key) => {
   const params = {
     Bucket: bucketName,
     Key: key,
   };
-  return s3.getObject(params).promise();
+  const command = new GetObjectCommand(params);
+  return s3.send(command).then((data) => data.Body);
 };
 
-const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
+const getPresignedURL = async (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
   const url = { url: null, error: null };
   try {
     const params = {
@@ -89,7 +99,8 @@ const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360)
       Key,
       Expires,
     };
-    url.url = s3Client.getSignedUrl('getObject', params);
+    const command = new GetObjectCommand(params);
+    url.url = await getSignedUrl(s3Client, command, { expiresIn: Expires });
   } catch (error) {
     url.error = error;
   }
@@ -108,7 +119,7 @@ const uploadFile = async (buffer, name, type, s3Client = s3) => {
     await verifyVersioning();
   }
 
-  return s3Client.upload(params).promise();
+  return s3Client.send(new PutObjectCommand(params));
 };
 
 export {

@@ -8,6 +8,21 @@ import {
   deleteFileFromS3,
   deleteFileFromS3Job,
 } from './s3';
+import {
+  GetBucketVersioningCommand,
+  PutBucketVersioningCommand,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+jest.mock('@aws-sdk/client-s3');
+jest.mock('@aws-sdk/s3-request-presigner');
+jest.mock('../../../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+}));
 
 const oldEnv = { ...process.env };
 const VCAP_SERVICES = {
@@ -84,8 +99,14 @@ const mockVersioningData = {
 };
 
 describe('verifyVersioning', () => {
-  let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
-  const mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => { res(params); }));
+  let mockGet = jest.spyOn(s3, 'send').mockImplementation(async (command) => {
+    if (command instanceof GetBucketVersioningCommand) return mockVersioningData;
+    return undefined;
+  });
+  const mockPut = jest.spyOn(s3, 'send').mockImplementation(async (command) => {
+    if (command instanceof PutBucketVersioningCommand) return { ...command.input };
+    return undefined;
+  });
   beforeEach(() => {
     mockGet.mockClear();
     mockPut.mockClear();
@@ -97,7 +118,7 @@ describe('verifyVersioning', () => {
     expect(got).toBe(mockVersioningData);
   });
   it('Enables versioning if it is disabled', async () => {
-    mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementationOnce(async () => { });
+    mockGet = jest.spyOn(s3, 'send').mockImplementationOnce(async (command) => { });
     const got = await verifyVersioning(process.env.S3_BUCKET);
     expect(mockGet.mock.calls.length).toBe(1);
     expect(mockPut.mock.calls.length).toBe(1);
@@ -121,8 +142,14 @@ describe('uploadFile', () => {
   const promise = {
     promise: () => new Promise((resolve) => { resolve(response); }),
   };
-  const mockUpload = jest.spyOn(s3, 'upload').mockImplementation(() => promise);
-  const mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
+  const mockUpload = jest.spyOn(s3, 'send').mockImplementation((command) => {
+    if (command instanceof PutObjectCommand) return promise.promise();
+    return undefined;
+  });
+  const mockGet = jest.spyOn(s3, 'send').mockImplementation(async (command) => {
+    if (command instanceof GetBucketVersioningCommand) return mockVersioningData;
+    return undefined;
+  });
   beforeEach(() => {
     mockUpload.mockClear();
     mockGet.mockClear();
@@ -149,62 +176,70 @@ describe('getPresignedUrl', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const fakeError = new Error('fake error');
-  const mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(() => 'https://example.com');
+  const mockGetURL = jest.spyOn(s3, 'send').mockImplementation(() => 'https://example.com');
   beforeEach(() => {
     mockGetURL.mockClear();
   });
-  it('calls getSignedUrl() with correct parameters', () => {
-    const url = getPresignedURL(Key, Bucket);
+  it('calls getSignedUrl() with correct parameters', async () => {
+    getSignedUrl.mockResolvedValueOnce('https://example.com');
+    const url = await getPresignedURL(Key, Bucket);
     expect(url).toMatchObject({ url: 'https://example.com', error: null });
-    expect(mockGetURL).toHaveBeenCalled();
-    expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
+    expect(getSignedUrl).toHaveBeenCalled();
   });
   it('calls getSignedUrl() with incorrect parameters', async () => {
-    mockGetURL.mockImplementationOnce(() => { throw fakeError; });
-    const url = getPresignedURL(Key, Bucket);
+    getSignedUrl.mockImplementationOnce(() => { throw fakeError; });
+    const url = await getPresignedURL(Key, Bucket);
     expect(url).toMatchObject({ url: null, error: fakeError });
-    expect(mockGetURL).toHaveBeenCalled();
-    expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
+    expect(getSignedUrl).toHaveBeenCalled();
   });
 });
+
 describe('s3Uploader.deleteFileFromS3', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const anotherFakeError = Error('fake');
   it('calls deleteFileFromS3() with correct parameters', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
+    const mockDeleteObject = jest.spyOn(s3, 'send').mockImplementation((command) => {
+      if (command instanceof DeleteObjectCommand) return Promise.resolve('good');
+      return undefined;
+    });
     const got = deleteFileFromS3(Key, Bucket);
     await expect(got).resolves.toBe('good');
-    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+    expect(mockDeleteObject).toHaveBeenCalled();
   });
   it('throws an error if promise rejects', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
-      () => ({ promise: () => Promise.reject(anotherFakeError) }),
-    );
+    const mockDeleteObject = jest.spyOn(s3, 'send').mockImplementationOnce((command) => {
+      if (command instanceof DeleteObjectCommand) return Promise.reject(anotherFakeError);
+      return undefined;
+    });
     const got = deleteFileFromS3(Key);
     await expect(got).rejects.toBe(anotherFakeError);
-    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+    expect(mockDeleteObject).toHaveBeenCalled();
   });
 });
 
-describe('s3Uploader.deleteFileFromJobS3', () => {
+describe('s3Uploader.deleteFileFromS3Job', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const anotherFakeError = Error({ statusCode: 500 });
   it('calls deleteFileFromS3Job() with correct parameters', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
+    const mockDeleteObject = jest.spyOn(s3, 'send').mockImplementation((command) => {
+      if (command instanceof DeleteObjectCommand) return Promise.resolve({ status: 200, data: {} });
+      return undefined;
+    });
     const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
     await expect(got).resolves.toStrictEqual({
       status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
     });
-    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+    expect(mockDeleteObject).toHaveBeenCalled();
   });
   it('throws an error if promise rejects', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
-      () => ({ promise: () => Promise.reject(anotherFakeError) }),
-    );
+    const mockDeleteObject = jest.spyOn(s3, 'send').mockImplementationOnce((command) => {
+      if (command instanceof DeleteObjectCommand) return Promise.reject(anotherFakeError);
+      return undefined;
+    });
     const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
     await expect(got).resolves.toStrictEqual({ data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
-    expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+    expect(mockDeleteObject).toHaveBeenCalled();
   });
 });

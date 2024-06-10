@@ -295,6 +295,8 @@
     "umzug": "^3.2.1"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.592.0",
+    "@aws-sdk/s3-request-presigner": "^3.592.0",
     "@babel/runtime": "^7.12.1",
     "@elastic/elasticsearch": "^8.2.0-patch.1",
     "@elastic/elasticsearch-mock": "^2.0.0",
