@@ -82,6 +82,7 @@
     "ejs": "^3.1.10",
     "express": "^4.19.2",
     "follow-redirects": "^1.15.6",
+    "jest": "^29.7.0",
     "json5": "^1.0.2",
     "glob-parent": "^6.0.2",
     "minimist": "^1.2.6",
@@ -188,8 +189,8 @@
     "eslint-plugin-testing-library": "^3.10.1",
     "fetch-mock": "^9.11.0",
     "history": "4.10.1",
-    "jest-fetch-mock": "^3.0.3",
-    "jest-junit": "^13.0.0",
+    "jest-fetch-mock": "^3.0.3",   
+    "jest-junit": "^16.0.0",
     "mutationobserver-shim": "^0.3.7",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
