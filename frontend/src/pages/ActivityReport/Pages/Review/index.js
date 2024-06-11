@@ -102,7 +102,7 @@ const ReviewSubmit = ({
             lastSaveTime={lastSaveTime}
           >
             <>
-              <Accordion bordered={false} items={items} />
+              <Accordion bordered={false} items={items} multiselectable />
             </>
           </Submitter>
         )}
