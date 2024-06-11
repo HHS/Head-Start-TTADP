@@ -9,6 +9,7 @@ import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
 import NationalCenters from './NationalCenters';
 import Goals from './Goals';
+import SS from './SS';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
@@ -46,6 +47,9 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
+          SS
+        </NavLink>
       </div>
       <h2>Engineer only</h2>
       <div className="margin-bottom-2">
@@ -61,6 +65,10 @@ function Admin() {
         <Route
           path="/admin/users/:userId?"
           render={({ match }) => <User match={match} />}
+        />
+        <Route
+          path="/admin/ss/"
+          render={({ match }) => <SS match={match} />}
         />
         <Route
           path="/admin/diag/"

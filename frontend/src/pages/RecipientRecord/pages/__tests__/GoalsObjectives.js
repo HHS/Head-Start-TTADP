@@ -145,17 +145,37 @@ describe('Goals and Objectives', () => {
     fetchMock.reset();
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 1, goalRows: goals, statuses: defaultStatuses });
+    fetchMock.get(goalsUrl, {
+      count: 1,
+      goalRows: goals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: goals[0].id, goalIds: goals[0].ids },
+      ],
+    });
 
     // Filters Status.
     const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, {
-      count: 1, goalRows: filterStatusGoals, statuses: defaultStatuses,
+      count: 1,
+      goalRows: filterStatusGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: filterStatusGoals[0].id, goalIds: filterStatusGoals[0].ids },
+      ],
     });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: noFilterGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: noFilterGoals[0].id, goalIds: noFilterGoals[0].ids },
+        { id: noFilterGoals[1].id, goalIds: noFilterGoals[1].ids },
+      ],
+    });
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
@@ -243,7 +263,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
 
     const response = [{
@@ -262,7 +282,12 @@ describe('Goals and Objectives', () => {
     ];
 
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: response, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: response,
+      statuses: defaultStatuses,
+      allGoalIds: [{ id: 4598, goalIds: [4598] }],
+    });
 
     act(() => renderGoalsAndObjectives());
 
@@ -305,6 +330,19 @@ describe('Goals and Objectives', () => {
         { ...goals[0], id: 3 },
       ],
       statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      ],
     });
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
@@ -331,7 +369,7 @@ describe('Goals and Objectives', () => {
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
     const goalToUse = {
       id: 1,
@@ -348,10 +386,12 @@ describe('Goals and Objectives', () => {
     };
     const goalCount = 60;
     const goalsToDisplay = [];
+    const allGoalIds = [];
     // eslint-disable-next-line no-plusplus
     for (let i = 1; i <= goalCount; i++) {
       const goalText = `This is goal text ${i}.`;
       goalsToDisplay.push({ ...goalToUse, id: i, goalText });
+      allGoalIds.push({ id: i, goalIds: [i] });
     }
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl,
@@ -359,6 +399,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 10),
         statuses: defaultStatuses,
+        allGoalIds,
       });
 
     // Render.
@@ -376,6 +417,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 25),
         statuses: defaultStatuses,
+        allGoalIds,
       });
     const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
     userEvent.selectOptions(perPageDropDown, '25');
@@ -384,5 +426,147 @@ describe('Goals and Objectives', () => {
     expect(await screen.findByText(/1-25 of 60/i)).toBeVisible();
     goalsPerPage = screen.queryAllByTestId('goalCard');
     expect(goalsPerPage.length).toBe(25);
+  });
+
+  it('respects select all on a per page basis', async () => {
+    const goalUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(goalUrl, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 1 },
+        { ...goals[0], id: 2 },
+        { ...goals[0], id: 3 },
+        { ...goals[0], id: 4 },
+        { ...goals[0], id: 5 },
+        { ...goals[0], id: 6 },
+        { ...goals[0], id: 7 },
+        { ...goals[0], id: 8 },
+        { ...goals[0], id: 9 },
+        { ...goals[0], id: 10 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      {
+        id: 4,
+        goalIds: [4],
+      },
+      {
+        id: 5,
+        goalIds: [5],
+      },
+      {
+        id: 6,
+        goalIds: [6],
+      },
+      {
+        id: 7,
+        goalIds: [7],
+      },
+      {
+        id: 8,
+        goalIds: [8],
+      },
+      {
+        id: 9,
+        goalIds: [9],
+      },
+      {
+        id: 10,
+        goalIds: [10],
+      },
+      ],
+    });
+    act(() => renderGoalsAndObjectives([1]));
+    expect(await screen.findByText(/1-10 of 12/i)).toBeVisible();
+
+    // Select All.
+    const selectAll = await screen.findByRole('checkbox', { name: /select all goals/i });
+    userEvent.click(selectAll);
+
+    // Assert all are selected.
+    const checkboxes = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxes.length).toBe(10);
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Change per page.
+    const goalUrlMore = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=10&limit=10';
+    fetchMock.get(goalUrlMore, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 11 },
+        { ...goals[0], id: 12 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 11,
+        goalIds: [11],
+      },
+      {
+        id: 12,
+        goalIds: [12],
+      },
+      ],
+    });
+
+    // Click page 2.
+    const pageTwo = await screen.findByRole('link', { name: /go to page number 2/i });
+    userEvent.click(pageTwo);
+
+    expect(await screen.findByText(/11-12 of 12/i)).toBeVisible();
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Assert all selected is NOT checked.
+    const selectAllNext = await screen.findByRole('checkbox', { name: /select all goals/i });
+    expect(selectAllNext).not.toBeChecked();
+
+    // Get all the checkboxes.
+    const checkboxesNext = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNext.length).toBe(2);
+
+    // Check the second one.
+    userEvent.click(checkboxesNext[1]);
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
+
+    // Select All.
+    userEvent.click(selectAllNext);
+
+    // Assert all are selected.
+    const checkboxesNextAll = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNextAll.length).toBe(2);
+    checkboxesNextAll.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 12 selected.
+    expect(await screen.findByText(/12 selected/i)).toBeVisible();
+
+    // Uncheck the second checkbox.
+    userEvent.click(checkboxesNext[1]);
+
+    // Assert the select all check box is not checked.
+    expect(selectAllNext).not.toBeChecked();
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });
 });

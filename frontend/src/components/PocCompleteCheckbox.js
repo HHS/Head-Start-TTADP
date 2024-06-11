@@ -4,9 +4,11 @@ import { Checkbox } from '@trussworks/react-uswds';
 import { useController, useFormContext } from 'react-hook-form';
 import moment from 'moment';
 import UserContext from '../UserContext';
+import isAdmin from '../permissions';
 
 export default function PocCompleteCheckbox({ userId, isPoc }) {
   const { user } = useContext(UserContext);
+  const userIsAdmin = isAdmin(user);
   const { register, setValue } = useFormContext();
   const {
     field: {
@@ -41,7 +43,7 @@ export default function PocCompleteCheckbox({ userId, isPoc }) {
 
   return (
     <>
-      {isPoc && hasValidEmailRole() ? (
+      {(isPoc && hasValidEmailRole()) || (userIsAdmin) ? (
         <>
           <Checkbox
             id={namePocComplete}
