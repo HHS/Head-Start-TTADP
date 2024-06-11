@@ -7,18 +7,8 @@ import db, {
 import {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
-  // propagateName,
 } from '../hooks/goal';
-import { GOAL_STATUS } from '../../constants';
 
-function sleep(milliseconds) {
-  const start = new Date().getTime();
-  for (let i = 0; i < 1e7; i += 1) {
-    if ((new Date().getTime() - start) > milliseconds) {
-      break;
-    }
-  }
-}
 const mockRecipient = { id: 5001, name: 'Bobs Builders', uei: 'NNA5N2KHMGM2' };
 const mockGrant = { id: 6001, number: '1234567890', regionId: 2 };
 const mockGoal = { name: 'build a playground' };
