@@ -3,6 +3,7 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import {
   searchIndex,
 } from './handlers';
+import db from '../../models';
 import {
   search,
 } from '../../lib/awsElasticSearch/index';
@@ -22,6 +23,7 @@ const mockResponse = {
 };
 
 describe('search', () => {
+  afterAll(() => db.sequelize.close());
   afterEach(() => {
     search.mockClear();
   });

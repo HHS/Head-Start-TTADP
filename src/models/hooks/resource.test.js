@@ -11,7 +11,7 @@ jest.mock('../../services/resourceQueue', () => ({
   addGetResourceMetadataToQueue: jest.fn(),
 }));
 
-describe('objectiveTopic hooks', () => {
+describe('resource hooks', () => {
   afterAll(async () => {
     await sequelize.close();
   });

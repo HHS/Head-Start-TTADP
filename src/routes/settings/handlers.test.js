@@ -1,4 +1,5 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import db from '../../models';
 import {
   getUserSettings,
   getUserEmailSettings,
@@ -23,6 +24,7 @@ jest.mock('../../services/userSettings', () => ({
 }));
 
 describe('Settings handlers', () => {
+  afterAll(() => db.sequelize.close());
   const mockResponse = {
     attachment: jest.fn(),
     json: jest.fn(),
