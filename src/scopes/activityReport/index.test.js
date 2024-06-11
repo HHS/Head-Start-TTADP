@@ -207,6 +207,20 @@ describe('filtersToScopes', () => {
     await db.sequelize.close();
   });
 
+  test('Dummy test to satisfy Jest', () => {
+    /*
+    * Jest 27 Introduction:
+    *   The update to Jest 27 introduced stricter rules to prevent situations where beforeAll
+    *   and afterAll hooks are used in describe blocks that do not contain any tests. This
+    *   prevents potential confusion and ensures that all setup and teardown logic is tied to
+    *   specific tests
+    *   (GitHub: https://github.com/jestjs/jest/issues/11485)
+    *   (Jest: https://jestjs.io/blog/2021/05/25/jest-27)
+    */
+
+    expect(true).toBe(true);
+  });
+
   describe('groups', () => {
     let reportIncluded;
     let reportExcluded;
@@ -3261,31 +3275,6 @@ describe('filtersToScopes', () => {
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
         .toEqual(expect.arrayContaining([firstReport.id, secondReport.id, thirdReport.id]));
-    });
-  });
-
-  describe('region id', () => {
-    let includedReport1;
-    let includedReport2;
-    let excludedReport;
-    let possibleIds;
-
-    beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        globallyExcludedReport.id,
-      ];
-    });
-
-    afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
     });
   });
 
