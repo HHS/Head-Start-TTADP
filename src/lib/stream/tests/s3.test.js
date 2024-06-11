@@ -42,6 +42,7 @@ describe('S3ClientWrapper', () => {
     it('should upload file as stream', async () => {
       const key = 'test-key';
       const stream = new Readable();
+      // eslint-disable-next-line no-underscore-dangle
       stream._read = () => {}; // Mock implementation of _read to avoid errors
 
       mockS3.send.mockResolvedValueOnce({});
@@ -56,6 +57,7 @@ describe('S3ClientWrapper', () => {
     it('should throw error and log if upload fails', async () => {
       const key = 'test-key';
       const stream = new Readable();
+      // eslint-disable-next-line no-underscore-dangle
       stream._read = () => {}; // Mock implementation of _read to avoid errors
       const error = new Error('Upload failed');
       mockS3.send.mockRejectedValue(error);
