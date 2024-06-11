@@ -271,7 +271,7 @@ export function processAssociations(associations, tables, schemas) {
     });
     const issues:string[] = [];
 
-    relationKey = sourceTarget[key].map((association) => association.as).join(', ');
+    relationKey = sourceTarget[key].map((association) => association.as).join(',');
 
     let lineColor;
     if (relationKey?.split(',').length === 1) {
