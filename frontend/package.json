@@ -99,8 +99,7 @@
     "webpack": "^5.76.1",
     "yaml": "^2.2.2",
     "semver": "^7.5.3",
-    "es5-ext": "^0.10.63",
-    "braces": "^3.0.2"
+    "es5-ext": "^0.10.63"
   },
   "eslintConfig": {
     "root": true,
