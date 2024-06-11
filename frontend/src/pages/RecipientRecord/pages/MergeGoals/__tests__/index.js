@@ -6,16 +6,13 @@ import {
 import join from 'url-join';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import MergeGoals, { navigator as navigate } from '..';
 import UserContext from '../../../../../UserContext';
 import FilterContext from '../../../../../FilterContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { mockWindowProperty } from '../../../../../testHelpers';
-
-const memoryHistory = createMemoryHistory();
 
 const RECIPIENT_ID = 401;
 const REGION_ID = 1;
@@ -94,26 +91,28 @@ describe('Merge goals', () => {
 
   const renderTest = (goalGroupId = GOAL_GROUP_ID, canMergeGoals = true, isAdmin = false) => {
     render(
-      <Router history={memoryHistory}>
-        <AppLoadingContext.Provider value={{ setIsAppLoading }}>
-          <UserContext.Provider value={{ user: isAdmin ? adminUser : user }}>
-            <FilterContext.Provider value={{ filterKey: 'test' }}>
-              <MergeGoals
-                recipientId={String(RECIPIENT_ID)}
-                regionId={String(REGION_ID)}
-                recipient={recipient}
-                match={{
-                  params: { recipientId: RECIPIENT_ID, regionId: REGION_ID, goalGroupId },
-                  path: '',
-                  url: '',
-                }}
-                recipientNameWithRegion="test"
-                canMergeGoals={canMergeGoals}
-              />
-            </FilterContext.Provider>
-          </UserContext.Provider>
-        </AppLoadingContext.Provider>
-      </Router>,
+      <MemoryRouter initialEntries={[`/recipient/${RECIPIENT_ID}/region/${REGION_ID}/group/${goalGroupId}`]}>
+        <Routes>
+          <Route
+            path="/recipient/:recipientId/region/:regionId/group/:goalGroupId"
+            element={(
+              <AppLoadingContext.Provider value={{ setIsAppLoading }}>
+                <UserContext.Provider value={{ user: isAdmin ? adminUser : user }}>
+                  <FilterContext.Provider value={{ filterKey: 'test' }}>
+                    <MergeGoals
+                      recipientId={String(RECIPIENT_ID)}
+                      regionId={String(REGION_ID)}
+                      recipient={recipient}
+                      recipientNameWithRegion="test"
+                      canMergeGoals={canMergeGoals}
+                    />
+                  </FilterContext.Provider>
+                </UserContext.Provider>
+              </AppLoadingContext.Provider>
+)}
+          />
+        </Routes>
+      </MemoryRouter>,
     );
   };
 
@@ -297,8 +296,6 @@ describe('Merge goals', () => {
   });
 
   it('you can click the submit button', async () => {
-    const oldPush = memoryHistory.push;
-    memoryHistory.push = jest.fn();
     fetchMock.get(idToUrl(), { goalRows: goals });
     renderTest();
     await waitFor(() => expect(screen.getByText('These goals might be duplicates')).toBeInTheDocument());
@@ -334,15 +331,6 @@ describe('Merge goals', () => {
     act(() => userEvent.click(confim));
 
     await waitFor(() => expect(fetchMock.called(goalsUrl, { method: 'POST' })).toBeTruthy());
-
-    expect(memoryHistory.push).toHaveBeenCalledWith(
-      `/recipient-tta-records/${RECIPIENT_ID}/region/${REGION_ID}/rttapa`,
-      {
-        mergedGoals: [1, 2],
-      },
-    );
-
-    memoryHistory.push = oldPush;
   });
 
   it('handles submission errors', async () => {

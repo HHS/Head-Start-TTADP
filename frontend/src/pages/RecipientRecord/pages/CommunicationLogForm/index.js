@@ -272,7 +272,7 @@ export default function CommunicationLogForm({ recipientName }) {
         data,
       );
 
-      navigate.push(
+      navigate(
         `${recipientRecordRootUrl(recipientId, regionId)}/communication`,
         { state: { message: 'You successfully saved the communication log.' } },
       );
