@@ -39,7 +39,6 @@ describe('activityReportGoalResource hooks', () => {
   let arToDestroy;
   let goalToDestroy;
   let activityReportGoalToDestroy;
-  let activityReportGoalResourceToDestroy;
   let resourceToDestroy;
   const destroyUrl = faker.internet.url();
 
@@ -75,7 +74,7 @@ describe('activityReportGoalResource hooks', () => {
 
     resourceToDestroy = await Resource.create({ url: destroyUrl });
 
-    activityReportGoalResourceToDestroy = await ActivityReportGoalResource.create({
+    await ActivityReportGoalResource.create({
       activityReportGoalId: activityReportGoalToDestroy.id,
       resourceId: resourceToDestroy.id,
       sourceFields: ['resource'],

@@ -1,8 +1,9 @@
 import { QueryTypes } from 'sequelize';
+import db from '../../models';
 import { reseed, query } from '../../../tests/utils/dbUtils';
-import { reseedDB, queryDB } from './handlers';
 
 describe('dbUtils', () => {
+  afterAll(() => db.sequelize.close());
   it('test reseed via function api', async () => {
     await query(`
       ALTER SEQUENCE "Goals_id_seq"

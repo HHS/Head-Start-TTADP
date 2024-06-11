@@ -286,6 +286,7 @@ describe('Navigator', () => {
         },
         second: 'on',
       },
+      false,
     ));
   });
 
@@ -321,7 +322,7 @@ describe('Navigator', () => {
       ...initialData,
       pageState: { ...initialData.pageState, 2: IN_PROGRESS },
       second: 'on',
-    }));
+    }, false));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
@@ -547,6 +548,60 @@ describe('packageGoals', () => {
         isActivelyBeingEditing: true,
         grantIds,
         prompts: [{ fieldName: 'prompt2' }],
+      },
+    ]);
+  });
+  it('skips returning edited goal if edited goal is null', () => {
+    const grantIds = [1];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      null,
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [{ fieldName: 'prompt' }],
+        grantIds,
+        isActivelyBeingEditing: false,
+      },
+    ]);
+  });
+  it('skips returning edited goal if edited goal has no name', () => {
+    const grantIds = [1];
+    const packagedGoals = packageGoals(
+      [
+        {
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+        },
+      ],
+      {
+        name: '',
+        endDate: '',
+        isActivelyBeingEditing: true,
+      },
+      grantIds,
+      [{ fieldName: 'prompt2' }],
+    );
+
+    expect(packagedGoals).toEqual([
+      {
+        name: 'goal name',
+        endDate: '09/01/2020',
+        prompts: [{ fieldName: 'prompt' }],
+        grantIds,
+        isActivelyBeingEditing: false,
       },
     ]);
   });

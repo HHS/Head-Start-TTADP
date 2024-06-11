@@ -17,3 +17,4 @@ CLAMAV_ENDPOINT: https://clamapi-ttahub-dev.apps.internal:9443
 SEND_NOTIFICATIONS: "true"
 SUPPRESS_ERROR_LOGGING: "false"
 SIMILARITY_ENDPOINT: https://tta-similarity-api-sandbox.app.cloud.gov/compute
+SMARTSHEET_ENDPOINT: https://api.smartsheetgov.com/2.0/
