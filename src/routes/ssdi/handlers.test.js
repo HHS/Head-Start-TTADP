@@ -68,7 +68,7 @@ describe('API Endpoints', () => {
       readFlagsAndQueryFromFile.mockReturnValue({
         flags: { flag1: { type: 'integer[]', description: 'Test Flag' } },
         query: 'SELECT * FROM test',
-        defaultOutputName: 'test_output'
+        defaultOutputName: 'test_output',
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);
@@ -88,7 +88,7 @@ describe('API Endpoints', () => {
       readFlagsAndQueryFromFile.mockReturnValue({
         flags: { flag1: { type: 'integer[]', description: 'Test Flag' } },
         query: 'SELECT * FROM test',
-        defaultOutputName: 'test_output'
+        defaultOutputName: 'test_output',
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);

@@ -65,7 +65,6 @@ const runQuery = async (req: Request, res: Response) => {
       res.json(result[0]);
     }
   } catch (error) {
-    console.log(error);
     res.status(500).send(`Error executing query: ${error.message}`);
   }
 };
