@@ -892,4 +892,5 @@ export {
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
+  afterDestroy,
 };

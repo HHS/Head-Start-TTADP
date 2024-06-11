@@ -18,7 +18,7 @@ import {
   getUserNamesByIds,
 } from '../../services/users';
 import User from '../../policies/user';
-import { Grant } from '../../models';
+import db, { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
 import SCOPES from '../../middleware/scopeConstants';
@@ -67,6 +67,7 @@ const mockRequest = {
 };
 
 describe('User handlers', () => {
+  afterAll(() => db.sequelize.close());
   afterEach(() => {
     jest.clearAllMocks();
   });
