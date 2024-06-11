@@ -44,7 +44,7 @@ export default (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     userRoles: {
       type: DataTypes.ARRAY(DataTypes.STRING),
