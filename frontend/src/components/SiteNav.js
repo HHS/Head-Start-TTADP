@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink as Link, withRouter } from 'react-router-dom';
+import SiteNavDisclosureGroup from './SiteNavDisclosureGroup';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
 
@@ -21,10 +22,23 @@ const navLinkClasses = [
 ].join(' ');
 
 const activeNavLinkClasses = 'border-left-05 border-white text-bold';
+const disclosureActiveLinkClasses = 'text-bold';
 
-const NavLink = (props) => (
-  <Link activeClassName={activeNavLinkClasses} className={navLinkClasses} {...props} />
+const NavLink = ({ withinDisclosure, ...props }) => (
+  <Link
+    activeClassName={withinDisclosure ? disclosureActiveLinkClasses : activeNavLinkClasses}
+    className={navLinkClasses}
+    {...props}
+  />
 );
+
+NavLink.propTypes = {
+  withinDisclosure: PropTypes.bool,
+};
+
+NavLink.defaultProps = {
+  withinDisclosure: false,
+};
 
 const SiteNav = ({
   authenticated,
@@ -81,9 +95,10 @@ const SiteNav = ({
             </div>
             <nav className="display-flex flex-column flex-justify flex-1" aria-label="main navigation">
               <div className="width-full margin-bottom-2 margin-top-2 desktop:margin-top-6">
-                <ul className="add-list-reset">
+                <SiteNavDisclosureGroup title="TTA Reporting">
                   <li>
                     <NavLink
+                      withinDisclosure
                       to="/activity-reports"
                     >
                       Activity Reports
@@ -91,13 +106,17 @@ const SiteNav = ({
                   </li>
                   <li>
                     <NavLink
+                      withinDisclosure
                       to="/training-reports/not-started"
                     >
                       Training Reports
                     </NavLink>
                   </li>
+                </SiteNavDisclosureGroup>
+                <SiteNavDisclosureGroup title="Dashboards">
                   <li>
                     <NavLink
+                      withinDisclosure
                       to="/dashboards/regional-dashboard/activity-reports"
                     >
                       Regional Dashboard
@@ -106,6 +125,7 @@ const SiteNav = ({
                   <FeatureFlag flag="regional_goal_dashboard">
                     <li>
                       <NavLink
+                        withinDisclosure
                         to="/regional-goal-dashboard"
                       >
                         Regional Goal Dashboard
@@ -114,6 +134,7 @@ const SiteNav = ({
                   </FeatureFlag>
                   <li>
                     <NavLink
+                      withinDisclosure
                       to="/dashboards/resources-dashboard"
                     >
                       Resource Dashboard
@@ -128,6 +149,8 @@ const SiteNav = ({
                       </NavLink>
                     </li>
                   </FeatureFlag>
+                </SiteNavDisclosureGroup>
+                <ul className="add-list-reset">
                   <li>
                     <NavLink
                       to="/recipient-tta-records"
