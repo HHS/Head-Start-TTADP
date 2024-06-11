@@ -62,75 +62,24 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     name: Joi.string(),
     grant: grantSchema,
     objectives: Joi.array(),
+    goalNumber: Joi.string(),
     goalNumbers: Joi.array().items(Joi.string()),
     goalIds: Joi.array().items(Joi.number()),
     grants: Joi.array().items(grantSchema),
+    grantId: Joi.number(),
     grantIds: Joi.array().items(Joi.number()),
     isNew: Joi.boolean(),
     collaborators: Joi.array().items(Joi.any().allow(null)),
     prompts: Joi.object(),
-    source: Joi.any()
+    source: Joi.any(),
+    statusChanges: Joi.array().items(Joi.object({
+      oldStatus: Joi.string(),
+      newStatus: Joi.string(),
+    })),
+    isReopenedGoal: Joi.boolean(),
+    regionId: Joi.number(),
+    recipientId: Joi.number(),
   }));
-
-  await validateSchema(response, schema, expect);
-});
-
-test('get /goals/:goalId/recipient/:recipientId', async ({ request }) => {
-  const response = await request.get(
-    `${root}/goals/4/recipient/2`,
-    { headers: { 'playwright-user-id': '1' } },
-  );
-
-  expect(response.status()).toBe(200);
-
-  const recipientSchema = Joi.object({
-    id: Joi.number()
-  });
-
-  const programSchema = Joi.object({
-    programType: Joi.string()
-  });
-
-  const grantSchema = Joi.object({
-    numberWithProgramTypes: Joi.string(),
-    id: Joi.number(),
-    number: Joi.string(),
-    regionId: Joi.number(),
-    recipientId: Joi.number(),
-    recipient: recipientSchema,
-    programs: Joi.array().items(programSchema)
-  });
-
-  const schema = Joi.object({
-    goalTemplateId: Joi.number().allow(null),
-    endDate: Joi.string().allow(null),
-    goalNumber: Joi.string(),
-    id: Joi.number(),
-    name: Joi.string(),
-    status: Joi.string(),
-    regionId: Joi.number(),
-    recipientId: Joi.number(),
-    createdVia: Joi.allow(null),
-    isRttapa: Joi.allow(null),
-    onAnyReport: Joi.boolean(),
-    onApprovedAR: Joi.boolean(),
-    rtrOrder: Joi.number(),
-    isCurated: Joi.boolean(),
-    objectives: Joi.array(),
-    grant: grantSchema,
-    source: Joi.string().allow(null),
-    prompts: Joi.array().items(
-      Joi.object({
-        id: Joi.number(),
-        title: Joi.string(),
-        response: Joi.array().items(
-          Joi.string()
-        ),
-        prompt: Joi.string(),
-       }),
-      ),
-    goalCollaborators: Joi.array().items(Joi.any().allow(null)),
-  });
 
   await validateSchema(response, schema, expect);
 });

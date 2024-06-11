@@ -36,8 +36,8 @@ import {
   removeUnusedGoalsObjectivesFromReport,
   saveGoalsForReport,
   removeRemovedRecipientsGoals,
-  getGoalsForReport,
 } from '../goalServices/goals';
+import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from './objectives';
 
 export async function batchQuery(query, limit) {
@@ -437,8 +437,6 @@ export async function activityReportAndRecipientsById(activityReportId) {
     include: [
       {
         attributes: [
-          ['id', 'value'],
-          ['title', 'label'],
           'id',
           'title',
           'status',
@@ -451,29 +449,11 @@ export async function activityReportAndRecipientsById(activityReportId) {
             model: Goal,
             as: 'goal',
             attributes: [
-              ['id', 'value'],
-              ['name', 'label'],
               'id',
               'name',
               'status',
               'endDate',
               'goalNumber',
-            ],
-          },
-          {
-            model: Resource,
-            as: 'resources',
-            attributes: [
-              ['url', 'value'],
-              ['id', 'key'],
-            ],
-          },
-          {
-            model: Topic,
-            as: 'topics',
-            attributes: [
-              ['id', 'value'],
-              ['name', 'label'],
             ],
           },
         ],

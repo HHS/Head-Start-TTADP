@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
-import { Sequelize, Op } from 'sequelize';
+import { Sequelize, Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -330,6 +331,417 @@ const switchToTopicCentric = (input) => {
     });
 };
 
+async function GenerateFlatTempTables(reportIds, tblNames) {
+  const flatResourceSql = /* sql */ `
+  -- 1.) Create AR temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdArTempTableName};
+  SELECT
+    id,
+    "startDate",
+    "numberOfParticipants",
+    to_char("startDate", 'Mon-YY') AS "rollUpDate",
+    "regionId",
+    "calculatedStatus"
+    INTO TEMP ${tblNames.createdArTempTableName}
+    FROM "ActivityReports" ar
+    WHERE ar."id" IN (${reportIds.map((r) => r.id).join(',')});
+
+  -- 2.) Create ARO Resources temp table.
+  DROP TABLE IF EXISTS ${tblNames.createdAroResourcesTempTableName};
+  SELECT
+  DISTINCT
+    ar.id AS "activityReportId",
+    aror."resourceId"
+    INTO TEMP ${tblNames.createdAroResourcesTempTableName}
+    FROM ${tblNames.createdArTempTableName} ar
+    JOIN "ActivityReportObjectives" aro
+      ON ar."id" = aro."activityReportId"
+    JOIN "ActivityReportObjectiveResources" aror
+      ON aro.id = aror."activityReportObjectiveId"
+    WHERE aror."sourceFields" && '{resource}';
+
+    -- 3.) Create Resources temp table (only what we need).
+    DROP TABLE IF EXISTS ${tblNames.createdResourcesTempTableName};
+    SELECT
+    DISTINCT
+      id,
+      domain,
+      url,
+      title
+      INTO TEMP ${tblNames.createdResourcesTempTableName}
+      FROM "Resources"
+      JOIN ${tblNames.createdAroResourcesTempTableName} dr
+        ON "Resources".id = dr."resourceId";
+
+      -- 4.) Create ARO Topics temp table. **** Revisit
+      DROP TABLE IF EXISTS ${tblNames.createdAroTopicsTempTableName};
+      SELECT
+      ar.id AS "activityReportId",
+      arot."topicId",
+      count(DISTINCT aro."objectiveId") AS "objectiveCount"
+      INTO TEMP ${tblNames.createdAroTopicsTempTableName}
+      FROM ${tblNames.createdArTempTableName}  ar
+      JOIN "ActivityReportObjectives" aro
+        ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveResources" aror
+        ON aro.id = aror."activityReportObjectiveId"
+      JOIN "ActivityReportObjectiveTopics" arot
+        ON aro.id = arot."activityReportObjectiveId"
+      GROUP BY ar.id, arot."topicId";
+
+      -- 5.) Create Topics temp table (only what we need).
+      DROP TABLE IF EXISTS ${tblNames.createdTopicsTempTableName};
+      SELECT
+      DISTINCT
+        id,
+        name
+      INTO TEMP ${tblNames.createdTopicsTempTableName}
+      FROM "Topics"
+      JOIN ${tblNames.createdAroTopicsTempTableName} dt
+        ON "Topics".id = dt."topicId";
+
+      -- 6.) Create Flat Resource temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceTempTableName};
+      SELECT
+      DISTINCT
+        ar.id AS "activityReportId",
+        ar."startDate",
+        ar."rollUpDate",
+        arorr.domain,
+        arorr.title,
+        arorr.url,
+        ar."numberOfParticipants"
+      INTO TEMP ${tblNames.createdFlatResourceTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN ${tblNames.createdAroResourcesTempTableName} aror
+        ON ar.id = aror."activityReportId"
+      JOIN ${tblNames.createdResourcesTempTableName} arorr
+        ON aror."resourceId" = arorr.id;
+
+      -- 7.) Create date headers.
+      DROP TABLE IF EXISTS ${tblNames.createdFlatResourceHeadersTempTableName};
+      SELECT
+          generate_series(
+            date_trunc('month', (SELECT MIN("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            date_trunc('month', (SELECT MAX("startDate") FROM ${tblNames.createdFlatResourceTempTableName})),
+            interval '1 month'
+          )::date AS "date"
+        INTO TEMP ${tblNames.createdFlatResourceHeadersTempTableName};
+  `;
+
+  // console.log('\n\n\n---- Flat sql: ', flatResourceSql, '\n\n\n');
+
+  // Execute the flat table sql.
+  await sequelize.query(
+    flatResourceSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getResourceUseSql(tblNames) {
+  const resourceUseSql = /* sql */`
+  WITH urlvals AS (
+    SELECT
+        url,
+        title,
+        "rollUpDate",
+        count(tf."activityReportId") AS "resourceCount"
+      FROM ${tblNames.createdFlatResourceTempTableName} tf
+      GROUP BY url, title, "rollUpDate"
+      ORDER BY "url", tf."rollUpDate" ASC),
+    distincturls AS (
+    SELECT DISTINCT url, title
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    ),
+    totals AS
+    (
+      SELECT
+      url,
+      title,
+      SUM("resourceCount") AS "totalCount"
+      FROM urlvals
+      GROUP BY url, title
+      ORDER BY SUM("resourceCount")  DESC,
+      url ASC
+      LIMIT 10
+    )
+      SELECT
+      d.url,
+      d.title,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(u."resourceCount", 0) AS "resourceCount",
+      t."totalCount"
+      FROM distincturls d
+      CROSS JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
+      JOIN totals t
+        ON d.url = t.url
+      LEFT JOIN urlvals u
+        ON d.url = u.url AND to_char(s."date", 'Mon-YY') = u."rollUpDate"
+      ORDER BY 1,4 ASC;
+  `;
+
+  return sequelize.query(
+    resourceUseSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getTopicsUseSql(tblNames) {
+  const topicUseSql = /* sql */`
+  WITH topicsuse AS (
+      SELECT
+        f."activityReportId",
+        t.name,
+        f."rollUpDate",
+        count(DISTINCT f.url) AS "resourceCount" -- Only count each resource once per ar and topic.
+      FROM ${tblNames.createdTopicsTempTableName}  t
+        JOIN ${tblNames.createdAroTopicsTempTableName} arot
+        ON t.id = arot."topicId"
+        JOIN ${tblNames.createdFlatResourceTempTableName} f
+        ON arot."activityReportId" = f."activityReportId"
+        GROUP BY f."activityReportId", t.name, f."rollUpDate"
+        ORDER BY t.name, f."rollUpDate" ASC
+    ),
+    topicsperdate AS
+    (
+    SELECT
+      "name",
+      "rollUpDate",
+      SUM("resourceCount") AS "resourceCount"
+    FROM topicsuse
+    GROUP BY "name", "rollUpDate"
+    ),
+    totals AS
+    (
+      SELECT
+        name,
+        SUM("resourceCount") AS "totalCount"
+      FROM topicsperdate
+      GROUP BY name
+      ORDER BY SUM("resourceCount") DESC
+    )
+    SELECT
+      d.name,
+      to_char(s."date", 'Mon-YY') AS "rollUpDate",
+      s."date",
+      coalesce(t."resourceCount", 0) AS "resourceCount",
+      tt."totalCount"
+    FROM ${tblNames.createdTopicsTempTableName} d
+    JOIN ${tblNames.createdFlatResourceHeadersTempTableName} s
+      ON 1=1
+    JOIN totals tt
+      ON d.name = tt.name
+    LEFT JOIN topicsperdate t
+      ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
+    ORDER BY 1, 3 ASC;`;
+  return sequelize.query(
+    topicUseSql,
+    {
+      type: QueryTypes.SELECT,
+    },
+  );
+}
+
+function getOverview(tblNames, totalReportCount) {
+  // - Number of Participants -
+  const numberOfParticipants = sequelize.query(/* sql */`
+  WITH ar_participants AS (
+    SELECT
+    f."activityReportId",
+    f."numberOfParticipants"
+    FROM ${tblNames.createdFlatResourceTempTableName} f
+    GROUP BY f."activityReportId", f."numberOfParticipants"
+  )
+  SELECT
+         SUM("numberOfParticipants") AS participants
+  FROM ar_participants;
+  `, {
+    type: QueryTypes.SELECT,
+  });
+
+  const numberOfRecipSql = /* sql */`
+   SELECT
+         count(DISTINCT g."recipientId") AS recipients
+  FROM ${tblNames.createdFlatResourceTempTableName} ar
+  JOIN "ActivityRecipients" arr
+    ON ar."activityReportId" = arr."activityReportId"
+  JOIN "Grants" g
+    ON arr."grantId" = g.id
+  `;
+
+  // - Number of Recipients -
+  const numberOfRecipients = sequelize.query(numberOfRecipSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  // - Reports with Resources Pct -
+  const pctOfResourcesSql = /* sql */`
+  SELECT
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (count(DISTINCT "activityReportId") / ${totalReportCount}::decimal * 100)::decimal(5,2)
+    END AS "resourcesPct"
+  FROM ${tblNames.createdAroResourcesTempTableName};
+  `;
+  const pctOfReportsWithResources = sequelize.query(pctOfResourcesSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  // - Number of Reports with ECLKC Resources Pct -
+  const pctOfECKLKCResources = sequelize.query(/* sql */`
+    WITH eclkc AS (
+      SELECT
+    COUNT(DISTINCT url) AS "eclkcCount"
+    FROM  ${tblNames.createdFlatResourceTempTableName}
+    WHERE domain = 'eclkc.ohs.acf.hhs.gov'
+    ), allres AS (
+    SELECT
+    COUNT(DISTINCT url) AS "allCount"
+    FROM ${tblNames.createdFlatResourceTempTableName}
+    )
+    SELECT
+      e."eclkcCount",
+    r."allCount",
+      CASE WHEN
+    r."allCount" = 0
+    THEN 0
+    ELSE  (e."eclkcCount" / r."allCount"::decimal * 100)::decimal(5,2)
+    END AS "eclkcPct"
+    FROM eclkc e
+    CROSS JOIN allres r;
+  `, {
+    type: QueryTypes.SELECT,
+  });
+
+  // 5.) Date Headers table.
+  const dateHeaders = sequelize.query(/* sql */`
+   SELECT
+    to_char("date", 'Mon-YY') AS "rollUpDate"
+   FROM ${tblNames.createdFlatResourceHeadersTempTableName};
+ `, {
+    type: QueryTypes.SELECT,
+  });
+  return {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  };
+}
+
+/*
+  Create a flat table to calculate the resource data. Use temp tables to ONLY join to the rows we need.
+  If over time the amount of data increases and slows again we can cache the flat table a set frequency.
+*/
+export async function resourceFlatData(scopes) {
+  // Date to retrieve report data from.
+  const reportCreatedAtDate = '2022-12-01';
+
+  // 1.) Get report ids using the scopes.
+  const reportIds = await ActivityReport.findAll({
+    attributes: [
+      'id',
+    ],
+    where: {
+      [Op.and]: [
+        scopes.activityReport,
+        {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          startDate: { [Op.ne]: null },
+          createdAt: { [Op.gt]: reportCreatedAtDate },
+        },
+      ],
+    },
+    raw: true,
+  });
+
+  // Get total number of reports.
+  const totalReportCount = reportIds.length;
+
+  if (reportIds.length === 0) {
+    reportIds.push({ id: 0 });
+  }
+  // 2.) Create temp table names.
+  const uuid = uuidv4().replaceAll('-', '_');
+  const createdArTempTableName = `Z_temp_resdb_ar__${uuid}`;
+  const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuid}`;
+  const createdResourcesTempTableName = `Z_temp_resdb_res__${uuid}`;
+  const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuid}`;
+  const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuid}`;
+  const createdFlatResourceHeadersTempTableName = `Z_temp_resdb_headers__${uuid}`; // Date Headers.
+  const createdFlatResourceTempTableName = `Z_temp_resdb_flat__${uuid}`; // Main Flat Table.
+
+  const tempTableNames = {
+    createdArTempTableName,
+    createdAroResourcesTempTableName,
+    createdResourcesTempTableName,
+    createdAroTopicsTempTableName,
+    createdTopicsTempTableName,
+    createdFlatResourceTempTableName,
+    createdFlatResourceHeadersTempTableName,
+  };
+
+  // 3. Generate the base temp tables (used for all calcs).
+  await GenerateFlatTempTables(reportIds, tempTableNames);
+
+  // 4.) Calculate the resource data.
+
+  // -- Resource Use --
+  let resourceUseResult = getResourceUseSql(tempTableNames);
+
+  // -- Topic Use --
+  let topicUseResult = getTopicsUseSql(tempTableNames);
+
+  // -- Overview --
+  let {
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  } = getOverview(tempTableNames, totalReportCount);
+
+  // -- Wait for all results --
+  [
+    resourceUseResult,
+    topicUseResult,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfECKLKCResources,
+    dateHeaders,
+  ] = await Promise.all(
+    [
+      resourceUseResult,
+      topicUseResult,
+      numberOfParticipants,
+      numberOfRecipients,
+      pctOfReportsWithResources,
+      pctOfECKLKCResources,
+      dateHeaders,
+    ],
+  );
+
+  // 5.) Restructure Overview.
+  const overView = {
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
+  };
+
+  // 6.) Return the data.
+  return {
+    resourceUseResult, topicUseResult, overView, dateHeaders, reportIds,
+  };
+}
+
 // collect all resource data from the db filtered via the scopes
 export async function resourceData(scopes, skipResources = false, skipTopics = false) {
   // Date to retrieve report data from.
@@ -452,7 +864,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'report'
                   ))
               FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -546,7 +958,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'specialistNextStep'
                   ))
               FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -645,7 +1057,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'recipientNextStep'
                   ))
               FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -745,7 +1157,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'objective'
                   ))
               FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -754,7 +1166,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -875,7 +1287,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'goals'
                   ))
               FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -884,7 +1296,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1602,5 +2014,116 @@ export async function resourceDashboard(scopes) {
     use: generateResourceUse(data),
     topicUse: generateResourceTopicUse(data),
     domainList: generateResourceDomainList(data, true),
+  };
+}
+
+export async function rollUpResourceUse(data) {
+  const rolledUpResourceUse = data.resourceUseResult.reduce((accumulator, resource) => {
+    const exists = accumulator.find((r) => r.url === resource.url);
+    if (!exists) {
+      // Add a property with the resource's URL.
+      return [
+        ...accumulator,
+        {
+          heading: resource.url,
+          url: resource.url,
+          title: resource.title,
+          sortBy: resource.title || resource.url,
+          total: resource.totalCount,
+          isUrl: true,
+          data: [{ title: resource.rollUpDate, value: resource.resourceCount }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.data.push({ title: resource.rollUpDate, value: resource.resourceCount });
+    return accumulator;
+  }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpResourceUse.forEach((resource) => {
+    resource.data.push({ title: 'Total', value: resource.total });
+  });
+
+  // Sort by total and name or url.
+  // rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.sortBy.localeCompare(r2.sortBy));
+  rolledUpResourceUse.sort((r1, r2) => r2.total - r1.total || r1.url.localeCompare(r2.url));
+  return rolledUpResourceUse;
+}
+
+export async function rollUpTopicUse(data) {
+  const rolledUpTopicUse = data.topicUseResult.reduce((accumulator, topic) => {
+    const exists = accumulator.find((r) => r.name === topic.name);
+    if (!exists) {
+      // Add a property with the resource's name.
+      return [
+        ...accumulator,
+        {
+          heading: topic.name,
+          name: topic.name,
+          total: topic.totalCount,
+          isUrl: false,
+          data: [{ title: topic.rollUpDate, value: topic.resourceCount }],
+        },
+      ];
+    }
+
+    // Add the resource to the accumulator.
+    exists.data.push({ title: topic.rollUpDate, value: topic.resourceCount });
+    return accumulator;
+  }, []);
+
+  // Loop through the rolled up resources and add a total.
+  rolledUpTopicUse.forEach((topic) => {
+    topic.data.push({ title: 'Total', value: topic.total });
+  });
+
+  // Sort by total then topic name.
+  rolledUpTopicUse.sort((r1, r2) => r2.total - r1.total || r1.name.localeCompare(r2.name));
+  return rolledUpTopicUse;
+}
+
+export function restructureOverview(data) {
+  return {
+    report: {
+      percentResources: `${formatNumber(data.overView.pctOfReportsWithResources[0].resourcesPct, 2)}%`,
+      numResources: formatNumber(data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount),
+      num: formatNumber(data.overView.pctOfReportsWithResources[0].totalReportsCount),
+    },
+    participant: {
+      numParticipants: formatNumber(data.overView.numberOfParticipants[0].participants),
+    },
+    recipient: {
+      numResources: formatNumber(data.overView.numberOfRecipients[0].recipients),
+    },
+    resource: {
+      numEclkc: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
+      num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
+      percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
+    },
+  };
+}
+
+export async function resourceDashboardFlat(scopes) {
+  // Get flat resource data.
+  const data = await resourceFlatData(scopes);
+
+  // Restructure overview.
+  const dashboardOverview = restructureOverview(data);
+
+  // Roll up resources.
+  const rolledUpResourceUse = await rollUpResourceUse(data);
+
+  // Roll up topics.
+  const rolledUpTopicUse = await rollUpTopicUse(data);
+
+  // Date headers.
+  const dateHeadersArray = data.dateHeaders.map((date) => date.rollUpDate);
+  return {
+    resourcesDashboardOverview: dashboardOverview,
+    resourcesUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
+    topicUse: { headers: dateHeadersArray, topics: rolledUpTopicUse },
+    reportIds: data.reportIds.map((r) => r.id),
   };
 }

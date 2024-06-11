@@ -17,7 +17,7 @@ const UrlFilters = () => {
 const renderUrlFilters = () => render(<UrlFilters />);
 
 describe('useUrlFilters', () => {
-  mockWindowProperty('location', new URL('http://localhost:3000/regional-dashboard?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma'));
+  mockWindowProperty('location', new URL('http://localhost:3000/dashboards/regional-dashboard/activity-reports?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma'));
 
   it('saves state to local storage', async () => {
     renderUrlFilters();

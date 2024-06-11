@@ -469,16 +469,23 @@ const detectAndCast = (value: string): {
   if (value.toLowerCase() === 'false') return { value: false, type: 'boolean' };
 
   // check for number with leading zeros
-  if (/^0\d*$/.test(value)) {
+  if (/^0\d*$/.test(value) && value.length > 1) {
     // It's an octal number string or a string with leading zeros, return as a string
-    return { value, type: 'string' };
+    return {
+      value,
+      type: 'string',
+    };
   }
 
   // Check for number
   const numberRegex = /^-?\d+(\.\d+)?$/;
   const numberMatch = value.match(numberRegex);
   if (numberMatch) {
-    return { value: Number(value), type: 'number' };
+    const newValue = Number(value);
+    return {
+      value: newValue,
+      type: 'number',
+    };
   }
 
   // Check for date
@@ -498,7 +505,10 @@ const detectAndCast = (value: string): {
     && date.getUTCHours() === hour
     && date.getUTCMinutes() === minute
     && date.getUTCSeconds() === second) {
-      return { value: date, type: 'Date' };
+      return {
+        value: date,
+        type: 'Date',
+      };
     }
   }
 

@@ -17,13 +17,14 @@ import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
+import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import isAdmin from './permissions';
+import isAdmin, { canSeeBehindFeatureFlag } from './permissions';
 import './App.scss';
 import LandingLayout from './components/LandingLayout';
 import RequestPermissions from './components/RequestPermissions';
@@ -56,6 +57,7 @@ import Group from './pages/AccountManagement/Group';
 import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import useGaUserData from './hooks/useGaUserData';
+import QADashboard from './pages/QADashboard';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -188,8 +190,7 @@ function App() {
   };
 
   const admin = isAdmin(user);
-  const { flags } = user || {};
-  const hasTrainingReportDashboard = flags && flags.includes('training_reports_dashboard');
+  const hasTrainingReportDashboard = canSeeBehindFeatureFlag(user, 'training_reports_dashboard');
 
   const renderAuthenticatedRoutes = () => (
     <>
@@ -258,9 +259,16 @@ function App() {
           path="/dashboards/resources-dashboard"
           render={() => (
             <AppWrapper authenticated logout={logout}>
-              <FeatureFlag flag="resources_dashboard" renderNotFound>
-                <ResourcesDashboard user={user} />
-              </FeatureFlag>
+              <ResourcesDashboard user={user} />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/ipd-courses"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <CourseDashboard />
             </AppWrapper>
           )}
         />
@@ -302,10 +310,28 @@ function App() {
         />
         <Route
           exact
-          path="/regional-dashboard"
+          path="/dashboards/qa-dashboard"
+          render={() => (
+            <FeatureFlag
+              renderNotFound
+              flag="quality_assurance_dashboard"
+            >
+              <AppWrapper
+                authenticated
+                logout={logout}
+                hasAlerts={!!(alert)}
+              >
+                <QADashboard />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/activity-reports"
           render={({ match }) => (
             <AppWrapper
-              padded={!admin && !hasTrainingReportDashboard}
+              padded={!(hasTrainingReportDashboard)}
               authenticated
               logout={logout}
               hasAlerts={!!(alert)}
@@ -316,7 +342,7 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/regional-dashboard/:reportType(training-reports|activity-reports|all-reports)"
+          path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
           render={({ match }) => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <FeatureFlag flag="training_reports_dashboard" renderNotFound>
