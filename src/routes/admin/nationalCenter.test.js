@@ -1,4 +1,5 @@
 import httpCodes from 'http-codes';
+import db from '../../models';
 import {
   updateNationalCenter,
   deleteNationalCenter,
@@ -32,6 +33,7 @@ describe('nationalCenter admin routes', () => {
   };
 
   describe('updateNationalCenter', () => {
+    afterAll(() => db.sequelize.close());
     it('successfully updates a nationalCenter', async () => {
       const nationalCenter = { id: 1, name: 'Updated National Center' };
       updateById.mockResolvedValueOnce(nationalCenter);
