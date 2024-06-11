@@ -364,75 +364,74 @@ describe('activity report model hooks', () => {
       expect(testObjective.status).toEqual('Not Started');
     });
   });
-});
-
-describe('moveDraftGoalsToNotStartedOnSubmission', () => {
-  it('logs an error if one is thrown', async () => {
-    const mockSequelize = {
-      models: {
-        Goal: {
-          findAll: jest.fn(() => { throw new Error('test error'); }),
+  describe('moveDraftGoalsToNotStartedOnSubmission', () => {
+    it('logs an error if one is thrown', async () => {
+      const mockSequelize = {
+        models: {
+          Goal: {
+            findAll: jest.fn(() => { throw new Error('test error'); }),
+          },
+          ActivityReport: {},
         },
-        ActivityReport: {},
-      },
-    };
-    const mockInstance = {
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
-      changed: jest.fn(() => ['submissionStatus']),
-      id: 1,
-    };
-    const mockOptions = {
-      transaction: 'transaction',
-    };
+      };
+      const mockInstance = {
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        changed: jest.fn(() => ['submissionStatus']),
+        id: 1,
+      };
+      const mockOptions = {
+        transaction: 'transaction',
+      };
 
-    jest.spyOn(auditLogger, 'error');
+      jest.spyOn(auditLogger, 'error');
 
-    await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
-    expect(auditLogger.error).toHaveBeenCalled();
+      await moveDraftGoalsToNotStartedOnSubmission(mockSequelize, mockInstance, mockOptions);
+      expect(auditLogger.error).toHaveBeenCalled();
+    });
   });
-});
 
-describe('propagateSubmissionStatus', () => {
-  it('logs an error if one is thrown updating goals', async () => {
-    const mockSequelize = {
-      fn: jest.fn(),
-      models: {
-        ActivityReport: {
-          findAll: jest.fn(() => []),
-          update: jest.fn(() => {
-            throw new Error('test error');
-          }),
+  describe('propagateSubmissionStatus', () => {
+    it('logs an error if one is thrown updating goals', async () => {
+      const mockSequelize = {
+        fn: jest.fn(),
+        models: {
+          ActivityReport: {
+            findAll: jest.fn(() => []),
+            update: jest.fn(() => {
+              throw new Error('test error');
+            }),
+          },
+          GoalTemplate: {
+            findOrCreate: jest.fn(() => [{ id: 1, name: 'name' }]),
+          },
+          Goal: {
+            findAll: jest.fn(() => [{
+              id: 1,
+              name: 'name',
+              createdAt: new Date(),
+              goalTemplateId: 1,
+              updatedAt: new Date(),
+            }]),
+            update: jest.fn(() => {
+              throw new Error('test error');
+            }),
+          },
         },
-        GoalTemplate: {
-          findOrCreate: jest.fn(() => [{ id: 1, name: 'name' }]),
-        },
-        Goal: {
-          findAll: jest.fn(() => [{
-            id: 1,
-            name: 'name',
-            createdAt: new Date(),
-            goalTemplateId: 1,
-            updatedAt: new Date(),
-          }]),
-          update: jest.fn(() => {
-            throw new Error('test error');
-          }),
-        },
-      },
-    };
-    const mockInstance = {
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
-      changed: jest.fn(() => ['submissionStatus']),
-      id: 1,
-      regionId: 1,
-    };
-    const mockOptions = {
-      transaction: 'transaction',
-    };
+      };
+      const mockInstance = {
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        changed: jest.fn(() => ['submissionStatus']),
+        id: 1,
+        regionId: 1,
+      };
+      const mockOptions = {
+        transaction: 'transaction',
+      };
 
-    jest.spyOn(auditLogger, 'error');
+      jest.spyOn(auditLogger, 'error');
 
-    await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
-    expect(auditLogger.error).toHaveBeenCalled();
+      await propagateSubmissionStatus(mockSequelize, mockInstance, mockOptions);
+      expect(auditLogger.error).toHaveBeenCalled();
+    });
   });
 });
