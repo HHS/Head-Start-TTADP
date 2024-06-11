@@ -1,12 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import moment from 'moment';
@@ -20,13 +19,12 @@ describe('User Page', () => {
   const featuresUrl = join('/api', 'admin', 'users', 'features');
   const userPatchUrl = join(usersUrl, '3');
 
-  const history = createMemoryHistory();
   afterEach(() => fetchMock.restore());
 
   it('displays an error if users are not "fetch-able"', async () => {
     fetchMock.get(usersUrl, 500);
     fetchMock.get(featuresUrl, []);
-    render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+    render(<MemoryRouter><Users match={{ path: '', url: '', params: { userId: undefined } }} /></MemoryRouter>);
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch users');
   });
@@ -77,8 +75,17 @@ describe('User Page', () => {
       },
     ];
 
-    const renderUsers = () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+    const renderUsers = (userId = '') => {
+      render(
+        <MemoryRouter initialEntries={[`/admin/users/${userId}`]}>
+          <Routes>
+            <Route
+              path="/admin/users/:userId"
+              element={<Users />}
+            />
+          </Routes>
+        </MemoryRouter>,
+      );
     };
 
     beforeEach(() => {
@@ -181,18 +188,18 @@ describe('User Page', () => {
         renderUsers();
         const button = await screen.findByText('Harry Potter');
         userEvent.click(button);
-        expect(history.location.pathname).toBe('/admin/users/3');
+        expect(window.history.location.pathname).toBe('/admin/users/3');
       });
     });
 
     it('displays an existing user', async () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+      renderUsers('3');
       const userInfo = await screen.findByRole('group', { name: 'User Profile' });
       expect(userInfo).toBeVisible();
     });
 
     it('displays the "Download users" button', async () => {
-      render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: undefined } }} /></Router>);
+      renderUsers();
       const download = await screen.findByRole('button', { name: 'Download users' });
       expect(download).toBeVisible();
     });
@@ -200,7 +207,7 @@ describe('User Page', () => {
     describe('saving', () => {
       it('handles errors by displaying an error message', async () => {
         fetchMock.put(userPatchUrl, 500);
-        render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+        renderUsers('3');
         const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
         const alert = await screen.findByRole('alert');
@@ -217,7 +224,7 @@ describe('User Page', () => {
           permissions: [],
           flags: ['my_tummy_hurts'],
         });
-        render(<Router history={history}><Users match={{ path: '', url: '', params: { userId: '3' } }} /></Router>);
+        renderUsers('3');
         const save = await screen.findByRole('button', { name: 'Save' });
         userEvent.click(save);
         const alert = await screen.findByRole('link', { name: 'Potter Harry' });

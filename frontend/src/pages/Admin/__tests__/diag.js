@@ -4,15 +4,12 @@ import {
   render, screen,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-
+import { MemoryRouter } from 'react-router-dom';
 import Diag from '../diag';
 
 const defaultBaseUrl = '/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D';
 
 describe('Diag', () => {
-  const history = createMemoryHistory();
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
@@ -30,9 +27,9 @@ describe('Diag', () => {
   });
 
   const RenderDiag = () => (
-    <Router history={history}>
+    <MemoryRouter>
       <Diag />
-    </Router>
+    </MemoryRouter>
   );
 
   it('renders the main view', async () => {

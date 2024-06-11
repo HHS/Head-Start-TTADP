@@ -1,12 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router';
+import { MemoryRouter } from 'react-router-dom';
 import {
   render, screen,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { createMemoryHistory } from 'history';
 
 import Admin from '../index';
 
@@ -16,8 +15,6 @@ const usersUrl = join('/', 'api', 'admin', 'users');
 const featuresUrl = join('/api', 'admin', 'users', 'features');
 
 describe('Admin landing page', () => {
-  const history = createMemoryHistory();
-
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
@@ -28,33 +25,30 @@ describe('Admin landing page', () => {
   });
 
   it('displays the cdi page', async () => {
-    history.push('/admin/cdi');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/cdi']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
     const grantView = await screen.findByText('Please select a grant');
     expect(grantView).toBeVisible();
   });
 
   it('displays the user page', async () => {
-    history.push('/admin/users');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/users']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
     const grantView = await screen.findByText('Select a user...');
     expect(grantView).toBeVisible();
   });
 
   it('displays the flags page', async () => {
-    history.push('/admin/flags');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/flags']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
     const flagsHeading = await screen.findByText('Active feature flags');
     expect(flagsHeading).toBeVisible();
@@ -62,11 +56,10 @@ describe('Admin landing page', () => {
 
   it('displays the diag page', async () => {
     fetchMock.get('/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D', []);
-    history.push('/admin/diag');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/diag']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
 
     const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
@@ -74,11 +67,10 @@ describe('Admin landing page', () => {
   });
   it('displays the site alerts page', async () => {
     fetchMock.get('/api/admin/alerts', []);
-    history.push('/admin/site-alerts');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/site-alerts']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
 
     const heading = await screen.findByRole('heading', { name: /site alerts/i });
@@ -87,11 +79,10 @@ describe('Admin landing page', () => {
 
   it('displays the national centers page', async () => {
     fetchMock.get('/api/national-center', { centers: [], users: [] });
-    history.push('/admin/national-centers');
     render(
-      <Router history={history}>
+      <MemoryRouter initialEntries={['/admin/national-centers']}>
         <Admin />
-      </Router>,
+      </MemoryRouter>,
     );
 
     const heading = await screen.findByRole('heading', { name: /national centers/i });

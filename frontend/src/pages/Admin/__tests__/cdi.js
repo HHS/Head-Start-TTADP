@@ -6,8 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
 import Cdi from '../cdi';
@@ -42,7 +41,6 @@ const defaultGrant = {
 };
 
 describe('CDI', () => {
-  const history = createMemoryHistory();
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
@@ -51,9 +49,9 @@ describe('CDI', () => {
   });
 
   const RenderCDI = ({ grantId = null }) => (
-    <Router history={history}>
+    <MemoryRouter>
       <Cdi match={{ params: { grantId }, path: '', url: '' }} />
-    </Router>
+    </MemoryRouter>
   );
 
   it('renders an empty page with no grant selected', async () => {

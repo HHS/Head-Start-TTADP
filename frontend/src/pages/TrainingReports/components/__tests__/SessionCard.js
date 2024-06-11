@@ -1,12 +1,11 @@
 import React from 'react';
-import { Router } from 'react-router';
+import { MemoryRouter } from 'react-router-dom';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+
 import SessionCard from '../SessionCard';
 
 describe('SessionCard', () => {
-  const history = createMemoryHistory();
   const defaultSession = {
     id: 1,
     data: {
@@ -24,7 +23,7 @@ describe('SessionCard', () => {
 
   const renderSessionCard = async (session = defaultSession, hasWritePermissions = true) => {
     render((
-      <Router history={history}>
+      <MemoryRouter>
         <SessionCard
           eventId={1}
           session={session}
@@ -32,7 +31,7 @@ describe('SessionCard', () => {
           onRemoveSession={jest.fn()}
           expanded
         />
-      </Router>));
+      </MemoryRouter>));
   };
 
   it('renders correctly', () => {

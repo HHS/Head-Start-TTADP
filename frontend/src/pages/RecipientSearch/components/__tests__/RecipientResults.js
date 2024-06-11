@@ -5,12 +5,8 @@ import {
   fireEvent,
   screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-
+import { MemoryRouter } from 'react-router-dom';
 import RecipientResults from '../RecipientResults';
-
-const history = createMemoryHistory();
 
 const recipients = [
   {
@@ -67,7 +63,7 @@ describe('Recipient Search > RecipientResults', () => {
     sortConfig = config,
   ) => (
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <RecipientResults
           region={1}
           recipients={recipients}
@@ -80,7 +76,7 @@ describe('Recipient Search > RecipientResults', () => {
           requestSort={requestSort}
           sortConfig={sortConfig}
         />
-      </Router>,
+      </MemoryRouter>,
     )
   );
 

@@ -4,8 +4,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
@@ -22,12 +21,10 @@ const communicationLogUrl = join(
 );
 
 describe('ViewCommunicationForm', () => {
-  const history = createMemoryHistory();
-
   const renderTest = (
     communicationLogId = '1',
   ) => render(
-    <Router history={history}>
+    <MemoryRouter>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
           <ViewCommunicationForm
@@ -44,7 +41,7 @@ describe('ViewCommunicationForm', () => {
           />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
 
   beforeEach(() => {

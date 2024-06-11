@@ -196,7 +196,7 @@ function App() {
     <>
       <Routes>
         <Route
-          path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
+          path="/activity-reports/legacy/:legacyId"
           element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <LegacyReport />
@@ -224,7 +224,7 @@ function App() {
           )}
         />
         <Route
-          path="/activity-reports/view/:activityReportId([0-9]*)"
+          path="/activity-reports/view/:activityReportId"
           element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ApprovedActivityReport user={user} />
@@ -232,7 +232,7 @@ function App() {
           )}
         />
         <Route
-          path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/activity-reports/:activityReportId/:currentPage"
           element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <ActivityReport />
@@ -240,7 +240,7 @@ function App() {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
+          path="/recipient-tta-records/:recipientId/region/:regionId"
           element={(
             <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
               <RecipientRecord
@@ -270,7 +270,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
+          path="/training-reports/:status"
           element={(
             <AppWrapper authenticated logout={logout}>
               <TrainingReports user={user} />
@@ -279,7 +279,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
+          path="/training-report/view/:trainingReportId"
           element={(
             <AppWrapper authenticated logout={logout}>
               <ViewTrainingReport />
@@ -288,7 +288,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId/:currentPage"
           element={(
             <AppWrapper authenticated logout={logout}>
               <TrainingReportForm />
@@ -297,7 +297,7 @@ function App() {
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
+          path="/training-report/:trainingReportId/session/:sessionId/:currentPage"
           element={(
             <AppWrapper authenticated logout={logout}>
               <SessionForm />
@@ -338,7 +338,7 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
+          path="/dashboards/regional-dashboard/:reportType"
           element={(
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <FeatureFlag flag="training_reports_dashboard" renderNotFound>
@@ -348,7 +348,7 @@ function App() {
           )}
         />
         <Route
-          path="/account/my-groups/:groupId([0-9]*)"
+          path="/account/my-groups/:groupId"
           element={(
             <AppWrapper authenticated logout={logout}>
               <MyGroups />
@@ -366,7 +366,7 @@ function App() {
         />
         <Route
           exact
-          path="/account/group/:groupId([0-9]*)"
+          path="/account/group/:groupId"
           element={(
             <AppWrapper authenticated logout={logout}>
               <Group />

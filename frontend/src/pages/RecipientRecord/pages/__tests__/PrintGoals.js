@@ -3,8 +3,7 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -13,8 +12,6 @@ import UserContext from '../../../../UserContext';
 import { filtersToQueryString } from '../../../../utils';
 import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
-
-const memoryHistory = createMemoryHistory();
 
 const RECIPIENT_ID = '123456';
 const REGION_ID = '1';
@@ -85,19 +82,28 @@ describe('PrintGoals', () => {
 
   const renderPrintGoals = (loc = {}) => {
     const location = { ...baseLocation, ...loc };
-
     render(
-      <Router history={memoryHistory}>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID) }}>
-          <UserContext.Provider value={{ user }}>
-            <PrintGoals
-              location={location}
-              recipientId={RECIPIENT_ID}
-              regionId={REGION_ID}
-            />
-          </UserContext.Provider>
-        </FilterContext.Provider>
-      </Router>,
+      <MemoryRouter initialEntries={[`/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals`]}>
+        <Routes location={location}>
+          <Route
+            path="/recipient/:recipientId/region/:regionId/goals"
+            element={(
+              <FilterContext.Provider value={{
+                filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID),
+              }}
+              >
+                <UserContext.Provider value={{ user }}>
+                  <PrintGoals
+                    location={location}
+                    recipientId={RECIPIENT_ID}
+                    regionId={REGION_ID}
+                  />
+                </UserContext.Provider>
+              </FilterContext.Provider>
+)}
+          />
+        </Routes>
+      </MemoryRouter>,
     );
   };
 

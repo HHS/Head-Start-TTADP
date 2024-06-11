@@ -4,8 +4,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import join from 'url-join';
-import { Router, MemoryRouter } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import TrainingReports from '../index';
@@ -115,7 +114,6 @@ const suspendedEvents = [{
 },
 ];
 
-const history = createMemoryHistory();
 const eventUrl = join('api', 'events');
 
 describe('TrainingReports', () => {
@@ -131,7 +129,7 @@ describe('TrainingReports', () => {
   const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
     const user = u || nonCentralOfficeUser;
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
           <UserContext.Provider value={{ user }}>
             <AppLoadingContext.Provider value={
@@ -146,7 +144,7 @@ describe('TrainingReports', () => {
             </AppLoadingContext.Provider>
           </UserContext.Provider>
         </AriaLiveContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
@@ -16,7 +15,6 @@ import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
-const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 const defaultStatuses = {
@@ -114,7 +112,7 @@ describe('Goals and Objectives', () => {
     };
 
     render(
-      <Router history={memoryHistory}>
+      <MemoryRouter>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
           <UserContext.Provider value={{ user: userForContext }}>
             <FilterContext.Provider value={{ filterKey: 'test' }}>
@@ -131,7 +129,7 @@ describe('Goals and Objectives', () => {
             </FilterContext.Provider>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

@@ -2,8 +2,7 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import TrainingReports from '../TrainingReports';
 
 describe('Training Reports page', () => {
@@ -13,8 +12,7 @@ describe('Training Reports page', () => {
   });
 
   it('displays the training reports page', async () => {
-    const history = createMemoryHistory();
-    render(<Router history={history}><TrainingReports /></Router>);
+    render(<MemoryRouter><TrainingReports /></MemoryRouter>);
 
     // Assert Displays text 'Training Report Import'
     const trainingReports = await screen.findByRole('heading', { name: /training reports import/i });

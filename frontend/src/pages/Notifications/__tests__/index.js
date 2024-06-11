@@ -1,17 +1,15 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import Notifications from '../index';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
 
 describe('Notifications', () => {
-  const history = createMemoryHistory();
   const renderNotifications = (data = { whatsNew: mockRSSData() }) => render(
-    <Router history={history}>
+    <MemoryRouter>
       <Notifications notifications={data} />
-    </Router>,
+    </MemoryRouter>,
   );
 
   const getItem = jest.fn();

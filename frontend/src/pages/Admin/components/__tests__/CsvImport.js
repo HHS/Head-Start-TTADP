@@ -6,8 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter as Router } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import CsvImport from '../CsvImport';
 
@@ -35,9 +34,8 @@ describe('CsvImport', () => {
   });
 
   it('displays the component', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={[]}
@@ -66,9 +64,8 @@ describe('CsvImport', () => {
   });
 
   it('displays csv required error', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={[]}
@@ -97,9 +94,8 @@ describe('CsvImport', () => {
   });
 
   it('displays duplicate event id error', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={[]}
@@ -132,9 +128,8 @@ describe('CsvImport', () => {
   });
 
   it('displays missing columns error', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -168,8 +163,6 @@ describe('CsvImport', () => {
   });
 
   it('displays invalid columns', async () => {
-    const history = createMemoryHistory();
-
     const validColumns = [
       'Primary ID',
       'Edit Title',
@@ -184,7 +177,7 @@ describe('CsvImport', () => {
       'Overall Vision/Goal for the PD Event',
     ];
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={validColumns}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -218,9 +211,8 @@ describe('CsvImport', () => {
   });
 
   it('ignores invalid columns', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -248,9 +240,8 @@ describe('CsvImport', () => {
   });
 
   it('displays good import csv', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -325,9 +316,8 @@ describe('CsvImport', () => {
   });
 
   it('displays optional summary results', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -431,9 +421,8 @@ describe('CsvImport', () => {
   });
 
   it('displays bad import csv', async () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -477,9 +466,9 @@ describe('CsvImport', () => {
 
   it('displays error if no import file is selected', async () => {
     // Render.
-    const history = createMemoryHistory();
+
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={['Primary ID', 'Edit Title', 'Creator']}
@@ -524,9 +513,9 @@ describe('CsvImport', () => {
     fetchMock.post(testCsvUrl, { status: 200, body: { success: false, count: 0 } });
 
     languageEncoding.mockImplementationOnce(() => Promise.resolve({ encoding: 'ansi' }));
-    const history = createMemoryHistory();
+
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={[]}
@@ -584,9 +573,9 @@ describe('CsvImport', () => {
     languageEncoding.mockImplementationOnce(() => {
       throw new Error('Exception thrown');
     });
-    const history = createMemoryHistory();
+
     render(
-      <Router history={history}>
+      <Router>
         <CsvImport
           validCsvHeaders={[]}
           requiredCsvHeaders={[]}

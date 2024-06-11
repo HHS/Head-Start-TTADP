@@ -1,7 +1,7 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
-import { Router } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import { createMemoryHistory } from 'history';
 import {
@@ -67,23 +67,30 @@ export const ReportComponent = ({
   showLastUpdatedTime = null,
   userId = 1,
 }) => (
-  <Router history={history}>
-    <AppLoadingContext.Provider value={{
-      setIsAppLoading: jest.fn(),
-      setAppLoadingText: jest.fn(),
-    }}
-    >
-      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
-        <ActivityReport
-          match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-          location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+  <MemoryRouter initialEntries={[`/activity-reports/${id}/${currentPage}`]}>
+    <Routes>
+      <Route
+        path="/activity-reports/:activityReportId/:currentPage"
+        element={(
+          <AppLoadingContext.Provider value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
           }}
-          region={1}
-        />
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>
-  </Router>
+          >
+            <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+              <ActivityReport
+                match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
+                location={{
+                  state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+                }}
+                region={1}
+              />
+            </UserContext.Provider>
+          </AppLoadingContext.Provider>
+ )}
+      />
+    </Routes>
+  </MemoryRouter>
 );
 
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {

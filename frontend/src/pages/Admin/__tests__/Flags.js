@@ -3,8 +3,7 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import Flags from '../Flags';
 
@@ -18,8 +17,7 @@ describe('Flags page', () => {
 
   it('displays the flags page', async () => {
     fetchMock.get(featuresUrl, ['goose_neck']);
-    const history = createMemoryHistory();
-    render(<Router history={history}><Flags /></Router>);
+    render(<MemoryRouter><Flags /></MemoryRouter>);
     const gooseNeck = await screen.findByText(/goose_neck/i);
     expect(gooseNeck).toBeVisible();
     const link = await screen.findByRole('link', { name: /view users with the goose_neck feature flag/i });
@@ -28,16 +26,16 @@ describe('Flags page', () => {
 
   it('displays an error', async () => {
     fetchMock.get(featuresUrl, 500);
-    const history = createMemoryHistory();
-    render(<Router history={history}><Flags /></Router>);
+
+    render(<MemoryRouter><Flags /></MemoryRouter>);
     const error = await screen.findByText(/Unable to fetch features/i);
     expect(error).toBeVisible();
   });
 
   it('displays "Turn on for all button"', async () => {
     fetchMock.get(featuresUrl, ['anv_statistics']);
-    const history = createMemoryHistory();
-    render(<Router history={history}><Flags /></Router>);
+
+    render(<MemoryRouter><Flags /></MemoryRouter>);
     const anvStats = await screen.findByText(/anv_statistics/i);
     expect(anvStats).toBeVisible();
     const onButton = await screen.findByText(/turn on for all/i);
@@ -47,8 +45,8 @@ describe('Flags page', () => {
 
   it('displays "Turn off for all button"', async () => {
     fetchMock.get(featuresUrl, ['anv_statistics']);
-    const history = createMemoryHistory();
-    render(<Router history={history}><Flags /></Router>);
+
+    render(<MemoryRouter><Flags /></MemoryRouter>);
     const anvStats = await screen.findByText(/anv_statistics/i);
     expect(anvStats).toBeVisible();
     const offButton = await screen.findByText(/turn off for all/i);

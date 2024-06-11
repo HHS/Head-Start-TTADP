@@ -5,19 +5,17 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
 
 describe('TrainingReportForm', () => {
-  const history = createMemoryHistory();
   const sessionsUrl = '/api/session-reports/eventId/1234';
 
   const renderTrainingReportForm = (trainingReportId, currentPage) => render(
-    <Router history={history}>
+    <MemoryRouter>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
           <TrainingReportForm match={{
@@ -28,7 +26,7 @@ describe('TrainingReportForm', () => {
           />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
 
   beforeEach(() => {

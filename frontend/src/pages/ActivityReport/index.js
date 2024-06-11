@@ -477,8 +477,7 @@ function ActivityReport({
         reportId.current = savedReport.id;
 
         cleanupLocalStorage('new', savedReport.id);
-
-        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+        navigate(`/activity-reports/${savedReport.id}/${currentPage}`, { replace: true });
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);

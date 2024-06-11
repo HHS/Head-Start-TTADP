@@ -1,7 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router';
+import { MemoryRouter } from 'react-router-dom';
 import RttapaUpdates from '../RttapaUpdates';
 
 describe('RttapaUpdates', () => {
@@ -31,12 +30,10 @@ describe('RttapaUpdates', () => {
     },
   ];
 
-  const history = createMemoryHistory();
-
   const renderTest = (logs = DEFAULT_LOGS) => render(
-    <Router history={history}>
+    <MemoryRouter>
       <RttapaUpdates regionId={1} recipientId={1} logs={logs} />
-    </Router>,
+    </MemoryRouter>,
   );
 
   test('renders the widget heading', async () => {

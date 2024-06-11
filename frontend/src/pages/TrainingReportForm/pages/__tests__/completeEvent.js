@@ -3,8 +3,7 @@ import React from 'react';
 import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -40,12 +39,10 @@ describe('completeEvent', () => {
         defaultValues,
       });
 
-      const history = createMemoryHistory();
-
       const formData = hookForm.watch();
 
       return (
-        <Router history={history}>
+        <MemoryRouter>
           <FormProvider {...hookForm}>
             <UserContext.Provider value={{ user: { id: 1 } }}>
               <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn, isAppLoading: false }}>
@@ -67,7 +64,7 @@ describe('completeEvent', () => {
               </AppLoadingContext.Provider>
             </UserContext.Provider>
           </FormProvider>
-        </Router>
+        </MemoryRouter>
       );
     };
 

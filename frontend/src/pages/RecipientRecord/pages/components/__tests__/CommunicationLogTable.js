@@ -1,8 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import { render, fireEvent } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
 import CommunicationLogTable from '../CommunicationLogTable';
 
 describe('CommunicationLogTable', () => {
@@ -22,10 +21,9 @@ describe('CommunicationLogTable', () => {
     const mockSortConfig = { sortBy: 'communicationDate', direction: 'asc' };
     const mockRecipientId = 1;
     const mockRegionId = '1';
-    const history = createMemoryHistory();
 
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <CommunicationLogTable
           logs={mockLogs}
           requestSort={mockRequestSort}
@@ -33,7 +31,7 @@ describe('CommunicationLogTable', () => {
           recipientId={mockRecipientId}
           regionId={mockRegionId}
         />
-      </Router>,
+      </MemoryRouter>,
     );
 
     expect(mockRequestSort).not.toHaveBeenCalled();
@@ -55,10 +53,9 @@ describe('CommunicationLogTable', () => {
     const mockSortConfig = { sortBy: 'communicationDate', direction: 'asc' };
     const mockRecipientId = 1;
     const mockRegionId = '1';
-    const history = createMemoryHistory();
 
     const { getByText } = render(
-      <Router history={history}>
+      <MemoryRouter>
         <CommunicationLogTable
           logs={mockLogs}
           requestSort={mockRequestSort}
@@ -66,7 +63,7 @@ describe('CommunicationLogTable', () => {
           recipientId={mockRecipientId}
           regionId={mockRegionId}
         />
-      </Router>,
+      </MemoryRouter>,
     );
 
     const dateHeaderButton = getByText('Date');
@@ -91,10 +88,9 @@ describe('CommunicationLogTable', () => {
     const mockSortConfig = { sortBy: 'purpose', direction: 'desc' };
     const mockRecipientId = 1;
     const mockRegionId = '1';
-    const history = createMemoryHistory();
 
     const { getByText } = render(
-      <Router history={history}>
+      <MemoryRouter>
         <CommunicationLogTable
           logs={mockLogs}
           requestSort={mockRequestSort}
@@ -102,7 +98,7 @@ describe('CommunicationLogTable', () => {
           recipientId={mockRecipientId}
           regionId={mockRegionId}
         />
-      </Router>,
+      </MemoryRouter>,
     );
 
     const dateHeaderButton = getByText('Date');

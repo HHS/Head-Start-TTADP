@@ -5,9 +5,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-
+import { MemoryRouter } from 'react-router';
 import MyAlerts from '../MyAlerts';
 import activityReports from '../mocks';
 import { ALERTS_PER_PAGE } from '../../../Constants';
@@ -20,7 +18,6 @@ const user = {
 };
 
 const renderMyAlerts = (report = false) => {
-  const history = createMemoryHistory();
   const newBtn = true;
   const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' };
   const alertsOffset = 0;
@@ -32,7 +29,7 @@ const renderMyAlerts = (report = false) => {
   const requestAlertsSort = jest.fn();
 
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <MyAlerts
           loading={false}
@@ -51,9 +48,8 @@ const renderMyAlerts = (report = false) => {
           handleDownloadAllAlerts={() => { }}
         />
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
-  return history;
 };
 
 describe('My Alerts', () => {

@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
@@ -82,9 +81,8 @@ const renderReview = (
     ...extraFormData,
   };
 
-  const history = createMemoryHistory();
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <RenderApprover
           onFormReview={onFormReview}
@@ -93,10 +91,8 @@ const renderReview = (
           pages={pages}
         />
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
-
-  return history;
 };
 
 describe('Approver review page', () => {

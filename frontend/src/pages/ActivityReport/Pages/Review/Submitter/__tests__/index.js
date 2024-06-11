@@ -6,8 +6,7 @@ import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import Submitter from '../index';
 import NetworkContext from '../../../../../../NetworkContext';
@@ -90,10 +89,9 @@ const renderReview = (
     }];
   }
 
-  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
           <RenderSubmitter
@@ -105,10 +103,8 @@ const renderReview = (
           />
         </NetworkContext.Provider>
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
-
-  return history;
 };
 
 describe('Submitter review page', () => {

@@ -7,8 +7,7 @@ import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
@@ -101,10 +100,9 @@ const renderReview = (
   approvers = null,
   activityReportCollaborators = [],
 ) => {
-  const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         {/* eslint-disable-next-line max-len */}
         <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
@@ -131,9 +129,8 @@ const renderReview = (
           </NetworkContext.Provider>
         </AppLoadingContext.Provider>
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
-  return history;
 };
 
 const selectLabel = 'Approving manager *';

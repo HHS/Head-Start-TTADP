@@ -7,8 +7,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import selectEvent from 'react-select-event';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import Close from '../Close';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
@@ -19,13 +18,12 @@ const goalsForGrantsUrl = join('/', 'api', 'activity-reports', 'goals');
 const closeGoalsUrl = join('/', 'api', 'admin', 'goals', 'close');
 
 describe('Close', () => {
-  const history = createMemoryHistory();
   const renderCloseGoals = () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <Router history={history}>
+        <MemoryRouter>
           <Close />
-        </Router>
+        </MemoryRouter>
       </AppLoadingContext.Provider>,
     );
   };

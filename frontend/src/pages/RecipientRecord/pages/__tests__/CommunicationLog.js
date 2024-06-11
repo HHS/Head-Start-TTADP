@@ -6,23 +6,21 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import CommunicationLog from '../CommunicationLog';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 import AriaLiveContext from '../../../../AriaLiveContext';
 
 describe('CommunicationLog', () => {
-  const history = createMemoryHistory();
   const renderTest = () => {
     render(
       <AriaLiveContext.Provider value={{ announce: () => {} }}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
           <UserContext.Provider value={{ user: { homeRegionId: 5 } }}>
-            <Router history={history}>
+            <MemoryRouter>
               <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
-            </Router>
+            </MemoryRouter>
           </UserContext.Provider>
         </AppLoadingContext.Provider>
       </AriaLiveContext.Provider>,
