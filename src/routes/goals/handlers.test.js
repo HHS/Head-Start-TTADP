@@ -12,7 +12,6 @@ import SCOPES from '../../middleware/scopeConstants';
 import {
   changeGoalStatus,
   createGoals,
-  retrieveGoalByIdAndRecipient,
   retrieveGoalsByIds,
   deleteGoal,
   createGoalsForReport,
@@ -26,7 +25,6 @@ import {
   createOrUpdateGoals,
   destroyGoal,
   goalByIdWithActivityReportsAndRegions,
-  goalByIdAndRecipient,
   createOrUpdateGoalsForActivityReport,
   goalsByIdsAndActivityReport,
   mergeGoals,
@@ -148,130 +146,6 @@ describe('merge goals', () => {
   });
 });
 
-describe('retrieve goal', () => {
-  it('checks permissions', async () => {
-    const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    userById.mockResolvedValueOnce({
-      permissions: [],
-    });
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grant: {
-        regionId: 2,
-      },
-    });
-
-    await retrieveGoalByIdAndRecipient(req, mockResponse);
-
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
-  });
-  it('handles success', async () => {
-    const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_REPORTS,
-        },
-      ],
-    });
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grant: { regionId: 2 },
-    });
-
-    goalByIdAndRecipient.mockResolvedValueOnce({});
-    await retrieveGoalByIdAndRecipient(req, mockResponse);
-
-    expect(mockResponse.json).toHaveBeenCalledWith({});
-  });
-
-  it('handles not found', async () => {
-    const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_REPORTS,
-        },
-      ],
-    });
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grant: { regionId: 2 },
-    });
-
-    goalByIdAndRecipient.mockResolvedValueOnce(null);
-    await retrieveGoalByIdAndRecipient(req, mockResponse);
-
-    expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
-  });
-
-  it('handles failures', async () => {
-    const req = {
-      params: {
-        goalId: 2,
-        recipientId: 2,
-      },
-      session: {
-        userId: 1,
-      },
-    };
-
-    userById.mockResolvedValueOnce({
-      permissions: [
-        {
-          regionId: 2,
-          scopeId: SCOPES.READ_REPORTS,
-        },
-      ],
-    });
-
-    goalByIdWithActivityReportsAndRegions.mockResolvedValueOnce({
-      objectives: [],
-      grants: [{ regionId: 2 }],
-    });
-
-    goalByIdAndRecipient.mockImplementationOnce(() => {
-      throw new Error();
-    });
-
-    await retrieveGoalByIdAndRecipient(req, mockResponse);
-
-    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
-  });
-});
-
 describe('createGoals', () => {
   afterAll(async () => {
     jest.clearAllMocks();
@@ -311,6 +185,7 @@ describe('createGoals', () => {
         goals: [{
           goalId: 2,
           recipientId: 2,
+          regionId: 2,
         }],
       },
       session: {
@@ -339,6 +214,7 @@ describe('createGoals', () => {
         goals: [{
           goalId: 2,
           recipientId: 2,
+          regionId: 2,
         }],
       },
       session: {
@@ -492,7 +368,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);
@@ -525,7 +400,6 @@ describe('changeGoalStatus', () => {
     goalByIdWithActivityReportsAndRegions.mockResolvedValue({
       objectives: [],
       grant: { regionId: 2 },
-      previousStatus: 'Was a Fish',
     });
 
     await changeGoalStatus(req, mockResponse);

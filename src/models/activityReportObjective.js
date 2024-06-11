@@ -5,7 +5,6 @@ const {
   beforeValidate,
   beforeDestroy,
   afterDestroy,
-  afterUpdate,
 } = require('./hooks/activityReportObjective');
 
 export default (sequelize, DataTypes) => {
@@ -76,6 +75,10 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.ENUM(SUPPORT_TYPES),
       allowNull: true,
     },
+    objectiveCreatedHere: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
     originalObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -95,7 +98,6 @@ export default (sequelize, DataTypes) => {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
-      afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
     },
   });
   return ActivityReportObjective;

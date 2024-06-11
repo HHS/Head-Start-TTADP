@@ -86,7 +86,7 @@ const DASHBOARD_FIELDS = {
         icon={faChartColumn}
         iconColor={colors.success}
         backgroundColor={colors.successLighter}
-        label={`across ${data.numReports} training reports`}
+        label={`across ${data.numReports} Training Reports`}
         data={`${data.numSessions} sessions`}
       />
     ),

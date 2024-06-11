@@ -1,3 +1,5 @@
+/* eslint-disable no-alert */
+/* eslint-disable no-console */
 import React, {
   useContext,
   useMemo,
@@ -20,7 +22,7 @@ import ResourcesDashboardOverview from '../../widgets/ResourcesDashboardOverview
 import ResourceUse from '../../widgets/ResourceUse';
 import { expandFilters, filtersToQueryString, formatDateRange } from '../../utils';
 import './index.scss';
-import { fetchResourceData } from '../../fetchers/Resources';
+import { fetchFlatResourceData } from '../../fetchers/Resources';
 import {
   downloadReports,
   getReportsViaIdPost,
@@ -28,7 +30,7 @@ import {
 import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
 import UserContext from '../../UserContext';
 import { RESOURCES_DASHBOARD_FILTER_CONFIG } from './constants';
-import { REPORTS_PER_PAGE } from '../../Constants';
+import { REPORTS_PER_PAGE, REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY } from '../../Constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import ResourcesAssociatedWithTopics from '../../widgets/ResourcesAssociatedWithTopics';
 import ReportsTable from '../../components/ActivityReportsTable/ReportsTable';
@@ -39,9 +41,6 @@ const defaultDate = formatDateRange({
   string: `2022/07/01-${moment().format('YYYY/MM/DD')}`,
   withSpaces: false,
 });
-
-const FILTER_KEY = 'regional-resources-dashboard-filters';
-
 export default function ResourcesDashboard() {
   const { user } = useContext(UserContext);
   const ariaLiveContext = useContext(AriaLiveContext);
@@ -107,7 +106,7 @@ export default function ResourcesDashboard() {
   }, [defaultRegion, hasCentralOffice, centralOfficeWithAllRegionFilters]);
 
   const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
-    FILTER_KEY,
+    REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY,
     defaultFilters,
   );
 
@@ -195,7 +194,7 @@ export default function ResourcesDashboard() {
       // Filters passed also contains region.
       const filterQuery = filtersToQueryString(filtersToApply);
       try {
-        const data = await fetchResourceData(
+        const data = await fetchFlatResourceData(
           filterQuery,
         );
         setResourcesData(data);

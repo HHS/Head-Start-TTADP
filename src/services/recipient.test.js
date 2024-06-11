@@ -9,7 +9,6 @@ import db, {
   Region,
   User,
   Objective,
-  ObjectiveTopic,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   Goal,
@@ -36,7 +35,12 @@ import {
 import filtersToScopes from '../scopes';
 import SCOPES from '../middleware/scopeConstants';
 import { GOAL_STATUS, OBJECTIVE_STATUS, AUTOMATIC_CREATION } from '../constants';
-import { createReport, destroyReport } from '../testUtils';
+import {
+  createRecipient,
+  createReport,
+  destroyReport,
+  createGrant,
+} from '../testUtils';
 
 describe('Recipient DB service', () => {
   const recipients = [
@@ -70,6 +74,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -239,6 +244,7 @@ describe('Recipient DB service', () => {
     await Program.destroy({ where: { id: [74, 75, 76, 77, 78, 79, 80, 81] } });
     await Grant.unscoped().destroy({
       where: { id: [74, 75, 76, 77, 78, 79, 80, 81] },
+      force: true,
       individualHooks: true,
     });
     await Recipient.unscoped().destroy({ where: { id: [73, 74, 75, 76] } });
@@ -869,12 +875,12 @@ describe('Recipient DB service', () => {
 
     it('properly de-duplicates based on responses', async () => {
       const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(4);
+      expect(goalRows.length).toBe(3);
 
       const doubler = goalRows.find((r) => r.responsesForComparison === 'not sure,dont have to');
       expect(doubler).toBeTruthy();
 
-      expect(doubler.ids.length).toBe(1);
+      expect(doubler.ids.length).toBe(2);
 
       const singler = goalRows.find((r) => r.responsesForComparison === 'gotta');
       expect(singler).toBeTruthy();
@@ -884,35 +890,39 @@ describe('Recipient DB service', () => {
       expect(noResponse).toBeTruthy();
       expect(noResponse.ids.length).toBe(1);
     });
+
+    it('properly combines the same goals with no creators/collaborators', async () => {
+      // Remove other goals
+      goals[0].destroy();
+      goals[3].destroy();
+
+      const { goalRows } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(1);
+      // Verify goal 2 and 3 have empty creators/collaborators
+      expect(goalRows[0].collaborators[0].goalCreator).toBe(undefined);
+      // Verify goal 2 and 3 are rolled up
+      expect(goalRows[0].ids.length).toBe(2);
+    });
   });
 
   describe('reduceObjectivesForRecipientRecord', () => {
     let recipient;
+    let grant;
     let goals;
     let objectives;
     let topics;
     let report;
 
     beforeAll(async () => {
-      recipient = await Recipient.create({
-        id: faker.datatype.number({ min: 1000 }),
-        uei: faker.datatype.string(),
-        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+      recipient = await createRecipient();
+
+      grant = await createGrant({
+        recipientId: recipient.id,
       });
 
       const goal = {
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
       };
-
-      const grant = await Grant.create({
-        status: 'Active',
-        regionId: 5,
-        id: faker.datatype.number({ min: 1000 }),
-        number: faker.datatype.string(),
-        recipientId: recipient.id,
-        startDate: '2019-01-01',
-        endDate: '2024-01-01',
-      });
 
       const goal1 = await Goal.create({
         name: goal.name,
@@ -938,24 +948,23 @@ describe('Recipient DB service', () => {
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective2 = await Objective.create({
         goalId: goal1.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       const objective3 = await Objective.create({
         goalId: goal2.id,
         status: OBJECTIVE_STATUS.IN_PROGRESS,
         title: matchingObjectiveTitle,
-        supportType: 'Planning',
       });
 
       objectives = [objective1, objective2, objective3];
+
+      const reason = faker.animal.cetacean();
 
       topics = await Topic.bulkCreate([
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
@@ -963,12 +972,6 @@ describe('Recipient DB service', () => {
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
         { name: `${faker.company.bsNoun()} ${faker.company.bsNoun()}` },
       ]);
-
-      await ObjectiveTopic.bulkCreate(
-        objectives.map((o, i) => ({ objectiveId: o.id, topicId: topics[i + 1].id })),
-      );
-
-      const reason = faker.animal.cetacean();
 
       report = await createReport({
         activityRecipients: [
@@ -979,23 +982,24 @@ describe('Recipient DB service', () => {
         reason: [reason],
         calculatedStatus: REPORT_STATUSES.APPROVED,
         topics: [topics[0].name],
-        regionId: 5,
+        regionId: grant.regionId,
       });
+
+      const aros = await Promise.all(objectives.map((o) => ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: o.id,
+      })));
+
+      await Promise.all((aros.map((aro) => ActivityReportObjectiveTopic.bulkCreate(
+        topics.map((t) => ({
+          activityReportObjectiveId: aro.id,
+          topicId: t.id,
+        })),
+      ))).flat());
 
       await ActivityReportGoal.create({
         activityReportId: report.id,
         goalId: goal1.id,
-      });
-
-      const aro = await ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: objective1.id,
-        supportType: 'Planning',
-      });
-
-      await ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: aro.id,
-        topicId: topics[1].id,
       });
     });
 
@@ -1018,18 +1022,13 @@ describe('Recipient DB service', () => {
         individualHooks: true,
       });
       await destroyReport(report);
-      await ObjectiveTopic.destroy({
-        where: {
-          objectiveId: objectives.map((o) => o.id),
-        },
-        individualHooks: true,
-      });
 
       await Topic.destroy({
         where: {
           id: topics.map((t) => t.id),
         },
         individualHooks: true,
+        force: true,
       });
       await Objective.destroy({
         where: {
@@ -1047,7 +1046,7 @@ describe('Recipient DB service', () => {
       });
       await Grant.destroy({
         where: {
-          id: goals.map((g) => g.grantId),
+          recipientId: recipient.id,
         },
         individualHooks: true,
       });
@@ -1060,19 +1059,19 @@ describe('Recipient DB service', () => {
     });
 
     it('successfully reduces data without losing topics', async () => {
-      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, 5, {});
+      const goalsForRecord = await getGoalsByActivityRecipient(recipient.id, grant.regionId, {});
 
-      expect(goalsForRecord.count).toBe(2);
-      expect(goalsForRecord.goalRows.length).toBe(2);
+      expect(goalsForRecord.count).toBe(1);
+      expect(goalsForRecord.goalRows.length).toBe(1);
       expect(goalsForRecord.allGoalIds.length).toBe(2);
 
+      expect(goalsForRecord.goalRows.flatMap((g) => g.goalTopics)).toHaveLength(4);
       const goal = goalsForRecord.goalRows[0];
-      expect(goal.reasons.length).toBe(0);
-
       expect(goal.objectives.length).toBe(1);
       const objective = goal.objectives[0];
-      expect(objective.topics.length).toBe(1);
-      expect(objective.supportType).toBe('Planning');
+      expect(objective.ids).toHaveLength(3);
+      expect(objective.ids.every(Boolean)).toBeTruthy();
+      expect(objective.topics.length).toBe(4);
     });
   });
 
@@ -1082,7 +1081,6 @@ describe('Recipient DB service', () => {
       programId,
       role = 'director',
       active = true,
-      programType = 'HS',
     ) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
@@ -1338,7 +1336,7 @@ describe('Recipient DB service', () => {
         ],
         reason: ['test'],
         calculatedStatus: REPORT_STATUSES.APPROVED,
-        regionId: 1,
+        regionId: grant.regionId,
         userId: author.id,
       });
 
@@ -1355,6 +1353,7 @@ describe('Recipient DB service', () => {
       await ActivityReportApprover.create({
         activityReportId: report.id,
         userId: approverOne.id,
+
       });
 
       await ActivityReportApprover.create({
@@ -1368,12 +1367,16 @@ describe('Recipient DB service', () => {
         where: {
           userId: [approverOne.id, approverTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await ActivityReportCollaborator.destroy({
         where: {
           userId: [collaboratorOne.id, collaboratorTwo.id],
         },
+        force: true,
+        individualHooks: true,
       });
 
       await destroyReport(report);
@@ -1381,6 +1384,7 @@ describe('Recipient DB service', () => {
         where: {
           id: grant.id,
         },
+        force: true,
         individualHooks: true,
       });
 
@@ -1388,6 +1392,8 @@ describe('Recipient DB service', () => {
         where: {
           id: recipient.id,
         },
+        force: true,
+        individualHooks: true,
       });
 
       await User.destroy({

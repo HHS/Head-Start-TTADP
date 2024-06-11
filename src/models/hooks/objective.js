@@ -1,6 +1,7 @@
+import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS, GOAL_STATUS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
 import {
@@ -201,12 +202,16 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
 
       // and if so, we update it (storing the previous status so we can revert if needed)
       if (atLeastOneInProgress) {
-        await goal.update({
-          status: 'In Progress',
-          previousStatus: 'Not Started',
-        }, {
+        // eslint-disable-next-line global-require
+        const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: 'In Progress',
+          reason: 'Objective moved to In Progress',
+          context: null,
           transaction: options.transaction,
-          individualHooks: true,
         });
       }
     }
@@ -229,48 +234,6 @@ const propagateTitle = async (sequelize, instance, options) => {
         individualHooks: true,
       },
     );
-  }
-};
-
-const propagateMetadataToTemplate = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('objectiveTemplateId')) {
-    const files = await sequelize.models.ObjectiveFile.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(files.map(async (file) => sequelize.models.ObjectiveTemplateFile
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          fileid: file.fileId,
-        },
-      })));
-
-    const resources = await sequelize.models.ObjectiveResource.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(resources.map(async (resource) => sequelize.models.ObjectiveTemplateResource
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          resourceId: resource.resourceId,
-        },
-      })));
-
-    const topics = await sequelize.models.ObjectiveTopics.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(topics.map(async (topic) => sequelize.models.ObjectiveTemplateTopics
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          topicId: topic.topicId,
-        },
-      })));
   }
 };
 
@@ -360,7 +323,6 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
-  await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);

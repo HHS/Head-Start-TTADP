@@ -194,7 +194,7 @@ test.describe('get /recipient', () => {
         recipientId: Joi.number(),
         createdVia: Joi.any().allow(null),
         isRttapa: Joi.any().allow(null),
-        onAnyReport: Joi.boolean(),
+        onAR: Joi.boolean(),
         onApprovedAR: Joi.boolean(),
         rtrOrder: Joi.number(),
         objectives: Joi.array().items(),
@@ -205,7 +205,8 @@ test.describe('get /recipient', () => {
           regionId: Joi.number(),
           recipientId: Joi.number(),
           recipient: Joi.object({
-            id: Joi.number()
+            id: Joi.number(),
+            name: Joi.string(),
           }),
           programs: Joi.array().items(
             Joi.object({
@@ -213,8 +214,10 @@ test.describe('get /recipient', () => {
             })
           )
         }),
+        goalNumber: Joi.string(),
         goalNumbers: Joi.array().items(Joi.string()),
         goalIds: Joi.array().items(Joi.number()),
+        grantId: Joi.number(),
         grants: Joi.array().items(
           Joi.object({
             id: Joi.number(),
@@ -222,7 +225,8 @@ test.describe('get /recipient', () => {
             regionId: Joi.number(),
             recipientId: Joi.number(),
             recipient: Joi.object({
-              id: Joi.number()
+              id: Joi.number(),
+              name: Joi.string(),
             }),
             programs: Joi.array().items(
               Joi.object({
@@ -239,6 +243,11 @@ test.describe('get /recipient', () => {
         endDate: Joi.string().allow(null).allow(''),
         goalCollaborators: Joi.array().items(Joi.any().allow(null)),
         collaborators: Joi.array().items(Joi.any().allow(null)),
+        statusChanges: Joi.array().items(Joi.object({
+          oldStatus: Joi.string(),
+          newStatus: Joi.string(),
+        })),
+        isReopenedGoal: Joi.boolean(),
       })
     ).min(1);
 

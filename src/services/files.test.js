@@ -1,14 +1,11 @@
 import faker from '@faker-js/faker';
-import { Op } from 'sequelize';
 import db, {
   File,
   Objective,
-  ObjectiveFile,
 } from '../models';
 import {
   updateStatusByKey,
   createFileMetaData,
-  createObjectivesFileMetaData,
 } from './files';
 
 describe('files service', () => {
@@ -141,19 +138,6 @@ describe('files service', () => {
     });
 
     afterAll(async () => {
-      await ObjectiveFile.destroy({
-        where: {
-          [Op.or]: [
-            {
-              objectiveId: objective.id,
-            },
-            {
-              fileId: filesForObjectiveFileMetaData.map((file) => file.id),
-            },
-          ],
-        },
-      });
-
       await Objective.destroy({
         where: {
           id: objective.id,
@@ -166,44 +150,6 @@ describe('files service', () => {
           id: filesForObjectiveFileMetaData.map((file) => file.id),
         },
       });
-    });
-
-    it('creates a file where needed', async () => {
-      const newFile = await createObjectivesFileMetaData('test2.pdf', faker.datatype.uuid(), [objective.id], 99);
-      filesForObjectiveFileMetaData = [...filesForObjectiveFileMetaData, newFile];
-
-      const objectiveFiles = await ObjectiveFile.findAll({
-        where: {
-          objectiveId: objective.id,
-          fileId: newFile.id,
-        },
-      });
-
-      expect(objectiveFiles.length).toBe(1);
-
-      expect(newFile.originalFileName).toBe('test2.pdf');
-    });
-
-    it('returns an existing file', async () => {
-      const [existingFile] = filesForObjectiveFileMetaData;
-
-      const newFile = await createObjectivesFileMetaData(
-        existingFile.originalFileName,
-        existingFile.key,
-        [objective.id],
-        existingFile.fileSize,
-      );
-
-      const objectiveFiles = await ObjectiveFile.findAll({
-        where: {
-          objectiveId: objective.id,
-          fileId: newFile.id,
-        },
-      });
-
-      expect(objectiveFiles.length).toBe(1);
-
-      expect(newFile.id).toEqual(existingFile.id);
     });
   });
 });

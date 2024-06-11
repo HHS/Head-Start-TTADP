@@ -29,7 +29,7 @@ const defaultDate = formatDateRange({
 });
 const defaultDateParam = `startDate.win=${encodeURIComponent(defaultDate)}`;
 
-const resourcesUrl = join('api', 'resources');
+const resourcesUrl = join('api', 'resources/flat');
 
 const resourcesDefault = {
   resourcesDashboardOverview: {
@@ -252,7 +252,7 @@ const regionTwoInParams = 'region.in[]=2';
 const reportIdInParams = 'region.in[]=1&region.in[]=2&reportId.ctn[]=123';
 const reportPostUrl = '/api/activity-reports/reportsByManyIds';
 
-describe('Resources Dashboard page', () => {
+describe('Resource Dashboard page', () => {
   afterEach(() => fetchMock.restore());
   const renderResourcesDashboard = (user) => {
     render(

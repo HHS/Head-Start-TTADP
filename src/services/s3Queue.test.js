@@ -22,7 +22,7 @@ describe('s3 queue manager tests', () => {
   });
 
   it('test schedule delete file', async () => {
-    await addDeleteFileToQueue(
+    addDeleteFileToQueue(
       file.id,
       file.key,
     );
@@ -30,7 +30,7 @@ describe('s3 queue manager tests', () => {
   });
 
   it('calls s3.add', async () => {
-    await addDeleteFileToQueue(
+    addDeleteFileToQueue(
       file.id,
       file.key,
     );

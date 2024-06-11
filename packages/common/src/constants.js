@@ -311,7 +311,7 @@ const GOAL_STATUS = {
 
 exports.GOAL_STATUS = GOAL_STATUS;
 
-const SUPPORT_TYPES = [ 
+const SUPPORT_TYPES = [
   'Introducing',
   'Planning',
   'Implementing',
@@ -333,3 +333,34 @@ const GROUP_SHARED_WITH = {
 };
 
 exports.GROUP_SHARED_WITH = GROUP_SHARED_WITH;
+
+/**
+ * A list of reasons that a CLOSED goal can be reopened.
+ */
+const REOPEN_CLOSED_REASONS = {
+  ACCIDENTALLY_CLOSED: 'Accidentally closed',
+  RECIPIENT_REQUEST: 'Recipient request to restart the work',
+  PS_REQUEST: 'PS request to restart the work',
+  NEW_RECIPIENT_STAFF_REQUEST: 'New recipient staff request similar work',
+};
+
+/**
+ * A list of reasons that a SUSPENDED goal can be reopened.
+ */
+const REOPEN_SUSPENDED_REASONS = {};
+
+/**
+ * REOPEN_REASONS is a map of FROM status to an array of
+ * possible TO statuses.
+ */
+const REOPEN_REASONS = {
+  [GOAL_STATUS.CLOSED]: REOPEN_CLOSED_REASONS,
+  [GOAL_STATUS.SUSPENDED]: REOPEN_SUSPENDED_REASONS,
+
+  INFERRED: {
+    OBJECTIVE_REOPEN: 'Objective Reopen',
+    IMPORTED_FROM_SMARTSHEET: 'Imported from Smartsheet',
+  },
+};
+
+exports.REOPEN_REASONS = REOPEN_REASONS;

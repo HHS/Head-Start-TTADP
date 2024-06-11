@@ -3,7 +3,7 @@ import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import { uniq } from 'lodash';
 import {
-  Alert, FormGroup,
+  Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
@@ -16,11 +16,12 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import ReadOnlyField from '../ReadOnlyField';
 import GoalName from './GoalName';
 import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import RTRGoalPrompts from './RTRGoalPrompts';
+import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
+import GoalFormTitle from './GoalFormTitle';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
@@ -44,7 +45,6 @@ export default function Form({
   objectives,
   setObjectives,
   setObjectiveError,
-  topicOptions,
   isOnApprovedReport,
   isOnReport,
   isCurated,
@@ -54,7 +54,6 @@ export default function Form({
   fetchError,
   goalNumbers,
   clearEmptyObjectiveError,
-  onUploadFiles,
   userCanEdit,
   source,
   setSource,
@@ -64,6 +63,7 @@ export default function Form({
   recipient,
   regionId,
   goalTemplateId,
+  isReopenedGoal,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
 
@@ -100,18 +100,16 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-
-  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
-
   const showAlert = isOnReport && status !== 'Closed';
-
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
-
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
-        <h2 className="margin-0">{formTitle}</h2>
+        <GoalFormTitle
+          goalNumbers={goalNumbers}
+          isReopenedGoal={isReopenedGoal}
+        />
         { status.toLowerCase() === 'draft'
         && (
           <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
@@ -134,22 +132,9 @@ export default function Form({
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
-      {collaborators.length > 0 ? collaborators.map((collaborator) => {
-        const {
-          goalCreatorName,
-          goalCreatorRoles,
-          goalNumber,
-        } = collaborator;
-        if (!goalCreatorName) return null;
-        return (
-          <FormGroup key={goalNumber}>
-            <ReadOnlyField label={`Entered by${collaborators.length > 1 ? ` (${goalNumber})` : ''}`}>
-              {goalCreatorName}
-              {goalCreatorRoles ? `, ${goalCreatorRoles}` : ''}
-            </ReadOnlyField>
-          </FormGroup>
-        );
-      }) : null}
+      <ReadOnlyGoalCollaborators
+        collaborators={collaborators}
+      />
 
       <GrantSelect
         selectedGrants={selectedGrants}
@@ -196,6 +181,8 @@ export default function Form({
           !isCurated,
           status !== 'Closed',
           createdVia !== 'tr',
+          userCanEdit,
+          !isOnApprovedReport,
         ]}
         label="Goal source"
         value={uniq(Object.values(source || {})).join(', ') || ''}
@@ -237,8 +224,6 @@ export default function Form({
           // that way we don't get the white screen of death
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
-          topicOptions={topicOptions}
-          onUploadFiles={onUploadFiles}
           goalStatus={status}
           userCanEdit={userCanEdit}
         />
@@ -301,10 +286,6 @@ Form.propTypes = {
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
@@ -324,7 +305,6 @@ Form.propTypes = {
     [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
   ).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
-  onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
   prompts: PropTypes.shape({
@@ -351,6 +331,7 @@ Form.propTypes = {
   })).isRequired,
   isNew: PropTypes.bool.isRequired,
   goalTemplateId: PropTypes.number,
+  isReopenedGoal: PropTypes.bool.isRequired,
 };
 
 Form.defaultProps = {
