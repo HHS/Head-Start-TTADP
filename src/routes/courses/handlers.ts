@@ -59,8 +59,16 @@ export async function updateCourseById(req: Request, res: Response) {
       res.status(404).send('Course not found');
       return;
     }
-    const updated = await course.update(req.body);
-    res.json(updated);
+
+    const newCourse = await createCourse(req.body.name);
+
+    await course.update({
+      mapsTo: newCourse.id,
+    });
+
+    await course.destroy();
+
+    res.json(newCourse);
   } catch (err) {
     await handleErrors(err, req, res, logContext);
   }

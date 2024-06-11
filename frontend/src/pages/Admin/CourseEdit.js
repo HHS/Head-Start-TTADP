@@ -51,6 +51,7 @@ function CourseEdit({ match }) {
   const saveChanges = async () => {
     const updated = await updateCourseById(courseId, { name: newCourse.name });
     setCourse({ ...updated });
+    history.replace(`/admin/course/${updated.id}`);
   };
 
   const confirmDelete = async () => {
