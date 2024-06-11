@@ -103,7 +103,12 @@ export async function deleteCourseById(req: Request, res: Response) {
       res.status(404).send('Course not found');
       return;
     }
-    await course.destroy();
+    try {
+      await course.destroy();
+    } catch (error) {
+      res.status(500).send('Could not destroy course.');
+      return;
+    }
     res.status(204).send();
   } catch (err) {
     await handleErrors(err, req, res, logContext);
