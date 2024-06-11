@@ -243,6 +243,9 @@ commands:
       itams_md_password:
         description: "password for itams monitoring data"
         type: env_var_name
+      smartsheet_access_token:
+        description: "non-production smartsheet access token"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -278,7 +281,8 @@ commands:
               --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
               --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
-              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
+              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
@@ -420,10 +424,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-2943/remove-models"
+    default: "lr/ttahub-1521/display-regions-in-AR-header"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "al-ttahub-2942-fix-number-of-goals"
+    default: "al-ttahub-2726-goals-and-objectives-review-redesign"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -864,6 +868,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Migrate database
                 command: |
@@ -917,6 +922,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Migrate database
                 command: |
@@ -970,6 +976,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Run database migrations
                 command: |
@@ -1021,6 +1028,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Run database migrations
                 command: |
