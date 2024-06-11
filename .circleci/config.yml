@@ -424,7 +424,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "mb/TTAHUB-2943/remove-models"
+    default: "lr/ttahub-1521/display-regions-in-AR-header"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "kw-smartsheet"
