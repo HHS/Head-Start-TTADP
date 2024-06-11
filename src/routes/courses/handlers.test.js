@@ -69,16 +69,27 @@ describe('Courses handlers', () => {
 
   describe('updateCourseById', () => {
     it('should update a course by id', async () => {
-      const course = { id: 1, name: 'Test Course', update: jest.fn() };
+      const course = {
+        id: 1,
+        name: 'Test Course 1',
+        update: jest.fn(),
+        destroy: jest.fn(),
+      };
+      const newCourse = { id: 2, name: 'Test Course 2' };
+
       getById.mockResolvedValue(course);
+      createCourse.mockResolvedValue(newCourse);
+
       const req = {
         session: { userId: 1 },
         params: { id: 1 },
         body: { name: 'Updated Course' },
       };
+
       await updateCourseById(req, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalled();
-      expect(course.update).toHaveBeenCalledWith({ name: 'Updated Course' });
+
+      expect(course.update).toHaveBeenCalledWith({ mapsTo: newCourse.id });
+      expect(course.destroy).toHaveBeenCalled();
     });
   });
 
