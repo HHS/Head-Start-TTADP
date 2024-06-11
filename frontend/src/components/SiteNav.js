@@ -1,7 +1,7 @@
 /* eslint-disable react/no-array-index-key, react/jsx-props-no-spreading */
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink as Link, withRouter } from 'react-router-dom';
+import { NavLink as Link } from 'react-router-dom';
 import SiteNavDisclosureGroup from './SiteNavDisclosureGroup';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
