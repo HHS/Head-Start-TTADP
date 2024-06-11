@@ -139,6 +139,129 @@ describe('logicalDataModel', () => {
 
       expect(result).toContain('!issue');
     });
+
+    it('should identify issues with non-distinct associations', () => {
+      const associations = [
+        {
+          source: { name: 'User' },
+          target: { name: 'Role' },
+          associationType: 'hasOne',
+          as: 'UserRole',
+        },
+        {
+          source: { name: 'User' },
+          target: { name: 'Role' },
+          associationType: 'hasOne',
+          as: 'UserRole',
+        },
+      ];
+      const tables = ['User', 'Role'];
+      const schemas = [
+        { table: 'User', attributes: [] },
+        { table: 'Role', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('associations need to be distinct');
+      expect(result).toContain('<color:');
+    });
+
+    it('should identify issues with non-camel case associations', () => {
+      const associations = [
+        {
+          source: { name: 'User' },
+          target: { name: 'Role' },
+          associationType: 'hasOne',
+          as: 'user_role',
+        },
+      ];
+      const tables = ['User', 'Role'];
+      const schemas = [
+        { table: 'User', attributes: [] },
+        { table: 'Role', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('associations need to be camel case');
+      expect(result).toContain('<color:');
+    });
+
+    it('should identify issues with non-distinct and non-camel case associations', () => {
+      const associations = [
+        {
+          source: { name: 'User' },
+          target: { name: 'Role' },
+          associationType: 'hasOne',
+          as: 'user_role',
+        },
+        {
+          source: { name: 'User' },
+          target: { name: 'Role' },
+          associationType: 'hasOne',
+          as: 'user_role',
+        },
+      ];
+      const tables = ['User', 'Role'];
+      const schemas = [
+        { table: 'User', attributes: [] },
+        { table: 'Role', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain("!issue='associations need to be distinct and camel case'");
+      expect(result).toContain('<color:');
+    });
+
+    // You can also include some edge cases to ensure robustness.
+    it('should handle empty associations and schemas gracefully', () => {
+      const associations = [];
+      const tables = [];
+      const schemas = [];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('Associations');
+      expect(result).not.toContain('<color:');
+      expect(result).not.toContain('!issue');
+    });
+
+    // it('should handle associations with multiple issues correctly', () => {
+    //   const associations = [
+    //     {
+    //       source: { name: 'User' },
+    //       target: { name: 'Role' },
+    //       associationType: 'hasOne',
+    //       as: 'user_role',
+    //     },
+    //     {
+    //       source: { name: 'User' },
+    //       target: { name: 'Role' },
+    //       associationType: 'hasOne',
+    //       as: 'UserRole',
+    //     },
+    //     {
+    //       source: { name: 'User' },
+    //       target: { name: 'Permission' },
+    //       associationType: 'hasOne',
+    //       as: 'userPermission',
+    //     },
+    //   ];
+    //   const tables = ['User', 'Role', 'Permission'];
+    //   const schemas = [
+    //     { table: 'User', attributes: [] },
+    //     { table: 'Role', attributes: [] },
+    //     { table: 'Permission', attributes: [] },
+    //   ];
+
+    //   const result = processAssociations(associations, tables, schemas);
+
+    //   expect(result).toContain("!issue='associations need to be distinct'");
+    //   expect(result).toContain("!issue='associations need to be camel case'");
+    //   expect(result).toContain('<color:');
+    // });
   });
 
   describe('writeUml', () => {
