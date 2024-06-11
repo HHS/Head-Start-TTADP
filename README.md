@@ -79,6 +79,77 @@ git config core.hooksPath .githooks
 
 If you are already using git hooks, add the .githooks/pre-commit contents to your hooks directory or current pre-commit hook. Remember to make the file executable.
 
+### Building Tests
+
+#### Helpful notes on writing (backend) tests
+It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary. 
+
+With that in mind, there a few "gotchas" to remember to help write sanitary tests.
+- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete.
+- When you call ```Model.destroy``` you should be adding  ```individualHooks: true``` to the Sequelize options. Often this is required for proper cleanup. There may be times when this is undesirable; this should be indicated with a comment.
+- Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped() 
+- There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.
+- The next section details additional tools, found in `src/lib/programmaticTransaction.ts`, which make maintaining a clean database state when writing tests a breeze.
+
+#### Database State Management in Tests
+
+The guidance is on using the `captureSnapshot` and `rollbackToSnapshot` functions  from `src/lib/programmaticTransaction.ts` to manage database state during automated testing with Jest. These functions ensure that each test is executed in a clean state, preventing tests from affecting each other and improving test reliability.
+
+##### Functions Overview
+
+- **`captureSnapshot()`**: Captures the current state of the database, specifically the maximum IDs from specified tables, which is used to detect and revert changes.
+- **`rollbackToSnapshot(snapshot: MaxIdRecord[])`**: Uses the snapshot taken by `captureSnapshot()` to revert the database to its state at the time of the snapshot. This is crucial for cleaning up after tests that alter the database.
+
+##### Example Usage
+
+###### Example 1: Using `beforeAll` and `afterAll`
+
+In this example, `captureSnapshot` and `rollbackToSnapshot` are used at the Jest suite level to manage database states before and after all tests run. This is useful when tests are not independent or when setup/teardown for each test would be too costly.
+
+```javascript
+describe('Database State Management', () => {
+  let snapshot;
+
+  beforeAll(async () => {
+    // Capture the initial database state before any tests run
+    snapshot = await transactionModule.captureSnapshot();
+  });
+
+  afterAll(async () => {
+    // Roll back to the initial state after all tests have completed
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+
+  it('Test Case 1', async () => {
+    // Test actions that modify the database
+  });
+
+  it('Test Case 2', async () => {
+    // Further test actions that modify the database
+  });
+});
+```
+
+###### Example 2: Using at the Beginning and End of Each Test Case
+
+This approach uses `captureSnapshot` and `rollbackToSnapshot` at the start and end of each individual test. It is most effective when tests are meant to run independently, ensuring no residual data affects subsequent tests.
+
+```javascript
+describe('Individual Test Isolation', () => {
+  it('Test Case 1', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    // Actions modifying the database
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+
+  it('Test Case 2', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    // More actions modifying the database
+    await transactionModule.rollbackToSnapshot(snapshot);
+  });
+});
+```
+
 ### Running Tests
 
 #### Docker
@@ -107,6 +178,7 @@ You may run into some issues running the docker commands on Windows:
 On the frontend, the lcov and HTML files are generated as normal, however on the backend, the folders are tested separately. The command `yarn coverage:backend` will concatenate the lcov files and also generate an HTML file. However, this provess requires `lcov` to be installed on a user's computer. On Apple, you can use Homebrew - `brew install lcov`. On a Windows machine, your path may vary, but two options include WSL and [this chocolatey package](https://community.chocolatey.org/packages/lcov).
 
 Another important note for running tests on the backend - we specifically exclude files on the backend that follow the ```*CLI.js``` naming convention (for example, ```adminToolsCLI.js```) from test coverage. This is meant to exclude files intended to be run in the shell. Any functionality in theses files should be imported from a file that is tested. The ```src/tools folder``` is where these files have usually lived and there are lots of great examples of the desired pattern in that folder.
+
 
 ## Yarn Commands
 
@@ -417,6 +489,9 @@ Our project includes four deployed Postgres databases, one to interact with each
     cf disallow-space-ssh ttahub-prod
     ```
 
+### Taking a production backup via CircleCI
+We can quickly take a production backup via the CircleCI web interface. To do so, go to the ```production``` branch there and trigger a pipeline with the variable ```manual-trigger``` set to true. You can then retrieve this backup with the script ```bin/latest_backup.sh```.
+
 ### Refreshing data in non-production environments
 
 In order to keep the non-production environments as close to production as possible we developed a way to transform a restored
@@ -466,7 +541,7 @@ Ex.
 If you are not logged into the cf cli, it will ask you for an sso temporary password. You can get a temporary password at https://login.fr.cloud.gov/passcode. The application will stay in maintenance mode even through deploys of the application. You need to explicitly run `./bin/maintenance -e ${env} -m off` to turn off maintenance mode.
 
 ## Updating node
-To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases). 
+To update the version of node the project uses, the version number needs to be specified in a few places. Cloud.gov only supports certain versions of node; you can find supported versions [on the repo for their buildpack](https://github.com/cloudfoundry/nodejs-buildpack/releases).
 
 Once you have that version number, you need to update it in the following files
 - .circleci/config.yml
@@ -513,9 +588,9 @@ ex:
 
 6. Finally, you may need to reconfigure the network policies to allow the app to connect to the virus scanning api. Check your network policies with:
  ```cf network-policies```
-If you see nothing there, you'll need to add an appropriate policy. 
+If you see nothing there, you'll need to add an appropriate policy.
 ```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
-ex: 
+ex:
 ```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
 
 
