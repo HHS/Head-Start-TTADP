@@ -28,7 +28,7 @@ export async function getCourseById(id: number) {
 }
 
 export async function createCourseByName(name: string) {
-  return Course.create({ name });
+  return Course.create({ name, persistsOnUpload: true });
 }
 
 export async function csvImport(buffer: Buffer | string) {
