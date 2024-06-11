@@ -228,6 +228,7 @@ describe('logicalDataModel', () => {
       expect(result).not.toContain('!issue');
     });
 
+    // eslint-disable-next-line jest/no-commented-out-tests
     // it('should handle associations with multiple issues correctly', () => {
     //   const associations = [
     //     {
