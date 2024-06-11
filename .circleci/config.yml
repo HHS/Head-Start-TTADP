@@ -427,7 +427,7 @@ parameters:
     default: "lr/ttahub-1521/display-regions-in-AR-header"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "kw-smartsheet"
+    default: "al-ttahub-2726-goals-and-objectives-review-redesign"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
