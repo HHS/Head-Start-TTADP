@@ -1,5 +1,5 @@
-import { stringify } from 'csv-stringify/sync';
-import express, { Request, Response } from 'express';
+import stringify from 'csv-stringify/lib/sync';
+import { Request, Response } from 'express';
 import db from '../../models'; // Adjust the path according to your project structure
 import {
   FlagValues,
