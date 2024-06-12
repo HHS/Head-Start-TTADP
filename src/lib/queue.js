@@ -95,50 +95,50 @@ function removeQueueEventHandlers(
 }
 
 // Define the handlers so they can be added and removed
-function handleShutdown(queue) {
-  return () => {
-    auditLogger.error('Shutting down, closing queue...');
-    queue.close().then(() => {
-      auditLogger.error('Queue closed successfully.');
-      removeQueueEventHandlers(queue);
-      process.exit(0);
-    }).catch((err) => {
-      auditLogger.error('Failed to close the queue:', err);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
-  };
-}
+// function handleShutdown(queue) {
+//   return () => {
+//     auditLogger.error('Shutting down, closing queue...');
+//     queue.close().then(() => {
+//       auditLogger.error('Queue closed successfully.');
+//       removeQueueEventHandlers(queue);
+//       process.exit(0);
+//     }).catch((err) => {
+//       auditLogger.error('Failed to close the queue:', err);
+//       removeQueueEventHandlers(queue);
+//       process.exit(1);
+//     });
+//   };
+// }
 
-function handleException(queue) {
-  return (err) => {
-    auditLogger.error('Uncaught exception:', err);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after uncaught exception.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
-  };
-}
+// function handleException(queue) {
+//   return (err) => {
+//     auditLogger.error('Uncaught exception:', err);
+//     queue.close().then(() => {
+//       auditLogger.error('Queue closed after uncaught exception.');
+//       removeQueueEventHandlers(queue);
+//       process.exit(1);
+//     }).catch((closeErr) => {
+//       auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
+//       removeQueueEventHandlers(queue);
+//       process.exit(1);
+//     });
+//   };
+// }
 
-function handleRejection(queue) {
-  return (reason, promise) => {
-    auditLogger.error('Unhandled rejection at:', promise, 'reason:', reason);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after unhandled rejection.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
-  };
-}
+// function handleRejection(queue) {
+//   return (reason, promise) => {
+//     auditLogger.error('Unhandled rejection at:', promise, 'reason:', reason);
+//     queue.close().then(() => {
+//       auditLogger.error('Queue closed after unhandled rejection.');
+//       removeQueueEventHandlers(queue);
+//       process.exit(1);
+//     }).catch((closeErr) => {
+//       auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
+//       removeQueueEventHandlers(queue);
+//       process.exit(1);
+//     });
+//   };
+// }
 
 // Setup event handlers
 // function setupQueueEventHandlers(queue) {
