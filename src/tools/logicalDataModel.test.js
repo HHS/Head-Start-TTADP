@@ -89,6 +89,64 @@ describe('logicalDataModel', () => {
       const issue = processClassDefinition(schema, 'foo');
       expect(issue).toContain('model missing for table');
     });
+
+    it('returns an issue when a column type does not match the model type', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            age: {
+              type: { toString: () => 'INTEGER' },
+            },
+          },
+        },
+        attributes: [
+          { name: 'age', type: 'string', allowNull: false },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Person');
+      expect(issue).toContain("!issue='column type does not match model: string != integer'");
+      expect(issue).toContain('<color:#d54309>string</color>');
+    });
+
+    it('returns an issue when a column is missing from the model', () => {
+      const schema = {
+        model: {
+          rawAttributes: {},
+        },
+        attributes: [
+          { name: 'email', type: 'string', allowNull: false },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'User');
+      expect(issue).toContain("!issue='column missing from model'");
+      expect(issue).toContain('<color:#d54309>email</color>: ');
+    });
+
+    it('returns an issue when a column default does not match the model default', () => {
+      const schema = {
+        model: {
+          rawAttributes: {
+            status: {
+              type: { toString: () => 'STRING' },
+              defaultValue: 'active',
+            },
+          },
+        },
+        attributes: [
+          {
+            name: 'status',
+            type: 'string',
+            allowNull: false,
+            default: 'inactive',
+          },
+        ],
+      };
+
+      const issue = processClassDefinition(schema, 'Account');
+      expect(issue).toContain("!issue='column default does not match model'");
+    });
   });
 
   describe('processAssociations', () => {
@@ -228,6 +286,49 @@ describe('logicalDataModel', () => {
       expect(result).not.toContain('!issue');
     });
 
+    it('should default to "1 to 1" association when association type is unrecognized', () => {
+      const associations = [
+        {
+          source: { name: 'Hello' },
+          target: { name: 'World' },
+          associationType: 'unknownAssociation',
+          as: 'helloWorld',
+        },
+      ];
+      const tables = ['Hello', 'World'];
+      const schemas = [
+        { model: { name: 'Hello' }, table: 'Hello', attributes: [] },
+        { model: { name: 'World' }, table: 'World', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      // Adjusting the expectation to match the actual line color used in the output
+      expect(result).toContain('Hello "1" --[#d54309,plain,thickness=2]-- "1" World : helloWorld');
+    });
+
+    it('should append issues for "many-to-many" associations to the UML string', () => {
+      const associations = [
+        {
+          source: { name: 'Grant' },
+          target: { name: 'Goal' },
+          associationType: 'belongsToMany',
+          as: 'enrollments',
+        },
+        // Intentionally omitting the reverse association to trigger the issue
+      ];
+      const tables = ['Grant', 'Goal'];
+      const schemas = [
+        { model: { name: 'Grant' }, table: 'Grant', attributes: [] },
+        { model: { name: 'Goal' }, table: 'Goal', attributes: [] },
+      ];
+
+      const result = processAssociations(associations, tables, schemas);
+
+      expect(result).toContain('!issue=\'associations need to be defined both directions\'');
+      expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
+    });
+
     // eslint-disable-next-line jest/no-commented-out-tests
     // it('should handle associations with multiple issues correctly', () => {
     //   const associations = [
@@ -298,48 +399,5 @@ describe('logicalDataModel', () => {
       fs.existsSync.mockReturnValue(false);
       expect(() => writeUml(uml, dbRoot)).not.toThrow();
     });
-  });
-
-  it('should default to "1 to 1" association when association type is unrecognized', () => {
-    const associations = [
-      {
-        source: { name: 'Hello' },
-        target: { name: 'World' },
-        associationType: 'unknownAssociation',
-        as: 'helloWorld',
-      },
-    ];
-    const tables = ['Hello', 'World'];
-    const schemas = [
-      { model: { name: 'Hello' }, table: 'Hello', attributes: [] },
-      { model: { name: 'World' }, table: 'World', attributes: [] },
-    ];
-
-    const result = processAssociations(associations, tables, schemas);
-
-    // Adjusting the expectation to match the actual line color used in the output
-    expect(result).toContain('Hello "1" --[#d54309,plain,thickness=2]-- "1" World : helloWorld');
-  });
-
-  it('should append issues for "many-to-many" associations to the UML string', () => {
-    const associations = [
-      {
-        source: { name: 'Grant' },
-        target: { name: 'Goal' },
-        associationType: 'belongsToMany',
-        as: 'enrollments',
-      },
-      // Intentionally omitting the reverse association to trigger the issue
-    ];
-    const tables = ['Grant', 'Goal'];
-    const schemas = [
-      { model: { name: 'Grant' }, table: 'Grant', attributes: [] },
-      { model: { name: 'Goal' }, table: 'Goal', attributes: [] },
-    ];
-
-    const result = processAssociations(associations, tables, schemas);
-
-    expect(result).toContain('!issue=\'associations need to be defined both directions\'');
-    expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
   });
 });
