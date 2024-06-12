@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
 
@@ -80,19 +81,19 @@ export async function increaseListeners(queue, num = 1) {
 }
 
 // Remove event handlers
-function removeQueueEventHandlers(
-  queue,
-  errorListener,
-  shutdownListener,
-  exceptionListener,
-  rejectionListener,
-) {
-  queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
-}
+// function removeQueueEventHandlers(
+//   queue,
+//   errorListener,
+//   shutdownListener,
+//   exceptionListener,
+//   rejectionListener,
+// ) {
+//   queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
+//   process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
+//   process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
+//   process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
+//   process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
+// }
 
 // Define the handlers so they can be added and removed
 // function handleShutdown(queue) {
