@@ -366,10 +366,7 @@ export function processAssociations(associations, tables, schemas) {
 export function writeUml(uml, dbRoot) {
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.puml'), uml);
   // update readme with uml
-  let root = path.dirname((require.main || {}).filename || './');
-  if (root.endsWith('mocha/bin')) {
-    root = path.join('./');
-  }
+  const root = path.dirname((require.main || {}).filename || './');
   if (fs.existsSync(path.join(root, 'README.md'))) {
     let readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     const umlRegex = /``` ?plantuml([\s\S]*?)\'db\/uml\.puml\n```/; // eslint-disable-line no-useless-escape
