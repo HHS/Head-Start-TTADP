@@ -210,6 +210,8 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
       name = null,
       status = null,
       createdVia = null,
+      goalTemplateId = null,
+      source = null,
     } = goal || {};
     const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
     if (goalNameIndex === -1) {
@@ -217,6 +219,8 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
       goals[`goal-${goalCsvRecordNumber}`] = name;
       goals[`goal-${goalCsvRecordNumber}-status`] = status;
       goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
+      goals[`goal-${goalCsvRecordNumber}-source`] = source;
+      goals[`goal-${goalCsvRecordNumber}-goal-template-id`] = goalTemplateId;
       goalCsvRecordNumber += 1;
       return;
     }
@@ -226,6 +230,20 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
     goals[field] = `${goals[field]}\n${id}`;
   });
   return goals;
+}
+
+function updateObjectiveWithRelatedModelData(
+  relation,
+  relationLabel,
+  relationKey,
+  accum,
+  objectiveId,
+) {
+  const relatedSimple = relation.map((t) => t[relationKey]);
+  Object.defineProperty(accum, `objective-${objectiveId}-${relationLabel}`, {
+    value: relatedSimple.join('\n'),
+    enumerable: true,
+  });
 }
 
 /*
@@ -243,7 +261,15 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
     const {
-      goal, title, status, ttaProvided, topics, files, resources,
+      goal,
+      title,
+      status,
+      ttaProvided,
+      topics,
+      files,
+      resources,
+      courses,
+      supportType,
     } = objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
@@ -313,32 +339,50 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
 
-    // Activity Report Objective: Topics.
-    const objTopics = topics.map((t) => t.name);
-    Object.defineProperty(accum, `objective-${objectiveId}-topics`, {
-      value: objTopics.join('\n'),
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      topics,
+      'topics',
+      'name',
+      accum,
+      objectiveId,
+    );
 
-    // Activity Report Objective: Resources Links.
-    const objResources = resources.map((r) => r.url);
-    Object.defineProperty(accum, `objective-${objectiveId}-resourcesLinks`, {
-      value: objResources.join('\n'),
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      courses,
+      'courses',
+      'name',
+      accum,
+      objectiveId,
+    );
 
-    // Activity Report Objective: Non-Resource Links (Files).
-    const objFiles = files.map((f) => f.originalFileName);
-    Object.defineProperty(accum, `objective-${objectiveId}-nonResourceLinks`, {
-      value: objFiles.join('\n'),
-      enumerable: true,
-    });
-    Object.defineProperty(accum, `objective-${objectiveId}-status`, {
-      value: status,
-      enumerable: true,
-    });
+    updateObjectiveWithRelatedModelData(
+      resources,
+      'resourcesLinks',
+      'url',
+      accum,
+      objectiveId,
+    );
+
+    updateObjectiveWithRelatedModelData(
+      files,
+      'nonResourceLinks',
+      'originalFileName',
+      accum,
+      objectiveId,
+    );
+
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
       value: convert(ttaProvided),
+      enumerable: true,
+    });
+
+    Object.defineProperty(accum, `objective-${objectiveId}-supportType`, {
+      value: supportType,
+      enumerable: true,
+    });
+
+    Object.defineProperty(accum, `objective-${objectiveId}-status`, {
+      value: status,
       enumerable: true,
     });
 
@@ -396,6 +440,7 @@ const arTransformers = [
   'participants',
   'topics',
   'ttaType',
+  'language',
   'numberOfParticipants',
   'deliveryMethod',
   'duration',
@@ -409,7 +454,9 @@ const arTransformers = [
   transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
   transformRelatedModel('recipientNextSteps', 'note'),
+  transformRelatedModel('recipientNextSteps', 'completeDate'),
   transformRelatedModel('specialistNextSteps', 'note'),
+  transformRelatedModel('specialistNextSteps', 'completeDate'),
   transformHTML('context'),
   transformHTML('additionalNotes'),
   'lastSaved',
