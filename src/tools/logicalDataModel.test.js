@@ -328,42 +328,6 @@ describe('logicalDataModel', () => {
       expect(result).toContain('!issue=\'associations need to be defined both directions\'');
       expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
     });
-
-    // eslint-disable-next-line jest/no-commented-out-tests
-    // it('should handle associations with multiple issues correctly', () => {
-    //   const associations = [
-    //     {
-    //       source: { name: 'User' },
-    //       target: { name: 'Role' },
-    //       associationType: 'hasOne',
-    //       as: 'Userrole',
-    //     },
-    //     {
-    //       source: { name: 'User' },
-    //       target: { name: 'Role' },
-    //       associationType: 'hasOne',
-    //       as: 'Userrole',
-    //     },
-    //     {
-    //       source: { name: 'User' },
-    //       target: { name: 'Permission' },
-    //       associationType: 'hasOne',
-    //       as: 'userPermission',
-    //     },
-    //   ];
-    //   const tables = ['User', 'Role', 'Permission'];
-    //   const schemas = [
-    //     { table: 'User', attributes: [] },
-    //     { table: 'Role', attributes: [] },
-    //     { table: 'Permission', attributes: [] },
-    //   ];
-
-    //   const result = processAssociations(associations, tables, schemas);
-
-    //   expect(result).toContain("!issue='associations need to be distinct'");
-    //   expect(result).toContain("!issue='associations need to be camel case'");
-    //   expect(result).toContain('<color:');
-    // });
   });
 
   describe('writeUml', () => {
