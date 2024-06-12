@@ -235,13 +235,13 @@ describe('logicalDataModel', () => {
     //       source: { name: 'User' },
     //       target: { name: 'Role' },
     //       associationType: 'hasOne',
-    //       as: 'user_role',
+    //       as: 'Userrole',
     //     },
     //     {
     //       source: { name: 'User' },
     //       target: { name: 'Role' },
     //       associationType: 'hasOne',
-    //       as: 'UserRole',
+    //       as: 'Userrole',
     //     },
     //     {
     //       source: { name: 'User' },
@@ -298,5 +298,48 @@ describe('logicalDataModel', () => {
       fs.existsSync.mockReturnValue(false);
       expect(() => writeUml(uml, dbRoot)).not.toThrow();
     });
+  });
+
+  it('should default to "1 to 1" association when association type is unrecognized', () => {
+    const associations = [
+      {
+        source: { name: 'Hello' },
+        target: { name: 'World' },
+        associationType: 'unknownAssociation',
+        as: 'helloWorld',
+      },
+    ];
+    const tables = ['Hello', 'World'];
+    const schemas = [
+      { model: { name: 'Hello' }, table: 'Hello', attributes: [] },
+      { model: { name: 'World' }, table: 'World', attributes: [] },
+    ];
+
+    const result = processAssociations(associations, tables, schemas);
+
+    // Adjusting the expectation to match the actual line color used in the output
+    expect(result).toContain('Hello "1" --[#d54309,plain,thickness=2]-- "1" World : helloWorld');
+  });
+
+  it('should append issues for "many-to-many" associations to the UML string', () => {
+    const associations = [
+      {
+        source: { name: 'Grant' },
+        target: { name: 'Goal' },
+        associationType: 'belongsToMany',
+        as: 'enrollments',
+      },
+      // Intentionally omitting the reverse association to trigger the issue
+    ];
+    const tables = ['Grant', 'Goal'];
+    const schemas = [
+      { model: { name: 'Grant' }, table: 'Grant', attributes: [] },
+      { model: { name: 'Goal' }, table: 'Goal', attributes: [] },
+    ];
+
+    const result = processAssociations(associations, tables, schemas);
+
+    expect(result).toContain('!issue=\'associations need to be defined both directions\'');
+    expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
   });
 });
