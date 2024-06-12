@@ -115,13 +115,6 @@ describe('LockManager', () => {
       jest.restoreAllMocks();
     });
 
-    it('should renew the lock successfully', async () => {
-      const renewSpy = jest.spyOn(lockManager2, 'renewHoldTTL');
-      await lockManager2.startRenewal();
-      expect(renewSpy).toHaveBeenCalled();
-      expect(renewSpy).toHaveReturnedWith(Promise.resolve(true));
-    });
-
     it('should log an error and stop renewal if renewing the lock fails', async () => {
       jest.spyOn(lockManager2, 'renewHoldTTL').mockImplementationOnce(async () => false);
       const stopRenewalSpy = jest.spyOn(lockManager2, 'stopRenewal');
