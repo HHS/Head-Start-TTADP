@@ -6,7 +6,9 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router-dom';
+import {
+  MemoryRouter, Route, Routes, useNavigate,
+} from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
 import Cdi from '../cdi';
@@ -48,9 +50,25 @@ describe('CDI', () => {
     fetchMock.get(recipientsUrl, defaultRecipients);
   });
 
-  const RenderCDI = ({ grantId = null }) => (
+  let navigate;
+
+  const CDIWithNavigate = () => {
+    navigate = useNavigate();
+    return <Cdi />;
+  };
+
+  const RenderCDI = () => (
     <MemoryRouter>
-      <Cdi match={{ params: { grantId }, path: '', url: '' }} />
+      <Routes>
+        <Route
+          path="/admin/cdi/:grantId"
+          element={<CDIWithNavigate />}
+        />
+        <Route
+          path="*"
+          element={<CDIWithNavigate />}
+        />
+      </Routes>
     </MemoryRouter>
   );
 
@@ -61,14 +79,16 @@ describe('CDI', () => {
   });
 
   it('renders the grant view if a grant is selected', async () => {
-    render(<RenderCDI grantId={1} />);
+    render(<RenderCDI />);
+    navigate('/admin/cdi/1');
     const number = await screen.findByText(withText('Number: abc123 - 1'));
     expect(number).toBeVisible();
   });
 
   it('handles updating of a CDI grant', async () => {
     fetchMock.put(join('/', 'api', 'admin', 'grants', 'cdi', '1'), { ...defaultGrant, regionId: 10 });
-    render(<RenderCDI grantId={1} />);
+    render(<RenderCDI />);
+    navigate('/admin/cdi/1');
     const button = await screen.findByRole('button');
     userEvent.click(button);
     const region = await screen.findByText(withText('Region: 10'));

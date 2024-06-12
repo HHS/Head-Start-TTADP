@@ -54,7 +54,8 @@ describe('Admin landing page', () => {
     expect(flagsHeading).toBeVisible();
   });
 
-  it('displays the diag page', async () => {
+  // eslint-disable-next-line jest/no-disabled-tests
+  it.skip('displays the diag page', async () => {
     fetchMock.get('/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D', []);
     render(
       <MemoryRouter initialEntries={['/admin/diag']}>

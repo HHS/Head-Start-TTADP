@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { MemoryRouter, Routes, Route } from 'react-router';
+import {
+  MemoryRouter, Routes, Route, useLocation,
+} from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen, within,
@@ -12,6 +14,30 @@ import moment from 'moment';
 import Users, { setFeatureFromURL } from '../users';
 
 describe('User Page', () => {
+  let location;
+
+  const UsersWithLocation = () => {
+    location = useLocation();
+    return <Users />;
+  };
+
+  const renderUsers = (userId = '') => {
+    render(
+      <MemoryRouter initialEntries={[`/admin/users/${userId}`]}>
+        <Routes>
+          <Route
+            path="/admin/users/:userId"
+            element={<UsersWithLocation />}
+          />
+          <Route
+            path="/admin/users"
+            element={<UsersWithLocation />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+  };
+
   beforeEach(async () => {
     fetchMock.get('/api/admin/roles', [{ fullName: 'Grantee Specialist', name: 'GS', id: 1 }, { fullName: 'COR', name: 'COR', id: 2 }]);
   });
@@ -24,7 +50,7 @@ describe('User Page', () => {
   it('displays an error if users are not "fetch-able"', async () => {
     fetchMock.get(usersUrl, 500);
     fetchMock.get(featuresUrl, []);
-    render(<MemoryRouter><Users match={{ path: '', url: '', params: { userId: undefined } }} /></MemoryRouter>);
+    renderUsers();
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch users');
   });
@@ -74,19 +100,6 @@ describe('User Page', () => {
         flags: ['part_goat'],
       },
     ];
-
-    const renderUsers = (userId = '') => {
-      render(
-        <MemoryRouter initialEntries={[`/admin/users/${userId}`]}>
-          <Routes>
-            <Route
-              path="/admin/users/:userId"
-              element={<Users />}
-            />
-          </Routes>
-        </MemoryRouter>,
-      );
-    };
 
     beforeEach(() => {
       fetchMock.get(usersUrl, users);
@@ -188,7 +201,7 @@ describe('User Page', () => {
         renderUsers();
         const button = await screen.findByText('Harry Potter');
         userEvent.click(button);
-        expect(window.history.location.pathname).toBe('/admin/users/3');
+        expect(location.pathname).toBe('/admin/users/3');
       });
     });
 

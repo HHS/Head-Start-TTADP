@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 import { NavLink as Link } from 'react-router-dom';
 
 function NavLink({
-  children, to, exact, fn,
+  children, to, fn,
 }) {
   return (
-    <Link className="usa-nav__link" to={to} activeClassName="usa-current" exact={exact} onClick={fn}>
+    <Link className="usa-nav__link" to={to} onClick={fn}>
       { children }
     </Link>
   );
@@ -15,12 +15,10 @@ function NavLink({
 NavLink.propTypes = {
   children: PropTypes.node.isRequired,
   to: PropTypes.string.isRequired,
-  exact: PropTypes.bool,
   fn: PropTypes.func,
 };
 
 NavLink.defaultProps = {
-  exact: false,
   fn: () => {},
 };
 
