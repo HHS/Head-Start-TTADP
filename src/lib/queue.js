@@ -141,40 +141,40 @@ function handleRejection(queue) {
 }
 
 // Setup event handlers
-function setupQueueEventHandlers(queue) {
-  const shutdownListener = handleShutdown(queue);
-  const exceptionListener = handleException(queue);
-  const rejectionListener = handleRejection(queue);
+// function setupQueueEventHandlers(queue) {
+//   const shutdownListener = handleShutdown(queue);
+//   const exceptionListener = handleException(queue);
+//   const rejectionListener = handleRejection(queue);
 
-  const errorListener = (err) => {
-    auditLogger.error('Queue encountered an error:', err);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed due to an error.');
-      removeQueueEventHandlers(
-        queue,
-        errorListener,
-        shutdownListener,
-        exceptionListener,
-        rejectionListener,
-      );
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after an error:', closeErr);
-      removeQueueEventHandlers(
-        queue,
-        errorListener,
-        shutdownListener,
-        exceptionListener,
-        rejectionListener,
-      );
-    });
-  };
+//   const errorListener = (err) => {
+//     auditLogger.error('Queue encountered an error:', err);
+//     queue.close().then(() => {
+//       auditLogger.error('Queue closed due to an error.');
+//       removeQueueEventHandlers(
+//         queue,
+//         errorListener,
+//         shutdownListener,
+//         exceptionListener,
+//         rejectionListener,
+//       );
+//     }).catch((closeErr) => {
+//       auditLogger.error('Failed to close the queue after an error:', closeErr);
+//       removeQueueEventHandlers(
+//         queue,
+//         errorListener,
+//         shutdownListener,
+//         exceptionListener,
+//         rejectionListener,
+//       );
+//     });
+//   };
 
-  queue.on('error', errorListener);
-  process.on('SIGINT', shutdownListener);
-  process.on('SIGTERM', shutdownListener);
-  process.on('uncaughtException', exceptionListener);
-  process.on('unhandledRejection', rejectionListener);
-}
+//   queue.on('error', errorListener);
+//   process.on('SIGINT', shutdownListener);
+//   process.on('SIGTERM', shutdownListener);
+//   process.on('uncaughtException', exceptionListener);
+//   process.on('unhandledRejection', rejectionListener);
+// }
 
 function setRedisConnectionName(queue, connectionName) {
   const { client } = queue;
