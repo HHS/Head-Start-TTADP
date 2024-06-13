@@ -6,7 +6,7 @@ import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import Submitter from '../index';
 import NetworkContext from '../../../../../../NetworkContext';
@@ -17,6 +17,8 @@ const defaultUser = {
   id: 1, name: 'Walter Burns', roles: [{ fullName: 'Reporter' }], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
 };
 
+let location;
+
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
   onFormSubmit, formData, pages, onResetToDraft, onSave,
@@ -25,6 +27,8 @@ const RenderSubmitter = ({
     mode: 'onChange',
     defaultValues: formData,
   });
+
+  location = useLocation();
 
   hookForm.register('goalsAndObjectives');
   // eslint-disable-next-line react/prop-types
@@ -173,11 +177,11 @@ describe('Submitter review page', () => {
 
     it('displays success if the report has been submitted', async () => {
       const mockSubmit = jest.fn();
-      const history = renderReview(REPORT_STATUSES.DRAFT, mockSubmit, true);
+      renderReview(REPORT_STATUSES.DRAFT, mockSubmit, true);
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
 
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
+      await waitFor(() => expect(location.pathname).toBe('/activity-reports'));
     });
 
     it('can be saved', async () => {
