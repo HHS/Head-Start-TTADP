@@ -8,6 +8,7 @@ const {
   setFlags,
   sanitizeFilename,
   generateFlagString,
+  executeQuery,  // Updated to executeQuery
 } = require('../../services/ssdi');
 const { listQueries, getFlags, runQuery } = require('./handlers');
 
@@ -72,7 +73,7 @@ describe('API Endpoints', () => {
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);
-      db.sequelize.query.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
+      executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
       sanitizeFilename.mockReturnValue('test_output_flag1_1-2-3');
       generateFlagString.mockReturnValue('flag1_1-2-3');
 
@@ -92,7 +93,7 @@ describe('API Endpoints', () => {
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);
-      db.sequelize.query.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
+      executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
       sanitizeFilename.mockReturnValue('test_output_flag1_1-2-3');
       generateFlagString.mockReturnValue('flag1_1-2-3');
 

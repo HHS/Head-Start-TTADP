@@ -9,6 +9,7 @@ import {
   setFlags,
   sanitizeFilename,
   generateFlagString,
+  executeQuery,
 } from '../../services/ssdi';
 
 // list all available query files with name and description
@@ -53,7 +54,7 @@ const runQuery = async (req: Request, res: Response) => {
     const flagValues: FlagValues = req.body;
     validateFlagValues(flags, flagValues);
     await setFlags(flags, flagValues);
-    const result = await db.sequelize.query(query);
+    const result = await executeQuery(query);
 
     const sanitizedOutputName = sanitizeFilename(`${defaultOutputName}_${generateFlagString(flagValues)}`);
 

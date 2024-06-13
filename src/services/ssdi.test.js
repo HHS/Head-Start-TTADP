@@ -10,6 +10,7 @@ import {
   setFlags,
   sanitizeFilename,
   generateFlagString,
+  executeQuery,
 } from './ssdi';
 
 // Mock fs and db
@@ -17,7 +18,7 @@ jest.mock('fs');
 jest.mock('../models', () => ({
   sequelize: {
     query: jest.fn(),
-    QueryTypes: { SELECT: 'SELECT' },
+    QueryTypes: { SELECT: 'SELECT', RAW: 'RAW' },
   },
 }));
 
@@ -31,11 +32,25 @@ describe('ssdi', () => {
       `;
       fs.readFileSync.mockReturnValue(fileContents);
 
-      const result = readNameAndDescriptionFromFile('test/path');
+      const result = readNameAndDescriptionFromFile('test/path.sql');
       expect(result).toEqual({
         name: 'TestName',
         description: 'Test description',
         defaultOutputName: 'test_output',
+      });
+    });
+
+    it('should use filename as default for name and default output name if not provided', () => {
+      const fileContents = `
+        @description: Test description
+      `;
+      fs.readFileSync.mockReturnValue(fileContents);
+
+      const result = readNameAndDescriptionFromFile('test/path.sql');
+      expect(result).toEqual({
+        name: 'path',
+        description: 'Test description',
+        defaultOutputName: 'path',
       });
     });
   });
@@ -77,11 +92,12 @@ describe('ssdi', () => {
         SELECT * FROM table;\n`;
       fs.readFileSync.mockReturnValue(fileContents);
 
-      const result = readFlagsAndQueryFromFile('test/path');
+      const result = readFlagsAndQueryFromFile('test/path.sql');
       expect(result).toEqual({
         flags: {
           flag1: {
             type: 'integer[]',
+            name: 'flag1',
             description: 'Flag description',
           },
         },
@@ -107,10 +123,9 @@ describe('ssdi', () => {
       expect(validateType('string[]', ['hello', 123])).toBe(false);
     });
 
-    it('should validate boolean type', () => {
-      expect(validateType('boolean', true)).toBe(true);
-      expect(validateType('boolean', false)).toBe(true);
-      expect(validateType('boolean', 'true')).toBe(false);
+    it('should validate boolean[] type', () => {
+      expect(validateType('boolean[]', [true, false])).toBe(true);
+      expect(validateType('boolean[]', [true, 'false'])).toBe(false);
     });
 
     it('should throw an error for unknown type', () => {
@@ -120,7 +135,7 @@ describe('ssdi', () => {
 
   describe('validateFlagValues', () => {
     const flags = {
-      flag1: { type: 'integer[]', description: 'Flag description' },
+      flag1: { type: 'integer[]', name: 'flag1', description: 'Flag description' },
     };
 
     it('should validate flag values correctly', () => {
@@ -142,7 +157,7 @@ describe('ssdi', () => {
 
   describe('setFlags', () => {
     it('should set flags in the database', async () => {
-      const flags = { flag1: { type: 'integer[]', description: 'Flag description' } };
+      const flags = { flag1: { type: 'integer[]', name: 'flag1', description: 'Flag description' } };
       const flagValues = { flag1: [1, 2, 3] };
 
       db.sequelize.query.mockResolvedValue([{ success: true }]);
@@ -166,6 +181,49 @@ describe('ssdi', () => {
     it('should generate a string representation of the flag values', () => {
       const flagValues = { flag1: [1, 2, 3], flag2: 'value' };
       expect(generateFlagString(flagValues)).toBe('flag1_1-2-3_flag2_value');
+    });
+  });
+
+  describe('executeQuery', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+  
+    it('should throw an error if the query is not a string', async () => {
+      const invalidQuery = 123;
+  
+      await expect(executeQuery(invalidQuery as unknown as string)).rejects.toThrow('The query must be a string');
+    });
+  
+    it('should set the transaction to READ ONLY', async () => {
+      const mockQuery = 'SELECT * FROM users;';
+      db.sequelize.query.mockResolvedValueOnce([]);
+  
+      await executeQuery(mockQuery);
+  
+      expect(db.sequelize.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY;', { type: db.sequelize.QueryTypes.RAW });
+    });
+  
+    it('should return the result of the query', async () => {
+      const mockQuery = 'SELECT * FROM users;';
+      const mockResult = [{ id: 1, name: 'John Doe' }];
+      db.sequelize.query
+        .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
+        .mockResolvedValueOnce(mockResult); // for the actual query
+  
+      const result = await executeQuery(mockQuery);
+  
+      expect(result).toEqual(mockResult);
+    });
+  
+    it('should throw an error if the query fails', async () => {
+      const mockQuery = 'SELECT * FROM users;';
+      const mockError = new Error('Query execution failed');
+      db.sequelize.query
+        .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
+        .mockRejectedValueOnce(mockError); // for the actual query
+  
+      await expect(executeQuery(mockQuery)).rejects.toThrow(`Query failed: ${mockError.message}`);
     });
   });
 });
