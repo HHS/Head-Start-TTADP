@@ -2,7 +2,7 @@ import '@testing-library/jest-dom';
 import join from 'url-join';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -24,9 +24,11 @@ const RenderLegacyReport = ({ report, fail = false, user = defaultUser }) => {
   }
 
   return (
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[`/activity-reports/legacy/${id}`]}>
       <UserContext.Provider value={{ user }}>
-        <LegacyReport match={{ path: '', url: '', params: { legacyId: id } }} />
+        <Routes>
+          <Route path="/activity-reports/legacy/:legacyId" element={<LegacyReport />} />
+        </Routes>
       </UserContext.Provider>
     </MemoryRouter>
   );

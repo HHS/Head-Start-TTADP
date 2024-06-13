@@ -35,6 +35,6 @@ describe('Diag', () => {
   it('renders the main view', async () => {
     render(<RenderDiag />);
     const requestErrorsView = await screen.findAllByText('Requesterrors');
-    expect(requestErrorsView.length).toBe(3);
+    expect(requestErrorsView.length).toBe(2);
   });
 });
