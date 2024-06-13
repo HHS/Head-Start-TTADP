@@ -11,7 +11,7 @@
 * - ssdi.goals - string[] - one or more verbatim goal text
 * - ssdi.status - string[] - one or more verbatim statuses
 * - ssdi.createdVia - string[] - one or more verbatim created via values
-* - ssdi.onApprovedAR - boolean - true or false
+* - ssdi.onApprovedAR - boolean[] - true or false
 * - ssdi.response - string[] - one or more verbatim response values
 * - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
 *
@@ -106,9 +106,10 @@ AND
 AND
 -- Filter for onApprovedAR if ssdi.onApprovedAR is defined
 (NULLIF(current_setting('ssdi.onApprovedAR', true), '') IS NULL
-      OR b."onApprovedAR" in (
-        SELECT value::BOOLEAN AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+      OR EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+        WHERE value::boolean = true
       ))
 AND
 -- Filter for response if ssdi.response is defined
