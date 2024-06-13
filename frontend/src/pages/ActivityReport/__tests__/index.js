@@ -17,7 +17,6 @@ import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
 import { mockWindowProperty, withText } from '../../../testHelpers';
 import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
 import {
-  history,
   formData,
   renderActivityReport,
   ReportComponent,
@@ -83,7 +82,7 @@ describe('ActivityReport', () => {
         approvers: [{ user: { id: 3 } }],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+      await waitFor(() => expect(window.history.location.pathname).toEqual('/activity-reports/1/review'));
     });
 
     it('does not allow approvers to navigate and change the report if the report has been approvedby one approver', async () => {
@@ -108,7 +107,7 @@ describe('ActivityReport', () => {
         ],
       });
       renderActivityReport(1, 'activity-summary', null, 3);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+      await waitFor(() => expect(window.history.location.pathname).toEqual('/activity-reports/1/review'));
     });
 
     it('allows approvers to navigate and change the report if the report is submitted', async () => {
@@ -131,7 +130,7 @@ describe('ActivityReport', () => {
       const data = formData();
       fetchMock.get('/api/activity-reports/1', data);
       renderActivityReport('1', null, null, 2);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/review'));
+      await waitFor(() => expect(window.history.location.pathname).toEqual('/activity-reports/1/review'));
     });
   });
 
@@ -349,7 +348,7 @@ describe('ActivityReport', () => {
 
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
-    await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
+    await waitFor(() => expect(window.history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
   });
 
   describe('resetToDraft', () => {
@@ -379,7 +378,7 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
+      await waitFor(() => expect(window.history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
     });
   });
 
