@@ -81,7 +81,11 @@ describe('PrintGoals', () => {
   };
 
   const renderPrintGoals = (loc = {}) => {
-    const location = { ...baseLocation, ...loc };
+    const location = {
+      ...baseLocation,
+      pathname: `/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals`,
+      ...loc,
+    };
     render(
       <MemoryRouter initialEntries={[`/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals`]}>
         <Routes location={location}>
@@ -151,8 +155,7 @@ describe('PrintGoals', () => {
   });
 
   it('builds a URL to query based on filters provided by window.location.search', async () => {
-    delete window.location;
-    window.location = {
+    const location = {
       search: filtersToQueryString(filters),
       state: {
         sortConfig: {
@@ -164,7 +167,9 @@ describe('PrintGoals', () => {
       },
     };
 
-    act(renderPrintGoals);
+    act(() => {
+      renderPrintGoals(location);
+    });
 
     // Expect that the mocked URL, which includes the filtered query was called.
     // This asserts that PrintGoals is respecting filters included in window.location.search.
@@ -173,6 +178,7 @@ describe('PrintGoals', () => {
 
   it('uses the sortConfig from the location prop if it exists', async () => {
     const loc = {
+      search: filtersToQueryString(filters),
       state: {
         sortConfig: {
           sortBy: 'goalStatus',

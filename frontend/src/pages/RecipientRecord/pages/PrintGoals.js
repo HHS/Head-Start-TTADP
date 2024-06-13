@@ -50,7 +50,8 @@ export default function PrintGoals({ recipientId, regionId }) {
       setLoading(false);
     }
 
-    const filterQuery = window.location.search.replace(/^\?/, '');
+    const filterQuery = location.search.replace(/^\?/, '');
+
     fetchGoals(filterQuery);
   }, [location.state, location.search, recipientId, regionId]);
 
