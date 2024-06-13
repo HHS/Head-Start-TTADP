@@ -13,6 +13,7 @@ import {
   IReducedGoal,
   IReducedObjective,
   IPrompt,
+  IReviewPrompt,
 } from './types';
 
 // this is the reducer called when not getting objectives for a report, IE, the RTR table
@@ -351,6 +352,43 @@ function reducePrompts(
     }, promptsToReduce);
 }
 
+function reducePromptsForReview(
+  recipientId: number,
+  fullGrantName: string,
+  newPrompts:IPrompt[] = [],
+  previousPrompts:IReviewPrompt[] = [],
+) {
+  const updatedPrompts = [...previousPrompts];
+  newPrompts.forEach((currentPrompt) => {
+    // Get the prompt Id.
+    const promptId = currentPrompt.promptId
+      ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+
+    // Get the responses for the prompt sorted alphabetically.
+    const { response } = currentPrompt;
+
+    // Sort report responses alphabetically.
+    response.sort();
+
+    // Create a key of promptId and responses.
+    const promptKey = `${promptId}-${response.map((r) => r).join('-')}`;
+    const existingPrompt = updatedPrompts.find((pp) => pp.key === promptKey);
+
+    if (!existingPrompt) {
+      updatedPrompts.push({
+        key: promptKey,
+        promptId,
+        recipients: [{ id: recipientId, name: fullGrantName }],
+        responses: response,
+      });
+    } else {
+      // It exists add this recipient.
+      existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
+    }
+  });
+  return updatedPrompts;
+}
+
 /**
  * Dedupes goals by name + status, as well as objectives by title + status
  * @param {Object[]} goals
@@ -425,6 +463,13 @@ export function reduceGoals(
             currentValue.dataValues.prompts || [],
             (existingGoal.prompts || []) as IPrompt[],
           );
+          // This will be for review on the report.
+          existingGoal.promptsForReview = reducePromptsForReview(
+            currentValue.dataValues.grant.recipientId,
+            currentValue.dataValues.grant.recipientNameWithPrograms,
+            currentValue.dataValues.prompts || [],
+            existingGoal.promptsForReview,
+          );
         } else {
           existingGoal.prompts = {
             ...existingGoal.prompts,
@@ -461,6 +506,13 @@ export function reduceGoals(
         [],
       );
 
+      const promptsForReview = reducePromptsForReview(
+        currentValue.dataValues.grant.recipientId,
+        currentValue.dataValues.grant.recipientNameWithPrograms,
+        currentValue.dataValues.prompts || [],
+        [],
+      );
+
       let sourceForRTR: { [key: string]: string };
       let sourceForPrompts: { [key: string]: IPrompt[] };
 
@@ -490,6 +542,7 @@ export function reduceGoals(
         createdVia: currentValue.dataValues.createdVia,
         source: forReport ? sourceForReport : sourceForRTR,
         prompts: forReport ? promptsForReport : sourceForPrompts,
+        promptsForReview: forReport ? promptsForReview : [],
         isNew: false,
         onAR: currentValue.dataValues.onAR,
         onApprovedAR: currentValue.dataValues.onApprovedAR,
