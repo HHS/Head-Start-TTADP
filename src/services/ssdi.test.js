@@ -188,41 +188,41 @@ describe('ssdi', () => {
     afterEach(() => {
       jest.clearAllMocks();
     });
-  
+
     it('should throw an error if the query is not a string', async () => {
       const invalidQuery = 123;
-  
+
       await expect(executeQuery(invalidQuery as unknown as string)).rejects.toThrow('The query must be a string');
     });
-  
+
     it('should set the transaction to READ ONLY', async () => {
       const mockQuery = 'SELECT * FROM users;';
       db.sequelize.query.mockResolvedValueOnce([]);
-  
+
       await executeQuery(mockQuery);
-  
+
       expect(db.sequelize.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY;', { type: db.sequelize.QueryTypes.RAW });
     });
-  
+
     it('should return the result of the query', async () => {
       const mockQuery = 'SELECT * FROM users;';
       const mockResult = [{ id: 1, name: 'John Doe' }];
       db.sequelize.query
         .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
         .mockResolvedValueOnce(mockResult); // for the actual query
-  
+
       const result = await executeQuery(mockQuery);
-  
+
       expect(result).toEqual(mockResult);
     });
-  
+
     it('should throw an error if the query fails', async () => {
       const mockQuery = 'SELECT * FROM users;';
       const mockError = new Error('Query execution failed');
       db.sequelize.query
         .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
         .mockRejectedValueOnce(mockError); // for the actual query
-  
+
       await expect(executeQuery(mockQuery)).rejects.toThrow(`Query failed: ${mockError.message}`);
     });
   });

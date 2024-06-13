@@ -56,9 +56,10 @@ const runQuery = async (req: Request, res: Response) => {
     const user = await userById(userId);
     const policy = new Generic(user);
 
-    // Check if flagValues contains recipientIds, filter the values with policy.filterRegions passing in the recipientIds.
-    // If flagValues does not contain recipientIds, use policy.getAllAccessibleRegions to define it.
-    // Before calling validateFlagValues, recipientIds must be defined and not be an empty set
+    // Check if flagValues contains recipientIds, filter the values with policy.filterRegions
+    // passing in the recipientIds. If flagValues does not contain recipientIds, use
+    // policy.getAllAccessibleRegions to define it. Before calling validateFlagValues,
+    // recipientIds must be defined and not be an empty set
 
     if (flagValues.recipientIds) {
       flagValues.recipientIds = policy.filterRegions(flagValues.recipientIds);
@@ -88,7 +89,6 @@ const runQuery = async (req: Request, res: Response) => {
     res.status(500).send(`Error executing query: ${error.message}`);
   }
 };
-
 
 export {
   listQueries,

@@ -10,14 +10,14 @@ const {
   generateFlagString,
   executeQuery,
   currentUserId,
-  userById
+  userById,
 } = require('../../services/ssdi');
 const { listQueries, getFlags, runQuery } = require('./handlers');
-const Generic = require('../../middleware/Generic');
+const Generic = require('../../policies/generic');
 
 jest.mock('../../models');
 jest.mock('../../services/ssdi');
-jest.mock('../../middleware/Generic');
+jest.mock('../../policies/generic');
 
 const app = express();
 app.use(express.json());
@@ -74,8 +74,8 @@ describe('API Endpoints', () => {
       permissions: [
         { scopeId: 1, regionId: 1 },
         { scopeId: 2, regionId: 2 },
-        { scopeId: 3, regionId: 3 }
-      ]
+        { scopeId: 3, regionId: 3 },
+      ],
     };
 
     beforeEach(() => {
@@ -92,8 +92,8 @@ describe('API Endpoints', () => {
       currentUserId.mockResolvedValue(user.id);
       userById.mockResolvedValue(user);
       Generic.mockImplementation(() => ({
-        filterRegions: jest.fn((ids) => ids.filter(id => id <= 3)),
-        getAllAccessibleRegions: jest.fn(() => [1, 2, 3])
+        filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
+        getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
       }));
     });
 
@@ -127,7 +127,7 @@ describe('API Endpoints', () => {
     it('should return 401 if recipientIds is an empty set', async () => {
       Generic.mockImplementation(() => ({
         filterRegions: jest.fn(() => []),
-        getAllAccessibleRegions: jest.fn(() => [])
+        getAllAccessibleRegions: jest.fn(() => []),
       }));
 
       const response = await request(app)
