@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { expect } from '@playwright/test';
 import { auditLogger } from '../logger';
-import { getResourceMetaDataJob } from './resource';
+import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 import db, { Resource } from '../models';
 
 jest.mock('../logger');
@@ -564,5 +564,25 @@ describe('resource worker tests', () => {
       status: 500,
       data: { url: 'http://www.test.gov' },
     });
+  });
+});
+
+describe('overrideStatusCodeOnAuthRequired', () => {
+  const httpCodes = { OK: 200, UNAUTHORIZED: 401, SERVICE_UNAVAILABLE: 503 };
+
+  it('returns UNAUTHORIZED if status code is OK and authentication is required', () => {
+    const statusCode = httpCodes.OK;
+    const list = ['auth'];
+    const data = 'some data with auth requirement';
+    const result = overrideStatusCodeOnAuthRequired(statusCode, list, data);
+    expect(result).toBe(httpCodes.UNAUTHORIZED);
+  });
+
+  it('returns OK if status code is OK and authentication is not required', () => {
+    const statusCode = httpCodes.OK;
+    const list = ['no-auth'];
+    const data = 'data without auth requirement';
+    const result = overrideStatusCodeOnAuthRequired(statusCode, list, data);
+    expect(result).toBe(httpCodes.OK);
   });
 });
