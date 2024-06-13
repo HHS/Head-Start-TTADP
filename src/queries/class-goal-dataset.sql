@@ -11,7 +11,7 @@
 * - ssdi.goals - string[] - one or more verbatim goal text
 * - ssdi.status - string[] - one or more verbatim statuses
 * - ssdi.createdVia - string[] - one or more verbatim created via values
-* - ssdi.onApprovedAR - boolean - true or false
+* - ssdi.onApprovedAR - boolean[] - true or false
 * - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
 *
 * Zero or more SSDI flags can be set within the same transaction as the query is executed.
@@ -55,7 +55,7 @@ AND
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for status if ssdi.goals is defined
+-- Filter for goals if ssdi.goals is defined
 (NULLIF(current_setting('ssdi.goals', true), '') IS NULL
       OR g.name in (
         SELECT value::text AS my_array
@@ -78,9 +78,10 @@ AND
 AND
 -- Filter for onApprovedAR if ssdi.onApprovedAR is defined
 (NULLIF(current_setting('ssdi.onApprovedAR', true), '') IS NULL
-      OR g."onApprovedAR" in (
-        SELECT value::BOOLEAN AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+      OR EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+        WHERE value::boolean = true
       ))
 AND
 -- Filter for createdAt dates between two values if ssdi.createdbetween is defined
