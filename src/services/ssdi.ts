@@ -49,9 +49,9 @@ const readNameAndDescriptionFromFile = (
   const defaultOutputNameMatch = fileContents.match(/@defaultOutputName:\s*(.*)/);
   const fileName = path.basename(filePath, path.extname(filePath));
   return {
-    name: nameMatch ? nameMatch[1].trim() : fileName, // Use script file name as default
+    name: nameMatch ? nameMatch[1].trim() : fileName,
     description: descriptionMatch ? descriptionMatch[1].trim() : 'No description available',
-    defaultOutputName: defaultOutputNameMatch ? defaultOutputNameMatch[1].trim() : fileName, // Use script file name as default
+    defaultOutputName: defaultOutputNameMatch ? defaultOutputNameMatch[1].trim() : fileName,
   };
 };
 
@@ -191,13 +191,13 @@ const executeQuery = async (query: string): Promise<any> => {
   try {
     // Set transaction to READ ONLY, this will fail the transaction if any tables are modified
     await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
-    
+
     const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
     return result;
   } catch (error) {
     throw new Error(`Query failed: ${error.message}`);
   }
-}
+};
 
 export {
   Flag,

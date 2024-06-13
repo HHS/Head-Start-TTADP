@@ -1,4 +1,4 @@
-import Generic from '../path/to/Generic';
+import Generic from './generic';
 import SCOPES from '../middleware/scopeConstants';
 
 describe('Generic', () => {
