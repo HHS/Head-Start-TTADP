@@ -14,7 +14,6 @@ const {
 const { listQueries, getFlags, runQuery } = require('./handlers');
 const Generic = require('../../policies/generic');
 
-jest.mock('../../models');
 jest.mock('../../services/ssdi');
 jest.mock('../../policies/generic');
 
@@ -88,8 +87,8 @@ describe('API Endpoints', () => {
       executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
       sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');
       generateFlagString.mockReturnValue('recipientIds_1-2-3');
-      currentUserId.mockResolvedValue(user.id);
-      userById.mockResolvedValue(user);
+      currentUserId.mockResolvedValue(Promise.resolve(user.id));
+      userById.mockResolvedValue(Promise.resolve(user));
       Generic.mockImplementation(() => ({
         filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
         getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
