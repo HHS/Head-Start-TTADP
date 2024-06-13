@@ -8,7 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
@@ -22,17 +22,23 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = null) => {
+  const renderMyGroups = (groupId = '') => {
     render(
-      <MemoryRouter>
-        <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-            <MyGroupsProvider>
-              <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-            </MyGroupsProvider>
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
-      </MemoryRouter>,
+      <UserContext.Provider value={{ user }}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <MyGroupsProvider>
+            <MemoryRouter initialEntries={[`/my-groups/${groupId}`]}>
+              <Routes>
+                <Route
+                  path="/my-groups/:groupId?"
+                  element={<MyGroups />}
+                />
+              </Routes>
+            </MemoryRouter>
+          </MyGroupsProvider>
+        </AppLoadingContext.Provider>
+      </UserContext.Provider>
+      ,
     );
   };
 

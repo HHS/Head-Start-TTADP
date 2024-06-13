@@ -188,13 +188,6 @@ export default function TrainingReportForm() {
     fetchReport();
   }, [currentPage, hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
 
-  useEffect(() => {
-    // set error if no training report id
-    if (!trainingReportId) {
-      setError('No training report id provided');
-    }
-  }, [trainingReportId]);
-
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
