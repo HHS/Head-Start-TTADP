@@ -177,7 +177,7 @@ export async function increaseListeners(queue, num = 1) {
 //   process.on('unhandledRejection', rejectionListener);
 // }
 
-function setRedisConnectionName(queue, connectionName) {
+export function setRedisConnectionName(queue, connectionName) {
   const { client } = queue;
   if (client && client.call) {
     client.call('client', 'setname', connectionName).catch((err) => {
