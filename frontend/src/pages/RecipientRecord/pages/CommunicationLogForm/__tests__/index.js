@@ -71,7 +71,7 @@ describe('CommunicationLogForm', () => {
     fetchMock.reset();
   });
 
-  it('renders training report form', async () => {
+  it('renders communication log form', async () => {
     await act(() => waitFor(() => {
       renderTest();
     }));
