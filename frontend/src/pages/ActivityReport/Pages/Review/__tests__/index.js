@@ -7,7 +7,7 @@ import moment from 'moment';
 import reactSelectEvent from 'react-select-event';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../UserContext';
@@ -38,6 +38,8 @@ const user = {
 
 const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approver 1' } }];
 
+let location;
+
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
   allComplete, formData, onSubmit, onReview, onResetToDraft, isApprover, isPendingApprover, pages,
@@ -49,6 +51,8 @@ const RenderReview = ({
       ...formData,
     },
   });
+
+  location = useLocation();
 
   return (
     <FormProvider {...hookForm}>
@@ -294,7 +298,8 @@ describe('ReviewSubmit', () => {
         onSubmit,
         onReview,
       );
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
+
+      userEvent.selectOptions(screen.getByTestId('Select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       await waitFor(() => expect(onReview).toHaveBeenCalled());
@@ -316,7 +321,7 @@ describe('ReviewSubmit', () => {
       renderReview(
         allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
       );
-      userEvent.selectOptions(screen.getByTestId('dropdown'), ['approved']);
+      userEvent.selectOptions(screen.getByTestId('Select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
       userEvent.click(reviewButton);
       const error = await screen.findByText('Unable to review report');
@@ -404,10 +409,10 @@ describe('ReviewSubmit', () => {
     const onResetToDraft = jest.fn();
     const complete = true;
 
-    const history = renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
+    renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
       formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
     userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
-    await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
+    await waitFor(() => expect(location.pathname).toBe('/activity-reports'));
   });
 
   it('initializes the form with "initialData"', async () => {

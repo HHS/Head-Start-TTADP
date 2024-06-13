@@ -2,7 +2,7 @@ import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen, act } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewTrainingReport, { formatOwnerName } from '..';
 
@@ -116,11 +116,16 @@ describe('ViewTrainingReport', () => {
   const renderTrainingReport = () => {
     act(() => {
       render(
-        <MemoryRouter>
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-            <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
-          </AppLoadingContext.Provider>
-        </MemoryRouter>,
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <MemoryRouter initialEntries={['/training-report/1']}>
+            <Routes>
+              <Route
+                path="/training-report/:trainingReportId"
+                element={<ViewTrainingReport />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </AppLoadingContext.Provider>,
       );
     });
   };
