@@ -4,7 +4,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
@@ -24,24 +24,18 @@ describe('ViewCommunicationForm', () => {
   const renderTest = (
     communicationLogId = '1',
   ) => render(
-    <MemoryRouter>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <ViewCommunicationForm
-            recipientName={RECIPIENT_NAME}
-            match={{
-              params: {
-                communicationLogId,
-                recipientId: RECIPIENT_ID,
-                regionId: REGION_ID,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </MemoryRouter>,
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+      <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+        <MemoryRouter initialEntries={[`/recipient-record/${RECIPIENT_ID}/region/${REGION_ID}/communication-log/${communicationLogId}`]}>
+          <Routes>
+            <Route
+              path="/recipient-record/:recipientId/region/:regionId/communication-log/:communicationLogId"
+              element={<ViewCommunicationForm recipientName={RECIPIENT_NAME} />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>,
   );
 
   beforeEach(() => {

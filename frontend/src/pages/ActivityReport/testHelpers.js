@@ -3,7 +3,6 @@
 import React from 'react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
-import { createMemoryHistory } from 'history';
 import {
   render,
 } from '@testing-library/react';
@@ -11,8 +10,6 @@ import moment from 'moment';
 import ActivityReport from './index';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
-
-export const history = createMemoryHistory();
 
 const user = {
   id: 1,
@@ -75,6 +72,7 @@ export const ReportComponent = ({
           <AppLoadingContext.Provider value={{
             setIsAppLoading: jest.fn(),
             setAppLoadingText: jest.fn(),
+            isAppLoading: false,
           }}
           >
             <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
