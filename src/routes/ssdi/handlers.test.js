@@ -1,6 +1,5 @@
 const request = require('supertest');
 const express = require('express');
-const db = require('../../models');
 const {
   listQueryFiles,
   readFlagsAndQueryFromFile,
