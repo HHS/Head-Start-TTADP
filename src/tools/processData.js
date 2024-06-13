@@ -88,6 +88,9 @@ const hsesUsers = [
   {
     name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
   },
+  {
+    name: 'Does Notexist', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
+  },
 ];
 
 const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
