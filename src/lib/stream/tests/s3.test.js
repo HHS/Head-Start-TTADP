@@ -2,6 +2,7 @@ import AWS from 'aws-sdk';
 import { Readable } from 'stream';
 import { auditLogger } from '../../../logger';
 import S3Client from '../s3';
+import { generateS3Config } from '../../s3';
 
 jest.mock('aws-sdk');
 
@@ -35,6 +36,30 @@ describe('S3Client', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('constructor', () => {
+    it('should create an S3 client with default configuration', () => {
+      const s3Config = generateS3Config();
+      const client = new S3Client();
+      expect(AWS.S3).toHaveBeenCalledWith(s3Config.s3Config);
+    });
+
+    it('should create an S3 client with custom configuration', () => {
+      const customConfig = {
+        bucketName: 'custom-bucket',
+        s3Config: {
+          accessKeyId: 'customAccessKeyId',
+          endpoint: 'customEndpoint',
+          region: 'customRegion',
+          secretAccessKey: 'customSecretAccessKey',
+          signatureVersion: 'v4',
+          s3ForcePathStyle: true,
+        },
+      };
+      const client = new S3Client(customConfig);
+      expect(AWS.S3).toHaveBeenCalledWith(customConfig.s3Config);
+    });
   });
 
   describe('uploadFileAsStream', () => {
