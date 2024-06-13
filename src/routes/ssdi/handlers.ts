@@ -11,6 +11,7 @@ import {
   generateFlagString,
   executeQuery,
 } from '../../services/ssdi';
+import Generic from '../../policies/generic';
 
 // list all available query files with name and description
 const listQueries = async (req: Request, res: Response) => {
@@ -39,8 +40,6 @@ const getFlags = async (req: Request, res: Response) => {
 };
 
 // Reads the flags and runs the query after setting the flags
-// TODO: no current restrictions on what an authenticated user can pull.
-//    Example: A user with only region 1 access can pull data for region 5
 const runQuery = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   const outputFormat = (req.query.format as string) || 'json';
@@ -52,6 +51,26 @@ const runQuery = async (req: Request, res: Response) => {
   try {
     const { flags, query, defaultOutputName } = readFlagsAndQueryFromFile(scriptPath);
     const flagValues: FlagValues = req.body;
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const policy = new Generic(user);
+
+    // Check if flagValues contains recipientIds, filter the values with policy.filterRegions passing in the recipientIds.
+    // If flagValues does not contain recipientIds, use policy.getAllAccessibleRegions to define it.
+    // Before calling validateFlagValues, recipientIds must be defined and not be an empty set
+
+    if (flagValues.recipientIds) {
+      flagValues.recipientIds = policy.filterRegions(flagValues.recipientIds);
+    } else {
+      flagValues.recipientIds = policy.getAllAccessibleRegions();
+    }
+
+    if (!flagValues.recipientIds || flagValues.recipientIds.length === 0) {
+      res.sendStatus(401);
+      return;
+    }
+
     validateFlagValues(flags, flagValues);
     await setFlags(flags, flagValues);
     const result = await executeQuery(query);
@@ -69,6 +88,7 @@ const runQuery = async (req: Request, res: Response) => {
     res.status(500).send(`Error executing query: ${error.message}`);
   }
 };
+
 
 export {
   listQueries,
