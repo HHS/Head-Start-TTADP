@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
@@ -5,7 +6,7 @@ import {
   render, screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, useLocation } from 'react-router';
 import MyAlerts from '../MyAlerts';
 import activityReports from '../mocks';
 import { ALERTS_PER_PAGE } from '../../../Constants';
@@ -17,7 +18,11 @@ const user = {
   id: 999,
 };
 
-const renderMyAlerts = (report = false) => {
+let location;
+
+const MyAlertsWithLocation = ({ report }) => {
+  location = useLocation();
+
   const newBtn = true;
   const alertsSortConfig = { sortBy: 'startDate', direction: 'desc' };
   const alertsOffset = 0;
@@ -28,25 +33,31 @@ const renderMyAlerts = (report = false) => {
   const setAlertReportsCount = jest.fn();
   const requestAlertsSort = jest.fn();
 
+  return (
+    <MyAlerts
+      loading={false}
+      reports={report ? [report] : activityReports}
+      newBtn={newBtn}
+      alertsSortConfig={alertsSortConfig}
+      alertsOffset={alertsOffset}
+      alertsPerPage={alertsPerPage}
+      alertsActivePage={alertsActivePage}
+      alertReportsCount={alertReportsCount}
+      sortHandler={requestAlertsSort}
+      updateReportAlerts={updateReportAlerts}
+      setAlertReportsCount={setAlertReportsCount}
+      fetchReports={() => { }}
+      updateReportFilters={() => { }}
+      handleDownloadAllAlerts={() => { }}
+    />
+  );
+};
+
+const renderMyAlerts = (report = false) => {
   render(
     <MemoryRouter>
       <UserContext.Provider value={{ user }}>
-        <MyAlerts
-          loading={false}
-          reports={report ? [report] : activityReports}
-          newBtn={newBtn}
-          alertsSortConfig={alertsSortConfig}
-          alertsOffset={alertsOffset}
-          alertsPerPage={alertsPerPage}
-          alertsActivePage={alertsActivePage}
-          alertReportsCount={alertReportsCount}
-          sortHandler={requestAlertsSort}
-          updateReportAlerts={updateReportAlerts}
-          setAlertReportsCount={setAlertReportsCount}
-          fetchReports={() => { }}
-          updateReportFilters={() => { }}
-          handleDownloadAllAlerts={() => { }}
-        />
+        <MyAlertsWithLocation report={report} />
       </UserContext.Provider>
     </MemoryRouter>,
   );
@@ -355,7 +366,7 @@ describe('My Alerts', () => {
   });
 
   test('redirects to view activity report when clicked from context menu', async () => {
-    const history = renderMyAlerts();
+    renderMyAlerts();
     const menuButtons = await screen.findAllByTestId('ellipsis-button');
     userEvent.click(menuButtons[0]);
 
@@ -364,7 +375,7 @@ describe('My Alerts', () => {
     });
     userEvent.click(viewButton);
 
-    expect(history.location.pathname).toBe('/activity-reports/1');
+    expect(location.pathname).toBe('/activity-reports/1');
   });
 
   test('Deletes selected report', async () => {
