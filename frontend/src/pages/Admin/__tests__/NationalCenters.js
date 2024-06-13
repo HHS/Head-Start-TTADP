@@ -163,11 +163,11 @@ describe('National Centers page', () => {
     fetchMock.get(nationalCenterUrl,
       {
         centers: [
-          { id: '1', name: 'DTL', users: [] },
-          { id: '2', name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
-          { id: '3', name: 'PFCE', users: [] },
-          { id: '4', name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
-          { id: '5', name: 'New Center', users: [{ id: 2, name: 'User 2' }] },
+          { id: 1, name: 'DTL', users: [] },
+          { id: 2, name: 'HBHS', users: [{ id: 1, name: 'User 1' }] },
+          { id: 3, name: 'PFCE', users: [] },
+          { id: 4, name: 'PFMO', users: [{ id: 4, name: 'User 4' }] },
+          { id: 5, name: 'New Center', users: [{ id: 2, name: 'User 2' }] },
         ],
         users: [{
           id: 1,
@@ -195,7 +195,9 @@ describe('National Centers page', () => {
     expect(screen.getByText('New Center (User 2)')).toBeVisible();
 
     // Verify list of users is updated.
-    userEvent.click(screen.getByText('DTL'));
+    act(() => {
+      userEvent.click(screen.getByText('DTL'));
+    });
 
     // Verify 'dropdown' doesn't contain entries for users already assigned to other centers.
     expect(screen.queryByText('User 1')).toBeNull();
