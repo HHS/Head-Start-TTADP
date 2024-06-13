@@ -4,7 +4,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import fetchMock from 'fetch-mock';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import TrainingReports from '../index';
@@ -129,22 +129,27 @@ describe('TrainingReports', () => {
   const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
     const user = u || nonCentralOfficeUser;
     render(
-      <MemoryRouter>
-        <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-          <UserContext.Provider value={{ user }}>
-            <AppLoadingContext.Provider value={
+      <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
+        <UserContext.Provider value={{ user }}>
+          <AppLoadingContext.Provider value={
             {
               setIsAppLoading: jest.fn(),
               setAppLoadingText: jest.fn(),
               isAppLoading: false,
             }
           }
-            >
-              <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </AriaLiveContext.Provider>
-      </MemoryRouter>,
+          >
+            <MemoryRouter initialEntries={[`/training-reports/${passedStatus}`]}>
+              <Routes>
+                <Route
+                  path="/training-reports/:status"
+                  element={<TrainingReports />}
+                />
+              </Routes>
+            </MemoryRouter>
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
+      </AriaLiveContext.Provider>,
     );
   };
 
@@ -440,25 +445,34 @@ describe('TrainingReports', () => {
     };
     const message = 'Successfully submitted report';
 
-    const pastLocations = [
-      { pathname: '/training-reports/not-started', state: { message } },
-    ];
-
     render(
-      <MemoryRouter initialEntries={pastLocations}>
-        <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={
+      <UserContext.Provider value={{ user }}>
+        <AppLoadingContext.Provider value={
             {
               setIsAppLoading: jest.fn(),
               setAppLoadingText: jest.fn(),
               isAppLoading: false,
             }
           }
-          >
-            <TrainingReports match={{ params: { status: EVENT_STATUS.NOT_STARTED } }} />
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
-      </MemoryRouter>,
+        >
+          <MemoryRouter initialEntries={['/training-reports/not-started']}>
+            <Routes location={{
+              pathname: '/training-reports/not-started',
+              search: '',
+              hash: '',
+              state: { message },
+              key: 'default',
+            }}
+            >
+              <Route
+                path="/training-reports/:status"
+                element={<TrainingReports />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </AppLoadingContext.Provider>
+      </UserContext.Provider>
+      ,
     );
 
     expect(await screen.findByText(/Successfully submitted report/i)).toBeVisible();

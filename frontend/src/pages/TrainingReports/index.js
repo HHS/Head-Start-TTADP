@@ -33,6 +33,7 @@ const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) 
 }));
 
 export default function TrainingReports() {
+  const location = useLocation();
   const { status } = useParams();
   const { user } = useContext(UserContext);
   const [error, updateError] = useState();
@@ -85,8 +86,6 @@ export default function TrainingReports() {
     }
     return '';
   };
-
-  const location = useLocation();
 
   let msg;
   const message = location.state && location.state.message;
