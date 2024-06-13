@@ -1,9 +1,11 @@
 import fs from 'fs';
 import path from 'path';
+import { QueryTypes } from 'sequelize';
 import db from '../models';
 
 interface Flag {
   type: string;
+  name: string;
   description: string;
 }
 
@@ -23,6 +25,16 @@ interface QueryFile {
   defaultOutputName: string;
 }
 
+interface CachedQuery {
+  flags: Flags;
+  query: string;
+  defaultOutputName: string;
+}
+
+// Caches to store the parsed query files and their metadata
+const queryFileCache: Map<string, QueryFile> = new Map();
+const queryDataCache: Map<string, CachedQuery> = new Map();
+
 // Helper function to read name, description, and default output name from a file
 const readNameAndDescriptionFromFile = (
   filePath: string,
@@ -35,10 +47,11 @@ const readNameAndDescriptionFromFile = (
   const nameMatch = fileContents.match(/@name:\s*(.*)/);
   const descriptionMatch = fileContents.match(/@description:\s*(.*)/);
   const defaultOutputNameMatch = fileContents.match(/@defaultOutputName:\s*(.*)/);
+  const fileName = path.basename(filePath, path.extname(filePath));
   return {
-    name: nameMatch ? nameMatch[1].trim() : 'Unknown', // TODO: use script file name as default
+    name: nameMatch ? nameMatch[1].trim() : fileName, // Use script file name as default
     description: descriptionMatch ? descriptionMatch[1].trim() : 'No description available',
-    defaultOutputName: defaultOutputNameMatch ? defaultOutputNameMatch[1].trim() : 'output', // TODO: use script file name as default
+    defaultOutputName: defaultOutputNameMatch ? defaultOutputNameMatch[1].trim() : fileName, // Use script file name as default
   };
 };
 
@@ -47,24 +60,30 @@ const listQueryFiles = (directory: string): QueryFile[] => {
   const files = fs.readdirSync(directory);
   return files.map((file) => {
     const filePath = path.join(directory, file);
+    if (queryFileCache.has(filePath)) {
+      return queryFileCache.get(filePath) as QueryFile;
+    }
     const { name, description, defaultOutputName } = readNameAndDescriptionFromFile(filePath);
-    return {
+    const queryFile: QueryFile = {
       name,
       description,
       filePath,
       defaultOutputName,
     };
+    queryFileCache.set(filePath, queryFile);
+    return queryFile;
   });
 };
 
 // Helper function to read flags and the query from the file
 const readFlagsAndQueryFromFile = (
   filePath: string,
-): {
-  flags: Flags;
-  query: string;
-  defaultOutputName: string;
-} => {
+): CachedQuery => {
+  // Check if the query data is already cached
+  if (queryDataCache.has(filePath)) {
+    return queryDataCache.get(filePath) as CachedQuery;
+  }
+
   const fileContents = fs.readFileSync(filePath, 'utf8');
   const lines = fileContents.split('\n');
   const flags: Flags = {};
@@ -81,10 +100,10 @@ const readFlagsAndQueryFromFile = (
     }
 
     if (inCommentBlock) {
-      const flagMatch = line.match(/ssdi\.(\w+) - (\w+\[\]) - (.*)/);
+      const flagMatch = line.match(/ - ssdi\.(\w+) - (\w+\[\]) - (.*)/);
       const defaultOutputNameMatch = line.match(/@defaultOutputName:\s*(.*)/);
       if (flagMatch) {
-        flags[flagMatch[1]] = { type: flagMatch[2], description: flagMatch[3] };
+        flags[flagMatch[1]] = { type: flagMatch[2], name: flagMatch[1], description: flagMatch[3] };
       }
       if (defaultOutputNameMatch) {
         defaultOutputName = defaultOutputNameMatch[1].trim();
@@ -100,7 +119,11 @@ const readFlagsAndQueryFromFile = (
     .replace(/^\s*\n|\s*\n$/g, '')
     .replace(/^\s*/, '');
 
-  return { flags, query, defaultOutputName };
+  const cachedQuery: CachedQuery = { flags, query, defaultOutputName };
+  // Cache the parsed query data
+  queryDataCache.set(filePath, cachedQuery);
+
+  return cachedQuery;
 };
 
 // Function to validate the type of the flag values
@@ -116,8 +139,8 @@ const validateType = (
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
     case 'string[]':
       return Array.isArray(value) && value.every((v) => typeof v === 'string');
-    case 'boolean':
-      return typeof value === 'boolean';
+    case 'boolean[]':
+      return Array.isArray(value) && value.every((v) => typeof v === 'boolean');
     default:
       throw new Error(`Unknown type: ${expectedType}`);
   }
@@ -159,6 +182,23 @@ const generateFlagString = (flagValues: FlagValues): string => Object.entries(fl
   .map(([key, value]) => `${key}_${Array.isArray(value) ? value.join('-') : value}`)
   .join('_');
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const executeQuery = async (query: string): Promise<any> => {
+  if (typeof query !== 'string') {
+    throw new Error('The query must be a string');
+  }
+
+  try {
+    // Set transaction to READ ONLY, this will fail the transaction if any tables are modified
+    await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
+    
+    const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
+    return result;
+  } catch (error) {
+    throw new Error(`Query failed: ${error.message}`);
+  }
+}
+
 export {
   Flag,
   Flags,
@@ -172,4 +212,5 @@ export {
   setFlags,
   sanitizeFilename,
   generateFlagString,
+  executeQuery,
 };
