@@ -1,7 +1,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 import React from 'react';
-import { MemoryRouter, Routes, Route } from 'react-router-dom';
+import {
+  MemoryRouter, Routes, Route, useLocation,
+} from 'react-router-dom';
 import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
 import {
   render,
@@ -58,38 +60,48 @@ export const formData = () => ({
   recipientGroup: null,
 });
 
+let location;
+
+const ARWithLocation = () => {
+  location = useLocation();
+  return <ActivityReport region={1} />;
+};
+
 export const ReportComponent = ({
   id,
   currentPage = 'activity-summary',
   showLastUpdatedTime = null,
   userId = 1,
-}) => (
-  <MemoryRouter initialEntries={[`/activity-reports/${id}/${currentPage}`]}>
-    <Routes>
-      <Route
-        path="/activity-reports/:activityReportId/:currentPage"
-        element={(
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
-          }}
-          >
-            <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
-              <ActivityReport
-                match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-                location={{
-                  state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-                }}
-                region={1}
-              />
-            </UserContext.Provider>
-          </AppLoadingContext.Provider>
- )}
-      />
-    </Routes>
-  </MemoryRouter>
-);
+}) => {
+  const lx = {
+    pathname: `/activity-reports/${id}/${currentPage}`,
+    state: {
+      showLastUpdatedTime,
+    },
+    hash: '',
+    search: '',
+  };
+
+  return (
+    <AppLoadingContext.Provider value={{
+      setIsAppLoading: jest.fn(),
+      setAppLoadingText: jest.fn(),
+      isAppLoading: false,
+    }}
+    >
+      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+        <MemoryRouter initialEntries={[`/activity-reports/${id}/${currentPage}`]}>
+          <Routes location={lx}>
+            <Route
+              path="/activity-reports/:activityReportId/:currentPage"
+              element={<ARWithLocation />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>
+  );
+};
 
 export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
   render(
@@ -100,6 +112,8 @@ export const renderActivityReport = (id, currentPage = 'activity-summary', showL
       userId={userId}
     />,
   );
+
+  return location;
 };
 
 export const recipients = {
