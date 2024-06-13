@@ -8,12 +8,16 @@ const {
   setFlags,
   sanitizeFilename,
   generateFlagString,
-  executeQuery,  // Updated to executeQuery
+  executeQuery,
+  currentUserId,
+  userById
 } = require('../../services/ssdi');
 const { listQueries, getFlags, runQuery } = require('./handlers');
+const Generic = require('../../middleware/Generic');
 
 jest.mock('../../models');
 jest.mock('../../services/ssdi');
+jest.mock('../../middleware/Generic');
 
 const app = express();
 app.use(express.json());
@@ -65,51 +69,73 @@ describe('API Endpoints', () => {
   });
 
   describe('runQuery', () => {
-    it('should run the query and return JSON result', async () => {
+    const user = {
+      id: 1,
+      permissions: [
+        { scopeId: 1, regionId: 1 },
+        { scopeId: 2, regionId: 2 },
+        { scopeId: 3, regionId: 3 }
+      ]
+    };
+
+    beforeEach(() => {
       readFlagsAndQueryFromFile.mockReturnValue({
-        flags: { flag1: { type: 'integer[]', description: 'Test Flag' } },
+        flags: { recipientIds: { type: 'integer[]', description: 'Test Flag' } },
         query: 'SELECT * FROM test',
         defaultOutputName: 'test_output',
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);
       executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
-      sanitizeFilename.mockReturnValue('test_output_flag1_1-2-3');
-      generateFlagString.mockReturnValue('flag1_1-2-3');
+      sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');
+      generateFlagString.mockReturnValue('recipientIds_1-2-3');
+      currentUserId.mockResolvedValue(user.id);
+      userById.mockResolvedValue(user);
+      Generic.mockImplementation(() => ({
+        filterRegions: jest.fn((ids) => ids.filter(id => id <= 3)),
+        getAllAccessibleRegions: jest.fn(() => [1, 2, 3])
+      }));
+    });
 
+    it('should run the query and return JSON result', async () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'test/path' })
-        .send({ flag1: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3, 4] });
+
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
     });
 
     it('should run the query and return CSV result', async () => {
-      readFlagsAndQueryFromFile.mockReturnValue({
-        flags: { flag1: { type: 'integer[]', description: 'Test Flag' } },
-        query: 'SELECT * FROM test',
-        defaultOutputName: 'test_output',
-      });
-      validateFlagValues.mockImplementation(() => {});
-      setFlags.mockResolvedValue([]);
-      executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
-      sanitizeFilename.mockReturnValue('test_output_flag1_1-2-3');
-      generateFlagString.mockReturnValue('flag1_1-2-3');
-
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'test/path', format: 'csv' })
-        .send({ flag1: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3, 4] });
+
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv');
-      expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_flag1_1-2-3.csv"');
+      expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_recipientIds_1-2-3.csv"');
     });
 
     it('should return 400 if script path is not provided', async () => {
-      const response = await request(app).post('/runQuery').send({ flag1: [1, 2, 3] });
+      const response = await request(app).post('/runQuery').send({ recipientIds: [1, 2, 3] });
       expect(response.status).toBe(400);
       expect(response.text).toBe('Script path is required');
+    });
+
+    it('should return 401 if recipientIds is an empty set', async () => {
+      Generic.mockImplementation(() => ({
+        filterRegions: jest.fn(() => []),
+        getAllAccessibleRegions: jest.fn(() => [])
+      }));
+
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'test/path' })
+        .send({});
+
+      expect(response.status).toBe(401);
     });
 
     it('should handle errors', async () => {
@@ -118,7 +144,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'test/path' })
-        .send({ flag1: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] });
+
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error executing query: Error reading query');
     });
