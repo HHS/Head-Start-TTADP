@@ -6,7 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
 
@@ -19,11 +19,13 @@ describe('Group', () => {
 
   const renderGroup = (groupId) => {
     render(
-      <MemoryRouter>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <Group match={{ params: { groupId }, path: '', url: '' }} />
-        </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <MemoryRouter initialEntries={[`/groups/${groupId}`]}>
+          <Routes>
+            <Route path="/groups/:groupId" element={<Group />} />
+          </Routes>
+        </MemoryRouter>
+      </AppLoadingContext.Provider>,
     );
   };
 

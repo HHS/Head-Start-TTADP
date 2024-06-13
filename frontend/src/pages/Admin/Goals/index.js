@@ -25,11 +25,15 @@ export default function Goals() {
             path="/admin/goals/close"
             element={<Close />}
           />
-          <Route>
-            <div>
-              <p className="usa-prose">A selection is in order</p>
-            </div>
-          </Route>
+          <Route
+            path="*"
+            element={(
+              <div>
+                <p className="usa-prose">A selection is in order</p>
+              </div>
+)}
+          />
+
         </Routes>
       </div>
     </div>
