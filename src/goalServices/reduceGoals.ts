@@ -366,6 +366,17 @@ function reducePromptsForReview(
 
     // Get the responses for the prompt sorted alphabetically.
     const { response } = currentPrompt;
+    if (!response || !response.length) {
+      // Add empty response.
+      const missingPromptKey = `${promptId}-${fullGrantName}`;
+      updatedPrompts.push({
+        key: missingPromptKey,
+        promptId,
+        recipients: [{ id: recipientId, name: fullGrantName }],
+        responses: [],
+      });
+      return;
+    }
 
     // Sort report responses alphabetically.
     response.sort();

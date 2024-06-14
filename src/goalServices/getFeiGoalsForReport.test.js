@@ -273,10 +273,11 @@ describe('getFeiGoalsForReport', () => {
     });
     await sequelize.close();
   });
+
   it('returns the correct number of goals and objectives', async () => {
     const goalsForReport = await getGoalsForReport(report.id);
     expect(goalsForReport).toHaveLength(1);
-    expect(goalsForReport[0].promptsForReview).toHaveLength(2);
+    expect(goalsForReport[0].promptsForReview).toHaveLength(3);
 
     // Check if the recipients are in the correct grant.
     const assertRecipients = goalsForReport[0].promptsForReview.filter((g) => g.responses.includes('response 1') && g.responses.includes('response 2'));
@@ -301,5 +302,14 @@ describe('getFeiGoalsForReport', () => {
     const recipient3 = assertRecipients2[0].recipients.filter((r) => r.id === recipientThree.id);
     expect(recipient3.length).toBe(1);
     expect(recipient3[0].name).toBe(`${recipientThree.name} - ${activeGrantThree.number}`);
+
+    const assertRecipients3 = goalsForReport[0].promptsForReview.filter(
+      (g) => g.responses.length === 0,
+    );
+
+    // Recipient 4 (no responses).
+    const recipient4 = assertRecipients3[0].recipients.filter((r) => r.id === recipientFour.id);
+    expect(recipient4.length).toBe(1);
+    expect(recipient4[0].name).toBe(`${recipientFour.name} - ${activeGrantFour.number}`);
   });
 });
