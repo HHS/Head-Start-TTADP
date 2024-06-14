@@ -41,6 +41,11 @@ const lastThirtyDaysParams = `startDate.win=${encodeURIComponent(lastThirtyDays)
 const allRegions = 'region.in[]=1&region.in[]=2';
 const regionInParams = 'region.in[]=1';
 
+const hoursOfTrainingUrl = '/api/widgets/trHoursOfTrainingByNationalCenter';
+const trReasonListUrl = '/api/widgets/trReasonList';
+const overviewUrl = '/api/widgets/trOverview';
+const sessionsByTopicUrl = '/api/widgets/trSessionsByTopic';
+
 describe('Regional Dashboard page', () => {
   beforeEach(async () => {
     fetchMock.get(overViewUrl, overViewResponse);
@@ -48,6 +53,20 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
     fetchMock.get(topicFrequencyGraphUrl, topicFrequencyResponse);
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`, activityReportsResponse);
+
+    fetchMock.get(overviewUrl, {
+      numReports: '0',
+      totalRecipients: '0',
+      recipientPercentage: '0%',
+      numGrants: '0',
+      numRecipients: '0',
+      sumDuration: '0',
+      numParticipants: '0',
+      numSessions: '0',
+    });
+    fetchMock.get(trReasonListUrl, []);
+    fetchMock.get(hoursOfTrainingUrl, []);
+    fetchMock.get(sessionsByTopicUrl, []);
   });
 
   afterEach(() => fetchMock.restore());
@@ -144,7 +163,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user);
-    const heading = await screen.findByText(/region 1 tta activity dashboard/i);
+    const heading = await screen.findByText(/Regional TTA activity dashboard/i);
     expect(heading).toBeVisible();
   });
 
@@ -164,7 +183,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'activity-reports');
-    const heading = await screen.findByText(/region 1 dashboard - activity reports/i);
+    const heading = await screen.findByText(/regional dashboard - activity reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -184,7 +203,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'training-reports');
-    const heading = await screen.findByText(/region 1 dashboard - training reports/i);
+    const heading = await screen.findByText(/regional dashboard - training reports/i);
     expect(heading).toBeVisible();
   });
 
@@ -204,7 +223,7 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
 
     renderDashboard(user, 'all-reports');
-    const heading = await screen.findByText(/region 1 dashboard - all reports/i);
+    const heading = await screen.findByText(/regional dashboard - all reports/i);
     expect(heading).toBeVisible();
   });
 
