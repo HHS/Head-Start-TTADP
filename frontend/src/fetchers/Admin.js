@@ -16,6 +16,12 @@ export const getRequestErrors = async ({
   return errors.json();
 };
 
+export const getRequestError = async (id) => {
+  const url = join('/', 'api', 'admin', 'requestErrors', id.toString());
+  const errors = await get(url);
+  return errors.json();
+};
+
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));
   return users.json();

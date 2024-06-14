@@ -70,7 +70,7 @@ function Admin() {
           element={<SS />}
         />
         <Route
-          path="diag"
+          path="diag/*"
           element={<Diag />}
         />
         <Route
