@@ -19,7 +19,11 @@ const ErrorDetails = ({
 ErrorDetails.propTypes = {
   title: PropTypes.string.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
-  content: PropTypes.object.isRequired,
+  content: PropTypes.object,
+};
+
+ErrorDetails.defaultProps = {
+  content: {},
 };
 
 function Diag() {

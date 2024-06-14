@@ -14,7 +14,7 @@ import useSessionSort from './useSessionSort';
  * Default offset value.
  */
 
-export default function usePerPageAndOffset(
+export default function usePerPageSortAndOffset(
   sessionSortKey,
   defaultSort = {},
   defaultPerPage = 10,
