@@ -18,11 +18,11 @@ export default function Goals() {
       <div className="ttahub-grid__content">
         <Routes>
           <Route
-            path="/admin/goals/create"
+            path="create"
             element={<Create />}
           />
           <Route
-            path="/admin/goals/close"
+            path="close"
             element={<Close />}
           />
           <Route

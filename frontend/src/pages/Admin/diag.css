@@ -1,4 +1,3 @@
-.smart-hub--overflow-auto {
-    overflow: auto;
-    max-height: 970px;
-  }
+.ttahub-admin-error-details pre{
+  white-space: pre-wrap; 
+}

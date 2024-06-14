@@ -26,7 +26,7 @@ describe('Admin landing page', () => {
 
   it('displays the cdi page', async () => {
     render(
-      <MemoryRouter initialEntries={['/admin/cdi']}>
+      <MemoryRouter initialEntries={['/cdi']}>
         <Admin />
       </MemoryRouter>,
     );
@@ -36,7 +36,7 @@ describe('Admin landing page', () => {
 
   it('displays the user page', async () => {
     render(
-      <MemoryRouter initialEntries={['/admin/users']}>
+      <MemoryRouter initialEntries={['/users']}>
         <Admin />
       </MemoryRouter>,
     );
@@ -46,7 +46,7 @@ describe('Admin landing page', () => {
 
   it('displays the flags page', async () => {
     render(
-      <MemoryRouter initialEntries={['/admin/flags']}>
+      <MemoryRouter initialEntries={['/flags']}>
         <Admin />
       </MemoryRouter>,
     );
@@ -54,22 +54,21 @@ describe('Admin landing page', () => {
     expect(flagsHeading).toBeVisible();
   });
 
-  // eslint-disable-next-line jest/no-disabled-tests
-  it.skip('displays the diag page', async () => {
-    fetchMock.get('/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D', []);
+  it('displays the diag page', async () => {
+    fetchMock.get('/api/admin/requestErrors', []);
     render(
-      <MemoryRouter initialEntries={['/admin/diag']}>
+      <MemoryRouter initialEntries={['/diag']}>
         <Admin />
       </MemoryRouter>,
     );
 
-    const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
+    const requestErrors = await screen.findByRole('heading', { name: /request errors/i });
     expect(requestErrors).toBeVisible();
   });
   it('displays the site alerts page', async () => {
     fetchMock.get('/api/admin/alerts', []);
     render(
-      <MemoryRouter initialEntries={['/admin/site-alerts']}>
+      <MemoryRouter initialEntries={['/site-alerts']}>
         <Admin />
       </MemoryRouter>,
     );
@@ -81,7 +80,7 @@ describe('Admin landing page', () => {
   it('displays the national centers page', async () => {
     fetchMock.get('/api/national-center', { centers: [], users: [] });
     render(
-      <MemoryRouter initialEntries={['/admin/national-centers']}>
+      <MemoryRouter initialEntries={['/national-centers']}>
         <Admin />
       </MemoryRouter>,
     );

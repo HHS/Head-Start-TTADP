@@ -4,6 +4,18 @@ import {
   get, put, post, destroy,
 } from './index';
 
+export const getRequestErrors = async ({
+  activePage,
+  perPage,
+  sortBy,
+  direction,
+}) => {
+  const url = join('/', 'api', 'admin', 'requestErrors');
+  const query = `?range=[${activePage},${perPage - 1}]&sort=["${sortBy}","${direction}"]`;
+  const errors = await get(url + query);
+  return errors.json();
+};
+
 export const getUsers = async () => {
   const users = await get((join('/', 'api', 'admin', 'users')));
   return users.json();

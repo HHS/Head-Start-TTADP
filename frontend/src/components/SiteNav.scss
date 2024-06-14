@@ -40,3 +40,8 @@
 .smart-hub-sitenav a:visited {
   color: #fff;
 }
+
+.smart-hub-sitenav a.active {
+  border-left: 0.25rem solid white;
+  font-weight: bold;
+}

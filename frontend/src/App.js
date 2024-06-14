@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
-
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
@@ -12,7 +10,6 @@ import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
-
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
@@ -37,7 +34,6 @@ import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
 import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
-
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
@@ -240,7 +236,7 @@ function App() {
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId/region/:regionId"
+          path="/recipient-tta-records/:recipientId/region/:regionId/*"
           element={(
             <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
               <RecipientRecord
@@ -419,7 +415,7 @@ function App() {
         />
         {admin && (
         <Route
-          path="/admin"
+          path="/admin/*"
           element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
           )}

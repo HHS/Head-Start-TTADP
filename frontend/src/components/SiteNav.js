@@ -21,12 +21,8 @@ const navLinkClasses = [
   'hover:text-no-underline',
 ].join(' ');
 
-const activeNavLinkClasses = 'border-left-05 border-white text-bold';
-const disclosureActiveLinkClasses = 'text-bold';
-
 const NavLink = ({ withinDisclosure, ...props }) => (
   <Link
-    activeClassName={withinDisclosure ? disclosureActiveLinkClasses : activeNavLinkClasses}
     className={navLinkClasses}
     {...props}
   />

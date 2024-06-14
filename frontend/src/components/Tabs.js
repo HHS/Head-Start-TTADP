@@ -18,7 +18,7 @@ export default function Tabs({
         <ul className="ttahub-tabs--tabs-ul display-flex margin-0 margin-bottom-0 padding-0">
           {tabs.map((tab) => (
             <li className={liClass} key={`tab-list-item-${tab.value}`}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={`/training-reports/${tab.value}`}>{tab.key}</NavLink>
+              <NavLink className={linkClass} to={`/training-reports/${tab.value}`}>{tab.key}</NavLink>
             </li>
           ))}
         </ul>

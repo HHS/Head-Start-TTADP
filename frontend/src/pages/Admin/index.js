@@ -19,86 +19,86 @@ function Admin() {
       <h1>Admin</h1>
       <h2>Support</h2>
       <div className="margin-bottom-2">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
+        <NavLink className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
+        <NavLink className="usa-button" to="/admin/courses">
           Courses
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/diag">
+        <NavLink className="usa-button" to="/admin/diag">
           Diag
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/goals">
+        <NavLink className="usa-button" to="/admin/goals">
           Goals
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
+        <NavLink className="usa-button" to="/admin/flags">
           Feature flags
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/national-centers">
+        <NavLink className="usa-button" to="/admin/national-centers">
           National centers
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
+        <NavLink className="usa-button" to="/admin/site-alerts">
           Site alerts
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
+        <NavLink className="usa-button" to="/admin/training-reports">
           Training Reports
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
+        <NavLink className="usa-button" to="/admin/users">
           Users
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
+        <NavLink className="usa-button" to="/admin/ss">
           SS
         </NavLink>
       </div>
       <h2>Engineer only</h2>
       <div className="margin-bottom-2">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
+        <NavLink className="usa-button" to="/admin/redis">
           Redis info
         </NavLink>
       </div>
       <Routes>
         <Route
-          path="/admin/cdi/:grantId?"
+          path="cdi/:grantId?"
           element={<Cdi />}
         />
         <Route
-          path="/admin/users/:userId?"
+          path="users/:userId?"
           element={<User />}
         />
         <Route
-          path="/admin/ss/"
-          render={({ match }) => <SS match={match} />}
+          path="ss"
+          element={<SS />}
         />
         <Route
-          path="/admin/diag/"
+          path="diag"
           element={<Diag />}
         />
         <Route
-          path="/admin/flags/"
+          path="flags"
           element={<Flags />}
         />
         <Route
-          path="/admin/site-alerts/"
+          path="site-alerts"
           element={<SiteAlerts />}
         />
         <Route
-          path="/admin/redis/"
+          path="redis"
           element={<Redis />}
         />
         <Route
-          path="/admin/national-centers/:nationalCenterId?"
+          path="national-centers/:nationalCenterId?"
           element={<NationalCenters />}
         />
         <Route
-          path="/admin/goals/"
-          render={<Goals />}
+          path="goals/*"
+          element={<Goals />}
         />
         <Route
-          path="/admin/training-reports/"
+          path="training-reports"
           element={<TrainingReports />}
         />
         <Route
-          path="/admin/courses/"
+          path="courses"
           element={<Courses />}
         />
       </Routes>

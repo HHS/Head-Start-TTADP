@@ -151,7 +151,6 @@ export default function RecipientRecord({ hasAlerts }) {
   return (
     <>
       <Helmet titleTemplate={`%s - ${recipientName} | TTA Hub`} defaultTitle="Recipient TTA Record | TTA Hub" />
-
       <Routes>
         <Route
           path="tta-history"

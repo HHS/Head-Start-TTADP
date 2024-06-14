@@ -13,7 +13,7 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { useLocation } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
-import GoalsTable from './GoalCards';
+import GoalCards from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
@@ -241,7 +241,7 @@ function GoalDataController({
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
-        <GoalsTable
+        <GoalCards
           recipientId={recipientId}
           regionId={regionId}
           filters={filters}
