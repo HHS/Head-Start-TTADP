@@ -52,9 +52,9 @@ done
 
 # Check the cf-cli v7 is available
 version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
-if [[ $version != "7" ]]; then
-    echo "Cloud Foundry CLI v7 not found. Please install it to continue"
-    echo "https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide"
+if [[ $version != "7" && $version != "8" ]]; then
+    echo "Cloud Foundry CLI v7 or v8 not found. Please install it to continue."
+    echo "https://docs.cloudfoundry.org/cf-cli/install-go-cli.html"
     exit 1
 fi
 
