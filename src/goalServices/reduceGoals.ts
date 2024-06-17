@@ -361,11 +361,9 @@ function reducePromptsForReview(
   const updatedPrompts = [...previousPrompts];
   newPrompts.forEach((currentPrompt) => {
     // Get the prompt Id.
-    const promptId = currentPrompt.promptId
-      ? currentPrompt.promptId : currentPrompt.dataValues.promptId;
+    const promptToUse = currentPrompt.promptId ? currentPrompt : currentPrompt.dataValues;
+    const { promptId, response } = promptToUse;
 
-    // Get the responses for the prompt sorted alphabetically.
-    const { response } = currentPrompt;
     if (!response || !response.length) {
       // Add empty response.
       const missingPromptKey = `${promptId}-missing`;
