@@ -368,13 +368,21 @@ function reducePromptsForReview(
     const { response } = currentPrompt;
     if (!response || !response.length) {
       // Add empty response.
-      const missingPromptKey = `${promptId}-${fullGrantName}`;
-      updatedPrompts.push({
-        key: missingPromptKey,
-        promptId,
-        recipients: [{ id: recipientId, name: fullGrantName }],
-        responses: [],
-      });
+      const missingPromptKey = `${promptId}-missing`;
+
+      // Check if prompt already exists.
+      const existingPrompt = updatedPrompts.find((pp) => pp.key === missingPromptKey);
+      if (!existingPrompt) {
+        updatedPrompts.push({
+          key: missingPromptKey,
+          promptId,
+          recipients: [{ id: recipientId, name: fullGrantName }],
+          responses: [],
+        });
+        return;
+      }
+      // If missing exists add it.
+      existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
       return;
     }
 

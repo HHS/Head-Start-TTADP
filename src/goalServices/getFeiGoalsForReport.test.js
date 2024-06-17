@@ -27,15 +27,18 @@ describe('getFeiGoalsForReport', () => {
   let goalOne;
   let goalTwo;
   let goalThree;
-  let goalFour;
+  let goalFour; // Missing root causes.
+  let goalFive; // Missing root causes.
   let recipientOne;
   let recipientTwo;
   let recipientThree;
   let recipientFour;
+  let recipientFive;
   let activeGrantOne;
   let activeGrantTwo;
   let activeGrantThree;
   let activeGrantFour;
+  let activeGrantFive;
 
   let template;
   let prompt;
@@ -58,6 +61,7 @@ describe('getFeiGoalsForReport', () => {
     recipientTwo = await createRecipient();
     recipientThree = await createRecipient();
     recipientFour = await createRecipient();
+    recipientFive = await createRecipient();
 
     // Grants.
     activeGrantOne = await createGrant({
@@ -77,6 +81,11 @@ describe('getFeiGoalsForReport', () => {
 
     activeGrantFour = await createGrant({
       recipientId: recipientFour.id,
+      status: 'Active',
+    });
+
+    activeGrantFive = await createGrant({
+      recipientId: recipientFive.id,
       status: 'Active',
     });
 
@@ -113,6 +122,13 @@ describe('getFeiGoalsForReport', () => {
       status: GOAL_STATUS.IN_PROGRESS,
       name: feiGoalText,
       grantId: activeGrantFour.id,
+      goalTemplateId: template.id,
+    });
+
+    goalFive = await createGoal({
+      status: GOAL_STATUS.IN_PROGRESS,
+      name: feiGoalText,
+      grantId: activeGrantFive.id,
       goalTemplateId: template.id,
     });
 
@@ -153,16 +169,6 @@ describe('getFeiGoalsForReport', () => {
       onApprovedAR: false,
     });
 
-    /*
-    await GoalFieldResponse.create({
-      goalTemplateFieldPromptId: prompt.id,
-      goalId: goalFour.id,
-      response: [],
-      onAR: true,
-      onApprovedAR: false,
-    });
-    */
-
     // create report
     report = await ActivityReport.create({
       activityRecipientType: 'recipient',
@@ -175,7 +181,8 @@ describe('getFeiGoalsForReport', () => {
         { activityRecipientId: recipientOne.id },
         { activityRecipientId: recipientTwo.id },
         { activityRecipientId: recipientThree.id },
-        { activityRecipientId: recipientFour.id }],
+        { activityRecipientId: recipientFour.id },
+        { activityRecipientId: recipientFive.id }],
       version: 2,
     });
 
@@ -203,6 +210,12 @@ describe('getFeiGoalsForReport', () => {
       goalId: goalFour.id,
       isActivelyEdited: false,
     });
+
+    await ActivityReportGoal.create({
+      activityReportId: report.id,
+      goalId: goalFive.id,
+      isActivelyEdited: false,
+    });
   });
   afterAll(async () => {
     // Delete ActivityReportGoals.
@@ -222,7 +235,7 @@ describe('getFeiGoalsForReport', () => {
     // Delete GoalFieldResponses.
     await GoalFieldResponse.destroy({
       where: {
-        goalId: [goalOne.id, goalTwo.id, goalThree.id, goalFour.id],
+        goalId: [goalOne.id, goalTwo.id, goalThree.id, goalFour.id, goalFive.id],
       },
     });
 
@@ -243,7 +256,7 @@ describe('getFeiGoalsForReport', () => {
     // Delete Goals.
     await Goal.destroy({
       where: {
-        id: [goalOne.id, goalTwo.id, goalThree.id, goalFour.id],
+        id: [goalOne.id, goalTwo.id, goalThree.id, goalFour.id, goalFive.id],
       },
       force: true,
     });
@@ -251,7 +264,13 @@ describe('getFeiGoalsForReport', () => {
     // Delete Grants.
     await Grant.destroy({
       where: {
-        id: [activeGrantOne.id, activeGrantTwo.id, activeGrantThree.id, activeGrantFour.id],
+        id: [
+          activeGrantOne.id,
+          activeGrantTwo.id,
+          activeGrantThree.id,
+          activeGrantFour.id,
+          activeGrantFive.id,
+        ],
       },
       individualHooks: true,
       force: true,
@@ -260,7 +279,13 @@ describe('getFeiGoalsForReport', () => {
     // Delete Recipients.
     await Recipient.destroy({
       where: {
-        id: [recipientOne.id, recipientTwo.id, recipientThree.id, recipientFour.id],
+        id: [
+          recipientOne.id,
+          recipientTwo.id,
+          recipientThree.id,
+          recipientFour.id,
+          recipientFive.id,
+        ],
       },
       force: true,
     });
@@ -303,13 +328,18 @@ describe('getFeiGoalsForReport', () => {
     expect(recipient3.length).toBe(1);
     expect(recipient3[0].name).toBe(`${recipientThree.name} - ${activeGrantThree.number}`);
 
+    // Recipients missing responses.
     const assertRecipients3 = goalsForReport[0].promptsForReview.filter(
       (g) => g.responses.length === 0,
     );
 
-    // Recipient 4 (no responses).
+    // Recipient 4 and Recipient 5 (no responses).
     const recipient4 = assertRecipients3[0].recipients.filter((r) => r.id === recipientFour.id);
     expect(recipient4.length).toBe(1);
     expect(recipient4[0].name).toBe(`${recipientFour.name} - ${activeGrantFour.number}`);
+
+    const recipient5 = assertRecipients3[0].recipients.filter((r) => r.id === recipientFive.id);
+    expect(recipient5.length).toBe(1);
+    expect(recipient5[0].name).toBe(`${recipientFive.name} - ${activeGrantFive.number}`);
   });
 });
