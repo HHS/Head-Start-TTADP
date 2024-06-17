@@ -69,7 +69,7 @@ module.exports = {
       WHERE g.id = lsc."goalId"
       RETURNING
         g.id "goalId",
-        g.status			
+        g.status
       ),
       -- 4. Update the objectives attached to the goals
       update_objectives AS (
@@ -81,7 +81,7 @@ module.exports = {
       WHERE o."goalId" = lsc."goalId"
       RETURNING
         o.id "objectiveId",
-        o.status			
+        o.status
       )
       -- 5. show stats for what was done when testing.
       SELECT
