@@ -102,5 +102,6 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
       // If we end up needing to revert this, it would be easier to use a separate
       // migration using the txid (or a similar identifier) after it's already set
+    },
   ),
 };
