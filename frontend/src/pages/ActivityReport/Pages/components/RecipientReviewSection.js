@@ -64,27 +64,27 @@ const RecipientReviewSection = () => {
     const promptsForReview = goal.promptsForReview || [];
     return (promptsForReview.length > 0 && (
       <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-1">
-        {promptsForReview.map((v, index) => (
+        {promptsForReview.map((v) => (
           <>
             <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
               {item.label}
             </div>
             <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
-              <div aria-label={`${item.label} ${index + 1}`} key={`${item.label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+              <div key={`${item.label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
                 {
-          v.responses.length
-            ? v.responses.join(', ')
-            : (
-              <div>
-                <FontAwesomeIcon icon={faTriangleExclamation} />
-                {' '}
-                Missing Information
+                  v.responses.length
+                    ? v.responses.join(', ')
+                    : (
+                      <div>
+                        <FontAwesomeIcon className="margin-right-1" icon={faTriangleExclamation} />
+                        {' '}
+                        Missing Information
+                      </div>
+                    )
+                }
               </div>
-            )
-          }
-              </div>
               <div>
-                <ul>
+                <ul className="margin-y-1 padding-left-2 font-body-2xs">
                   {v.recipients.map((r) => (
                     <li key={uuidv4()}>{r.name}</li>
                   ))}
