@@ -51,12 +51,12 @@ while [ "$1" != "" ]; do
 done
 
 # Check the cf-cli v7 is available
-version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
-if [[ $version != "7" ]]; then
-    echo "Cloud Foundry CLI v7 not found. Please install it to continue"
-    echo "https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide"
-    exit 1
-fi
+# version=$(cf version | cut -d " " -f 3 | cut -d "." -f 1)
+# if [[ $version != "7" ]]; then
+#     echo "Cloud Foundry CLI v7 not found. Please install it to continue"
+#     echo "https://github.com/cloudfoundry/cli/wiki/V7-CLI-Installation-Guide"
+#     exit 1
+# fi
 
 route=tta-smarthub-$environment
 domain=app.cloud.gov
