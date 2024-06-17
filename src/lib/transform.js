@@ -80,13 +80,44 @@ function transformRelatedModel(field, prop) {
       }
       // we sort the values
       const value = records.map((r) => (r[prop] || '')).sort().join('\n');
-      Object.defineProperty(obj, field, {
+      Object.defineProperty(obj, `${field}`, {
         value,
         enumerable: true,
       });
     }
     return obj;
   }
+  return transformer;
+}
+
+/**
+ *
+ * @param {string} field
+ * @param {Array} fieldDefs expected [{ subfield: string, label: string }]
+ * @param {*} prop
+ * @returns () => ({})
+ */
+function transformRelatedModelWithMultiFields(field, fieldDefs) {
+  function transformer(instance) {
+    const obj = {};
+    fieldDefs.forEach((fieldDef) => {
+      let records = instance[field];
+      if (records) {
+        if (!Array.isArray(records)) {
+          records = [records];
+        }
+        const value = records.map((r) => r[fieldDef.subfield]).join('\n');
+        console.log({ value });
+        console.log({ label: fieldDef.label });
+        Object.defineProperty(obj, fieldDef.label, {
+          value,
+          enumerable: true,
+        });
+      }
+    });
+    return obj;
+  }
+
   return transformer;
 }
 
@@ -210,7 +241,6 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
       name = null,
       status = null,
       createdVia = null,
-      goalTemplateId = null,
       source = null,
     } = goal || {};
     const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
@@ -220,7 +250,6 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
       goals[`goal-${goalCsvRecordNumber}-status`] = status;
       goals[`goal-${goalCsvRecordNumber}-created-from`] = createdVia;
       goals[`goal-${goalCsvRecordNumber}-source`] = source;
-      goals[`goal-${goalCsvRecordNumber}-goal-template-id`] = goalTemplateId;
       goalCsvRecordNumber += 1;
       return;
     }
@@ -301,6 +330,21 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         enumerable: true,
       });
 
+      Object.defineProperty(accum, `goal-${goalNum}-source`, {
+        value: goal.source,
+        enumerable: true,
+      });
+
+      Object.defineProperty(accum, `goal-${goalNum}-standard-ohs-goal`, {
+        value: goal.isCurated ? 'Yes' : 'No',
+        enumerable: true,
+      });
+
+      Object.defineProperty(accum, `goal-${goalNum}-fei-root-causes`, {
+        value: goal.responses.map((response) => response.response).join('\n'),
+        enumerable: true,
+      });
+
       // Created From.
       Object.defineProperty(accum, `goal-${goalNum}-created-from`, {
         value: goal.createdVia,
@@ -312,6 +356,11 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
         accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        accum[`goal-${goalNum}-source`] = `${accum[`goal-${goalNum}-source`]}\n${goal.source}`;
+        if (goal.isCurated) {
+          accum[`goal-${goalNum}-fei-root-causes`] = `${accum[`goal-${goalNum}-fei-root-causes`]}\n${goal.responses
+            .map((response) => response.response).join('\n')}`;
+        }
         goalIds[goalName].push(goalId);
       }
       return accum;
@@ -321,8 +370,6 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     if (!goalNum) {
       goalNum = 1;
     }
-
-    // same with objective num
 
     /**
      * this will start other entity objectives at 1.1, which will prevent the creation
@@ -412,6 +459,7 @@ function transformGoalsAndObjectives(report) {
         topics: aro.topics,
         files: aro.files,
         resources: aro.resources,
+        courses: aro.courses,
       }
     ));
     if (objectiveRecords) {
@@ -453,10 +501,20 @@ const arTransformers = [
   'nonECLKCResourcesUsed',
   transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModel('recipientNextSteps', 'note'),
-  transformRelatedModel('recipientNextSteps', 'completeDate'),
-  transformRelatedModel('specialistNextSteps', 'note'),
-  transformRelatedModel('specialistNextSteps', 'completeDate'),
+  transformRelatedModelWithMultiFields('recipientNextSteps', [{
+    subfield: 'note',
+    label: 'recipientNextSteps',
+  }, {
+    subfield: 'completeDate',
+    label: 'recipientNextStepsCompleteDate',
+  }]),
+  transformRelatedModelWithMultiFields('specialistNextSteps', [{
+    subfield: 'note',
+    label: 'specialistNextSteps',
+  }, {
+    subfield: 'completeDate',
+    label: 'specialistNextStepsCompleteDate',
+  }]),
   transformHTML('context'),
   transformHTML('additionalNotes'),
   'lastSaved',
