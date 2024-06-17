@@ -6,7 +6,7 @@ const singleLineLogger = (
 
 const connectionValidation = async (connection) => {
   try {
-    await connection.authenticate();
+    await connection.query('SELECT 1');
     // eslint-disable-next-line no-console
     console.info('Connection validated successfully');
   } catch (error) {
