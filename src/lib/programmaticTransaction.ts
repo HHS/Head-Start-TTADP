@@ -81,11 +81,26 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}"`)
             .join(', ');
 
-          const replacements = Object.entries(change.old_row_data)
-            .reduce((acc, [key, value]) => ({
-              ...acc,
-              [key]: value,
-            }), {});
+          const replacements = Object.entries(change.old_row_data).reduce(
+            (acc, [key, value]) => {
+              let parsedValue;
+
+              // Try to parse the value as JSON
+              try {
+                parsedValue = JSON.parse(value);
+              } catch (error) {
+                parsedValue = value; // If parsing fails, use the original value
+              }
+
+              return {
+                ...acc,
+                [key]: Array.isArray(parsedValue)
+                  ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+                  : parsedValue,
+              };
+            },
+            { id: change.data_id },
+          );
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
@@ -100,11 +115,32 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}" = :${key}`)
             .join(', ');
 
+          const replacements = Object.entries(change.old_row_data).reduce(
+            (acc, [key, value]) => {
+              let parsedValue;
+
+              // Try to parse the value as JSON
+              try {
+                parsedValue = JSON.parse(value);
+              } catch (error) {
+                parsedValue = value; // If parsing fails, use the original value
+              }
+
+              return {
+                ...acc,
+                [key]: Array.isArray(parsedValue)
+                  ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+                  : parsedValue,
+              };
+            },
+            { id: change.data_id },
+          );
+
           await sequelize.query(/* sql */ `
             UPDATE "${tableName}"
             SET ${setClause}
             WHERE id = :id;
-          `, { replacements: { ...change.old_row_data, id: change.data_id } });
+          `, { replacements });
         }
         break;
       default:
