@@ -83,13 +83,15 @@ describe('ssdi', () => {
   });
 
   describe('readFlagsAndQueryFromFile', () => {
-    it('should read flags and query from file', () => {
+    it('should read flags and query from file and remove comments', () => {
       const fileContents = `
         /*
         * - ssdi.flag1 - integer[] - Flag description
         * @defaultOutputName: test_output
         */
-        SELECT * FROM table;\n`;
+        SELECT * FROM table; -- comment
+        SELECT * FROM another_table; -- another comment
+      `;
       fs.readFileSync.mockReturnValue(fileContents);
 
       const result = readFlagsAndQueryFromFile('test/path.sql');
@@ -101,7 +103,7 @@ describe('ssdi', () => {
             description: 'Flag description',
           },
         },
-        query: 'SELECT * FROM table;',
+        query: 'SELECT * FROM table;\nSELECT * FROM another_table;',
         defaultOutputName: 'test_output',
       });
     });

@@ -46,7 +46,7 @@ describe('API Endpoints', () => {
     it('should get flags from the script', async () => {
       readFlagsAndQueryFromFile.mockReturnValue({ flags: { flag1: { type: 'integer[]', description: 'Test Flag' } } });
 
-      const response = await request(app).get('/getFlags').query({ path: 'test/path' });
+      const response = await request(app).get('/getFlags').query({ path: 'src/queries/test/path' });
       expect(response.status).toBe(200);
       expect(response.body).toEqual({ flag1: { type: 'integer[]', description: 'Test Flag' } });
     });
@@ -57,10 +57,22 @@ describe('API Endpoints', () => {
       expect(response.text).toBe('Script path is required');
     });
 
+    it('should return 400 for path traversal attempts', async () => {
+      const response = await request(app).get('/getFlags').query({ path: '../outside/path' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
+    });
+
+    it('should return 400 if script path is not within allowed directory', async () => {
+      const response = await request(app).get('/getFlags').query({ path: 'some/other/path' });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+    });
+
     it('should handle errors', async () => {
       readFlagsAndQueryFromFile.mockImplementation(() => { throw new Error('Error reading flags'); });
 
-      const response = await request(app).get('/getFlags').query({ path: 'test/path' });
+      const response = await request(app).get('/getFlags').query({ path: 'src/queries/test/path' });
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error reading flags');
     });
@@ -98,7 +110,7 @@ describe('API Endpoints', () => {
     it('should run the query and return JSON result', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'test/path' })
+        .query({ path: 'src/queries/test/path' })
         .send({ recipientIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
@@ -108,7 +120,7 @@ describe('API Endpoints', () => {
     it('should run the query and return CSV result', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'test/path', format: 'csv' })
+        .query({ path: 'src/queries/test/path', format: 'csv' })
         .send({ recipientIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
@@ -122,7 +134,19 @@ describe('API Endpoints', () => {
       expect(response.text).toBe('Script path is required');
     });
 
-    it('should return 401 if recipientIds is an empty set', async () => {
+    it('should return 400 for path traversal attempts', async () => {
+      const response = await request(app).post('/runQuery').query({ path: '../outside/path' }).send({ recipientIds: [1, 2, 3] });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
+    });
+
+    it('should return 400 if script path is not within allowed directory', async () => {
+      const response = await request(app).post('/runQuery').query({ path: 'some/other/path' }).send({ recipientIds: [1, 2, 3] });
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+    });
+
+    it('should return 401 if regionIds is an empty set', async () => {
       Generic.mockImplementation(() => ({
         filterRegions: jest.fn(() => []),
         getAllAccessibleRegions: jest.fn(() => []),
@@ -130,7 +154,7 @@ describe('API Endpoints', () => {
 
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'test/path' })
+        .query({ path: 'src/queries/test/path' })
         .send({});
 
       expect(response.status).toBe(401);
@@ -141,7 +165,7 @@ describe('API Endpoints', () => {
 
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'test/path' })
+        .query({ path: 'src/queries/test/path' })
         .send({ recipientIds: [1, 2, 3] });
 
       expect(response.status).toBe(500);
