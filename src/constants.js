@@ -261,8 +261,6 @@ const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin',
 
 const CURRENT_GOAL_SIMILARITY_VERSION = 3;
 
-const OHS_STANDARD_GOAL_TEMPLATE_IDS = [];
-
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,
   FILE_STATUSES,
@@ -299,5 +297,4 @@ module.exports = {
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,
   FEATURE_FLAGS,
-  OHS_STANDARD_GOAL_TEMPLATE_IDS,
 };
