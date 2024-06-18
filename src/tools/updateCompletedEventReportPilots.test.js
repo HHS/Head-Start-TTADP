@@ -121,4 +121,29 @@ describe('updateCompletedEventReportPilots', () => {
     expect(erp2Users.map((u) => u.userId))
       .toEqual(expect.arrayContaining([user1.id, user2.id, user3.id]));
   });
+
+  it('does not create EventReportPilotNationalCenterUser records for report owners without national centers', async () => {
+    // Create a user without a national center
+    const userWithoutNationalCenter = await createUser();
+
+    // Create an Event Report for the user without a national center
+    const erpWithoutNationalCenter = await EventReportPilot.create({
+      regionId: 1,
+      ownerId: userWithoutNationalCenter.id,
+      collaboratorIds: [],
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+    }, { individualHooks: false });
+
+    await updateCompletedEventReportPilots();
+
+    const erpNationalCenterUsers = await EventReportPilotNationalCenterUser.findAll({
+      where: { eventReportPilotId: erpWithoutNationalCenter.id },
+    });
+
+    expect(erpNationalCenterUsers).toHaveLength(0);
+
+    // Clean up the created test data
+    await EventReportPilot.destroy({ where: { id: erpWithoutNationalCenter.id } });
+    await User.destroy({ where: { id: userWithoutNationalCenter.id } });
+  });
 });
