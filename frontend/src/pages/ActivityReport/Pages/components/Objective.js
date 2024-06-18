@@ -18,11 +18,10 @@ import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
-  OBJECTIVE_RESOURCES,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
 } from './goalValidator';
-import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
@@ -112,7 +111,8 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].resources`,
     rules: {
       validate: {
-        allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
+        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
+        noDisallowedUrls,
       },
     },
     defaultValue: objective.resources,

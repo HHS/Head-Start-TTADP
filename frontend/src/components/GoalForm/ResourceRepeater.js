@@ -11,7 +11,6 @@ import QuestionTooltip from './QuestionTooltip';
 import URLInput from '../URLInput';
 import colors from '../../colors';
 import './ResourceRepeater.scss';
-import { OBJECTIVE_LINK_ERROR } from './constants';
 
 export default function ResourceRepeater({
   resources,
@@ -44,7 +43,7 @@ export default function ResourceRepeater({
 
   const updateResource = (value, i) => {
     const newResources = [...resources];
-    const toUpdate = { ...newResources[i], value };
+    const toUpdate = { ...newResources[i], value: value.trim() };
     newResources.splice(i, 1, toUpdate);
     setResources(newResources);
   };
@@ -64,7 +63,7 @@ export default function ResourceRepeater({
               Enter one resource per field. To enter more resources, select “Add new resource”
             </span>
           </Fieldset>
-          {error.props.children ? OBJECTIVE_LINK_ERROR : null}
+          {error.props.children ? error : null}
           <div className="ttahub-resource-repeater">
             { resources.map((r, i) => (
               <div key={r.key} className="display-flex" id="resources">
@@ -77,7 +76,7 @@ export default function ResourceRepeater({
                   id={`resource-${i + 1}`}
                   onBlur={validateResources}
                   onChange={({ target: { value } }) => updateResource(value, i)}
-                  value={r.value}
+                  value={r.value || ''}
                   disabled={isLoading}
                 />
                 { resources.length > 1 ? (
