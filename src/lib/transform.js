@@ -357,8 +357,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
         accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
         accum[`goal-${goalNum}-source`] = uniq([...accum[`goal-${goalNum}-source`].split('\n'), goal.source]).join('\n');
         if (goal.isCurated) {
-          accum[`goal-${goalNum}-fei-root-causes`] = `${accum[`goal-${goalNum}-fei-root-causes`]}\n${goal.responses
-            .map((response) => response.response).join('\n')}`;
+          accum[`goal-${goalNum}-fei-root-causes`] = uniq([...accum[`goal-${goalNum}-fei-root-causes`].split('\n'), ...goal.responses.map((response) => response.response)]).join('\n');
         }
         goalIds[goalName].push(goalId);
       }
