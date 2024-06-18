@@ -6,9 +6,14 @@ const singleLineLogger = (
 
 const connectionValidation = async (connection) => {
   try {
-    await connection.query('SELECT 1');
+    // eslint-disable-next-line no-underscore-dangle
+    if (!connection._invalid && !connection._ending) {
+      return false;
+    }
+    const result = await connection.query('SELECT 1');
     // eslint-disable-next-line no-console
     console.info('Connection validated successfully');
+    return !!result;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Connection validation failed:', {
@@ -39,6 +44,7 @@ module.exports = {
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -52,6 +58,7 @@ module.exports = {
     logging: false,
     minifyAliases: true,
     pool: {
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -66,6 +73,7 @@ module.exports = {
     logging: singleLineLogger,
     minifyAliases: true,
     pool: {
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -83,6 +91,7 @@ module.exports = {
       ssl: true,
     },
     pool: {
+      max: 10,
       validate: connectionValidation,
     },
   },
