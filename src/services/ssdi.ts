@@ -115,6 +115,7 @@ const readFlagsAndQueryFromFile = (
 
   // Join the query lines and remove leading and trailing blank lines
   const query = queryLines
+    .map((line) => line.replace(/--.*$/, ''))
     .join('\n')
     .replace(/^\s*\n|\s*\n$/g, '')
     .replace(/^\s*/, '');
