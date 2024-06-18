@@ -107,8 +107,6 @@ function transformRelatedModelWithMultiFields(field, fieldDefs) {
           records = [records];
         }
         const value = records.map((r) => r[fieldDef.subfield]).join('\n');
-        console.log({ value });
-        console.log({ label: fieldDef.label });
         Object.defineProperty(obj, fieldDef.label, {
           value,
           enumerable: true,
