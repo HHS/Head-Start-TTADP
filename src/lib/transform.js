@@ -1,5 +1,6 @@
 import moment from 'moment';
 import md5 from 'md5';
+import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
 import { DATE_FORMAT } from '../constants';
 
@@ -266,7 +267,7 @@ function updateObjectiveWithRelatedModelData(
   accum,
   objectiveId,
 ) {
-  const relatedSimple = relation.map((t) => t[relationKey]);
+  const relatedSimple = (relation || []).map((t) => t[relationKey]);
   Object.defineProperty(accum, `objective-${objectiveId}-${relationLabel}`, {
     value: relatedSimple.join('\n'),
     enumerable: true,
@@ -354,7 +355,7 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
         accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
-        accum[`goal-${goalNum}-source`] = `${accum[`goal-${goalNum}-source`]}\n${goal.source}`;
+        accum[`goal-${goalNum}-source`] = uniq([...accum[`goal-${goalNum}-source`].split('\n'), goal.source]).join('\n');
         if (goal.isCurated) {
           accum[`goal-${goalNum}-fei-root-causes`] = `${accum[`goal-${goalNum}-fei-root-causes`]}\n${goal.responses
             .map((response) => response.response).join('\n')}`;
