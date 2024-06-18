@@ -97,6 +97,17 @@ const reindexTable = async (model, triggeredById = null) => tableMaintenanceComm
 );
 
 /**
+ * Asynchronous function calling a stored procedure that corrects onApprovedAR and onAR flags.
+ * @returns {Promise} A promise that resolves when the stored procedure completes.
+ */
+const correctArFlags = async (triggeredById = null) => tableMaintenanceCommand(
+  'SELECT correct_ar_flags()', // SQL command to reindex a table
+  MAINTENANCE_CATEGORY.DB, // Maintenance category for database maintenance commands
+  MAINTENANCE_TYPE.CORRECT_AR_FLAGS, // Maintenance type for reindexing
+  triggeredById,
+);
+
+/**
  * This function vacuums all tables in the database using Sequelize ORM.
  * @param {number} offset - The starting index of the models to vacuum.
  * @param {number} limit - The number of models to vacuum.
@@ -178,8 +189,10 @@ const dailyMaintenance = async (offset = 0, limit = numOfModels) => maintenanceC
       await Promise.all([vacuumTablesPromise]);
       // Reindex tables to optimize queries.
       const reindexTablesPromise = reindexTables(offset, limit, triggeredById);
-      // Wait for both promises to resolve.
-      const results = await Promise.all([vacuumTablesPromise, reindexTablesPromise]);
+      // Correct onApprovedAR and onAR flags for Goals and Objectives.
+      const correctArFlagsPromise = correctArFlags(triggeredById);
+      // Wait for all promises to resolve.
+      const results = await Promise.all([vacuumTablesPromise, reindexTablesPromise, correctArFlagsPromise]);
 
       // Return an object indicating whether all promises resolved successfully.
       return { isSuccessful: results.every((r) => r === true) };
