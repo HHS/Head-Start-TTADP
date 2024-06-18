@@ -6,11 +6,28 @@ const singleLineLogger = (
 
 const connectionValidation = async (connection) => {
   try {
+    /*
+    * The following two checks are based on the default implementation in postgres found:
+    * https://github.com/sequelize/sequelize/blob/1b47a0fda94668459d264de41e21802bee8c9328/packages/postgres/src/connection-manager.ts#L252
+    */
     // eslint-disable-next-line no-underscore-dangle
-    if (!connection._invalid && !connection._ending) {
+    if (connection._invalid) {
+      console.info('Connection invalid');
       return false;
     }
-    const result = await connection.query('SELECT 1');
+    // eslint-disable-next-line no-underscore-dangle
+    if (connection._ending) {
+      console.info('Connection ending');
+      return false;
+    }
+
+    const queryConfig = {
+      text: 'SELECT 1',
+      // Set the timeout in milliseconds
+      statement_timeout: 1500, // Adjust the timeout value as needed
+    };
+
+    const result = await connection.query(queryConfig);
     // eslint-disable-next-line no-console
     console.info('Connection validated successfully');
     return !!result;
