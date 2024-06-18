@@ -381,6 +381,8 @@ function reducePromptsForReview(
       }
       // If missing exists add it.
       existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
+      // Sort recipients alphabetically.
+      existingPrompt.recipients.sort((a, b) => a.name.localeCompare(b.name));
       return;
     }
 
@@ -401,6 +403,8 @@ function reducePromptsForReview(
     } else {
       // It exists add this recipient.
       existingPrompt.recipients.push({ id: recipientId, name: fullGrantName });
+      // Sort recipients alphabetically.
+      existingPrompt.recipients.sort((a, b) => a.name.localeCompare(b.name));
     }
   });
   return updatedPrompts;
