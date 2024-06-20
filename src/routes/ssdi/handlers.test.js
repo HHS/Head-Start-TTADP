@@ -1,6 +1,6 @@
-const request = require('supertest');
-const express = require('express');
-const {
+import request from 'supertest';
+import express from 'express';
+import {
   listQueryFiles,
   readFlagsAndQueryFromFile,
   validateFlagValues,
@@ -8,13 +8,30 @@ const {
   sanitizeFilename,
   generateFlagString,
   executeQuery,
-  currentUserId,
-  userById,
-} = require('../../services/ssdi');
-const { listQueries, getFlags, runQuery } = require('./handlers');
-const Generic = require('../../policies/generic');
+} from '../../services/ssdi';
+import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
+import { listQueries, getFlags, runQuery } from './handlers';
+import Generic from '../../policies/generic';
 
-jest.mock('../../services/ssdi');
+jest.mock('../../services/ssdi', () => ({
+  listQueryFiles: jest.fn(),
+  readFlagsAndQueryFromFile: jest.fn(),
+  validateFlagValues: jest.fn(),
+  setFlags: jest.fn(),
+  sanitizeFilename: jest.fn(),
+  generateFlagString: jest.fn(),
+  executeQuery: jest.fn(),
+}));
+
+jest.mock('../../services/currentUser', () => ({
+  currentUserId: jest.fn(),
+}));
+
+jest.mock('../../services/users', () => ({
+  userById: jest.fn(),
+}));
+
 jest.mock('../../policies/generic');
 
 const app = express();
@@ -96,11 +113,11 @@ describe('API Endpoints', () => {
       });
       validateFlagValues.mockImplementation(() => {});
       setFlags.mockResolvedValue([]);
-      executeQuery.mockResolvedValue([[{ id: 1, name: 'Test' }]]);
+      executeQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
       sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');
       generateFlagString.mockReturnValue('recipientIds_1-2-3');
-      currentUserId.mockResolvedValue(Promise.resolve(user.id));
-      userById.mockResolvedValue(Promise.resolve(user));
+      currentUserId.mockResolvedValue(user.id);
+      userById.mockResolvedValue(user);
       Generic.mockImplementation(() => ({
         filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
         getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
@@ -124,7 +141,7 @@ describe('API Endpoints', () => {
         .send({ recipientIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
-      expect(response.headers['content-type']).toBe('text/csv');
+      expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
       expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_recipientIds_1-2-3.csv"');
     });
 
