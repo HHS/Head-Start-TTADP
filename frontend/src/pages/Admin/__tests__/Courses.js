@@ -1,16 +1,23 @@
 import '@testing-library/jest-dom';
+import { Router } from 'react-router';
 import React from 'react';
 import {
   render,
   act,
   screen,
 } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import Courses from '../Courses';
 
 describe('Courses', () => {
   const renderTest = () => {
-    render(<Courses />);
+    const history = createMemoryHistory();
+    render(
+      <Router history={history}>
+        <Courses />
+      </Router>,
+    );
   };
 
   beforeEach(() => {
