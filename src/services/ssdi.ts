@@ -126,7 +126,6 @@ const readFlagsAndQueryFromFile = (
   return cachedQuery;
 };
 
-
 // Function to validate the type of the flag values
 const validateType = (
   expectedType: string,
