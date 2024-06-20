@@ -186,6 +186,14 @@ test.describe('get /recipient', () => {
         id: Joi.number(),
         isCurated: Joi.boolean(),
         prompts: Joi.object(),
+        promptsForReview: Joi.array().items(Joi.object({
+          key: Joi.string(),
+          recipients: Joi.array().items(Joi.object({
+            id: Joi.number(),
+            name: Joi.string(),
+          })),
+          responses: Joi.array().items(Joi.string()),
+        })),
         name: Joi.string(),
         source: Joi.object(),
         goalTemplateId: Joi.number().allow(null),
