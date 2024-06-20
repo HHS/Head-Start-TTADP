@@ -185,4 +185,55 @@ describe('RecipientReviewSection', () => {
     expect(screen.queryAllByText(/Resource links/i).length).toBe(3);
     expect(screen.queryAllByText(/Resource attachments/i).length).toBe(3);
   });
+
+  it('renders fei response correctly', async () => {
+    RenderReviewSection([{
+      ...defaultGoalsAndObjectives[0],
+      promptsForReview: [
+        {
+          key: 'Root Cause 1',
+          promptId: 1,
+          prompt: 'Prompt 1',
+          recipients: [{ id: 1, name: 'Recipient 1' }, { id: 2, name: 'Recipient 2' }],
+          responses: ['Response 1', 'Response 2'],
+        },
+        {
+          key: 'Root Cause 2',
+          promptId: 1,
+          prompt: 'Prompt 2',
+          recipients: [{ id: 3, name: 'Recipient 3' }, { id: 4, name: 'Recipient 4' }],
+          responses: ['Response 3'],
+        },
+        {
+          key: 'Root Cause 3',
+          promptId: 1,
+          prompt: 'Prompt 3',
+          recipients: [{ id: 3, name: 'Recipient 5' }],
+          responses: [],
+        },
+      ],
+    }]);
+
+    // Assert generic goal information is displayed.
+    expect(screen.queryAllByText(/Goal summary/i).length).toBe(1);
+    expect(screen.getByText(/this is my 1st goal title/i)).toBeInTheDocument();
+
+    // Expect the text 'Root cause' to be displayed 3 times.
+    expect(screen.queryAllByText(/Root cause/i).length).toBe(3);
+
+    // Assert Response 1 and Response 2 are displayed.
+    expect(screen.getByText(/response 1, response 2/i)).toBeInTheDocument();
+
+    // Assert Response 3 is displayed.
+    expect(screen.getByText('Response 3')).toBeInTheDocument();
+
+    // Assert that the correct number of recipients are displayed.
+    expect(screen.queryAllByText(/Recipient 1/).length).toBe(1);
+    expect(screen.queryAllByText(/Recipient 2/).length).toBe(1);
+    expect(screen.queryAllByText(/Recipient 3/).length).toBe(1);
+    expect(screen.queryAllByText(/Recipient 5/).length).toBe(1);
+
+    // Assert 'Missing information' is displayed once.
+    expect(screen.queryAllByText(/Missing Information/).length).toBe(1);
+  });
 });
