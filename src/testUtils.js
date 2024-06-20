@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
@@ -107,6 +108,16 @@ export async function createGrant(grant = {}) {
   }
 
   return Grant.create({ ...defaultGrant(), ...grant, recipientId: g.id });
+}
+
+export async function createGrants(grantTmpl = {}, num = 1) {
+  const grants = [];
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < num; i++) {
+    const grant = await createGrant(grantTmpl);
+    grants.push(grant);
+  }
+  return grants;
 }
 
 export async function createReport(report) {
