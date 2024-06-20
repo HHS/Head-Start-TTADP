@@ -109,16 +109,15 @@ const readFlagsAndQueryFromFile = (
         defaultOutputName = defaultOutputNameMatch[1].trim();
       }
     } else {
-      queryLines.push(line);
+      queryLines.push(line.trim()); // Trim spaces from each query line
     }
   });
 
   // Join the query lines and remove leading and trailing blank lines
   const query = queryLines
-    .map((line) => line.replace(/--.*$/, ''))
+    .map((line) => line.replace(/--.*$/, '').trim())
     .join('\n')
-    .replace(/^\s*\n|\s*\n$/g, '')
-    .replace(/^\s*/, '');
+    .replace(/^\s*\n|\s*\n$/g, '');
 
   const cachedQuery: CachedQuery = { flags, query, defaultOutputName };
   // Cache the parsed query data
@@ -126,6 +125,7 @@ const readFlagsAndQueryFromFile = (
 
   return cachedQuery;
 };
+
 
 // Function to validate the type of the flag values
 const validateType = (

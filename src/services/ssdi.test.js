@@ -194,7 +194,7 @@ describe('ssdi', () => {
     it('should throw an error if the query is not a string', async () => {
       const invalidQuery = 123;
 
-      await expect(executeQuery(invalidQuery as unknown as string)).rejects.toThrow('The query must be a string');
+      await expect(executeQuery(invalidQuery)).rejects.toThrow('The query must be a string');
     });
 
     it('should set the transaction to READ ONLY', async () => {
