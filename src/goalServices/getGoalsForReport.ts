@@ -26,6 +26,7 @@ const {
   Topic,
   Course,
   File,
+  Program,
 } = db;
 
 export default async function getGoalsForReport(reportId: number) {
@@ -48,7 +49,8 @@ export default async function getGoalsForReport(reportId: number) {
               'options', gtfp.options,
               'validations', gtfp.validations,
               'response', gfr.response,
-              'reportResponse', argfr.response
+              'reportResponse', argfr.response,
+              'grantId', "Goal"."grantId"
             ))
           FROM "GoalTemplateFieldPrompts" gtfp
           LEFT JOIN "GoalFieldResponses" gfr
@@ -87,6 +89,11 @@ export default async function getGoalsForReport(reportId: number) {
         model: Grant,
         as: 'grant',
         required: true,
+        include: [{
+          model: Program,
+          as: 'programs',
+          attributes: ['programType'],
+        }],
       },
       {
         separate: true,
