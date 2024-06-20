@@ -1,4 +1,6 @@
 import React from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuidv4 } from 'uuid';
 import { useFormContext } from 'react-hook-form';
 import { reportIsEditable } from '../../../../utils';
@@ -24,6 +26,8 @@ const RecipientReviewSection = () => {
       items: [
         { label: 'Recipient\'s goal', name: 'name' },
         { label: 'Goal source', name: 'source' },
+        { label: 'Goal number', name: 'goalNumber' },
+        { label: 'Root cause', name: 'promptsForReview' },
         {
           label: 'Anticipated close date', name: 'endDate',
         },
@@ -56,8 +60,50 @@ const RecipientReviewSection = () => {
     },
   ];
 
-  const buildGoalReview = (goal) => goalSection[0].items.map((item) => (
-    <>
+  const buildFeiRootCauseReviewSection = (item, goal) => {
+    const promptsForReview = goal.promptsForReview || [];
+    return (promptsForReview.length > 0 && (
+      <div className="grid-row margin-bottom-3 desktop:margin-bottom-0 margin-top-1">
+        {promptsForReview.map((v) => (
+          <>
+            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6  font-sans-2xs desktop:font-sans-sm text-bold desktop:text-normal">
+              {item.label}
+            </div>
+            <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
+              <div key={`${item.label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+                {
+                  v.responses.length
+                    ? v.responses.join(', ')
+                    : (
+                      <div>
+                        <FontAwesomeIcon className="margin-right-1" icon={faTriangleExclamation} />
+                        {' '}
+                        Missing Information
+                      </div>
+                    )
+                }
+              </div>
+              <div>
+                <ul className="margin-y-1 padding-left-2 font-body-2xs">
+                  {v.recipients.map((r) => (
+                    <li key={uuidv4()}>{r.name}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </>
+        ))}
+      </div>
+    )
+    );
+  };
+
+  const buildGoalReview = (goal) => goalSection[0].items.map((item) => {
+    if (item.label === 'Root cause') {
+      return buildFeiRootCauseReviewSection(item, goal);
+    }
+
+    return (
       <ReviewItem
         key={uuidv4()}
         label={item.label}
@@ -66,8 +112,8 @@ const RecipientReviewSection = () => {
         sortValues={item.sort}
         customValue={goal}
       />
-    </>
-  ));
+    );
+  });
 
   const buildObjectiveReview = (objectives, isLastGoal) => {
     const returnObjectives = objectives.map(
