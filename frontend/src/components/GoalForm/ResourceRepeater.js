@@ -1,4 +1,5 @@
 import React from 'react';
+import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -18,10 +19,12 @@ export default function ResourceRepeater({
   error,
   validateResources,
   toolTipText,
-  validateOnRemove,
   isLoading,
 }) {
   const addResource = () => {
+    if ((error.props.children) || resources.some((r) => !r.value)) {
+      return;
+    }
     const newResources = [...resources, { key: uuidv4(), value: '' }];
     setResources(newResources);
   };
@@ -30,15 +33,7 @@ export default function ResourceRepeater({
     const newResources = [...resources];
     newResources.splice(i, 1);
     setResources(newResources);
-
-    // This is an attempt to handle on remove validation for resources.
-    // the AR and RTR use two different approaches to validation.
-    // This works around it by allowing the parent component to pass in a validation function.
-    if (validateOnRemove) {
-      validateOnRemove(newResources);
-    } else {
-      validateResources();
-    }
+    validateResources();
   };
 
   const updateResource = (value, i) => {
@@ -66,7 +61,7 @@ export default function ResourceRepeater({
           {error.props.children ? error : null}
           <div className="ttahub-resource-repeater">
             { resources.map((r, i) => (
-              <div key={r.key} className="display-flex" id="resources">
+              <div key={r.key} className={`display-flex${r.value && !isValidResourceUrl(r.value) ? ' ttahub-resource__error' : ''}`} id="resources">
                 <Label htmlFor={`resource-${i + 1}`} className="sr-only">
                   Resource
                   {' '}
@@ -112,11 +107,9 @@ ResourceRepeater.propTypes = {
   validateResources: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   toolTipText: PropTypes.string,
-  validateOnRemove: PropTypes.func,
 };
 
 ResourceRepeater.defaultProps = {
   isLoading: false,
   toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
-  validateOnRemove: null,
 };
