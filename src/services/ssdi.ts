@@ -204,6 +204,8 @@ export {
   Flags,
   FlagValues,
   QueryFile,
+  queryFileCache,
+  queryDataCache,
   listQueryFiles,
   readNameAndDescriptionFromFile,
   readFlagsAndQueryFromFile,

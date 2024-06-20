@@ -2,6 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import db from '../models';
 import {
+  queryFileCache,
+  queryDataCache,
   listQueryFiles,
   readNameAndDescriptionFromFile,
   readFlagsAndQueryFromFile,
@@ -21,6 +23,12 @@ jest.mock('../models', () => ({
     QueryTypes: { SELECT: 'SELECT', RAW: 'RAW' },
   },
 }));
+
+// Clear the caches before each test
+beforeEach(() => {
+  queryFileCache.clear();
+  queryDataCache.clear();
+});
 
 describe('ssdi', () => {
   describe('readNameAndDescriptionFromFile', () => {
@@ -80,6 +88,25 @@ describe('ssdi', () => {
         },
       ]);
     });
+
+    it('should return cached query file data if available', () => {
+      fs.readdirSync.mockReturnValue(['file1.sql']);
+      const cachedQueryFile = {
+        name: 'CachedName',
+        description: 'Cached description',
+        filePath: 'test/directory/file1.sql',
+        defaultOutputName: 'cached_output',
+      };
+
+      // Set the cache with the cachedQueryFile data
+      queryFileCache.set('test/directory/file1.sql', cachedQueryFile);
+
+      const result = listQueryFiles('test/directory');
+      expect(result).toEqual([cachedQueryFile]);
+
+      // Ensure fs.readFileSync is not called since data is from cache
+      expect(fs.readFileSync).not.toHaveBeenCalled();
+    });
   });
 
   describe('readFlagsAndQueryFromFile', () => {
@@ -106,6 +133,29 @@ describe('ssdi', () => {
         query: 'SELECT * FROM table;\nSELECT * FROM another_table;',
         defaultOutputName: 'test_output',
       });
+    });
+
+    it('should return cached query data if available', () => {
+      const cachedQuery = {
+        flags: {
+          flag1: {
+            type: 'integer[]',
+            name: 'flag1',
+            description: 'Cached Flag description',
+          },
+        },
+        query: 'SELECT * FROM cached_table;',
+        defaultOutputName: 'cached_output',
+      };
+
+      // Set the cache with the cachedQuery data
+      queryDataCache.set('test/path.sql', cachedQuery);
+
+      const result = readFlagsAndQueryFromFile('test/path.sql');
+      expect(result).toEqual(cachedQuery);
+
+      // Ensure fs.readFileSync is not called since data is from cache
+      expect(fs.readFileSync).not.toHaveBeenCalled();
     });
   });
 
