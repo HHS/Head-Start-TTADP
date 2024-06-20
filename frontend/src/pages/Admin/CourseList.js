@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Label, TextInput } from '@trussworks/react-uswds';
+import { Link } from 'react-router-dom';
 
 function CourseList({ courses }) {
   const [filter, setFilter] = useState('');
@@ -33,7 +34,7 @@ function CourseList({ courses }) {
       />
       {filteredCourses.map((course) => (
         <div key={course.id} className="margin-bottom-1">
-          <a href={`/admin/course/${course.id}`}>{course.name}</a>
+          <Link to={`/admin/course/${course.id}`}>{course.name}</Link>
         </div>
       ))}
     </div>
