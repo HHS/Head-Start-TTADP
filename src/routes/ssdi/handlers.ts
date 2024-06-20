@@ -63,6 +63,14 @@ const runQuery = async (req: Request, res: Response) => {
     res.status(400).send('Script path is required');
     return;
   }
+  if (scriptPath.includes('../')) {
+    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
+    return;
+  }
+  if (!scriptPath.startsWith('src/queries/')) {
+    res.status(400).json({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+    return;
+  }
 
   try {
     const { flags, query, defaultOutputName } = readFlagsAndQueryFromFile(scriptPath);
