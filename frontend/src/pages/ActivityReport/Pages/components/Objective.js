@@ -111,8 +111,8 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].resources`,
     rules: {
       validate: {
-        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
         noDisallowedUrls,
+        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
       },
     },
     defaultValue: objective.resources,
