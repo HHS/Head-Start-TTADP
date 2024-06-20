@@ -16,6 +16,10 @@ import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
 describe('Programmatic Transaction', () => {
+  beforeAll(async () => {
+    await sequelize.sync({ force: true }); // Reset and synchronize the database schema
+  });
+
   afterAll(async () => {
     await sequelize.close();
   });
@@ -251,6 +255,11 @@ describe('Programmatic Transaction', () => {
     const goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
       where: { title: 'FEI root cause' },
     });
+
+    // Ensure the prompt is found before proceeding
+    if (!goalTemplateFieldPrompt) {
+      throw new Error('GoalTemplateFieldPrompt not found');
+    }
 
     await GoalFieldResponse.create({
       goalId: faker.datatype.number(),
