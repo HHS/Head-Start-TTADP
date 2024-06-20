@@ -140,7 +140,7 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
-      await selectEvent.select(grantNumberInput, ['number EHS, Active']);
+      await selectEvent.select(grantNumberInput, ['number EHS - Active']);
       expect(apply).toHaveBeenCalled();
     });
   });
