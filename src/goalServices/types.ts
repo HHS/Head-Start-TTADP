@@ -18,6 +18,18 @@ interface IPrompt {
   dataValues?: IPrompt;
   toJSON?: () => IPrompt;
   allGoalsHavePromptResponse?: boolean;
+  grantId?: number;
+}
+
+interface IReviewPrompt {
+  key: string;
+  promptId: number;
+  responses: string[];
+  recipients:
+  {
+    id: number;
+    name: string;
+  }[];
 }
 
 interface ITopic {
@@ -117,6 +129,7 @@ interface IGrant {
     }
   }
   goalId?: number;
+  recipientNameWithPrograms: string;
 }
 
 interface IGrantModelInstance extends IGrant {
@@ -253,6 +266,7 @@ interface IReducedGoal {
   prompts : {
     [x: string]: IPrompt[];
   } | IPrompt[];
+  promptsForReview: IReviewPrompt[];
   statusChanges?: { oldStatus: string }[];
   goalNumber: string;
   goalNumbers: string[];
@@ -339,4 +353,5 @@ export {
   // -- other entity objective -- //
   IOtherEntityObjective,
   IOtherEntityObjectiveModelInstance,
+  IReviewPrompt,
 };
