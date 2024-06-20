@@ -19,27 +19,24 @@ import TabsNav from '../../components/TabsNav';
 import Dashboard from './components/Dashboard';
 import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 
-const pageConfig = (userHasOnlyOneRegion, defaultRegion) => {
-  const prefix = `${userHasOnlyOneRegion ? `Region ${defaultRegion}` : 'Regional'}`;
-  return ({
-    'training-reports': {
-      h1Text: `${prefix} dashboard - Training Reports`,
-      showFilters: false,
-    },
-    'all-reports': {
-      h1Text: `${prefix} dashboard - All reports`,
-      showFilters: false,
-    },
-    'activity-reports': {
-      h1Text: `${prefix} dashboard - Activity Reports`,
-      showFilters: true,
-    },
-    default: {
-      h1Text: `${prefix} TTA activity dashboard`,
-      showFilters: true,
-    },
-  });
-};
+const pageConfig = () => ({
+  'training-reports': {
+    h1Text: 'Regional dashboard - Training Reports',
+    showFilters: false,
+  },
+  'all-reports': {
+    h1Text: 'Regional dashboard - All reports',
+    showFilters: false,
+  },
+  'activity-reports': {
+    h1Text: 'Regional dashboard - Activity Reports',
+    showFilters: true,
+  },
+  default: {
+    h1Text: 'Regional TTA activity dashboard',
+    showFilters: true,
+  },
+});
 
 const links = [
   {
