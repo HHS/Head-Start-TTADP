@@ -14,12 +14,6 @@ export default (sequelize, DataTypes) => {
       ObjectiveTemplate.belongsTo(models.Region, { foreignKey: 'regionId', as: 'region' });
       ObjectiveTemplate.hasMany(models.Objective, { foreignKey: 'objectiveTemplateId', as: 'objectives' });
       ObjectiveTemplate.hasMany(models.GoalTemplateObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'goalTemplateObjectiveTemplates' });
-      ObjectiveTemplate.belongsToMany(models.GoalTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'objectiveTemplateId',
-        otherKey: 'goalTemplateId',
-        as: 'goalTemplates',
-      });
     }
   }
   ObjectiveTemplate.init({
