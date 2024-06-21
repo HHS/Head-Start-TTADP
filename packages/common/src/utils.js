@@ -1,4 +1,27 @@
-const { GOAL_STATUS } = require('./constants');
+const { GOAL_STATUS, DISALLOWED_URLS, VALID_URL_REGEX } = require('./constants');
+
+function isValidResourceUrl(attempted) {
+  try {
+    const httpOccurences = (attempted.match(/http/gi) || []).length;
+    if (
+      httpOccurences !== 1
+      || DISALLOWED_URLS.some((disallowed) => disallowed.url === attempted)
+    ) {
+      return false;
+    }
+
+    const matches = [...attempted.matchAll(VALID_URL_REGEX)].map(({ groups }) => groups);
+
+    if (matches?.length !== 1) {
+      return false;
+    }
+
+    const u = new URL(attempted);
+    return (u !== '');
+  } catch (e) {
+    return false;
+  }
+};
 
 /**
  * Given a list of goal statuses, determine the final status
@@ -31,5 +54,6 @@ function determineMergeGoalStatus(statuses) {
 }
 
 module.exports = {
-  determineMergeGoalStatus
+  determineMergeGoalStatus,
+  isValidResourceUrl,
 }
