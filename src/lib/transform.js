@@ -32,6 +32,7 @@ function transformSimpleValue(instance, field) {
     value = value.sort().join('\n');
   }
   const obj = {};
+
   Object.defineProperty(obj, field, {
     value,
     enumerable: true,
@@ -355,7 +356,11 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
         accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
-        accum[`goal-${goalNum}-source`] = uniq([...accum[`goal-${goalNum}-source`].split('\n'), goal.source]).join('\n');
+        if (accum[`goal-${goalNum}-source`]) {
+          accum[`goal-${goalNum}-source`] = uniq([...(accum[`goal-${goalNum}-source`]).split('\n'), goal.source]).join('\n');
+        } else {
+          accum[`goal-${goalNum}-source`] = goal.source;
+        }
         if (goal.isCurated) {
           accum[`goal-${goalNum}-fei-root-causes`] = uniq([...accum[`goal-${goalNum}-fei-root-causes`].split('\n'), ...goal.responses.map((response) => response.response)]).join('\n');
         }

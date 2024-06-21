@@ -135,6 +135,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'TTA type',
         },
         {
+          key: 'language',
+          header: 'Language',
+        },
+        {
           key: 'deliveryMethod',
           header: 'Delivery method',
         },

@@ -640,6 +640,58 @@ describe('activityReportToCsvRecord', () => {
     });
   });
 
+  it('handles a null goal source', () => {
+    const objectives = mockObjectives.map((mo, i) => {
+      if (i === 0) {
+        return {
+          ...mo,
+          title: 'same title',
+          goal: {
+            ...mo.goal,
+            source: null,
+            name: 'same name',
+          },
+          topics: [{ name: 'Topic 1' }],
+          resources: [{ url: 'https://test.gov' }],
+          files: [{ originalFileName: 'TestFile.docx' }],
+          courses: [{ name: 'Other' }],
+        };
+      }
+
+      return {
+        ...mo,
+        title: 'same title',
+        goal: {
+          ...mo.goal,
+          name: 'same name',
+        },
+        topics: [{ name: 'Topic 1' }],
+        resources: [{ url: 'https://test.gov' }],
+        files: [{ originalFileName: 'TestFile.docx' }],
+        courses: [{ name: 'Other' }],
+      };
+    });
+
+    const output = makeGoalsAndObjectivesObject(objectives);
+    expect(output).toEqual({
+      'goal-1-id': '2080\n2081\n2082\n2084\n2085',
+      'goal-1': 'same name',
+      'goal-1-status': 'Not Started',
+      'goal-1-created-from': 'activityReport',
+      'goal-1-fei-root-causes': '',
+      'goal-1-source': 'RTTAPA development',
+      'goal-1-standard-ohs-goal': 'No',
+      'objective-1.1': 'same title',
+      'objective-1.1-topics': 'Topic 1',
+      'objective-1.1-resourcesLinks': 'https://test.gov',
+      'objective-1.1-nonResourceLinks': 'TestFile.docx',
+      'objective-1.1-courses': 'Other',
+      'objective-1.1-supportType': 'Maintaining',
+      'objective-1.1-ttaProvided': 'Training',
+      'objective-1.1-status': 'Complete',
+    });
+  });
+
   it('return a list of all keys that are a goal or objective and in the proper order', () => {
     const csvData = [
       {
