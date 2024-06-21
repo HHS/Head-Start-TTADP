@@ -80,11 +80,11 @@ module.exports = {
       FROM "Grants" gr
       JOIN "Goals" g
         ON g."grantId" = gr.id
-	AND gr."regionId" = 10
+        AND gr."regionId" = 10
       WHERE o."goalId" = g.id
         AND o."status" != 'Complete'
-	AND o."deletedAt" IS NULL
-	AND o."mapsToParentObjectiveId" IS NULL
+        AND o."deletedAt" IS NULL
+        AND o."mapsToParentObjectiveId" IS NULL
       RETURNING
         o.id "objectiveId",
         o.status
