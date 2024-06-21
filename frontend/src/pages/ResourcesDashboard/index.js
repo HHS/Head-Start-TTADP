@@ -307,6 +307,7 @@ export default function ResourcesDashboard() {
           'ECLKC Resources',
           'Recipients reached',
           'Participants reached',
+          'Reports citing iPD courses',
         ]}
         showTooltips
       />

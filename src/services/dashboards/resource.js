@@ -2102,6 +2102,9 @@ export function restructureOverview(data) {
       num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
       percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
     },
+    ipdCourses: {
+      percentReports: `${formatNumber(0)}%`,
+    },
   };
 }
 
