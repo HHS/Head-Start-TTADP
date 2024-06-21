@@ -71,14 +71,20 @@ module.exports = {
         g.id "goalId",
         g.status
       ),
-      -- 4. Update the objectives attached to the goals
+      -- 4. Update all objectives attached to any R10 goal
       update_objectives AS (
       UPDATE "Objectives" o
       SET
         "status" = 'Complete',
         "updatedAt" = NOW()
-      FROM log_status_change lsc
-      WHERE o."goalId" = lsc."goalId"
+      FROM "Grants" gr
+      JOIN "Goals" g
+        ON g."grantId" = gr.id
+	AND gr."regionId" = 10
+      WHERE o."goalId" = g.id
+        AND o."status" != 'Complete'
+	AND o."deletedAt" IS NULL
+	AND o."mapsToParentObjectiveId" IS NULL
       RETURNING
         o.id "objectiveId",
         o.status
