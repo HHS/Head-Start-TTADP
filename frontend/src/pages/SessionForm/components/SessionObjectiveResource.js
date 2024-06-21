@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import { isValidResourceUrl } from '@ttahub/common';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useFormContext } from 'react-hook-form';
@@ -12,7 +13,7 @@ import {
   FormGroup,
 } from '@trussworks/react-uswds';
 import colors from '../../../colors';
-import { isValidResourceUrl } from '../../../components/GoalForm/constants';
+import { noDisallowedUrls } from '../../../components/GoalForm/constants';
 import './SessionObjectiveResource.scss';
 
 export default function SessionObjectiveResource({
@@ -46,6 +47,7 @@ export default function SessionObjectiveResource({
             validate: {
               isValidResourceUrl: (value) => {
                 if (!value) return true;
+                if (noDisallowedUrls([{ value }]) !== true) return noDisallowedUrls([{ value }]);
                 return isValidResourceUrl(value) || 'Please enter a valid URL';
               },
             },
