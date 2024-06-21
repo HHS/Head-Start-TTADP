@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
