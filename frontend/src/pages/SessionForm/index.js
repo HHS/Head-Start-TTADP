@@ -9,7 +9,7 @@ import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
@@ -20,7 +20,6 @@ import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import { isValidResourceUrl } from '../../components/GoalForm/constants';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS

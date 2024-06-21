@@ -1,4 +1,4 @@
-import { isValidResourceUrl } from './urlUtils';
+import { isValidResourceUrl } from '@ttahub/common';
 
 describe('urlUtils', () => {
   describe('isValidResourceUrl', () => {
@@ -22,6 +22,9 @@ describe('urlUtils', () => {
       'http://google.comhttp://ask.comhttp://aol.com',
       // eslint-disable-next-line no-useless-escape
       'http:\lkj http:/test.v',
+      'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+      'https://eclkc.ohs.acf.hhs.gov/cas/login',
+      'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
     ];
 
     it('correctly validates resources', () => {
