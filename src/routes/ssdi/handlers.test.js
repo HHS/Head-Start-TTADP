@@ -196,7 +196,7 @@ describe('API Endpoints', () => {
         .send({ regionIds: [1, 'a', 2, 'b', 3] });
 
       expect(response.status).toBe(200);
-      expect(policy.filterRegions).toHaveBeenCalledWith([1, 2, 3]);
+      expect(Generic().filterRegions).toHaveBeenCalledWith([1, 2, 3]);
     });
 
     it('should filter regionIds using policy', async () => {
@@ -206,7 +206,7 @@ describe('API Endpoints', () => {
         .send({ regionIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
-      expect(policy.filterRegions).toHaveBeenCalledWith([1, 2, 3, 4]);
+      expect(Generic().filterRegions).toHaveBeenCalledWith([1, 2, 3, 4]);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
     });
   });
