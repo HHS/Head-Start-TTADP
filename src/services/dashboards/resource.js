@@ -2142,7 +2142,7 @@ export function restructureOverview(data) {
       percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
     },
     ipdCourses: {
-      percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct)}%`,
+      percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct, 2)}%`,
     },
   };
 }
