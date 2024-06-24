@@ -424,7 +424,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "lr/ttahub-1521/display-regions-in-AR-header"
+    default: "mb/TTAHUB-3007/no-disallowed-urls"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "al-ttahub-add-fei-root-cause-to-review"
