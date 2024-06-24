@@ -16,10 +16,6 @@ import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
 describe('Programmatic Transaction', () => {
-  beforeAll(async () => {
-    await sequelize.sync({ force: true }); // Reset and synchronize the database schema
-  });
-
   afterAll(async () => {
     await sequelize.close();
   });
