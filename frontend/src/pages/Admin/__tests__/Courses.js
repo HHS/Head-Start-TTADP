@@ -1,22 +1,20 @@
 import '@testing-library/jest-dom';
-import { Router } from 'react-router';
 import React from 'react';
 import {
   render,
   act,
   screen,
 } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
 import Courses from '../Courses';
 
 describe('Courses', () => {
   const renderTest = () => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <Courses />
-      </Router>,
+      </MemoryRouter>,
     );
   };
 
