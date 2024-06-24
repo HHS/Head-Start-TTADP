@@ -1105,13 +1105,13 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportGoalResource.create({
+      await ActivityReportGoalResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
       });
 
-      await ActivityReportObjectiveResource.create({
+      await ActivityReportObjectiveResource.destroy({
         where: {
           resourceId: resources.map((r) => r.id),
         },
@@ -1568,7 +1568,7 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      await ActivityReportObjectiveFile.create({
+      await ActivityReportObjectiveFile.destroy({
         where: {
           fileId: resources.map((r) => r.id),
         },
