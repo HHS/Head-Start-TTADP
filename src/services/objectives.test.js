@@ -5,6 +5,7 @@ import db, {
   ActivityReport,
   User,
   Objective,
+  ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
@@ -273,6 +274,7 @@ describe('Objectives DB service', () => {
     // Destroy objective file.
     await ActivityReportObjectiveFile.destroy({
       where: { activityReportObjectiveId: aroIds, fileId: [file.id, keepFile.id] },
+      individualHooks: true,
     });
     await File.destroy({
       where: { id: [file.id, keepFile.id] },
@@ -282,13 +284,17 @@ describe('Objectives DB service', () => {
     // Destroy objective resource.
     await ActivityReportObjectiveResource.destroy({
       where: { activityReportObjectiveId: aroIds, resourceId: [resource.id, keepResource.id] },
+      individualHooks: true,
     });
     await Resource.destroy({
       where: { id: [resource.id, keepResource.id] },
       individualHooks: true,
     });
 
-    await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
+    await ActivityReportObjective.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
     await Objective.destroy({
       where: {
         id:
@@ -300,17 +306,29 @@ describe('Objectives DB service', () => {
             findObjectiveByTitle.id,
           ],
       },
+      individualHooks: true,
       force: true,
     });
-    await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
-    await ActivityReport.destroy({ where: { id: report.id } });
+    await ActivityRecipient.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReportGoal.destroy({
+      where: { activityReportId: report.id },
+      individualHooks: true,
+    });
+    await ActivityReport.destroy({ where: { id: report.id }, individualHooks: true });
 
-    await Objective.destroy({ where: { id: objectiveInfo.id }, force: true });
-    await Goal.destroy({ where: { id: goalInfo.id }, force: true });
+    await Objective.destroy({
+      where: { id: objectiveInfo.id },
+      individualHooks: true,
+      force: true,
+    });
+    await Goal.destroy({ where: { id: goalInfo.id }, individualHooks: true, force: true });
     await Grant.destroy({ where: { id: grantInfo.id }, individualHooks: true });
-    await Recipient.destroy({ where: { id: recipientInfo.id } });
-    await OtherEntity.destroy({ where: { id: otherEntity.id } });
-    await User.destroy({ where: { id: mockUser.id } });
+    await Recipient.destroy({ where: { id: recipientInfo.id }, individualHooks: true });
+    await OtherEntity.destroy({ where: { id: otherEntity.id }, individualHooks: true });
+    await User.destroy({ where: { id: mockUser.id }, individualHooks: true });
     await db.sequelize.close();
   });
 
@@ -534,6 +552,7 @@ describe('Objectives DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
         force: true,
       });
 
