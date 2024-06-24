@@ -43,7 +43,9 @@ export function Field({
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
           />
-        ) : label1}
+        ) : (
+          <span className="margin-top-1">{label1}</span>
+        )}
         {label2}
         {route && (
           <Link to={route.to} className="margin-top-1">
