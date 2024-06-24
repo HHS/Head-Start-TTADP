@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history/cjs/history.min';
+import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
 import { ResourcesDashboardOverviewWidget } from '../ResourcesDashboardOverview';
 
