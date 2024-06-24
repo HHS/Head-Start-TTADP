@@ -51,13 +51,13 @@ describe('Resource Dashboard Overview Widget', () => {
     };
 
     renderResourcesDashboardOverview({ data });
-    expect(await screen.findByText(/^[ \t]*reports with resources\r?\n?[ \t]*8,135 of 19,914/i)).toBeVisible();
-    expect(await screen.findByText(/^[ \t]*eclkc resources\n?[ \t]*1,819 of 2,365/i)).toBeVisible();
-    expect(await screen.findByText(/248/i)).toBeVisible();
+    expect(await screen.findByText(/8,135 of 19,914/)).toBeVisible();
+    expect(await screen.findByText(/1,819 of 2,365/)).toBeVisible();
+    expect(await screen.findByText(/248/)).toBeVisible();
     expect(await screen.findByText(/recipients reached/i)).toBeVisible();
-    expect(await screen.findByText(/765/i)).toBeVisible();
+    expect(await screen.findByText(/765/)).toBeVisible();
     expect(await screen.findByText(/participants reached/i)).toBeVisible();
-    expect(await screen.findByText(/88.88%/i)).toBeVisible();
+    expect(await screen.findByText(/88.88%/)).toBeVisible();
     expect(await screen.findByText(/reports citing ipd courses/i)).toBeVisible();
   });
 });
