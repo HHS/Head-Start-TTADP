@@ -6,8 +6,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import CourseEdit from '../CourseEdit';
 
 describe('CourseEdit', () => {
@@ -17,12 +16,11 @@ describe('CourseEdit', () => {
     id: courseId,
     name: 'Test Course',
   };
-  const history = createMemoryHistory();
   const renderCourseEdit = () => {
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <CourseEdit match={{ params: { courseId } }} />
-      </Router>,
+      </MemoryRouter>,
     );
   };
 
