@@ -11,12 +11,12 @@ import {
   Label,
   TextInput,
 } from '@trussworks/react-uswds';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses';
 import Modal from '../../components/Modal';
 
-function CourseEdit() {
-  const { courseId } = useParams(); // useParams to get courseId from URL
+function CourseEdit({ match }) {
+  const { params: { courseId } } = match;
   const [course, setCourse] = useState();
   const [newCourse, setNewCourse] = useState();
   const modalRef = useRef();
