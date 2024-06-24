@@ -130,40 +130,4 @@ describe('files service', () => {
       expect(newFile.id).toEqual(existingFile.id);
     });
   });
-
-  describe('createObjectiveFileMetaData', () => {
-    let objective;
-
-    let filesForObjectiveFileMetaData;
-    beforeAll(async () => {
-      objective = await Objective.create({
-        title: 'A brand new test objective',
-        status: 'Not Started',
-      });
-
-      filesForObjectiveFileMetaData = await Promise.all([
-        File.create({
-          originalFileName: 'test.pdf',
-          key: faker.datatype.uuid(),
-          status: 'APPROVED',
-          fileSize: 12345,
-        }),
-      ]);
-    });
-
-    afterAll(async () => {
-      await Objective.destroy({
-        where: {
-          id: objective.id,
-        },
-        force: true,
-      });
-
-      await File.destroy({
-        where: {
-          id: filesForObjectiveFileMetaData.map((file) => file.id),
-        },
-      });
-    });
-  });
 });
