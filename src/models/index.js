@@ -53,6 +53,22 @@ process.on('uncaughtException', async (err) => {
   process.exit(1);
 });
 
+sequelize.addHook('beforeConnect', () => {
+  auditLogger.info('Attempting to connect to the database');
+});
+
+sequelize.addHook('afterConnect', () => {
+  auditLogger.info('Database connection established');
+});
+
+sequelize.addHook('beforeDisconnect', () => {
+  auditLogger.info('Attempting to disconnect from the database');
+});
+
+sequelize.addHook('afterDisconnect', () => {
+  auditLogger.info('Database connection closed');
+});
+
 fs
   .readdirSync(__dirname)
   .filter((file) => (file.indexOf('.') !== 0)
@@ -105,6 +121,7 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.gracefulShutdown = gracefulShutdown;
 
 module.exports = db;
 
