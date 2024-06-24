@@ -1,11 +1,10 @@
-import { Router } from 'react-router';
 import React from 'react';
 import {
   render,
   screen,
   fireEvent,
 } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import CourseList from '../CourseList';
 
 describe('CourseList', () => {
@@ -16,11 +15,10 @@ describe('CourseList', () => {
   ];
 
   const renderComponent = (c) => {
-    const history = createMemoryHistory();
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <CourseList courses={c || courses} />
-      </Router>,
+      </MemoryRouter>,
     );
   };
 
