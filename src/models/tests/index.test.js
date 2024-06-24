@@ -1,10 +1,12 @@
 const Sequelize = require('sequelize');
-const { gracefulShutdown } = require('..');
+const { gracefulShutdown, sequelize } = require('..');
 const { auditLogger } = require('../../logger');
 
 jest.mock('sequelize', () => ({
   Sequelize: jest.fn().mockImplementation(() => ({
+    authenticate: jest.fn(() => Promise.resolve()),
     close: jest.fn(() => Promise.resolve()),
+    addHook: jest.fn(),
   })),
 }));
 
@@ -77,5 +79,31 @@ describe('Graceful shutdown', () => {
     await gracefulShutdown('test message');
 
     expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Close error');
+  });
+});
+
+describe('Sequelize Hooks', () => {
+  it('should log info before connecting to the database', async () => {
+    const beforeConnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'beforeConnect')[1];
+    await beforeConnectHook();
+    expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database');
+  });
+
+  it('should log info after connecting to the database', async () => {
+    const afterConnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'afterConnect')[1];
+    await afterConnectHook();
+    expect(auditLogger.info).toHaveBeenCalledWith('Database connection established');
+  });
+
+  it('should log info before disconnecting from the database', async () => {
+    const beforeDisconnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'beforeDisconnect')[1];
+    await beforeDisconnectHook();
+    expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database');
+  });
+
+  it('should log info after disconnecting from the database', async () => {
+    const afterDisconnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'afterDisconnect')[1];
+    await afterDisconnectHook();
+    expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed');
   });
 });
