@@ -12,6 +12,7 @@ import Goals from './Goals';
 import SS from './SS';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
+import CourseEdit from './CourseEdit';
 
 function Admin() {
   return (
@@ -100,6 +101,10 @@ function Admin() {
         <Route
           path="/admin/courses/"
           render={({ match }) => <Courses match={match} />}
+        />
+        <Route
+          path="/admin/course/:courseId"
+          render={({ match }) => <CourseEdit match={match} />}
         />
       </Switch>
     </>
