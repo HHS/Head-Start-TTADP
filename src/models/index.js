@@ -24,6 +24,35 @@ if (config.use_env_variable) {
 
 audit.attachHooksForAuditing(sequelize);
 
+// Function to gracefully close the Sequelize connection
+const gracefulShutdown = async (msg) => {
+  try {
+    await sequelize.close();
+    auditLogger.info(`Sequelize disconnected through ${msg}`);
+  } catch (err) {
+    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${err}`);
+  }
+};
+
+// Listen for SIGINT (Ctrl+C)
+process.on('SIGINT', async () => {
+  await gracefulShutdown('app termination (SIGINT)');
+  process.exit(0);
+});
+
+// Listen for SIGTERM (e.g., kill command)
+process.on('SIGTERM', async () => {
+  await gracefulShutdown('app termination (SIGTERM)');
+  process.exit(0);
+});
+
+// Listen for uncaught exceptions
+process.on('uncaughtException', async (err) => {
+  auditLogger.error('Uncaught Exception:', err);
+  await gracefulShutdown('uncaught exception');
+  process.exit(1);
+});
+
 fs
   .readdirSync(__dirname)
   .filter((file) => (file.indexOf('.') !== 0)
