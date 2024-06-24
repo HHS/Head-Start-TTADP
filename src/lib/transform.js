@@ -463,6 +463,7 @@ function transformGoalsAndObjectives(report) {
         files: aro.files,
         resources: aro.resources,
         courses: aro.courses,
+        supportType: aro.supportType,
       }
     ));
     if (objectiveRecords) {
