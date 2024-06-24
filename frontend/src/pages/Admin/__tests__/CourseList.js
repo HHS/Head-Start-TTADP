@@ -4,7 +4,7 @@ import {
   screen,
   fireEvent,
 } from '@testing-library/react';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter } from 'react-router-dom';
 import CourseList from '../CourseList';
 
 describe('CourseList', () => {
