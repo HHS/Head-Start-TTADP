@@ -3,6 +3,8 @@ import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import * as transactionModule from './programmaticTransaction';
 import {
   Grant,
+  Goal,
+  Recipient,
   Topic,
   ActivityReport,
   ActivityReportApprover,
@@ -257,8 +259,24 @@ describe('Programmatic Transaction', () => {
       throw new Error('GoalTemplateFieldPrompt not found');
     }
 
+    let grant = {
+      id: faker.datatype.number({ min: 67000, max: 68000 }),
+      number: faker.random.alphaNumeric(10),
+      cdi: false,
+      regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
+    };
+    const recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
+    grant = await Grant.create({ ...grant, recipientId: recipient.id });
+    const goal = await Goal.create({
+      name: 'This is some serious goal text',
+      status: 'Draft',
+      grantId: grant.id,
+    });
+
     await GoalFieldResponse.create({
-      goalId: faker.datatype.number(),
+      goalId: goal.id,
       goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
       response: jsonArray,
     });
