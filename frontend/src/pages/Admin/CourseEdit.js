@@ -11,16 +11,16 @@ import {
   Label,
   TextInput,
 } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses';
 import Modal from '../../components/Modal';
 
-function CourseEdit({ match }) {
-  const { params: { courseId } } = match;
+function CourseEdit() {
+  const { courseId } = useParams(); // useParams to get courseId from URL
   const [course, setCourse] = useState();
   const [newCourse, setNewCourse] = useState();
   const modalRef = useRef();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function fetchCourse() {
@@ -51,7 +51,7 @@ function CourseEdit({ match }) {
   const saveChanges = async () => {
     const updated = await updateCourseById(courseId, { name: newCourse.name });
     setCourse({ ...updated });
-    history.replace(`/admin/course/${updated.id}`);
+    navigate(`/admin/course/${updated.id}`, { replace: true });
   };
 
   const confirmDelete = async () => {
@@ -61,7 +61,7 @@ function CourseEdit({ match }) {
 
     await deleteCourseById(courseId);
 
-    history.push('/admin/courses');
+    navigate('/admin/courses');
   };
 
   return (
