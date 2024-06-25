@@ -1,9 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faLink, faCube, faUser, faUserFriends,
+  faLink,
+  faCube,
+  faUser,
+  faUserFriends,
+  faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import './ResourcesDashboardOverview.css';
 
@@ -14,6 +19,7 @@ import colors from '../colors';
 export function Field({
   label1,
   label2,
+  route,
   data,
   icon,
   iconColor,
@@ -37,8 +43,15 @@ export function Field({
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
           />
-        ) : label1}
+        ) : (
+          <span className="margin-top-1">{label1}</span>
+        )}
         {label2}
+        {route && (
+          <Link to={route.to} className="margin-top-1">
+            {route.label}
+          </Link>
+        )}
       </span>
     </Grid>
   );
@@ -58,12 +71,17 @@ Field.propTypes = {
   backgroundColor: PropTypes.string.isRequired,
   tooltipText: PropTypes.string,
   showTooltip: PropTypes.bool,
+  route: PropTypes.shape({
+    to: PropTypes.string,
+    label: PropTypes.string,
+  }),
 };
 
 Field.defaultProps = {
   tooltipText: '',
   showTooltip: false,
   label2: '',
+  route: null,
 };
 const DASHBOARD_FIELDS = {
   'Reports with resources': {
@@ -124,6 +142,24 @@ const DASHBOARD_FIELDS = {
       />
     ),
   },
+  'Reports citing iPD courses': {
+    render: (data) => (
+      <Field
+        key="reports-citing-ipd-courses"
+        icon={faFolder}
+        showTooltip={false}
+        label1="Reports citing iPD courses"
+        iconColor={colors.baseDark}
+        backgroundColor={colors.baseLightest}
+        tooltipText="Total participants of ARs that cite at least one resource"
+        data={data.ipdCourses.percentReports}
+        route={{
+          to: '/dashboards/ipd-courses',
+          label: 'Display details',
+        }}
+      />
+    ),
+  },
 };
 
 export function ResourcesDashboardOverviewWidget({
@@ -180,6 +216,9 @@ ResourcesDashboardOverviewWidget.defaultProps = {
     participant: {
       numParticipants: '0',
     },
+    ipdCourses: {
+      percentReports: '0%',
+    },
   },
   loading: false,
   showTooltips: false,
@@ -188,6 +227,7 @@ ResourcesDashboardOverviewWidget.defaultProps = {
     'ECLKC Resources',
     'Recipients reached',
     'Participants reached',
+    'Reports citing iPD courses',
   ],
 };
 
