@@ -5,13 +5,10 @@ import {
   screen, render, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter, Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import SiteNav from '../SiteNav';
 import UserContext from '../../UserContext';
-
-const history = createMemoryHistory();
 
 describe('SiteNav', () => {
   describe('when authenticated & pathname = "activity-reports', () => {
@@ -19,8 +16,7 @@ describe('SiteNav', () => {
 
     const logoutUrl = join('api', 'logout');
     const userUrl = join('api', 'user');
-
-    beforeEach(() => {
+    test('survey button is visible', async () => {
       const user = {
         name: 'name',
         id: 1,
@@ -30,17 +26,13 @@ describe('SiteNav', () => {
       };
       fetchMock.get(userUrl, { ...user });
       fetchMock.get(logoutUrl, 200);
-
       render(
-        <Router history={history}>
-          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+        <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+          <MemoryRouter initialEntries={['/activity-reports']}>
             <SiteNav authenticated admin user={user} hasAlerts={false} />
-          </UserContext.Provider>
-        </Router>,
+          </MemoryRouter>
+        </UserContext.Provider>,
       );
-    });
-    test('survey button is visible', async () => {
-      history.push('/activity-reports');
       const surveyButton = await screen.findByText(/Please leave feedback/i);
       expect(surveyButton).toBeVisible();
     });
