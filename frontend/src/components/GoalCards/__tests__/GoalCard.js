@@ -28,6 +28,7 @@ describe('GoalCard', () => {
     source: 'The inferno',
     createdVia: 'rtr',
     onAR: true,
+    responses: [],
     sessionObjectives: [{
       title: 'Session objective 1',
       trainingReportId: 'TR-1',
@@ -130,6 +131,13 @@ describe('GoalCard', () => {
 
     expect(screen.getByText(/goal source/i)).toBeInTheDocument();
     expect(screen.getByText(/The inferno/i)).toBeInTheDocument();
+  });
+
+  it('shows the fei root causes', () => {
+    renderGoalCard(DEFAULT_PROPS,
+      { ...goal, responses: [{ response: ['root cause 1', 'root cause 2', 'root cause 3'] }] });
+    expect(screen.getByText(/root cause/i)).toBeInTheDocument();
+    expect(screen.getByText(/root cause 1, root cause 2, root cause 3/i)).toBeInTheDocument();
   });
 
   it('hides the checkbox when hideCheckbox is true', () => {
