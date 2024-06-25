@@ -149,7 +149,7 @@ export const grantNumberFilter = (possibleGrants) => ({
       labelText="Select grant numbers to filter by"
       options={possibleGrants.map((g) => ({
         value: g.number,
-        label: g.numberWithProgramTypes,
+        label: `${g.numberWithProgramTypes} - ${g.status}`,
       }))}
       selectedValues={query}
       mapByValue
