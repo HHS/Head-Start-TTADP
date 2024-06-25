@@ -26,6 +26,7 @@ import {
   ActivityReportCollaborator,
   ActivityReportApprover,
   ActivityReportObjective,
+  GoalTemplateFieldPrompt,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -511,6 +512,13 @@ export async function getGoalsByActivityRecipient(
     ...filters
   },
 ) {
+  // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
+  const feiRootCauseFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+    where: {
+      title: 'FEI root cause',
+    },
+  });
+
   // Scopes.
   const { goal: scopes } = await filtersToScopes(filters, { goal: { recipientId } });
 
@@ -652,7 +660,7 @@ export async function getGoalsByActivityRecipient(
         model: GoalFieldResponse,
         as: 'responses',
         required: false,
-        attributes: ['response', 'goalId'],
+        attributes: ['response', 'goalId', 'goalTemplateFieldPromptId'],
       },
       {
         model: GoalTemplate,
@@ -869,6 +877,7 @@ export async function getGoalsByActivityRecipient(
       onAR: current.onAR,
       sessionObjectives: [],
       responses: current.responses,
+      isFei: current.goalTemplateId === feiRootCauseFieldPrompt.goalTemplateId,
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));
