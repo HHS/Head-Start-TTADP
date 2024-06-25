@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent,
+  render,
+  screen,
+  fireEvent,
+  act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import ResourceRepeater from '../ResourceRepeater';
 
 describe('ResourceRepeater', () => {
@@ -76,29 +80,54 @@ describe('ResourceRepeater', () => {
     expect(screen.queryAllByText("Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page.").length).toBe(2);
   });
 
-  it('calls validateOnRemove() when a resource is removed', async () => {
-    const validateOnRemoveMock = jest.fn();
-    const resources = [
-      { key: 1, value: 'http://www.resources.com' },
-      { key: 2, value: 'http://www.resources2.com' },
-    ];
-
+  it('cannot add a resource if the first is blank', async () => {
+    const setResources = jest.fn();
     render(<ResourceRepeater
       error={<></>}
-      resources={resources}
-      setResources={jest.fn()}
+      resources={[
+        { key: 1, value: '' },
+      ]}
+      setResources={setResources}
       validateResources={jest.fn()}
       status="In Progress"
       isOnReport={false}
       isLoading={false}
       goalStatus="In Progress"
       userCanEdit
-      validateOnRemove={validateOnRemoveMock}
     />);
 
-    const removeButton = screen.getByRole('button', { name: /remove resource 1/i });
-    fireEvent.click(removeButton);
+    const addButton = screen.getByRole('button', { name: /add new resource/i });
+    act(() => {
+      userEvent.click(addButton);
+    });
 
-    expect(validateOnRemoveMock).toHaveBeenCalled();
+    expect(setResources).not.toHaveBeenCalled();
+    const urlInputs = document.querySelectorAll('input[type="url"]');
+    expect(urlInputs.length).toBe(1);
+  });
+  it('cannot add a resource if there is an error', async () => {
+    const setResources = jest.fn();
+    render(<ResourceRepeater
+      error={<span className="usa-error">This is an error</span>}
+      resources={[
+        { key: 1, value: 'garbelasdf' },
+      ]}
+      setResources={setResources}
+      validateResources={jest.fn()}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+      goalStatus="In Progress"
+      userCanEdit
+    />);
+
+    const addButton = screen.getByRole('button', { name: /add new resource/i });
+    act(() => {
+      userEvent.click(addButton);
+    });
+
+    expect(setResources).not.toHaveBeenCalled();
+    const urlInputs = document.querySelectorAll('input[type="url"]');
+    expect(urlInputs.length).toBe(1);
   });
 });
