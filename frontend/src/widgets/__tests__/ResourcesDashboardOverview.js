@@ -1,18 +1,15 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { ResourcesDashboardOverviewWidget } from '../ResourcesDashboardOverview';
 
 const renderResourcesDashboardOverview = (props) => {
-  const history = createMemoryHistory();
-
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <ResourcesDashboardOverviewWidget loading={props.loading} data={props.data} />
-    </Router>,
+    </MemoryRouter>,
   );
 };
 
