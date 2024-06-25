@@ -46,6 +46,9 @@ const resourcesDefault = {
     participant: {
       numParticipants: '765',
     },
+    ipdCourses: {
+      percentReports: '4.65%',
+    },
   },
   resourcesUse: {
     headers: ['Jan-22'],
@@ -113,6 +116,9 @@ const resourcesRegion1 = {
     participant: {
       numParticipants: '665',
     },
+    ipdCourses: {
+      percentReports: '4.65%',
+    },
   },
   resourcesUse: {
     headers: ['Jan-22'],
@@ -179,6 +185,9 @@ const resourcesRegion2 = {
     },
     participant: {
       numParticipants: '565',
+    },
+    ipdCourses: {
+      percentReports: '4.65%',
     },
   },
   resourcesUse: {
@@ -438,6 +447,10 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/1.65%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
+
+    // iPD courses
+    expect(screen.getByText(/4.65%/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports citing ipd courses[ \t]*$/i)[0]).toBeInTheDocument();
 
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*eclkc resources[ \t]*$/i)[0]).toBeInTheDocument();
