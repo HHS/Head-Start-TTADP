@@ -1,6 +1,16 @@
 import db from '../../models';
-import { allCourses, getCourseUrlWidgetDataWithCache } from './handlers';
-import { getAllCourses } from '../../services/course';
+import {
+  allCourses,
+  getCourseUrlWidgetDataWithCache,
+  getCourseById,
+  updateCourseById,
+  createCourseByName,
+} from './handlers';
+import {
+  getAllCourses,
+  getCourseById as getById,
+  createCourseByName as createCourse,
+} from '../../services/course';
 import handleErrors from '../../lib/apiErrorHandler';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { getCourseUrlWidgetData } from '../../services/dashboards/course';
@@ -43,6 +53,57 @@ describe('Courses handlers', () => {
     getAllCourses.mockRejectedValue(new Error('Test error'));
     await allCourses(mockRequest, mockResponse);
     expect(handleErrors).toHaveBeenCalled();
+  });
+
+  describe('getCourseById', () => {
+    it('should return a course by id', async () => {
+      const course = { id: 1, name: 'Test Course' };
+      getById.mockResolvedValue(course);
+      const req = {
+        params: { id: 1 },
+      };
+      await getCourseById(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(course);
+    });
+  });
+
+  describe('updateCourseById', () => {
+    it('should update a course by id', async () => {
+      const course = {
+        id: 1,
+        name: 'Test Course 1',
+        update: jest.fn(),
+        destroy: jest.fn(),
+      };
+      const newCourse = { id: 2, name: 'Test Course 2' };
+
+      getById.mockResolvedValue(course);
+      createCourse.mockResolvedValue(newCourse);
+
+      const req = {
+        session: { userId: 1 },
+        params: { id: 1 },
+        body: { name: 'Updated Course' },
+      };
+
+      await updateCourseById(req, mockResponse);
+
+      expect(course.update).toHaveBeenCalledWith({ mapsTo: newCourse.id });
+      expect(course.destroy).toHaveBeenCalled();
+    });
+  });
+
+  describe('createCourseByName', () => {
+    it('should create a course by name', async () => {
+      const course = { id: 1, name: 'Test Course' };
+      createCourse.mockResolvedValue(course);
+      const req = {
+        session: { userId: 1 },
+        body: { name: 'Test Course' },
+      };
+      await createCourseByName(req, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(course);
+    });
   });
 
   describe('getCourseUrlsWidgetData', () => {
