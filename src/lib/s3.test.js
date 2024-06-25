@@ -99,9 +99,16 @@ describe('verifyVersioning', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockS3Send = jest.spyOn(s3, 'send').mockImplementation(async (command) => {
-      if (command.constructor.name === 'GetBucketVersioningCommand') return mockVersioningData;
-      if (command.constructor.name === 'PutBucketVersioningCommand') return { ...command };
+    mockS3Send = jest.spyOn(s3, 'send').mockImplementation((command) => {
+      if (command.constructor.name === 'GetBucketVersioningCommand') {
+        return Promise.resolve(mockVersioningData);
+      }
+      if (command.constructor.name === 'PutBucketVersioningCommand') {
+        return Promise.resolve({
+          Bucket: process.env.S3_BUCKET,
+          VersioningConfiguration: mockVersioningData,
+        });
+      }
       return undefined;
     });
   });
@@ -118,7 +125,15 @@ describe('verifyVersioning', () => {
 
   it('Enables versioning if it is disabled', async () => {
     process.env.S3_BUCKET = 'test-bucket';
-    mockS3Send.mockImplementationOnce(async (command) => { });
+    // First call to GetBucketVersioningCommand will return empty data to
+    // simulate disabled versioning
+    mockS3Send.mockImplementationOnce(async (command) => {
+      if (command.constructor.name === 'GetBucketVersioningCommand') {
+        return {};
+      }
+      return {};
+    });
+
     const got = await verifyVersioning(process.env.S3_BUCKET);
     expect(mockS3Send).toHaveBeenCalledTimes(2);
     expect(got.Bucket).toBe(process.env.S3_BUCKET);

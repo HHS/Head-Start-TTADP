@@ -72,7 +72,7 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
     Bucket: bucket,
   };
   const data = await s3Client.send(new GetBucketVersioningCommand(params));
-  if (!(data) || data.Status !== 'Enabled') {
+  if (!(data) || data?.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
