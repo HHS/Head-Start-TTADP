@@ -34,7 +34,7 @@ describe('maintenance', () => {
       const category = MAINTENANCE_CATEGORY.DB;
       const type = MAINTENANCE_TYPE.VACUUM_ANALYZE;
       const data = {};
-      const command = 'VACUUM ANALYZE my_table;';
+      const command = 'VACUUM ANALYZE "Goals";';
 
       await maintenanceCommand(command, category, type, data);
 
