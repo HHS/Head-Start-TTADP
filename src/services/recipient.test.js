@@ -713,6 +713,7 @@ describe('Recipient DB service', () => {
     let goals;
     let grant;
     let template;
+    let feiRootCausePrompt;
 
     const region = 5;
 
@@ -767,12 +768,20 @@ describe('Recipient DB service', () => {
         ],
       });
 
+      // Find a GoalTemplateFieldPrompt with the title 'FEI root cause'.
+      feiRootCausePrompt = await GoalTemplateFieldPrompt.findOne({
+        where: {
+          title: 'FEI root cause',
+        },
+      });
+
       const goal1 = await Goal.create({
         name: goal.name,
         status: goal.status,
         grantId: grant.id,
         onApprovedAR: true,
         source: null,
+        goalTemplateId: feiRootCausePrompt.goalTemplateId,
       });
 
       const goal2 = await Goal.create({
@@ -821,6 +830,15 @@ describe('Recipient DB service', () => {
         goalId: goal3.id,
         goalTemplateFieldPromptId: fieldPrompt.id,
         response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      // Create FEI responses.
+      await GoalFieldResponse.create({
+        goalId: goal1.id,
+        goalTemplateFieldPromptId: feiRootCausePrompt.id,
+        response: ['fei response 1', 'fei response 2'],
         onAr: true,
         onApprovedAR: false,
       });
@@ -894,6 +912,27 @@ describe('Recipient DB service', () => {
       const noResponse = goalRows.find((r) => r.responsesForComparison === '');
       expect(noResponse).toBeTruthy();
       expect(noResponse.ids.length).toBe(1);
+    });
+
+    it('properly marks is fei goal', async () => {
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(3);
+      expect(allGoalIds.length).toBe(3);
+
+      // From goal Rows get goal 1.
+      const goal1 = goalRows.find((r) => r.ids.includes(goals[0].id));
+      expect(goal1).toBeTruthy();
+      expect(goal1.isFei).toBe(true);
+
+      // From goal Rows get goal 2.
+      const goal2 = goalRows.find((r) => r.ids.includes(goals[1].id));
+      expect(goal2).toBeTruthy();
+      expect(goal2.isFei).toBe(false);
+
+      // From goal Rows get goal 3.
+      const goal3 = goalRows.find((r) => r.ids.includes(goals[2].id));
+      expect(goal3).toBeTruthy();
+      expect(goal3.isFei).toBe(false);
     });
 
     it('properly combines the same goals with no creators/collaborators', async () => {

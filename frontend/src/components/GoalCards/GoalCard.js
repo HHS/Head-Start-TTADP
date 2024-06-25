@@ -284,7 +284,7 @@ export default function GoalCard({
             />
           </p>
           {
-              goal.responses && goal.responses.length
+              goal.isFei
                 ? (
                   <div className="grid-row">
                     <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
