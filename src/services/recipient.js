@@ -868,6 +868,7 @@ export async function getGoalsByActivityRecipient(
       collaborators: [],
       onAR: current.onAR,
       sessionObjectives: [],
+      responses: current.responses,
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));

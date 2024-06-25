@@ -216,6 +216,12 @@ export default function GoalCard({
   const internalLeftMargin = hideCheckbox ? '' : 'desktop:margin-left-5';
   const border = erroneouslySelected || deleteError ? 'smart-hub-border-base-error' : 'smart-hub-border-base-lighter';
 
+  const getResponses = () => {
+    const responses = goal.responses.length ? goal.responses[0].response : [];
+    const sortedResponses = responses.sort((a, b) => a.localeCompare(b));
+    return sortedResponses.map((r) => r).join(', ');
+  };
+
   return (
     <article
       className={`ttahub-goal-card usa-card padding-3 radius-lg border ${border} width-full maxw-full margin-bottom-2`}
@@ -277,14 +283,20 @@ export default function GoalCard({
               goalNumbers={goalNumbers}
             />
           </p>
-          <div className="grid-row">
-            <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
-              Root cause
-            </p>
-            <p className="usa-prose margin-bottom-0 margin-top-1">
-              This is a test.
-            </p>
-          </div>
+          {
+              goal.responses && goal.responses.length
+                ? (
+                  <div className="grid-row">
+                    <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
+                      Root cause
+                    </p>
+                    <p className="usa-prose margin-bottom-0 margin-top-1">
+                      { getResponses() }
+                    </p>
+                  </div>
+                )
+                : null
+          }
         </div>
         <div className="ttahub-goal-card__goal-column ttahub-goal-card__goal-column__goal-source padding-right-3">
           <p className="usa-prose text-bold margin-y-0">Goal source</p>
