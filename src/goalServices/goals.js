@@ -484,6 +484,7 @@ export async function createOrUpdateGoals(goals) {
         status: 'Draft', // if we are creating a goal for the first time, it should be set to 'Draft'
         isFromSmartsheetTtaPlan: false,
         rtrOrder: rtrOrder + 1,
+        createdVia: 'rtr',
       });
     }
 
@@ -503,10 +504,6 @@ export async function createOrUpdateGoals(goals) {
 
       if (newGoal.status !== status) {
         newGoal.set({ status });
-      }
-
-      if (!newGoal.createdVia || newGoal.createdVia !== createdVia) {
-        newGoal.set({ createdVia: createdVia || (newGoal.isFromSmartsheetTtaPlan ? 'imported' : 'rtr') });
       }
     }
 
