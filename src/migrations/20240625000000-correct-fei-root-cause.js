@@ -1,6 +1,7 @@
 const {
   prepMigration,
 } = require('../lib/migration');
+
 module.exports = {
   up: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
