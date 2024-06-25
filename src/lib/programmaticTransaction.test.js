@@ -230,7 +230,7 @@ describe('Programmatic Transaction', () => {
     expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
     expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
 
-    await transactionModule.rollbackToSnapshot(snapshot);
+    await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
     const report = await ActivityReport.findOne({ where: { id: report1.id } });
     expect(report).toBeNull();
     const users = await User.findAll({
@@ -260,7 +260,7 @@ describe('Programmatic Transaction', () => {
     }
 
     let grant = {
-      id: faker.datatype.number({ min: 67000, max: 68000 }),
+      id: faker.datatype.number({ min: 97000, max: 98000 }),
       number: faker.random.alphaNumeric(10),
       cdi: false,
       regionId: 1,
@@ -285,7 +285,7 @@ describe('Programmatic Transaction', () => {
     expect(goalFieldResponse).not.toBeNull();
     expect(goalFieldResponse.response).toEqual(jsonArray);
 
-    await transactionModule.rollbackToSnapshot(snapshot);
+    await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
     goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).toBeNull();
   });
