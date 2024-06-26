@@ -64,6 +64,6 @@ describe('dataValidation', () => {
 
   it('should log results to the auditLogger', async () => {
     await dataValidation();
-    expect(auditLogger.info).toHaveBeenCalledTimes(10);
+    expect(auditLogger.info).toHaveBeenCalledTimes(34);
   });
 });
