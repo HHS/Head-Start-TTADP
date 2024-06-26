@@ -218,8 +218,7 @@ export default function GoalCard({
 
   const getResponses = () => {
     const responses = goal.responses.length ? goal.responses[0].response : [];
-    const sortedResponses = responses.sort((a, b) => a.localeCompare(b));
-    return sortedResponses.map((r) => r).join(', ');
+    return responses.map((r) => r).join(', ');
   };
 
   return (
