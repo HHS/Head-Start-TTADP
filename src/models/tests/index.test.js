@@ -1,5 +1,4 @@
-import Sequelize from 'sequelize';
-import { gracefulShutdown, sequelize } from '..';
+import { sequelize, gracefulShutdown } from '..';
 import { auditLogger } from '../../logger';
 
 jest.mock('../../logger', () => ({
@@ -9,92 +8,119 @@ jest.mock('../../logger', () => ({
   },
 }));
 
-describe('Graceful shutdown', () => {
-  let originalExit;
-
+describe('Sequelize Tests', () => {
   beforeAll(() => {
-    originalExit = process.exit;
-    process.exit = jest.fn();
     jest.spyOn(sequelize, 'close').mockResolvedValue();
   });
 
   afterAll(() => {
-    process.exit = originalExit;
     jest.restoreAllMocks();
   });
 
-  it('should close the sequelize connection and log info on SIGINT', async () => {
-    process.emit('SIGINT');
+  describe('Graceful shutdown', () => {
+    let originalExit;
 
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    beforeAll(() => {
+      originalExit = process.exit;
+      process.exit = jest.fn();
+    });
 
-    expect(sequelize.close).toHaveBeenCalled();
-    expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGINT)');
-    expect(process.exit).toHaveBeenCalledWith(0);
+    afterAll(() => {
+      process.exit = originalExit;
+    });
+
+    it('should close the sequelize connection and log info on SIGINT', async () => {
+      process.emit('SIGINT');
+
+      await new Promise((resolve) => { setTimeout(resolve, 100); });
+
+      expect(sequelize.close).toHaveBeenCalled();
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGINT)');
+      expect(process.exit).toHaveBeenCalledWith(0);
+    });
+
+    it('should close the sequelize connection and log info on SIGTERM', async () => {
+      process.emit('SIGTERM');
+
+      await new Promise((resolve) => { setTimeout(resolve, 100); });
+
+      expect(sequelize.close).toHaveBeenCalled();
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGTERM)');
+      expect(process.exit).toHaveBeenCalledWith(0);
+    });
+
+    it('should close the sequelize connection and log error on uncaughtException', async () => {
+      const error = new Error('Test error');
+      process.emit('uncaughtException', error);
+
+      await new Promise((resolve) => { setTimeout(resolve, 100); });
+
+      expect(sequelize.close).toHaveBeenCalled();
+      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught Exception:', error);
+      expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle graceful shutdown function', async () => {
+      await gracefulShutdown('test message');
+
+      expect(sequelize.close).toHaveBeenCalled();
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through test message');
+    });
+
+    it('should log error if sequelize.close throws error', async () => {
+      sequelize.close.mockImplementation(() => Promise.reject(new Error('Close error')));
+
+      await gracefulShutdown('test message');
+
+      // Check the calls to auditLogger.error
+      expect(auditLogger.error).toHaveBeenNthCalledWith(1, 'Uncaught Exception:', expect.any(Error));
+      expect(auditLogger.error).toHaveBeenNthCalledWith(2, 'Error during Sequelize disconnection through test message: Error: Close error');
+    });
+
   });
 
-  it('should close the sequelize connection and log info on SIGTERM', async () => {
-    process.emit('SIGTERM');
+  describe('Sequelize Hooks', () => {
+    beforeEach(() => {
+      jest.restoreAllMocks();
+    });
+    it('should log info before connecting to the database', async () => {
+      const beforeConnectHooks = sequelize.options.hooks.beforeConnect;
+      expect(Array.isArray(beforeConnectHooks)).toBe(true);
+      expect(beforeConnectHooks.length).toBeGreaterThan(0);
 
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+      await Promise.all(beforeConnectHooks.map(hook => hook()));
 
-    expect(sequelize.close).toHaveBeenCalled();
-    expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGTERM)');
-    expect(process.exit).toHaveBeenCalledWith(0);
-  });
+      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database');
+    });
 
-  it('should close the sequelize connection and log error on uncaughtException', async () => {
-    const error = new Error('Test error');
-    process.emit('uncaughtException', error);
+    it('should log info after connecting to the database', async () => {
+      const afterConnectHooks = sequelize.options.hooks.afterConnect;
+      expect(Array.isArray(afterConnectHooks)).toBe(true);
+      expect(afterConnectHooks.length).toBeGreaterThan(0);
 
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+      await Promise.all(afterConnectHooks.map(hook => hook()));
 
-    expect(sequelize.close).toHaveBeenCalled();
-    expect(auditLogger.error).toHaveBeenCalledWith('Uncaught Exception:', error);
-    expect(process.exit).toHaveBeenCalledWith(1);
-  });
+      expect(auditLogger.info).toHaveBeenCalledWith('Database connection established');
+    });
 
-  it('should handle graceful shutdown function', async () => {
-    await gracefulShutdown('test message');
+    it('should log info before disconnecting from the database', async () => {
+      const beforeDisconnectHooks = sequelize.options.hooks.beforeDisconnect;
+      expect(Array.isArray(beforeDisconnectHooks)).toBe(true);
+      expect(beforeDisconnectHooks.length).toBeGreaterThan(0);
 
-    expect(sequelize.close).toHaveBeenCalled();
-    expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through test message');
-  });
+      await Promise.all(beforeDisconnectHooks.map(hook => hook()));
 
-  it('should log error if sequelize.close throws error', async () => {
-    sequelize.close.mockImplementation(() => Promise.reject(new Error('Close error')));
+      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database');
+    });
 
-    await gracefulShutdown('test message');
+    it('should log info after disconnecting from the database', async () => {
+      const afterDisconnectHooks = sequelize.options.hooks.afterDisconnect;
+      expect(Array.isArray(afterDisconnectHooks)).toBe(true);
+      expect(afterDisconnectHooks.length).toBeGreaterThan(0);
 
-    // Check the specific error message among the calls
-    expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Error: Close error');
-    // Optionally, check the total number of calls to auditLogger.error if needed
-    expect(auditLogger.error).toHaveBeenCalledTimes(1);
-  });
-});
+      await Promise.all(afterDisconnectHooks.map(hook => hook()));
 
-describe('Sequelize Hooks', () => {
-  it('should log info before connecting to the database', async () => {
-    const beforeConnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'beforeConnect')[1];
-    await beforeConnectHook();
-    expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database');
-  });
-
-  it('should log info after connecting to the database', async () => {
-    const afterConnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'afterConnect')[1];
-    await afterConnectHook();
-    expect(auditLogger.info).toHaveBeenCalledWith('Database connection established');
-  });
-
-  it('should log info before disconnecting from the database', async () => {
-    const beforeDisconnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'beforeDisconnect')[1];
-    await beforeDisconnectHook();
-    expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database');
-  });
-
-  it('should log info after disconnecting from the database', async () => {
-    const afterDisconnectHook = sequelize.addHook.mock.calls.find((call) => call[0] === 'afterDisconnect')[1];
-    await afterDisconnectHook();
-    expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed');
+      expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed');
+    });
   });
 });
