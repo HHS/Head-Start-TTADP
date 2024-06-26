@@ -514,6 +514,7 @@ export async function getGoalsByActivityRecipient(
 ) {
   // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
   const feiRootCauseFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+    attributes: ['goalTemplateId'],
     where: {
       title: 'FEI root cause',
     },
@@ -597,6 +598,7 @@ export async function getGoalsByActivityRecipient(
           ELSE 7 END`),
       'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
+      [sequelize.literal(`"Goal"."goalTemplateId" = ${feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
     ],
     where: goalWhere,
     include: [
@@ -877,7 +879,7 @@ export async function getGoalsByActivityRecipient(
       onAR: current.onAR,
       sessionObjectives: [],
       responses: current.responses,
-      isFei: current.goalTemplateId === feiRootCauseFieldPrompt.goalTemplateId,
+      isFei: current.isFei,
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));
