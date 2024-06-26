@@ -71,6 +71,14 @@ test('get /goals?goalIds[]=&reportId', async ({ request }) => {
     isNew: Joi.boolean(),
     collaborators: Joi.array().items(Joi.any().allow(null)),
     prompts: Joi.object(),
+    promptsForReview: Joi.array().items(Joi.object({
+      key: Joi.string(),
+      recipients: Joi.array().items(Joi.object({
+        id: Joi.number(),
+        name: Joi.string(),
+      })),
+      responses: Joi.array().items(Joi.string()),
+    })),
     source: Joi.any(),
     statusChanges: Joi.array().items(Joi.object({
       oldStatus: Joi.string(),

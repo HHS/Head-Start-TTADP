@@ -829,6 +829,7 @@ describe('Resources dashboard', () => {
         numberOfParticipants: [{ participants: '44' }],
         numberOfRecipients: [{ recipients: '1' }],
         pctOfECKLKCResources: [{ eclkcCount: '2', allCount: '3', eclkcPct: '66.6667' }],
+        pctOfReportsWithCourses: [{ coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' }],
       },
     };
 
@@ -850,6 +851,9 @@ describe('Resources dashboard', () => {
         numEclkc: '2',
         num: '3',
         percentEclkc: '66.67%',
+      },
+      ipdCourses: {
+        percentReports: '80.00%',
       },
     });
   });

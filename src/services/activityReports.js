@@ -20,6 +20,8 @@ import {
   Recipient,
   OtherEntity,
   Goal,
+  GoalTemplate,
+  GoalFieldResponse,
   User,
   NextStep,
   Objective,
@@ -31,6 +33,7 @@ import {
   Topic,
   CollaboratorRole,
   Role,
+  Course,
 } from '../models';
 import {
   removeUnusedGoalsObjectivesFromReport,
@@ -1163,7 +1166,7 @@ async function getDownloadableActivityReports(where, separate = true) {
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
-        attributes: ['ttaProvided', 'status'],
+        attributes: ['ttaProvided', 'status', 'supportType'],
         order: [['objective', 'goal', 'id'], ['objective', 'id']],
         separate,
         include: [{
@@ -1173,6 +1176,15 @@ async function getDownloadableActivityReports(where, separate = true) {
             model: Goal,
             as: 'goal',
             required: false,
+            include: [{
+              model: GoalFieldResponse,
+              as: 'responses',
+              attributes: ['response'],
+            }, {
+              model: GoalTemplate,
+              as: 'goalTemplate',
+              attributes: ['creationMethod'],
+            }],
           },
           ],
           attributes: ['id', 'title', 'status'],
@@ -1189,6 +1201,10 @@ async function getDownloadableActivityReports(where, separate = true) {
         {
           model: File,
           as: 'files',
+        },
+        {
+          model: Course,
+          as: 'courses',
         },
         ],
       },
@@ -1259,14 +1275,14 @@ async function getDownloadableActivityReports(where, separate = true) {
       },
       {
         model: NextStep,
-        attributes: ['note', 'id'],
+        attributes: ['note', 'id', 'completeDate'],
         as: 'specialistNextSteps',
         separate,
         required: false,
       },
       {
         model: NextStep,
-        attributes: ['note', 'id'],
+        attributes: ['note', 'id', 'completeDate'],
         as: 'recipientNextSteps',
         separate,
         required: false,
