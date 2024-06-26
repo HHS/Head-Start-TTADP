@@ -598,7 +598,7 @@ export async function getGoalsByActivityRecipient(
           ELSE 7 END`),
       'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
-      [sequelize.literal(`"Goal"."goalTemplateId" = ${feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
+      [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
     ],
     where: goalWhere,
     include: [
@@ -662,7 +662,7 @@ export async function getGoalsByActivityRecipient(
         model: GoalFieldResponse,
         as: 'responses',
         required: false,
-        attributes: ['response', 'goalId', 'goalTemplateFieldPromptId'],
+        attributes: ['response', 'goalId'],
       },
       {
         model: GoalTemplate,
@@ -879,7 +879,7 @@ export async function getGoalsByActivityRecipient(
       onAR: current.onAR,
       sessionObjectives: [],
       responses: current.responses,
-      isFei: current.isFei,
+      isFei: current.dataValues.isFei,
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));
