@@ -76,7 +76,6 @@ describe('Sequelize Tests', () => {
       expect(auditLogger.error).toHaveBeenNthCalledWith(1, 'Uncaught Exception:', expect.any(Error));
       expect(auditLogger.error).toHaveBeenNthCalledWith(2, 'Error during Sequelize disconnection through test message: Error: Close error');
     });
-
   });
 
   describe('Sequelize Hooks', () => {
@@ -88,7 +87,7 @@ describe('Sequelize Tests', () => {
       expect(Array.isArray(beforeConnectHooks)).toBe(true);
       expect(beforeConnectHooks.length).toBeGreaterThan(0);
 
-      await Promise.all(beforeConnectHooks.map(hook => hook()));
+      await Promise.all(beforeConnectHooks.map((hook) => hook()));
 
       expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database');
     });
@@ -98,7 +97,7 @@ describe('Sequelize Tests', () => {
       expect(Array.isArray(afterConnectHooks)).toBe(true);
       expect(afterConnectHooks.length).toBeGreaterThan(0);
 
-      await Promise.all(afterConnectHooks.map(hook => hook()));
+      await Promise.all(afterConnectHooks.map((hook) => hook()));
 
       expect(auditLogger.info).toHaveBeenCalledWith('Database connection established');
     });
@@ -108,7 +107,7 @@ describe('Sequelize Tests', () => {
       expect(Array.isArray(beforeDisconnectHooks)).toBe(true);
       expect(beforeDisconnectHooks.length).toBeGreaterThan(0);
 
-      await Promise.all(beforeDisconnectHooks.map(hook => hook()));
+      await Promise.all(beforeDisconnectHooks.map((hook) => hook()));
 
       expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database');
     });
@@ -118,7 +117,7 @@ describe('Sequelize Tests', () => {
       expect(Array.isArray(afterDisconnectHooks)).toBe(true);
       expect(afterDisconnectHooks.length).toBeGreaterThan(0);
 
-      await Promise.all(afterDisconnectHooks.map(hook => hook()));
+      await Promise.all(afterDisconnectHooks.map((hook) => hook()));
 
       expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed');
     });
