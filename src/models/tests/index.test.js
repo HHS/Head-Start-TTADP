@@ -7,6 +7,7 @@ jest.mock('sequelize', () => ({
     authenticate: jest.fn(() => Promise.resolve()),
     close: jest.fn(() => Promise.resolve()),
     addHook: jest.fn(),
+    useCLS: jest.fn(),
   })),
 }));
 
