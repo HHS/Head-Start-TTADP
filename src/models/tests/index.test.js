@@ -2,14 +2,22 @@ import Sequelize from 'sequelize';
 import { gracefulShutdown, sequelize } from '..';
 import { auditLogger } from '../../logger';
 
-jest.mock('sequelize', () => ({
-  Sequelize: jest.fn().mockImplementation(() => ({
+jest.mock('sequelize', () => {
+  const Sequelize = jest.fn().mockImplementation(() => ({
     authenticate: jest.fn(() => Promise.resolve()),
     close: jest.fn(() => Promise.resolve()),
     addHook: jest.fn(),
-  })),
-  useCLS: jest.fn(),
-}));
+  }));
+
+  Sequelize.useCLS = jest.fn();
+  Sequelize.Sequelize = Sequelize;
+
+  return {
+    Sequelize,
+    useCLS: Sequelize.useCLS,
+  };
+});
+
 
 jest.mock('../../logger', () => ({
   auditLogger: {
