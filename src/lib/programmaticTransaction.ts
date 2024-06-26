@@ -163,6 +163,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
+    auditLogger.log('info', JSON.stringify({ allChanges }));
     await revertChange(allChanges);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);
