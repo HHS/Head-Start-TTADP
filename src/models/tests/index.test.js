@@ -2,23 +2,6 @@ import Sequelize from 'sequelize';
 import { gracefulShutdown, sequelize } from '..';
 import { auditLogger } from '../../logger';
 
-jest.mock('sequelize', () => {
-  const Sequelize = jest.fn().mockImplementation(() => ({
-    authenticate: jest.fn(() => Promise.resolve()),
-    close: jest.fn(() => Promise.resolve()),
-    addHook: jest.fn(),
-  }));
-
-  Sequelize.useCLS = jest.fn();
-  Sequelize.Sequelize = Sequelize;
-
-  return {
-    Sequelize,
-    useCLS: Sequelize.useCLS,
-  };
-});
-
-
 jest.mock('../../logger', () => ({
   auditLogger: {
     info: jest.fn(),
@@ -32,10 +15,12 @@ describe('Graceful shutdown', () => {
   beforeAll(() => {
     originalExit = process.exit;
     process.exit = jest.fn();
+    jest.spyOn(sequelize, 'close').mockResolvedValue();
   });
 
   afterAll(() => {
     process.exit = originalExit;
+    jest.restoreAllMocks();
   });
 
   it('should close the sequelize connection and log info on SIGINT', async () => {
@@ -81,8 +66,12 @@ describe('Graceful shutdown', () => {
 
     await gracefulShutdown('test message');
 
-    expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Close error');
+    // Check the specific error message among the calls
+    expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Error: Close error');
+    // Optionally, check the total number of calls to auditLogger.error if needed
+    expect(auditLogger.error).toHaveBeenCalledTimes(1);
   });
+
 });
 
 describe('Sequelize Hooks', () => {
