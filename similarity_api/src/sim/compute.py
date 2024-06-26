@@ -40,9 +40,10 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
       AND NULLIF(TRIM(g."name"), '') IS NOT NULL
     -- -------------------------------------------
     -- Only needed to prevent goals created from non-approved reports from being merged
-      AND ((ar."approvedAt" IS NOT NULL
-        AND g."createdVia"::text = 'activityReport')
-        OR (g."createdVia"::text != 'activityReport')
+    -- Prevent goals created via TR.
+      AND (
+        (ar."approvedAt" IS NOT NULL AND g."createdVia"::text = 'activityReport')
+        OR (g."createdVia"::text != 'activityReport' AND g."createdVia"::text != 'tr')
       )
     -- -------------------------------------------
     ;
@@ -193,7 +194,8 @@ def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates
         JOIN "Recipients" r
           ON gr."recipientId" = r."id"
         WHERE r."id" = :recipient_id
-          AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
+          AND NULLIF(TRIM(g."name"), '') IS NOT NULL
+          AND g."createdVia"::text != 'tr';
         """,
         {'recipient_id': recipient_id}
     )    
