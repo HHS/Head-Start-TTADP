@@ -288,7 +288,7 @@ export default function GoalCard({
                 ? (
                   <div className="grid-row">
                     <p className="usa-prose text-bold margin-bottom-0 margin-top-1 margin-right-1">
-                      Root cause
+                      Root cause:
                     </p>
                     <p className="usa-prose margin-bottom-0 margin-top-1">
                       { getResponses() }

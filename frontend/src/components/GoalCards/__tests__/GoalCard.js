@@ -136,7 +136,7 @@ describe('GoalCard', () => {
   it('shows the fei root causes', () => {
     renderGoalCard(DEFAULT_PROPS,
       { ...goal, isFei: true, responses: [{ response: ['root cause 1', 'root cause 2', 'root cause 3'] }] });
-    expect(screen.getByText('Root cause')).toBeInTheDocument();
+    expect(screen.getByText('Root cause:')).toBeInTheDocument();
     expect(screen.getByText(/root cause 1, root cause 2, root cause 3/i)).toBeInTheDocument();
   });
 
