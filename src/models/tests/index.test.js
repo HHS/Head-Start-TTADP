@@ -71,7 +71,6 @@ describe('Graceful shutdown', () => {
     // Optionally, check the total number of calls to auditLogger.error if needed
     expect(auditLogger.error).toHaveBeenCalledTimes(1);
   });
-
 });
 
 describe('Sequelize Hooks', () => {
