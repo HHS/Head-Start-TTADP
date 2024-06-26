@@ -66,6 +66,7 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   }
   const tableName = change.source_table.replace('ZAL', '');
   try {
+    auditLogger.log('info', JSON.stringify({ tableName, ...change }));
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
