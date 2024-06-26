@@ -1,10 +1,10 @@
 import React, { useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import moment from 'moment-timezone';
-import { Redirect } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useFormContext } from 'react-hook-form';
 import {
-  Form, Fieldset, Button, Alert, Dropdown,
+  Form, Fieldset, Button, Alert, Select,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
 import IncompletePages from '../IncompletePages';
@@ -101,7 +101,7 @@ const Draft = ({
 
   return (
     <>
-      {justSubmitted && <Redirect to={{ pathname: '/activity-reports', state: { message } }} />}
+      {justSubmitted && <Navigate to={{ pathname: '/activity-reports', state: { message } }} />}
       <h2>Submit Report</h2>
       <IndicatesRequiredField />
       <Form className="smart-hub--form-large smart-hub--form__draft smart-hub--form" onSubmit={handleSubmit(onSubmit)}>
@@ -114,7 +114,7 @@ const Draft = ({
                   name="creatorRole"
                   required
                 >
-                  <Dropdown
+                  <Select
                     id="creatorRole"
                     name="creatorRole"
                     inputRef={register({ required: 'Select one' })}
@@ -123,7 +123,7 @@ const Draft = ({
                     {completeUserRoles().map((role) => (
                       <option key={role} value={role}>{role}</option>
                     ))}
-                  </Dropdown>
+                  </Select>
                 </FormItem>
               </Fieldset>
             )

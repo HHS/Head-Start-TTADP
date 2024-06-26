@@ -6,8 +6,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
@@ -37,8 +36,6 @@ const userBluePrint = {
     },
   ],
 };
-
-const history = createMemoryHistory();
 
 const res = {
   count: 13,
@@ -122,11 +119,11 @@ const recipientUrl = join('/', 'api', 'recipient');
 
 const renderRecipientSearch = (user) => {
   render((
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <RecipientSearch user={user} />
       </UserContext.Provider>
-    </Router>
+    </MemoryRouter>
   ));
 };
 

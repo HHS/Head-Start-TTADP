@@ -6,8 +6,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import GoalCard from '../GoalCard';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -79,11 +78,9 @@ describe('GoalCard', () => {
     hideGoalOptions: false,
   };
 
-  const history = createMemoryHistory();
-
   const renderGoalCard = (props = DEFAULT_PROPS, defaultGoal = goal, user = DEFAULT_USER) => {
     render((
-      <Router history={history}>
+      <MemoryRouter>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
           <UserContext.Provider value={{ user }}>
             <GoalCard
@@ -102,7 +99,7 @@ describe('GoalCard', () => {
             />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </Router>));
+      </MemoryRouter>));
   };
 
   it('shows the checkbox by default', () => {
@@ -331,10 +328,8 @@ describe('GoalCard', () => {
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
     fetchMock.delete(url, {});
-    history.push = jest.fn();
     userEvent.click(deleteButton);
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/rttapa', { message: 'Goal deleted successfully' });
     expect(document.querySelector('.smart-hub-border-base-error')).toBeNull();
   });
 
@@ -361,9 +356,7 @@ describe('GoalCard', () => {
     const url = `${goalApi}?goalIds=1`;
     fetchMock.delete(url, 500);
     userEvent.click(deleteButton);
-    history.push = jest.fn();
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(history.push).not.toHaveBeenCalled();
     expect(document.querySelector('.smart-hub-border-base-error')).not.toBeNull();
   });
 

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import { useLocation } from 'react-router-dom';
 import { getRecipientGoals } from '../../../fetchers/recipient';
 import PrintableGoal from './components/PrintableGoal';
 import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
 
 const OFFSET = 0;
-export default function PrintGoals({ location, recipientId, regionId }) {
+export default function PrintGoals({ recipientId, regionId }) {
   const [goals, setGoals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [, setError] = useState('');
+  const location = useLocation();
 
   useEffect(() => {
     const sortConfig = location.state && location.state.sortConfig
@@ -49,7 +50,8 @@ export default function PrintGoals({ location, recipientId, regionId }) {
       setLoading(false);
     }
 
-    const filterQuery = window.location.search.replace(/^\?/, '');
+    const filterQuery = location.search.replace(/^\?/, '');
+
     fetchGoals(filterQuery);
   }, [location.state, location.search, recipientId, regionId]);
 
@@ -76,7 +78,6 @@ export default function PrintGoals({ location, recipientId, regionId }) {
 }
 
 PrintGoals.propTypes = {
-  location: ReactRouterPropTypes.location.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
 };

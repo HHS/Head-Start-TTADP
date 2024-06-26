@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
-  Dropdown,
+  Select,
   Checkbox,
 } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
@@ -163,7 +163,7 @@ const RecipientsWithGroups = () => {
               label="Group name"
               name="recipientGroup"
             >
-              <Dropdown
+              <Select
                 required
                 control={control}
                 id="recipientGroup"
@@ -176,7 +176,7 @@ const RecipientsWithGroups = () => {
                 {groups.map((group) => (
                   <option key={group.id} value={group.id}>{group.name}</option>
                 ))}
-              </Dropdown>
+              </Select>
             </FormItem>
           </div>
         )

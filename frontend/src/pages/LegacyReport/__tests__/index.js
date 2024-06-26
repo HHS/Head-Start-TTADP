@@ -2,9 +2,8 @@ import '@testing-library/jest-dom';
 import join from 'url-join';
 import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import LegacyReport from '../index';
@@ -17,7 +16,6 @@ const RenderLegacyReport = ({ report, fail = false, user = defaultUser }) => {
   // eslint-disable-next-line react/prop-types
   const { id } = report;
   const url = `/api/activity-reports/legacy/${id}`;
-  const history = createMemoryHistory();
 
   if (fail) {
     fetchMock.get(url, 500);
@@ -26,11 +24,13 @@ const RenderLegacyReport = ({ report, fail = false, user = defaultUser }) => {
   }
 
   return (
-    <Router history={history}>
+    <MemoryRouter initialEntries={[`/activity-reports/legacy/${id}`]}>
       <UserContext.Provider value={{ user }}>
-        <LegacyReport match={{ path: '', url: '', params: { legacyId: id } }} />
+        <Routes>
+          <Route path="/activity-reports/legacy/:legacyId" element={<LegacyReport />} />
+        </Routes>
       </UserContext.Provider>
-    </Router>
+    </MemoryRouter>
   );
 };
 

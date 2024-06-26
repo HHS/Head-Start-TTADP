@@ -23,6 +23,7 @@ const Modal = ({
   SecondaryActionButton,
   hideCancelButton,
   forceAction,
+  describedBy,
 }) => (
   <>
     <TrussWorksModal
@@ -30,6 +31,7 @@ const Modal = ({
       id={`${modalId}`}
       isLarge={isLarge}
       aria-labelledby={`${modalId}-heading`}
+      aria-describedby={describedBy || `${modalId}-desc`}
       forceAction={forceAction}
       className={`ttahub-modal ${showCloseX ? 'show-close-x' : ''}`}
     >
@@ -103,6 +105,7 @@ Modal.propTypes = {
   SecondaryActionButton: PropTypes.oneOfType([PropTypes.func, PropTypes.bool]),
   hideCancelButton: PropTypes.bool,
   forceAction: PropTypes.bool,
+  describedBy: PropTypes.string,
 };
 
 Modal.defaultProps = {
@@ -118,6 +121,7 @@ Modal.defaultProps = {
   SecondaryActionButton: false,
   hideCancelButton: false,
   forceAction: false,
+  describedBy: '',
 };
 
 export default Modal;

@@ -41,6 +41,8 @@ function RegionPermissionModal({
     modalRef.current.toggleModal(false);
   };
 
+  const modalId = 'RegionPermissionModal';
+
   const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
   const openSmartSheetRequest = () => <a href={smartSheetAccessLink} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
   return (
@@ -49,7 +51,7 @@ function RegionPermissionModal({
         modalRef={modalRef}
         onOk={showFilterWithMyRegionAccess}
         okButtonCss="usa-button--primary"
-        modalId="RegionPermissionModal"
+        modalId={modalId}
         title={`You need permission to access region${showMultipleRegions} ${missingRegionsList}`}
         okButtonText="Show filter with my regions"
         SecondaryActionButton={openSmartSheetRequest}
@@ -57,7 +59,7 @@ function RegionPermissionModal({
         isLarge
         forceAction
       >
-        <p>
+        <p id={`${modalId}-desc`}>
           Most TTA Hub users have access to one region.
           This link might be from someone working in a different region.
         </p>

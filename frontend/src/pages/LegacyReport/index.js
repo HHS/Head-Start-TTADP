@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Table } from '@trussworks/react-uswds';
+import { useParams } from 'react-router-dom';
 import { map, uniqueId } from 'lodash';
-
 import Container from '../../components/Container';
 import FileReviewItem from '../ActivityReport/Pages/Review/FileReviewItem';
 import { legacyReportById } from '../../fetchers/activityReports';
@@ -76,8 +75,8 @@ EditForm.propTypes = {
   }).isRequired,
 };
 
-function LegacyReport({ match }) {
-  const { params: { legacyId } } = match;
+function LegacyReport() {
+  const { legacyId } = useParams();
   const [legacyReport, updateLegacyReport] = useState();
   const [loading, updateLoading] = useState(true);
   const [error, updateError] = useState(false);
@@ -200,9 +199,5 @@ function LegacyReport({ match }) {
     </>
   );
 }
-
-LegacyReport.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};
 
 export default LegacyReport;

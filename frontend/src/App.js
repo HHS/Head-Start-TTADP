@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
-
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-
 import { fetchUser, fetchLogout } from './fetchers/Auth';
 import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
@@ -12,7 +10,6 @@ import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
-
 import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
@@ -37,7 +34,6 @@ import AppWrapper from './components/AppWrapper';
 import AccountManagement from './pages/AccountManagement';
 import MyGroups from './pages/AccountManagement/MyGroups';
 import Logout from './pages/Logout';
-
 import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
 import { getNotifications } from './fetchers/feed';
 import { storageAvailable } from './hooks/helpers';
@@ -194,24 +190,22 @@ function App() {
 
   const renderAuthenticatedRoutes = () => (
     <>
-      <Switch>
+      <Routes>
         <Route
-          path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
-          render={({ match }) => (
+          path="/activity-reports/legacy/:legacyId"
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <LegacyReport
-                match={match}
-              />
+              <LegacyReport />
             </AppWrapper>
           )}
         />
         <Route
           exact
           path="/activity-reports"
-          render={({ match }) => (
+          element={(
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <LandingLayout>
-                <Landing match={match} />
+                <Landing />
               </LandingLayout>
             </AppWrapper>
           )}
@@ -219,35 +213,33 @@ function App() {
         <Route
           exact
           path="/"
-          render={() => (
+          element={(
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <Home />
             </AppWrapper>
           )}
         />
         <Route
-          path="/activity-reports/view/:activityReportId([0-9]*)"
-          render={({ match, location }) => (
+          path="/activity-reports/view/:activityReportId"
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <ApprovedActivityReport location={location} match={match} user={user} />
+              <ApprovedActivityReport user={user} />
             </AppWrapper>
           )}
         />
         <Route
-          path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
-          render={({ match, location }) => (
+          path="/activity-reports/:activityReportId/:currentPage"
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <ActivityReport location={location} match={match} />
+              <ActivityReport />
             </AppWrapper>
           )}
         />
         <Route
-          path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
-          render={({ match, location }) => (
+          path="/recipient-tta-records/:recipientId/region/:regionId/*"
+          element={(
             <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
               <RecipientRecord
-                location={location}
-                match={match}
                 user={user}
                 hasAlerts={!!(alert)}
               />
@@ -257,7 +249,7 @@ function App() {
         <Route
           exact
           path="/dashboards/resources-dashboard"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout}>
               <ResourcesDashboard user={user} />
             </AppWrapper>
@@ -266,7 +258,7 @@ function App() {
         <Route
           exact
           path="/dashboards/ipd-courses"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout}>
               <CourseDashboard />
             </AppWrapper>
@@ -274,44 +266,44 @@ function App() {
         />
         <Route
           exact
-          path="/training-reports/:status(not-started|in-progress|complete|suspended)"
-          render={({ match }) => (
+          path="/training-reports/:status"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <TrainingReports user={user} match={match} />
+              <TrainingReports user={user} />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/view/:trainingReportId([0-9RT\-]*)"
-          render={({ match }) => (
+          path="/training-report/view/:trainingReportId"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <ViewTrainingReport match={match} />
+              <ViewTrainingReport />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/:currentPage([a-z\-]*)?"
-          render={({ match }) => (
+          path="/training-report/:trainingReportId/:currentPage"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <TrainingReportForm match={match} />
+              <TrainingReportForm />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/training-report/:trainingReportId([0-9RT\-]*)/session/:sessionId(new|[0-9]*)/:currentPage([a-z\-]*)?"
-          render={({ match }) => (
+          path="/training-report/:trainingReportId/session/:sessionId/:currentPage"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <SessionForm match={match} />
+              <SessionForm />
             </AppWrapper>
           )}
         />
         <Route
           exact
           path="/dashboards/qa-dashboard"
-          render={() => (
+          render={(
             <FeatureFlag
               renderNotFound
               flag="quality_assurance_dashboard"
@@ -329,58 +321,58 @@ function App() {
         <Route
           exact
           path="/dashboards/regional-dashboard/activity-reports"
-          render={({ match }) => (
+          element={(
             <AppWrapper
               padded={!(hasTrainingReportDashboard)}
               authenticated
               logout={logout}
               hasAlerts={!!(alert)}
             >
-              <RegionalDashboard match={match} />
+              <RegionalDashboard />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/dashboards/regional-dashboard/:reportType(training-reports|all-reports)"
-          render={({ match }) => (
+          path="/dashboards/regional-dashboard/:reportType"
+          element={(
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
               <FeatureFlag flag="training_reports_dashboard" renderNotFound>
-                <RegionalDashboard match={match} />
+                <RegionalDashboard />
               </FeatureFlag>
             </AppWrapper>
           )}
         />
         <Route
-          path="/account/my-groups/:groupId([0-9]*)"
-          render={({ match }) => (
+          path="/account/my-groups/:groupId"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <MyGroups match={match} />
+              <MyGroups />
             </AppWrapper>
           )}
         />
         <Route
           exact
           path="/account/my-groups"
-          render={({ match }) => (
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <MyGroups match={match} />
+              <MyGroups />
             </AppWrapper>
           )}
         />
         <Route
           exact
-          path="/account/group/:groupId([0-9]*)"
-          render={({ match }) => (
+          path="/account/group/:groupId"
+          element={(
             <AppWrapper authenticated logout={logout}>
-              <Group match={match} />
+              <Group />
             </AppWrapper>
           )}
         />
         <Route
           exact
           path="/regional-goal-dashboard"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout}>
               <FeatureFlag flag="regional_goal_dashboard" renderNotFound>
                 <RegionalGoalDashboard user={user} />
@@ -392,7 +384,7 @@ function App() {
         <Route
           exact
           path="/account"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
@@ -401,7 +393,7 @@ function App() {
         <Route
           exact
           path="/notifications"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <NotificationsPage notifications={notifications} />
             </AppWrapper>
@@ -410,7 +402,7 @@ function App() {
         <Route
           exact
           path="/account/verify-email/:token"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
@@ -419,12 +411,12 @@ function App() {
         <Route
           exact
           path="/logout"
-          render={() => <Logout />}
+          element={<Logout />}
         />
         {admin && (
         <Route
-          path="/admin"
-          render={() => (
+          path="/admin/*"
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
           )}
         />
@@ -432,20 +424,20 @@ function App() {
         <Route
           exact
           path="/recipient-tta-records"
-          render={() => (
+          element={(
             <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
               <RecipientSearch user={user} />
             </AppWrapper>
           )}
         />
         <Route
-          render={() => (
+          element={(
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <NotFound />
             </AppWrapper>
           )}
         />
-      </Switch>
+      </Routes>
     </>
   );
 

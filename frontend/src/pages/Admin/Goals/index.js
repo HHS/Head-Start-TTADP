@@ -1,6 +1,6 @@
 import React from 'react';
 import { SideNav } from '@trussworks/react-uswds';
-import { Link, Switch, Route } from 'react-router-dom';
+import { Link, Routes, Route } from 'react-router-dom';
 import Create from './Create';
 import Close from './Close';
 
@@ -16,21 +16,25 @@ export default function Goals() {
         <SideNav items={sideNavMenuItems} />
       </nav>
       <div className="ttahub-grid__content">
-        <Switch>
+        <Routes>
           <Route
-            path="/admin/goals/create"
-            render={() => <Create />}
+            path="create"
+            element={<Create />}
           />
           <Route
-            path="/admin/goals/close"
-            render={() => <Close />}
+            path="close"
+            element={<Close />}
           />
-          <Route>
-            <div>
-              <p className="usa-prose">A selection is in order</p>
-            </div>
-          </Route>
-        </Switch>
+          <Route
+            path="*"
+            element={(
+              <div>
+                <p className="usa-prose">A selection is in order</p>
+              </div>
+)}
+          />
+
+        </Routes>
       </div>
     </div>
   );

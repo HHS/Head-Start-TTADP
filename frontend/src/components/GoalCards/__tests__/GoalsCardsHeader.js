@@ -1,7 +1,7 @@
+/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { render, act, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useNavigate } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import GoalCardsHeader from '../GoalsCardsHeader';
@@ -58,17 +58,21 @@ describe('GoalDataController', () => {
     showNewGoals: false,
     canMergeGoals: true,
   };
-  const history = createMemoryHistory();
 
-  const renderTest = (props = {}, locationState = undefined) => {
-    history.location.state = locationState;
+  let navigate;
 
+  const Test = (props) => {
+    navigate = useNavigate();
+    return <GoalCardsHeader {...defaultProps} {...props} />;
+  };
+
+  const renderTest = (props = {}) => {
     render(
       <UserContext.Provider value={{ user: DEFAULT_USER }}>
-        <Router history={history}>
+        <MemoryRouter>
           {/* eslint-disable-next-line react/jsx-props-no-spreading */}
-          <GoalCardsHeader {...defaultProps} {...props} />
-        </Router>
+          <Test {...props} />
+        </MemoryRouter>
       </UserContext.Provider>,
     );
   };
@@ -77,31 +81,29 @@ describe('GoalDataController', () => {
     act(() => {
       renderTest(
         {}, // props
-        {
-          mergedGoals: [1, 2], // location state
-        },
       );
     });
+
+    act(() => navigate('/', { state: { mergedGoals: [1, 2] } }));
 
     expect(await screen.findByText(/goals g-1, g-2 have been merged/i)).toBeInTheDocument();
     const resetSort = await screen.findByRole('button', { name: 'Reset goal sort order' });
     userEvent.click(resetSort);
-    expect(dismissMergeSuccess).toBeCalled();
+    expect(dismissMergeSuccess).toHaveBeenCalled();
   });
 
   it('displays correct singular message with merged goals', async () => {
     act(() => {
       renderTest(
         {}, // props
-        {
-          mergedGoals: [1], // location state
-        },
       );
     });
+
+    act(() => navigate('/', { state: { mergedGoals: [1] } }));
 
     expect(await screen.findByText(/goal g-1 has been merged/i)).toBeInTheDocument();
     const resetSort = await screen.findByRole('button', { name: 'Reset goal sort order' });
     userEvent.click(resetSort);
-    expect(dismissMergeSuccess).toBeCalled();
+    expect(dismissMergeSuccess).toHaveBeenCalled();
   });
 });

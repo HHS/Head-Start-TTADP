@@ -4,8 +4,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
 
@@ -13,16 +12,14 @@ const { ADMIN } = SCOPE_IDS;
 
 describe('feature flag', () => {
   const renderFeatureFlag = (flag, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
             <h1>This is a test</h1>
           </FeatureFlag>
         </UserContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

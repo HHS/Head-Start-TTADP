@@ -1,12 +1,9 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import { render, act } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import FinalGoalCard from '../FinalGoalCard';
 import UserContext from '../../../../../../UserContext';
-
-const memoryHistory = createMemoryHistory();
 
 describe('FinalGoalCard', () => {
   const baseGoals = [{
@@ -98,7 +95,7 @@ describe('FinalGoalCard', () => {
       permissions: [],
     };
     render(
-      <Router history={memoryHistory}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <FinalGoalCard
             goals={goals}
@@ -106,7 +103,7 @@ describe('FinalGoalCard', () => {
             finalGoalId={finalGoalId}
           />
         </UserContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

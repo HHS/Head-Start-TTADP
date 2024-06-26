@@ -4,8 +4,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import DisplayWithPermission from '../DisplayWithPermission';
 import UserContext from '../../UserContext';
 
@@ -13,16 +12,14 @@ const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('display with permissions', () => {
   const renderDisplayWithPermission = (scopes, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <DisplayWithPermission scopes={scopes} renderNotFound={renderNotFound}>
             <h1>This is a test</h1>
           </DisplayWithPermission>
         </UserContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

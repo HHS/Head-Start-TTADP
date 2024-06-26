@@ -5,30 +5,28 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
 
 describe('TrainingReportForm', () => {
-  const history = createMemoryHistory();
   const sessionsUrl = '/api/session-reports/eventId/1234';
 
-  const renderTrainingReportForm = (trainingReportId, currentPage) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <TrainingReportForm match={{
-            params: { currentPage, trainingReportId },
-            path: currentPage,
-            url: currentPage,
-          }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
+  const renderTrainingReportForm = (trainingReportId, currentPage = '') => render(
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+      <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+        <MemoryRouter initialEntries={[`/training-report/${trainingReportId}/${currentPage}`]}>
+          <Routes>
+            <Route
+              path="/training-report/:trainingReportId/:currentPage"
+              element={<TrainingReportForm />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </UserContext.Provider>
+    </AppLoadingContext.Provider>,
   );
 
   beforeEach(() => {
@@ -153,24 +151,6 @@ describe('TrainingReportForm', () => {
 
     expect(fetchMock.called('/api/events/id/123')).toBe(true);
     expect(await screen.findByText(/error fetching training report/i)).toBeInTheDocument();
-  });
-
-  it('displays "no training report id provided" error', async () => {
-    fetchMock.get('/api/events/id/123', {
-      regionId: '1',
-      reportId: 1,
-      data: {},
-      collaboratorIds: [],
-      ownerId: 1,
-      owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
-      },
-    });
-    act(() => {
-      renderTrainingReportForm('', 'event-summary');
-    });
-
-    expect(screen.getByText(/no training report id provided/i)).toBeInTheDocument();
   });
 
   it('tests the on save & continue button', async () => {

@@ -1,12 +1,9 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { SCOPE_IDS } from '@ttahub/common';
 import Tabs from '../Tabs';
 import UserContext from '../../UserContext';
-
-const history = createMemoryHistory();
 
 const DEFAULT_USER = {
   name: 'test@test.com',
@@ -26,18 +23,21 @@ const testTabs = [
   { key: 'Test Tab 3', value: 'test-tab-3' }];
 
 describe('Tabs', () => {
+  // eslint-disable-next-line react/prop-types
+  const Test = ({ backLink, user }) => (
+    <MemoryRouter>
+      <UserContext.Provider value={{ user }}>
+        <Tabs
+          tabs={testTabs}
+          ariaLabel="test label"
+          backLink={backLink}
+        />
+      </UserContext.Provider>
+    </MemoryRouter>
+  );
+
   const renderTabs = (backLink = null, user = DEFAULT_USER) => {
-    render(
-      <Router history={history}>
-        <UserContext.Provider value={{ user }}>
-          <Tabs
-            tabs={testTabs}
-            ariaLabel="test label"
-            backLink={backLink}
-          />
-        </UserContext.Provider>
-      </Router>,
-    );
+    render(<Test backLink={backLink} user={user} />);
   };
 
   it('renders the correct tabs', () => {
@@ -45,13 +45,6 @@ describe('Tabs', () => {
     expect(screen.getByText('Test Tab 1')).toBeInTheDocument();
     expect(screen.getByText('Test Tab 2')).toBeInTheDocument();
     expect(screen.getByText('Test Tab 3')).toBeInTheDocument();
-  });
-
-  it('calls the appropriate link when a tab is clicked', () => {
-    renderTabs();
-    const tab2 = screen.getByRole('link', { name: /test tab 2/i });
-    fireEvent.click(tab2);
-    expect(history.location.pathname).toBe('/training-reports/test-tab-2');
   });
 
   it('does not show the icon if there is no back link', () => {

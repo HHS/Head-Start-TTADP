@@ -2,10 +2,10 @@ import React, { useContext, useState } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import {
-  FormGroup, Button, Fieldset, Dropdown, ErrorMessage,
+  FormGroup, Button, Fieldset, Select, ErrorMessage,
 } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
-import { useHistory } from 'react-router';
+import { useNavigate } from 'react-router';
 import RichEditor from '../../../../../components/RichEditor';
 import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
@@ -31,7 +31,7 @@ const NeedsAction = ({
   const [submitCR, setSubmitCR] = useState(!creatorRole && userHasOneRole ? user.roles[0] : creatorRole || '');
   const [creatorNotes, setCreatorNotes] = useState(additionalNotes);
   const [showCreatorRoleError, setShowCreatorRoleError] = useState(false);
-  const history = useHistory();
+  const navigate = useNavigate();
   const { watch } = useFormContext();
 
   const approvers = watch('approvers');
@@ -58,7 +58,7 @@ const NeedsAction = ({
         status: 'submitted',
       };
 
-      history.push('/activity-reports', { message });
+      navigate('/activity-reports', { state: { message } });
     }
   };
 
@@ -83,7 +83,7 @@ const NeedsAction = ({
                   <Fieldset>
                     {showCreatorRoleError
                       ? <ErrorMessage>Please select a creator role.</ErrorMessage> : null}
-                    <Dropdown
+                    <Select
                       id="creatorRole"
                       name="creatorRole"
                       value={submitCR}
@@ -93,7 +93,7 @@ const NeedsAction = ({
                       {user.roles.map(({ fullName: role }) => (
                         <option key={role} value={role}>{role}</option>
                       ))}
-                    </Dropdown>
+                    </Select>
                   </Fieldset>
                 </FormGroup>
               </>

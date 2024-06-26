@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
 import UserContext from '../../../../../../UserContext';
@@ -39,6 +38,8 @@ const incompletePages = [{
   review: false,
 }];
 
+let location;
+
 const RenderApprover = ({
   // eslint-disable-next-line react/prop-types
   onFormReview, reviewed, formData, pages,
@@ -47,6 +48,8 @@ const RenderApprover = ({
     mode: 'onChange',
     defaultValues: formData,
   });
+
+  location = useLocation();
 
   return (
     <FormProvider {...hookForm}>
@@ -82,9 +85,8 @@ const renderReview = (
     ...extraFormData,
   };
 
-  const history = createMemoryHistory();
   render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <RenderApprover
           onFormReview={onFormReview}
@@ -93,10 +95,8 @@ const renderReview = (
           pages={pages}
         />
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
-
-  return history;
 };
 
 describe('Approver review page', () => {
@@ -108,17 +108,17 @@ describe('Approver review page', () => {
 
     it('allows the approver to submit a review and redirects them after', async () => {
       const mockSubmit = jest.fn();
-      const history = renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
-      const dropdown = await screen.findByTestId('dropdown');
+      renderReview(REPORT_STATUSES.SUBMITTED, mockSubmit, true);
+      const dropdown = await screen.findByTestId('Select');
       userEvent.selectOptions(dropdown, 'approved');
       const button = await screen.findByRole('button');
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
+      await waitFor(() => expect(location.pathname).toBe('/activity-reports'));
     });
 
     it('approver viewing approved report, user is redirected', async () => {
-      const history = renderReview(REPORT_STATUSES.APPROVED, () => { }, true);
-      await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
+      renderReview(REPORT_STATUSES.APPROVED, () => { }, true);
+      await waitFor(() => expect(location.pathname).toBe('/activity-reports'));
     });
 
     it('handles empty notes', async () => {

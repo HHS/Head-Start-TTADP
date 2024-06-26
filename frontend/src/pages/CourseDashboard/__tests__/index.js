@@ -4,13 +4,10 @@ import React from 'react';
 import moment from 'moment';
 import join from 'url-join';
 import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import {
-  // act,
   render,
   screen,
-  // fireEvent,
 } from '@testing-library/react';
 // import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
@@ -19,8 +16,6 @@ import CourseDashboard from '../index';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import { formatDateRange } from '../../../utils';
-
-const history = createMemoryHistory();
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -90,9 +85,9 @@ describe('Resources Dashboard page', () => {
     render(
       <UserContext.Provider value={{ user }}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
-          <Router history={history}>
+          <MemoryRouter>
             <CourseDashboard user={user} />
-          </Router>
+          </MemoryRouter>
         </AriaLiveContext.Provider>
       </UserContext.Provider>,
     );

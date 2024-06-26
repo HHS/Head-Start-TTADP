@@ -11,6 +11,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
+import { MemoryRouter, Route, Routes } from 'react-router';
 import ApprovedActivityReport from '../index';
 
 describe('Activity report print and share view', () => {
@@ -105,15 +106,16 @@ describe('Activity report print and share view', () => {
   };
 
   function renderApprovedActivityReport(id, passedUser = user) {
-    const match = {
-      path: '',
-      url: '',
-      params: {
-        activityReportId: id,
-      },
-    };
-
-    render(<ApprovedActivityReport user={passedUser} match={match} />);
+    render(
+      <MemoryRouter initialEntries={[`/activity-reports/${id}`]}>
+        <Routes>
+          <Route
+            path="/activity-reports/:activityReportId"
+            element={<ApprovedActivityReport user={passedUser} />}
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
   }
   afterEach(() => fetchMock.restore());
 

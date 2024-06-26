@@ -6,13 +6,11 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import ObjectiveCard from '../ObjectiveCard';
 import UserContext from '../../../UserContext';
 
 describe('ObjectiveCard', () => {
-  const history = createMemoryHistory();
   const renderObjectiveCard = (objective, dispatchStatusChange = jest.fn()) => {
     render(
       <UserContext.Provider value={{
@@ -24,7 +22,7 @@ describe('ObjectiveCard', () => {
         },
       }}
       >
-        <Router history={history}>
+        <MemoryRouter>
           <ObjectiveCard
             objective={objective}
             regionId={1}
@@ -32,7 +30,7 @@ describe('ObjectiveCard', () => {
             objectivesExpanded
             dispatchStatusChange={dispatchStatusChange}
           />
-        </Router>
+        </MemoryRouter>
       </UserContext.Provider>,
     );
   };

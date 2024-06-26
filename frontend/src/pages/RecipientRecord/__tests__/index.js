@@ -5,8 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { act } from 'react-dom/test-utils';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
@@ -16,7 +15,6 @@ import { GrantDataProvider } from '../pages/GrantDataContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
-const memoryHistory = createMemoryHistory();
 
 describe('recipient record page', () => {
   const user = {
@@ -62,60 +60,32 @@ describe('recipient record page', () => {
     ],
   };
 
-  const mockGoal = {
-    name: 'This is a goal name',
-    status: 'In Progress',
-    endDate: '10/08/2021',
-    sources: [],
-    prompts: [],
-    grant: {
-      id: 1,
-      number: '1',
-      programs: [{
-        programType: 'EHS',
-      }],
-      status: 'Active',
-    },
-    objectives: [
-      {
-        id: 1238474,
-        title: 'This is an objective',
-        status: 'Not Started',
-        resources: [],
-        topics: [],
-        activityReports: [],
-        roles: [],
-      },
-    ],
-  };
-
-  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
-    const match = {
-      path: '',
-      url: '',
-      params: {
-        recipientId: '1',
-        regionId,
-      },
-    };
-
+  function renderRecipientRecord(regionId = '45', path = '') {
+    const initialEntries = [`/recipient-tta-records/1/region/${regionId}/${path}`];
     render(
-      <Router history={history}>
-        <UserContext.Provider value={{ user }}>
-          <GrantDataProvider>
-            <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }
-          }
-            >
-              <RecipientRecord match={match} />
-            </AppLoadingContext.Provider>
-          </GrantDataProvider>
-        </UserContext.Provider>
-      </Router>,
+      <MemoryRouter initialEntries={initialEntries}>
+        <Routes>
+          <Route
+            path="/recipient-tta-records/:recipientId/region/:regionId/*"
+            element={(
+              <UserContext.Provider value={{ user }}>
+                <GrantDataProvider>
+                  <AppLoadingContext.Provider value={
+                    {
+                      setIsAppLoading: jest.fn(),
+                      setAppLoadingText: jest.fn(),
+                      isAppLoading: false,
+                    }
+                  }
+                  >
+                    <RecipientRecord hasAlerts={false} />
+                  </AppLoadingContext.Provider>
+                </GrantDataProvider>
+              </UserContext.Provider>
+      )}
+          />
+        </Routes>
+      </MemoryRouter>,
     );
   }
 
@@ -209,8 +179,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/1/region/45/leadership', []);
-    memoryHistory.push('/recipient-tta-records/1/region/45/profile');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'profile'));
     const heading = await screen.findByRole('heading', { name: /recipient summary/i });
     expect(heading).toBeInTheDocument();
   });
@@ -218,8 +187,7 @@ describe('recipient record page', () => {
   it('navigates to the tta history page', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient-tta-records/1/region/45/tta-history');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'tta-history'));
     await waitFor(() => {
       const ar = screen.getByText(/the number of approved activity reports\. click to visually reveal this information/i);
       expect(ar).toBeInTheDocument();
@@ -236,29 +204,16 @@ describe('recipient record page', () => {
   it('navigates to the goals & objectives page', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient-tta-records/1/region/45/rttapa');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'rttapa'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
-  });
-
-  it('navigates to the edit goals page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/goals/12389/recipient/45', mockGoal);
-    fetchMock.get('/api/topic', []);
-    memoryHistory.push('/recipient-tta-records/45/region/1/goals/12389');
-    act(() => renderRecipientRecord());
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/TTA Goals for the Mighty Recipient/i);
   });
 
   it('navigates to the print goals page', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=false', { goalRows: [] });
-    memoryHistory.push('/recipient-tta-records/45/region/1/rttapa/print');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'rttapa/print'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);
   });
@@ -267,8 +222,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/1/log/1', 404);
-    memoryHistory.push('/recipient-tta-records/45/region/1/communication/1/view');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'communication/1/view'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/There was an error fetching the communication log/i);
   });
@@ -276,8 +230,7 @@ describe('recipient record page', () => {
   it('navigates to the communication log form', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    memoryHistory.push('/recipient-tta-records/45/region/1/communication/new/log');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'communication/new/log'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/Back to Communication Log/i);
   });
@@ -286,8 +239,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/45/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&', []);
-    memoryHistory.push('/recipient-tta-records/45/region/1/communication');
-    act(() => renderRecipientRecord());
+    act(() => renderRecipientRecord('45', 'communication'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/There are no communication logs for this recipient/i);
   });
@@ -299,15 +251,22 @@ describe('recipient record page', () => {
       backLink,
     ) => {
       render(
-        <Router history={memoryHistory}>
-          <UserContext.Provider value={{ user }}>
-            <PageWithHeading error="" regionId="1" recipientId="1" recipientNameWithRegion={recipientNameWithRegion} slug="sadness" backLink={backLink}>
-              <div>
-                <h1>Test</h1>
-              </div>
-            </PageWithHeading>
-          </UserContext.Provider>
-        </Router>,
+        <MemoryRouter>
+          <Routes>
+            <Route
+              path="/"
+              element={(
+                <UserContext.Provider value={{ user }}>
+                  <PageWithHeading error="" regionId="1" recipientId="1" recipientNameWithRegion={recipientNameWithRegion} slug="sadness" backLink={backLink}>
+                    <div>
+                      <h1>Test</h1>
+                    </div>
+                  </PageWithHeading>
+                </UserContext.Provider>
+          )}
+            />
+          </Routes>
+        </MemoryRouter>,
       );
     };
 

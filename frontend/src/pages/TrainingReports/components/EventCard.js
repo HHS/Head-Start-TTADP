@@ -2,7 +2,7 @@ import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -22,7 +22,7 @@ function EventCard({
 }) {
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const hasAdminRights = isAdmin(user);
   const {
@@ -60,7 +60,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/session/new/`);
+        navigate(`/training-report/${idForLink}/session/new/`);
       },
     });
   }
@@ -70,7 +70,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/event-summary`);
+        navigate(`/training-report/${idForLink}/event-summary`);
       },
     });
   }
@@ -79,7 +79,7 @@ function EventCard({
   menuItems.push({
     label: 'View event',
     onClick: () => {
-      history.push(`/training-report/view/${idForLink}`);
+      navigate(`/training-report/view/${idForLink}`);
     },
   });
 

@@ -4,8 +4,7 @@ import {
   render, screen, act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -13,7 +12,6 @@ import TTAHistory from '../TTAHistory';
 import { formatDateRange } from '../../../../utils';
 import UserContext from '../../../../UserContext';
 
-const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 describe('Recipient Record - TTA History', () => {
@@ -40,9 +38,9 @@ describe('Recipient Record - TTA History', () => {
   const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
     render(
       <UserContext.Provider value={{ user }}>
-        <Router history={memoryHistory}>
+        <MemoryRouter>
           <TTAHistory recipientName={name} recipientId="401" regionId="1" />
-        </Router>
+        </MemoryRouter>
 
       </UserContext.Provider>,
     );

@@ -39,12 +39,6 @@ const generateEsConfig = () => {
   };
 };
 
-const {
-  uri,
-  accessKey,
-  secretKey,
-} = generateEsConfig();
-
 const createAwsConnector = (credentials, region) => {
   class AmazonConnection extends Connection {
     buildRequestObject(params) {
@@ -62,16 +56,25 @@ const createAwsConnector = (credentials, region) => {
   };
 };
 
-const getClient = async () => new Client({
-  ...createAwsConnector(
-    {
-      accessKeyId: accessKey,
-      secretAccessKey: secretKey,
-    },
-    'us-gov-west-1',
-  ),
-  node: uri,
-});
+const getClient = async () => {
+  const {
+    uri,
+    accessKey,
+    secretKey,
+  } = generateEsConfig();
+
+  return new Client({
+    node: uri,
+    ...createAwsConnector(
+      {
+        accessKeyId: accessKey,
+        secretAccessKey: secretKey,
+      },
+      'us-gov-west-1',
+    ),
+  });
+};
+
 /*
   Create an index that can have searchable documents assigned.
 */

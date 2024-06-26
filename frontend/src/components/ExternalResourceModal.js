@@ -36,11 +36,13 @@ const ExternalLink = ({ to, children }) => {
         okButtonAriaLabel="This button will redirect you to content that is outside of any OHS-led system."
       >
         <Alert role="alert" type="warning">
-          <b>Note:</b>
+          <strong>Note:</strong>
           {' '}
-          This link is hosted outside of an OHS-led system.
-          OHS does not have responsibility for external content or
-          the privacy policies of non-government websites.
+          <span id={`${openResource}-desc`}>
+            This link is hosted outside of an OHS-led system.
+            OHS does not have responsibility for external content or
+            the privacy policies of non-government websites.
+          </span>
         </Alert>
       </Modal>
       <a href={to} onClick={onLinkClick}>

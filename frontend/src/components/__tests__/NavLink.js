@@ -26,27 +26,7 @@ describe('NavLink', () => {
           <NavLink to={to}>{title}</NavLink>
         </MemoryRouter>,
       );
-      expect(screen.getByText(title)).toHaveClass('usa-current');
-    });
-  });
-
-  describe('with exact true', () => {
-    test('is not active when location is not an exact match', () => {
-      render(
-        <MemoryRouter initialEntries={[`${to}/test`]} initialIndex={0}>
-          <NavLink exact to={to}>{title}</NavLink>
-        </MemoryRouter>,
-      );
-      expect(screen.getByText(title)).not.toHaveClass('usa-current');
-    });
-
-    test('is active when location is an exact match', () => {
-      render(
-        <MemoryRouter initialEntries={[to]} initialIndex={0}>
-          <NavLink exact to={to}>{title}</NavLink>
-        </MemoryRouter>,
-      );
-      expect(screen.getByText(title)).toHaveClass('usa-current');
+      expect(screen.getByText(title)).toHaveClass('active');
     });
   });
 });

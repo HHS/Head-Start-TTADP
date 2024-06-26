@@ -6,8 +6,9 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import {
+  MemoryRouter, Route, Routes, useNavigate,
+} from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 
 import Cdi from '../cdi';
@@ -42,7 +43,6 @@ const defaultGrant = {
 };
 
 describe('CDI', () => {
-  const history = createMemoryHistory();
   afterEach(() => fetchMock.restore());
 
   beforeEach(() => {
@@ -50,10 +50,26 @@ describe('CDI', () => {
     fetchMock.get(recipientsUrl, defaultRecipients);
   });
 
-  const RenderCDI = ({ grantId = null }) => (
-    <Router history={history}>
-      <Cdi match={{ params: { grantId }, path: '', url: '' }} />
-    </Router>
+  let navigate;
+
+  const CDIWithNavigate = () => {
+    navigate = useNavigate();
+    return <Cdi />;
+  };
+
+  const RenderCDI = () => (
+    <MemoryRouter>
+      <Routes>
+        <Route
+          path="/admin/cdi/:grantId"
+          element={<CDIWithNavigate />}
+        />
+        <Route
+          path="*"
+          element={<CDIWithNavigate />}
+        />
+      </Routes>
+    </MemoryRouter>
   );
 
   it('renders an empty page with no grant selected', async () => {
@@ -63,14 +79,16 @@ describe('CDI', () => {
   });
 
   it('renders the grant view if a grant is selected', async () => {
-    render(<RenderCDI grantId={1} />);
+    render(<RenderCDI />);
+    navigate('/admin/cdi/1');
     const number = await screen.findByText(withText('Number: abc123 - 1'));
     expect(number).toBeVisible();
   });
 
   it('handles updating of a CDI grant', async () => {
     fetchMock.put(join('/', 'api', 'admin', 'grants', 'cdi', '1'), { ...defaultGrant, regionId: 10 });
-    render(<RenderCDI grantId={1} />);
+    render(<RenderCDI />);
+    navigate('/admin/cdi/1');
     const button = await screen.findByRole('button');
     userEvent.click(button);
     const region = await screen.findByText(withText('Region: 10'));

@@ -11,7 +11,7 @@
     "@hookform/error-message": "^0.0.5",
     "@silevis/reactgrid": "3.1",
     "@react-hook/resize-observer": "^1.2.6",
-    "@trussworks/react-uswds": "4.1.1",
+    "@trussworks/react-uswds": "^6.2.0",
     "@ttahub/common": "^2.1.5",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
@@ -35,7 +35,6 @@
     "prop-types": "^15.7.2",
     "query-string": "^7.0.0",
     "react": "^17.0.1",
-    "react-admin": "^3.19.12",
     "react-app-polyfill": "^3.0.0",
     "react-dom": "^17.0.1",
     "react-draft-wysiwyg": "^1.14.6",
@@ -48,8 +47,8 @@
     "react-js-pagination": "^3.0.3",
     "react-plotly.js": "^2.5.1",
     "react-responsive": "^8.1.1",
-    "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0",
+    "react-router": "^6.23.1",
+    "react-router-dom": "^6.23.1",
     "react-router-hash-link": "^2.3.1",
     "react-router-prop-types": "^1.0.5",
     "react-select": "^5.7.4",
@@ -61,7 +60,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "18.20.3"
+    "node": "20.12.2"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -94,7 +93,7 @@
     "minimatch": "^3.0.5",
     "postcss": "^8.4.31",
     "decode-uri-component": "^0.2.1",
-    "tough-cookie": "^4.0.0",
+    "tough-cookie": "4.0.0",
     "ua-parser-js": "^0.7.33",
     "webpack": "^5.76.1",
     "yaml": "^2.2.2",
@@ -150,7 +149,11 @@
   },
   "babel": {
     "presets": [
-      "@babel/preset-react"
+      "@babel/preset-react",
+      "react-app",
+      {
+        "absoluteRuntime": false
+      }
     ]
   },
   "browserslist": {
@@ -166,6 +169,7 @@
     ]
   },
   "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
     "@testing-library/jest-dom": "^5.11.9",

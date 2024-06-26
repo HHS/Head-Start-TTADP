@@ -13,7 +13,7 @@ import {
   TextInput,
   Checkbox,
   Label,
-  Dropdown,
+  Select,
 } from '@trussworks/react-uswds';
 import moment from 'moment';
 import {
@@ -279,7 +279,7 @@ const ActivitySummary = ({
                 label="Group name"
                 name="recipientGroup"
               >
-                <Dropdown
+                <Select
                   required
                   control={control}
                   id="recipientGroup"
@@ -292,7 +292,7 @@ const ActivitySummary = ({
                   {groups.map((group) => (
                     <option key={group.id} value={group.id}>{group.name}</option>
                   ))}
-                </Dropdown>
+                </Select>
               </FormItem>
             </div>
           )

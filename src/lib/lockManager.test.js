@@ -76,24 +76,38 @@ describe('LockManager', () => {
 
   describe('startRenewal', () => {
     it('should start the renewal process', async () => {
-      jest.useFakeTimers();
+      jest.useFakeTimers({ enableGlobally: true });
+
+      // Mock setInterval
+      const mockSetInterval = jest.spyOn(global, 'setInterval').mockImplementation(() => {});
+
       await lockManager.acquireLock();
       await lockManager.startRenewal();
 
       jest.advanceTimersByTime(lockTTL / 2);
       expect(setInterval).toHaveBeenCalled();
+
+      // Clean up
+      mockSetInterval.mockRestore();
       jest.useRealTimers();
     });
   });
 
   describe('stopRenewal', () => {
     it('should stop the renewal process', async () => {
-      jest.useFakeTimers();
+      jest.useFakeTimers({ enableGlobally: true });
+
+      // Mock clearInterval
+      const mockClearInterval = jest.spyOn(global, 'clearInterval').mockImplementation(() => {});
+
       await lockManager.acquireLock();
       await lockManager.startRenewal();
-
       await lockManager.stopRenewal();
+
       expect(clearInterval).toHaveBeenCalled();
+
+      // Clean up
+      mockClearInterval.mockRestore();
       jest.useRealTimers();
     });
   });

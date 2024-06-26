@@ -17,7 +17,7 @@ export default function TabsNav({ backLink, links, ariaLabel }) {
         <ul className="display-flex margin-0 margin-bottom-5 padding-0">
           {links.map((link) => (
             <li key={uniqueId('tabsnav-link_')} className={liClass}>
-              <NavLink activeClassName={`${linkClass}--active`} className={`${linkClass}`} to={link.to}>{link.label}</NavLink>
+              <NavLink className={linkClass} to={link.to}>{link.label}</NavLink>
             </li>
           ))}
         </ul>

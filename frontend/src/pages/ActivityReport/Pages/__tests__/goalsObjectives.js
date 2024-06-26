@@ -10,8 +10,7 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import join from 'url-join';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -63,14 +62,13 @@ const RenderGoalsObjectives = ({
       ...data,
     },
   });
-  const history = createMemoryHistory();
 
   hookForm.setValue = spy;
 
   return (
     <UserContext.Provider value={{ user: { flags: [] } }}>
       <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-        <Router history={history}>
+        <MemoryRouter>
           <FormProvider {...hookForm}>
             {goalsObjectives.render(
               null,
@@ -88,7 +86,7 @@ const RenderGoalsObjectives = ({
               () => <></>,
             )}
           </FormProvider>
-        </Router>
+        </MemoryRouter>
       </NetworkContext.Provider>
     </UserContext.Provider>
   );
@@ -121,16 +119,15 @@ const renderGoals = (
 
 // eslint-disable-next-line react/prop-types
 const RenderReview = ({ goals, activityRecipientType = 'recipient', objectivesWithoutGoals = [] }) => {
-  const history = createMemoryHistory();
   const hookForm = useForm({
     defaultValues: { goalsAndObjectives: goals, activityRecipientType, objectivesWithoutGoals },
   });
   return (
-    <Router history={history}>
+    <MemoryRouter>
       <FormProvider {...hookForm}>
         {goalsObjectives.reviewSection()}
       </FormProvider>
-    </Router>
+    </MemoryRouter>
   );
 };
 

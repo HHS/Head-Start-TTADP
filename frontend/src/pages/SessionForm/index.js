@@ -5,10 +5,9 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
@@ -50,13 +49,13 @@ const resetFormData = (reset, updatedSession) => {
   reset(form);
 };
 
-export default function SessionForm({ match }) {
-  const { params: { sessionId, currentPage, trainingReportId } } = match;
+export default function SessionForm() {
+  const { sessionId, currentPage, trainingReportId } = useParams();
 
   const reportId = useRef(sessionId);
 
   // for redirects if a page is not provided
-  const history = useHistory();
+  const navigate = useNavigate();
 
   /* ============
 
@@ -133,7 +132,7 @@ export default function SessionForm({ match }) {
         setReportFetched(true);
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
-        history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
+        navigate(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`, { replace: true });
       } catch (e) {
         setError('Error creating session');
       } finally {
@@ -145,7 +144,7 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [currentPage, history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [currentPage, hookForm.reset, navigate, reportFetched, sessionId, trainingReportId]);
 
   useEffect(() => {
     // fetch event report data
@@ -178,12 +177,12 @@ export default function SessionForm({ match }) {
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/training-report/${trainingReportId}/session/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   if (!currentPage) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
+      <Navigate to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
     );
   }
 
@@ -250,7 +249,7 @@ export default function SessionForm({ match }) {
         eventId: trainingReportId || null,
       });
 
-      history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
+      navigate('/training-reports/in-progress', { state: { message: 'You successfully submitted the session.' } });
     } catch (err) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
@@ -269,7 +268,7 @@ export default function SessionForm({ match }) {
 
   if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
     return (
-      <Redirect to={`/training-report/view/${trainingReportId}`} />
+      <Navigate to={`/training-report/view/${trainingReportId}`} />
     );
   }
 
@@ -331,7 +330,3 @@ export default function SessionForm({ match }) {
     </div>
   );
 }
-
-SessionForm.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};
