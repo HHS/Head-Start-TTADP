@@ -42,6 +42,7 @@ import {
   findOrFailExistingGoal,
   responsesForComparison,
 } from '../goalServices/helpers';
+import getCachedResponse from '../lib/cache';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -513,12 +514,22 @@ export async function getGoalsByActivityRecipient(
   },
 ) {
   // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
-  const feiRootCauseFieldPrompt = await GoalTemplateFieldPrompt.findOne({
-    attributes: ['goalTemplateId'],
-    where: {
-      title: 'FEI root cause',
+  const feiCacheKey = 'feiRootCauseFieldPrompt';
+  const feiResponse = await getCachedResponse(
+    feiCacheKey,
+    async () => {
+      const feiRootCauseFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+        attributes: ['goalTemplateId'],
+        where: {
+          title: 'FEI root cause',
+        },
+      });
+      return JSON.stringify({
+        feiRootCauseFieldPrompt,
+      });
     },
-  });
+    JSON.parse,
+  );
 
   // Scopes.
   const { goal: scopes } = await filtersToScopes(filters, { goal: { recipientId } });
@@ -598,7 +609,7 @@ export async function getGoalsByActivityRecipient(
           ELSE 7 END`),
       'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
-      [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
+      [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiResponse.feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
     ],
     where: goalWhere,
     include: [
