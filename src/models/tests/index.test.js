@@ -1,6 +1,6 @@
-import httpContext from 'express-http-context';
-import { sequelize, gracefulShutdown, descriptiveDetails } from '..';
+import { sequelize, gracefulShutdown } from '..';
 import { auditLogger } from '../../logger';
+import httpContext from 'express-http-context'; // Add this import
 
 jest.mock('express-http-context', () => ({
   get: jest.fn(),
@@ -35,49 +35,104 @@ describe('Sequelize Tests', () => {
     });
 
     it('should close the sequelize connection and log info on SIGINT', async () => {
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
+
       process.emit('SIGINT');
 
       await new Promise((resolve) => { setTimeout(resolve, 100); });
 
       expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGINT)');
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGINT): {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
       expect(process.exit).toHaveBeenCalledWith(0);
     });
 
     it('should close the sequelize connection and log info on SIGTERM', async () => {
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
+
       process.emit('SIGTERM');
 
       await new Promise((resolve) => { setTimeout(resolve, 100); });
 
       expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGTERM)');
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGTERM): {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
       expect(process.exit).toHaveBeenCalledWith(0);
     });
 
     it('should close the sequelize connection and log error on uncaughtException', async () => {
       const error = new Error('Test error');
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
+
       process.emit('uncaughtException', error);
 
       await new Promise((resolve) => { setTimeout(resolve, 100); });
 
       expect(sequelize.close).toHaveBeenCalled();
       expect(auditLogger.error).toHaveBeenCalledWith('Uncaught Exception:', error);
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through uncaught exception: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
     it('should handle graceful shutdown function', async () => {
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
+
       await gracefulShutdown('test message');
 
       expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through test message');
+      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through test message: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
     });
 
     it('should log error if sequelize.close throws error', async () => {
       sequelize.close.mockImplementation(() => Promise.reject(new Error('Close error')));
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
 
       await gracefulShutdown('test message');
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Error: Close error');
+      expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}: Error: Close error');
     });
   });
 

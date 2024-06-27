@@ -25,13 +25,29 @@ if (config.use_env_variable) {
 
 audit.attachHooksForAuditing(sequelize);
 
+const descriptiveDetails = () => {
+  const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
+  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
+  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : null;
+  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : null;
+  const descriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : null;
+
+  return {
+    ...(descriptor && { descriptor }),
+    ...(loggedUser && { loggedUser }),
+    ...(impersonationId && { impersonationId }),
+    ...(sessionSig && { sessionSig }),
+    ...(transactionId && { transactionId }),
+  };
+};
+
 // Function to gracefully close the Sequelize connection
 const gracefulShutdown = async (msg) => {
   try {
     await sequelize.close();
-    auditLogger.info(`Sequelize disconnected through ${msg}`);
+    auditLogger.info(`Sequelize disconnected through ${msg}: ${JSON.stringify(descriptiveDetails())}`);
   } catch (err) {
-    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${err}`);
+    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${JSON.stringify(descriptiveDetails())}: ${err}`);
   }
 };
 
@@ -53,22 +69,6 @@ process.on('uncaughtException', async (err) => {
   await gracefulShutdown('uncaught exception');
   process.exit(1);
 });
-
-const descriptiveDetails = () => {
-  const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
-  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
-  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : null;
-  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : null;
-  const descriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : null;
-
-  return {
-    ...(descriptor && { descriptor }),
-    ...(loggedUser && { loggedUser }),
-    ...(impersonationId && { impersonationId }),
-    ...(sessionSig && { sessionSig }),
-    ...(transactionId && { transactionId }),
-  };
-};
 
 sequelize.addHook('beforeConnect', () => {
   auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
