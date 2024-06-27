@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const cls = require('cls-hooked');
+const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 
 const namespace = cls.createNamespace('transaction');
 const basename = path.basename(__filename);
@@ -53,20 +54,36 @@ process.on('uncaughtException', async (err) => {
   process.exit(1);
 });
 
+const descriptiveDetails = () => {
+  const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
+  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
+  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : null;
+  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : null;
+  const descriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : null;
+
+  return {
+    ...(descriptor && { descriptor }),
+    ...(loggedUser && { loggedUser }),
+    ...(impersonationId && { impersonationId }),
+    ...(sessionSig && { sessionSig }),
+    ...(transactionId && { transactionId }),
+  };
+};
+
 sequelize.addHook('beforeConnect', () => {
-  auditLogger.info('Attempting to connect to the database');
+  auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('afterConnect', () => {
-  auditLogger.info('Database connection established');
+  auditLogger.info(`Database connection established: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('beforeDisconnect', () => {
-  auditLogger.info('Attempting to disconnect from the database');
+  auditLogger.info(`Attempting to disconnect from the database: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('afterDisconnect', () => {
-  auditLogger.info('Database connection closed');
+  auditLogger.info(`Database connection closed: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 fs
@@ -122,6 +139,7 @@ Object.keys(db).forEach((modelName) => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 db.gracefulShutdown = gracefulShutdown;
+db.descriptiveDetails = descriptiveDetails;
 
 module.exports = db;
 

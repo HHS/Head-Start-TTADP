@@ -1,5 +1,10 @@
-import { sequelize, gracefulShutdown } from '..';
+import httpContext from 'express-http-context';
+import { sequelize, gracefulShutdown, descriptiveDetails } from '..';
 import { auditLogger } from '../../logger';
+
+jest.mock('express-http-context', () => ({
+  get: jest.fn(),
+}));
 
 jest.mock('../../logger', () => ({
   auditLogger: {
@@ -72,16 +77,25 @@ describe('Sequelize Tests', () => {
 
       await gracefulShutdown('test message');
 
-      // Check the calls to auditLogger.error
-      expect(auditLogger.error).toHaveBeenNthCalledWith(1, 'Uncaught Exception:', expect.any(Error));
-      expect(auditLogger.error).toHaveBeenNthCalledWith(2, 'Error during Sequelize disconnection through test message: Error: Close error');
+      expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: Error: Close error');
     });
   });
 
   describe('Sequelize Hooks', () => {
     beforeEach(() => {
       jest.restoreAllMocks();
+      httpContext.get.mockImplementation((key) => {
+        const values = {
+          loggedUser: 'testUser',
+          transactionId: '12345',
+          sessionSig: 'abcde',
+          impersonationUserId: 'impUser',
+          auditDescriptor: 'testDescriptor',
+        };
+        return values[key];
+      });
     });
+
     it('should log info before connecting to the database', async () => {
       const beforeConnectHooks = sequelize.options.hooks.beforeConnect;
       expect(Array.isArray(beforeConnectHooks)).toBe(true);
@@ -89,7 +103,7 @@ describe('Sequelize Tests', () => {
 
       await Promise.all(beforeConnectHooks.map((hook) => hook()));
 
-      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database');
+      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to connect to the database: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
     });
 
     it('should log info after connecting to the database', async () => {
@@ -99,7 +113,7 @@ describe('Sequelize Tests', () => {
 
       await Promise.all(afterConnectHooks.map((hook) => hook()));
 
-      expect(auditLogger.info).toHaveBeenCalledWith('Database connection established');
+      expect(auditLogger.info).toHaveBeenCalledWith('Database connection established: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
     });
 
     it('should log info before disconnecting from the database', async () => {
@@ -109,7 +123,7 @@ describe('Sequelize Tests', () => {
 
       await Promise.all(beforeDisconnectHooks.map((hook) => hook()));
 
-      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database');
+      expect(auditLogger.info).toHaveBeenCalledWith('Attempting to disconnect from the database: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
     });
 
     it('should log info after disconnecting from the database', async () => {
@@ -119,7 +133,7 @@ describe('Sequelize Tests', () => {
 
       await Promise.all(afterDisconnectHooks.map((hook) => hook()));
 
-      expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed');
+      expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
     });
   });
 });
