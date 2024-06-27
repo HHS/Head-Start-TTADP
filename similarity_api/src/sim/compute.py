@@ -43,7 +43,7 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
     -- Prevent goals created via TR.
       AND (
         (ar."approvedAt" IS NOT NULL AND g."createdVia"::text = 'activityReport')
-        OR (g."createdVia"::text != 'activityReport' AND g."createdVia"::text != 'tr')
+        OR (g."createdVia"::text NOT IN ( 'activityReport', 'tr'))
       )
     -- -------------------------------------------
     ;
