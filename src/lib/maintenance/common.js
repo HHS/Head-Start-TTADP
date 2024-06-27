@@ -5,6 +5,7 @@ const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
 const { default: LockManager } = require('../lockManager');
+import transactionQueueWrapper from '../../workers/transactionWrapper';
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
@@ -103,7 +104,13 @@ const processMaintenanceQueue = () => {
 
   // Process each category in the queue using its corresponding processor
   Object.entries(maintenanceQueueProcessors)
-    .map(([category, processor]) => maintenanceQueue.process(category, processor));
+    .map(([category, processor]) => maintenanceQueue.process(
+      category,
+      (job) => transactionQueueWrapper(
+        processor(job),
+        category,
+      ),
+    ));
 };
 
 /**
