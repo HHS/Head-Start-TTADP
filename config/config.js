@@ -61,8 +61,8 @@ module.exports = {
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
-      max: 10,
-      validate: connectionValidation,
+      max: 1,
+      // validate: connectionValidation,
     },
   },
   test: {
