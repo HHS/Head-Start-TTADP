@@ -9,11 +9,14 @@ const logContext = {
   namespace,
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Job = any; // Define the correct type for your job here
 
 const transactionQueueWrapper = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   originalFunction: (job: Job) => Promise<any>,
   context = '',
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => async (job: Job): Promise<any> => {
   let error: Error | undefined;
   const startTime = Date.now();
