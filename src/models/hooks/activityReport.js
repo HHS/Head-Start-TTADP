@@ -160,7 +160,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
           },
         ],
         includeIgnoreAttributes: false,
-        transaction: options.transaction,
+        // transaction: options.transaction,
         raw: true,
       });
       // Generate a distinct list of goal names.
@@ -185,7 +185,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         { goalTemplateId: goal.goalTemplateId },
         {
           where: { id: goal.id },
-          transaction: options.transaction,
+          // transaction: options.transaction,
           individualHooks: true,
         },
       )));

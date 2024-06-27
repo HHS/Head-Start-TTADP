@@ -61,7 +61,7 @@ module.exports = {
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
-      max: 5,
+      max: 1,
       // validate: connectionValidation,
     },
   },
@@ -75,8 +75,8 @@ module.exports = {
     logging: false,
     minifyAliases: true,
     pool: {
-      max: 5,
-      // validate: connectionValidation,
+      max: 10,
+      validate: connectionValidation,
     },
   },
   dss: {
@@ -90,8 +90,8 @@ module.exports = {
     logging: singleLineLogger,
     minifyAliases: true,
     pool: {
-      max: 5,
-      // validate: connectionValidation,
+      max: 10,
+      validate: connectionValidation,
     },
   },
   production: {
@@ -108,8 +108,8 @@ module.exports = {
       ssl: true,
     },
     pool: {
-      max: 5,
-      // validate: connectionValidation,
+      max: 10,
+      validate: connectionValidation,
     },
   },
 };
