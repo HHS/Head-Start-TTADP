@@ -114,8 +114,12 @@ export async function createGrants(grantTmpl = {}, num = 1) {
   const grants = [];
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < num; i++) {
-    const grant = await createGrant(grantTmpl);
-    grants.push(grant);
+    try {
+      const grant = await createGrant(grantTmpl);
+      grants.push(grant);
+    } catch (error) {
+      auditLogger.error(JSON.stringify(error));
+    }
   }
   return grants;
 }

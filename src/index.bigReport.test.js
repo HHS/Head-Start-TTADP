@@ -1,3 +1,5 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-await-in-loop */
 /* eslint-disable max-len */
 import request from 'supertest';
 import faker from '@faker-js/faker';
@@ -5,24 +7,60 @@ import app from './app';
 import { createRecipient, createGrants } from './testUtils';
 import {
   sequelize,
-  Grant,
-  ActivityRecipient,
-  ActivityReport,
   Topic,
 } from './models';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from './constants';
+// import { captureSnapshot, rollbackToSnapshot } from './lib/programmaticTransaction';
+import { activityReportAndRecipientsById } from './services/activityReports';
 
-jest.mock('axios');
 jest.mock('smartsheet');
 
+const BIG_TIMEOUT = 240000;
+const fakeUrl = () => `${faker.internet.url()}/${faker.datatype.string(100)}`;
+
 describe('Smash the site with a giant report', () => {
-  let recipient;
-  let grants;
-  let topic;
+  // let snapshot;
 
   const BASE_REPORT = {
     activityRecipientType: 'recipient',
     regionId: 1,
+    context: `context ${fakeUrl()}`,
+    pageState: {
+      1: 'In progress', 2: 'Not started', 3: 'Not started', 4: 'Not started',
+    },
+    version: 2,
+    ECLKCResourcesUsed: [],
+    activityType: [],
+    additionalNotes: null,
+    files: [],
+    collaborators: [],
+    activityReportCollaborators: [],
+    deliveryMethod: null,
+    duration: null,
+    goals: [],
+    recipientNextSteps: [{ id: null, note: '' }],
+    recipients: [],
+    nonECLKCResourcesUsed: [],
+    numberOfParticipants: null,
+    objectivesWithoutGoals: [],
+    otherResources: [],
+    participantCategory: '',
+    participants: [],
+    reason: [],
+    requester: null,
+    specialistNextSteps: [{ id: null, note: '' }],
+    calculatedStatus: 'draft',
+    targetPopulations: [],
+    topics: [],
+    approvers: [],
+    creatorRole: 'Grants Specialist',
+    userId: 5,
+    savedToStorageTime: new Date(),
+    createdInLocalStorage: new Date(),
+    ttaType: [],
+    startDate: null,
+    endDate: null,
+    approverUserIds: [],
   };
 
   const BASE_GOAL = {
@@ -39,34 +77,24 @@ describe('Smash the site with a giant report', () => {
     files: [],
     objectiveCreatedHere: true,
     status: OBJECTIVE_STATUS.NOT_STARTED,
-    ttaProvided: '<p>Yes</p>',
+    ttaProvided: `<p>Yes</p> ${faker.datatype.string(100)} ${fakeUrl()}`,
   };
 
   beforeAll(async () => {
-    recipient = await createRecipient();
-    grants = await createGrants({ recipientId: recipient.id }, 30);
-    topic = await Topic.create({ name: faker.datatype.string(100) });
-  });
+    jest.setTimeout(BIG_TIMEOUT);
+    // snapshot = await captureSnapshot();
+  }, BIG_TIMEOUT);
 
   afterAll(async () => {
-    const grantIds = grants.map((grant) => grant.id);
-
-    const recipientJoins = await ActivityRecipient.findAll({ where: { grantId: grantIds } });
-    await ActivityReport.destroy(
-      {
-        where: { id: recipientJoins.map((join) => join.activityReportId) },
-        individualHooks: true,
-      },
-    );
-
-    await Grant.destroy({ where: { id: grantIds }, individualHooks: true });
-    await Topic.destroy({ where: { id: topic.id }, individualHooks: true });
-    // Clean up the database
-    await recipient.destroy({ individualHooks: true });
+    // await rollbackToSnapshot(snapshot);
     await sequelize.close();
-  });
+  }, BIG_TIMEOUT);
 
   test('Handles getting smashed by a big report', async () => {
+    const topic1 = await Topic.create({ name: faker.datatype.string(100) });
+    const topic2 = await Topic.create({ name: faker.datatype.string(100) });
+    const recipient = await createRecipient();
+    const grants = await createGrants({ recipientId: recipient.id, regionId: 1 }, 30);
     const { status, body } = await request(app)
       .post('/api/activity-reports')
       .send({
@@ -81,26 +109,69 @@ describe('Smash the site with a giant report', () => {
 
     const goals = [{
       ...BASE_GOAL,
+      grantIds: grants.map((grant) => grant.id),
       name: faker.datatype.string(100),
       objectives: [{
         ...BASE_OBJECTIVE,
         title: faker.datatype.string(100),
-        topics: [{ id: topic.id }],
-        resources: [{ url: faker.internet.url() }],
+        topics: [{ id: topic1.id }, { id: topic2.id }],
+        resources: [{ url: fakeUrl() }],
       }],
     }, {
       ...BASE_GOAL,
+      grantIds: grants.map((grant) => grant.id),
       name: faker.datatype.string(100),
       objectives: [{
         ...BASE_OBJECTIVE,
         title: faker.datatype.string(100),
-        topics: [{ id: topic.id }],
-        resources: [{ url: faker.internet.url() }],
+        topics: [{ id: topic1.id }, { id: topic2.id }],
+        resources: [
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+        ],
+      }],
+    }, {
+      ...BASE_GOAL,
+      grantIds: grants.map((grant) => grant.id),
+      name: faker.datatype.string(100),
+      objectives: [{
+        ...BASE_OBJECTIVE,
+        title: faker.datatype.string(100),
+        topics: [{ id: topic1.id }, { id: topic2.id }],
+        resources: [
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+          { url: fakeUrl() },
+        ],
       }],
     }];
 
-    const { status: status2, body: body2 } = await request(app)
-      .post(`/api/activity-reports/${reportId}`)
+    const [report] = await activityReportAndRecipientsById(reportId);
+    expect(report).toBeDefined();
+    expect(report.id).toEqual(reportId);
+
+    const url = `/api/activity-reports/${reportId}`;
+    const { status: status2 } = await request(app)
+      .put(url)
       .send({
         ...BASE_REPORT,
         id: reportId,
@@ -110,12 +181,35 @@ describe('Smash the site with a giant report', () => {
         goals,
       });
 
-    console.log(body2);
-
     expect(status2).toBe(200);
+    const { status: status3 } = await request(app)
+      .put(url)
+      .send({
+        ...BASE_REPORT,
+        id: reportId,
+        activityRecipients: grants.map((grant) => ({
+          activityRecipientId: grant.id,
+        })),
+        goals: [goals[0]],
+      });
+
+    expect(status3).toBe(200);
+
+    const { status: status4 } = await request(app)
+      .put(url)
+      .send({
+        ...BASE_REPORT,
+        id: reportId,
+        activityRecipients: grants.map((grant) => ({
+          activityRecipientId: grant.id,
+        })),
+        goals,
+      });
+
+    expect(status4).toBe(200);
   });
-});
+}, BIG_TIMEOUT);
 
 /**
- * yarn docker:yarn:be node 'node_modules/.bin/jest' 'src/index.bigReport.test.js' -t 'Smash the site with a giant report' ---forceExit
+ * yarn docker:yarn:be node 'node_modules/.bin/jest' 'src/index.bigReport.test.js' ---forceExit
  */
