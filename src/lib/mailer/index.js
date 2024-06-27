@@ -17,6 +17,7 @@ import {
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import logEmailNotification from './logNotifications';
+import transactionQueueWrapper from '../../workers/transactionWrapper';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -992,51 +993,136 @@ export const processNotificationQueue = () => {
   notificationQueue.on('completed', onCompletedNotification);
   increaseListeners(notificationQueue, 10);
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION,
+    (job) => transactionQueueWrapper(
+      notifyApproverAssigned(job),
+      EMAIL_ACTIONS.NEEDS_ACTION,
+    ),
+  );
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED,
+    (job) => transactionQueueWrapper(
+      notifyApproverAssigned(job),
+      EMAIL_ACTIONS.SUBMITTED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED,
+    (job) => transactionQueueWrapper(
+      notifyApproverAssigned(job),
+      EMAIL_ACTIONS.APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    (job) => transactionQueueWrapper(
+      notifyApproverAssigned(job),
+      EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    (job) => transactionQueueWrapper(
+      notifyApproverAssigned(job),
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    (job) => transactionQueueWrapper(
+      notifyDigest(job),
+      EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    (job) => transactionQueueWrapper(
+      notifyDigest(job),
+      EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED_DIGEST,
+    (job) => transactionQueueWrapper(
+      notifyDigest(job),
+      EMAIL_ACTIONS.APPROVED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    (job) => transactionQueueWrapper(
+      notifyDigest(job),
+      EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    (job) => transactionQueueWrapper(
+      notifyDigest(job),
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    ),
+  );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    sendTrainingReportNotification,
+    (job) => transactionQueueWrapper(
+      sendTrainingReportNotification(job),
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+    ),
   );
 };
 
