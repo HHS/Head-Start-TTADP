@@ -1,6 +1,6 @@
+import httpContext from 'express-http-context';
 import { sequelize, gracefulShutdown } from '..';
 import { auditLogger } from '../../logger';
-import httpContext from 'express-http-context'; // Add this import
 
 jest.mock('express-http-context', () => ({
   get: jest.fn(),
