@@ -36,7 +36,8 @@ const processScanQueue = () => {
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
-  scanQueue.process((job) => transactionQueueWrapper(processFile(job.data.key)));
+  const process = (job) => processFile(job.data.key);
+  scanQueue.process(transactionQueueWrapper(process));
 };
 
 export {

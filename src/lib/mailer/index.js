@@ -995,132 +995,132 @@ export const processNotificationQueue = () => {
 
   notificationQueue.process(
     EMAIL_ACTIONS.NEEDS_ACTION,
-    (job) => transactionQueueWrapper(
-      notifyApproverAssigned(job),
+    transactionQueueWrapper(
+      notifyApproverAssigned,
       EMAIL_ACTIONS.NEEDS_ACTION,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.SUBMITTED,
-    (job) => transactionQueueWrapper(
-      notifyApproverAssigned(job),
+    transactionQueueWrapper(
+      notifyApproverAssigned,
       EMAIL_ACTIONS.SUBMITTED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.APPROVED,
-    (job) => transactionQueueWrapper(
-      notifyApproverAssigned(job),
+    transactionQueueWrapper(
+      notifyApproverAssigned,
       EMAIL_ACTIONS.APPROVED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.COLLABORATOR_ADDED,
-    (job) => transactionQueueWrapper(
-      notifyApproverAssigned(job),
+    transactionQueueWrapper(
+      notifyApproverAssigned,
       EMAIL_ACTIONS.COLLABORATOR_ADDED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
-    (job) => transactionQueueWrapper(
-      notifyApproverAssigned(job),
+    transactionQueueWrapper(
+      notifyApproverAssigned,
       EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
-    (job) => transactionQueueWrapper(
-      notifyDigest(job),
+    transactionQueueWrapper(
+      notifyDigest,
       EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
     ),
   );
   notificationQueue.process(
     EMAIL_ACTIONS.SUBMITTED_DIGEST,
-    (job) => transactionQueueWrapper(
-      notifyDigest(job),
+    transactionQueueWrapper(
+      notifyDigest,
       EMAIL_ACTIONS.SUBMITTED_DIGEST,
     ),
   );
   notificationQueue.process(
     EMAIL_ACTIONS.APPROVED_DIGEST,
-    (job) => transactionQueueWrapper(
-      notifyDigest(job),
+    transactionQueueWrapper(
+      notifyDigest,
       EMAIL_ACTIONS.APPROVED_DIGEST,
     ),
   );
   notificationQueue.process(
     EMAIL_ACTIONS.COLLABORATOR_DIGEST,
-    (job) => transactionQueueWrapper(
-      notifyDigest(job),
+    transactionQueueWrapper(
+      notifyDigest,
       EMAIL_ACTIONS.COLLABORATOR_DIGEST,
     ),
   );
   notificationQueue.process(
     EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
-    (job) => transactionQueueWrapper(
-      notifyDigest(job),
+    transactionQueueWrapper(
+      notifyDigest,
       EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
     ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    (job) => transactionQueueWrapper(
-      sendTrainingReportNotification(job),
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
     ),
   );
