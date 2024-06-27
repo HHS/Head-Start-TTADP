@@ -54,7 +54,7 @@ module.exports = {
       ;
       
       -- As a protective step, this will create a divide by zero error and
-      -- rollback the transaction if there is more if there is more than
+      -- rollback the transaction if there is more than
       -- one recipient found with 'Transportation' responses
       SELECT 1/
         (
