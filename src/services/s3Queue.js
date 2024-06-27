@@ -34,7 +34,10 @@ const processS3Queue = () => {
   // Delete S3 file.
   s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
-    (job) => transactionQueueWrapper(deleteFileFromS3Job(job), S3_ACTIONS.DELETE_FILE),
+    transactionQueueWrapper(
+      deleteFileFromS3Job,
+      S3_ACTIONS.DELETE_FILE,
+    ),
   );
 };
 

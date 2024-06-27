@@ -48,7 +48,10 @@ const processResourceQueue = () => {
   // Get resource metadata.
   resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
-    (job) => transactionQueueWrapper(getResourceMetaDataJob(job), RESOURCE_ACTIONS.GET_METADATA),
+    transactionQueueWrapper(
+      getResourceMetaDataJob,
+      RESOURCE_ACTIONS.GET_METADATA,
+    ),
   );
 };
 

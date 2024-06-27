@@ -106,8 +106,8 @@ const processMaintenanceQueue = () => {
   Object.entries(maintenanceQueueProcessors)
     .map(([category, processor]) => maintenanceQueue.process(
       category,
-      (job) => transactionQueueWrapper(
-        processor(job),
+      transactionQueueWrapper(
+        processor,
         category,
       ),
     ));
