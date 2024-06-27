@@ -5,7 +5,7 @@ const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
 const { default: LockManager } = require('../lockManager');
-import transactionQueueWrapper from '../../workers/transactionWrapper';
+const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
