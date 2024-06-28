@@ -43,11 +43,12 @@ const descriptiveDetails = () => {
 
 // Function to gracefully close the Sequelize connection
 const gracefulShutdown = async (msg) => {
+  const details = JSON.stringify(descriptiveDetails());
   try {
     await sequelize.close();
-    auditLogger.info(`Sequelize disconnected through ${msg}: ${JSON.stringify(descriptiveDetails())}`);
+    auditLogger.info(`Sequelize disconnected through ${msg}: ${details}`);
   } catch (err) {
-    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${JSON.stringify(descriptiveDetails())}: ${err}`);
+    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${details}: ${err}`);
   }
 };
 
