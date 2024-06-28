@@ -7,6 +7,7 @@ const {
   updateUsersFlagsEnum,
   dropAndRecreateEnum,
   updateSequence,
+  addValuesToEnumIfTheyDontExist,
 } = require('./migration');
 
 describe('migration', () => {
@@ -321,6 +322,31 @@ describe('migration', () => {
       await expect(updateSequence(queryInterface, 'SequelizeMeta', transaction)).rejects.toThrow(
         'No sequences found for table SequelizeMeta',
       );
+    });
+  });
+
+  describe('addValuesToEnumIfTheyDontExist', () => {
+    const enumName = 'test_enum';
+    const enumValues = ['value1', 'value2'];
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should attempt to add each enum value if not exists', async () => {
+      await addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, enumValues);
+
+      // Verify that the query was called with the correct SQL for each enum value,
+      // trimming for any unintentional whitespace
+      enumValues.forEach((enumValue) => {
+        expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+          expect.stringContaining(`ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';`.trim()),
+          { transaction },
+        );
+      });
+
+      // Verify the query was called the correct number of times for the enumValues provided
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(enumValues.length);
     });
   });
 });
