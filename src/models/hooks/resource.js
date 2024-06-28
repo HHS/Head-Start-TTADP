@@ -1,4 +1,4 @@
-import { VALID_URL_REGEX } from '../../lib/urlUtils';
+const { VALID_URL_REGEX } = require('@ttahub/common');
 
 const autoPopulateDomain = (sequelize, instance, options) => {
   // eslint-disable-next-line no-prototype-builtins

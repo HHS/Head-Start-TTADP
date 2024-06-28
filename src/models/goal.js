@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
@@ -8,7 +8,7 @@ const {
   afterUpdate,
   afterDestroy,
 } = require('./hooks/goal');
-const { GOAL_CREATED_VIA } = require('../constants');
+const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -77,6 +77,13 @@ export default (sequelize, DataTypes) => {
       get() {
         const { id } = this;
         return `G-${id}`;
+      },
+    },
+    isCurated: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { goalTemplate } = this;
+        return goalTemplate?.creationMethod === CREATION_METHOD.CURATED;
       },
     },
     grantId: {

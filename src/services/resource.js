@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { VALID_URL_REGEX } from '@ttahub/common';
 import {
   ActivityReport,
   ActivityReportResource,
@@ -14,7 +15,6 @@ import {
   NextStepResource,
   Resource,
 } from '../models';
-import { VALID_URL_REGEX } from '../lib/urlUtils';
 import { SOURCE_FIELD } from '../constants';
 import Semaphore from '../lib/semaphore';
 
