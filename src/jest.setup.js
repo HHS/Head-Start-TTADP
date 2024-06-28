@@ -16,6 +16,13 @@ jest.mock('express-http-context', () => ({
   middleware: jest.fn((req, res, next) => next()), // Mock the middleware function
 }));
 
+const sanitize = (value) => {
+  if (typeof value === 'string') {
+    return value.replace(/'/g, "''");
+  }
+  return value;
+};
+
 // Setup for each test
 global.beforeEach((done) => {
   httpContext.ns.run(() => {
@@ -28,7 +35,7 @@ global.beforeEach((done) => {
 
     // Set values in the context
     httpContext.set('sessionSig', relativeTestPath);
-    httpContext.set('auditDescriptor', state.currentTestName);
+    httpContext.set('auditDescriptor', sanitize(state.currentTestName));
 
     // Retrieve and log the values from the context
     console.log(httpContext.get('sessionSig'));
