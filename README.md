@@ -36,12 +36,12 @@ those services are already running on your machine.
 
 1. Make sure Docker is installed. To check run `docker ps`.
 2. Make sure you have Node 18.20.3 installed.
-4. Copy `.env.example` to `.env`.
-6. Change the `FONTAWESOME_NPM_AUTH_TOKEN`, `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
-7. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
-3. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them.
-10. Run `yarn docker:start` to start the application. The [frontend][frontend] will be available on `localhost:3000`  and the [backend][backend] will run on `localhost:8080`, [API documentation][API documentation] will run on `localhost:5003`, and [minio][minio] will run on `localhost:9000`.
-11. Run `yarn docker:stop` to stop the servers and remove the docker containers.
+3. Copy `.env.example` to `.env`.
+4. Change the `AUTH_CLIENT_ID` and `AUTH_CLIENT_SECRET` variables to to values found in the team Keybase account. If you don't have access to Keybase, please ask in the acf-head-start-eng slack channel for access.
+5. Optionally, set `CURRENT_USER` to your current user's uid:gid. This will cause files created by docker compose to be owned by your user instead of root.
+6. Run `yarn docker:reset`. This builds the frontend and backend, installs dependencies, then runs database migrations and seeders. If this returns errors that the version of nodejs is incorrect, you may have older versions of the containers built. Delete those images and it should rebuild them. If you are using a newer Mac with the Apple Silicon chipset, puppeteer install fails with the message: ```"The chromium binary is not available for arm64"```. See the section immediately following this one, entitled "Apple Silicon & Chromium" for instructions on how to proceed.
+7. Run `yarn docker:start` to start the application. The [frontend][frontend] will be available on `localhost:3000`  and the [backend][backend] will run on `localhost:8080`, [API documentation][API documentation] will run on `localhost:5003`, and [minio][minio] will run on `localhost:9000`.
+8. Run `yarn docker:stop` to stop the servers and remove the docker containers.
 
 The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-requests-in-development/) to paths it doesn't recognize to the backend.
 
@@ -51,6 +51,21 @@ We use an AWS OpenSearch docker image (Elasticsearch fork) and require that the 
 * `AWS_ELASTICSEARCH_ENDPOINT=http://opensearch-node1:9200`
 * `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
 * `AWS_ELASTICSEARCH_SECRET_KEY=admin`
+
+#### Apple Silicon & Chromium
+On a Mac with Apple Silicon, puppeteer install fails with the message:
+```"The chromium binary is not available for arm64"```
+
+See [docker-compose.override.yml](docker-compose.override.yml) and uncomment the relevant lines to skip downloading chromium and use the host's binary instead.
+
+You will need to have chromium installed (you probably do not). The recommended installation method is to use brew: `brew install chromium --no-quarantine`
+
+To ~/.zshrc (or your particular shell config), you'll need to add:
+
+```sh
+export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+export PUPPETEER_EXECUTABLE_PATH=`which chromium`
+```
 
 #### Local build
 
