@@ -61,7 +61,7 @@ function combineNames(firstName, lastName) {
   return joinedName === '' ? null : joinedName;
 }
 
-function getPersonnelField(role, field, program) {
+export function getPersonnelField(role, field, program) {
   // return if program is not an object.
   if (typeof program !== 'object') {
     return null;
