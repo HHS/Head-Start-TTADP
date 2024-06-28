@@ -170,11 +170,16 @@ WITH
             zg.new_row_data ->> 'status'
     )
 INSERT INTO "GoalStatusChanges"
-    ("goalId", "userId", "userName", "userRoles", "oldStatus", "newStatus", "reason", "context", "createdAt", "updatedAt")
-SELECT
-    "goalId", "userId", "userName", "userRoles", "oldStatus", "newStatus", "reason", "context", "createdAt", "updatedAt"
-FROM
-    status_changes_query;
+      ("goalId", "userId", "userName", "userRoles", "oldStatus", "newStatus", "reason", "context", "createdAt", "updatedAt")
+    SELECT
+        scq."goalId", scq."userId", scq."userName", scq."userRoles", scq."oldStatus", scq."newStatus", scq."reason", scq."context", scq."createdAt", scq."updatedAt"
+    FROM status_changes_query scq
+    LEFT JOIN "GoalStatusChanges" gsc
+    ON gsc."goalId" = scq."goalId"
+    AND gsc."oldStatus" = scq."oldStatus"
+    AND gsc."newStatus" = scq."newStatus"
+    AND gsc."createdAt" BETWEEN scq."createdAt" - interval '30 seconds' AND scq."createdAt" + interval '30 seconds'
+    WHERE gsc.id IS NULL;
       `, { transaction });
     },
   ),
