@@ -27,7 +27,6 @@ const sanitize = (value) => {
 global.beforeEach((done) => {
   httpContext.ns.run(() => {
     // Ensure the namespace is initialized
-    console.log('!!!!!!!!!!');
     const state = expect.getState();
 
     // Convert absolute testPath to a relative path
@@ -36,11 +35,6 @@ global.beforeEach((done) => {
     // Set values in the context
     httpContext.set('sessionSig', relativeTestPath);
     httpContext.set('auditDescriptor', sanitize(state.currentTestName));
-
-    // Retrieve and log the values from the context
-    console.log(httpContext.get('sessionSig'));
-    console.log(httpContext.get('auditDescriptor'));
-
     done();
   });
 });
