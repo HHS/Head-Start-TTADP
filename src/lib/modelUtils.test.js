@@ -198,5 +198,11 @@ describe('modelUtils', () => {
         posts: [{ id: 10, title: 'Post Title' }],
       });
     });
+
+    it('returns data unmodified if it isn\'t an array or an object', () => {
+      const data = 'dog';
+      const out = nestedRawish(data);
+      expect(out).toEqual('dog');
+    });
   });
 });
