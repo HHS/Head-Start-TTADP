@@ -148,4 +148,31 @@ describe('LockManager', () => {
       jest.useRealTimers();
     });
   });
+
+  describe('readLock error handling', () => {
+    it('should log error and rethrow when getting lock value fails', async () => {
+      jest.spyOn(lockManager.redis, 'get').mockRejectedValue(new Error('Redis error'));
+      await expect(lockManager.readLock()).rejects.toThrow('Redis error');
+      expect(mockAuditLoggerError).toHaveBeenCalledWith(expect.stringContaining('Error getting value at key'), expect.any(Error));
+    });
+  });
+
+  describe('executeWithLock with holdLock', () => {
+    it('should start renewal with the lock TTL when holdLock is true', async () => {
+      const callback = jest.fn().mockResolvedValue(0);
+      const spyStartRenewal = jest.spyOn(lockManager, 'startRenewal');
+      await lockManager.acquireLock();
+      await lockManager.executeWithLock(callback, true);
+      expect(spyStartRenewal).toHaveBeenCalledWith(lockTTL);
+    });
+  });
+
+  describe('close method error handling', () => {
+    it('should not log or rethrow if error message is "Connection is closed."', async () => {
+      const testError = new Error('Connection is closed.');
+      jest.spyOn(lockManager.redis, 'disconnect').mockRejectedValue(testError);
+      await lockManager.close(); // Expect not to throw
+      expect(mockAuditLoggerError).not.toHaveBeenCalledWith(`LockManager.close: ${testError.message}`, testError);
+    });
+  });
 });
