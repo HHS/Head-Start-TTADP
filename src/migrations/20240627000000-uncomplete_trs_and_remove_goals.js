@@ -94,7 +94,7 @@ module.exports = {
         AS
         WITH updater AS (
         UPDATE "SessionReportPilots"
-        SET data = JSONB_SET(data,'{status}','"In Progress"')
+        SET data = JSONB_SET(data,'{status}','"In progress"')
         FROM sr_to_update
         WHERE id = srid
           AND data->>'status' = 'Complete'
@@ -109,7 +109,7 @@ module.exports = {
         AS
         WITH updater AS (
         UPDATE "EventReportPilots"
-        SET data = JSONB_SET(data,'{status}','"In Progress"')
+        SET data = JSONB_SET(data,'{status}','"In progress"')
         FROM er_to_update
         WHERE id = erid
           AND data->>'status' = 'Complete'
