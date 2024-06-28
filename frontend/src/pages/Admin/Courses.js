@@ -1,7 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Button } from '@trussworks/react-uswds';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Button, Grid, GridContainer } from '@trussworks/react-uswds';
 import CsvImport from './components/CsvImport';
 import { getCourses } from '../../fetchers/courses';
+import Container from '../../components/Container';
+import CourseList from './CourseList';
+import CourseAdd from './CourseAdd';
 
 function Courses() {
   const [courses, setCourses] = useState();
@@ -9,16 +12,14 @@ function Courses() {
   const typeName = 'courses';
   const apiPathName = 'courses';
 
-  useEffect(() => {
-    async function get() {
-      const response = await getCourses();
-      setCourses(response);
-    }
+  const refresh = useCallback(async () => {
+    const response = await getCourses();
+    setCourses(response);
+  }, []);
 
-    if (!courses) {
-      get();
-    }
-  }, [courses]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const exportCourses = () => {
     // export courses as CSV
@@ -47,24 +48,36 @@ function Courses() {
 
   return (
     <>
-      <CsvImport
-        validCsvHeaders={validCsvHeaders}
-        requiredCsvHeaders={requiredCsvHeaders}
-        typeName={typeName}
-        apiPathName={apiPathName}
-        primaryIdColumn={primaryIdColumn}
-      />
-
-      {courses && (
-      <Button
-        outline
-        type="button"
-        onClick={exportCourses}
-      >
-        Export courses as CSV
-      </Button>
-      )}
-
+      <GridContainer className="margin-0 padding-0">
+        <Grid row gap="lg">
+          <Grid tablet={{ col: 6 }}>
+            <Container>
+              <CourseList courses={courses} />
+            </Container>
+          </Grid>
+          <Grid tablet={{ col: 6 }}>
+            <Container>
+              <CourseAdd refresh={refresh} />
+            </Container>
+            <Container>
+              <CsvImport
+                validCsvHeaders={validCsvHeaders}
+                requiredCsvHeaders={requiredCsvHeaders}
+                typeName={typeName}
+                apiPathName={apiPathName}
+                primaryIdColumn={primaryIdColumn}
+              />
+            </Container>
+            {courses && (
+              <Container>
+                <Button outline type="button" onClick={exportCourses}>
+                  Export courses as CSV
+                </Button>
+              </Container>
+            )}
+          </Grid>
+        </Grid>
+      </GridContainer>
     </>
   );
 }

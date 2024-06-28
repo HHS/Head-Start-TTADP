@@ -502,5 +502,24 @@ describe('processData', () => {
       const recipientName = await convertRecipientName(null);
       expect(recipientName).toBe(null);
     });
+
+    it('converts recipient grants correctly', () => {
+      const recipientsGrants = 'John Doe|01HP044445\nJane Doe|09CH011111';
+      const expected = 'Unknown Recipient | UnknownGrant\nUnknown Recipient | UnknownGrant';
+      const result = convertRecipientName(recipientsGrants);
+      expect(result).toBe(expected);
+    });
+
+    it('handles missing grants', () => {
+      const recipientsGrants = 'John Doe|Missing\nJane Doe|';
+      const expected = 'Unknown Recipient | UnknownGrant\nUnknown Recipient | UnknownGrant';
+      const result = convertRecipientName(recipientsGrants);
+      expect(result).toBe(expected);
+    });
+
+    it('returns an empty string for empty input', () => {
+      const result = convertRecipientName('');
+      expect(result).toBe('');
+    });
   });
 });
