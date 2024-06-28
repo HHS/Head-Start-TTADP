@@ -22,24 +22,25 @@ SELECT
     u.name "user",
     STRING_AGG(DISTINCT rr.name, ' ') "roles",
     cl."createdAt",
-    cl.data ->> 'method' method,
-    NULLIF(cl.data ->> 'result', '') result,
-    cl.data ->> 'purpose' purpose,
-    cl.data ->> 'duration' duration, 
-    cl.data ->> 'regionId' region,
+    COALESCE(cl.data ->> 'method', '') method,
+    cl.data ->> 'result' result,
+    COALESCE(cl.data ->> 'purpose', '') purpose,
+    COALESCE(cl.data ->> 'duration', '') duration, 
+    COALESCE(cl.data ->> 'regionId', '') region,
     to_date(cl.data ->> 'communicationDate', 'MM/DD/YYYY') "communicationDate",
-    cl.data ->> 'pocComplete' "pocComplete",
-    (
+    COALESCE(cl.data ->> 'pocComplete', '') "pocComplete",
+    COALESCE(cl.data ->> 'notes', '') "notes",
+    COALESCE((
         SELECT jsonb_agg(elem)
         FROM jsonb_array_elements(cl.data -> 'recipientNextSteps') elem
         WHERE elem != '{"note": "","completeDate": ""}'::jsonb
-    ) AS recipientNextSteps,
-    (
+    )::TEXT,'') AS recipientNextSteps,
+    COALESCE((
         SELECT jsonb_agg(elem)
         FROM jsonb_array_elements(cl.data -> 'specialistNextSteps') elem
         WHERE elem != '{"note": "","completeDate": ""}'::jsonb
-    ) AS specialistNextSteps,
-    NULLIF(array_remove(array_agg(f."originalFileName"), null), '{}') AS filenames
+    )::TEXT,'') AS specialistNextSteps,
+    COALESCE(NULLIF(array_remove(array_agg(f."originalFileName"), null), '{}')::TEXT,'') AS filenames
 FROM "Recipients" r
 JOIN "CommunicationLogs" cl
     ON cl."recipientId" = r.id
@@ -105,5 +106,5 @@ AND
 AND cl.data -> 'pageState' ->> '1' = 'Complete'
 AND cl.data -> 'pageState' ->> '2' = 'Complete'
 AND cl.data -> 'pageState' ->> '3' = 'Complete'
-GROUP BY 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14
+GROUP BY 1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 ORDER BY 1,11;
