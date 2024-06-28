@@ -308,7 +308,7 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
 export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options) => {
   const processSessionReport = async (sessionReport) => {
     let event;
-    let nextSessionRecipients;
+    let nextSessionRecipients = [];
 
     if (sessionReport && sessionReport.data) {
       const data = (typeof sessionReport.data.val === 'string')
@@ -316,7 +316,7 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
         : sessionReport.data;
 
       event = data.event;
-      nextSessionRecipients = data.recipients;
+      nextSessionRecipients = data.recipients || [];
     }
 
     if (!event || !event.id || !sessionReport || !sessionReport.id) return;
