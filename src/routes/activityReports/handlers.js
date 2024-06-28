@@ -135,6 +135,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'TTA type',
         },
         {
+          key: 'language',
+          header: 'Language',
+        },
+        {
           key: 'deliveryMethod',
           header: 'Delivery method',
         },
@@ -173,8 +177,16 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
+          key: 'specialistNextStepsCompleteDate',
+          header: 'Specialist next steps anticipated completion date',
+        },
+        {
           key: 'recipientNextSteps',
           header: 'Recipient next steps',
+        },
+        {
+          key: 'recipientNextStepsCompleteDate',
+          header: 'Recipient next steps anticipated completion date',
         },
         {
           key: 'createdAt',
