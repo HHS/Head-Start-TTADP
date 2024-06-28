@@ -230,8 +230,7 @@
     "setupFiles": [
       "./src/setupTest.js",
       "./src/env.js"
-    ],
-    "setupFilesAfterEnv": ["./src/jest.setup.js"]
+    ]
   },
   "keywords": [],
   "author": "",
