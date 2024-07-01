@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import {
+  BrowserRouter, Route, Switch,
+} from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
