@@ -48,6 +48,7 @@ describe('createOrUpdateGoals', () => {
       status: 'Draft',
       grantId: grants[0].id,
       source: GOAL_SOURCES[0],
+      createdVia: 'activityReport',
     });
 
     objective = await Objective.create({
@@ -113,7 +114,6 @@ describe('createOrUpdateGoals', () => {
       grantId: goal.grantId,
       status: 'Draft',
     };
-
     newGoals = await createOrUpdateGoals([
       {
         ...basicGoal,
