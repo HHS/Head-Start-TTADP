@@ -528,7 +528,9 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
             id: '1',
             data: {
               event: { id: '2' },
-              recipients: [],
+              // Leave this commented verifies the bugfix in TTAHUB-3114, where
+              // nextSessionRecipients was never assigned a good value.
+              // recipients: [],
             },
           })),
         },
