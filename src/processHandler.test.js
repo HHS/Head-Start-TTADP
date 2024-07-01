@@ -25,23 +25,23 @@ jest.mock('./models', () => ({
 }));
 
 describe('processHandler', () => {
+  let originalExit;
+
+  beforeAll(() => {
+    originalExit = process.exit;
+    process.exit = jest.fn();
+  });
+
+  afterAll(() => {
+    process.exit = originalExit;
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    resetShutDownFlag();
+  });
+
   describe('gracefulShutdown', () => {
-    let isShuttingDown;
-    let originalExit;
-
-    beforeAll(() => {
-      originalExit = process.exit;
-      process.exit = jest.fn();
-    });
-
-    afterAll(() => {
-      process.exit = originalExit;
-    });
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      resetShutDownFlag();
-    });
 
     it('should close the sequelize connection and log info on success', async () => {
       sequelize.close.mockResolvedValueOnce();
@@ -156,6 +156,22 @@ describe('processHandler', () => {
         'Sequelize disconnected through app termination (unhandledRejection): {"some":"details"}',
       );
       expect(process.exit).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle unhandledRejection and return early if reason message includes "maxretriesperrequest" in CI environment', async () => {
+      const reason = new Error('maxretriesperrequest');
+      const promise = Promise.reject(reason);
+      process.env.CI = 'true';
+      isConnectionOpen.mockReturnValueOnce(true);
+
+      await promise.catch(() => {}); // Prevent unhandledRejection warning in test
+      await emitProcessEvent('unhandledRejection', reason, promise);
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `Unhandled rejection at: ${promise} reason: ${reason}`,
+      );
+      expect(sequelize.close).not.toHaveBeenCalled();
+      delete process.env.CI; // Clean up CI environment variable
     });
 
     it('should handle SIGINT and call gracefulShutdown', async () => {
