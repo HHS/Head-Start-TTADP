@@ -103,7 +103,11 @@ export default class Goal {
   }
 
   canView() {
+    if (!this.goal || !this.goal.grant) {
+      return false;
+    }
     const region = this.goal.grant.regionId;
+
     return this.canReadInRegion(region);
   }
 }
