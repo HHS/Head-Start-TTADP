@@ -1,6 +1,8 @@
 import { ActivityReportCollaborator } from '..';
 import { auditLogger } from '../../logger';
 
+jest.mock('../../logger');
+
 describe('ActivityReportCollaborator Model', () => {
   it('should handle undefined user gracefully', () => {
     const instance = new ActivityReportCollaborator();
