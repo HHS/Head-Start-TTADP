@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/return-await */
+import httpContext from 'express-http-context';
 import { createTransport } from 'nodemailer';
 import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
@@ -18,6 +19,7 @@ import {
 import { userById } from '../../services/users';
 import logEmailNotification from './logNotifications';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
+import referenceData from '../../workers/referenceData';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -356,6 +358,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
       const data = {
         report,
         newCollaborator: collaborator.user,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_ADDED, data);
     } catch (err) {
@@ -371,6 +374,7 @@ export const approverAssignedNotification = (report, newApprovers) => {
       const data = {
         report,
         newApprover: approver,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED, data);
     } catch (err) {
@@ -386,6 +390,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
       report,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
   } catch (err) {
@@ -409,6 +414,7 @@ export const programSpecialistRecipientReportApprovedNotification = (
       report,
       programSpecialists,
       recipients,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
@@ -483,6 +489,7 @@ export const trVisionAndGoalComplete = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
         templatePath: 'tr_poc_vision_goal_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
@@ -515,6 +522,7 @@ export const trPocSessionComplete = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
         templatePath: 'tr_poc_session_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
@@ -551,6 +559,7 @@ export const trSessionCreated = async (event) => {
           ...event,
           displayId: eventId,
         },
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
@@ -583,6 +592,7 @@ export const trSessionCompleted = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
         templatePath: 'tr_session_completed',
+        ...referenceData(),
       };
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
     }));
@@ -620,6 +630,7 @@ export const trCollaboratorAdded = async (
       emailTo: [collaborator.email],
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
+      ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
@@ -652,6 +663,7 @@ export const trPocAdded = async (
       emailTo: [poc.email],
       debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
       templatePath: 'tr_poc_added',
+      ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
@@ -687,6 +699,7 @@ export const trPocEventComplete = async (
         reportPath,
         debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
         templatePath: 'tr_event_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
@@ -709,6 +722,7 @@ export const changesRequestedNotification = (
       approver,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
   } catch (err) {
@@ -743,6 +757,7 @@ export async function collaboratorDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
@@ -780,6 +795,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
@@ -818,6 +834,7 @@ export async function submittedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
@@ -857,6 +874,7 @@ export async function approvedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
@@ -919,6 +937,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
