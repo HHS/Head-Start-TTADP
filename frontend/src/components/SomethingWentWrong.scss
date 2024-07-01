@@ -1,0 +1,22 @@
+@use '../colors.scss' as *;
+
+.smart-hub--something-went-wrong h3 {
+    color: $response-code;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.smart-hub--something-went-wrong h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.smart-hub--something-went-wrong p {
+    color: $base-dark;
+    font-size: 1.25rem;
+    font-weight: 400;
+}
+
+.smart-hub--something-went-wrong li {
+    margin-bottom: .5rem;
+}

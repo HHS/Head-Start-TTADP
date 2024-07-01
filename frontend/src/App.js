@@ -10,6 +10,7 @@ import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
 import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
+import HideSiteNavContext from './HideSiteNavContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
@@ -58,6 +59,7 @@ import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import useGaUserData from './hooks/useGaUserData';
 import QADashboard from './pages/QADashboard';
+import SomethingWentWrong from './components/SomethingWentWrong';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -76,6 +78,7 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+  const [hideSiteNav, setHideSiteNav] = useState(false);
 
   useGaUserData(user);
 
@@ -439,6 +442,14 @@ function App() {
           )}
         />
         <Route
+          path="/something-went-wrong/:responseCode([0-9]*)"
+          render={({ match }) => (
+            <AppWrapper authenticated logout={logout}>
+              <SomethingWentWrong match={match} />
+            </AppWrapper>
+          )}
+        />
+        <Route
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <NotFound />
@@ -456,9 +467,13 @@ function App() {
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
-        <BrowserRouter>
-          <ScrollToTop />
-          {authenticated && (
+        <HideSiteNavContext.Provider value={
+          { hideSiteNav, setHideSiteNav }
+        }
+        >
+          <BrowserRouter>
+            <ScrollToTop />
+            {authenticated && !hideSiteNav && (
             <>
               <a className="usa-skipnav" href="#main-content">
                 Skip to main content
@@ -475,30 +490,31 @@ function App() {
                 />
               </UserContext.Provider>
             </>
-          )}
-          <AriaLiveContext.Provider value={{ announce }}>
-            <MyGroupsProvider authenticated={authenticated}>
-              <UserContext.Provider value={{ user, authenticated, logout }}>
-                <Header
-                  authenticated
-                  alert={alert}
-                  areThereUnreadNotifications={areThereUnreadNotifications}
-                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
-                />
-                {!authenticated && (authError === 403
-                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                  : (
-                    <AppWrapper padded={false} logout={logout}>
-                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
-                    </AppWrapper>
-                  )
-                )}
-                {authenticated && renderAuthenticatedRoutes()}
-              </UserContext.Provider>
-            </MyGroupsProvider>
-          </AriaLiveContext.Provider>
-        </BrowserRouter>
-        <AriaLiveRegion messages={announcements} />
+            )}
+            <AriaLiveContext.Provider value={{ announce }}>
+              <MyGroupsProvider authenticated={authenticated}>
+                <UserContext.Provider value={{ user, authenticated, logout }}>
+                  <Header
+                    authenticated
+                    alert={alert}
+                    areThereUnreadNotifications={areThereUnreadNotifications}
+                    setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                  />
+                  {!authenticated && (authError === 403
+                    ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                    : (
+                      <AppWrapper padded={false} logout={logout}>
+                        <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                      </AppWrapper>
+                    )
+                  )}
+                  {authenticated && renderAuthenticatedRoutes()}
+                </UserContext.Provider>
+              </MyGroupsProvider>
+            </AriaLiveContext.Provider>
+          </BrowserRouter>
+          <AriaLiveRegion messages={announcements} />
+        </HideSiteNavContext.Provider>
       </AppLoadingContext.Provider>
     </>
   );
