@@ -76,13 +76,30 @@ describe('Goals policies', () => {
       const goal = {
         objectives: [],
         grant: { regionId: 2 },
-
       };
       const user = {
         permissions: [
           {
             regionId: 2,
             scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
+      };
+
+      const policy = new Goal(user, goal);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('returns true if user is admin', async () => {
+      const goal = {
+        objectives: [],
+        grant: { regionId: 2 },
+      };
+      const user = {
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
           },
         ],
       };

@@ -56,7 +56,7 @@ export default class Goal {
     // eslint-disable-next-line max-len
     const isAdmin = find(this.user.permissions, (permission) => permission.scopeId === SCOPES.ADMIN);
 
-    return isAdmin || !isUndefined(permissions);
+    return !isUndefined(isAdmin) || !isUndefined(permissions);
   }
 
   // refactored to take a region id rather than directly check
