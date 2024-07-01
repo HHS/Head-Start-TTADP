@@ -6,6 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 import {} from 'dotenv/config';
 import throng from 'throng';
+import httpContext from 'express-http-context';
 import {
   processScanQueue,
 } from './services/scanQueue';
@@ -28,25 +29,29 @@ import {
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 
-// Pull jobs off the redis queue and process them.
+// Wrap your process functions to use httpContext
 async function start(context: { id: number }) {
-  // File Scanning Queue
-  processScanQueue();
+  httpContext.ns.run(() => {
+    httpContext.set('workerId', context.id);
 
-  // AWS Elasticsearch Queue
-  processAWSElasticsearchQueue();
+    // File Scanning Queue
+    processScanQueue();
 
-  // S3 Queue.
-  processS3Queue();
+    // AWS Elasticsearch Queue
+    processAWSElasticsearchQueue();
 
-  // Resource Queue.
-  processResourceQueue();
+    // S3 Queue.
+    processS3Queue();
 
-  // Notifications Queue
-  processNotificationQueue();
+    // Resource Queue.
+    processResourceQueue();
 
-  // Maintenance Queue
-  processMaintenanceQueue();
+    // Notifications Queue
+    processNotificationQueue();
+
+    // Maintenance Queue
+    processMaintenanceQueue();
+  });
 }
 
 // spawn workers and start them

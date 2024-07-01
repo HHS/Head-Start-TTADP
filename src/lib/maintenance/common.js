@@ -6,6 +6,7 @@ const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
 const { default: LockManager } = require('../lockManager');
 const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
+const { default: referenceData } = require('../../workers/referenceData');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
@@ -131,7 +132,7 @@ const enqueueMaintenanceJob = async (
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        maintenanceQueue.add(category, data);
+        maintenanceQueue.add(category, { ...data, ...referenceData() });
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);
