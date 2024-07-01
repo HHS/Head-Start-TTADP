@@ -1,5 +1,5 @@
 import httpContext from 'express-http-context';
-import { sequelize, gracefulShutdown } from '..';
+import { sequelize, isConnectionOpen } from '..';
 import { auditLogger } from '../../logger';
 
 jest.mock('express-http-context', () => ({
@@ -20,120 +20,6 @@ describe('Sequelize Tests', () => {
 
   afterAll(() => {
     jest.restoreAllMocks();
-  });
-
-  describe('Graceful shutdown', () => {
-    let originalExit;
-
-    beforeAll(() => {
-      originalExit = process.exit;
-      process.exit = jest.fn();
-    });
-
-    afterAll(() => {
-      process.exit = originalExit;
-    });
-
-    it('should close the sequelize connection and log info on SIGINT', async () => {
-      httpContext.get.mockImplementation((key) => {
-        const values = {
-          loggedUser: 'testUser',
-          transactionId: '12345',
-          sessionSig: 'abcde',
-          impersonationUserId: 'impUser',
-          auditDescriptor: 'testDescriptor',
-        };
-        return values[key];
-      });
-
-      process.emit('SIGINT');
-
-      await new Promise((resolve) => { setTimeout(resolve, 100); });
-
-      expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGINT): {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
-      expect(process.exit).toHaveBeenCalledWith(0);
-    });
-
-    it('should close the sequelize connection and log info on SIGTERM', async () => {
-      httpContext.get.mockImplementation((key) => {
-        const values = {
-          loggedUser: 'testUser',
-          transactionId: '12345',
-          sessionSig: 'abcde',
-          impersonationUserId: 'impUser',
-          auditDescriptor: 'testDescriptor',
-        };
-        return values[key];
-      });
-
-      process.emit('SIGTERM');
-
-      await new Promise((resolve) => { setTimeout(resolve, 100); });
-
-      expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through app termination (SIGTERM): {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
-      expect(process.exit).toHaveBeenCalledWith(0);
-    });
-
-    it('should close the sequelize connection and log error on uncaughtException', async () => {
-      const error = new Error('Test error');
-      httpContext.get.mockImplementation((key) => {
-        const values = {
-          loggedUser: 'testUser',
-          transactionId: '12345',
-          sessionSig: 'abcde',
-          impersonationUserId: 'impUser',
-          auditDescriptor: 'testDescriptor',
-        };
-        return values[key];
-      });
-
-      process.emit('uncaughtException', error);
-
-      await new Promise((resolve) => { setTimeout(resolve, 100); });
-
-      expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught Exception:', error);
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through uncaught exception: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
-      expect(process.exit).toHaveBeenCalledWith(1);
-    });
-
-    it('should handle graceful shutdown function', async () => {
-      httpContext.get.mockImplementation((key) => {
-        const values = {
-          loggedUser: 'testUser',
-          transactionId: '12345',
-          sessionSig: 'abcde',
-          impersonationUserId: 'impUser',
-          auditDescriptor: 'testDescriptor',
-        };
-        return values[key];
-      });
-
-      await gracefulShutdown('test message');
-
-      expect(sequelize.close).toHaveBeenCalled();
-      expect(auditLogger.info).toHaveBeenCalledWith('Sequelize disconnected through test message: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
-    });
-
-    it('should log error if sequelize.close throws error', async () => {
-      sequelize.close.mockImplementation(() => Promise.reject(new Error('Close error')));
-      httpContext.get.mockImplementation((key) => {
-        const values = {
-          loggedUser: 'testUser',
-          transactionId: '12345',
-          sessionSig: 'abcde',
-          impersonationUserId: 'impUser',
-          auditDescriptor: 'testDescriptor',
-        };
-        return values[key];
-      });
-
-      await gracefulShutdown('test message');
-
-      expect(auditLogger.error).toHaveBeenCalledWith('Error during Sequelize disconnection through test message: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}: Error: Close error');
-    });
   });
 
   describe('Sequelize Hooks', () => {
@@ -189,6 +75,49 @@ describe('Sequelize Tests', () => {
       await Promise.all(afterDisconnectHooks.map((hook) => hook()));
 
       expect(auditLogger.info).toHaveBeenCalledWith('Database connection closed: {"descriptor":"testDescriptor","loggedUser":"testUser","impersonationId":"impUser","sessionSig":"abcde","transactionId":"12345"}');
+    });
+  });
+
+  describe('isConnectionOpen', () => {
+    it('should return false when there is no pool', () => {
+      sequelize.connectionManager.pool = null;
+
+      const result = isConnectionOpen();
+
+      expect(result).toBe(false);
+    });
+
+    it('should return false when there are no active connections in the pool', () => {
+      sequelize.connectionManager.pool = {
+        _availableObjects: [],
+        _inUseObjects: [],
+      };
+
+      const result = isConnectionOpen();
+
+      expect(result).toBe(false);
+    });
+
+    it('should return true when there are available objects in the pool', () => {
+      sequelize.connectionManager.pool = {
+        _availableObjects: [{}],
+        _inUseObjects: [],
+      };
+
+      const result = isConnectionOpen();
+
+      expect(result).toBe(true);
+    });
+
+    it('should return true when there are in-use objects in the pool', () => {
+      sequelize.connectionManager.pool = {
+        _availableObjects: [],
+        _inUseObjects: [{}],
+      };
+
+      const result = isConnectionOpen();
+
+      expect(result).toBe(true);
     });
   });
 });

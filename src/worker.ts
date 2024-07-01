@@ -6,6 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 import {} from 'dotenv/config';
 import throng from 'throng';
+import {} from './processHandler';
 import {
   processScanQueue,
 } from './services/scanQueue';
