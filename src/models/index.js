@@ -25,6 +25,18 @@ if (config.use_env_variable) {
 
 audit.attachHooksForAuditing(sequelize);
 
+function isConnectionOpen() {
+  const pool = sequelize.connectionManager.pool;
+
+  if (!pool) {
+    return false;
+  }
+
+  // Check if there are any active connections in the pool
+  const isOpen = pool._availableObjects.length > 0 || pool._inUseObjects.length > 0;
+  return isOpen;
+}
+
 const descriptiveDetails = () => {
   const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
   const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
@@ -41,35 +53,6 @@ const descriptiveDetails = () => {
   };
 };
 
-// Function to gracefully close the Sequelize connection
-const gracefulShutdown = async (msg) => {
-  const details = JSON.stringify(descriptiveDetails());
-  try {
-    await sequelize.close();
-    auditLogger.info(`Sequelize disconnected through ${msg}: ${details}`);
-  } catch (err) {
-    auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${details}: ${err}`);
-  }
-};
-
-// Listen for SIGINT (Ctrl+C)
-process.on('SIGINT', async () => {
-  await gracefulShutdown('app termination (SIGINT)');
-  process.exit(0);
-});
-
-// Listen for SIGTERM (e.g., kill command)
-process.on('SIGTERM', async () => {
-  await gracefulShutdown('app termination (SIGTERM)');
-  process.exit(0);
-});
-
-// Listen for uncaught exceptions
-process.on('uncaughtException', async (err) => {
-  auditLogger.error('Uncaught Exception:', err);
-  await gracefulShutdown('uncaught exception');
-  process.exit(1);
-});
 
 sequelize.addHook('beforeConnect', () => {
   auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
@@ -139,7 +122,7 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
-db.gracefulShutdown = gracefulShutdown;
+db.isConnectionOpen = isConnectionOpen;
 db.descriptiveDetails = descriptiveDetails;
 
 module.exports = db;
