@@ -121,7 +121,7 @@ describe('processHandler', () => {
 
       expect(auditLogger.error).toHaveBeenCalledWith('Fatal exception', error);
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through fatal exception: {"some":"details"}'
+        'Sequelize disconnected through fatal exception: {"some":"details"}',
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -150,7 +150,7 @@ describe('processHandler', () => {
       await emitProcessEvent('unhandledRejection', reason, promise);
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        `Unhandled rejection at: ${promise} reason: ${reason}`
+        `Unhandled rejection at: ${promise} reason: ${reason}`,
       );
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through app termination (unhandledRejection): {"some":"details"}',
