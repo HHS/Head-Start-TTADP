@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
     },
     fullName: {
       type: DataTypes.VIRTUAL,
-      get() {       
+      get() {
         if (!this.user) {
           const { stack } = new Error();
           auditLogger.error(`Access attempt to undefined user for userID: ${this.userId}, stack: ${stack}`);
