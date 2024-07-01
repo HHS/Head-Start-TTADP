@@ -26,13 +26,14 @@ if (config.use_env_variable) {
 audit.attachHooksForAuditing(sequelize);
 
 function isConnectionOpen() {
-  const pool = sequelize.connectionManager.pool;
+  const { pool } = sequelize.connectionManager;
 
   if (!pool) {
     return false;
   }
 
   // Check if there are any active connections in the pool
+  // eslint-disable-next-line no-underscore-dangle
   const isOpen = pool._availableObjects.length > 0 || pool._inUseObjects.length > 0;
   return isOpen;
 }
@@ -52,7 +53,6 @@ const descriptiveDetails = () => {
     ...(transactionId && { transactionId }),
   };
 };
-
 
 sequelize.addHook('beforeConnect', () => {
   auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
