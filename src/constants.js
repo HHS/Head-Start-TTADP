@@ -259,7 +259,7 @@ const MAINTENANCE_CATEGORY = {
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 3;
+const CURRENT_GOAL_SIMILARITY_VERSION = 4;
 
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,
