@@ -42,7 +42,6 @@ describe('processHandler', () => {
   });
 
   describe('gracefulShutdown', () => {
-
     it('should close the sequelize connection and log info on success', async () => {
       sequelize.close.mockResolvedValueOnce();
       isConnectionOpen.mockReturnValueOnce(true);
@@ -91,22 +90,6 @@ describe('processHandler', () => {
   });
 
   describe('Process event handlers', () => {
-    let originalExit;
-
-    beforeAll(() => {
-      originalExit = process.exit;
-      process.exit = jest.fn();
-    });
-
-    afterAll(() => {
-      process.exit = originalExit;
-    });
-
-    beforeEach(() => {
-      jest.clearAllMocks();
-      resetShutDownFlag();
-    });
-
     const emitProcessEvent = async (eventName, ...args) => {
       process.emit(eventName, ...args);
       await new Promise(setImmediate); // Ensure all async code in handlers runs
