@@ -45,6 +45,7 @@ import {
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
+import { HTTPError } from '../../fetchers';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -383,6 +384,12 @@ function ActivityReport({
           </>
         );
         const errorMsg = !connection ? networkErrorMessage : <>Unable to load activity report</>;
+
+        if (e instanceof HTTPError && [403, 404].includes(e.status)) {
+          // Redirect to the SomethingWentWrong component pass the response code as a param.
+          history.push(`/something-went-wrong/${e.status}`);
+        }
+
         updateError(errorMsg);
         // If the error was caused by an invalid region, we need a way to communicate that to the
         // component so we can redirect the user. We can do this by updating the form data
