@@ -62,8 +62,47 @@ describe('dataValidation', () => {
     });
   });
 
-  it('should log results to the auditLogger', async () => {
+  it('should log specific messages to the auditLogger', async () => {
     await dataValidation();
-    expect(auditLogger.info).toHaveBeenCalledTimes(10);
+
+    const complexPatterns = [
+      /Grants data counts: \[\s*(.|\s)*\s*\]/m,
+      /ActivityReports data counts: \[\s*(.|\s)*\s*\]/m,
+    ];
+
+    const simplePatterns = [
+      /Attempting to connect to the database: {}/,
+      /Database connection established: {}/,
+      /Attempting to disconnect from the database: {}/,
+      /Database connection closed: {}/,
+      /Goals has \d+ records, last updated at: .+/,
+      /Recipients has \d+ records, last updated at: .+/,
+      /Grants has \d+ records, last updated at: .+/,
+      /ActivityReports has \d+ records, last updated at: .+/,
+      /Users has \d+ records, last updated at: .+/,
+      /Files has \d+ records, last updated at: .+/,
+      /Objectives has \d+ records, last updated at: .+/,
+      /NextSteps has \d+ records, last updated at: .+/,
+    ];
+
+    const allPatterns = [...simplePatterns, ...complexPatterns];
+
+    const loggedMessages = auditLogger.info.mock.calls.map((call) => call[0]);
+    const unmatchedMessages = [];
+
+    loggedMessages.forEach((message, index) => {
+      const matchedPattern = allPatterns.find((pattern) => pattern.test(message));
+      if (!matchedPattern) {
+        unmatchedMessages.push({ index: index + 1, message });
+      }
+    });
+
+    expect(unmatchedMessages).toStrictEqual([]);
+
+    // Check if all expected patterns were matched
+    allPatterns.forEach((pattern) => {
+      const matched = loggedMessages.some((message) => pattern.test(message));
+      expect(matched).toBeTruthy();
+    });
   });
 });
