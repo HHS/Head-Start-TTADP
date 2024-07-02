@@ -141,3 +141,92 @@ export default async function handleErrors(req, res, error, logContext) {
     handleUnexpectedErrorInCatchBlock(req, res, e, logContext);
   }
 }
+
+const logWorkerError = async (job, operation, error, logContext) => {
+  if (
+    operation !== 'SequelizeError'
+    && process.env.SUPPRESS_ERROR_LOGGING
+    && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
+  ) {
+    return 0;
+  }
+
+  try {
+    const responseBody = typeof error === 'object'
+      && error !== null ? { ...error, errorStack: error?.stack } : error;
+
+    const requestBody = {
+      ...(job.data
+        && typeof job.data === 'object'
+        && Object.keys(job.data).length > 0
+        && { data: job.data }),
+    };
+
+    const requestErrorId = await createRequestError({
+      operation,
+      uri: job.queue.name, // Assuming the queue name serves as a URI equivalent
+      method: 'PROCESS_JOB', // Indicating this is a job processing operation
+      requestBody,
+      responseBody,
+      responseCode: 'INTERNAL_SERVER_ERROR',
+    });
+
+    return requestErrorId;
+  } catch (e) {
+    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
+  }
+
+  return null;
+};
+
+export const handleWorkerError = async (job, error, logContext) => {
+  if (process.env.NODE_ENV === 'development') {
+    logger.error(error);
+  }
+
+  let operation;
+  let label;
+
+  if (error instanceof Sequelize.Error) {
+    operation = 'SequelizeError';
+    label = 'Sequelize error';
+  } else {
+    operation = 'UNEXPECTED_ERROR';
+    label = 'UNEXPECTED ERROR';
+  }
+
+  if (error instanceof Sequelize.ConnectionError
+    || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
+  }
+
+  const requestErrorId = await logWorkerError(job, operation, error, logContext);
+
+  let errorMessage;
+
+  if (error?.stack) {
+    errorMessage = error.stack;
+  } else {
+    errorMessage = error;
+  }
+
+  if (requestErrorId) {
+    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+  } else {
+    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
+  }
+
+  // Handle job failure as needed
+};
+
+export const handleUnexpectedWorkerError = (job, error, logContext) => {
+  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
+};
+
+export const handleWorkerErrors = async (job, error, logContext) => {
+  try {
+    await handleWorkerError(job, error, logContext);
+  } catch (e) {
+    handleUnexpectedWorkerError(job, e, logContext);
+  }
+};
