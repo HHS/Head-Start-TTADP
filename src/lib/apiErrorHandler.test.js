@@ -54,6 +54,7 @@ describe('apiErrorHandler', () => {
     const requestErrors = await RequestErrors.findAll();
 
     expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors[0].operation).toBe('SequelizeError');
   });
 
   it('handles a generic error', async () => {
@@ -65,9 +66,10 @@ describe('apiErrorHandler', () => {
     const requestErrors = await RequestErrors.findAll();
 
     expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors[0].operation).toBe('UNEXPECTED_ERROR');
   });
 
-  it('can handle unexpected error in catch block', async () => {
+  it('handles unexpected error in catch block', async () => {
     const mockUnexpectedErr = new Error('Unexpected error');
     handleUnexpectedErrorInCatchBlock(mockRequest, mockResponse, mockUnexpectedErr, mockLogContext);
 
@@ -76,5 +78,31 @@ describe('apiErrorHandler', () => {
     const requestErrors = await RequestErrors.findAll();
 
     expect(requestErrors.length).toBe(0);
+  });
+
+  it('handles error suppression when SUPPRESS_ERROR_LOGGING is true', async () => {
+    process.env.SUPPRESS_ERROR_LOGGING = 'true';
+    await handleErrors(mockRequest, mockResponse, mockSequelizeError, mockLogContext);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+
+    const requestErrors = await RequestErrors.findAll();
+
+    expect(requestErrors.length).toBe(0);
+
+    delete process.env.SUPPRESS_ERROR_LOGGING;
+  });
+
+  it('logs connection pool information on connection errors', async () => {
+    const mockConnectionError = new Sequelize.ConnectionError(new Error('Connection error'));
+    await handleErrors(mockRequest, mockResponse, mockConnectionError, mockLogContext);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+
+    // Ensure that connection pool information is logged
+    const requestErrors = await RequestErrors.findAll();
+
+    expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors[0].operation).toBe('SequelizeError');
   });
 });
