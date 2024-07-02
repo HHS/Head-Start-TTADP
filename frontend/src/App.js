@@ -508,7 +508,7 @@ function App() {
                       <SomethingWentWrong errorResponseCode={errorResponseCode} />
                     </AppWrapper>
                     )}
-                  {authenticated && renderAuthenticatedRoutes()}
+                  {authenticated && !errorResponseCode && renderAuthenticatedRoutes()}
                 </UserContext.Provider>
               </MyGroupsProvider>
             </AriaLiveContext.Provider>
