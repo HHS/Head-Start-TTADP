@@ -134,7 +134,7 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
 
 const extractEventData = (sessionReport) => {
   let event;
-  let recipients;
+  let recipients = [];
 
   if (sessionReport && sessionReport.data) {
     const data = (typeof sessionReport.data.val === 'string')
@@ -142,7 +142,7 @@ const extractEventData = (sessionReport) => {
       : sessionReport.data;
 
     event = data.event;
-    recipients = data.recipients;
+    recipients = Array.isArray(data.recipients) ? data.recipients : [data.recipients].filter((recipient) => recipient !== undefined);
   }
 
   return { event, recipients };

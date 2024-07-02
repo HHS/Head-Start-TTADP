@@ -478,6 +478,32 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
     expect(mockSequelize.models.GoalCollaborator.update).toHaveBeenCalledTimes(0);
   });
 
+  it('doesn\'t fail when recipients is null', async () => {
+    const mockSequelize = {
+      Sequelize: { Model: jest.fn() },
+      models: { Goal: { create: jest.fn(), findOne: jest.fn(() => true) } },
+    };
+
+    const mockInstanceNoRecipients = {
+      id: 1,
+      data: {
+        event: {
+          id: '2',
+          data: { goal: 'Increase knowledge about X' },
+        },
+        recipients: null,
+      },
+    };
+
+    await createGoalsForSessionRecipientsIfNecessary(
+      mockSequelize,
+      mockInstanceNoRecipients,
+      mockOptions,
+    );
+
+    expect(mockSequelize.models.Goal.create).not.toHaveBeenCalled();
+  });
+
   it('does not create a new goal if one already exists', async () => {
     const mockSequelize = {
       Sequelize: {
