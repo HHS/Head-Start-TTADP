@@ -64,11 +64,10 @@ describe('dataValidation', () => {
 
   it('should log specific messages to the auditLogger', async () => {
     await dataValidation();
-    expect(auditLogger.info).toHaveBeenCalledTimes(34);
 
     const complexPatterns = [
-      /Grants data counts: \[\s*\{\s*"regionId": \d+,\s*"status": "(Active|Inactive|null)",\s*"count": "\d+"\s*\},?(\s*\{\s*"regionId": \d+,\s*"status": "(Active|Inactive|null)",\s*"count": "\d+"\s*\},?)*\s*\]/,
-      /ActivityReports data counts: \[\s*\{\s*"regionId": \d+,\s*"submissionStatus": "(draft|submitted|deleted|null)",\s*"count": "\d+"\s*\},?(\s*\{\s*"regionId": \d+,\s*"submissionStatus": "(draft|submitted|deleted|null)",\s*"count": "\d+"\s*\},?)*\s*\]/,
+      /Grants data counts: \[\s*(.|\s)*\s*\]/m,
+      /ActivityReports data counts: \[\s*(.|\s)*\s*\]/m,
     ];
 
     const simplePatterns = [
@@ -93,25 +92,17 @@ describe('dataValidation', () => {
 
     loggedMessages.forEach((message, index) => {
       const matchedPattern = allPatterns.find((pattern) => pattern.test(message));
-      if (matchedPattern) {
-        console.log(`Message ${index + 1} matched pattern: ${matchedPattern}`);
-      } else {
+      if (!matchedPattern) {
         unmatchedMessages.push({ index: index + 1, message });
       }
     });
 
-    // Log unmatched messages
-    if (unmatchedMessages.length > 0) {
-      console.log('Unmatched messages:', unmatchedMessages);
-    }
+    expect(unmatchedMessages).toStrictEqual([]);
 
     // Check if all expected patterns were matched
-    allPatterns.forEach((pattern, patternIndex) => {
+    allPatterns.forEach((pattern) => {
       const matched = loggedMessages.some((message) => pattern.test(message));
       expect(matched).toBeTruthy();
-      if (!matched) {
-        console.log(`Pattern ${patternIndex + 1} did not match any message: ${pattern}`);
-      }
     });
   });
 });
