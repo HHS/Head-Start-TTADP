@@ -28,7 +28,8 @@ const transactionQueueWrapper = (
     httpContext.set('sessionSig', job.id); // TODO: what value should be used here
     httpContext.set('auditDescriptor', originalFunction.name);
     try {
-      return sequelize.transaction(async () => {
+      return sequelize.transaction(async (transaction) => {
+        httpContext.set('transactionId', transaction.id);
         let result;
         try {
           // eslint-disable-next-line
