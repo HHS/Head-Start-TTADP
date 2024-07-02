@@ -63,7 +63,7 @@ describe('processHandler', () => {
 
       expect(sequelize.close).toHaveBeenCalledTimes(1);
       expect(auditLogger.error).toHaveBeenCalledWith(
-        `Error during Sequelize disconnection through test message: {"some":"details"}: ${formatLogObject(error)}`,
+        'Error during Sequelize disconnection through test message: {"some":"details"}: Error: close error',
       );
     });
 
