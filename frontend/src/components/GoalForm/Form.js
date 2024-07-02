@@ -136,17 +136,25 @@ export default function Form({
         collaborators={collaborators}
       />
 
-      <GrantSelect
-        selectedGrants={selectedGrants}
-        isOnReport={isOnReport}
-        setSelectedGrants={setSelectedGrants}
-        possibleGrants={possibleGrants}
-        validateGrantNumbers={validateGrantNumbers}
-        error={errors[FORM_FIELD_INDEXES.GRANTS]}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          status !== 'Closed',
+          userCanEdit,
+          possibleGrants.length > 1,
+          !isOnReport,
+        ]}
+        label="Recipient grant numbers"
+        value={selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}
+      >
+        <GrantSelect
+          selectedGrants={selectedGrants}
+          setSelectedGrants={setSelectedGrants}
+          possibleGrants={possibleGrants}
+          validateGrantNumbers={validateGrantNumbers}
+          error={errors[FORM_FIELD_INDEXES.GRANTS]}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalName
         goalName={goalName}
