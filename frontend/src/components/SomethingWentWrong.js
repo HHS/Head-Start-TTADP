@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link, Button } from '@trussworks/react-uswds';
-import { Link as ReactLink, useHistory } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import SomethingWentWrongContext from '../SomethingWentWrongContext';
 import './SomethingWentWrong.scss';
@@ -109,7 +109,7 @@ function SomethingWentWrong({ errorResponseCode }) {
             <li>
               Go back to
               {' '}
-              <ReactLink to="/">home</ReactLink>
+              <Button unstyled onClick={onHomeClick}>home</Button>
             </li>
             <li>
               Contact
