@@ -62,8 +62,56 @@ describe('dataValidation', () => {
     });
   });
 
-  it('should log results to the auditLogger', async () => {
+  it('should log specific messages to the auditLogger', async () => {
     await dataValidation();
     expect(auditLogger.info).toHaveBeenCalledTimes(34);
+
+    const complexPatterns = [
+      /Grants data counts: \[\s*\{\s*"regionId": \d+,\s*"status": "(Active|Inactive|null)",\s*"count": "\d+"\s*\},?(\s*\{\s*"regionId": \d+,\s*"status": "(Active|Inactive|null)",\s*"count": "\d+"\s*\},?)*\s*\]/,
+      /ActivityReports data counts: \[\s*\{\s*"regionId": \d+,\s*"submissionStatus": "(draft|submitted|deleted|null)",\s*"count": "\d+"\s*\},?(\s*\{\s*"regionId": \d+,\s*"submissionStatus": "(draft|submitted|deleted|null)",\s*"count": "\d+"\s*\},?)*\s*\]/,
+    ];
+
+    const simplePatterns = [
+      /Attempting to connect to the database: {}/,
+      /Database connection established: {}/,
+      /Attempting to disconnect from the database: {}/,
+      /Database connection closed: {}/,
+      /Goals has \d+ records, last updated at: .+/,
+      /Recipients has \d+ records, last updated at: .+/,
+      /Grants has \d+ records, last updated at: .+/,
+      /ActivityReports has \d+ records, last updated at: .+/,
+      /Users has \d+ records, last updated at: .+/,
+      /Files has \d+ records, last updated at: .+/,
+      /Objectives has \d+ records, last updated at: .+/,
+      /NextSteps has \d+ records, last updated at: .+/,
+    ];
+
+    const allPatterns = [...simplePatterns, ...complexPatterns];
+
+    const loggedMessages = auditLogger.info.mock.calls.map((call) => call[0]);
+    const unmatchedMessages = [];
+
+    loggedMessages.forEach((message, index) => {
+      const matchedPattern = allPatterns.find((pattern) => pattern.test(message));
+      if (matchedPattern) {
+        console.log(`Message ${index + 1} matched pattern: ${matchedPattern}`);
+      } else {
+        unmatchedMessages.push({ index: index + 1, message });
+      }
+    });
+
+    // Log unmatched messages
+    if (unmatchedMessages.length > 0) {
+      console.log('Unmatched messages:', unmatchedMessages);
+    }
+
+    // Check if all expected patterns were matched
+    allPatterns.forEach((pattern, patternIndex) => {
+      const matched = loggedMessages.some((message) => pattern.test(message));
+      expect(matched).toBeTruthy();
+      if (!matched) {
+        console.log(`Pattern ${patternIndex + 1} did not match any message: ${pattern}`);
+      }
+    });
   });
 });
