@@ -1,3 +1,4 @@
+import httpContext from 'express-http-context';
 import { sequelize } from '../models';
 import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
@@ -14,7 +15,8 @@ export default function transactionWrapper(originalFunction, context = '') {
     let error;
     const startTime = Date.now();
     try {
-      return sequelize.transaction(async () => {
+      return sequelize.transaction(async (transaction) => {
+        httpContext.set('transactionId', transaction.id);
         let result;
         try {
           await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
