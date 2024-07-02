@@ -3,13 +3,18 @@ import { Link, Button } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import SomethingWentWrongContext from '../SomethingWentWrongContext';
+import AppLoadingContext from '../AppLoadingContext';
 import './SomethingWentWrong.scss';
 
 /* eslint-disable max-len */
 
 function SomethingWentWrong({ errorResponseCode }) {
   const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
+  const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
+
+  // Make sure if something was loading when an error occurred, we stop the loading spinner.
+  if (isAppLoading) setIsAppLoading(false);
 
   const supportLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
   const getSupportLink = () => (
