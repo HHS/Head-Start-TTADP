@@ -12,7 +12,7 @@ import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
 import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
-import HideSiteNavContext from './HideSiteNavContext';
+import SomethingWentWrongContext from './SomethingWentWrongContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
@@ -80,7 +80,7 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
-  const [hideSiteNav, setHideSiteNav] = useState(false);
+  const [errorResponseCode, setErrorResponseCode] = useState(null);
 
   useGaUserData(user);
 
@@ -444,14 +444,6 @@ function App() {
           )}
         />
         <Route
-          path="/something-went-wrong/:responseCode([0-9]*)"
-          render={({ match }) => (
-            <AppWrapper authenticated logout={logout}>
-              <SomethingWentWrong match={match} />
-            </AppWrapper>
-          )}
-        />
-        <Route
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
               <NotFound />
@@ -469,13 +461,13 @@ function App() {
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
-        <HideSiteNavContext.Provider value={
-          { hideSiteNav, setHideSiteNav }
+        <SomethingWentWrongContext.Provider value={
+          { errorResponseCode, setErrorResponseCode }
         }
         >
           <BrowserRouter>
             <ScrollToTop />
-            {authenticated && !hideSiteNav && (
+            {authenticated && !errorResponseCode && (
             <>
               <a className="usa-skipnav" href="#main-content">
                 Skip to main content
@@ -510,13 +502,19 @@ function App() {
                       </AppWrapper>
                     )
                   )}
+                  {authenticated && errorResponseCode
+                    && (
+                    <AppWrapper hasAlerts={false} authenticated logout={logout}>
+                      <SomethingWentWrong errorResponseCode={errorResponseCode} />
+                    </AppWrapper>
+                    )}
                   {authenticated && renderAuthenticatedRoutes()}
                 </UserContext.Provider>
               </MyGroupsProvider>
             </AriaLiveContext.Provider>
           </BrowserRouter>
           <AriaLiveRegion messages={announcements} />
-        </HideSiteNavContext.Provider>
+        </SomethingWentWrongContext.Provider>
       </AppLoadingContext.Provider>
     </>
   );

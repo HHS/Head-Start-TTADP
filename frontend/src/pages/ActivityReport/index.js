@@ -46,6 +46,7 @@ import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLo
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import { HTTPError } from '../../fetchers';
+// import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -203,6 +204,7 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
+  // const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
