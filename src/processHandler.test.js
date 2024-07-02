@@ -1,6 +1,6 @@
 import { auditLogger } from './logger';
 import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
-import { gracefulShutdown, resetShutDownFlag } from './processHandler'; // Adjust the import path
+import { gracefulShutdown, resetShutDownFlag, formatLogObject } from './processHandler'; // Adjust the import path
 
 jest.mock('./logger', () => ({
   auditLogger: {
@@ -63,7 +63,7 @@ describe('processHandler', () => {
 
       expect(sequelize.close).toHaveBeenCalledTimes(1);
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error during Sequelize disconnection through test message: {"some":"details"}: Error: close error',
+        `Error during Sequelize disconnection through test message: {"some":"details"}: ${formatLogObject(error)}`,
       );
     });
 
@@ -102,7 +102,7 @@ describe('processHandler', () => {
 
       await emitProcessEvent('_fatalException', error);
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Fatal exception', error);
+      expect(auditLogger.error).toHaveBeenCalledWith('Fatal exception', formatLogObject(error));
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through fatal exception: {"some":"details"}',
       );
@@ -116,7 +116,7 @@ describe('processHandler', () => {
 
       await emitProcessEvent('uncaughtException', error);
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught exception', error);
+      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught exception', formatLogObject(error));
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through uncaught exception: {"some":"details"}',
       );
@@ -239,8 +239,7 @@ describe('processHandler', () => {
       const warning = { name: 'TestWarning', message: 'This is a warning', stack: 'stack trace' };
       await emitProcessEvent('warning', warning);
 
-      expect(auditLogger.warn).toHaveBeenCalledWith(`Warning: ${warning.name} - ${warning.message}`);
-      expect(auditLogger.warn).toHaveBeenCalledWith(warning.stack);
+      expect(auditLogger.warn).toHaveBeenCalledWith('Warning:', formatLogObject(warning));
     });
 
     it('should handle rejectionHandled events and log info', async () => {
@@ -254,6 +253,9 @@ describe('processHandler', () => {
       await emitProcessEvent('exit', 0);
 
       expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 0');
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        'Sequelize disconnected through app termination (exit event) with code 0: {"some":"details"}',
+      );
     });
   });
 });
