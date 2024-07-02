@@ -22,8 +22,8 @@ const transactionQueueWrapper = (
   let error: Error | undefined;
   const startTime = Date.now();
   return httpContext.ns.runPromise(async () => {
-    httpContext.set('loggedUser', job.userId);
-    httpContext.set('impersonationUserId', job.impersonationUserId);
+    httpContext.set('loggedUser', job.referenceData.userId);
+    httpContext.set('impersonationUserId', job.referenceData.impersonationUserId);
     httpContext.set('transactionId', convertToUUID(job.id));
     httpContext.set('sessionSig', job.id); // TODO: what value should be used here
     httpContext.set('auditDescriptor', originalFunction.name);
