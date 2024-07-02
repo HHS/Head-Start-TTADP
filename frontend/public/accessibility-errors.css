@@ -1,0 +1,32 @@
+/**
+
+Approach & code taken from Heydon Pickering's article on testing HTML with modern CSS
+https://heydonworks.com/article/testing-html-with-modern-css/
+
+**/
+
+:root {
+    --error-outline: 0.25rem solid red;
+    --warning-outline: 0.25rem solid orange;
+}
+  
+a:not([href]) {
+    outline: var(--error-outline);
+    --error: 'The link does not have an href. Did you mean to use a <button>?';
+}
+
+a[href^="javascript"] {
+    outline: var(--error-outline);
+    --error-javascript-href: 'The href does not appear to include a location. Did you mean to use a <button>?';
+}
+  
+a[disabled] {
+    outline: var(--error-outline);
+    --error-anchor-disabled: 'The disabled property is not valid on anchors (links). Did you mean to use a <button>?';
+}
+
+label:not(:has(:is(input,output,textarea,select))):not([for]) {
+    outline: var(--error-outline);
+    --error-unassociated-label: 'The <label> neither uses the `for` attribute nor wraps an applicable form element'
+}
+
