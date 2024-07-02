@@ -30,7 +30,7 @@ export const formatLogObject = (logObject) => ({
   message: logObject.message,
   name: logObject.name,
   stack: logObject.stack,
-  ...logObject // Include any other enumerable properties
+  ...logObject,
 });
 
 // Listen for _fatalException
@@ -56,7 +56,7 @@ process.on('unhandledRejection', async (reason, promise) => {
       if (reason.message.toLowerCase().includes('maxretriesperrequest')) {
         return;
       }
-      auditLogger.error('Uncaught rejection', formatLogObject(err));
+      auditLogger.error('Uncaught rejection', formatLogObject(reason));
     }
   }
 
@@ -108,7 +108,7 @@ process.on('SIGHUP', async () => {
 
 // Listen for warning events
 process.on('warning', (warning) => {
-  auditLogger.warn(`Warning:`, formatLogObject(warning));
+  auditLogger.warn('Warning:', formatLogObject(warning));
 });
 
 // Listen for rejectionHandled events
