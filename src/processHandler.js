@@ -26,16 +26,23 @@ export const gracefulShutdown = async (msg) => {
   }
 };
 
+export const formatLogObject = (logObject) => ({
+  message: logObject.message,
+  name: logObject.name,
+  stack: logObject.stack,
+  ...logObject // Include any other enumerable properties
+});
+
 // Listen for _fatalException
 process.on('_fatalException', async (err) => {
-  auditLogger.error('Fatal exception', err);
+  auditLogger.error('Fatal exception', formatLogObject(err));
   await gracefulShutdown('fatal exception');
   process.exit(1);
 });
 
 // Listen for uncaught exceptions
 process.on('uncaughtException', async (err) => {
-  auditLogger.error('Uncaught exception', err);
+  auditLogger.error('Uncaught exception', formatLogObject(err));
   await gracefulShutdown('uncaught exception');
   process.exit(1);
 });
@@ -49,6 +56,7 @@ process.on('unhandledRejection', async (reason, promise) => {
       if (reason.message.toLowerCase().includes('maxretriesperrequest')) {
         return;
       }
+      auditLogger.error('Uncaught rejection', formatLogObject(err));
     }
   }
 
@@ -100,8 +108,7 @@ process.on('SIGHUP', async () => {
 
 // Listen for warning events
 process.on('warning', (warning) => {
-  auditLogger.warn(`Warning: ${warning.name} - ${warning.message}`);
-  auditLogger.warn(warning.stack);
+  auditLogger.warn(`Warning:`, formatLogObject(warning));
 });
 
 // Listen for rejectionHandled events
