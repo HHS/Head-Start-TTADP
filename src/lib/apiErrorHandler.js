@@ -13,7 +13,6 @@ import { sequelize } from '../models';
  * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
  */
 async function logRequestError(req, operation, error, logContext) {
-  // Check if error logging should be suppressed
   if (
     operation !== 'SequelizeError'
     && process.env.SUPPRESS_ERROR_LOGGING
@@ -23,27 +22,16 @@ async function logRequestError(req, operation, error, logContext) {
   }
 
   try {
-    // Prepare the response body for storage
-    const responseBody = typeof error === 'object'
-      && error !== null ? { ...error, errorStack: error?.stack } : error;
+    const responseBody = typeof error === 'object' && error !== null
+      ? { ...error, errorStack: error?.stack }
+      : error;
 
-    // Prepare the request body for storage
     const requestBody = {
-      ...(req.body
-        && typeof req.body === 'object'
-        && Object.keys(req.body).length > 0
-        && { body: req.body }),
-      ...(req.params
-        && typeof req.params === 'object'
-        && Object.keys(req.params).length > 0
-        && { params: req.params }),
-      ...(req.query
-        && typeof req.query === 'object'
-        && Object.keys(req.query).length > 0
-        && { query: req.query }),
+      ...(req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0 && { body: req.body }),
+      ...(req.params && typeof req.params === 'object' && Object.keys(req.params).length > 0 && { params: req.params }),
+      ...(req.query && typeof req.query === 'object' && Object.keys(req.query).length > 0 && { query: req.query }),
     };
 
-    // Create a request error in the database and get its ID
     const requestErrorId = await createRequestError({
       operation,
       uri: req.originalUrl,
@@ -69,7 +57,6 @@ async function logRequestError(req, operation, error, logContext) {
  * @param {Object} logContext - The context for logging.
  */
 export const handleError = async (req, res, error, logContext) => {
-  // Check if the environment is development
   if (process.env.NODE_ENV === 'development') {
     logger.error(error);
   }
@@ -77,7 +64,6 @@ export const handleError = async (req, res, error, logContext) => {
   let operation;
   let label;
 
-  // Check if the error is an instance of Sequelize.Error
   if (error instanceof Sequelize.Error) {
     operation = 'SequelizeError';
     label = 'Sequelize error';
@@ -86,24 +72,15 @@ export const handleError = async (req, res, error, logContext) => {
     label = 'UNEXPECTED ERROR';
   }
 
-  // eslint-disable-next-line max-len
-  if (error instanceof Sequelize.ConnectionError || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
+  if (error instanceof Sequelize.ConnectionError
+    || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
   }
 
-  // Log the request error and get the error ID
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
-  let errorMessage;
+  const errorMessage = error?.stack || error;
 
-  // Check if the error has a stack property
-  if (error?.stack) {
-    errorMessage = error.stack;
-  } else {
-    errorMessage = error;
-  }
-
-  // Log the error message with the error ID if available
   if (requestErrorId) {
     logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
   } else {
@@ -114,12 +91,11 @@ export const handleError = async (req, res, error, logContext) => {
 };
 
 /**
- * Handles any unexpected errors in an error handler catch block
- *
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} error - error
- * @param {*} logContext - useful data for logging
+ * Handles any unexpected errors in an error handler catch block.
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
  */
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
@@ -128,11 +104,10 @@ export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
 
 /**
  * Handles API errors. Saves data in the RequestErrors table and sends 500 error.
- *
- * @param {*} req - request
- * @param {*} res - response
- * @param {*} error - error
- * @param {*} logContext - useful data for logging
+ * @param {Object} req - The request object.
+ * @param {Object} res - The response object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
  */
 export default async function handleErrors(req, res, error, logContext) {
   try {
@@ -142,6 +117,14 @@ export default async function handleErrors(req, res, error, logContext) {
   }
 }
 
+/**
+ * Logs a worker error and stores it in the database.
+ * @param {Object} job - The job object.
+ * @param {string} operation - The operation name.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The logging context.
+ * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
+ */
 const logWorkerError = async (job, operation, error, logContext) => {
   if (
     operation !== 'SequelizeError'
@@ -152,23 +135,21 @@ const logWorkerError = async (job, operation, error, logContext) => {
   }
 
   try {
-    const responseBody = typeof error === 'object'
-      && error !== null ? { ...error, errorStack: error?.stack } : error;
+    const responseBody = typeof error === 'object' && error !== null
+      ? { ...error, errorStack: error?.stack }
+      : error;
 
     const requestBody = {
-      ...(job.data
-        && typeof job.data === 'object'
-        && Object.keys(job.data).length > 0
-        && { data: job.data }),
+      ...(job.data && typeof job.data === 'object' && Object.keys(job.data).length > 0 && { data: job.data }),
     };
 
     const requestErrorId = await createRequestError({
       operation,
-      uri: job.queue.name, // Assuming the queue name serves as a URI equivalent
-      method: 'PROCESS_JOB', // Indicating this is a job processing operation
+      uri: job.queue.name,
+      method: 'PROCESS_JOB',
       requestBody,
       responseBody,
-      responseCode: 'INTERNAL_SERVER_ERROR',
+      responseCode: INTERNAL_SERVER_ERROR,
     });
 
     return requestErrorId;
@@ -179,6 +160,12 @@ const logWorkerError = async (job, operation, error, logContext) => {
   return null;
 };
 
+/**
+ * Handles errors in a worker job.
+ * @param {Object} job - The job object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
+ */
 export const handleWorkerError = async (job, error, logContext) => {
   if (process.env.NODE_ENV === 'development') {
     logger.error(error);
@@ -202,13 +189,7 @@ export const handleWorkerError = async (job, error, logContext) => {
 
   const requestErrorId = await logWorkerError(job, operation, error, logContext);
 
-  let errorMessage;
-
-  if (error?.stack) {
-    errorMessage = error.stack;
-  } else {
-    errorMessage = error;
-  }
+  const errorMessage = error?.stack || error;
 
   if (requestErrorId) {
     logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
@@ -219,10 +200,22 @@ export const handleWorkerError = async (job, error, logContext) => {
   // Handle job failure as needed
 };
 
+/**
+ * Handles any unexpected errors in a worker error handler catch block.
+ * @param {Object} job - The job object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
+ */
 export const handleUnexpectedWorkerError = (job, error, logContext) => {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
 };
 
+/**
+ * Handles worker job errors. Logs the error and stores it in the database.
+ * @param {Object} job - The job object.
+ * @param {Error} error - The error object.
+ * @param {Object} logContext - The context for logging.
+ */
 export const handleWorkerErrors = async (job, error, logContext) => {
   try {
     await handleWorkerError(job, error, logContext);
