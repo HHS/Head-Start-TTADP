@@ -142,7 +142,15 @@ describe('Maintenance Queue', () => {
       jest.clearAllMocks();
     });
     it('should add a job to the maintenance queue if a processor is defined for the given category', () => {
-      const data = { test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category' };
+      const data = {
+        test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category',
+        referenceData: {
+          impersonationId: undefined,
+          sessionSig: undefined,
+          transactionId: undefined,
+          userId: undefined,
+        },
+      };
       const category = 'test-category';
       const processor = jest.fn();
       addQueueProcessor(category, processor);
