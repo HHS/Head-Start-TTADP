@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import ApprovedActivityReport from '../index';
 
@@ -104,7 +105,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderApprovedActivityReport(id, passedUser = user) {
+  function renderApprovedActivityReport(id, passedUser = user, setErrorResponseCode = jest.fn()) {
     const match = {
       path: '',
       url: '',
@@ -113,7 +114,11 @@ describe('Activity report print and share view', () => {
       },
     };
 
-    render(<ApprovedActivityReport user={passedUser} match={match} />);
+    render(
+      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+        <ApprovedActivityReport user={passedUser} match={match} />
+      </SomethingWentWrongContext.Provider>,
+    );
   }
   afterEach(() => fetchMock.restore());
 
@@ -224,18 +229,22 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    act(() => renderApprovedActivityReport(5007));
-
-    await waitFor(() => {
-      expect(screen.getByText(/sorry, you are not allowed to view this report/i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderApprovedActivityReport(5007, user, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(401);
+      });
     });
   });
 
   it('handles data errors', async () => {
-    act(() => renderApprovedActivityReport(5002));
-
-    await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderApprovedActivityReport(5002, user, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalled();
+      });
     });
   });
 
@@ -314,9 +323,12 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles a malformed url', async () => {
-    act(() => renderApprovedActivityReport('butter-lover'));
-    await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderApprovedActivityReport('butter-lover', user, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+      });
     });
   });
 

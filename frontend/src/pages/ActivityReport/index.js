@@ -262,6 +262,7 @@ function ActivityReport({
           try {
             fetchedReport = await getReport(activityReportId);
           } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
             setErrorResponseCode(e.status);
           }
           report = convertReportToFormData(fetchedReport);
