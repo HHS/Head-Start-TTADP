@@ -99,6 +99,7 @@ describe('record', () => {
         // eslint-disable-next-line @typescript-eslint/quotes
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
+        lock: true,
       });
       expect(result).toBe(mockName);
     });
@@ -128,6 +129,7 @@ describe('record', () => {
         // eslint-disable-next-line @typescript-eslint/quotes
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
+        lock: true,
       });
       expect(result).toBeNull();
     });
@@ -167,6 +169,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
 
@@ -188,6 +191,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
 
@@ -206,6 +210,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
   });
@@ -228,6 +233,7 @@ describe('record', () => {
           processAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
         },
+        lock: true,
       });
       expect(result).toBe(true);
     });
@@ -249,6 +255,7 @@ describe('record', () => {
           processAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
         },
+        lock: true,
       });
       expect(result).toBe(false);
     });
@@ -309,6 +316,7 @@ describe('record', () => {
         },
         order: [['createdAt', 'ASC']],
         limit: 1,
+        lock: true,
       });
 
       expect(result).toEqual(mockImportFile);
@@ -383,6 +391,7 @@ describe('record', () => {
             },
           },
           individualHooks: true,
+          lock: true,
         },
       );
     });
@@ -404,6 +413,7 @@ describe('record', () => {
           status: [IMPORT_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -509,6 +519,7 @@ describe('record', () => {
             },
           },
           individualHooks: true,
+          lock: true,
         },
       );
     });
