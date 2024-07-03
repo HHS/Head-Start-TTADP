@@ -1,9 +1,6 @@
 import {
   Sequelize,
   Op,
-  where,
-  cast,
-  col,
 } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -68,6 +65,7 @@ describe('record', () => {
     // Clear all instances and calls to constructor and all methods:
     jest.clearAllMocks();
   });
+
   describe('getPriorFile', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -369,12 +367,13 @@ describe('record', () => {
           ftpFileInfo: expect.any(Object),
           status: IMPORT_STATUSES.IDENTIFIED,
         }),
+        { lock: true }
       );
     });
 
     it('should update matched files in the database', async () => {
       ImportFile.findAll.mockResolvedValueOnce([
-        { id: 2, importId, fileInfo: availableFiles[0].fileInfo },
+        { id: 2, importId, ftpFileInfo: availableFiles[0].fileInfo },
       ]);
       await recordAvailableFiles(importId, availableFiles);
 
@@ -401,7 +400,7 @@ describe('record', () => {
         {
           id: 2,
           importId,
-          fileInfo: { path: '/path/to', name: 'file3.txt' },
+          ftpFileInfo: { path: '/path/to', name: 'file3.txt' },
         },
       ]);
       await recordAvailableFiles(importId, availableFiles);
@@ -421,7 +420,7 @@ describe('record', () => {
       ImportFile.findAll.mockResolvedValueOnce(availableFiles.map((file, index) => ({
         id: index + 2,
         importId,
-        fileInfo: file.fileInfo,
+        ftpFileInfo: file.fileInfo,
       })));
       await recordAvailableFiles(importId, availableFiles);
 
@@ -490,7 +489,7 @@ describe('record', () => {
       }));
 
       expect(ImportDataFile.create)
-        .toHaveBeenCalledWith(expectedBulkCreateArgument[0]);
+        .toHaveBeenCalledWith(expectedBulkCreateArgument[0], { lock: true });
     });
 
     it('should update matched files in the database when there are matched files', async () => {
@@ -530,7 +529,15 @@ describe('record', () => {
 
       await recordAvailableDataFiles(importFileId, [availableFiles[0]]);
 
-      expect(ImportDataFile.destroy).toHaveBeenCalled();
+      expect(ImportDataFile.destroy).toHaveBeenCalledWith({
+        where: {
+          importFileId,
+          id: expect.any(Number),
+          status: [IMPORT_DATA_STATUSES.IDENTIFIED],
+        },
+        individualHooks: true,
+        lock: true,
+      });
     });
 
     it('should not perform any database operations when there are no new, or removed files', async () => {
@@ -579,6 +586,7 @@ describe('record', () => {
           },
         },
         individualHooks: true,
+        lock: true,
       };
 
       // Act
@@ -724,7 +732,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -733,7 +741,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash, status },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -741,8 +749,8 @@ describe('record', () => {
       await setImportFileHash(importFileId, newHash);
 
       expect(ImportFile.update).toHaveBeenCalledWith(
-        expect.not.objectContaining({ status }),
-        expect.any(Object),
+        { hash: newHash },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -751,7 +759,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: null },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -791,6 +799,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -808,6 +817,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -825,6 +835,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -843,6 +854,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -859,6 +871,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -884,6 +897,7 @@ describe('record', () => {
       {
         where: { id: importDataFileId },
         individualHooks: true,
+        lock: true,
       },
     );
 
@@ -897,7 +911,7 @@ describe('record', () => {
       // Check that ImportDataFile.update was called correctly
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: newStatus },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -947,10 +961,11 @@ describe('record', () => {
             },
           },
         },
+        lock: true,
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: mockStatus },
-        { where: { id: mockImportDataFile.id }, individualHooks: true },
+        { where: { id: mockImportDataFile.id }, individualHooks: true, lock: true },
       );
     });
 
@@ -976,6 +991,7 @@ describe('record', () => {
             },
           },
         },
+        lock: true,
       });
       expect(ImportDataFile.update).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
