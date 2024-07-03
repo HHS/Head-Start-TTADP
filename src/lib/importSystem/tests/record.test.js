@@ -489,7 +489,7 @@ describe('record', () => {
       }));
 
       expect(ImportDataFile.create)
-        .toHaveBeenCalledWith(expectedBulkCreateArgument[0], { lock: true });
+        .toHaveBeenCalledWith(expectedBulkCreateArgument[0]);
     });
 
     it('should update matched files in the database when there are matched files', async () => {
@@ -518,7 +518,6 @@ describe('record', () => {
             },
           },
           individualHooks: true,
-          lock: true,
         },
       );
     });
@@ -536,7 +535,6 @@ describe('record', () => {
           status: [IMPORT_DATA_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
-        lock: true,
       });
     });
 
@@ -586,7 +584,6 @@ describe('record', () => {
           },
         },
         individualHooks: true,
-        lock: true,
       };
 
       // Act
@@ -961,7 +958,6 @@ describe('record', () => {
             },
           },
         },
-        lock: true,
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: mockStatus },
@@ -991,7 +987,6 @@ describe('record', () => {
             },
           },
         },
-        lock: true,
       });
       expect(ImportDataFile.update).not.toHaveBeenCalled();
       expect(result).toBeUndefined();
