@@ -209,7 +209,7 @@ describe('Activity report print and share view', () => {
       version: null,
     });
 
-    fetchMock.get('/api/activity-reports/5007', 401);
+    fetchMock.get('/api/activity-reports/5007', { status: 401 });
   });
 
   it('renders an activity report in clean view', async () => {
@@ -315,13 +315,6 @@ describe('Activity report print and share view', () => {
     });
   });
 
-  it('renders a version 2 report with goals', async () => {
-    act(() => renderApprovedActivityReport(5005));
-    await waitFor(() => {
-      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-    });
-  });
-
   it('handles a malformed url', async () => {
     const setErrorResponseCode = jest.fn();
     act(async () => {
@@ -349,5 +342,12 @@ describe('Activity report print and share view', () => {
     });
 
     global.localStorage = oldLocalStorage;
+  });
+
+  it('renders a version 2 report with goals', async () => {
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
   });
 });
