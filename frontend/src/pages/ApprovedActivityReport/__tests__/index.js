@@ -152,7 +152,7 @@ describe('Activity report print and share view', () => {
       }],
       requester: 'chud',
     });
-    fetchMock.get('/api/activity-reports/5002', 500);
+    fetchMock.get('/api/activity-reports/5002', { status: 500 });
 
     fetchMock.get('/api/activity-reports/5003', {
       ...report,
@@ -230,21 +230,21 @@ describe('Activity report print and share view', () => {
 
   it('handles authorization errors', async () => {
     const setErrorResponseCode = jest.fn();
-    act(async () => {
-      renderApprovedActivityReport(5007, user, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(401);
-      });
+    act(() => renderApprovedActivityReport(5007, user, setErrorResponseCode));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
+      expect(setErrorResponseCode).toHaveBeenCalledWith(401);
     });
   });
 
   it('handles data errors', async () => {
     const setErrorResponseCode = jest.fn();
-    act(async () => {
-      renderApprovedActivityReport(5002, user, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalled();
-      });
+    act(() => renderApprovedActivityReport(5002, user, setErrorResponseCode));
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/activity-reports/5002')).toBeTruthy();
+      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
     });
   });
 
