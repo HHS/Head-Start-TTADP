@@ -32,6 +32,16 @@ const {
 export default async function getGoalsForReport(reportId: number) {
   const goals = await Goal.findAll({
     attributes: {
+      exclude: [
+        'timeframe',
+        'isFromSmartsheetTtaPlan',
+        'isRttapa',
+        'mapsToParentGoalId',
+        'createdAt',
+        'updatedAt',
+        'createdVia',
+        'deletedAt',
+      ],
       include: [
         [sequelize.col('grant.regionId'), 'regionId'],
         [sequelize.col('grant.recipient.id'), 'recipientId'],

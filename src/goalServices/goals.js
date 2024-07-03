@@ -1152,7 +1152,7 @@ async function createObjectivesForGoal(goal, objectives) {
       resources,
       files,
       courses,
-      ttaProvided: objective.ttaProvided,
+      ttaProvided,
       closeSuspendReason,
       closeSuspendContext,
       index,
@@ -1229,7 +1229,6 @@ export async function saveGoalsForReport(goals, report) {
           createdVia: 'activityReport',
           name: goal.name ? goal.name.trim() : '',
           grantId,
-          ...fields,
           status,
         }, { individualHooks: true });
       }

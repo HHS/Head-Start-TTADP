@@ -461,22 +461,6 @@ export function reduceGoals(
           existingGoal.objectives,
         );
 
-        existingGoal.collaborators = existingGoal.collaborators || [];
-
-        existingGoal.collaborators = uniqBy([
-          ...existingGoal.collaborators,
-          {
-            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues as IGoal),
-            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues as IGoal),
-          } as {
-            goalNumber: string;
-            goalCreatorName: string;
-            goalCreatorRoles: string;
-          },
-        ], 'goalCreatorName');
-
-        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
         if (forReport) {
           existingGoal.prompts = existingGoal.prompts || [];
           existingGoal.prompts = reducePrompts(
@@ -507,6 +491,24 @@ export function reduceGoals(
             [currentValue.grant.numberWithProgramTypes]: currentValue.dataValues.source,
           };
         }
+
+        existingGoal.collaborators = existingGoal.collaborators || [];
+
+        existingGoal.collaborators = uniqBy([
+          ...existingGoal.collaborators,
+          {
+            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues as IGoal),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues as IGoal),
+          } as {
+            goalNumber: string;
+            goalCreatorName: string;
+            goalCreatorRoles: string;
+          },
+        ], 'goalCreatorName');
+
+        existingGoal.isReopenedGoal = wasGoalPreviouslyClosed(existingGoal);
+
         return previousValues;
       }
 
@@ -551,7 +553,6 @@ export function reduceGoals(
         isCurated: currentValue.dataValues.isCurated,
         goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
         grantId: currentValue.grant.id,
-        collaborators: currentValue.collaborators,
         id: currentValue.dataValues.id,
         name: currentValue.dataValues.name,
         endDate,
@@ -568,8 +569,6 @@ export function reduceGoals(
         onAR: currentValue.dataValues.onAR,
         onApprovedAR: currentValue.dataValues.onApprovedAR,
         rtrOrder: currentValue.dataValues.rtrOrder,
-        isReopenedGoal: wasGoalPreviouslyClosed(currentValue),
-        goalCollaborators: currentValue.goalCollaborators,
         objectives: objectivesReducer(
           currentValue.objectives,
         ),
@@ -589,21 +588,23 @@ export function reduceGoals(
         statusChanges: currentValue.statusChanges,
       } as IReducedGoal;
 
-      goal.collaborators = [
-        {
-          goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
-          ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
-          ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
-        } as {
-          goalNumber: string;
-          goalCreatorName: string;
-          goalCreatorRoles: string;
-        },
-      ];
-
-      goal.collaborators = goal.collaborators.filter(
-        (c: { goalCreatorName: string }) => c.goalCreatorName !== null,
-      );
+      if (!forReport) {
+        goal.isReopenedGoal = wasGoalPreviouslyClosed(currentValue);
+        goal.goalCollaborators = currentValue.goalCollaborators;
+        goal.collaborators = [
+          {
+            goalNumber: currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
+            ...getGoalCollaboratorDetails('Creator', currentValue.dataValues),
+            ...getGoalCollaboratorDetails('Linker', currentValue.dataValues),
+          } as {
+            goalNumber: string;
+            goalCreatorName: string;
+            goalCreatorRoles: string;
+          },
+        ].filter(
+          (c: { goalCreatorName: string }) => c.goalCreatorName !== null,
+        );
+      }
 
       return [...previousValues, goal];
     } catch (err) {

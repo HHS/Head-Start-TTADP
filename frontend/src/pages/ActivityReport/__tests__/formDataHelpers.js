@@ -1,258 +1,426 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import { convertGoalsToFormData } from '../formDataHelpers';
+import { convertGoalsToFormData, packageGoals } from '../formDataHelpers';
 
-describe('convertGoalsToFormData', () => {
-  it('converts', () => {
-    const { goals, goalForEditing } = convertGoalsToFormData(
-      [
+describe('FormDataHelpers', () => {
+  describe('packageGoals', () => {
+    const baseGoal = {
+      objectives: [],
+      goalIds: [1, 2, 3],
+      onApprovedAR: true,
+      source: 'Recipient request',
+      status: 'In progress',
+    };
+
+    it('correctly formats goals with multiple recipients', () => {
+      const grantIds = [1, 2];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            name: 'goal name',
+            endDate: '09/01/2020',
+            prompts: [{ fieldName: 'prompt' }],
+            objectives: [],
+          },
+        ],
         {
-          id: 1,
+          ...baseGoal,
+          name: 'recipient',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
           objectives: [],
-          activityReportGoals: [
-            {
-              id: 1,
-              isActivelyEdited: true,
-            },
-          ],
-          source: 'Source',
         },
+        grantIds,
+        [{ fieldName: 'prompt2' }],
+      );
+
+      expect(packagedGoals).toEqual([
+        {
+          ...baseGoal,
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [],
+          grantIds,
+          isActivelyBeingEditing: false,
+          objectives: [],
+        },
+        {
+          ...baseGoal,
+          name: 'recipient',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          grantIds,
+          prompts: [],
+          objectives: [],
+        },
+      ]);
+    });
+
+    it('correctly formats goals for a single recipient', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            name: 'goal name',
+            endDate: '09/01/2020',
+            prompts: [{ fieldName: 'prompt' }],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          name: 'recipient',
+          objectives: [],
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+        },
+        grantIds,
+        [{ fieldName: 'prompt2' }],
+      );
+
+      expect(packagedGoals).toEqual([
+        {
+          ...baseGoal,
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+          grantIds,
+          isActivelyBeingEditing: false,
+        },
+        {
+          ...baseGoal,
+          name: 'recipient',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          grantIds,
+          prompts: [{ fieldName: 'prompt2' }],
+        },
+      ]);
+    });
+    it('skips returning edited goal if edited goal is null', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            name: 'goal name',
+            endDate: '09/01/2020',
+            prompts: [{ fieldName: 'prompt' }],
+          },
+        ],
+        null,
+        grantIds,
+        [{ fieldName: 'prompt2' }],
+      );
+
+      expect(packagedGoals).toEqual([
+        {
+          ...baseGoal,
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+          grantIds,
+          isActivelyBeingEditing: false,
+        },
+      ]);
+    });
+    it('skips returning edited goal if edited goal has no name', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            name: 'goal name',
+            endDate: '09/01/2020',
+            prompts: [{ fieldName: 'prompt' }],
+            objectives: [],
+          },
+        ],
+        {
+          ...baseGoal,
+          name: '',
+          endDate: '',
+          isActivelyBeingEditing: true,
+          objectives: [],
+        },
+        grantIds,
+        [{ fieldName: 'prompt2' }],
+      );
+
+      expect(packagedGoals).toEqual([
+        {
+          ...baseGoal,
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+          grantIds,
+          isActivelyBeingEditing: false,
+          objectives: [],
+        },
+      ]);
+    });
+  });
+
+  describe('convertGoalsToFormData', () => {
+    it('converts', () => {
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
+          {
+            id: 1,
+            objectives: [],
+            activityReportGoals: [
+              {
+                id: 1,
+                isActivelyEdited: true,
+              },
+            ],
+            source: 'Source',
+          },
+          {
+            id: 2,
+            objectives: [],
+            source: '',
+            activityReportGoals: [
+              {
+                id: 2,
+                isActivelyEdited: false,
+              },
+            ],
+          },
+        ],
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goals).toEqual([
         {
           id: 2,
-          objectives: [],
+          grantIds: [1, 2, 3],
           source: '',
+          prompts: [],
+          objectives: [],
           activityReportGoals: [
-            {
-              id: 2,
-              isActivelyEdited: false,
-            },
+            { id: 2, isActivelyEdited: false },
           ],
         },
-      ],
-      [1, 2, 3],
-      REPORT_STATUSES.DRAFT,
-    );
+      ]);
 
-    expect(goals).toEqual([
-      {
-        id: 2,
-        grantIds: [1, 2, 3],
+      expect(goalForEditing).toEqual({
+        id: 1,
         source: '',
         prompts: [],
+        grantIds: [1, 2, 3],
         objectives: [],
         activityReportGoals: [
-          { id: 2, isActivelyEdited: false },
+          { id: 1, isActivelyEdited: true },
         ],
-      },
-    ]);
-
-    expect(goalForEditing).toEqual({
-      id: 1,
-      source: '',
-      prompts: [],
-      grantIds: [1, 2, 3],
-      objectives: [],
-      activityReportGoals: [
-        { id: 1, isActivelyEdited: true },
-      ],
+      });
     });
-  });
-  it('only returns one goalForEditing (even if more than one activityreportgoal has isActivelyEditing: true', () => {
-    const { goals, goalForEditing } = convertGoalsToFormData(
-      [
-        {
-          id: 1,
-          activityReportGoals: [
-            {
-              id: 1,
-              isActivelyEdited: true,
-            },
-          ],
-          prompts: [],
-        },
-        {
-          id: 2,
-          activityReportGoals: [
-            {
-              id: 3,
-              isActivelyEdited: true,
-            },
-          ],
-          prompts: [],
-        },
-      ],
-      [1, 2, 3],
-      REPORT_STATUSES.DRAFT,
-    );
-
-    expect(goals).toEqual([
-      {
-        id: 2,
-        grantIds: [1, 2, 3],
-        activityReportGoals: [
-          {
-            id: 3,
-            isActivelyEdited: true,
-          },
-        ],
-        source: '',
-        prompts: [],
-      },
-    ]);
-
-    expect(goalForEditing).toEqual({
-      id: 1,
-      grantIds: [1, 2, 3],
-      source: '',
-      activityReportGoals: [
-        {
-          id: 1,
-          isActivelyEdited: true,
-        },
-      ],
-      prompts: [],
-    });
-  });
-  it('returns an empty goalForEditing if no activityreportgoal has isActivelyEditing: true', () => {
-    const { goals, goalForEditing } = convertGoalsToFormData(
-      [
-        {
-          id: 1,
-          activityReportGoals: [
-            {
-              id: 1,
-              isActivelyEdited: false,
-            },
-          ],
-          prompts: [],
-        },
-        {
-          id: 2,
-          activityReportGoals: [
-            {
-              id: 3,
-              isActivelyEdited: false,
-            },
-          ],
-          prompts: [],
-        },
-      ],
-      [1, 2, 3],
-      REPORT_STATUSES.DRAFT,
-    );
-
-    expect(goals).toEqual([
-      {
-        id: 1,
-        grantIds: [1, 2, 3],
-        source: '',
-        prompts: [],
-        activityReportGoals: [
+    it('only returns one goalForEditing (even if more than one activityreportgoal has isActivelyEditing: true', () => {
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
           {
             id: 1,
-            isActivelyEdited: false,
+            activityReportGoals: [
+              {
+                id: 1,
+                isActivelyEdited: true,
+              },
+            ],
+            prompts: [],
           },
-        ],
-      },
-      {
-        id: 2,
-        source: '',
-        prompts: [],
-        grantIds: [1, 2, 3],
-        activityReportGoals: [
           {
-            id: 3,
-            isActivelyEdited: false,
+            id: 2,
+            activityReportGoals: [
+              {
+                id: 3,
+                isActivelyEdited: true,
+              },
+            ],
+            prompts: [],
           },
         ],
-      },
-    ]);
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+      );
 
-    expect(goalForEditing).toEqual(null);
-  });
-  it('returns an empty goalForEditing if activityreportgoal is not set', () => {
-    const { goals, goalForEditing } = convertGoalsToFormData(
-      [
-        {
-          id: 1,
-        },
+      expect(goals).toEqual([
         {
           id: 2,
-        },
-      ],
-      [1, 2, 3],
-      REPORT_STATUSES.DRAFT,
-    );
-
-    expect(goals).toEqual([
-      {
-        id: 1,
-        grantIds: [1, 2, 3],
-        source: '',
-        prompts: [],
-      },
-      {
-        id: 2,
-        grantIds: [1, 2, 3],
-        source: '',
-        prompts: [],
-      },
-    ]);
-
-    expect(goalForEditing).toEqual(null);
-  });
-  it('returns an empty goalForEditing if the goal is submitted', () => {
-    const { goals, goalForEditing } = convertGoalsToFormData(
-      [
-        {
-          id: 1,
-          activityReportGoals: [
-            {
-              id: 1,
-              isActivelyEdited: true,
-            },
-          ],
-        },
-        {
-          id: 2,
+          grantIds: [1, 2, 3],
           activityReportGoals: [
             {
               id: 3,
               isActivelyEdited: true,
             },
           ],
+          source: '',
+          prompts: [],
         },
-      ],
-      [1, 2, 3],
-      REPORT_STATUSES.SUBMITTED,
-    );
+      ]);
 
-    expect(goals).toEqual([
-      {
+      expect(goalForEditing).toEqual({
         id: 1,
         grantIds: [1, 2, 3],
+        source: '',
         activityReportGoals: [
           {
             id: 1,
             isActivelyEdited: true,
           },
         ],
-        source: '',
         prompts: [],
-      },
-      {
-        id: 2,
-        grantIds: [1, 2, 3],
-        activityReportGoals: [
+      });
+    });
+    it('returns an empty goalForEditing if no activityreportgoal has isActivelyEditing: true', () => {
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
           {
-            id: 3,
-            isActivelyEdited: true,
+            id: 1,
+
+            activityReportGoals: [
+              {
+                id: 1,
+                isActivelyEdited: false,
+              },
+            ],
+            prompts: [],
+          },
+          {
+            id: 2,
+
+            activityReportGoals: [
+              {
+                id: 3,
+                isActivelyEdited: false,
+              },
+            ],
+            prompts: [],
           },
         ],
-        source: '',
-        prompts: [],
-      },
-    ]);
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+      );
 
-    expect(goalForEditing).toEqual(null);
+      expect(goals).toEqual([
+        {
+          id: 1,
+          grantIds: [1, 2, 3],
+          source: '',
+          prompts: [],
+          activityReportGoals: [
+            {
+              id: 1,
+              isActivelyEdited: false,
+            },
+          ],
+        },
+        {
+          id: 2,
+          source: '',
+          prompts: [],
+          grantIds: [1, 2, 3],
+          activityReportGoals: [
+            {
+              id: 3,
+              isActivelyEdited: false,
+            },
+          ],
+        },
+      ]);
+
+      expect(goalForEditing).toEqual(null);
+    });
+    it('returns an empty goalForEditing if activityreportgoal is not set', () => {
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
+          {
+            id: 1,
+
+          },
+          {
+            id: 2,
+
+          },
+        ],
+        [1, 2, 3],
+        REPORT_STATUSES.DRAFT,
+      );
+
+      expect(goals).toEqual([
+        {
+          id: 1,
+          grantIds: [1, 2, 3],
+          source: '',
+          prompts: [],
+        },
+        {
+          id: 2,
+          grantIds: [1, 2, 3],
+          source: '',
+          prompts: [],
+        },
+      ]);
+
+      expect(goalForEditing).toEqual(null);
+    });
+    it('returns an empty goalForEditing if the goal is submitted', () => {
+      const { goals, goalForEditing } = convertGoalsToFormData(
+        [
+          {
+            id: 1,
+            activityReportGoals: [
+              {
+                id: 1,
+                isActivelyEdited: true,
+              },
+            ],
+
+          },
+          {
+            id: 2,
+            activityReportGoals: [
+              {
+                id: 3,
+                isActivelyEdited: true,
+              },
+            ],
+
+          },
+        ],
+        [1, 2, 3],
+        REPORT_STATUSES.SUBMITTED,
+      );
+
+      expect(goals).toEqual([
+        {
+          id: 1,
+          grantIds: [1, 2, 3],
+          activityReportGoals: [
+            {
+              id: 1,
+              isActivelyEdited: true,
+            },
+          ],
+          source: '',
+          prompts: [],
+        },
+        {
+          id: 2,
+          grantIds: [1, 2, 3],
+          activityReportGoals: [
+            {
+              id: 3,
+              isActivelyEdited: true,
+            },
+          ],
+          source: '',
+          prompts: [],
+        },
+      ]);
+
+      expect(goalForEditing).toEqual(null);
+    });
   });
 });
