@@ -1,4 +1,5 @@
 import { createTransport } from 'nodemailer';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   notifyCollaboratorAssigned,
   notifyApproverAssigned,
@@ -120,7 +121,7 @@ const mockRecipient = {
 
 const reportObject = {
   activityRecipientType: 'recipient',
-  submissionStatus: 'Draft',
+  submissionStatus: REPORT_STATUSES.DRAFT,
   userId: mockUser.id,
   regionId: 1,
   lastUpdatedById: mockUser.id,
@@ -130,7 +131,7 @@ const reportObject = {
 const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
-  submissionStatus: 'Submitted',
+  submissionStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
