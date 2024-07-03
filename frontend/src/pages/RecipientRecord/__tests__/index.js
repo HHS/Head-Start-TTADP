@@ -10,6 +10,7 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import AppLoadingContext from '../../../AppLoadingContext';
 import { GrantDataProvider } from '../pages/GrantDataContext';
@@ -101,20 +102,22 @@ describe('recipient record page', () => {
 
     render(
       <Router history={history}>
-        <UserContext.Provider value={{ user }}>
-          <GrantDataProvider>
-            <AppLoadingContext.Provider value={
+        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <GrantDataProvider>
+              <AppLoadingContext.Provider value={
             {
               setIsAppLoading: jest.fn(),
               setAppLoadingText: jest.fn(),
               isAppLoading: false,
             }
           }
-            >
-              <RecipientRecord match={match} />
-            </AppLoadingContext.Provider>
-          </GrantDataProvider>
-        </UserContext.Provider>
+              >
+                <RecipientRecord match={match} />
+              </AppLoadingContext.Provider>
+            </GrantDataProvider>
+          </UserContext.Provider>
+        </SomethingWentWrongContext.Provider>
       </Router>,
     );
   }
@@ -248,7 +251,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/goals/12389/recipient/45', mockGoal);
     fetchMock.get('/api/topic', []);
     memoryHistory.push('/recipient-tta-records/45/region/1/goals/12389');
-    act(() => renderRecipientRecord());
+    await act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);
   });
