@@ -523,7 +523,6 @@ describe('record', () => {
     });
 
     it('should delete removed files from the database when there are removed files', async () => {
-      // Mock the database response for current import data files
       ImportDataFile.findAll.mockResolvedValue(currentImportDataFiles);
 
       await recordAvailableDataFiles(importFileId, [availableFiles[0]]);
@@ -531,7 +530,7 @@ describe('record', () => {
       expect(ImportDataFile.destroy).toHaveBeenCalledWith({
         where: {
           importFileId,
-          id: expect.any(Number),
+          id: currentImportDataFiles.map((file) => file.id),
           status: [IMPORT_DATA_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
@@ -961,7 +960,7 @@ describe('record', () => {
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: mockStatus },
-        { where: { id: mockImportDataFile.id }, individualHooks: true, lock: true },
+        { where: { id: mockImportDataFile.id }, individualHooks: true },
       );
     });
 
