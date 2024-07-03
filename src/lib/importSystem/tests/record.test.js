@@ -367,7 +367,7 @@ describe('record', () => {
           ftpFileInfo: expect.any(Object),
           status: IMPORT_STATUSES.IDENTIFIED,
         }),
-        { lock: true }
+        { lock: true },
       );
     });
 
