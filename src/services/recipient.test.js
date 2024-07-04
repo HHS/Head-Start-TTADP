@@ -713,6 +713,7 @@ describe('Recipient DB service', () => {
     let goals;
     let grant;
     let template;
+    let feiRootCausePrompt;
 
     const region = 5;
 
@@ -724,6 +725,11 @@ describe('Recipient DB service', () => {
       });
 
       const goal = {
+        name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
+        status: GOAL_STATUS.IN_PROGRESS,
+      };
+
+      const goal2Info = {
         name: `${faker.animal.dog()} ${faker.animal.cat()} ${faker.animal.dog()}`,
         status: GOAL_STATUS.IN_PROGRESS,
       };
@@ -767,6 +773,13 @@ describe('Recipient DB service', () => {
         ],
       });
 
+      // Find a GoalTemplateFieldPrompt with the title 'FEI root cause'.
+      feiRootCausePrompt = await GoalTemplateFieldPrompt.findOne({
+        where: {
+          title: 'FEI root cause',
+        },
+      });
+
       const goal1 = await Goal.create({
         name: goal.name,
         status: goal.status,
@@ -799,7 +812,16 @@ describe('Recipient DB service', () => {
         source: null,
       });
 
-      goals = [goal1, goal2, goal3, goal4];
+      const feiGoal = await Goal.create({
+        name: goal2Info.name,
+        status: goal2Info.status,
+        grantId: grant.id,
+        onApprovedAR: true,
+        source: null,
+        goalTemplateId: feiRootCausePrompt.goalTemplateId,
+      });
+
+      goals = [goal1, goal2, goal3, goal4, feiGoal];
 
       await GoalFieldResponse.create({
         goalId: goal1.id,
@@ -821,6 +843,15 @@ describe('Recipient DB service', () => {
         goalId: goal3.id,
         goalTemplateFieldPromptId: fieldPrompt.id,
         response: ['not sure', 'dont have to'],
+        onAr: true,
+        onApprovedAR: false,
+      });
+
+      // Create FEI responses.
+      await GoalFieldResponse.create({
+        goalId: feiGoal.id,
+        goalTemplateFieldPromptId: feiRootCausePrompt.id,
+        response: ['fei response 1', 'fei response 2'],
         onAr: true,
         onApprovedAR: false,
       });
@@ -875,8 +906,8 @@ describe('Recipient DB service', () => {
 
     it('properly de-duplicates based on responses', async () => {
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
-      expect(goalRows.length).toBe(3);
-      expect(allGoalIds.length).toBe(3);
+      expect(goalRows.length).toBe(4);
+      expect(allGoalIds.length).toBe(4);
 
       const goalWithMultipleIds = allGoalIds.find((g) => g.id === goals[2].id);
       expect(goalWithMultipleIds).not.toBeNull();
@@ -896,10 +927,37 @@ describe('Recipient DB service', () => {
       expect(noResponse.ids.length).toBe(1);
     });
 
+    it('properly marks is fei goal', async () => {
+      const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
+      expect(goalRows.length).toBe(4);
+      expect(allGoalIds.length).toBe(4);
+
+      // From goal Rows get goal 1.
+      const goal1 = goalRows.find((r) => r.ids.includes(goals[0].id));
+      expect(goal1).toBeTruthy();
+      expect(goal1.isFei).toBe(false);
+
+      // From goal Rows get goal 2.
+      const goal2 = goalRows.find((r) => r.ids.includes(goals[1].id));
+      expect(goal2).toBeTruthy();
+      expect(goal2.isFei).toBe(false);
+
+      // From goal Rows get goal 3.
+      const goal3 = goalRows.find((r) => r.ids.includes(goals[2].id));
+      expect(goal3).toBeTruthy();
+      expect(goal3.isFei).toBe(false);
+
+      // From fei goal get goal 4.
+      const feiGoal = goalRows.find((r) => r.ids.includes(goals[4].id));
+      expect(feiGoal).toBeTruthy();
+      expect(feiGoal.isFei).toBe(true);
+    });
+
     it('properly combines the same goals with no creators/collaborators', async () => {
       // Remove other goals
       goals[0].destroy();
       goals[3].destroy();
+      goals[4].destroy();
 
       const { goalRows, allGoalIds } = await getGoalsByActivityRecipient(recipient.id, region, {});
       expect(goalRows.length).toBe(1);
