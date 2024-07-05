@@ -420,7 +420,7 @@ describe('record', () => {
       ImportFile.findAll.mockResolvedValueOnce(availableFiles.map((file, index) => ({
         id: index + 2,
         importId,
-        ftpFileInfo: file.fileInfo,
+        fileInfo: file.fileInfo,
       })));
       await recordAvailableFiles(importId, availableFiles);
 
