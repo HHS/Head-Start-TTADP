@@ -275,8 +275,8 @@ const recordAvailableFiles = async (
 
   const fileMatches = (currentImportFile, availableFile) => (
     importId === currentImportFile.importId
-    && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-    && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+    && availableFile?.fileInfo?.path === currentImportFile?.fileInfo?.path
+    && availableFile?.fileInfo?.name === currentImportFile?.fileInfo?.name
   );
 
   // Separate the available files into new, matched, and removed files

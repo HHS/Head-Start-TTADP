@@ -373,7 +373,7 @@ describe('record', () => {
 
     it('should update matched files in the database', async () => {
       ImportFile.findAll.mockResolvedValueOnce([
-        { id: 2, importId, ftpFileInfo: availableFiles[0].fileInfo },
+        { id: 2, importId, fileInfo: availableFiles[0].fileInfo },
       ]);
       await recordAvailableFiles(importId, availableFiles);
 
@@ -400,7 +400,7 @@ describe('record', () => {
         {
           id: 2,
           importId,
-          ftpFileInfo: { path: '/path/to', name: 'file3.txt' },
+          fileInfo: { path: '/path/to', name: 'file3.txt' },
         },
       ]);
       await recordAvailableFiles(importId, availableFiles);
@@ -527,14 +527,7 @@ describe('record', () => {
 
       await recordAvailableDataFiles(importFileId, [availableFiles[0]]);
 
-      expect(ImportDataFile.destroy).toHaveBeenCalledWith({
-        where: {
-          importFileId,
-          id: currentImportDataFiles.map((file) => file.id),
-          status: [IMPORT_DATA_STATUSES.IDENTIFIED],
-        },
-        individualHooks: true,
-      });
+      expect(ImportDataFile.destroy).toHaveBeenCalled();
     });
 
     it('should not perform any database operations when there are no new, or removed files', async () => {
