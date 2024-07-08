@@ -19,7 +19,7 @@ module.exports = {
         allowNull: true,
       }, { transaction });
       await queryInterface.changeColumn('GoalStatusChanges', 'newStatus', {
-        type: Sequelize.TEXT,
+        type: Sequelize.STRING,
         allowNull: true,
       }, { transaction });
       await queryInterface.changeColumn('GoalStatusChanges', 'userId', {
