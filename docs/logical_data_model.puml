@@ -356,7 +356,7 @@ class GoalStatusChanges{
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
  context : text
-!issue='column type does not match model: text != varchar(255)' newStatus : <color:#d54309>text</color>
+ newStatus : varchar(255)
  oldStatus : varchar(255)
  reason : text
  userName : varchar(255)
