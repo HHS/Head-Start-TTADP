@@ -1,6 +1,6 @@
 import { auditLogger } from './logger';
 import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
-import { gracefulShutdown, resetShutDownFlag, formatLogObject } from './processHandler'; // Adjust the import path
+import { gracefulShutdown, resetShutDownFlag, formatLogObject, registerEventListener } from './processHandler'; // Adjust the import path
 
 jest.mock('./logger', () => ({
   auditLogger: {
@@ -30,6 +30,7 @@ describe('processHandler', () => {
   beforeAll(() => {
     originalExit = process.exit;
     process.exit = jest.fn();
+    registerEventListener();
   });
 
   afterAll(() => {

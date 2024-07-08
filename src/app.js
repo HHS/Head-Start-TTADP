@@ -10,7 +10,7 @@ import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
-import {} from './processHandler';
+import { registerEventListener } from './processHandler';
 import { hsesAuth } from './middleware/authMiddleware';
 import { retrieveUserDetails } from './services/currentUser';
 import cookieSession from './middleware/sessionMiddleware';
@@ -21,6 +21,8 @@ import runCronJobs from './lib/cron';
 const app = express();
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
+
+registerEventListener();
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   index = fs.readFileSync(path.join(__dirname, '../client', 'index.html')).toString();
