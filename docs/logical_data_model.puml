@@ -355,10 +355,10 @@ class GoalStatusChanges{
  * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
  * newStatus : varchar(255)
- * reason : text
  * updatedAt : timestamp with time zone : now()
  context : text
  oldStatus : varchar(255)
+ reason : text
  userName : varchar(255)
  userRoles : varchar(255)[]
 }
