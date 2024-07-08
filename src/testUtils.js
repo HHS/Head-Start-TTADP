@@ -68,7 +68,7 @@ export async function createUser(user) {
 }
 
 function defaultRegion() {
-  const number = faker.datatype.number({ min: 50, max: 1000 });
+  const number = faker.datatype.number({ min: 50, max: 2000 });
   return {
     id: faker.unique(() => number, { maxRetries: 20 }),
     name: `Region ${number}`,
