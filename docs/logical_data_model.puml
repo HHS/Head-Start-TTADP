@@ -351,12 +351,12 @@ class GoalSimilarityGroups{
 
 class GoalStatusChanges{
  * id : integer : <generated>
+ userId : integer : REFERENCES "Users".id
  * goalId : integer : REFERENCES "Goals".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
- * newStatus : varchar(255)
  * updatedAt : timestamp with time zone : now()
  context : text
+!issue='column type does not match model: text != varchar(255)' newStatus : <color:#d54309>text</color>
  oldStatus : varchar(255)
  reason : text
  userName : varchar(255)

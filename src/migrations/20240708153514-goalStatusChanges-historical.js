@@ -18,6 +18,14 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       }, { transaction });
+      await queryInterface.changeColumn('GoalStatusChanges', 'newStatus', {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      }, { transaction });
+      await queryInterface.changeColumn('GoalStatusChanges', 'userId', {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+      }, { transaction });
 
       await queryInterface.sequelize.query(/* sql */`
 select create_timeseries_from_audit_log('Users');
@@ -144,7 +152,10 @@ WITH
     status_changes_query AS (
         SELECT
             zg.data_id AS "goalId",
-            zg.dml_as AS "userId",
+            CASE
+                WHEN zg.dml_as = -1 OR zg.dml_as = 0 THEN NULL
+                ELSE zg.dml_as
+            END AS "userId",
             u.name AS "userName",
             ARRAY_AGG(DISTINCT r.name) FILTER (WHERE r.name IS NOT NULL) AS "userRoles",
             zg.old_row_data ->> 'status' AS "oldStatus",
@@ -187,7 +198,9 @@ INSERT INTO "GoalStatusChanges"
     AND gsc."oldStatus" = scq."oldStatus"
     AND gsc."newStatus" = scq."newStatus"
     AND gsc."createdAt" BETWEEN scq."createdAt" - interval '30 seconds' AND scq."createdAt" + interval '30 seconds'
-    WHERE gsc.id IS NULL;
+    LEFT JOIN "Goals" g ON g.id = scq."goalId"
+    WHERE gsc.id IS NULL
+    AND g.id IS NOT NULL;
       `, { transaction });
     },
   ),
