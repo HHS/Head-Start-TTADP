@@ -113,6 +113,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
       source: g.source,
       name: g.name,
       grantIds,
+      id: g.id,
       isActivelyBeingEditing: false,
       prompts: grantIds.length < 2 ? g.prompts : [],
       objectives: g.objectives.map((objective) => ({
