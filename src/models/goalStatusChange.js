@@ -60,7 +60,7 @@ export default (sequelize, DataTypes) => {
     },
     reason: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     context: {
       type: DataTypes.TEXT,

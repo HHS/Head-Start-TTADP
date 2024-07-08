@@ -14,6 +14,10 @@ module.exports = {
         type: Sequelize.ARRAY(Sequelize.STRING),
         allowNull: true,
       }, { transaction });
+      await queryInterface.changeColumn('GoalStatusChanges', 'reason', {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      }, { transaction });
 
       await queryInterface.sequelize.query(/* sql */`
 select create_timeseries_from_audit_log('Users');
