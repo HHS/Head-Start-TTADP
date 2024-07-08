@@ -6,7 +6,7 @@ if (process.env.NODE_ENV === 'production') {
 
 import {} from 'dotenv/config';
 import throng from 'throng';
-import {} from './processHandler';
+import { registerEventListener } from './processHandler';
 import {
   processScanQueue,
 } from './services/scanQueue';
@@ -31,6 +31,8 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Pull jobs off the redis queue and process them.
 async function start(context: { id: number }) {
+  registerEventListener();
+
   // File Scanning Queue
   processScanQueue();
 
