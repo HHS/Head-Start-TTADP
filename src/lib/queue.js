@@ -87,11 +87,11 @@ function removeQueueEventHandlers(
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
+  queue.removeListener('error', errorListener);
+  process.removeListener('SIGINT', shutdownListener);
+  process.removeListener('SIGTERM', shutdownListener);
+  process.removeListener('uncaughtException', exceptionListener);
+  process.removeListener('unhandledRejection', rejectionListener);
 }
 
 // Define the handlers so they can be added and removed
@@ -186,8 +186,17 @@ function setRedisConnectionName(queue, connectionName) {
 }
 
 export default function newQueue(queName) {
-  const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  const queue = new Queue(queName, `redis://${host}:${port}`, {
+    ...redisOpts,
+    maxRetriesPerRequest: 50, // Adjust this value as needed
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
+      return delay;
+    },
+  });
+
   setRedisConnectionName(queue, `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${queName}-${process.pid}`);
-  // setupQueueEventHandlers(queue); // TODO - currently causing mor errors then fixing
+  setupQueueEventHandlers(queue);
   return queue;
 }
