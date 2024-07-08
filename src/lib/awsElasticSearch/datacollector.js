@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { AWS_ELASTIC_SEARCH_INDEXES } from '../../constants';
 
-const collectActivityReportData = async (ids, sequelize, transaction) => {
+const collectActivityReportData = async (ids, sequelize) => {
   // Recipient Steps.
   const recipientNextStepsToIndex = await sequelize.models.NextStep.findAll({
     attributes: ['activityReportId', 'note'],
@@ -15,7 +15,6 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
       ['note', 'ASC'],
     ],
     raw: true,
-    transaction,
   });
 
   // Specialist Steps.
@@ -31,7 +30,6 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
       ['note', 'ASC'],
     ],
     raw: true,
-    transaction,
   });
   // Goals.
   const goalsToIndex = await sequelize.models.ActivityReportGoal.findAll({
@@ -45,7 +43,6 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
       ['name', 'ASC'],
     ],
     raw: true,
-    transaction,
   });
   // Objectives.
   const objectivesToIndex = await sequelize.models.ActivityReportObjective.findAll({
@@ -59,7 +56,6 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
       ['title', 'ASC'],
     ],
     raw: true,
-    transaction,
   });
 
   // Objective resource links.
@@ -86,7 +82,6 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
       ['resource', 'url', 'ASC'],
     ],
     raw: true,
-    transaction,
   });
   return {
     recipientNextStepsToIndex,
@@ -97,11 +92,11 @@ const collectActivityReportData = async (ids, sequelize, transaction) => {
   };
 };
 
-const collectModelData = async (ids, indexName, sequelize, transaction = null) => {
+const collectModelData = async (ids, indexName, sequelize) => {
   switch (indexName) {
     // Activity Reports.
     case AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS:
-      return collectActivityReportData(ids, sequelize, transaction);
+      return collectActivityReportData(ids, sequelize);
     default:
       throw new Error(`AWS Elasticsearch: Unable to find index of type "${indexName}".`);
   }
