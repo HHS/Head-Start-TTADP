@@ -118,10 +118,10 @@ export const registerEventListener = () => {
   });
 
   // Listen for exit event as a fallback
-  process.on('exit', (code) => {
+  process.on('exit', async (code) => {
     auditLogger.info(`About to exit with code: ${code}`);
     // If not already handled, you might want to ensure any remaining cleanup
     // is performed here. This is a last resort.
-    gracefulShutdown(`app termination (exit event) with code ${code}`);
+    await gracefulShutdown(`app termination (exit event) with code ${code}`);
   });
 };
