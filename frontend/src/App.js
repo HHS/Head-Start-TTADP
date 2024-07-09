@@ -80,6 +80,7 @@ function App() {
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
   const [errorResponseCode, setErrorResponseCode] = useState(null);
+  const [showingNotFound, setShowingNotFound] = useState(false);
 
   useGaUserData(user);
 
@@ -461,12 +462,14 @@ function App() {
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <SomethingWentWrongContext.Provider value={
-          { errorResponseCode, setErrorResponseCode }
+          {
+            errorResponseCode, setErrorResponseCode, showingNotFound, setShowingNotFound,
+          }
         }
         >
           <BrowserRouter>
             <ScrollToTop />
-            {authenticated && !errorResponseCode && (
+            {authenticated && !errorResponseCode && !showingNotFound && (
             <>
               <a className="usa-skipnav" href="#main-content">
                 Skip to main content
@@ -504,7 +507,7 @@ function App() {
                   {authenticated && errorResponseCode
                     && (
                     <AppWrapper hasAlerts={false} authenticated logout={logout}>
-                      <SomethingWentWrong errorResponseCode={errorResponseCode} />
+                      <SomethingWentWrong passedErrorResponseCode={errorResponseCode} />
                     </AppWrapper>
                     )}
                   {authenticated && !errorResponseCode && renderAuthenticatedRoutes()}

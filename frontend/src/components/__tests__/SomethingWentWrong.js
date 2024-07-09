@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Router } from 'react-router';
 import SomethingWentWrong from '../SomethingWentWrong';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const history = createMemoryHistory();
 
@@ -10,7 +11,15 @@ const renderSomethingWentWrong = (
   responseCode = 500,
 ) => render(
   <Router history={history}>
-    <SomethingWentWrong errorResponseCode={responseCode} />
+    <SomethingWentWrongContext.Provider value={{
+      errorResponseCode: null,
+      setErrorResponseCode: jest.fn(),
+      setShowingNotFound: jest.fn(),
+      showingNotFoundL: false,
+    }}
+    >
+      <SomethingWentWrong passedErrorResponseCode={responseCode} />
+    </SomethingWentWrongContext.Provider>
   </Router>,
 );
 
@@ -19,8 +28,8 @@ describe('SomethingWentWrong component', () => {
   it('renders a 401 error message', async () => {
     renderSomethingWentWrong(401);
 
-    expect(screen.getByText('401 error - unauthorized')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /unauthorized access/i })).toBeInTheDocument();
+    expect(screen.getByText('403 error - forbidden')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /restricted access/i })).toBeInTheDocument();
     expect(screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)).toBeInTheDocument();
     expect(screen.getByText(/Double-check permissions:/i)).toBeInTheDocument();
     expect(screen.getByText(/Ensure you have the proper clearance to access this page/i)).toBeInTheDocument();
@@ -52,7 +61,7 @@ describe('SomethingWentWrong component', () => {
     renderSomethingWentWrong(404);
 
     expect(screen.getByText('404 error')).toBeInTheDocument();
-    expect(screen.getByText('Page not found')).toBeInTheDocument();
+    expect(screen.getByText('Page not found.')).toBeInTheDocument();
     expect(screen.getByText(/Well, this is awkward. It seems like the page/i)).toBeInTheDocument();
     expect(screen.getByText(/home/i)).toBeInTheDocument();
     expect(screen.getByText(/support/i)).toBeInTheDocument();
