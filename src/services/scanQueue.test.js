@@ -26,11 +26,11 @@ describe('addToScanQueue', () => {
 
   it('calls scanQueue.add', async () => {
     await addToScanQueue('test.txt');
-    expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', expect.objectContaining({
-      maxRetriesPerRequest: 50,
-      redis: { password: mockPassword },
-      retryStrategy: expect.any(Function),
+    expect(scanQueue.add).toHaveBeenCalledWith('test.txt', expect.objectContaining({
+      attempts: expect.any(Number),
+      backoff: expect.any(Object),
+      removeOnComplete: true,
+      removeOnFail: true,
     }));
-    expect(scanQueue.add).toHaveBeenCalled();
   });
 });
