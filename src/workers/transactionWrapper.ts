@@ -19,7 +19,6 @@ const transactionQueueWrapper = (
   context = '',
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ) => async (job: Job): Promise<any> => {
-  let error: Error | undefined;
   const startTime = Date.now();
   return httpContext.ns.runPromise(async () => {
     httpContext.set('loggedUser', job.referenceData.userId);
@@ -39,14 +38,13 @@ const transactionQueueWrapper = (
           removeFromAuditedTransactions();
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${(err as Error).message}`);
-          error = err as Error;
           throw err;
         }
         return result;
       });
     } catch (err) {
-      await handleWorkerErrors(job, error || err, logContext);
-      throw error || err;
+      await handleWorkerErrors(job, err, logContext);
+      throw err;
     }
   });
 };
