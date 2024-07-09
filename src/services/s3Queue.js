@@ -12,8 +12,7 @@ const addDeleteFileToQueue = (id, key) => {
     fileKey: key,
     key: S3_ACTIONS.DELETE_FILE,
   };
-  s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
-  return data;
+  return s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
 };
 
 const onFailedS3Queue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
