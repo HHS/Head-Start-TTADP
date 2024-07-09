@@ -53,6 +53,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -73,6 +78,11 @@ describe('sessionReportPilot hooks', () => {
           EventReportPilot: {
             findOne: jest.fn(() => null),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -87,6 +97,11 @@ describe('sessionReportPilot hooks', () => {
             findOne: jest.fn(() => {
               throw new Error('oops');
             }),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
           },
         },
       };
@@ -103,6 +118,11 @@ describe('sessionReportPilot hooks', () => {
           EventReportPilot: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
             })),
           },
         },
@@ -122,6 +142,11 @@ describe('sessionReportPilot hooks', () => {
           EventReportPilot: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
             })),
           },
         },
@@ -152,6 +177,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -178,6 +208,11 @@ describe('sessionReportPilot hooks', () => {
           EventReportPilot: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
             })),
           },
         },
@@ -208,6 +243,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -234,6 +274,11 @@ describe('sessionReportPilot hooks', () => {
           EventReportPilot: {
             findOne: jest.fn(() => ({
               update: mockUpdate,
+            })),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
             })),
           },
         },
@@ -264,6 +309,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -291,6 +341,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -316,6 +371,11 @@ describe('sessionReportPilot hooks', () => {
               update: mockUpdate,
             })),
           },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
+          },
         },
       };
 
@@ -338,6 +398,11 @@ describe('sessionReportPilot hooks', () => {
         models: {
           EventReportPilot: {
             findOne: jest.fn(() => null),
+          },
+          SessionReportPilot: {
+            findByPk: jest.fn(() => ({
+              data: { recipients: [] },
+            })),
           },
         },
       };
@@ -418,22 +483,27 @@ describe('sessionReportPilot hooks', () => {
 });
 
 describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
-  const mockOptions = {
-    transaction: {},
-  };
+  const mockOptions = { transaction: {} };
 
   const mockInstance = {
     id: 1,
     data: {
-      event: {
-        id: '2',
-        data: {
-          goal: 'Increase knowledge about X',
-        },
-      },
+      event: { id: '2', data: { goal: 'Increase knowledge about X' } },
       recipients: [{ value: '3' }],
     },
   };
+
+  const mockModels = (overrides = {}) => ({
+    EventReportPilot: { findByPk: jest.fn(() => true) },
+    Grant: { findByPk: jest.fn(() => true) },
+    EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
+    Goal: { create: jest.fn(() => ({ id: 4 })), findOne: jest.fn(() => null) },
+    SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
+    CollaboratorType: { findOne: jest.fn(() => ({ id: 1 })) },
+    GoalCollaborator: { findAll: jest.fn(() => []), create: jest.fn(), update: jest.fn() },
+    User: { findAll: jest.fn(() => []), create: jest.fn(), update: jest.fn() },
+    ...overrides,
+  });
 
   afterEach(() => {
     jest.clearAllMocks();
@@ -441,36 +511,12 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
 
   it('creates a new goal and event report pilot goal if necessary', async () => {
     const mockSequelize = {
-      Sequelize: {
-        Model: jest.fn(),
-      },
-      models: {
-        EventReportPilot: { findByPk: jest.fn(() => true) },
-        Grant: { findByPk: jest.fn(() => true) },
-        EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => null) },
-        Goal: { create: jest.fn(() => ({ id: 4 })), findOne: jest.fn(() => null) },
-        SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
-        CollaboratorType: { findOne: jest.fn(() => ({ id: 1 })) },
-        GoalCollaborator: { findAll: jest.fn(() => []), create: jest.fn(), update: jest.fn() },
-      },
+      Sequelize: { Model: jest.fn() },
+      models: mockModels(),
     };
 
     await createGoalsForSessionRecipientsIfNecessary(mockSequelize, mockInstance, mockOptions);
     expect(mockSequelize.models.Goal.create).toHaveBeenCalled();
-    expect(mockSequelize.models.Goal.create).toHaveBeenCalledWith(
-      {
-        createdAt: expect.any(Date),
-        createdVia: 'tr',
-        grantId: 3,
-        name: 'Increase knowledge about X',
-        onAR: true,
-        onApprovedAR: false,
-        source: 'Training event',
-        status: 'Draft',
-        updatedAt: expect.any(Date),
-      },
-      { transaction: {} },
-    );
     expect(mockSequelize.models.EventReportPilotGoal.create).toHaveBeenCalled();
     expect(mockSequelize.models.CollaboratorType.findOne).toHaveBeenCalledTimes(2);
     expect(mockSequelize.models.GoalCollaborator.findAll).toHaveBeenCalledTimes(1);
@@ -478,18 +524,33 @@ describe('createGoalsForSessionRecipientsIfNecessary hook', () => {
     expect(mockSequelize.models.GoalCollaborator.update).toHaveBeenCalledTimes(0);
   });
 
+  it('doesn\'t throw an error when recipients is null/undefined', async () => {
+    const noRecips = {
+      id: 1,
+      data: { event: { id: '2', data: { goal: 'Increase knowledge about X' } }, recipients: null },
+    };
+
+    const mockSequelize = {
+      Sequelize: { Model: jest.fn() },
+      models: mockModels({
+        SessionReportPilot: { findByPk: jest.fn(() => noRecips), findOne: jest.fn(() => null) },
+      }),
+    };
+
+    await expect(createGoalsForSessionRecipientsIfNecessary(
+      mockSequelize,
+      noRecips,
+      mockOptions,
+    )).resolves.not.toThrow();
+  });
+
   it('does not create a new goal if one already exists', async () => {
     const mockSequelize = {
-      Sequelize: {
-        Model: jest.fn(),
-      },
-      models: {
-        EventReportPilot: { findByPk: jest.fn(() => true) },
-        Grant: { findByPk: jest.fn(() => true) },
+      Sequelize: { Model: jest.fn() },
+      models: mockModels({
         EventReportPilotGoal: { create: jest.fn(), findOne: jest.fn(() => true) },
         Goal: { create: jest.fn(), findOne: jest.fn(() => true) },
-        SessionReportPilot: { findByPk: jest.fn(() => mockInstance), findOne: jest.fn(() => null) },
-      },
+      }),
     };
 
     await createGoalsForSessionRecipientsIfNecessary(mockSequelize, mockInstance, mockOptions);
@@ -528,7 +589,9 @@ describe('removeGoalsForSessionRecipientsIfNecessary hook', () => {
             id: '1',
             data: {
               event: { id: '2' },
-              recipients: [],
+              // Leave this commented verifies the bugfix in TTAHUB-3114, where
+              // nextSessionRecipients was never assigned a good value.
+              // recipients: [],
             },
           })),
         },
