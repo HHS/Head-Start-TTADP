@@ -275,9 +275,10 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/1/log/1', 404);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication/1/view');
-    act(() => renderRecipientRecord());
+    const setErrorResponseCode = jest.fn();
+    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/There was an error fetching the communication log/i);
+    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(404));
   });
 
   it('navigates to the communication log form', async () => {
