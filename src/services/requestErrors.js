@@ -6,6 +6,7 @@ export default async function createRequestError({
   responseBody = 'N/A',
   responseCode = 'N/A',
 }) {
+  // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   try {
     const requestErrorBody = {
@@ -19,6 +20,7 @@ export default async function createRequestError({
 }
 
 export async function requestErrors({ filter = '{}', range = '[0,9]', sort = '["createdAt","DESC"]' } = {}) {
+  // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   const offset = JSON.parse(range)[0];
   const limit = JSON.parse(range)[1];
@@ -34,6 +36,7 @@ export async function requestErrors({ filter = '{}', range = '[0,9]', sort = '["
 }
 
 export async function requestErrorById(id) {
+  // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   return RequestErrors.findOne({
     where: { id },
@@ -41,6 +44,7 @@ export async function requestErrorById(id) {
 }
 
 export async function requestErrorsByIds({ filter = '{}' } = {}) {
+  // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   return RequestErrors.findAll({
     where: JSON.parse(filter),
@@ -49,6 +53,7 @@ export async function requestErrorsByIds({ filter = '{}' } = {}) {
 }
 
 export async function delRequestErrors({ filter = '{}' } = {}) {
+  // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   return RequestErrors.destroy({
     where: JSON.parse(filter),
