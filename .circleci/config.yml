@@ -406,7 +406,7 @@ parameters:
     default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/3005/ipd-courses-widget"
+    default: "jp/3112/rm-elasticsearch"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
