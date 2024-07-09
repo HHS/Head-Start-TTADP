@@ -13,9 +13,6 @@ import {
   processResourceQueue,
 } from './services/resourceQueue';
 import {
-  processAWSElasticsearchQueue,
-} from './lib/awsElasticSearch/queueManager';
-import {
   processS3Queue,
 } from './services/s3Queue';
 import {
@@ -32,9 +29,6 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 async function start(context: { id: number }) {
   // File Scanning Queue
   processScanQueue();
-
-  // AWS Elasticsearch Queue
-  processAWSElasticsearchQueue();
 
   // S3 Queue.
   processS3Queue();
