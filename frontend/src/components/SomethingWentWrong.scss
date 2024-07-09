@@ -9,11 +9,16 @@
 .smart-hub--something-went-wrong h1 {
     font-size: 2.5rem;
     font-weight: 700;
+    font-family: Merriweather, serif;
+}
+
+.smart-hub--something-went-wrong-body {
+    max-width: 700px;
 }
 
 .smart-hub--something-went-wrong p,
 .smart-hub--something-went-wrong ul li button {
-    color: $base-dark;
+    color: $base-darkest;
     font-size: 1.25rem;
     font-weight: 400;
 }
