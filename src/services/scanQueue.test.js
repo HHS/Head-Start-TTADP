@@ -20,9 +20,12 @@ describe('addToScanQueue', () => {
     Queue.mockImplementation(() => scanQueue);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('calls scanQueue.add', async () => {
     await addToScanQueue('test.txt');
-
     expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', expect.objectContaining({
       maxRetriesPerRequest: 50,
       redis: { password: mockPassword },

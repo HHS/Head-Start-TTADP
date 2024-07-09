@@ -25,6 +25,10 @@ describe('Resource queue manager tests', () => {
     Queue.mockImplementation(() => resourceQueue);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('test schedule get resource metadata', async () => {
     await addGetResourceMetadataToQueue(resource.id, resource.key);
     expect(resourceQueue.add).toHaveBeenCalled();
