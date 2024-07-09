@@ -34,7 +34,7 @@ describe('file hooks', () => {
         where: { id: file.id },
         individualHooks: true,
       });
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, fileName);
+      await expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, fileName);
     });
   });
 });
