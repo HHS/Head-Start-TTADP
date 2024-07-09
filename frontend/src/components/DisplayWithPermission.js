@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
-import NotFound from '../pages/NotFound';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
+import SomethingWentWrong from './SomethingWentWrong';
 
 export default function DisplayWithPermission({
   scopes, renderNotFound, children,
@@ -16,7 +16,7 @@ export default function DisplayWithPermission({
 
   if (!admin && !userHasScope) {
     if (renderNotFound) {
-      return <NotFound />;
+      return <SomethingWentWrong />;
     }
     return <></>;
   }

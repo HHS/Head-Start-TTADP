@@ -72,6 +72,7 @@ describe('display with permissions', () => {
     };
     const renderNotFound = true;
     renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /404 error/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /page not found/i })).toBeVisible();
   });
 });
