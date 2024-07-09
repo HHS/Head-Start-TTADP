@@ -19,6 +19,7 @@ import {
   methodFilter,
   resultFilter,
 } from '../../../components/filter/communicationLogFilters';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
 const FILTER_KEY = 'communication-log-filters';
@@ -43,6 +44,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
   });
 
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const {
@@ -71,7 +73,7 @@ export default function CommunicationLog({ regionId, recipientId }) {
 
         setLogs(response);
       } catch (err) {
-        setError('Error fetching communication logs');
+        setErrorResponseCode(err.status);
       } finally {
         setIsAppLoading(false);
       }

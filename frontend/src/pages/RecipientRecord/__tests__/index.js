@@ -90,7 +90,7 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
+  function renderRecipientRecord(history = memoryHistory, regionId = '45', setErrorResponseCode = jest.fn()) {
     const match = {
       path: '',
       url: '',
@@ -102,7 +102,7 @@ describe('recipient record page', () => {
 
     render(
       <Router history={history}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode: jest.fn() }}>
+        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
           <UserContext.Provider value={{ user }}>
             <GrantDataProvider>
               <AppLoadingContext.Provider value={
@@ -195,17 +195,21 @@ describe('recipient record page', () => {
   it('handles recipient not found', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('Recipient record not found');
-    expect(error).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    await act(async () => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    await waitFor(() => {
+      expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+    });
   });
 
   it('handles fetch error', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 500);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('There was an error fetching recipient data');
-    expect(error).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    await waitFor(() => {
+      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+    });
   });
 
   it('navigates to the profile page', async () => {

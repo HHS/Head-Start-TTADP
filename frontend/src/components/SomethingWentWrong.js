@@ -175,7 +175,11 @@ function SomethingWentWrong({ errorResponseCode }) {
 }
 
 SomethingWentWrong.propTypes = {
-  errorResponseCode: PropTypes.number.isRequired,
+  errorResponseCode: PropTypes.number,
+};
+
+SomethingWentWrong.defaultProps = {
+  errorResponseCode: 404,
 };
 
 export default SomethingWentWrong;

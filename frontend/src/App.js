@@ -22,7 +22,6 @@ import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
-import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
@@ -446,7 +445,7 @@ function App() {
         <Route
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
-              <NotFound />
+              <SomethingWentWrong />
             </AppWrapper>
           )}
         />
