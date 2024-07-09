@@ -12,21 +12,18 @@ import CommunicationLog from '../CommunicationLog';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
 import AriaLiveContext from '../../../../AriaLiveContext';
-import SomethingWentWrongContext from '../../../../SomethingWentWrongContext';
 
 describe('CommunicationLog', () => {
   const history = createMemoryHistory();
-  const renderTest = (setErrorResponseCode = jest.fn) => {
+  const renderTest = () => {
     render(
       <AriaLiveContext.Provider value={{ announce: () => {} }}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
-          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-            <UserContext.Provider value={{ user: { homeRegionId: 5 } }}>
-              <Router history={history}>
-                <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
-              </Router>
-            </UserContext.Provider>
-          </SomethingWentWrongContext.Provider>
+          <UserContext.Provider value={{ user: { homeRegionId: 5 } }}>
+            <Router history={history}>
+              <CommunicationLog recipientName="Big recipient" recipientId={1} regionId={5} />
+            </Router>
+          </UserContext.Provider>
         </AppLoadingContext.Provider>
       </AriaLiveContext.Provider>,
     );
@@ -92,16 +89,5 @@ describe('CommunicationLog', () => {
     act(() => userEvent.click(apply));
 
     await waitFor(() => expect(fetchMock.called(filteredUrl)).toBe(true));
-  });
-
-  it('correctly calls setErrorResponseCode when a 500 is returned', async () => {
-    fetchMock.get('/api/communication-logs/region/5/recipient/1?sortBy=communicationDate&direction=desc&offset=0&limit=10&format=json&result.in[]=RTTAPA%20declined', 500);
-    const setErrorResponseCode = jest.fn();
-    await act(async () => {
-      renderTest(setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(500);
-      });
-    });
   });
 });
