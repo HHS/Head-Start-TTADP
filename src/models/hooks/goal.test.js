@@ -132,6 +132,49 @@ describe('goal hooks', () => {
       expect(result.length).toEqual(0);
     });
 
+    it('should invalidate similarity groups on a goal name update', async () => {
+      // Create a single goal
+      const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+
+      // Create two similarity groups
+      const group1 = await GoalSimilarityGroupModel.create({
+        recipientId: recipient.id,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      });
+
+      const group2 = await GoalSimilarityGroupModel.create({
+        recipientId: recipient.id,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      });
+
+      // Associate the single goal with both groups
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group1.id,
+        goalId: goal.id,
+      });
+
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group2.id,
+        goalId: goal.id,
+      });
+
+      // Update the name of the goal
+      await goal.update({ name: 'New Name' }, { individualHooks: true });
+
+      // Check the results to ensure both groups are invalidated
+      const result = await GoalSimilarityGroupModel.findAll({
+        where: {
+          recipientId: recipient.id,
+          userHasInvalidated: false,
+          finalGoalId: null,
+        },
+      });
+
+      expect(result.length).toEqual(0);
+    });
+
     it('should invalidate similarity groups on goal destroy', async () => {
       const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
 
