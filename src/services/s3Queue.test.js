@@ -31,13 +31,17 @@ describe('s3 queue manager tests', () => {
     Queue.mockImplementation(() => s3Queue);
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('test schedule delete file', async () => {
-    addDeleteFileToQueue(file.id, file.key);
+    await addDeleteFileToQueue(file.id, file.key);
     expect(s3Queue.add).toHaveBeenCalled();
   });
 
   it('calls s3.add', async () => {
-    addDeleteFileToQueue(file.id, file.key);
+    await addDeleteFileToQueue(file.id, file.key);
     expect(Queue).toHaveBeenCalledWith('s3', 'redis://undefined:6379', expect.objectContaining({
       maxRetriesPerRequest: 50,
       redis: { password: mockPassword },
