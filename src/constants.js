@@ -149,12 +149,6 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
 };
 
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
-};
-
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
 };
@@ -218,10 +212,6 @@ const SOURCE_FIELD = {
 
 const RESOURCE_DOMAIN = {
   ECLKC: 'eclkc.ohs.acf.hhs.gov',
-};
-
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
 };
 
 const GRANT_INACTIVATION_REASONS = {
