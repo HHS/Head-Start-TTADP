@@ -25,6 +25,7 @@ import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -125,6 +126,7 @@ export default function TrainingReportForm({ match }) {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -179,14 +181,19 @@ export default function TrainingReportForm({ match }) {
         resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
       } catch (e) {
-        setError('Error fetching training report');
+        setErrorResponseCode(e.status);
       } finally {
         setReportFetched(true);
         setDatePickerKey(Date.now().toString());
       }
     }
     fetchReport();
-  }, [currentPage, hookForm.reset, isAppLoading, reportFetched, trainingReportId]);
+  }, [currentPage,
+    hookForm.reset,
+    isAppLoading,
+    reportFetched,
+    trainingReportId,
+    setErrorResponseCode]);
 
   useEffect(() => {
     // set error if no training report id

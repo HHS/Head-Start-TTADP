@@ -135,6 +135,15 @@ describe('ActivityReport', () => {
     });
   });
 
+  describe('something went wrong context', () => {
+    it('ensure we call set the response code on error', async () => {
+      fetchMock.get('/api/activity-reports/1', 500);
+      const setErrorResponseCode = jest.fn();
+      renderActivityReport('1', 'activity-summary', null, 1, setErrorResponseCode);
+      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+    });
+  });
+
   describe('groups', () => {
     it('recipients correctly update for groups', async () => {
       const groupRecipients = {
