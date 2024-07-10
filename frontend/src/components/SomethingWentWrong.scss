@@ -6,6 +6,16 @@
     font-weight: 700;
 }
 
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body a,
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body button
+ {
+    color: $text-link;
+}
+
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body a:visited {
+    color: $text-visited;
+}
+
 .smart-hub--something-went-wrong h1 {
     font-size: 2.5rem;
     font-weight: 700;
