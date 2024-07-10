@@ -48,10 +48,10 @@ module.exports = {
       FROM r_10_active_goals g
       LEFT JOIN "Users" u
         ON (
-	  (u.id = 550 AND "phoneNumber" IS NOT NULL) --for non-prod
-	  OR
-	  (md5(u.name || ' 'bdjy34gg') = '7b1166c709d27ec6519b05c24373be6ai') --for prod
-	  )
+          (u.id = 550 AND "phoneNumber" IS NOT NULL) --for non-prod
+          OR
+          (md5(u.name || ' 'bdjy34gg') = '7b1166c709d27ec6519b05c24373be6ai') --for prod
+        )
       LEFT JOIN "UserRoles" ur
         ON u.id = ur."userId"
       LEFT JOIN "Roles" ro
