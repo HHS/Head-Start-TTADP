@@ -11,26 +11,24 @@ const logContext = {
 
 export default function transactionWrapper(originalFunction, context = '') {
   return async function wrapper(req, res, next) {
-    let error;
     const startTime = Date.now();
     try {
-      return sequelize.transaction(async () => {
-        let result;
+      // eslint-disable-next-line @typescript-eslint/return-await
+      return await sequelize.transaction(async () => {
         try {
           await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
-          result = await originalFunction(req, res, next);
+          const result = await originalFunction(req, res, next);
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
           removeFromAuditedTransactions();
+          return result;
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${err.message}`);
-          error = err;
           throw err;
         }
-        return result;
       });
     } catch (err) {
-      return handleErrors(req, res, error || err, logContext);
+      return handleErrors(req, res, err, logContext);
     }
   };
 }
