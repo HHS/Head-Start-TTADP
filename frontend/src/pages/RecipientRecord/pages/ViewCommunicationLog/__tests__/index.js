@@ -10,6 +10,7 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import ViewCommunicationForm from '../index';
+import SomethingWentWrongContext from '../../../../../SomethingWentWrongContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -26,23 +27,26 @@ describe('ViewCommunicationForm', () => {
 
   const renderTest = (
     communicationLogId = '1',
+    setErrorResponseCode = jest.fn(),
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <ViewCommunicationForm
-            recipientName={RECIPIENT_NAME}
-            match={{
-              params: {
-                communicationLogId,
-                recipientId: RECIPIENT_ID,
-                regionId: REGION_ID,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </UserContext.Provider>
+        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+            <ViewCommunicationForm
+              recipientName={RECIPIENT_NAME}
+              match={{
+                params: {
+                  communicationLogId,
+                  recipientId: RECIPIENT_ID,
+                  regionId: REGION_ID,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </UserContext.Provider>
+        </SomethingWentWrongContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
   );
@@ -103,13 +107,14 @@ describe('ViewCommunicationForm', () => {
 
   it('shows error message', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
+    const setErrorResponseCode = jest.fn();
     fetchMock.get(url, 500);
-
-    await act(() => waitFor(() => {
-      renderTest();
-    }));
-
-    expect(await screen.findByText(/There was an error fetching the communication log/i)).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        renderTest('1', setErrorResponseCode);
+        expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+      });
+    });
   });
 
   it('should render the view without edit button', async () => {

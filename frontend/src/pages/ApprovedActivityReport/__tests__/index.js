@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import ApprovedActivityReport from '../index';
 
@@ -104,7 +105,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderApprovedActivityReport(id, passedUser = user) {
+  function renderApprovedActivityReport(id, passedUser = user, setErrorResponseCode = jest.fn()) {
     const match = {
       path: '',
       url: '',
@@ -113,7 +114,11 @@ describe('Activity report print and share view', () => {
       },
     };
 
-    render(<ApprovedActivityReport user={passedUser} match={match} />);
+    render(
+      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+        <ApprovedActivityReport user={passedUser} match={match} />
+      </SomethingWentWrongContext.Provider>,
+    );
   }
   afterEach(() => fetchMock.restore());
 
@@ -147,7 +152,7 @@ describe('Activity report print and share view', () => {
       }],
       requester: 'chud',
     });
-    fetchMock.get('/api/activity-reports/5002', 500);
+    fetchMock.get('/api/activity-reports/5002', { status: 500 });
 
     fetchMock.get('/api/activity-reports/5003', {
       ...report,
@@ -204,7 +209,7 @@ describe('Activity report print and share view', () => {
       version: null,
     });
 
-    fetchMock.get('/api/activity-reports/5007', 401);
+    fetchMock.get('/api/activity-reports/5007', { status: 401 });
   });
 
   it('renders an activity report in clean view', async () => {
@@ -224,18 +229,22 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    act(() => renderApprovedActivityReport(5007));
+    const setErrorResponseCode = jest.fn();
+    act(() => renderApprovedActivityReport(5007, user, setErrorResponseCode));
 
     await waitFor(() => {
-      expect(screen.getByText(/sorry, you are not allowed to view this report/i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
+      expect(setErrorResponseCode).toHaveBeenCalledWith(401);
     });
   });
 
   it('handles data errors', async () => {
-    act(() => renderApprovedActivityReport(5002));
+    const setErrorResponseCode = jest.fn();
+    act(() => renderApprovedActivityReport(5002, user, setErrorResponseCode));
 
     await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+      expect(fetchMock.called('/api/activity-reports/5002')).toBeTruthy();
+      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
     });
   });
 
@@ -306,17 +315,13 @@ describe('Activity report print and share view', () => {
     });
   });
 
-  it('renders a version 2 report with goals', async () => {
-    act(() => renderApprovedActivityReport(5005));
-    await waitFor(() => {
-      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
-    });
-  });
-
   it('handles a malformed url', async () => {
-    act(() => renderApprovedActivityReport('butter-lover'));
-    await waitFor(() => {
-      expect(screen.getByText(/sorry, something went wrong\./i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderApprovedActivityReport('butter-lover', user, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+      });
     });
   });
 
@@ -337,5 +342,12 @@ describe('Activity report print and share view', () => {
     });
 
     global.localStorage = oldLocalStorage;
+  });
+
+  it('renders a version 2 report with goals', async () => {
+    act(() => renderApprovedActivityReport(5005));
+    await waitFor(() => {
+      expect(screen.getByText(report.author.fullName)).toBeInTheDocument();
+    });
   });
 });
