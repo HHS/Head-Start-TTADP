@@ -30,6 +30,13 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error(`Unhandled rejection at: ${promise} reason: ${reason}`);
 
+  // If this is a SequelizeConnectionAcquireTimeoutError,
+  // exit with 111 so that the conditional-restart.sh script
+  // restarts the node process.
+  if (reason.name === 'SequelizeConnectionAcquireTimeoutError') {
+    process.exit(111);
+  }
+
   if (process.env.CI) {
     if (reason instanceof Error) {
       if (reason.message.toLowerCase().includes('maxretriesperrequest')) {

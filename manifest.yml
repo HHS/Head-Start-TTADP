@@ -46,7 +46,7 @@ applications:
     processes:
       - type: web
         instances: ((web_instances))
-        command: yarn start:web
+        command: sh -c ./bin/conditional-restart.sh
         memory: ((web_memory))
       - type: worker
         instances: ((worker_instances))
