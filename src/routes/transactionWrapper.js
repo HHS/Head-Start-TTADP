@@ -15,7 +15,8 @@ export default function transactionWrapper(originalFunction, context = '') {
     let error;
     const startTime = Date.now();
     try {
-      return sequelize.transaction(async (transaction) => {
+      // eslint-disable-next-line @typescript-eslint/return-await
+      return await sequelize.transaction(async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         let result;
         try {
