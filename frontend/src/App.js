@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
 
-import { BrowserRouter, Route, Switch } from 'react-router-dom';
+import {
+  BrowserRouter, Route, Switch,
+} from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 
 import { fetchUser, fetchLogout } from './fetchers/Auth';
@@ -10,6 +12,7 @@ import { HTTPError } from './fetchers';
 import { getSiteAlerts } from './fetchers/siteAlerts';
 import FeatureFlag from './components/FeatureFlag';
 import UserContext from './UserContext';
+import SomethingWentWrongContext from './SomethingWentWrongContext';
 import SiteNav from './components/SiteNav';
 import Header from './components/Header';
 
@@ -19,7 +22,6 @@ import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
-import NotFound from './pages/NotFound';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import ActivityReport from './pages/ActivityReport';
@@ -58,6 +60,7 @@ import SessionForm from './pages/SessionForm';
 import ViewTrainingReport from './pages/ViewTrainingReport';
 import useGaUserData from './hooks/useGaUserData';
 import QADashboard from './pages/QADashboard';
+import SomethingWentWrong from './components/SomethingWentWrong';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
 
@@ -76,6 +79,8 @@ function App() {
   const [notifications, setNotifications] = useState({ whatsNew: '' });
 
   const [areThereUnreadNotifications, setAreThereUnreadNotifications] = useState(false);
+  const [errorResponseCode, setErrorResponseCode] = useState(null);
+  const [showingNotFound, setShowingNotFound] = useState(false);
 
   useGaUserData(user);
 
@@ -441,7 +446,7 @@ function App() {
         <Route
           render={() => (
             <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
-              <NotFound />
+              <SomethingWentWrong />
             </AppWrapper>
           )}
         />
@@ -456,9 +461,15 @@ function App() {
       </Helmet>
       <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
-        <BrowserRouter>
-          <ScrollToTop />
-          {authenticated && (
+        <SomethingWentWrongContext.Provider value={
+          {
+            errorResponseCode, setErrorResponseCode, showingNotFound, setShowingNotFound,
+          }
+        }
+        >
+          <BrowserRouter>
+            <ScrollToTop />
+            {authenticated && !errorResponseCode && !showingNotFound && (
             <>
               <a className="usa-skipnav" href="#main-content">
                 Skip to main content
@@ -475,30 +486,37 @@ function App() {
                 />
               </UserContext.Provider>
             </>
-          )}
-          <AriaLiveContext.Provider value={{ announce }}>
-            <MyGroupsProvider authenticated={authenticated}>
-              <UserContext.Provider value={{ user, authenticated, logout }}>
-                <Header
-                  authenticated
-                  alert={alert}
-                  areThereUnreadNotifications={areThereUnreadNotifications}
-                  setAreThereUnreadNotifications={setAreThereUnreadNotifications}
-                />
-                {!authenticated && (authError === 403
-                  ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-                  : (
-                    <AppWrapper padded={false} logout={logout}>
-                      <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+            )}
+            <AriaLiveContext.Provider value={{ announce }}>
+              <MyGroupsProvider authenticated={authenticated}>
+                <UserContext.Provider value={{ user, authenticated, logout }}>
+                  <Header
+                    authenticated
+                    alert={alert}
+                    areThereUnreadNotifications={areThereUnreadNotifications}
+                    setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+                  />
+                  {!authenticated && (authError === 403
+                    ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
+                    : (
+                      <AppWrapper padded={false} logout={logout}>
+                        <Unauthenticated loggedOut={loggedOut} timedOut={timedOut} />
+                      </AppWrapper>
+                    )
+                  )}
+                  {authenticated && errorResponseCode
+                    && (
+                    <AppWrapper hasAlerts={false} authenticated logout={logout}>
+                      <SomethingWentWrong passedErrorResponseCode={errorResponseCode} />
                     </AppWrapper>
-                  )
-                )}
-                {authenticated && renderAuthenticatedRoutes()}
-              </UserContext.Provider>
-            </MyGroupsProvider>
-          </AriaLiveContext.Provider>
-        </BrowserRouter>
-        <AriaLiveRegion messages={announcements} />
+                    )}
+                  {authenticated && !errorResponseCode && renderAuthenticatedRoutes()}
+                </UserContext.Provider>
+              </MyGroupsProvider>
+            </AriaLiveContext.Provider>
+          </BrowserRouter>
+          <AriaLiveRegion messages={announcements} />
+        </SomethingWentWrongContext.Provider>
       </AppLoadingContext.Provider>
     </>
   );
