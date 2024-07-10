@@ -13,8 +13,6 @@ import { sequelize } from '../models';
  * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
  */
 async function logRequestError(req, operation, error, logContext) {
-  console.log('process.env.SUPPRESS_ERROR_LOGGING', process.env.SUPPRESS_ERROR_LOGGING);
-  console.log('operation', operation);
   if (
     operation !== 'SequelizeError'
     && process.env.SUPPRESS_ERROR_LOGGING
