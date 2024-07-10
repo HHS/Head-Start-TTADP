@@ -50,7 +50,7 @@ module.exports = {
         ON (
           (u.id = 550 AND "phoneNumber" IS NOT NULL) --for non-prod
           OR
-          (md5(u.name || ' 'bdjy34gg') = '7b1166c709d27ec6519b05c24373be6ai') --for prod
+          (md5(u.name || 'bdjy34gg') = '7b1166c709d27ec6519b05c24373be6ai') --for prod
         )
       LEFT JOIN "UserRoles" ur
         ON u.id = ur."userId"
