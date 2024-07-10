@@ -780,6 +780,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           // The 'userId' must not be equal to the 'userId' of the 'instance'
           userId: { [Op.not]: instance.userId },
         },
+        transaction: options.transaction,
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the first query
       sequelize.models.ActivityReportGoal.findAll({ // Find all ActivityReportGoals models
@@ -788,6 +789,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
         },
+        transaction: options.transaction,
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the second query
       sequelize.models.ActivityReportObjective.findAll({ // Find all ActivityReportObjective models
@@ -797,6 +799,7 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           activityReportId: instance.id,
         },
         raw: true, // Return raw data instead of Sequelize instances
+        transaction: options.transaction,
       }), // End of the second query
     ]);
 
@@ -804,36 +807,37 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       ...collaborators, // Spread the elements of the 'collaborators' array into a new array
       { userId: instance.userId }, // Add an object with a 'userId' property to the new array
     ].filter(({ userId }) => userId);
-    await Promise.all([
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => goals
-          // Use map to iterate over each element in the 'goals' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ goalId }) => findOrCreateCollaborator(
-            'goal',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            goalId, // The 'goalId' from the current iteration of the 'goals' array
-            userId, // The 'userId' from the current iteration of the new array
-            GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => objectives
-          // Use map to iterate over each element in the 'objectives' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ objectiveId }) => findOrCreateCollaborator(
-            'objective',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
-            userId, // The 'userId' from the current iteration of the new array
-            OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
+
+    const findOrCreateCollaboratorOptions = users.flatMap((user) => [
+      ...goals.map((goal) => ({
+        type: 'goal',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: goal.goalId,
+        userId: user.userId,
+        collaboratorType: GOAL_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
+      ...objectives.map((objective) => ({
+        type: 'objective',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: objective.objectiveId,
+        userId: user.userId,
+        collaboratorType: OBJECTIVE_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
     ]);
+
+    await Promise.all(findOrCreateCollaboratorOptions.map((option) => findOrCreateCollaborator(
+      option.type,
+      option.sequelize,
+      option.transaction,
+      option.associatedId,
+      option.userId,
+      option.collaboratorType,
+      option.metadata,
+    )));
   }
 };
 
