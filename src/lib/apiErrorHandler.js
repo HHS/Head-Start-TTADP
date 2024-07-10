@@ -13,11 +13,16 @@ import { sequelize } from '../models';
  * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
  */
 async function logRequestError(req, operation, error, logContext) {
+  console.log('process.env.SUPPRESS_ERROR_LOGGING', process.env.SUPPRESS_ERROR_LOGGING);
+  console.log('operation', operation);
   if (
     operation !== 'SequelizeError'
     && process.env.SUPPRESS_ERROR_LOGGING
     && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
   ) {
+    return 0;
+  }
+  if (!error) {
     return 0;
   }
 
@@ -74,9 +79,8 @@ export const handleError = async (req, res, error, logContext) => {
 
   if (error instanceof Sequelize.ConnectionError
     || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
+    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize?.connectionManager?.pool)}`);
   }
-
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
   const errorMessage = error?.stack || error;
