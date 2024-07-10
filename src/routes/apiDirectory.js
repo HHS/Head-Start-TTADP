@@ -59,6 +59,20 @@ router.use((req, res, next) => {
   next();
 });
 
+const fakeSequelizeError = async (req, res) => {
+  const SequelizeConnectionAcquireTimeoutError = new Error('SequelizeConnectionAcquireTimeoutError');
+  SequelizeConnectionAcquireTimeoutError.name = 'SequelizeConnectionAcquireTimeoutError';
+  throw SequelizeConnectionAcquireTimeoutError;
+};
+
+const normalExit = async (req, res) => {
+  process.exit(200);
+};
+
+const exitTestRouter = express.Router();
+exitTestRouter.get('/restart', fakeSequelizeError);
+exitTestRouter.get('/no-restart', normalExit);
+
 router.use('/admin', adminRouter);
 router.use('/activity-reports', activityReportsRouter);
 router.use('/users', usersRouter);
@@ -82,6 +96,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/communication-logs', communicationLogRouter);
 router.use('/monitoring', monitoringRouter);
 router.use('/courses', coursesRouter);
+router.use('/exit', exitTestRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
