@@ -29,10 +29,12 @@
 .smart-hub--something-went-wrong p,
 .smart-hub--something-went-wrong ul li button {
     color: $base-darkest;
-    font-size: 1.25rem;
-    font-weight: 400;
 }
 
 .smart-hub--something-went-wrong li {
     margin-bottom: .5rem;
+}
+
+.smart-hub--something-went-wrong ul:last-child {
+    margin-bottom: 1rem;
 }
