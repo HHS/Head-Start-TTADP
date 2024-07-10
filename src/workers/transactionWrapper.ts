@@ -1,5 +1,4 @@
 import httpContext from 'express-http-context';
-import convertToUUID from '../lib/uuidConverter';
 import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import { sequelize } from '../models';
 import { handleWorkerErrors } from '../lib/apiErrorHandler';
