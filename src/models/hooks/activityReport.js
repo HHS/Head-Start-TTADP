@@ -636,7 +636,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
-          transaction: options.transaction,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change

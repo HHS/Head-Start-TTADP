@@ -211,7 +211,6 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
           newStatus: 'In Progress',
           reason: 'Objective moved to In Progress',
           context: null,
-          transaction: options.transaction,
         });
       }
     }
