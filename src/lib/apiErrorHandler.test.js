@@ -2,6 +2,7 @@ import Sequelize from 'sequelize';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db, { RequestErrors } from '../models';
 import handleErrors, { handleUnexpectedErrorInCatchBlock, handleWorkerErrors, handleUnexpectedWorkerError } from './apiErrorHandler';
+import { auditLogger as logger } from '../logger';
 
 const mockUser = {
   id: 47,
@@ -42,10 +43,18 @@ const mockLogContext = {
   namespace: 'TEST',
 };
 
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+}));
+
 describe('apiErrorHandler', () => {
   beforeEach(async () => {
     await RequestErrors.destroy({ where: {} });
+    jest.clearAllMocks();
   });
+
   afterAll(async () => {
     await RequestErrors.destroy({ where: {} });
     await db.sequelize.close();
@@ -104,6 +113,7 @@ describe('apiErrorHandler', () => {
     await handleErrors(mockRequest, mockResponse, mockConnectionError, mockLogContext);
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Connection Pool: Used Connections'));
 
     const requestErrors = await RequestErrors.findAll();
 
@@ -171,6 +181,7 @@ describe('apiErrorHandler', () => {
     );
 
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Connection Pool: Used Connections'));
 
     const requestErrors = await RequestErrors.findAll();
 

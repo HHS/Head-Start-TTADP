@@ -17,10 +17,9 @@ export default function transactionWrapper(originalFunction, context = '') {
       // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(async (transaction) => {
         httpContext.set('transactionId', transaction.id);
-        let result;
         try {
           await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
-          result = await originalFunction(req, res, next);
+          const result = await originalFunction(req, res, next);
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
           removeFromAuditedTransactions();

@@ -77,7 +77,10 @@ export const handleError = async (req, res, error, logContext) => {
 
   if (error instanceof Sequelize.ConnectionError
     || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize?.connectionManager?.pool)}`);
+    const pool = sequelize?.connectionManager?.pool;
+    const usedConnections = pool ? pool.used.length : null;
+    const waitingConnections = pool ? pool.pending.length : null;
+    logger.error(`${logContext.namespace} Connection Pool: Used Connections - ${usedConnections}, Waiting Connections - ${waitingConnections}`);
   }
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
@@ -186,7 +189,10 @@ export const handleWorkerError = async (job, error, logContext) => {
 
   if (error instanceof Sequelize.ConnectionError
     || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} Connection Pool: ${JSON.stringify(sequelize.connectionManager.pool)}`);
+    const pool = sequelize?.connectionManager?.pool;
+    const usedConnections = pool ? pool.used.length : null;
+    const waitingConnections = pool ? pool.pending.length : null;
+    logger.error(`${logContext.namespace} Connection Pool: Used Connections - ${usedConnections}, Waiting Connections - ${waitingConnections}`);
   }
 
   const requestErrorId = await logWorkerError(job, operation, error, logContext);

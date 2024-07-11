@@ -22,17 +22,16 @@ const transactionQueueWrapper = (
   return httpContext.ns.runPromise(async () => {
     httpContext.set('loggedUser', job.referenceData.userId);
     httpContext.set('impersonationUserId', job.referenceData.impersonationUserId);
-    httpContext.set('sessionSig', job.id); // TODO: what value should be used here
+    httpContext.set('sessionSig', job.id);
     httpContext.set('auditDescriptor', originalFunction.name);
     try {
       // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(async (transaction) => {
         httpContext.set('transactionId', transaction.id);
-        let result;
         try {
           // eslint-disable-next-line
           await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
-          result = await originalFunction(job);
+          const result = await originalFunction(job);
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
           removeFromAuditedTransactions();
