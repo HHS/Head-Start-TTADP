@@ -6,6 +6,7 @@ import {
   screen,
   within,
   waitFor,
+  act,
 } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import selectEvent from 'react-select-event';
@@ -18,6 +19,7 @@ import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 import AppLoadingContext from '../../../AppLoadingContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -101,31 +103,33 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, goalId = 'new') {
+  function renderForm(recipient = defaultRecipient, goalId = 'new', setErrorResponseCode = jest.fn()) {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
-        <UserContext.Provider value={{
-          user: {
-            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-          },
-        }}
-        >
-          <AppLoadingContext.Provider value={
+        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+          <UserContext.Provider value={{
+            user: {
+              permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+            },
+          }}
+          >
+            <AppLoadingContext.Provider value={
           {
             setIsAppLoading: jest.fn(),
             setAppLoadingText: jest.fn(),
             isAppLoading: false,
           }
         }
-          >
-            <CreateGoal
-              recipient={recipient}
-              regionId="1"
-              isNew={goalId === 'new'}
-            />
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
+            >
+              <CreateGoal
+                recipient={recipient}
+                regionId="1"
+                isNew={goalId === 'new'}
+              />
+            </AppLoadingContext.Provider>
+          </UserContext.Provider>
+        </SomethingWentWrongContext.Provider>
       </Router>
     ));
   }
@@ -366,6 +370,16 @@ describe('create goal', () => {
 
     alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
+  });
+
+  it('correctly calls the setErrorResponseCode function when there is an error', async () => {
+    const setErrorResponseCode = jest.fn();
+    fetchMock.restore();
+    fetchMock.get('/api/recipient/1/goals?goalIds=', 500);
+    await act(async () => {
+      renderForm(defaultRecipient, '48743', setErrorResponseCode);
+      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+    });
   });
 
   it('removes goals', async () => {

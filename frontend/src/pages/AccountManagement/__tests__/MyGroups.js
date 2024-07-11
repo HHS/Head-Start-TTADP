@@ -14,6 +14,7 @@ import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -22,15 +23,17 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = null) => {
+  const renderMyGroups = (groupId = null, setErrorResponseCode = jest.fn()) => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-            <MyGroupsProvider>
-              <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-            </MyGroupsProvider>
-          </AppLoadingContext.Provider>
+          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+            <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+              <MyGroupsProvider>
+                <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+              </MyGroupsProvider>
+            </AppLoadingContext.Provider>
+          </SomethingWentWrongContext.Provider>
         </UserContext.Provider>
       </MemoryRouter>,
     );
@@ -214,13 +217,12 @@ describe('MyGroups', () => {
 
   it('handles fetch errors', async () => {
     fetchMock.get('/api/group/1', 500);
-
-    act(() => {
-      renderMyGroups(1);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/There was an error fetching your group/i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    await act(async () => {
+      renderMyGroups(1, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalled();
+      });
     });
   });
 
