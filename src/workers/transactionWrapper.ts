@@ -36,11 +36,11 @@ const transactionQueueWrapper = (
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
           removeFromAuditedTransactions();
+          return result;
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${(err as Error).message}`);
           throw err;
         }
-        return result;
       });
     } catch (err) {
       await handleWorkerErrors(job, err, logContext);
