@@ -1,6 +1,6 @@
 import Queue from 'bull';
 import { addDeleteFileToQueue, s3Queue } from './s3Queue';
-import { FILE_STATUSES } from '../constants';
+import { FILE_STATUSES, S3_ACTIONS } from '../constants';
 import db, { File } from '../models';
 
 jest.mock('bull');
@@ -42,11 +42,9 @@ describe('s3 queue manager tests', () => {
 
   it('calls s3.add', async () => {
     await addDeleteFileToQueue(file.id, file.key);
-    expect(Queue).toHaveBeenCalledWith('s3', 'redis://undefined:6379', expect.objectContaining({
-      maxRetriesPerRequest: 50,
-      redis: { password: mockPassword },
-      retryStrategy: expect.any(Function),
-    }));
-    expect(s3Queue.add).toHaveBeenCalled();
+    expect(s3Queue.add).toHaveBeenCalledWith(
+      S3_ACTIONS.DELETE_FILE,
+      { fileId: file.id, fileKey: file.key, key: S3_ACTIONS.DELETE_FILE },
+    );
   });
 });
