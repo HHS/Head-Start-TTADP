@@ -34,7 +34,7 @@ import {
   submitReport,
   saveReport,
   getReport,
-  getRecipients,
+  getRecipientsForAR,
   createReport,
   getCollaborators,
   getApprovers,
@@ -278,7 +278,7 @@ function ActivityReport({
         }
 
         const apiCalls = [
-          getRecipients(report.regionId),
+          getRecipientsForAR(report.regionId, reportId.current),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGroupsForActivityReport(report.regionId),
