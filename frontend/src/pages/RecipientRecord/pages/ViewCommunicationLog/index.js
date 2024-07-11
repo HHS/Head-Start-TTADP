@@ -2,7 +2,6 @@ import React, { useEffect, useState, useContext } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert } from '@trussworks/react-uswds';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Link } from 'react-router-dom';
 import Container from '../../../../components/Container';
@@ -13,6 +12,7 @@ import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
+import SomethingWentWrongContext from '../../../../SomethingWentWrongContext';
 
 export default function ViewCommunicationLog({ match, recipientName }) {
   const {
@@ -24,9 +24,9 @@ export default function ViewCommunicationLog({ match, recipientName }) {
   } = match;
 
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [log, setLog] = useState();
-  const [error, setError] = useState();
 
   const isAuthor = log && log.author && log.author.id === user.id;
 
@@ -37,27 +37,19 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         const response = await getCommunicationLogById(regionId, communicationLogId);
         setLog(response);
       } catch (err) {
-        setError('There was an error fetching the communication log.');
+        setErrorResponseCode(err.status);
       } finally {
         setIsAppLoading(false);
       }
     }
 
-    if (!log && !error) {
+    if (!log) {
       fetchLog();
     }
-  }, [communicationLogId, error, log, regionId, setIsAppLoading]);
+  }, [communicationLogId, log, regionId, setIsAppLoading, setErrorResponseCode]);
 
-  if (!log && !error) {
+  if (!log) {
     return null;
-  }
-
-  if (error) {
-    return (
-      <Alert type="error">
-        {error}
-      </Alert>
-    );
   }
 
   return (

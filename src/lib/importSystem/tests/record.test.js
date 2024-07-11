@@ -1,9 +1,6 @@
 import {
   Sequelize,
   Op,
-  where,
-  cast,
-  col,
 } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -68,6 +65,7 @@ describe('record', () => {
     // Clear all instances and calls to constructor and all methods:
     jest.clearAllMocks();
   });
+
   describe('getPriorFile', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -99,6 +97,7 @@ describe('record', () => {
         // eslint-disable-next-line @typescript-eslint/quotes
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
+        lock: true,
       });
       expect(result).toBe(mockName);
     });
@@ -128,6 +127,7 @@ describe('record', () => {
         // eslint-disable-next-line @typescript-eslint/quotes
         order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
         raw: true,
+        lock: true,
       });
       expect(result).toBeNull();
     });
@@ -167,6 +167,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
 
@@ -188,6 +189,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
 
@@ -206,6 +208,7 @@ describe('record', () => {
           downloadAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
         },
+        lock: true,
       });
     });
   });
@@ -228,6 +231,7 @@ describe('record', () => {
           processAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
         },
+        lock: true,
       });
       expect(result).toBe(true);
     });
@@ -249,6 +253,7 @@ describe('record', () => {
           processAttempts: { [Op.lt]: 5 },
           status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
         },
+        lock: true,
       });
       expect(result).toBe(false);
     });
@@ -309,6 +314,7 @@ describe('record', () => {
         },
         order: [['createdAt', 'ASC']],
         limit: 1,
+        lock: true,
       });
 
       expect(result).toEqual(mockImportFile);
@@ -361,6 +367,7 @@ describe('record', () => {
           ftpFileInfo: expect.any(Object),
           status: IMPORT_STATUSES.IDENTIFIED,
         }),
+        { lock: true },
       );
     });
 
@@ -383,6 +390,7 @@ describe('record', () => {
             },
           },
           individualHooks: true,
+          lock: true,
         },
       );
     });
@@ -404,6 +412,7 @@ describe('record', () => {
           status: [IMPORT_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -514,7 +523,6 @@ describe('record', () => {
     });
 
     it('should delete removed files from the database when there are removed files', async () => {
-      // Mock the database response for current import data files
       ImportDataFile.findAll.mockResolvedValue(currentImportDataFiles);
 
       await recordAvailableDataFiles(importFileId, [availableFiles[0]]);
@@ -713,7 +721,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -722,7 +730,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash, status },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -730,8 +738,8 @@ describe('record', () => {
       await setImportFileHash(importFileId, newHash);
 
       expect(ImportFile.update).toHaveBeenCalledWith(
-        expect.not.objectContaining({ status }),
-        expect.any(Object),
+        { hash: newHash },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -740,7 +748,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: null },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 
@@ -780,6 +788,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -797,6 +806,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -814,6 +824,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -832,6 +843,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -848,6 +860,7 @@ describe('record', () => {
       expect(ImportFile.update).toHaveBeenCalledWith(expectedUpdateArg, {
         where: { id: importFileId },
         individualHooks: true,
+        lock: true,
       });
     });
 
@@ -873,6 +886,7 @@ describe('record', () => {
       {
         where: { id: importDataFileId },
         individualHooks: true,
+        lock: true,
       },
     );
 
@@ -886,7 +900,7 @@ describe('record', () => {
       // Check that ImportDataFile.update was called correctly
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: newStatus },
-        { where: { id: importFileId }, individualHooks: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true },
       );
     });
 

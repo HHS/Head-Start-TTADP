@@ -200,14 +200,14 @@ export async function deleteGoal(req, res) {
     }));
 
     if (!permissions.every((permission) => permission)) {
-      res.sendStatus(401);
+      res.sendStatus(httpCodes.UNAUTHORIZED);
       return;
     }
 
     const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
-      res.sendStatus(404);
+      res.sendStatus(httpCodes.NOT_FOUND);
       return;
     }
 

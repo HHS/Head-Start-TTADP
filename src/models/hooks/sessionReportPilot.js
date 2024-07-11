@@ -133,17 +133,9 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
 };
 
 const extractEventData = (sessionReport) => {
-  let event;
-  let recipients;
-
-  if (sessionReport && sessionReport.data) {
-    const data = (typeof sessionReport.data.val === 'string')
-      ? JSON.parse(sessionReport.data.val)
-      : sessionReport.data;
-
-    event = data.event;
-    recipients = data.recipients;
-  }
+  const data = sessionReport?.data?.val ? JSON.parse(sessionReport.data.val) : sessionReport?.data;
+  const event = data?.event;
+  const recipients = Array.isArray(data?.recipients) ? data.recipients : [data?.recipients].filter(Boolean);
 
   return { event, recipients };
 };
@@ -302,13 +294,14 @@ export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
     }
   } catch (error) {
     auditLogger.error(`Error in createGoalsForSessionRecipientsIfNecessary: ${error}`);
+    throw error;
   }
 };
 
 export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options) => {
   const processSessionReport = async (sessionReport) => {
     let event;
-    let nextSessionRecipients;
+    let nextSessionRecipients = [];
 
     if (sessionReport && sessionReport.data) {
       const data = (typeof sessionReport.data.val === 'string')
@@ -316,7 +309,7 @@ export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sess
         : sessionReport.data;
 
       event = data.event;
-      nextSessionRecipients = data.recipients;
+      nextSessionRecipients = data.recipients || [];
     }
 
     if (!event || !event.id || !sessionReport || !sessionReport.id) return;

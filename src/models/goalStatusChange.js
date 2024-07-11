@@ -33,7 +33,7 @@ export default (sequelize, DataTypes) => {
     },
     userId: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
       references: {
         model: {
           tableName: 'users',
@@ -44,11 +44,11 @@ export default (sequelize, DataTypes) => {
     },
     userName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     userRoles: {
       type: DataTypes.ARRAY(DataTypes.STRING),
-      allowNull: false,
+      allowNull: true,
     },
     oldStatus: {
       type: DataTypes.STRING,
@@ -56,11 +56,11 @@ export default (sequelize, DataTypes) => {
     },
     newStatus: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     reason: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     context: {
       type: DataTypes.TEXT,
