@@ -11,39 +11,50 @@ import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 import { draftObject } from './testHelpers';
 
+// Mock addDeleteFileToQueue from src/services/s3Queue.js
+jest.mock('../../services/s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
+
 describe('propagateDestroyToFile', () => {
+  beforeAll(async () => {
+    await sequelize.authenticate();
+  });
+
   afterAll(async () => {
     await sequelize.close();
   });
 
   it('should delete the file if it is not associated with any other models', async () => {
-    const file = await File.create({
-      originalFileName: 'test.pdf',
-      key: 'test.pdf',
-      status: FILE_STATUSES.UPLOADED,
-      fileSize: 123445,
-    });
-
-    const mockInstance = {
-      fileId: file.id,
-    };
-
+    // eslint-disable-next-line global-require
+    const { addDeleteFileToQueue } = require('../../services/s3Queue');
     const transaction = await sequelize.transaction();
 
-    const mockOptions = {
-      transaction,
-    };
+    try {
+      const file = await File.create({
+        originalFileName: 'test.pdf',
+        key: 'test.pdf',
+        status: FILE_STATUSES.UPLOADED,
+        fileSize: 123445,
+      }, { transaction });
 
-    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
+      const mockInstance = { fileId: file.id };
+      const mockOptions = { transaction };
 
-    const foundFile = await File.findOne({
-      where: { id: file.id },
-      transaction,
-    });
+      await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-    expect(foundFile).toBeNull();
+      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+      const foundFile = await File.findOne({
+        where: { id: file.id },
+        transaction,
+      });
 
-    await transaction.commit();
+      expect(foundFile).toBeNull();
+      await transaction.commit();
+    } catch (error) {
+      await transaction.rollback();
+      throw error;
+    }
   });
 
   it('won\'t destroy the file if its on a report', async () => {
