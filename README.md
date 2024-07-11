@@ -47,11 +47,6 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
-We use an AWS OpenSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
-* `AWS_ELASTICSEARCH_ENDPOINT=http://opensearch-node1:9200`
-* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
-* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
-
 #### Apple Silicon & Chromium
 On a Mac with Apple Silicon, puppeteer install fails with the message:
 ```"The chromium binary is not available for arm64"```
@@ -73,11 +68,6 @@ You can also run build commands directly on your host (without docker). Make sur
 
 You must also install and run minio locally to use the file upload functionality. Please comment out `S3_ENDPOINT=http://minio:9000` and uncomment `S3_ENDPOINT=http://localhost:9000` in your .env file.
 
-We use an AWS OpensSearch docker image (Elasticsearch fork) and require that the following variables get added to the env file.
-* `AWS_ELASTICSEARCH_ENDPOINT=http://localhost:9200`
-* `AWS_ELASTICSEARCH_ACCESS_KEY=admin`
-* `AWS_ELASTICSEARCH_SECRET_KEY=admin`
-
 #### Precommit hooks
 
 Our CI will fail if code is committed that doesn't pass our linter (eslint). This repository contains a pre-commit hook that runs eslint's built in "fix" command  on all staged javascript files so that any autofixable errors will be fixed. The precommit hook, in .gihooks/pre-commit, also contains code to auto-format our terraform files, which you can read more about [here](https://github.com/adhocteam/Head-Start-TTADP/tree/main/terraform#set-up).
@@ -97,12 +87,12 @@ If you are already using git hooks, add the .githooks/pre-commit contents to you
 ### Building Tests
 
 #### Helpful notes on writing (backend) tests
-It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary. 
+It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary.
 
 With that in mind, there a few "gotchas" to remember to help write sanitary tests.
 - ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete.
 - When you call ```Model.destroy``` you should be adding  ```individualHooks: true``` to the Sequelize options. Often this is required for proper cleanup. There may be times when this is undesirable; this should be indicated with a comment.
-- Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped() 
+- Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped()
 - There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.
 - The next section details additional tools, found in `src/lib/programmaticTransaction.ts`, which make maintaining a clean database state when writing tests a breeze.
 
@@ -627,4 +617,3 @@ ex:
 [backend]:http://localhost:8080
 [API documentation]:http://localhost:5003
 [minio]:http://localhost:3000
-[elasticsearch]:http://localhost:9200
