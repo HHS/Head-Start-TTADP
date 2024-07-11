@@ -38,7 +38,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
       message: '403 error - forbidden',
       title: 'Restricted access.',
       body: (
-        <p>
+        <p className="usa-prose">
           Sorry, but it looks like you&apos;re trying to access a restricted area. Here&apos;s what you can do:
           <ul>
             <li>
@@ -76,7 +76,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
       message: '404 error',
       title: 'Page not found.',
       body: (
-        <p>
+        <p className="usa-prose">
           Well, this is awkward. It seems like the page you&apos;re looking for has taken a detour into the unknown. Here&apos;s what you can do:
           <ul>
             <li>
@@ -101,7 +101,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
       message: null,
       title: 'Something went wrong.',
       body: (
-        <p>
+        <p className="usa-prose">
           Well, this is awkward. It seems like the page you&apos;re looking for has taken a detour into the unknown. Here&apos;s what you can do:
           <ul>
             <li>
