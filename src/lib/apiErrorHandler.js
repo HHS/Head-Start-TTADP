@@ -89,8 +89,8 @@ export const handleError = async (req, res, error, logContext) => {
   // eslint-disable-next-line max-len
   if (error instanceof Sequelize.ConnectionError || error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     const pool = sequelize?.connectionManager?.pool;
-    const usedConnections = pool ? pool.used.length : null;
-    const waitingConnections = pool ? pool.pending.length : null;
+    const usedConnections = pool ? pool?.used?.length : null;
+    const waitingConnections = pool ? pool?.pending?.length : null;
     logger.error(`${logContext.namespace} Connection Pool: Used Connections - ${usedConnections}, Waiting Connections - ${waitingConnections}`);
   }
 
