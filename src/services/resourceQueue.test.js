@@ -1,4 +1,5 @@
 import Queue from 'bull';
+import { RESOURCE_ACTIONS } from '../constants';
 import { addGetResourceMetadataToQueue, resourceQueue } from './resourceQueue';
 import db, { Resource } from '../models';
 
@@ -36,11 +37,22 @@ describe('Resource queue manager tests', () => {
 
   it('calls resource.add', async () => {
     await addGetResourceMetadataToQueue(resource.id, resource.key);
-    expect(Queue).toHaveBeenCalledWith('resource', 'redis://undefined:6379', expect.objectContaining({
-      maxRetriesPerRequest: 50,
-      redis: { password: mockPassword },
-      retryStrategy: expect.any(Function),
-    }));
-    expect(resourceQueue.add).toHaveBeenCalled();
+    expect(resourceQueue.add).toHaveBeenCalledWith(
+      RESOURCE_ACTIONS.GET_METADATA,
+      {
+        resourceId: resource.id,
+        resourceUrl: resource.key,
+        key: RESOURCE_ACTIONS.GET_METADATA,
+      },
+      {
+        attempts: process.env.RESOURCE_METADATA_RETRIES || 3,
+        backoff: {
+          type: 'exponential',
+          delay: process.env.RESOURCE_METADATA_BACKOFF_DELAY || 10000,
+        },
+        removeOnComplete: true,
+        removeOnFail: true,
+      },
+    );
   });
 });
