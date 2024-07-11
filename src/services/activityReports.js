@@ -1144,7 +1144,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
             model: Program,
             as: 'programs',
             attributes: ['programType'],
-            required: true,
+            required: false,
           },
           {
             model: Recipient,
