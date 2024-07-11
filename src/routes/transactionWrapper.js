@@ -12,7 +12,6 @@ const logContext = {
 
 export default function transactionWrapper(originalFunction, context = '') {
   return async function wrapper(req, res, next) {
-    let error;
     const startTime = Date.now();
     try {
       // eslint-disable-next-line @typescript-eslint/return-await
@@ -25,15 +24,14 @@ export default function transactionWrapper(originalFunction, context = '') {
           const duration = Date.now() - startTime;
           auditLogger.info(`${originalFunction.name} ${context} execution time: ${duration}ms`);
           removeFromAuditedTransactions();
+          return result;
         } catch (err) {
           auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${err.message}`);
-          error = err;
           throw err;
         }
-        return result;
       });
     } catch (err) {
-      return handleErrors(req, res, error || err, logContext);
+      return handleErrors(req, res, err, logContext);
     }
   };
 }
