@@ -14,6 +14,7 @@ import {
   ActivityReportCollaborator,
   ActivityReportFile,
   sequelize,
+  Sequelize,
   ActivityRecipient,
   File,
   Grant,
@@ -1125,33 +1126,54 @@ export async function setStatus(report, status) {
  * @param {number} [regionId] - A region id to query against
  * @returns {*} Grants and Other entities
  */
-export async function possibleRecipients(regionId) {
-  const where = { status: 'Active', regionId };
-
+export async function possibleRecipients(regionId, activityReportId = null) {
   const grants = await Recipient.findAll({
-    attributes: ['id', 'name'],
+    attributes: [
+      'id',
+      'name',
+    ],
     order: ['name'],
-    include: [{
-      where,
-      model: Grant,
-      as: 'grants',
-      attributes: [['id', 'activityRecipientId'], 'name', 'number'],
-      include: [{
-        model: Recipient,
-        as: 'recipient',
-      },
+    include: [
       {
-        model: Program,
-        as: 'programs',
-        attributes: ['programType'],
+        model: Grant,
+        as: 'grants',
+        attributes: ['number', ['id', 'activityRecipientId'], 'name'],
+        required: true,
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: ['programType'],
+            required: true,
+          },
+          {
+            model: Recipient,
+            as: 'recipient',
+            required: true,
+          },
+          {
+            model: ActivityRecipient,
+            as: 'activityRecipients',
+            attributes: [],
+            required: false,
+          },
+        ],
       },
+    ],
+    where: {
+      '$grants.regionId$': regionId,
+      [Op.or]: [
+        { '$grants.status$': 'Active' },
+        { '$grants->activityRecipients.activityReportId$': activityReportId },
       ],
-    }],
+    },
   });
+
   const otherEntities = await OtherEntity.findAll({
     raw: true,
     attributes: [['id', 'activityRecipientId'], 'name'],
   });
+
   return { grants, otherEntities };
 }
 
