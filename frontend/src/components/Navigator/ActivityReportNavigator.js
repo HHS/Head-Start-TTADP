@@ -16,7 +16,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 
@@ -65,28 +65,6 @@ export function getPromptErrors(promptTitles, errors) {
 }
 
 export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
-
-export const packageGoals = (goals, goal, grantIds, prompts) => {
-  const packagedGoals = [
-    // we make sure to mark all the read only goals as "ActivelyEdited: false"
-    ...goals.map((g) => ({
-      ...g,
-      grantIds,
-      isActivelyBeingEditing: false,
-      prompts: grantIds.length < 2 ? g.prompts : [],
-    })),
-  ];
-
-  if (goal && goal.name) {
-    packagedGoals.push({
-      ...goal,
-      grantIds,
-      prompts: grantIds.length < 2 ? prompts : [],
-    });
-  }
-
-  return packagedGoals;
-};
 
 /**
  * @summary checks to see if the tta provided field contains the cursor

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -8,7 +8,6 @@ import { Switch, Route } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
-import { HTTPError } from '../../fetchers';
 import './index.scss';
 import Profile from './pages/Profile';
 import TTAHistory from './pages/TTAHistory';
@@ -23,6 +22,7 @@ import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export function PageWithHeading({
   children,
@@ -34,7 +34,6 @@ export function PageWithHeading({
   slug,
 }) {
   const headerMargin = backLink.props.children ? 'margin-top-0' : 'margin-top-5';
-
   return (
     <div>
       <RecipientTabs region={regionId} recipientId={recipientId} backLink={backLink} />
@@ -77,6 +76,7 @@ PageWithHeading.defaultProps = {
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const { recipientId, regionId } = match.params;
 
   const [loading, setLoading] = useState(true);
@@ -92,7 +92,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
     recipientName: '',
   });
 
-  const [error, setError] = useState();
   const [canMergeGoals, setCanMergeGoals] = useState(false);
 
   useEffect(() => {
@@ -124,11 +123,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           });
         }
       } catch (e) {
-        if (e instanceof HTTPError && e.status === 404) {
-          setError('Recipient record not found');
-        } else {
-          setError('There was an error fetching recipient data');
-        }
+        setErrorResponseCode(e.status);
       } finally {
         setLoading(false);
       }
@@ -162,7 +157,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               slug="tta-history"
               hasAlerts={hasAlerts}
@@ -181,7 +175,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
@@ -202,7 +195,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={`TTA goals for ${recipientNameWithRegion}`}
               slug="print-goals"
               hasAlerts={hasAlerts}
@@ -235,7 +227,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
@@ -327,7 +318,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
@@ -345,7 +335,6 @@ export default function RecipientRecord({ match, hasAlerts }) {
             <PageWithHeading
               regionId={regionId}
               recipientId={recipientId}
-              error={error}
               recipientNameWithRegion={recipientNameWithRegion}
               hasAlerts={hasAlerts}
             >
