@@ -11,21 +11,27 @@ import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
+import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 describe('TrainingReportForm', () => {
   const history = createMemoryHistory();
   const sessionsUrl = '/api/session-reports/eventId/1234';
 
-  const renderTrainingReportForm = (trainingReportId, currentPage) => render(
+  const renderTrainingReportForm = (
+    trainingReportId, currentPage,
+    setErrorResponseCode = jest.fn,
+  ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <TrainingReportForm match={{
-            params: { currentPage, trainingReportId },
-            path: currentPage,
-            url: currentPage,
-          }}
-          />
+          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
+            <TrainingReportForm match={{
+              params: { currentPage, trainingReportId },
+              path: currentPage,
+              url: currentPage,
+            }}
+            />
+          </SomethingWentWrong.Provider>
         </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
@@ -63,6 +69,15 @@ describe('TrainingReportForm', () => {
     });
 
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
+  });
+
+  it('calls setErrorResponseCode when an error occurs', async () => {
+    fetchMock.get('/api/events/id/1', 500);
+    const setErrorResponseCode = jest.fn();
+    act(() => {
+      renderTrainingReportForm('1', 'event-summary', setErrorResponseCode);
+    });
+    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
   });
 
   it('redirects to event summary', async () => {
@@ -143,16 +158,6 @@ describe('TrainingReportForm', () => {
 
     jest.advanceTimersByTime(30000);
     expect(fetchMock.called('/api/events/id/123')).toBe(true);
-  });
-
-  it('displays error when event report fails to load', async () => {
-    fetchMock.get('/api/events/id/123', 500);
-    act(() => {
-      renderTrainingReportForm('123', 'event-summary');
-    });
-
-    expect(fetchMock.called('/api/events/id/123')).toBe(true);
-    expect(await screen.findByText(/error fetching training report/i)).toBeInTheDocument();
   });
 
   it('displays "no training report id provided" error', async () => {

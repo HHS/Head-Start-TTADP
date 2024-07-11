@@ -59,6 +59,7 @@ const getPriorFile = async (
     // eslint-disable-next-line @typescript-eslint/quotes
     order: [[Sequelize.literal(`"ftpFileInfo" ->> 'name'`), 'DESC']],
     raw: true,
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   // Check if a file was found
@@ -86,6 +87,7 @@ const importHasMoreToDownload = async (
       downloadAttempts: { [Op.lt]: 5 },
       status: [IMPORT_STATUSES.IDENTIFIED, IMPORT_STATUSES.COLLECTION_FAILED],
     },
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   return (pendingFiles?.length || 0) >= 1;
@@ -107,6 +109,7 @@ const importHasMoreToProcess = async (
       processAttempts: { [Op.lt]: 5 },
       status: [IMPORT_STATUSES.COLLECTED, IMPORT_STATUSES.PROCESSING_FAILED],
     },
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   return (pendingFiles?.length || 0) >= 1;
@@ -190,6 +193,7 @@ const getNextFileToProcess = async (
           literal(`"updatedAt" + INTERVAL '${(avg.seconds || 0) + Math.floor((avg.milliseconds + totalStdDevMilliseconds) / 1000)} seconds ${(avg.milliseconds + totalStdDevMilliseconds) % 1000} milliseconds' > NOW()`),
         ],
       },
+      lock: true, // Lock the row for update to prevent race conditions
     },
   );
 
@@ -235,6 +239,7 @@ const getNextFileToProcess = async (
       ['createdAt', 'ASC'],
     ],
     limit: 1, // Limit the result to 1 record
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   return importFile;
@@ -265,12 +270,13 @@ const recordAvailableFiles = async (
       importId,
     },
     raw: true,
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   const fileMatches = (currentImportFile, availableFile) => (
     importId === currentImportFile.importId
-    && availableFile.fileInfo.path === currentImportFile.fileInfo.path
-    && availableFile.fileInfo.name === currentImportFile.fileInfo.name
+    && availableFile?.fileInfo?.path === currentImportFile?.fileInfo?.path
+    && availableFile?.fileInfo?.name === currentImportFile?.fileInfo?.name
   );
 
   // Separate the available files into new, matched, and removed files
@@ -298,6 +304,9 @@ const recordAvailableFiles = async (
           ftpFileInfo: newFile.fileInfo,
           status: IMPORT_STATUSES.IDENTIFIED,
         },
+        {
+          lock: true, // Lock the row for update to prevent race conditions
+        },
       ))
       : []),
     // Update matched files in the database if there are any
@@ -317,6 +326,7 @@ const recordAvailableFiles = async (
             },
           },
           individualHooks: true,
+          lock: true, // Lock the row for update to prevent race conditions
         },
       ))
       : []),
@@ -329,6 +339,7 @@ const recordAvailableFiles = async (
           status: [IMPORT_STATUSES.IDENTIFIED],
         },
         individualHooks: true,
+        lock: true, // Lock the row for update to prevent race conditions
       })
       : Promise.resolve()),
   ]);
@@ -519,6 +530,7 @@ const logFileToBeCollected = async (
       attributes: ['key'],
       require: false,
     }],
+    lock: true, // Lock the row for update to prevent race conditions
   });
 
   if (!importFile.fileId) {
@@ -552,6 +564,7 @@ const logFileToBeCollected = async (
             },
           },
         },
+        lock: true, // Lock the row for update to prevent race conditions
       },
     );
   } else {
@@ -572,6 +585,7 @@ const logFileToBeCollected = async (
             },
           },
         },
+        lock: true, // Lock the row for update to prevent race conditions
       },
     );
   }
@@ -601,6 +615,7 @@ const setImportFileHash = async (
   {
     where: { id: importFileId }, // Specify the import file to update based on its ID
     individualHooks: true, // Enable individual hooks for each updated record
+    lock: true, // Lock the row for update to prevent race conditions
   },
 );
 
@@ -624,6 +639,7 @@ const setImportFileStatus = async (
   {
     where: { id: importFileId }, // Specify the import file to update based on its ID
     individualHooks: true, // Enable individual hooks for each updated record
+    lock: true, // Lock the row for update to prevent race conditions
   },
 );
 
