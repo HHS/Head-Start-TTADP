@@ -3,12 +3,14 @@ import {
   act,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { MemoryRouter } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
+import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 const endpoint = join('/', 'api', 'groups');
 
@@ -17,11 +19,13 @@ describe('Group', () => {
     fetchMock.restore();
   });
 
-  const renderGroup = (groupId) => {
+  const renderGroup = (groupId, setErrorResponseCode = jest.fn()) => {
     render(
       <MemoryRouter>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <Group match={{ params: { groupId }, path: '', url: '' }} />
+          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
+            <Group match={{ params: { groupId }, path: '', url: '' }} />
+          </SomethingWentWrong.Provider>
         </AppLoadingContext.Provider>
       </MemoryRouter>,
     );
@@ -76,35 +80,36 @@ describe('Group', () => {
 
   it('handles null response', async () => {
     fetchMock.get(join(endpoint, '1'), null);
-
-    act(() => {
-      renderGroup(1);
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderGroup(1, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(null);
+      });
     });
-
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
   });
 
   it('handles 404', async () => {
     fetchMock.get(join(endpoint, '1'), 404);
-
-    act(() => {
-      renderGroup(1);
+    const setErrorResponseCode = jest.fn();
+    act(async () => {
+      renderGroup(1, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+      });
     });
-
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
   });
 
   it('handles 500', async () => {
     fetchMock.get(join(endpoint, '1'), 500);
 
-    act(() => {
-      renderGroup(1);
+    const setErrorResponseCode = jest.fn();
+    await act(async () => {
+      renderGroup(1, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+      });
     });
-
-    const error = await screen.findByText('There was an error fetching your group');
-    expect(error).toBeInTheDocument();
   });
 
   it('handles no group id', async () => {
