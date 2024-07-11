@@ -2374,9 +2374,9 @@
   integrity sha512-L7z9BgrNEcYyUYtF+HaEfiS5ebkh9jXqbszz7pC0hRBPaatV0XjSD3+eHrpqFemQfgwiFF0QPIarnIihIDn7OA==
 
 "@ttahub/common@^2.1.5":
-  version "2.1.5"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.1.5.tgz#1e9550c507a6e4422eae72a923eed7c18613e827"
-  integrity sha512-fy2jgE7xdaifZsxF+uiqwGpsxa0UchjPUNI2BI84Rw72FiTAglpkfn4wy4yO82NW7PyIa9CbICa4sP+XcKwKMg==
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.1.6.tgz#259d98201d394eafce7686f8334768091af4655d"
+  integrity sha512-/X/suR8B5aKYuVXXRHa1gjBTMzzz7vyXDCwATkZ4McQhoil8dtzndYgACDFY5bC+ZsEIfqiTcDQ+Ssle1N9mbA==
 
 "@turf/area@^6.4.0":
   version "6.5.0"
