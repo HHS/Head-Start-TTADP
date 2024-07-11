@@ -780,7 +780,6 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           // The 'userId' must not be equal to the 'userId' of the 'instance'
           userId: { [Op.not]: instance.userId },
         },
-        transaction: options.transaction,
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the first query
       sequelize.models.ActivityReportGoal.findAll({ // Find all ActivityReportGoals models
@@ -789,7 +788,6 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           // Filter the models based on the 'activityReportId' matching the 'id' of the 'instance'
           activityReportId: instance.id,
         },
-        transaction: options.transaction,
         raw: true, // Return raw data instead of Sequelize instances
       }), // End of the second query
       sequelize.models.ActivityReportObjective.findAll({ // Find all ActivityReportObjective models
@@ -799,7 +797,6 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
           activityReportId: instance.id,
         },
         raw: true, // Return raw data instead of Sequelize instances
-        transaction: options.transaction,
       }), // End of the second query
     ]);
 
