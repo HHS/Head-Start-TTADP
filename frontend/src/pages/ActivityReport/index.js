@@ -34,13 +34,14 @@ import {
   submitReport,
   saveReport,
   getReport,
-  getRecipientsForAR,
+  getRecipientsForExistingAR,
   createReport,
   getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
   getGroupsForActivityReport,
+  getRecipients,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
@@ -277,8 +278,17 @@ function ActivityReport({
           };
         }
 
+        const getRecips = async () => {
+          if (reportId.current && reportId.current !== 'new') {
+            return getRecipientsForExistingAR(report.regionId, reportId.current);
+          }
+
+          return getRecipients(report.regionId);
+        };
+
         const apiCalls = [
-          getRecipientsForAR(report.regionId, reportId.current),
+          getRecips(),
+          // getRecipientsForAR(report.regionId, reportId.current),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGroupsForActivityReport(report.regionId),
