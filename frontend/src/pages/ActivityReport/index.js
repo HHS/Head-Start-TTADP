@@ -288,7 +288,6 @@ function ActivityReport({
 
         const apiCalls = [
           getRecips(),
-          // getRecipientsForAR(report.regionId, reportId.current),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGroupsForActivityReport(report.regionId),
