@@ -14,9 +14,6 @@ import {
   processResourceQueue,
 } from './services/resourceQueue';
 import {
-  processAWSElasticsearchQueue,
-} from './lib/awsElasticSearch/queueManager';
-import {
   processS3Queue,
 } from './services/s3Queue';
 import {
@@ -35,9 +32,6 @@ async function start(context: { id: number }) {
 
   // File Scanning Queue
   processScanQueue();
-
-  // AWS Elasticsearch Queue
-  processAWSElasticsearchQueue();
 
   // S3 Queue.
   processS3Queue();
