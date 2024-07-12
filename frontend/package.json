@@ -150,10 +150,9 @@
   "babel": {
     "presets": [
       "@babel/preset-react",
-      "react-app",
-      {
+      ["react-app", {
         "absoluteRuntime": false
-      }
+      }]
     ]
   },
   "browserslist": {
