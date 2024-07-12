@@ -62,5 +62,6 @@ router.put('/:activityReportId/review', checkActivityReportIdParam, transactionW
 router.put('/:activityReportId/submit', checkActivityReportIdParam, transactionWrapper(submitReport));
 router.put('/:activityReportId/unlock', checkActivityReportIdParam, transactionWrapper(unlockReport));
 router.put('/:activityReportId/goals/edit', checkActivityReportIdParam, transactionWrapper(setGoalAsActivelyEdited));
+router.get('/:activityReportId/activity-recipients', transactionWrapper(getActivityRecipientsForExistingReport));
 
 export default router;

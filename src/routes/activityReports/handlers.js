@@ -724,9 +724,9 @@ export async function getActivityRecipients(req, res) {
 
 export async function getActivityRecipientsForExistingReport(req, res) {
   const { region } = req.query;
-  const { reportId } = req.params;
+  const { activityReportId } = req.params;
   const targetRegion = parseInt(region, DECIMAL_BASE);
-  const activityRecipients = await possibleRecipients(targetRegion, reportId);
+  const activityRecipients = await possibleRecipients(targetRegion, activityReportId);
   res.json(activityRecipients);
 }
 
