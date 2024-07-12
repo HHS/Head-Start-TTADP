@@ -66,7 +66,8 @@ export default async function logEmailNotification(job, success, result) {
         template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
       default:
-        break;
+        logger.error(`Unknown job name: ${job.name}`);
+        throw new Error(`Unknown job name: ${job.name}`);
     }
     subject = compileFile(template)(report);
     const mailerLogEntry = await createMailerLog({
@@ -80,7 +81,7 @@ export default async function logEmailNotification(job, success, result) {
     });
     return mailerLogEntry;
   } catch (err) {
-    logger.error(`Unable to create a log notification record: ${err}`);
+    logger.error(`Unable to create a log notification record: ${err} ${err.stack}`);
     return null;
   }
 }
