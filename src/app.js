@@ -42,6 +42,10 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 const app = express();
+
+app.disable('x-powered-by');
+app.set('X-Content-Type-Options', 'nosniff');
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
@@ -63,7 +67,16 @@ app.use((req, res, next) => {
   res.locals.nonce = crypto.randomBytes(16).toString('hex');
   const cspMiddleware = helmet.contentSecurityPolicy({
     directives: {
-      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
+      ...omit(
+        helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'upgrade-insecure-requests',
+        'block-all-mixed-content',
+        'script-src',
+        'img-src',
+        'default-src',
+      ),
+      styleSrc: ["'self"],
+      fontSrc: ["'self'"],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
