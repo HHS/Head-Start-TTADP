@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
 import HeaderUserMenu from './HeaderUserMenu';
 
@@ -6,6 +6,7 @@ import logo1x from '../images/eclkc-blocks-logo-43x56.png';
 import logo2x from '../images/eclkc-blocks-logo-86x111.png';
 import ReadOnlyEditor from './ReadOnlyEditor';
 import SiteAlert from './SiteAlert';
+import SomethingWentWrongContext from '../SomethingWentWrongContext';
 
 function Header({
   authenticated,
@@ -13,6 +14,7 @@ function Header({
   areThereUnreadNotifications,
   setAreThereUnreadNotifications,
 }) {
+  const { errorResponseCode, showingNotFound } = useContext(SomethingWentWrongContext);
   const headerClassNames = [
     'smart-hub-header',
     'pin-top',
@@ -49,12 +51,14 @@ function Header({
             <p className="smart-hub-title font-family-sans text-bold margin-y-1">Office of Head Start TTA Hub</p>
           </div>
         </div>
+        { !errorResponseCode && !showingNotFound && (
         <div className="flex-column flex-align-self-center">
           <HeaderUserMenu
             areThereUnreadNotifications={areThereUnreadNotifications}
             setAreThereUnreadNotifications={setAreThereUnreadNotifications}
           />
         </div>
+        )}
       </div>
     </header>
   );
