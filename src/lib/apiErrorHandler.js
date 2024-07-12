@@ -25,7 +25,7 @@ async function logRequestError(req, operation, error, logContext) {
   }
 
   try {
-    const responseBody = typeof error === 'object' && error !== null
+    const responseBody = typeof error === 'object'
       ? { ...error, errorStack: error?.stack }
       : error;
 
@@ -35,6 +35,7 @@ async function logRequestError(req, operation, error, logContext) {
       ...(req.query && typeof req.query === 'object' && Object.keys(req.query).length > 0 && { query: req.query }),
     };
 
+    // Create a request error in the database and get its ID
     const requestErrorId = await createRequestError({
       operation,
       uri: req.originalUrl,
@@ -138,9 +139,12 @@ const logWorkerError = async (job, operation, error, logContext) => {
   ) {
     return 0;
   }
+  if (!error) {
+    return 0;
+  }
 
   try {
-    const responseBody = typeof error === 'object' && error !== null
+    const responseBody = typeof error === 'object'
       ? { ...error, errorStack: error?.stack }
       : error;
 
