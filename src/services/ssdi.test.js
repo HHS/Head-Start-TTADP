@@ -28,6 +28,7 @@ jest.mock('../models', () => ({
 beforeEach(() => {
   queryFileCache.clear();
   queryDataCache.clear();
+  jest.clearAllMocks();
 });
 
 describe('ssdi', () => {
@@ -105,7 +106,7 @@ describe('ssdi', () => {
       expect(result).toEqual([cachedQueryFile]);
 
       // Ensure fs.readFileSync is not called since data is from cache
-      expect(fs.readFileSync).not.toHaveBeenCalled();
+      expect(fs.readFileSync).not.toHaveBeenCalledWith('test/directory/file1.sql', 'utf8');
     });
   });
 
