@@ -16,6 +16,7 @@ import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 describe('SessionReportForm', () => {
   const sessionsUrl = join('/', 'api', 'session-reports');
@@ -37,19 +38,26 @@ describe('SessionReportForm', () => {
     );
   };
 
-  const renderSessionForm = (trainingReportId, currentPage, sessionId) => render(
-    <MemoryRouter initialEntries={[`/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`]}>
-      <Routes>
-        <Route
-          path="/training-report/:trainingReportId/session/:sessionId/:currentPage"
-          element={(<TestComponent currentPage={currentPage} />)}
-        />
-        <Route
-          path="*"
-          element={<div>Training report</div>}
-        />
-      </Routes>
-    </MemoryRouter>,
+  const renderSessionForm = (
+    trainingReportId,
+    currentPage,
+    sessionId,
+    setErrorResponseCode = jest.fn,
+  ) => render(
+    <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+      <MemoryRouter initialEntries={[`/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`]}>
+        <Routes>
+          <Route
+            path="/training-report/:trainingReportId/session/:sessionId/:currentPage"
+            element={(<TestComponent currentPage={currentPage} />)}
+          />
+          <Route
+            path="*"
+            element={<div>Training report</div>}
+          />
+        </Routes>
+      </MemoryRouter>
+    </SomethingWentWrongContext.Provider>,
   );
 
   beforeEach(() => {
@@ -115,21 +123,18 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
   });
 
-  it('handles an error fetching a session', async () => {
+  it('sets response error', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
       url, 500,
     );
-
+    const setErrorResponseCode = jest.fn();
     act(() => {
-      renderSessionForm('1', 'session-summary', '1');
+      renderSessionForm('1', 'session-summary', '1', setErrorResponseCode);
     });
-
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-
-    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
-    expect(screen.getByText(/Error fetching session/i)).toBeInTheDocument();
+    expect(setErrorResponseCode).toHaveBeenCalledWith(500);
   });
 
   it('saves draft', async () => {

@@ -102,6 +102,68 @@ export const unflattenResourcesUsed = (array) => {
   return array.map((value) => ({ value }));
 };
 
+export const packageGoals = (goals, goal, grantIds, prompts) => {
+  const packagedGoals = [
+    // we make sure to mark all the read only goals as "ActivelyEdited: false"
+    ...goals.map((g) => ({
+      goalIds: g.goalIds,
+      status: g.status,
+      endDate: g.endDate,
+      onApprovedAR: g.onApprovedAR,
+      source: g.source,
+      name: g.name,
+      grantIds,
+      id: g.id,
+      isActivelyBeingEditing: false,
+      prompts: grantIds.length < 2 ? g.prompts : [],
+      objectives: g.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+      })),
+    })),
+  ];
+
+  if (goal && goal.name) {
+    packagedGoals.push({
+      goalIds: goal.goalIds,
+      status: goal.status,
+      endDate: goal.endDate,
+      onApprovedAR: goal.onApprovedAR,
+      source: goal.source,
+      name: goal.name,
+      isActivelyBeingEditing: goal.isActivelyBeingEditing,
+      objectives: goal.objectives.map((objective) => ({
+        id: objective.id,
+        isNew: objective.isNew,
+        ttaProvided: objective.ttaProvided,
+        title: objective.title,
+        status: objective.status,
+        resources: objective.resources,
+        topics: objective.topics,
+        files: objective.files,
+        supportType: objective.supportType,
+        courses: objective.courses,
+        closeSuspendReason: objective.closeSuspendReason,
+        closeSuspendContext: objective.closeSuspendContext,
+      })),
+      grantIds,
+      prompts: grantIds.length < 2 ? prompts : [],
+    });
+  }
+
+  return packagedGoals;
+};
+
 // this function takes goals returned from the API and parses them appropriately,
 // setting the editable goal (or at least doing its best guess)
 /**

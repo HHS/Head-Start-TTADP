@@ -30,7 +30,6 @@ Boundary(aws, "AWS GovCloud") {
         ContainerDb(www_db, "PostgreSQL Database", "AWS RDS", "Contains content and configuration for the TTA Hub")
         ContainerDb(www_s3, "AWS S3 bucket", "AWS S3", "Stores static file assets")
         ContainerDb(www_redis, "Redis Database", "AWS Elasticache", "Queue of background jobs to work on")
-        Container(Elasticache, "Elasticache", "AWS Elasticache", "Elasticache for search results")
       }
     }
   }

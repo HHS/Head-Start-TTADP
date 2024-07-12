@@ -4,7 +4,7 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES, GOAL_STATUS } from '../../constants';
+import { GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 import db, {
@@ -41,9 +41,6 @@ import {
   createRecipient,
   createGoal,
 } from '../../testUtils';
-import {
-  deleteIndex,
-} from '../../lib/awsElasticSearch/index';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
@@ -2772,9 +2769,6 @@ describe('filtersToScopes', () => {
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
         individualHooks: true,
       });
-
-      // Delete indexes.
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
     });
 
     it('return correct report text filter search results', async () => {

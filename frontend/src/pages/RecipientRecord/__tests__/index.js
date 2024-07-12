@@ -9,6 +9,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import AppLoadingContext from '../../../AppLoadingContext';
 import { GrantDataProvider } from '../pages/GrantDataContext';
@@ -60,32 +61,34 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(regionId = '45', path = '') {
+  function renderRecipientRecord(regionId = '45', path = '', setErrorResponseCode = jest.fn()) {
     const initialEntries = [`/recipient-tta-records/1/region/${regionId}/${path}`];
     render(
-      <MemoryRouter initialEntries={initialEntries}>
-        <Routes>
-          <Route
-            path="/recipient-tta-records/:recipientId/region/:regionId/*"
-            element={(
-              <UserContext.Provider value={{ user }}>
-                <GrantDataProvider>
-                  <AppLoadingContext.Provider value={
+      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+        <MemoryRouter initialEntries={initialEntries}>
+          <Routes>
+            <Route
+              path="/recipient-tta-records/:recipientId/region/:regionId/*"
+              element={(
+                <UserContext.Provider value={{ user }}>
+                  <GrantDataProvider>
+                    <AppLoadingContext.Provider value={
                     {
                       setIsAppLoading: jest.fn(),
                       setAppLoadingText: jest.fn(),
                       isAppLoading: false,
                     }
                   }
-                  >
-                    <RecipientRecord hasAlerts={false} />
-                  </AppLoadingContext.Provider>
-                </GrantDataProvider>
-              </UserContext.Provider>
+                    >
+                      <RecipientRecord hasAlerts={false} />
+                    </AppLoadingContext.Provider>
+                  </GrantDataProvider>
+                </UserContext.Provider>
       )}
-          />
-        </Routes>
-      </MemoryRouter>,
+            />
+          </Routes>
+        </MemoryRouter>
+      </SomethingWentWrongContext.Provider>,
     );
   }
 
@@ -162,17 +165,11 @@ describe('recipient record page', () => {
   it('handles recipient not found', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('Recipient record not found');
-    expect(error).toBeInTheDocument();
-  });
-
-  it('handles fetch error', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
-    fetchMock.get('/api/recipient/1?region.in[]=45', 500);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('There was an error fetching recipient data');
-    expect(error).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    await act(async () => renderRecipientRecord('45', '', setErrorResponseCode));
+    await waitFor(() => {
+      expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+    });
   });
 
   it('navigates to the profile page', async () => {
@@ -216,15 +213,6 @@ describe('recipient record page', () => {
     act(() => renderRecipientRecord('45', 'rttapa/print'));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);
-  });
-
-  it('navigates to the communication log page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/communication-logs/region/1/log/1', 404);
-    act(() => renderRecipientRecord('45', 'communication/1/view'));
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/There was an error fetching the communication log/i);
   });
 
   it('navigates to the communication log form', async () => {

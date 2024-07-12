@@ -1,0 +1,31 @@
+@use '../colors.scss' as *;
+
+.smart-hub--something-went-wrong h3 {
+    color: $response-code;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body a,
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body button
+ {
+    color: $text-link;
+}
+
+.smart-hub--something-went-wrong .smart-hub--something-went-wrong-body a:visited {
+    color: $text-visited;
+}
+
+.smart-hub--something-went-wrong h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    font-family: Merriweather, serif;
+}
+
+.smart-hub--something-went-wrong-body {
+    max-width: 700px;
+}
+
+.smart-hub--something-went-wrong ul:last-child {
+    margin-bottom: 1rem;
+}

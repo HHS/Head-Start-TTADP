@@ -19,7 +19,6 @@ services:
       - POSTGRES_DB=ttasmarthub
       - DATABASE_URL=postgres://postgres:secretpass@postgres_docker:5432/ttasmarthub
       - SESSION_SECRET=notasecret
-      - FONTAWESOME_NPM_AUTH_TOKEN
       - BYPASS_SOCKETS="true"
     volumes:
       - ".:/app:rw"

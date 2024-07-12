@@ -12,6 +12,7 @@ import moment from 'moment';
 import ActivityReport from './index';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const user = {
   id: 1,
@@ -72,6 +73,7 @@ export const ReportComponent = ({
   currentPage = 'activity-summary',
   showLastUpdatedTime = null,
   userId = 1,
+  setErrorResponseCode = jest.fn(),
 }) => {
   const lx = {
     pathname: `/activity-reports/${id}/${currentPage}`,
@@ -91,25 +93,28 @@ export const ReportComponent = ({
     >
       <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
         <MemoryRouter initialEntries={[`/activity-reports/${id}/${currentPage}`]}>
-          <Routes location={lx}>
-            <Route
-              path="/activity-reports/:activityReportId/:currentPage"
-              element={<ARWithLocation />}
-            />
-          </Routes>
+          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+            <Routes location={lx}>
+              <Route
+                path="/activity-reports/:activityReportId/:currentPage"
+                element={<ARWithLocation />}
+              />
+            </Routes>
+          </SomethingWentWrongContext.Provider>
         </MemoryRouter>
       </UserContext.Provider>
     </AppLoadingContext.Provider>
   );
 };
 
-export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
+export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1, setErrorResponseCode = jest.fn()) => {
   render(
     <ReportComponent
       id={id}
       currentPage={currentPage}
       showLastUpdatedTime={showLastUpdatedTime}
       userId={userId}
+      setErrorResponseCode={setErrorResponseCode}
     />,
   );
 

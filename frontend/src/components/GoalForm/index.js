@@ -36,6 +36,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import VanillaModal from '../VanillaModal';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -112,6 +113,7 @@ export default function GoalForm({
 
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const canView = useMemo(() => user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
@@ -134,9 +136,14 @@ export default function GoalForm({
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const [goal] = await goalsByIdAndRecipient(
-          ids, recipient.id.toString(),
-        );
+        let goal = null;
+        try {
+          [goal] = await goalsByIdAndRecipient(
+            ids, recipient.id.toString(),
+          );
+        } catch (err) {
+          setErrorResponseCode(err.status);
+        }
 
         const selectedGoalGrants = goal.grants ? goal.grants : [goal.grant];
 
@@ -200,6 +207,7 @@ export default function GoalForm({
     ids,
     setAppLoadingText,
     setIsAppLoading,
+    setErrorResponseCode,
   ]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {

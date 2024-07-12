@@ -20,6 +20,7 @@ import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -95,6 +96,7 @@ export default function SessionForm() {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -157,14 +159,14 @@ export default function SessionForm() {
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
       } catch (e) {
-        setError('Error fetching session');
+        setErrorResponseCode(e.status);
       } finally {
         setReportFetched(true);
         setDatePickerKey(`f${Date.now().toString()}`);
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId]);
+  }, [currentPage, hookForm.reset, reportFetched, sessionId, setErrorResponseCode]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);

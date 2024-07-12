@@ -7,6 +7,7 @@ import {
 import { MemoryRouter } from 'react-router';
 import DisplayWithPermission from '../DisplayWithPermission';
 import UserContext from '../../UserContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
@@ -15,9 +16,18 @@ describe('display with permissions', () => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <DisplayWithPermission scopes={scopes} renderNotFound={renderNotFound}>
-            <h1>This is a test</h1>
-          </DisplayWithPermission>
+          <SomethingWentWrongContext.Provider value={{
+            errorResponseCode: null,
+            setErrorResponseCode: jest.fn(),
+            setShowingNotFound: jest.fn(),
+            showingNotFoundL: false,
+          }}
+          >
+
+            <DisplayWithPermission scopes={scopes} renderNotFound={renderNotFound}>
+              <h1>This is a test</h1>
+            </DisplayWithPermission>
+          </SomethingWentWrongContext.Provider>
         </UserContext.Provider>
       </MemoryRouter>,
     );
@@ -69,6 +79,7 @@ describe('display with permissions', () => {
     };
     const renderNotFound = true;
     renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /404 error/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /page not found/i })).toBeVisible();
   });
 });

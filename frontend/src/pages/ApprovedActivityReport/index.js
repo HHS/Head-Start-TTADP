@@ -1,4 +1,6 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, {
+  useEffect, useState, useRef, useContext,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Navigate, useParams } from 'react-router-dom';
 import moment from 'moment-timezone';
@@ -15,12 +17,11 @@ import './index.scss';
 import ApprovedReportV1 from './components/ApprovedReportV1';
 import ApprovedReportV2 from './components/ApprovedReportV2';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export default function ApprovedActivityReport({ user }) {
-  const [notAuthorized, setNotAuthorized] = useState(false);
-  const [somethingWentWrong, setSomethingWentWrong] = useState(false);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const { activityReportId } = useParams();
-
   const [justUnlocked, updatedJustUnlocked] = useState(false);
 
   const [report, setReport] = useState({
@@ -75,7 +76,6 @@ export default function ApprovedActivityReport({ user }) {
 
   useEffect(() => {
     if (!parseInt(activityReportId, 10)) {
-      setSomethingWentWrong(true);
       return;
     }
 
@@ -85,54 +85,13 @@ export default function ApprovedActivityReport({ user }) {
         // review and submit table
         setReport(data);
       } catch (err) {
-        if (err && err.status && (err.status >= 400 && err.status < 500)) {
-          setNotAuthorized(true);
-          return;
-        }
-
-        // eslint-disable-next-line no-console
-        console.log(err);
-        setSomethingWentWrong(true);
+        setErrorResponseCode(err.status);
       }
     }
 
     fetchReport();
-  }, [activityReportId, user]);
+  }, [activityReportId, setErrorResponseCode, user]);
 
-  if (notAuthorized) {
-    return (
-      <>
-        <Helmet>
-          <title>Not Authorized To View Activity Report</title>
-        </Helmet>
-        <div className="usa-alert usa-alert--error no-print" role="alert">
-          <div className="usa-alert__body">
-            <h4 className="usa-alert__heading">Unauthorized</h4>
-            <p className="usa-alert__text">
-              Sorry, you are not allowed to view this report
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  if (somethingWentWrong) {
-    return (
-      <>
-        <Helmet>
-          <title>Error Displaying Activity Report</title>
-        </Helmet>
-        <div className="usa-alert usa-alert--warning no-print">
-          <div className="usa-alert__body">
-            <p className="usa-alert__text">
-              Sorry, something went wrong.
-            </p>
-          </div>
-        </div>
-      </>
-    );
-  }
   const {
     id: reportId,
     displayId,

@@ -14,6 +14,7 @@ import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -22,19 +23,21 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = '') => {
+  const renderMyGroups = (groupId = '', setErrorResponseCode = jest.fn()) => {
     render(
       <UserContext.Provider value={{ user }}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
           <MyGroupsProvider>
-            <MemoryRouter initialEntries={[`/my-groups/${groupId}`]}>
-              <Routes>
-                <Route
-                  path="/my-groups/:groupId?"
-                  element={<MyGroups />}
-                />
-              </Routes>
-            </MemoryRouter>
+            <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+              <MemoryRouter initialEntries={[`/my-groups/${groupId}`]}>
+                <Routes>
+                  <Route
+                    path="/my-groups/:groupId?"
+                    element={<MyGroups />}
+                  />
+                </Routes>
+              </MemoryRouter>
+            </SomethingWentWrongContext.Provider>
           </MyGroupsProvider>
         </AppLoadingContext.Provider>
       </UserContext.Provider>
@@ -220,13 +223,12 @@ describe('MyGroups', () => {
 
   it('handles fetch errors', async () => {
     fetchMock.get('/api/group/1', 500);
-
-    act(() => {
-      renderMyGroups(1);
-    });
-
-    await waitFor(() => {
-      expect(screen.getByText(/There was an error fetching your group/i)).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    await act(async () => {
+      renderMyGroups(1, setErrorResponseCode);
+      await waitFor(() => {
+        expect(setErrorResponseCode).toHaveBeenCalled();
+      });
     });
   });
 

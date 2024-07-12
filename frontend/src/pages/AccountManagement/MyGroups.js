@@ -20,6 +20,7 @@ import {
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
 import AppLoadingContext from '../../AppLoadingContext';
 import QuestionTooltip from '../../components/GoalForm/QuestionTooltip';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const mapSelectedRecipients = (grants) => grants.map((grant) => ({
   value: grant.id,
@@ -73,6 +74,7 @@ export default function MyGroups() {
     },
   });
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const watchIsPrivate = watch(GROUP_FIELD_NAMES.IS_PRIVATE);
   const watchShareWithEveryone = watch(GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE);
   const watchCoOwners = watch(GROUP_FIELD_NAMES.CO_OWNERS);
@@ -111,7 +113,7 @@ export default function MyGroups() {
           });
         }
       } catch (err) {
-        setError('There was an error fetching your group');
+        setErrorResponseCode(err.status);
       } finally {
         setIsAppLoading(false);
       }
@@ -121,7 +123,7 @@ export default function MyGroups() {
     if (groupId && usersFetched && recipientsFetched) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched]);
+  }, [groupId, setIsAppLoading, reset, usersFetched, recipientsFetched, setErrorResponseCode]);
 
   const isCreator = !groupId || (groupCreator && user.id === groupCreator.id);
 

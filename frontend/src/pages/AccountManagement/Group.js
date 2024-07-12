@@ -3,17 +3,15 @@ import { Helmet } from 'react-helmet';
 import { Link, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Alert } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import { fetchGroup } from '../../fetchers/groups';
 import AppLoadingContext from '../../AppLoadingContext';
 import WidgetCard from '../../components/WidgetCard';
 import ReadOnlyField from '../../components/ReadOnlyField';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export default function Group() {
   const { groupId } = useParams();
-
-  const [error, setError] = useState(null);
 
   const [group, setGroup] = useState({
     name: '',
@@ -21,6 +19,7 @@ export default function Group() {
   });
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   useEffect(() => {
     async function getGroup() {
@@ -29,7 +28,7 @@ export default function Group() {
         const existingGroupData = await fetchGroup(groupId);
         setGroup(existingGroupData);
       } catch (err) {
-        setError('There was an error fetching your group');
+        setErrorResponseCode(err.status);
       } finally {
         setIsAppLoading(false);
       }
@@ -39,7 +38,7 @@ export default function Group() {
     if (groupId) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading]);
+  }, [groupId, setIsAppLoading, setErrorResponseCode]);
 
   if (!group) {
     return null;
@@ -85,11 +84,6 @@ export default function Group() {
       <WidgetCard
         header={<h1 className="margin-top-2 margin-bottom-4 font-serif-xl">{group.name}</h1>}
       >
-        {error ? (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        ) : null}
         <ReadOnlyField label="Group owner">
           {group && group.creator ? group.creator.name : ''}
         </ReadOnlyField>
