@@ -190,23 +190,33 @@ describe('API Endpoints', () => {
     });
 
     it('should filter out non-integer regionIds', async () => {
+      const filterRegionsMock = jest.fn((val) => val);
+      Generic.mockImplementation(() => ({
+        filterRegions: filterRegionsMock,
+        getAllAccessibleRegions: jest.fn(() => []),
+      }));
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'src/queries/test/path' })
         .send({ regionIds: [1, 'a', 2, 'b', 3] });
 
       expect(response.status).toBe(200);
-      expect(Generic().filterRegions).toHaveBeenCalledWith([1, 2, 3]);
+      expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3]);
     });
 
     it('should filter regionIds using policy', async () => {
+      const filterRegionsMock = jest.fn((val) => val);
+      Generic.mockImplementation(() => ({
+        filterRegions: filterRegionsMock,
+        getAllAccessibleRegions: jest.fn(() => []),
+      }));
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'src/queries/test/path' })
         .send({ regionIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
-      expect(Generic().filterRegions).toHaveBeenCalledWith([1, 2, 3, 4]);
+      expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3, 4]);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
     });
   });
