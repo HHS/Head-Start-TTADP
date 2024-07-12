@@ -10,6 +10,7 @@ module.exports = {
 
         -- One very old session lacks the regionId value
         -- This finds and sets it
+	DROP TABLE IF EXISTS sr_updates;
         CREATE TEMP TABLE sr_updates
         AS
         WITH updater AS (
