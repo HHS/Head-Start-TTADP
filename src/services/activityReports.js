@@ -299,62 +299,6 @@ export function activityReportByLegacyId(legacyId) {
   });
 }
 
-export function populateRecipientInfo(activityRecipients) {
-  return activityRecipients.map((recipient) => {
-    if (recipient.grant) {
-      const programsToAssign = (recipient.grant.programs || []).map((p) => p.programType);
-
-      // Program Types.
-      const programTypes = programsToAssign && programsToAssign.length > 0
-        ? [...new Set(
-          programsToAssign.filter((p) => (p))
-            .map((p) => (p)).sort(),
-        )] : [];
-
-      Object.defineProperty(
-        recipient.grant,
-        'programTypes',
-        {
-          value: programTypes,
-          enumerable: true,
-        },
-      );
-
-      // Number with Program Types.
-      const numberWithProgramTypes = `${recipient.grant.number} ${programTypes.length > 0 ? ` - ${programTypes.join(', ')}` : ''}`;
-
-      Object.defineProperty(
-        recipient.grant,
-        'numberWithProgramTypes',
-        {
-          value: numberWithProgramTypes,
-          enumerable: true,
-        },
-      );
-
-      // Name.
-      Object.defineProperty(
-        recipient.grant,
-        'name',
-        {
-          value: recipient.name,
-          enumerable: true,
-        },
-      );
-
-      Object.defineProperty(
-        recipient,
-        'name',
-        {
-          value: recipient.name,
-          enumerable: true,
-        },
-      );
-    }
-    return { ...recipient };
-  });
-}
-
 export async function activityReportAndRecipientsById(activityReportId) {
   const arId = parseInt(activityReportId, DECIMAL_BASE);
 
@@ -392,10 +336,7 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
   });
 
-  // Populate Activity Recipient info.
-  const updatedRecipients = populateRecipientInfo(recipients);
-
-  const activityRecipients = updatedRecipients.map((recipient) => {
+  const activityRecipients = recipients.map((recipient) => {
     const name = recipient.otherEntity ? recipient.otherEntity.name : recipient.grant.name;
     const activityRecipientId = recipient.otherEntity
       ? recipient.otherEntity.dataValues.id : recipient.grant.dataValues.id;
@@ -1294,13 +1235,7 @@ async function getDownloadableActivityReports(where, separate = true) {
   };
 
   // Get reports.
-  const reports = await batchQuery(query, 2000);
-
-  // Populate Activity Recipient info.
-  return reports.map((r) => {
-    const updatedRecipients = populateRecipientInfo(r.activityRecipients);
-    return { ...r, activityRecipients: updatedRecipients };
-  });
+  return batchQuery(query, 2000);
 }
 
 export async function getAllDownloadableActivityReports(
