@@ -16,7 +16,6 @@ export default async function changeGoalStatus({
   newStatus,
   reason,
   context,
-  transaction = null,
 }: GoalStatusChangeParams) {
   const [user, goal] = await Promise.all([
     db.User.findOne({
@@ -32,7 +31,6 @@ export default async function changeGoalStatus({
           },
         },
       ],
-      ...(transaction ? { transaction } : {}),
     }),
     db.Goal.findByPk(goalId),
   ]);

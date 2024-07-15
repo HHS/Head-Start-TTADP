@@ -9,6 +9,7 @@ import {
   getReports,
   getReportAlerts,
   getActivityRecipients,
+  getActivityRecipientsForExistingReport,
   getGoals,
   reviewReport,
   resetToDraft,
@@ -40,6 +41,7 @@ router.post('/', transactionWrapper(createReport));
 router.get('/approvers', transactionWrapper(getApprovers));
 router.get('/groups', transactionWrapper(getGroups));
 router.get('/activity-recipients', transactionWrapper(getActivityRecipients));
+router.get('/activity-recipients/:reportId', transactionWrapper(getActivityRecipientsForExistingReport));
 router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
 router.post('/objectives', transactionWrapper(saveOtherEntityObjectivesForReport));
@@ -60,5 +62,6 @@ router.put('/:activityReportId/review', checkActivityReportIdParam, transactionW
 router.put('/:activityReportId/submit', checkActivityReportIdParam, transactionWrapper(submitReport));
 router.put('/:activityReportId/unlock', checkActivityReportIdParam, transactionWrapper(unlockReport));
 router.put('/:activityReportId/goals/edit', checkActivityReportIdParam, transactionWrapper(setGoalAsActivelyEdited));
+router.get('/:activityReportId/activity-recipients', transactionWrapper(getActivityRecipientsForExistingReport));
 
 export default router;
