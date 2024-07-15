@@ -508,13 +508,10 @@ const logFileToBeCollected = async (
 }> => {
   let key;
 
-  // Find the import file record based on the import ID and available file information
+  // Step 1: Find and lock the import file record based on the import ID and available
+  // file information
   const importFile = await ImportFile.findOne({
-    attributes: [
-      'id',
-      'fileId',
-      'downloadAttempts',
-    ],
+    attributes: ['id', 'fileId', 'downloadAttempts'],
     where: {
       importId,
       ftpFileInfo: {
@@ -524,13 +521,19 @@ const logFileToBeCollected = async (
         },
       },
     },
-    include: [{
-      model: File,
-      as: 'file',
-      attributes: ['key'],
-      require: false,
-    }],
     lock: true, // Lock the row for update to prevent race conditions
+  });
+
+  if (!importFile) {
+    throw new Error('Import file not found');
+  }
+
+  // Step 2: Fetch the associated file record
+  const file = await File.findOne({
+    attributes: ['key'],
+    where: {
+      id: importFile.fileId,
+    },
   });
 
   if (!importFile.fileId) {
@@ -551,39 +554,27 @@ const logFileToBeCollected = async (
     await ImportFile.update(
       {
         fileId: fileRecord.id,
-        downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        downloadAttempts: importFile.downloadAttempts + 1,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
-          importId,
-          ftpFileInfo: {
-            [Op.contains]: {
-              path: availableFile.fileInfo.path,
-              name: availableFile.fileInfo.name,
-            },
-          },
+          id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
       },
     );
   } else {
     // Retrieve the key from the existing import file record
-    key = importFile.file.dataValues.key;
+    key = file ? file.key : null;
     await ImportFile.update(
       {
-        downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        downloadAttempts: importFile.downloadAttempts + 1,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
-          importId,
-          ftpFileInfo: {
-            [Op.contains]: {
-              path: availableFile.fileInfo.path,
-              name: availableFile.fileInfo.name,
-            },
-          },
+          id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
       },
@@ -593,7 +584,7 @@ const logFileToBeCollected = async (
   return {
     importFileId: importFile.id,
     key,
-    attempts: importFile.dataValues.downloadAttempts,
+    attempts: importFile.downloadAttempts,
   };
 };
 
