@@ -62,8 +62,13 @@ describe('Email Notifications', () => {
     errno: -4078, code: 'ESOCKET', syscall: 'connect', address: '127.0.0.1', port: 1025, command: 'CONN',
   };
 
+  beforeAll(() => {
+    jest.clearAllMocks();
+  });
+
   afterAll(async () => {
     await db.sequelize.close();
+    jest.clearAllMocks();
   });
 
   describe('on demand', () => {
