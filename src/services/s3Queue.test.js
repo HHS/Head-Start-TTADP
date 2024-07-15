@@ -44,7 +44,17 @@ describe('s3 queue manager tests', () => {
     await addDeleteFileToQueue(file.id, file.key);
     expect(s3Queue.add).toHaveBeenCalledWith(
       S3_ACTIONS.DELETE_FILE,
-      { fileId: file.id, fileKey: file.key, key: S3_ACTIONS.DELETE_FILE },
+      {
+        fileId: file.id,
+        fileKey: file.key,
+        key: S3_ACTIONS.DELETE_FILE,
+        referenceData: {
+          impersonationId: undefined,
+          sessionSig: undefined,
+          transactionId: undefined,
+          userId: undefined,
+        },
+      },
     );
   });
 });

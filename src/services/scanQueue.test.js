@@ -25,12 +25,23 @@ describe('addToScanQueue', () => {
   });
 
   it('calls scanQueue.add', async () => {
-    await addToScanQueue('test.txt');
-    expect(scanQueue.add).toHaveBeenCalledWith('test.txt', expect.objectContaining({
-      attempts: expect.any(Number),
-      backoff: expect.any(Object),
-      removeOnComplete: true,
-      removeOnFail: true,
-    }));
+    await addToScanQueue({ key: 'test.txt' });
+    expect(scanQueue.add).toHaveBeenCalledWith(
+      {
+        key: 'test.txt',
+        referenceData: {
+          impersonationId: undefined,
+          sessionSig: undefined,
+          transactionId: undefined,
+          userId: undefined,
+        },
+      },
+      expect.objectContaining({
+        attempts: expect.any(Number),
+        backoff: expect.any(Object),
+        removeOnComplete: true,
+        removeOnFail: true,
+      }),
+    );
   });
 });
