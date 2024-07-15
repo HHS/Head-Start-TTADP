@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/return-await */
+import httpContext from 'express-http-context';
 import { createTransport } from 'nodemailer';
 import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
@@ -17,6 +18,8 @@ import {
 } from '../../services/activityReports';
 import { userById } from '../../services/users';
 import logEmailNotification from './logNotifications';
+import transactionQueueWrapper from '../../workers/transactionWrapper';
+import referenceData from '../../workers/referenceData';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -355,6 +358,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
       const data = {
         report,
         newCollaborator: collaborator.user,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_ADDED, data);
     } catch (err) {
@@ -370,6 +374,7 @@ export const approverAssignedNotification = (report, newApprovers) => {
       const data = {
         report,
         newApprover: approver,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED, data);
     } catch (err) {
@@ -385,6 +390,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
       report,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
   } catch (err) {
@@ -408,6 +414,7 @@ export const programSpecialistRecipientReportApprovedNotification = (
       report,
       programSpecialists,
       recipients,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
@@ -482,6 +489,7 @@ export const trVisionAndGoalComplete = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
         templatePath: 'tr_poc_vision_goal_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
@@ -514,6 +522,7 @@ export const trPocSessionComplete = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
         templatePath: 'tr_poc_session_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
@@ -550,6 +559,7 @@ export const trSessionCreated = async (event) => {
           ...event,
           displayId: eventId,
         },
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
@@ -582,6 +592,7 @@ export const trSessionCompleted = async (event) => {
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
         templatePath: 'tr_session_completed',
+        ...referenceData(),
       };
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
     }));
@@ -619,6 +630,7 @@ export const trCollaboratorAdded = async (
       emailTo: [collaborator.email],
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
+      ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
@@ -651,6 +663,7 @@ export const trPocAdded = async (
       emailTo: [poc.email],
       debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
       templatePath: 'tr_poc_added',
+      ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
@@ -686,6 +699,7 @@ export const trPocEventComplete = async (
         reportPath,
         debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
         templatePath: 'tr_event_complete',
+        ...referenceData(),
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
@@ -708,6 +722,7 @@ export const changesRequestedNotification = (
       approver,
       authorWithSetting,
       collabsWithSettings,
+      ...referenceData(),
     };
     notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
   } catch (err) {
@@ -742,6 +757,7 @@ export async function collaboratorDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_DIGEST, data);
       return data;
@@ -779,6 +795,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, data);
@@ -817,6 +834,7 @@ export async function submittedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.SUBMITTED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED_DIGEST, data);
@@ -856,6 +874,7 @@ export async function approvedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.APPROVED_DIGEST, data);
@@ -918,6 +937,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
         type: EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST,
         freq,
         subjectFreq,
+        ...referenceData(),
       };
 
       notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_APPROVED_DIGEST, data);
@@ -992,51 +1012,136 @@ export const processNotificationQueue = () => {
   notificationQueue.on('completed', onCompletedNotification);
   increaseListeners(notificationQueue, 10);
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION, notifyChangesRequested);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED, notifyApproverAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED, notifyReportApproved);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved);
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.NEEDS_ACTION,
+    ),
+  );
 
-  notificationQueue.process(EMAIL_ACTIONS.NEEDS_ACTION_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.SUBMITTED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.APPROVED_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.COLLABORATOR_DIGEST, notifyDigest);
-  notificationQueue.process(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST, notifyDigest);
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.SUBMITTED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.COLLABORATOR_ADDED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    transactionQueueWrapper(
+      notifyApproverAssigned,
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.SUBMITTED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.APPROVED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.APPROVED_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.COLLABORATOR_DIGEST,
+    ),
+  );
+  notificationQueue.process(
+    EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    transactionQueueWrapper(
+      notifyDigest,
+      EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+    ),
+  );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+    ),
   );
 
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    sendTrainingReportNotification,
+    transactionQueueWrapper(
+      sendTrainingReportNotification,
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+    ),
   );
 };
 
