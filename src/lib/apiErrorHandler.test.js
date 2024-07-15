@@ -46,6 +46,7 @@ const mockLogContext = {
 jest.mock('../logger', () => ({
   auditLogger: {
     error: jest.fn(),
+    info: jest.fn(),
   },
 }));
 
