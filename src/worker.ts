@@ -5,9 +5,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 import {} from 'dotenv/config';
+import httpContext from 'express-http-context';
 import throng from 'throng';
 import { registerEventListener } from './processHandler';
-import httpContext from 'express-http-context';
 import {
   processScanQueue,
 } from './services/scanQueue';
