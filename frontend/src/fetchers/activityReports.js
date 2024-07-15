@@ -102,7 +102,7 @@ export const getRecipients = async (region) => {
   return recipients.json();
 };
 
-export const getRecipientsForExistingAR = async (region, reportId) => {
+export const getRecipientsForExistingAR = async (reportId) => {
   const url = join(activityReportUrl, `${reportId}`, 'activity-recipients');
   const recipients = await get(url);
   return recipients.json();

@@ -280,7 +280,7 @@ function ActivityReport({
 
         const getRecips = async () => {
           if (reportId.current && reportId.current !== 'new') {
-            return getRecipientsForExistingAR(report.regionId, reportId.current);
+            return getRecipientsForExistingAR(reportId.current);
           }
 
           return getRecipients(report.regionId);
