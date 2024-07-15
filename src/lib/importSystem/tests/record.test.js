@@ -50,6 +50,7 @@ jest.mock('../../../models', () => ({
   },
   File: {
     create: jest.fn(),
+    findOne: jest.fn(),
   },
   ZALImportFile: {
     findAll: jest.fn().mockReturnValue([]),
@@ -622,9 +623,7 @@ describe('record', () => {
       ImportFile.findOne.mockResolvedValue({
         id: 1,
         fileId: null,
-        dataValues: {
-          downloadAttempts: 0,
-        },
+        downloadAttempts: 0,
       });
 
       File.create.mockResolvedValue({
@@ -665,7 +664,7 @@ describe('record', () => {
       expect(result).toEqual({
         importFileId: 1,
         key: '/import/123/uuid-mock.txt',
-        attempts: 0,
+        attempts: 1,
       });
     });
 
@@ -673,14 +672,12 @@ describe('record', () => {
       ImportFile.findOne.mockResolvedValue({
         id: 1,
         fileId: 2,
-        file: {
-          dataValues: {
-            key: '/import/123/uuid-mock.txt',
-          },
-        },
-        dataValues: {
-          downloadAttempts: 1,
-        },
+        downloadAttempts: 1,
+      });
+
+      File.findOne.mockResolvedValue({
+        id: 2,
+        key: '/import/123/uuid-mock.txt',
       });
 
       const result = await logFileToBeCollected(importId, availableFile);
@@ -696,7 +693,7 @@ describe('record', () => {
       expect(result).toEqual({
         importFileId: 1,
         key: '/import/123/uuid-mock.txt',
-        attempts: 1,
+        attempts: 2,
       });
     });
   });

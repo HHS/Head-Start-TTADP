@@ -522,19 +522,14 @@ const logFileToBeCollected = async (
       },
     },
     lock: true, // Lock the row for update to prevent race conditions
+    raw: true,
   });
 
   if (!importFile) {
     throw new Error('Import file not found');
   }
 
-  // Step 2: Fetch the associated file record
-  const file = await File.findOne({
-    attributes: ['key'],
-    where: {
-      id: importFile.fileId,
-    },
-  });
+  const downloadAttempts = importFile.downloadAttempts + 1;
 
   if (!importFile.fileId) {
     // Generate a unique key for the file using the import ID, a UUID, and the file extension
@@ -554,7 +549,7 @@ const logFileToBeCollected = async (
     await ImportFile.update(
       {
         fileId: fileRecord.id,
-        downloadAttempts: importFile.downloadAttempts + 1,
+        downloadAttempts,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
@@ -565,11 +560,19 @@ const logFileToBeCollected = async (
       },
     );
   } else {
+    // Step 2: Fetch the associated file record
+    const file = await File.findOne({
+      attributes: ['key'],
+      where: {
+        id: importFile.fileId,
+      },
+    });
+
     // Retrieve the key from the existing import file record
     key = file ? file.key : null;
     await ImportFile.update(
       {
-        downloadAttempts: importFile.downloadAttempts + 1,
+        downloadAttempts,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
@@ -584,7 +587,7 @@ const logFileToBeCollected = async (
   return {
     importFileId: importFile.id,
     key,
-    attempts: importFile.downloadAttempts,
+    attempts: downloadAttempts,
   };
 };
 
