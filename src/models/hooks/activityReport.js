@@ -3,7 +3,6 @@ const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
   OBJECTIVE_STATUS,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GOAL_COLLABORATORS,
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
@@ -629,7 +628,6 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           newStatus: status,
           reason: 'Activity Report approved',
           context: null,
-          transaction: options.transaction,
         });
       }
       // removing hooks because we don't want to trigger the automatic status change
@@ -734,36 +732,37 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       ...collaborators, // Spread the elements of the 'collaborators' array into a new array
       { userId: instance.userId }, // Add an object with a 'userId' property to the new array
     ].filter(({ userId }) => userId);
-    await Promise.all([
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => goals
-          // Use map to iterate over each element in the 'goals' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ goalId }) => findOrCreateCollaborator(
-            'goal',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            goalId, // The 'goalId' from the current iteration of the 'goals' array
-            userId, // The 'userId' from the current iteration of the new array
-            GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => objectives
-          // Use map to iterate over each element in the 'objectives' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ objectiveId }) => findOrCreateCollaborator(
-            'objective',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
-            userId, // The 'userId' from the current iteration of the new array
-            OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
+
+    const findOrCreateCollaboratorOptions = users.flatMap((user) => [
+      ...goals.map((goal) => ({
+        type: 'goal',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: goal.goalId,
+        userId: user.userId,
+        collaboratorType: GOAL_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
+      ...objectives.map((objective) => ({
+        type: 'objective',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: objective.objectiveId,
+        userId: user.userId,
+        collaboratorType: OBJECTIVE_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
     ]);
+
+    await Promise.all(findOrCreateCollaboratorOptions.map((option) => findOrCreateCollaborator(
+      option.type,
+      option.sequelize,
+      option.transaction,
+      option.associatedId,
+      option.userId,
+      option.collaboratorType,
+      option.metadata,
+    )));
   }
 };
 

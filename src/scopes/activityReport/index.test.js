@@ -4,7 +4,7 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES, GOAL_STATUS } from '../../constants';
+import { GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 import db, {

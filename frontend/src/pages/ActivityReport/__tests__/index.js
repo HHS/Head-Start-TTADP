@@ -42,6 +42,7 @@ describe('ActivityReport', () => {
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
+    fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
     fetchMock.get('/api/activity-reports/groups?region=1', [{
       id: 110,
       name: 'Group 1',
@@ -135,6 +136,15 @@ describe('ActivityReport', () => {
     });
   });
 
+  describe('something went wrong context', () => {
+    it('ensure we call set the response code on error', async () => {
+      fetchMock.get('/api/activity-reports/1', 500);
+      const setErrorResponseCode = jest.fn();
+      renderActivityReport('1', 'activity-summary', null, 1, setErrorResponseCode);
+      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+    });
+  });
+
   describe('groups', () => {
     it('recipients correctly update for groups', async () => {
       const groupRecipients = {
@@ -146,6 +156,7 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
 
       const data = formData();
       fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
@@ -217,6 +228,7 @@ describe('ActivityReport', () => {
       };
 
       fetchMock.get('/api/activity-reports/activity-recipients?region=1', groupRecipients, { overwriteRoutes: true });
+      fetchMock.get('/api/activity-reports/1/activity-recipients', groupRecipients, { overwriteRoutes: true });
 
       const data = formData();
       fetchMock.get('/api/activity-reports/1', { ...data, activityRecipients: [] });
@@ -354,6 +366,7 @@ describe('ActivityReport', () => {
 
   describe('resetToDraft', () => {
     it('navigates to the correct page', async () => {
+      fetchMock.get('/api/activity-reports/3/activity-recipients', recipients);
       const data = formData();
       // load the report
       fetchMock.get('/api/activity-reports/3', {

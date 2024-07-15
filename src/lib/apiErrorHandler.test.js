@@ -1,8 +1,9 @@
 import Sequelize from 'sequelize';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db, { RequestErrors } from '../models';
-import handleErrors, { handleUnexpectedErrorInCatchBlock, logRequestError } from './apiErrorHandler';
+import handleErrors, { handleUnexpectedErrorInCatchBlock, logRequestError, handleWorkerErrors, handleUnexpectedWorkerError } from './apiErrorHandler';
 import { auditLogger } from '../logger';
+import { auditLogger as logger } from '../logger';
 
 const mockUser = {
   id: 47,
@@ -32,16 +33,29 @@ const mockResponse = {
   })),
 };
 
+const mockJob = {
+  data: { jobDetail: 'example job detail' },
+  queue: { name: 'exampleQueue' },
+};
+
 const mockSequelizeError = new Sequelize.Error('Not all ok here');
 
 const mockLogContext = {
   namespace: 'TEST',
 };
 
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+}));
+
 describe('apiErrorHandler', () => {
   beforeEach(async () => {
     await RequestErrors.destroy({ where: {} });
+    jest.clearAllMocks();
   });
+
   afterAll(async () => {
     await RequestErrors.destroy({ where: {} });
     await db.sequelize.close();
@@ -55,6 +69,7 @@ describe('apiErrorHandler', () => {
     const requestErrors = await RequestErrors.findAll();
 
     expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors[0].operation).toBe('SequelizeError');
   });
 
   it('handles a generic error', async () => {
@@ -66,9 +81,10 @@ describe('apiErrorHandler', () => {
     const requestErrors = await RequestErrors.findAll();
 
     expect(requestErrors.length).not.toBe(0);
+    expect(requestErrors[0].operation).toBe('UNEXPECTED_ERROR');
   });
 
-  it('can handle unexpected error in catch block', async () => {
+  it('handles unexpected error in catch block', async () => {
     const mockUnexpectedErr = new Error('Unexpected error');
     handleUnexpectedErrorInCatchBlock(mockRequest, mockResponse, mockUnexpectedErr, mockLogContext);
 

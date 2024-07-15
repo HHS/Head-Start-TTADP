@@ -108,7 +108,7 @@ module.exports = {
       ssl: true,
     },
     pool: {
-      max: 10,
+      max: 30,
       validate: connectionValidation,
     },
   },

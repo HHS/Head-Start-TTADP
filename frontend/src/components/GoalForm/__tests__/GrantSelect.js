@@ -8,21 +8,18 @@ import GrantSelect from '../GrantSelect';
 
 describe('GrantSelect', () => {
   const renderGrantSelect = (
-    validateGrantNumbers = jest.fn(), userCanEdit = true, selectedGrants = [],
+    validateGrantNumbers = jest.fn(),
   ) => {
     render((
       <div>
         <GrantSelect
           error={<></>}
           setSelectedGrants={jest.fn()}
-          selectedGrants={selectedGrants}
+          selectedGrants={[]}
           validateGrantNumbers={validateGrantNumbers}
           label="Select grants"
           inputName="grantSelect"
           isLoading={false}
-          isOnReport={false}
-          goalStatus="Not Started"
-          userCanEdit={userCanEdit}
           possibleGrants={[
             {
               value: 1,

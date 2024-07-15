@@ -34,17 +34,19 @@ import {
   submitReport,
   saveReport,
   getReport,
-  getRecipients,
+  getRecipientsForExistingAR,
   createReport,
   getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
   getGroupsForActivityReport,
+  getRecipients,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -202,6 +204,7 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -256,7 +259,13 @@ function ActivityReport({
         reportId.current = activityReportId;
 
         if (activityReportId !== 'new') {
-          const fetchedReport = await getReport(activityReportId);
+          let fetchedReport;
+          try {
+            fetchedReport = await getReport(activityReportId);
+          } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
+            setErrorResponseCode(e.status);
+          }
           report = convertReportToFormData(fetchedReport);
         } else {
           report = {
@@ -269,8 +278,16 @@ function ActivityReport({
           };
         }
 
+        const getRecips = async () => {
+          if (reportId.current && reportId.current !== 'new') {
+            return getRecipientsForExistingAR(reportId.current);
+          }
+
+          return getRecipients(report.regionId);
+        };
+
         const apiCalls = [
-          getRecipients(report.regionId),
+          getRecips(),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGroupsForActivityReport(report.regionId),
