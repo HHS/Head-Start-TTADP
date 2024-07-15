@@ -2,6 +2,7 @@ import React, {
   useState,
   useEffect,
 } from 'react';
+import PropTypes from 'prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Select,
@@ -16,7 +17,7 @@ import GroupAlert from './GroupAlert';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = () => {
+const RecipientsWithGroups = ({ regionId }) => {
   const {
     control,
     register,
@@ -24,12 +25,11 @@ const RecipientsWithGroups = () => {
     setValue,
   } = useFormContext();
 
-  // Recipients.
-  const regionId = watch('regionId');
   const watchFormRecipients = watch('recipients');
   const watchGroup = watch('recipientGroup');
 
   const [recipientOptions, setRecipientOptions] = useState();
+
   useEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
@@ -203,6 +203,10 @@ const RecipientsWithGroups = () => {
         }
     </>
   );
+};
+
+RecipientsWithGroups.propTypes = {
+  regionId: PropTypes.number.isRequired,
 };
 
 export default RecipientsWithGroups;
