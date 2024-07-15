@@ -133,7 +133,7 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
 
     if (!goalId) return;
 
-    const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
+    const similarityGroups = await sequelize.models.GoalSimilarityGroup.findAll({
       attributes: ['recipientId', 'id'],
       include: [
         {
@@ -149,18 +149,20 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
       transaction: options.transaction,
     });
 
-    if (!similarityGroup) return;
+    if (similarityGroups.length === 0) return;
+
+    const groupIds = similarityGroups.map((group) => group.id);
 
     await sequelize.models.GoalSimilarityGroupGoal.destroy({
       where: {
-        goalSimilarityGroupId: similarityGroup.id,
+        goalSimilarityGroupId: groupIds,
       },
       transaction: options.transaction,
     });
 
     await sequelize.models.GoalSimilarityGroup.destroy({
       where: {
-        recipientId: similarityGroup.recipientId,
+        id: groupIds,
         userHasInvalidated: false,
         finalGoalId: null,
       },
