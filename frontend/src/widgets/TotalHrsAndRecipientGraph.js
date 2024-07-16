@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-basic-dist';
+import Plotly from 'plotly.js-strict-dist-min';
 import { Grid } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import withWidgetData from './withWidgetData';
