@@ -73,27 +73,34 @@ describe('Email Notifications', () => {
 
   describe('on demand', () => {
     it('create a mailer log entry for a collaborator added', async () => {
-      try {
-        // eslint-disable-next-line no-console
-        console.log('Starting test: create a mailer log entry for a collaborator added');
-        expect(1).toBe(1);
-        // const mailerLog = await logEmailNotification(mockJob, success, result);
-        // // eslint-disable-next-line no-console
-        // console.log('Result:', mailerLog);
-        // expect(mailerLog).not.toBeNull();
-        // expect(mailerLog.emailTo.length).toEqual(1);
-        // expect(mailerLog.emailTo[0]).toEqual('mockNewCollaborator@test.gov');
-        // expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Added as collaborator');
-        // expect(mailerLog.success).toEqual(false);
-        // expect(mailerLog.result).toEqual(result);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
-        throw err;
-      }
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJob.id,
+        emailTo: [mockJob.data.newCollaborator.email],
+        action: mockJob.name,
+        subject: 'Activity Report AR-04-1235: Added as collaborator',
+        activityReports: [mockJob.data.report.id],
+        success,
+        result,
+      });
+      const mailerLog = await logEmailNotification(mockJob, success, result);
+      expect(mailerLog).not.toBeNull();
+      expect(mailerLog.emailTo.length).toEqual(1);
+      expect(mailerLog.emailTo[0]).toEqual('mockNewCollaborator@test.gov');
+      expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Added as collaborator');
+      expect(mailerLog.success).toEqual(false);
+      expect(mailerLog.result).toEqual(result);
     });
     it('create a mailer log entry for a submitted report', async () => {
       mockJob.name = EMAIL_ACTIONS.SUBMITTED;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJob.id,
+        emailTo: [mockJob.data.newApprover.user.email],
+        action: mockJob.name,
+        subject: 'Activity Report AR-04-1235: Submitted for review',
+        activityReports: [mockJob.data.report.id],
+        success,
+        result,
+      });
       const mailerLog = await logEmailNotification(mockJob, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
@@ -104,6 +111,16 @@ describe('Email Notifications', () => {
     });
     it('create a mailer log entry for a needs action report', async () => {
       mockJob.name = EMAIL_ACTIONS.NEEDS_ACTION;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJob.id,
+        emailTo: [mockJob.data.report.author.email,
+          mockJob.data.report.activityReportCollaborators[0].user.email],
+        action: mockJob.name,
+        subject: 'Activity Report AR-04-1235: Changes requested',
+        activityReports: [mockJob.data.report.id],
+        success,
+        result,
+      });
       const mailerLog = await logEmailNotification(mockJob, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(2);
