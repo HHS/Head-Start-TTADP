@@ -1,7 +1,7 @@
 import stringify from 'csv-stringify/lib/sync';
 import { Request, Response } from 'express';
-import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
+import { currentUserId } from '../../../services/currentUser';
+import { userById } from '../../../services/users';
 import {
   FlagValues,
   listQueryFiles,
@@ -11,8 +11,8 @@ import {
   sanitizeFilename,
   generateFlagString,
   executeQuery,
-} from '../../services/ssdi';
-import Generic from '../../policies/generic';
+} from '../../../services/ssdi';
+import Generic from '../../../policies/generic';
 
 // list all available query files with name and description
 const listQueries = async (req: Request, res: Response) => {
