@@ -96,8 +96,6 @@
     "restoreTopics:local": "./node_modules/.bin/babel-node ./src/tools/restoreTopicsCLI.js",
     "coverage:backend": "./bin/build-coverage-report",
     "docker:coverage:backend": "docker compose run --rm backend chmod 744 ./bin/build-coverage-report && ./bin/build-coverage-report",
-    "createAwsElasticSearchIndexes": "node ./build/server/src/tools/createAwsElasticSearchIndexesCli.js",
-    "createAwsElasticSearchIndexes:local": "./node_modules/.bin/babel-node ./src/tools/createAwsElasticSearchIndexesCli.js",
     "populateLegacyResourceTitles": "node ./build/server/src/tools/populateLegacyResourceTitlesCli.js",
     "populateLegacyResourceTitles:local": "./node_modules/.bin/babel-node ./src/tools/populateLegacyResourceTitlesCli.js",
     "updateCompletedEventReportPilots": "node ./build/server/src/tools/updateCompletedEventReportPilotsCLI.js",
@@ -192,7 +190,6 @@
       "<rootDir>/src/app.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
-      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCLI.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
@@ -215,7 +212,6 @@
       "<rootDir>/src/lib/cron.js",
       "<rootDir>/src/tools/*CLI.js",
       "<rootDir>/src/tools/*Cli.js",
-      "<rootDir>/src/tools/createAwsElasticSearchIndexesCli.js",
       "<rootDir>/src/tools/populateLegacyResourceTitlesCli.js",
       "<rootDir>/src/tools/importTTAPlanGoals.js"
     ],
@@ -296,11 +292,9 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.12.1",
-    "@elastic/elasticsearch": "^8.2.0-patch.1",
-    "@elastic/elasticsearch-mock": "^2.0.0",
     "@faker-js/faker": "^6.0.0",
     "@opensearch-project/opensearch": "^1.1.0",
-    "@ttahub/common": "^2.1.5",
+    "@ttahub/common": "^2.1.6",
     "adm-zip": "^0.5.1",
     "aws-sdk": "^2.826.0",
     "aws4": "^1.11.0",
