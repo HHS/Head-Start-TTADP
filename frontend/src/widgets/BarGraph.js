@@ -1,15 +1,16 @@
-import React, {
-  useRef, useLayoutEffect, useState, useEffect,
-} from 'react';
+import React, { useRef, useLayoutEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import Plotly from 'plotly.js-strict-dist-min';
+// https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
+import Plotly from 'plotly.js-basic-dist';
+import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import './BarGraph.css';
 
+const Plot = createPlotlyComponent(Plotly);
+const BottomAxis = createPlotlyComponent(Plotly);
+
 function BarGraph({ data }) {
   const parentRef = useRef(null);
-  const plot = useRef();
-  const bottomAxis = useRef();
   const [width, setWidth] = useState(850);
 
   // more nightmarish stuff here
@@ -30,97 +31,72 @@ function BarGraph({ data }) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  useEffect(() => {
-    if (!data || !Array.isArray(data)) {
-      return;
-    }
+  if (!data || !Array.isArray(data)) {
+    return null;
+  }
 
-    const categories = [];
-    const counts = [];
+  const categories = [];
+  const counts = [];
 
-    data.forEach((dataPoint) => {
-      categories.push(dataPoint.category);
-      counts.push(dataPoint.count);
-    });
+  data.forEach((dataPoint) => {
+    categories.push(dataPoint.category);
+    counts.push(dataPoint.count);
+  });
 
-    const range = [Math.min(...counts), Math.max(...counts)];
+  const range = [Math.min(...counts), Math.max(...counts)];
 
-    const trace = {
-      type: 'bar',
-      orientation: 'h',
-      x: counts,
-      y: categories,
-      marker: {
-        color: colors.ttahubMediumBlue,
-      },
-      width: 0.75,
-      hovertemplate: '%{y}: %{x}<extra></extra>',
-    };
+  const trace = {
+    type: 'bar',
+    orientation: 'h',
+    x: counts,
+    y: categories,
+    marker: {
+      color: colors.ttahubMediumBlue,
+    },
+    width: 0.75,
+    hovertemplate: '%{y}: %{x}<extra></extra>',
+  };
 
-    const layout = {
-      bargap: 0.5,
-      height: 25 * data.length,
-      width,
-      hoverlabel: {
-        bgcolor: '#000',
-        bordercolor: '#000',
-        font: {
-          color: '#fff',
-          size: 16,
-        },
-      },
+  const layout = {
+    bargap: 0.5,
+    height: 25 * data.length,
+    width,
+    hoverlabel: {
+      bgcolor: '#000',
+      bordercolor: '#000',
       font: {
-        color: colors.textInk,
+        color: '#fff',
+        size: 16,
       },
-      margin: {
-        l: 320,
-        r: 0,
-        t: 0,
-        b: 0,
-      },
-      xaxis: {
-        range,
-      },
-      yaxis: {
-        zeroline: false,
-        autotick: false,
-        ticks: 'outside',
-        tick0: 0,
-        ticklen: 4,
-        tickwidth: 1,
-        tickcolor: 'transparent',
-      },
-    };
+    },
+    font: {
+      color: colors.textInk,
+    },
+    margin: {
+      l: 320,
+      r: 0,
+      t: 0,
+      b: 0,
+    },
+    xaxis: {
+      range,
+    },
+    yaxis: {
+      zeroline: false,
+      autotick: false,
+      ticks: 'outside',
+      tick0: 0,
+      ticklen: 4,
+      tickwidth: 1,
+      tickcolor: 'transparent',
+    },
+  };
 
-    const config = {
-      responsive: true,
-      displayModeBar: false,
-      hovermode: 'none',
-    };
-
-    Plotly.newPlot(plot.current, [trace], layout, config);
-    Plotly.newPlot(
-      bottomAxis.current,
-      [{ mode: 'bar' }],
-      {
-        width,
-        height: 40,
-        margin: {
-          l: 320,
-          t: 0,
-          r: 0,
-        },
-        yaxis: { tickmode: 'array', tickvals: [] },
-        xaxis: {
-          range,
-        },
-      },
-      {
-        displayModeBar: false,
-        responsive: true,
-      },
-    );
-  }, [data, width]);
+  const config = {
+    responsive: true,
+    displayModeBar: false,
+    hovermode: 'none',
+  };
 
   return (
     <>
@@ -128,11 +104,34 @@ function BarGraph({ data }) {
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
         <div className="ttahub-bar-graph--bars-top" tabIndex={0}>
           <span className="sr-only">Use the arrow keys to scroll graph</span>
-          <div ref={plot} />
+          <Plot
+            data={[trace]}
+            layout={layout}
+            config={config}
+          />
         </div>
       </div>
       <div className="height-5 width-full">
-        <div ref={bottomAxis} />
+        <BottomAxis
+          data={[{ mode: 'bar' }]}
+          layout={{
+            width,
+            height: 40,
+            margin: {
+              l: 320,
+              t: 0,
+              r: 0,
+            },
+            yaxis: { tickmode: 'array', tickvals: [] },
+            xaxis: {
+              range,
+            },
+          }}
+          config={{
+            displayModeBar: false,
+            responsive: true,
+          }}
+        />
       </div>
     </>
   );
