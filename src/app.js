@@ -74,7 +74,7 @@ app.use((req, res, next) => {
         'style-src',
         'font-src',
       ),
-      styleSrc: ["'self', unsafe-inline"],
+      styleSrc: ["'strict-dynamic'", "'self'"],
       fontSrc: ["'self'"],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", '*.googletagmanager.com'],
