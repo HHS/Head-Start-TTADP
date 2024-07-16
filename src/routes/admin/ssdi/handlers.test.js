@@ -8,11 +8,11 @@ import {
   sanitizeFilename,
   generateFlagString,
   executeQuery,
-} from '../../services/ssdi';
-import { currentUserId } from '../../services/currentUser';
-import { userById } from '../../services/users';
+} from '../../../services/ssdi';
+import { currentUserId } from '../../../services/currentUser';
+import { userById } from '../../../services/users';
 import { listQueries, getFlags, runQuery } from './handlers';
-import Generic from '../../policies/generic';
+import Generic from '../../../policies/generic';
 
 jest.mock('../../services/ssdi', () => ({
   listQueryFiles: jest.fn(),
