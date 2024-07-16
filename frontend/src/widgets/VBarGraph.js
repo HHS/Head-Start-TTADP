@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import Plotly from 'plotly.js-strict-dist-min';
+// https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
+import Plotly from 'plotly.js-basic-dist';
+import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
@@ -9,6 +11,8 @@ import MediaCaptureButton from '../components/MediaCaptureButton';
 import WidgetH2 from '../components/WidgetH2';
 import useSize from '../hooks/useSize';
 import './VBarGraph.css';
+
+const Plot = createPlotlyComponent(Plotly);
 
 function VBarGraph({
   data,
@@ -19,9 +23,8 @@ function VBarGraph({
   loading,
   loadingLabel,
 }) {
+  const [plot, updatePlot] = useState({});
   const bars = useRef(null);
-  const plot = useRef(null);
-
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
   // toggle the data table
   function toggleAccessibleData() {
@@ -95,7 +98,13 @@ function VBarGraph({
       hovermode: 'none',
     };
 
-    Plotly.newPlot(plot.current, [trace], layout, { displayModeBar: false, hovermode: 'none', responsive: true });
+    updatePlot({
+      data: [trace],
+      layout,
+      config: {
+        responsive: true, displayModeBar: false, hovermode: 'none',
+      },
+    });
   }, [data, xAxisLabel, size, yAxisLabel]);
 
   const tableData = data.map((row) => ({
@@ -147,7 +156,12 @@ function VBarGraph({
         : (
           <>
             <div className="display-flex flex-align-center position-relative">
-              <div ref={plot} />
+              <Plot
+                data={plot.data}
+                layout={plot.layout}
+                config={plot.config}
+              />
+
             </div>
           </>
         )}
