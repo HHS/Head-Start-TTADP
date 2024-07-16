@@ -188,7 +188,15 @@ describe('Email Notifications', () => {
           },
         },
       };
-
+      createMailerLogMock.mockResolvedValue({
+        jobId: mockTrJobDigest.id,
+        emailTo: [mockTrJobDigest.data.emailTo[0]],
+        action: mockTrJobDigest.name,
+        subject: 'A session has been created for Training Report TR-04-1235',
+        activityReports: [mockTrJobDigest.data.report],
+        success,
+        result,
+      });
       for (let i = 0; i < actions.length; i += 1) {
         // eslint-disable-next-line no-await-in-loop
         const jobResult = await logEmailNotification({
@@ -208,6 +216,15 @@ describe('Email Notifications', () => {
 
   describe('digest', () => {
     it('create a mailer log entry for a collaborator added', async () => {
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJobDigest.id,
+        emailTo: [mockJobDigest.data.user.email],
+        action: mockJobDigest.name,
+        subject: 'TTA Hub daily digest: added as collaborator',
+        activityReports: [mockJobDigest.data.reports[0].id, mockJobDigest.data.reports[1].id],
+        success,
+        result,
+      });
       const mailerLog = await logDigestEmailNotification(mockJobDigest, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
@@ -220,6 +237,15 @@ describe('Email Notifications', () => {
     });
     it('create a mailer log entry for a submitted report', async () => {
       mockJobDigest.name = EMAIL_ACTIONS.SUBMITTED_DIGEST;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJobDigest.id,
+        emailTo: [mockJobDigest.data.user.email],
+        action: mockJobDigest.name,
+        subject: 'TTA Hub daily digest: reports for review',
+        activityReports: [mockJobDigest.data.reports[0].id, mockJobDigest.data.reports[1].id],
+        success,
+        result,
+      });
       const mailerLog = await logDigestEmailNotification(mockJobDigest, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
@@ -232,6 +258,15 @@ describe('Email Notifications', () => {
     });
     it('create a mailer log entry for a needs action report', async () => {
       mockJobDigest.name = EMAIL_ACTIONS.NEEDS_ACTION_DIGEST;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJobDigest.id,
+        emailTo: [mockJobDigest.data.user.email],
+        action: mockJobDigest.name,
+        subject: 'TTA Hub daily digest: changes requested',
+        activityReports: [mockJobDigest.data.reports[0].id, mockJobDigest.data.reports[1].id],
+        success,
+        result,
+      });
       const mailerLog = await logDigestEmailNotification(mockJobDigest, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
@@ -244,6 +279,15 @@ describe('Email Notifications', () => {
     });
     it('create a mailer log entry for an approved report', async () => {
       mockJobDigest.name = EMAIL_ACTIONS.APPROVED_DIGEST;
+      createMailerLogMock.mockResolvedValueOnce({
+        jobId: mockJobDigest.id,
+        emailTo: [mockJobDigest.data.user.email],
+        action: mockJobDigest.name,
+        subject: 'TTA Hub daily digest: approved reports',
+        activityReports: [mockJobDigest.data.reports[0].id, mockJobDigest.data.reports[1].id],
+        success,
+        result,
+      });
       const mailerLog = await logDigestEmailNotification(mockJobDigest, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toBe(1);
