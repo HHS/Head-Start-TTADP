@@ -14,7 +14,7 @@ import { userById } from '../../../services/users';
 import { listQueries, getFlags, runQuery } from './handlers';
 import Generic from '../../../policies/generic';
 
-jest.mock('../../services/ssdi', () => ({
+jest.mock('../../../services/ssdi', () => ({
   listQueryFiles: jest.fn(),
   readFlagsAndQueryFromFile: jest.fn(),
   validateFlagValues: jest.fn(),
@@ -24,15 +24,15 @@ jest.mock('../../services/ssdi', () => ({
   executeQuery: jest.fn(),
 }));
 
-jest.mock('../../services/currentUser', () => ({
+jest.mock('../../../services/currentUser', () => ({
   currentUserId: jest.fn(),
 }));
 
-jest.mock('../../services/users', () => ({
+jest.mock('../../../services/users', () => ({
   userById: jest.fn(),
 }));
 
-jest.mock('../../policies/generic');
+jest.mock('../../../policies/generic');
 
 const app = express();
 app.use(express.json());
