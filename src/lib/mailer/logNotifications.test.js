@@ -132,6 +132,16 @@ describe('Email Notifications', () => {
     });
     it('create a mailer log entry for an approved report', async () => {
       mockJob.name = EMAIL_ACTIONS.APPROVED;
+      createMailerLogMock.mockResolvedValue({
+        jobId: mockJob.id,
+        emailTo: [mockJob.data.report.author.email,
+          mockJob.data.report.activityReportCollaborators[0].user.email],
+        action: mockJob.name,
+        subject: 'Activity Report AR-04-1235: Approved',
+        activityReports: [mockJob.data.report.id],
+        success,
+        result,
+      });
       const mailerLog = await logEmailNotification(mockJob, success, result);
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toBe(2);
