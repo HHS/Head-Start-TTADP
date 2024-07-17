@@ -290,16 +290,16 @@ describe('record', () => {
         definitions: [
           {
             "keys": [
-              "statusId"
+              "statusId",
             ],
-            "path": ".",
-            "encoding": "utf16le",
-            "fileName": "AMS_ReviewStatus.xml",
-            "remapDef": {
-              "Name": "name",
-              "StatusId": "statusId"
+            path: '.',
+            encoding: 'utf16le',
+            fileName: 'AMS_ReviewStatus.xml',
+            remapDef: {
+              Name: 'name',
+              StatusId: 'statusId',
             },
-            "tableName": "MonitoringReviewStatuses"
+            tableName: 'MonitoringReviewStatuses',
           },
         ],
       };
@@ -331,7 +331,7 @@ describe('record', () => {
         order: [['createdAt', 'ASC']],
         limit: 1,
         lock: true,
-        raw:true,
+        raw: true,
       });
 
       expect(File.findOne).toHaveBeenCalledWith({
@@ -339,7 +339,7 @@ describe('record', () => {
         where: {
           id: mockImportFile.fileId,
         },
-        raw:true,
+        raw: true,
       });
 
       expect(Import.findOne).toHaveBeenCalledWith({
@@ -347,7 +347,7 @@ describe('record', () => {
         where: {
           id: mockImportFile.importId,
         },
-        raw:true,
+        raw: true,
       });
 
       expect(result).toEqual({
@@ -410,7 +410,7 @@ describe('record', () => {
         order: [['createdAt', 'ASC']],
         limit: 1,
         lock: true,
-        raw:true,
+        raw: true,
       });
     });
   });
