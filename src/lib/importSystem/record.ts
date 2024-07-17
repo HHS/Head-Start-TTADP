@@ -1,13 +1,9 @@
 import {
   Sequelize,
   fn,
-  cast,
-  col,
   literal,
   Op,
-  where,
 } from 'sequelize';
-import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
@@ -197,32 +193,18 @@ const getNextFileToProcess = async (
     },
   );
 
-  // Find the next import file to process
+  // Find the next import file to process without join and locking mechanism
   const importFile = await ImportFile.findOne({
     attributes: [
-      ['id', 'importFileId'],
+      'id',
       'fileId',
       'status',
       'processAttempts',
-    ],
-    include: [
-      {
-        model: File,
-        as: 'file',
-        attributes: [
-          'key',
-        ],
-      },
-      {
-        model: Import,
-        as: 'import',
-        attributes: [
-          'definitions',
-        ],
-      },
+      'importId',
     ],
     where: {
       importId,
+      fileId: { [Op.ne]: null }, // Ensure fileId is not null
       [Op.or]: [
         // New Work
         { status: IMPORT_STATUSES.COLLECTED }, // Import file is in the "collected" status
@@ -240,9 +222,38 @@ const getNextFileToProcess = async (
     ],
     limit: 1, // Limit the result to 1 record
     lock: true, // Lock the row for update to prevent race conditions
+    raw: true,
   });
 
-  return importFile;
+  if (!importFile) {
+    return null;
+  }
+
+  // Fetch the associated File data
+  const file = await File.findOne({
+    attributes: ['key'],
+    where: {
+      id: importFile.fileId,
+    },
+    raw: true,
+  });
+
+  // Fetch the associated Import data
+  const importData = await Import.findOne({
+    attributes: ['definitions'],
+    where: {
+      id: importFile.importId,
+    },
+    raw: true,
+  });
+  return {
+    importFileId: importFile.id,
+    fileId: importFile.fileId,
+    status: importFile.status,
+    processAttempts: importFile.processAttempts,
+    fileKey: file?.key,
+    importDefinitions: importData?.definitions,
+  };
 };
 
 /**
@@ -381,11 +392,10 @@ const recordAvailableDataFiles = async (
   });
 
   const fileMatches = (currentImportDataFile, availableFile) => (
-    importFileId === currentImportDataFile.importFileId
+    importFileId === currentImportDataFile?.importFileId
     && availableFile.path === currentImportDataFile.fileInfo.path
     && availableFile.name === currentImportDataFile.fileInfo.name
   );
-
   // Separate the available files into new, matched, and removed files
   // New files are those that are not already recorded in the database
   const newFiles = availableFiles
