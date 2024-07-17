@@ -289,8 +289,8 @@ describe('record', () => {
         id: mockImportFile.fileId,
         definitions: [
           {
-            "keys": [
-              "statusId",
+            keys: [
+              'statusId',
             ],
             path: '.',
             encoding: 'utf16le',
