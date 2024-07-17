@@ -15,6 +15,7 @@ import { auditLogger } from '../logger';
 describe('Programmatic Transaction', () => {
   afterAll(async () => {
     await sequelize.close();
+    jest.clearAllMocks();
   });
   it('Insert', async () => {
     const snapshot = await transactionModule.captureSnapshot();
