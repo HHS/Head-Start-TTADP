@@ -24,7 +24,7 @@ const transactionQueueWrapper = (
     httpContext.set('sessionSig', job.id);
     httpContext.set('auditDescriptor', originalFunction.name);
     try {
-      // eslint-ignore-next-line global-require
+      // eslint-disable-next-line global-require
       const { sequelize } = require('../models');
       // eslint-disable-next-line @typescript-eslint/return-await
       return await sequelize.transaction(async (transaction) => {
