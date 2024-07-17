@@ -61,7 +61,13 @@ app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
+  // set the X-Content-Type-Options header to prevent MIME-sniffing
+  res.set('X-Content-Type-Options', 'nosniff');
+
+  // set nonce
   res.locals.nonce = crypto.randomBytes(16).toString('hex');
+
+  // set CSP
   const cspMiddleware = helmet.contentSecurityPolicy({
     directives: {
       ...omit(
