@@ -13,9 +13,13 @@ import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
 describe('Programmatic Transaction', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+  });
   afterAll(async () => {
     await sequelize.close();
-    jest.clearAllMocks();
+    jest.resetModules();
+    jest.resetAllMocks();
   });
   it('Insert', async () => {
     const snapshot = await transactionModule.captureSnapshot();
