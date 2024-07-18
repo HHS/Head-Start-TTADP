@@ -1,20 +1,22 @@
 /**
-* This query collects all the FEI and near FEI goals based on several criteria.
+* @name: FEI Goals Report
+* @description: This query collects all the FEI and near FEI goals based on several criteria.
+* @defaultOutputName: fei_goals_report
 *
 * The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
-* - ssdi.regionIds - one or more values for 1 through 12
-* - ssdi.recipients - one or more verbatium recipient names
-* - ssdi.grantNumbers - one or more verbatium grant numbers
-* - ssdi.goals - one or more verbatium goal text
-* - ssdi.status - one or more verbatium statuses
-* - ssdi.createdVia - one or more verbatium created via values
-* - ssdi.onApprovedAR - true or false
-* - ssdi.response - one or more verbatium response values
-* - ssdi.createdbetween - two dates defining a range for the createdAt to be within
+* - ssdi.regionIds - integer[] - one or more values for 1 through 12
+* - ssdi.recipients - string[] - one or more verbatim recipient names
+* - ssdi.grantNumbers - string[] - one or more verbatim grant numbers
+* - ssdi.goals - string[] - one or more verbatim goal text
+* - ssdi.status - string[] - one or more verbatim statuses
+* - ssdi.createdVia - string[] - one or more verbatim created via values
+* - ssdi.onApprovedAR - boolean[] - true or false
+* - ssdi.response - string[] - one or more verbatim response values
+* - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
 *
-* zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
+* Zero or more SSDI flags can be set within the same transaction as the query is executed.
+* The following is an example of how to set an SSDI flag:
 * SELECT SET_CONFIG('ssdi.createdbetween','["2023-10-01","2023-10-15"]',TRUE);
 */
 WITH bad AS (
@@ -104,9 +106,10 @@ AND
 AND
 -- Filter for onApprovedAR if ssdi.onApprovedAR is defined
 (NULLIF(current_setting('ssdi.onApprovedAR', true), '') IS NULL
-      OR b."onApprovedAR" in (
-        SELECT value::BOOLEAN AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+      OR EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+        WHERE value::boolean = true
       ))
 AND
 -- Filter for response if ssdi.response is defined
