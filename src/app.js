@@ -19,6 +19,7 @@ import { logger, auditLogger, requestLogger } from './logger';
 import runCronJobs from './lib/cron';
 
 const app = express();
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
@@ -39,10 +40,27 @@ app.use(express.json({ limit: '2MB' }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
+  // set the X-Content-Type-Options header to prevent MIME-sniffing
+  res.set('X-Content-Type-Options', 'nosniff');
+
+  // set nonce
   res.locals.nonce = crypto.randomBytes(16).toString('hex');
+
+  // set CSP
   const cspMiddleware = helmet.contentSecurityPolicy({
     directives: {
-      ...omit(helmet.contentSecurityPolicy.getDefaultDirectives(), 'upgrade-insecure-requests', 'block-all-mixed-content', 'script-src', 'img-src', 'default-src'),
+      ...omit(
+        helmet.contentSecurityPolicy.getDefaultDirectives(),
+        'upgrade-insecure-requests',
+        'block-all-mixed-content',
+        'script-src',
+        'img-src',
+        'default-src',
+        'style-src',
+        'font-src',
+      ),
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'"],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
@@ -60,8 +78,10 @@ if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
 }
 
 app.use('/api/v1', require('./routes/externalApi').default);
-
 app.use('/api', require('./routes/apiDirectory').default);
+
+// Disable "X-Powered-By" header
+app.disable('x-powered-by');
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
