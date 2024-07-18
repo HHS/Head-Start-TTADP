@@ -1,19 +1,21 @@
 /**
-* This query collects all the goals.
+* @name: Goals Report
+* @description: This query collects all the goals.
+* @defaultOutputName: goals_report
 *
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
+* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values.
 * The following are the available flags within this script:
-* - ssdi.regionIds - one or more values for 1 through 12
-* - ssdi.recipients - one or more verbatium recipient names
-* - ssdi.grantNumbers - one or more verbatium grant numbers
-* - ssdi.goals - one or more verbatium goal text
-* - ssdi.status - one or more verbatium statuses
-* - ssdi.createdVia - one or more verbatium created via values
-* - ssdi.onApprovedAR - true or false
-* - ssdi.createdbetween - two dates defining a range for the createdAt to be within
+* - ssdi.regionIds - integer[] - one or more values for 1 through 12
+* - ssdi.recipients - string[] - one or more verbatim recipient names
+* - ssdi.grantNumbers - string[] - one or more verbatim grant numbers
+* - ssdi.goals - string[] - one or more verbatim goal text
+* - ssdi.status - string[] - one or more verbatim statuses
+* - ssdi.createdVia - string[] - one or more verbatim created via values
+* - ssdi.onApprovedAR - boolean[] - true or false
+* - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
 *
-* zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
+* Zero or more SSDI flags can be set within the same transaction as the query is executed.
+* The following is an example of how to set an SSDI flag:
 * SELECT SET_CONFIG('ssdi.createdbetween','["2022-07-01","2023-06-30"]',TRUE);
 */
 SELECT
@@ -53,7 +55,7 @@ AND
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for status if ssdi.goals is defined
+-- Filter for goals if ssdi.goals is defined
 (NULLIF(current_setting('ssdi.goals', true), '') IS NULL
       OR g.name in (
         SELECT value::text AS my_array
@@ -76,9 +78,10 @@ AND
 AND
 -- Filter for onApprovedAR if ssdi.onApprovedAR is defined
 (NULLIF(current_setting('ssdi.onApprovedAR', true), '') IS NULL
-      OR g."onApprovedAR" in (
-        SELECT value::BOOLEAN AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+      OR EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.onApprovedAR', true), ''),'[]')::json) AS value
+        WHERE value::boolean = true
       ))
 AND
 -- Filter for createdAt dates between two values if ssdi.createdbetween is defined

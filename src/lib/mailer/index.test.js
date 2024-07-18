@@ -132,7 +132,6 @@ const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  // calculatedStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -170,9 +169,10 @@ describe('mailer tests', () => {
     process.env = oldEnv;
     await db.sequelize.close();
   });
+
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyChangesRequested({
         data: {
           report: mockReport,
@@ -189,12 +189,12 @@ describe('mailer tests', () => {
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Changes requested`);
-      expect(message.text).toContain(`${mockManager.name} requested changed to report ${mockReport.displayId}.`);
+      expect(message.text).toContain(`${mockManager.name} requested changes to report ${mockReport.displayId}.`);
       expect(message.text).toContain(mockApprover.note);
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyChangesRequested({
         data: {
           report: mockReport,
@@ -206,19 +206,20 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyChangesRequested({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyChangesRequested({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyReportApproved({
         data: {
           report: mockReport,
-          approver: mockApprover,
           authorWithSetting: mockReport.author,
           collabsWithSettings: [mockCollaborator1, mockCollaborator2],
         },
@@ -235,11 +236,10 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyReportApproved({
         data: {
           report: mockReport,
-          approver: mockApprover,
           authorWithSetting: null,
           collabsWithSettings: [],
         },
@@ -247,15 +247,17 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyReportApproved({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyReportApproved({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Program Specialists: Recipient Report Approved', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
@@ -272,7 +274,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no program specialists/recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
@@ -283,19 +285,21 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyRecipientReportApproved({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
           programSpecialists: [mockProgramSpecialist],
           recipients: [mockRecipient],
         },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyApproverAssigned({
         data: { report: mockReport, newApprover: mockApprover },
       }, jsonTransport);
@@ -309,15 +313,17 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      expect(notifyApproverAssigned({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyApproverAssigned({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Add Collaborators', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockNewCollaborator },
       }, jsonTransport);
@@ -331,16 +337,17 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      expect(notifyCollaboratorAssigned({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockCollaborator1 },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('sendTrainingReportNotification', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       process.env.CI = '';
       const data = {
         emailTo: [mockNewCollaborator.email],
@@ -366,7 +373,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain('/asdf/');
     });
     it('Honors no send', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       process.env.CI = '';
       const data = {
         emailTo: [`no-send_${mockNewCollaborator.email}`],
@@ -385,7 +392,7 @@ describe('mailer tests', () => {
       expect(email).toBeNull();
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
+      process.env.SEND_NOTIFICATIONS = 'false';
       const data = {
         emailTo: [mockNewCollaborator.email],
         templatePath: 'tr_session_completed',
@@ -397,14 +404,15 @@ describe('mailer tests', () => {
           displayId: 'mockReport-1',
         },
       };
-      await expect(sendTrainingReportNotification({
+      const email = await sendTrainingReportNotification({
         data,
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
 
     it('Tests that emails are not sent on CI', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
-      process.env.CI = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
+      process.env.CI = 'true';
       const data = {
         emailTo: [mockNewCollaborator.email],
         templatePath: 'tr_session_completed',
@@ -416,15 +424,16 @@ describe('mailer tests', () => {
           displayId: 'mockReport-1',
         },
       };
-      await expect(sendTrainingReportNotification({
+      const email = await sendTrainingReportNotification({
         data,
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('Collaborators digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -451,7 +460,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -476,7 +485,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -501,7 +510,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no new collaborator notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -523,21 +532,22 @@ describe('mailer tests', () => {
     });
 
     it('tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyDigest({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
           reports: [],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
         },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('Changes requested digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -564,7 +574,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -589,7 +599,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -614,7 +624,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no changes requested notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -638,7 +648,7 @@ describe('mailer tests', () => {
 
   describe('Submitted digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -665,7 +675,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -690,7 +700,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -715,7 +725,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no submitted notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -739,7 +749,7 @@ describe('mailer tests', () => {
 
   describe('Approved digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -766,7 +776,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -791,7 +801,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -816,7 +826,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no approved reports notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -840,7 +850,7 @@ describe('mailer tests', () => {
 
   describe('Program Specialist: Report approved digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -865,7 +875,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -890,7 +900,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -915,7 +925,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no approved reports notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [],
