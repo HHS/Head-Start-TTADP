@@ -109,24 +109,26 @@ commands:
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      message_text:
+        description: "Message text to post to Slack"
+        type: string
     steps:
     - run:
-        name: Notify Slack of Deployment
+        name: Notify Slack
         command: |
-          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
-          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
-          else
-            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+          # Ensure all parameters are provided
+          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "<< parameters.message_text >>" ]; then
+            echo "Missing required parameters. Notification will not be sent."
+            exit 1
           fi
 
           curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
           -H 'Content-type: application/json;charset=utf-8' \
           --data "{
             \"channel\": \"<< parameters.slack_channel >>\",
-            \"text\": \"$MESSAGE_TEXT\"
+            \"text\": \"<< parameters.message_text >>\"
           }" https://slack.com/api/chat.postMessage
+
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
@@ -406,7 +408,7 @@ parameters:
     default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "gh/cfignore-keep-sql-drop-tests"
+    default: "TTAHUB-3060/url-publish"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -843,6 +845,19 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - run:
+                name: Set Deployment Message
+                command: |
+                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to sandbox was successful!"
+                  else
+                    export MESSAGE_TEXT=":rocket: Deployment to sandbox was successful!"
+                  fi
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text: "$MESSAGE_TEXT"
       - when:  # dev
           condition:
             and:
@@ -897,6 +912,19 @@ jobs:
                 env_name: dev
                 new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - run:
+                name: Set Deployment Message
+                command: |
+                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to dev was successful!"
+                  else
+                    export MESSAGE_TEXT=":rocket: Deployment to dev was successful!"
+                  fi
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text: "$MESSAGE_TEXT"
       - when:  # staging
           condition:
             and:
@@ -949,6 +977,19 @@ jobs:
                 env_name: staging
                 new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - run:
+                name: Set Deployment Message
+                command: |
+                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to staging was successful!"
+                  else
+                    export MESSAGE_TEXT=":rocket: Deployment to staging was successful!"
+                  fi
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text: "$MESSAGE_TEXT"
       - when:  # prod
           condition:
             and:
@@ -1001,9 +1042,19 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - run:
+                name: Set Deployment Message
+                command: |
+                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+                  else
+                    export MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+                  fi
             - notify_slack:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+                message_text: "$MESSAGE_TEXT"
     resource_class: large
   backup_upload_production:
     docker:
@@ -1020,6 +1071,19 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+    - run:
+        name: Set Backup Message
+        command: |
+          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+            export MESSAGE_TEXT=":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!"
+          else
+            export MESSAGE_TEXT=":download::database: Production backup successful!"
+          fi
+    - notify_slack:
+        slack_bot_token: $SLACK_BOT_TOKEN
+        slack_channel: "acf-head-start-eng"
+        message_text: "$MESSAGE_TEXT"
 workflows:
   build_test_deploy:
     when:
