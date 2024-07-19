@@ -666,17 +666,64 @@ perform_backup_and_upload() {
   fi
   set -e
 }
+
+# -----------------------------------------------------------------------------
+
+generate_presigned_urls() {
+  local aws_s3_server=$1
+  local backup_filename_prefix=$2
+  local duration=$3
+
+  log "INFO" "Preparing to generate presigned URLs."
+  parameters_validate "${aws_s3_server}"
+  parameters_validate "${backup_filename_prefix}"
+  parameters_validate "${duration}"
+
+  log "INFO" "Finding latest backup files in S3."
+  local latest_backup_file_path
+  latest_backup_file_path=$(aws s3 ls "s3://${AWS_DEFAULT_BUCKET}/${backup_filename_prefix}" --recursive | awk '{print $4}' | grep 'latest-backup.txt' | sort | tail -n 1)
+  if [[ -z "${latest_backup_file_path}" ]]; then
+      log "ERROR" "latest-backup.txt not found in S3 bucket."
+      set -e
+      exit 7
+  fi
+
+  log "INFO" "Downloading latest-backup.txt file."
+  aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${latest_backup_file_path}" /tmp/latest-backup.txt
+
+  log "INFO" "Reading latest backup files."
+  local zip_file_path md5_file_path sha256_file_path password_file_path
+  zip_file_path=$(awk 'NR==1' /tmp/latest-backup.txt)
+  md5_file_path=$(awk 'NR==2' /tmp/latest-backup.txt)
+  sha256_file_path=$(awk 'NR==3' /tmp/latest-backup.txt)
+  password_file_path=$(awk 'NR==4' /tmp/latest-backup.txt)
+
+  log "INFO" "Generating presigned URLs."
+  local zip_url md5_url sha256_url password_url
+  zip_url=$(aws s3 presign "s3://${AWS_DEFAULT_BUCKET}/${zip_file_path}" --expires-in "${duration}")
+  md5_url=$(aws s3 presign "s3://${AWS_DEFAULT_BUCKET}/${md5_file_path}" --expires-in "${duration}")
+  sha256_url=$(aws s3 presign "s3://${AWS_DEFAULT_BUCKET}/${sha256_file_path}" --expires-in "${duration}")
+  password_url=$(aws s3 presign "s3://${AWS_DEFAULT_BUCKET}/${password_file_path}" --expires-in "${duration}")
+
+  log "INFO" "Generated presigned URLs:"
+  local urls_json
+  urls_json=$(jq -n --arg zip_url "$zip_url" --arg md5_url "$md5_url" --arg sha256_url "$sha256_url" --arg password_url "$password_url" '{zip_url: $zip_url, md5_url: $md5_url, sha256_url: $sha256_url, password_url: $password_url}')
+
+  echo "${urls_json}" > /tmp/presigned_urls.json
+}
 # -----------------------------------------------------------------------------
 
 function main() {
   local backup_filename_prefix=$1
   local rds_server=$2
   local aws_s3_server=$3
+  local duration=${4-86400}  # Default duration to 24 hours
 
   log "INFO" "Validate parameters and exports"
   parameters_validate "${backup_filename_prefix}"
   parameters_validate "${rds_server}"
   parameters_validate "${aws_s3_server}"
+  parameters_validate "${duration}"
 
   export_validate "VCAP_SERVICES"
 
@@ -688,7 +735,7 @@ function main() {
   log "INFO" "add the bin dir for the new cli tools to PATH"
   add_to_path '/tmp/local/bin'
 
-  log "INFO" "check dependancies"
+  log "INFO" "check dependencies"
   check_dependencies aws md5sum openssl pg_dump pg_isready sha256sum zip
 
   log "INFO" "collect and configure credentials"
@@ -699,8 +746,12 @@ function main() {
   rds_test_connectivity
   s3_test_connectivity
 
-  log "INFO" "backup, upload, verfity db"
+  log "INFO" "backup, upload, verify db"
   perform_backup_and_upload "${backup_filename_prefix}"
+
+  log "INFO" "generate presigned URLs"
+  generate_presigned_urls "${aws_s3_server}" "${backup_filename_prefix}" "${duration}"
+  log "INFO" "Presigned URLs JSON written to /tmp/presigned_urls.json: $(cat /tmp/presigned_urls.json)"
 
   log "INFO" "clear the populated env vars"
   rds_clear

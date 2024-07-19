@@ -6,6 +6,9 @@ set -o pipefail
 set -o noglob
 set -o noclobber
 
+# Source the environment file to get the URLs
+source /etc/environment
+
 # -----------------------------------------------------------------------------
 # Generic helper functions
 # -----------------------------------------------------------------------------
