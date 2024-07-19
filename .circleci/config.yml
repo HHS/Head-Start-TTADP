@@ -101,7 +101,7 @@ commands:
               }
             }"
   notify_slack:
-    description: "Notify slack of a deploy to production"
+    description: "Notify Slack of a deploy to production"
     parameters:
       slack_bot_token:
         description: "Slack bot token"
@@ -112,12 +112,29 @@ commands:
       message_text:
         description: "Message text to post to Slack"
         type: string
+        default: ""
+      message_text_script:
+        description: "Script to generate message text"
+        type: string
+        default: ""
     steps:
+      - run:
+          name: Set Message Text
+          command: |
+            # Evaluate message_text_script if provided
+            if [ -n "<< parameters.message_text_script >>" ]; then
+              eval "<< parameters.message_text_script >>"
+            else
+              MESSAGE_TEXT="<< parameters.message_text >>"
+            fi
+            echo $MESSAGE_TEXT
+            echo "export MESSAGE_TEXT='$MESSAGE_TEXT'" >> $BASH_ENV
       - run:
           name: Notify Slack
           command: |
+            source $BASH_ENV
             # Ensure all parameters are provided
-            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "<< parameters.message_text >>" ]; then
+            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
               echo "Missing required parameters. Notification will not be sent."
               exit 1
             fi
@@ -126,10 +143,8 @@ commands:
             -H 'Content-type: application/json;charset=utf-8' \
             --data "{
               \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"<< parameters.message_text >>\"
+              \"text\": \"$MESSAGE_TEXT\"
             }" https://slack.com/api/chat.postMessage
-
-
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -366,20 +381,16 @@ commands:
           environment:
             CF_RDS_SERVICE_NAME: ttahub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
-      - run:
-          name: Read Presigned URLs
-          command: |
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_script: |
             if [ -f /tmp/presigned_urls.json ]; then
               PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
-              echo "export PRESIGNED_URLS_JSON='$PRESIGNED_URLS_JSON'" >> $BASH_ENV
-              source $BASH_ENV
             else
               echo "Presigned URLs JSON file not found!"
               exit 1
             fi
-      - run:
-          name: Set Backup Message
-          command: |
             ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
             PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
             MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
@@ -399,12 +410,6 @@ commands:
               - [MD5 Checksum]($MD5_URL)
               - [SHA256 Checksum]($SHA256_URL)"
             fi
-            echo "export MESSAGE_TEXT='$MESSAGE_TEXT'" >> $BASH_ENV
-            source $BASH_ENV
-      - notify_slack:
-          slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-eng"
-          message_text: "$MESSAGE_TEXT"
       - run:
           name: Logout of service account
           command: |
@@ -889,19 +894,16 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - run:
-                name: Set Deployment Message
-                command: |
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
                     export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to sandbox was successful!"
                   else
                     export MESSAGE_TEXT=":rocket: Deployment to sandbox was successful!"
                   fi
-            - notify_slack:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-head-start-github"
-                message_text: "$MESSAGE_TEXT"
       - when:  # dev
           condition:
             and:
@@ -956,19 +958,16 @@ jobs:
                 env_name: dev
                 new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - run:
-                name: Set Deployment Message
-                command: |
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
                     export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to dev was successful!"
                   else
                     export MESSAGE_TEXT=":rocket: Deployment to dev was successful!"
                   fi
-            - notify_slack:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-head-start-github"
-                message_text: "$MESSAGE_TEXT"
       - when:  # staging
           condition:
             and:
@@ -1021,19 +1020,16 @@ jobs:
                 env_name: staging
                 new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - run:
-                name: Set Deployment Message
-                command: |
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
                     export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to staging was successful!"
                   else
                     export MESSAGE_TEXT=":rocket: Deployment to staging was successful!"
                   fi
-            - notify_slack:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-head-start-github"
-                message_text: "$MESSAGE_TEXT"
       - when:  # prod
           condition:
             and:
@@ -1086,19 +1082,16 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - run:
-                name: Set Deployment Message
-                command: |
+            - notify_slack:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+                message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
                     export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
                   else
                     export MESSAGE_TEXT=":rocket: Deployment to production was successful!"
                   fi
-            - notify_slack:
-                slack_bot_token: $SLACK_BOT_TOKEN
-                slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-                message_text: "$MESSAGE_TEXT"
     resource_class: large
   backup_upload_production:
     docker:
