@@ -189,7 +189,7 @@ describe('mailer tests', () => {
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Changes requested`);
-      expect(message.text).toContain(`${mockManager.name} requested changed to report ${mockReport.displayId}.`);
+      expect(message.text).toContain(`${mockManager.name} requested changes to report ${mockReport.displayId}.`);
       expect(message.text).toContain(mockApprover.note);
       expect(message.text).toContain(reportPath);
     });
