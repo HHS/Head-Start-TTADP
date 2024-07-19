@@ -187,8 +187,12 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.4.39",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.33"
   },
   "jest": {
     "coveragePathIgnorePatterns": [
