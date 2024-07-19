@@ -113,21 +113,21 @@ commands:
         description: "Message text to post to Slack"
         type: string
     steps:
-    - run:
-        name: Notify Slack
-        command: |
-          # Ensure all parameters are provided
-          if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "<< parameters.message_text >>" ]; then
-            echo "Missing required parameters. Notification will not be sent."
-            exit 1
-          fi
+      - run:
+          name: Notify Slack
+          command: |
+            # Ensure all parameters are provided
+            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "<< parameters.message_text >>" ]; then
+              echo "Missing required parameters. Notification will not be sent."
+              exit 1
+            fi
 
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data "{
-            \"channel\": \"<< parameters.slack_channel >>\",
-            \"text\": \"<< parameters.message_text >>\"
-          }" https://slack.com/api/chat.postMessage
+            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+            -H 'Content-type: application/json;charset=utf-8' \
+            --data "{
+              \"channel\": \"<< parameters.slack_channel >>\",
+              \"text\": \"<< parameters.message_text >>\"
+            }" https://slack.com/api/chat.postMessage
 
 
   cf_deploy:
@@ -366,6 +366,45 @@ commands:
           environment:
             CF_RDS_SERVICE_NAME: ttahub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
+      - run:
+          name: Read Presigned URLs
+          command: |
+            if [ -f /tmp/presigned_urls.json ]; then
+              PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
+              echo "export PRESIGNED_URLS_JSON='$PRESIGNED_URLS_JSON'" >> $BASH_ENV
+              source $BASH_ENV
+            else
+              echo "Presigned URLs JSON file not found!"
+              exit 1
+            fi
+      - run:
+          name: Set Backup Message
+          command: |
+            ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
+            PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
+            MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
+            SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
+
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              export MESSAGE_TEXT=":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!
+              - [Backup ZIP]($ZIP_URL)
+              - [Password File]($PASSWORD_URL)
+              - [MD5 Checksum]($MD5_URL)
+              - [SHA256 Checksum]($SHA256_URL)"
+            else
+              export MESSAGE_TEXT=":download::database: Production backup successful!
+              - [Backup ZIP]($ZIP_URL)
+              - [Password File]($PASSWORD_URL)
+              - [MD5 Checksum]($MD5_URL)
+              - [SHA256 Checksum]($SHA256_URL)"
+            fi
+            echo "export MESSAGE_TEXT='$MESSAGE_TEXT'" >> $BASH_ENV
+            source $BASH_ENV
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text: "$MESSAGE_TEXT"
       - run:
           name: Logout of service account
           command: |
@@ -635,6 +674,11 @@ jobs:
       - run:
           name: Wait for server to start
           command: ./bin/ping-server 3000
+      - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
       - run:
           name: Install playwright dependencies
           command: |
@@ -1071,19 +1115,6 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
-    - run:
-        name: Set Backup Message
-        command: |
-          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            export MESSAGE_TEXT=":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!"
-          else
-            export MESSAGE_TEXT=":download::database: Production backup successful!"
-          fi
-    - notify_slack:
-        slack_bot_token: $SLACK_BOT_TOKEN
-        slack_channel: "acf-head-start-eng"
-        message_text: "$MESSAGE_TEXT"
 workflows:
   build_test_deploy:
     when:
