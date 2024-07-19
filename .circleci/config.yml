@@ -403,7 +403,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
+    default: "TTAHUB-3097/transactions-for-workers-round-2"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "main"
