@@ -487,9 +487,10 @@ const processZipFileFromS3 = async (
 
   // Destructure properties from the importFile object
   const {
-    dataValues: { importFileId, processAttempts = 0 },
-    file: { key },
-    import: { definitions: processDefinitions },
+    importFileId,
+    processAttempts = 0,
+    fileKey: key,
+    importDefinitions: processDefinitions,
   } = importFile;
 
   // These must be let to properly wrap the population in a try/catch
