@@ -119,32 +119,34 @@ commands:
         default: ""
     steps:
       - run:
-          name: Set Message Text
+          name: Notify Slack
           command: |
+            source $BASH_ENV
+
             # Evaluate message_text_script if provided
             if [ -n "<< parameters.message_text_script >>" ]; then
               eval "<< parameters.message_text_script >>"
             else
               MESSAGE_TEXT="<< parameters.message_text >>"
             fi
+            
             echo $MESSAGE_TEXT
-            echo "export MESSAGE_TEXT='$MESSAGE_TEXT'" >> $BASH_ENV
-      - run:
-          name: Notify Slack
-          command: |
-            source $BASH_ENV
+
             # Ensure all parameters are provided
             if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
               echo "Missing required parameters. Notification will not be sent."
               exit 1
             fi
 
-            curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-            -H 'Content-type: application/json;charset=utf-8' \
-            --data "{
-              \"channel\": \"<< parameters.slack_channel >>\",
-              \"text\": \"$MESSAGE_TEXT\"
-            }" https://slack.com/api/chat.postMessage
+            curl \
+              -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                \"channel\": \"<< parameters.slack_channel >>\",
+                \"text\": \"$MESSAGE_TEXT\"
+              }" \
+              https://slack.com/api/chat.postMessage
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
