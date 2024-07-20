@@ -21,7 +21,9 @@ const transactionQueueWrapper = (
   return httpContext.ns.runPromise(async () => {
     httpContext.set('loggedUser', job?.referenceData?.userId);
     httpContext.set('impersonationUserId', job?.referenceData?.impersonationUserId);
-    httpContext.set('sessionSig', job.id);
+    httpContext.set('sessionSig', job?.referenceData?.transactionId
+      ? `${job.id}:${job?.referenceData?.transactionId}`
+      : job.id);
     httpContext.set('auditDescriptor', originalFunction.name);
     try {
       // eslint-disable-next-line global-require
