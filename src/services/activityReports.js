@@ -968,13 +968,27 @@ export async function createOrUpdate(newActivityReport, report) {
   }
 
   if (recipientNextSteps) {
-    const { id } = savedReport;
-    await saveNotes(id, recipientNextSteps, true);
+    // Filter out objects with null id and empty string note
+    const filteredNextSteps = recipientNextSteps.filter(
+      (step) => step.id !== null && step.note !== '',
+    );
+
+    if (filteredNextSteps.length > 0) {
+      const { id } = savedReport;
+      await saveNotes(id, filteredNextSteps, true);
+    }
   }
 
   if (specialistNextSteps) {
-    const { id } = savedReport;
-    await saveNotes(id, specialistNextSteps, false);
+    // Filter out objects with null id and empty string note
+    const filteredNextSteps = specialistNextSteps.filter(
+      (step) => step.id !== null && step.note !== '',
+    );
+
+    if (filteredNextSteps.length > 0) {
+      const { id } = savedReport;
+      await saveNotes(id, filteredNextSteps, true);
+    }
   }
 
   /**
