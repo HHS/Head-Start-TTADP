@@ -145,10 +145,10 @@ describe('Maintenance Queue', () => {
       const data = {
         test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category',
         referenceData: {
-          impersonationId: undefined,
-          sessionSig: undefined,
-          transactionId: undefined,
-          userId: undefined,
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
         },
       };
       const category = 'test-category';
