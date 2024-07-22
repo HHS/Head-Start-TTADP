@@ -14,7 +14,6 @@ import {
   ActivityReportCollaborator,
   ActivityReportFile,
   sequelize,
-  Sequelize,
   ActivityRecipient,
   File,
   Grant,
@@ -1045,7 +1044,7 @@ export async function setStatus(report, status) {
 export async function possibleRecipients(regionId, activityReportId = null) {
   // If we have an activityReportId get the startDate of the report.
   // We have to consider that we have a report with no ActivityRecipients (ie no way to join).
-  let startDate = activityReportId ? await ActivityReport.findOne({
+  const reportWithStartDate = activityReportId ? await ActivityReport.findOne({
     attributes: ['startDate'],
     where: {
       id: activityReportId,
@@ -1053,8 +1052,9 @@ export async function possibleRecipients(regionId, activityReportId = null) {
   }) : null;
 
   // If we have a valid startDate subtract 61 days from it.
-  if (startDate) {
-    startDate = moment(startDate.startDate).subtract(61, 'days').format('YYYY-MM-DD');
+  let startDate = null;
+  if (reportWithStartDate && reportWithStartDate.startDate) {
+    startDate = moment(reportWithStartDate.startDate).subtract(61, 'days').format('YYYY-MM-DD');
   }
 
   const grants = await Recipient.findAll({
