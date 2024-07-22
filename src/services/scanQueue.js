@@ -16,7 +16,7 @@ const addToScanQueue = (fileKey) => {
   return scanQueue.add(
     {
       ...fileKey,
-      referenceData: referenceData(),
+      ...(referenceData()),
     },
     {
       attempts: retries,
@@ -40,7 +40,7 @@ const processScanQueue = () => {
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
-  const processFileFromJob = (job) => processFile(job.data.key);
+  const processFileFromJob = async (job) => processFile(job.data.key);
   scanQueue.process(transactionQueueWrapper(processFileFromJob));
 };
 

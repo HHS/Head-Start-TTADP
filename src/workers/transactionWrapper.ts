@@ -19,12 +19,17 @@ const transactionQueueWrapper = (
 ) => async (job: Job): Promise<any> => {
   const startTime = Date.now();
   return httpContext.ns.runPromise(async () => {
-    httpContext.set('loggedUser', job?.referenceData?.userId);
-    httpContext.set('impersonationUserId', job?.referenceData?.impersonationUserId);
-    httpContext.set('sessionSig', job?.referenceData?.transactionId
-      ? `${job.id}:${job?.referenceData?.transactionId}`
+    httpContext.set('loggedUser', job?.data?.referenceData?.userId);
+    httpContext.set('impersonationUserId', job?.data?.referenceData?.impersonationId);
+    httpContext.set('sessionSig', job?.data?.referenceData?.transactionId
+      ? `${job.id}:${job?.data?.referenceData?.transactionId}`
       : job.id);
     httpContext.set('auditDescriptor', originalFunction.name);
+
+    if (job.data && job.data.referenceData !== undefined) {
+      // eslint-disable-next-line no-param-reassign
+      delete job.data.referenceData;
+    }
     try {
       // eslint-disable-next-line global-require
       const { sequelize } = require('../models');
