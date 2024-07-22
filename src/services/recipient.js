@@ -486,7 +486,7 @@ function calculatePreviousStatus(goal) {
   // otherwise we check to see if there is the goal is on an activity report,
   // and also check the status
   if (goal.objectives.length) {
-    const onAr = goal.objectives.some((objective) => objective.activityReports.length);
+    const onAr = goal.objectives.some((objective) => objective.onApprovedAR);
     const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
 
     if (onAr && isCompletedOrInProgress) {
@@ -708,11 +708,12 @@ export async function getGoalsByActivityRecipient(
             model: ActivityReportObjective,
             as: 'activityReportObjectives',
             attributes: ['id', 'objectiveId'],
+            separate: true,
             include: [
               {
                 model: Topic,
-                through: [],
                 as: 'topics',
+                attributes: ['name'],
               },
             ],
           },
@@ -733,25 +734,6 @@ export async function getGoalsByActivityRecipient(
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
-            include: [
-              {
-                model: ActivityRecipient,
-                as: 'activityRecipients',
-                attributes: ['activityReportId', 'grantId'],
-                required: true,
-                include: [
-                  {
-                    required: true,
-                    model: Grant,
-                    as: 'grant',
-                    attributes: ['id', 'recipientId'],
-                    where: {
-                      recipientId,
-                    },
-                  },
-                ],
-              },
-            ],
           },
         ],
       },
