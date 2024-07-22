@@ -1043,6 +1043,20 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId, activityReportId = null) {
+  // If we have an activityReportId get the startDate of the report.
+  // We have to consider that we have a report with no ActivityRecipients (ie no way to join).
+  let startDate = activityReportId ? await ActivityReport.findOne({
+    attributes: ['startDate'],
+    where: {
+      id: activityReportId,
+    },
+  }) : null;
+
+  // If we have a valid startDate subtract 61 days from it.
+  if (startDate) {
+    startDate = moment(startDate.startDate).subtract(61, 'days').format('YYYY-MM-DD');
+  }
+
   const grants = await Recipient.findAll({
     attributes: [
       'id',
@@ -1080,7 +1094,13 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       '$grants.regionId$': regionId,
       [Op.or]: [
         { '$grants.status$': 'Active' },
-        { '$grants->activityRecipients.activityReportId$': activityReportId },
+        { ...(activityReportId ? { '$grants.activityRecipients.activityReportId$': activityReportId } : {}) },
+        {
+          '$grants.inactivationDate$': {
+            [Op.gte]:
+              sequelize.literal(`${!startDate ? `date_trunc('day', NOW()) - interval '61 days'` : `'${startDate}'`}`),
+          },
+        },
       ],
     },
   });
