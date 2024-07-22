@@ -763,7 +763,7 @@ export async function activityReportAlerts(userId, {
               ],
             },
             id: {
-              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
+              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara
                 WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
             },
           },
@@ -781,7 +781,7 @@ export async function activityReportAlerts(userId, {
                   { userId },
                   {
                     id: {
-                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc
                       WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
                     },
                   },
@@ -963,11 +963,11 @@ export async function createOrUpdate(newActivityReport, report) {
     const activityRecipientIds = activityRecipients.map(
       (g) => g.activityRecipientId,
     );
-
     await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
   }
 
-  if (recipientNextSteps) {
+  // eslint-disable-next-line no-extra-boolean-cast
+  if (!!recipientNextSteps) {
     // Filter out objects with null id and empty string note
     const filteredNextSteps = recipientNextSteps.filter(
       (step) => step.id !== null && step.note !== '',
@@ -979,7 +979,8 @@ export async function createOrUpdate(newActivityReport, report) {
     }
   }
 
-  if (specialistNextSteps) {
+  // eslint-disable-next-line no-extra-boolean-cast
+  if (!!specialistNextSteps) {
     // Filter out objects with null id and empty string note
     const filteredNextSteps = specialistNextSteps.filter(
       (step) => step.id !== null && step.note !== '',
@@ -987,7 +988,7 @@ export async function createOrUpdate(newActivityReport, report) {
 
     if (filteredNextSteps.length > 0) {
       const { id } = savedReport;
-      await saveNotes(id, filteredNextSteps, true);
+      await saveNotes(id, filteredNextSteps, false);
     }
   }
 
