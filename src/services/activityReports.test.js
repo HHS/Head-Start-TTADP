@@ -442,8 +442,8 @@ describe('Activity report service', () => {
         calculatedStatus: REPORT_STATUSES.DRAFT,
         activityRecipients: [],
         // Set a start date that will NOT return the inactive grant.
-        startDate: new Date(new Date().setDate(new Date().getDate() + 64)),
-        endDate: new Date(new Date().setDate(new Date().getDate() + 64)),
+        startDate: new Date(new Date().setDate(new Date().getDate() + 62)),
+        endDate: new Date(new Date().setDate(new Date().getDate() + 62)),
       });
     });
 
