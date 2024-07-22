@@ -357,7 +357,7 @@ describe('Activity report service', () => {
         ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
-        Region.create({ name: 'office 19', id: 19 }),
+        Region.findOrCreate({ where: { name: 'office 19', id: 19 } }),
       ]);
 
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
