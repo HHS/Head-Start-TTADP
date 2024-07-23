@@ -468,6 +468,21 @@ export async function activityReportAndRecipientsById(activityReportId) {
     ],
   });
 
+  if (report?.specialistNextSteps?.length === 0) {
+    report.specialistNextSteps[0] = {
+      dataValues: {
+        note: '',
+      },
+    };
+  }
+  if (report?.recipientNextSteps?.length === 0) {
+    report.recipientNextSteps[0] = {
+      dataValues: {
+        note: '',
+      },
+    };
+  }
+
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
 
