@@ -37,6 +37,7 @@ describe('Goal Form > Form component', () => {
     objectives = [],
     fetchError = '',
     user = DEFAULT_USER,
+    userCanEdit = true,
   ) => {
     render(
       <UserContext.Provider value={{
@@ -91,7 +92,7 @@ describe('Goal Form > Form component', () => {
             onUploadFile={jest.fn()}
             validateGoalNameAndRecipients={jest.fn()}
             prompts={goal.prompts}
-            userCanEdit
+            userCanEdit={userCanEdit}
             source={goal.source}
             setSource={jest.fn()}
             createdVia={goal.createdVia || 'activityReport'}
@@ -143,6 +144,47 @@ describe('Goal Form > Form component', () => {
     sourceSelects.forEach((sourceSelect) => {
       expect(sourceSelect).toBeEnabled();
     });
+  });
+
+  it('disables the goal source if userCanEdit is false', () => {
+    renderGoalForm(
+      {
+        ...DEFAULT_GOAL,
+        createdVia: 'activityReport',
+        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
+        source: { 'GRANT_NUMBER EHS': 'Not Training event' },
+      },
+      [],
+      '',
+      { ...DEFAULT_USER, permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS }] },
+      false,
+    );
+
+    expect(screen.getByText(/goal source/i)).toBeVisible();
+    expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(0);
+  });
+
+  it('enables the goal source if userCanEdit is true', () => {
+    renderGoalForm(
+      {
+        ...DEFAULT_GOAL,
+        createdVia: 'activityReport',
+        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
+        source: { 'GRANT_NUMBER EHS': 'Not Training event' },
+      },
+      [],
+      '',
+      {
+        ...DEFAULT_USER,
+        permissions: [
+          { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
+        ],
+      },
+      true,
+    );
+
+    expect(screen.getByText(/goal source/i)).toBeVisible();
+    expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(1);
   });
 
   it('shows an error when the fetch has failed', async () => {

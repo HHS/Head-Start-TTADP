@@ -5,45 +5,54 @@ executors:
   docker-executor:
     # for docker you must specify an image to use for the primary container
     docker:
-      - image: cimg/node:18.19.1-browsers
+      - image: cimg/node:18.20.3-browsers
   docker-postgres-executor:
     docker:
-      - image: cimg/node:18.19.1-browsers
+      - image: cimg/node:18.20.3-browsers
         environment:
           DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
+      - image: cimg/postgres:15.6
         environment:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: secretpass
           POSTGRES_DB: ttasmarthub
   docker-python-executor:
     docker:
-      - image: cimg/python:3.9.18
-  docker-postgres-elasticsearch-executor:
-    docker:
-      - image: cimg/node:18.19.1-browsers
-        environment:
-          DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
-      - image: circleci/postgres:12.4-ram
-        environment:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: secretpass
-          POSTGRES_DB: ttasmarthub
-      - image: opensearchproject/opensearch:1.3.2
-        name: opensearch
-        environment:
-          transport.host: 0.0.0.0
-          network.host: 0.0.0.0
-          http.port: 9200
-          cluster.name: opensearch-cluster
-          node.name: opensearch-node1
-          discovery.type: single-node
-          DISABLE_SECURITY_PLUGIN: true
-          ES_JAVA_OPTS: "-Xms256m -Xmx256m"
+      - image: cimg/python:3.9.19
   machine-executor:
     machine:
       image: ubuntu-2204:current
+  aws-executor:
+    docker:
+      - image: cimg/aws:2024.03
 commands:
+  sparse_checkout:
+    description: "Checkout a sparse directory from a specific branch."
+    parameters:
+      directory:
+        type: string
+        description: "Directory to checkout sparsely"
+      branch:
+        type: string
+        description: "Branch to checkout"
+    steps:
+      - run:
+          name: Install Git
+          command: |
+            sudo apt-get update && sudo apt-get install -y git
+      - run:
+          name: Clone Repository
+          command: |
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+      - run:
+          name: Setup Sparse Checkout
+          command: |
+            git config core.sparseCheckout true
+            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
+      - run:
+          name: Checkout Branch
+          command: |
+            git checkout << parameters.branch >>
   create_combined_yarnlock:
     description: "Concatenate all yarn.json files into single file.
       File is used as checksum source for part of caching key."
@@ -213,6 +222,9 @@ commands:
       itams_md_password:
         description: "password for itams monitoring data"
         type: env_var_name
+      smartsheet_access_token:
+        description: "non-production smartsheet access token"
+        type: env_var_name
     steps:
       - run:
           name: Login with service account
@@ -248,11 +260,114 @@ commands:
               --var ITAMS_MD_HOST=${<< parameters.itams_md_host >>} \
               --var ITAMS_MD_PORT=${<< parameters.itams_md_port >>} \
               --var ITAMS_MD_USERNAME=${<< parameters.itams_md_username >>} \
-              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>}
+              --var ITAMS_MD_PASSWORD=${<< parameters.itams_md_password >>} \
+              --var SMARTSHEET_ACCESS_TOKEN=${<< parameters.smartsheet_access_token >>}
       # - run:
       #     name: Push maintenance application
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
+  cf_backup:
+    description: "Login to cloud foundry space with service account credentials, Connect to DB & S3, backup DB to S3"
+    parameters:
+      auth_client_secret:
+        description: "Name of CircleCi project environment variable that
+          holds authentication client secret, a required application variable"
+        type: env_var_name
+      cloudgov_username:
+        description: "Name of CircleCi project environment variable that
+          holds deployer username for cloudgov space"
+        type: env_var_name
+      cloudgov_password:
+        description: "Name of CircleCi project environment variable that
+          holds deployer password for cloudgov space"
+        type: env_var_name
+      cloudgov_space:
+        description: "Name of CircleCi project environment variable that
+          holds name of cloudgov space to target for application deployment"
+        type: env_var_name
+      rds_service_name:
+        description: "Name of the rds service to backup"
+        type: string
+      s3_service_name:
+        description: "Name of the s3 service access"
+        type: string
+      backup_prefix:
+        description: "prefix name to use for backups"
+        type: string
+    steps:
+      - run:
+          name: Install Dependencies
+          command: |
+            set -e
+            set -u
+            set -o pipefail
+            set -o noglob
+            set -o noclobber
+
+            # update
+            sudo apt-get update
+            # Install uuid-runtime to have access to uuidgen
+            # Install pv wget
+            sudo apt-get install pv uuid-runtime wget
+            # Install Cloud Foundry CLI
+            wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
+            echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
+            sudo apt-get update
+            sudo apt-get install cf8-cli
+            # Install plugin needed for connect-to-service
+            cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # The line you want to ensure exists in the /etc/hosts file
+            line="127.0.0.1        localhost"
+
+            # Check if the line already exists
+            if ! grep -qF "$line" /etc/hosts; then
+                # If the line does not exist, append it
+                echo "$line" | sudo tee -a /etc/hosts > /dev/null
+                echo "Line added to /etc/hosts"
+            else
+                echo "Line already exists in /etc/hosts"
+            fi
+
+            # cleanup
+            sudo rm -rf /var/lib/apt/lists/*
+      - run:
+          name: Login with service account
+          command: |
+            cf login -a << pipeline.parameters.cg_api >> \
+              -u ${<< parameters.cloudgov_username >>} \
+              -p ${<< parameters.cloudgov_password >>} \
+              -o << pipeline.parameters.cg_org >> \
+              -s ${<< parameters.cloudgov_space >>}
+      - run:
+          name: cf_lambda - script to trigger backup
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg automation_dir "./automation" \
+              --arg manifest "manifest.yml" \
+              --arg task_name "backup" \
+              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
+              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
+              '{
+                automation_dir: $automation_dir,
+                manifest: $manifest,
+                task_name: $task_name,
+                command: $command,
+                args: $args
+              }')
+
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
+
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+          environment:
+            CF_RDS_SERVICE_NAME: ttahub-prod
+            CF_S3_SERVICE_NAME: ttahub-db-backups
+      - run:
+          name: Logout of service account
+          command: |
+            cf logout
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -288,10 +403,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al/ttahub-2570/flat-resource-sql"
+    default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "jp/2793/reopen-frontend"
+    default: "gh/cfignore-keep-sql-drop-tests"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -305,6 +420,9 @@ parameters:
   sandbox_new_relic_app_id:
     default: "867346799"
     type: string
+  manual-trigger:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
@@ -328,8 +446,24 @@ jobs:
           name: Lint backend
           command: yarn lint:ci
       - run:
+          name: Audit vulnerability of backend node_modules
+          command: |
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
           name: Lint frontend
           command: yarn --cwd frontend lint:ci
+      - run:
+          name: Audit vulnerability of frontend node_modules
+          command: |
+            cd frontend
+            chmod 744 ./run-yarn-audit.sh
+            ./run-yarn-audit.sh;
+      - run:
+          name: Check nodejs version compatibility with buildpack
+          command: |
+            chmod +x ./bin/check_node_version_compatibility.sh
+            ./bin/check_node_version_compatibility.sh
       - store_artifacts:  # store backend lint reports
           path: reports
       - store_artifacts:  # store frontend lint reports
@@ -362,6 +496,11 @@ jobs:
             source venv/bin/activate
             pip install -U pip setuptools wheel
             pip install -U -r requirements.txt
+      - run:
+          name: Check python version compatibility  with buildpack
+          command: |
+            chmod +x ./bin/check_python_version_compatibility.sh
+            ./bin/check_python_version_compatibility.sh
       - save_cache:
           paths:
             - similarity_api/src/venv
@@ -376,22 +515,14 @@ jobs:
             - similarity_api
     resource_class: large
   test_backend:
-    executor: docker-postgres-elasticsearch-executor
+    executor: docker-postgres-executor
     environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
         SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
       - setup_remote_docker:
           version: default
-      - run:
-          name: Audit vulnerability of backend node_modules
-          command: |
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
       - run:
           name: Run migrations ci
           command: yarn db:migrate:ci
@@ -428,7 +559,7 @@ jobs:
       - run:
           name: Syft SBOM
           environment:
-            SYFT_VERSION: v0.82.0
+            SYFT_VERSION: v1.5.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
             OUTPUT_FILE:  reports/syft_sbom.json
@@ -442,7 +573,7 @@ jobs:
       - run:
           name: Grype Docker image
           environment:
-            GRYPE_VERSION: v0.62.2
+            GRYPE_VERSION: v0.78.0
             OUTPUT_FORMAT: sarif
             OUTPUT_FILE: reports/grype.json
           command: |
@@ -473,12 +604,6 @@ jobs:
             chmod 744 ./checkcolorhash.sh
             ./checkcolorhash.sh;
       - run:
-          name: Audit vulnerability of frontend node_modules
-          command: |
-            cd frontend
-            chmod 744 ./run-yarn-audit.sh
-            ./run-yarn-audit.sh;
-      - run:
           name: Test frontend
           command: yarn --cwd frontend run test:ci --maxWorkers=50%
       - store_test_results:
@@ -487,11 +612,7 @@ jobs:
           path: frontend/coverage/
     resource_class: large
   test_e2e:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -528,11 +649,7 @@ jobs:
           path: playwright/e2e
     resource_class: large
   test_api:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -569,11 +686,7 @@ jobs:
           path: playwright/api
     resource_class: large
   test_utils:
-    executor: docker-postgres-elasticsearch-executor
-    environment:
-        AWS_ELASTICSEARCH_ENDPOINT: http://opensearch:9200
-        AWS_ELASTICSEARCH_ACCESS_KEY: admin
-        AWS_ELASTICSEARCH_SECRET_KEY: admin
+    executor: docker-postgres-executor
     steps:
       - attach_workspace:
           at: .
@@ -653,7 +766,7 @@ jobs:
           command: ./bin/run-owasp-scan
       - store_artifacts:
           path: reports/owasp_report.html
-    resource_class: arm.large
+    resource_class: large
   deploy:
     executor: docker-executor
     steps:
@@ -720,6 +833,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Migrate database
                 command: |
@@ -774,6 +888,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Migrate database
                 command: |
@@ -828,6 +943,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Run database migrations
                 command: |
@@ -880,6 +996,7 @@ jobs:
                 itams_md_port: ITAMS_MD_PORT
                 itams_md_username: ITAMS_MD_USERNAME
                 itams_md_password: ITAMS_MD_PASSWORD
+                smartsheet_access_token: SMARTSHEET_ACCESS_TOKEN
             - run:
                 name: Run database migrations
                 command: |
@@ -892,8 +1009,25 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
     resource_class: large
+  backup_upload_production:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directory: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_backup:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-prod
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
 workflows:
   build_test_deploy:
+    when:
+      equal: [false, << pipeline.parameters.manual-trigger >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -921,6 +1055,20 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+      - backup_upload_production:
+          requires:
+            - test_backend
+            - test_frontend
+            - test_e2e
+            - test_api
+            - test_similarity_api
+            - test_utils
+            - cucumber_test
+            - dynamic_security_scan
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
       - deploy:
           requires:
             - test_backend
@@ -972,3 +1120,18 @@ workflows:
       - dynamic_security_scan:
           requires:
             - build_and_lint
+  daily_backup_upload_production:
+    triggers:
+      - schedule:
+          cron: "0 10 * * 1-5"
+          filters:
+            branches:
+              only:
+                - << pipeline.parameters.prod_git_branch >>
+    jobs:
+      - backup_upload_production
+  manual_backup_upload_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-trigger >>]
+    jobs:
+      - backup_upload_production

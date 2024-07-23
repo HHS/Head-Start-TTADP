@@ -6,7 +6,6 @@ import RecipientSummary from '../components/RecipientSummary';
 import GrantList from '../components/GrantsList';
 import RecipientLeadership from '../components/RecipientLeadership';
 import './Profile.css';
-import FeatureFlag from '../../../components/FeatureFlag';
 import ClassReview from './components/ClassReview';
 import MonitoringReview from './components/MonitoringReview';
 import { useGrantData } from './GrantDataContext';
@@ -16,7 +15,7 @@ export default function Profile({
   regionId,
   recipientId,
 }) {
-  const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
+  const activeGrants = (recipientSummary.grants || []).filter((grant) => grant.status === 'Active');
   const { hasMonitoringData, hasClassData } = useGrantData();
 
   return (
@@ -35,39 +34,37 @@ export default function Profile({
           <Grid desktop={{ col: 12 }} tabletLg={{ col: 12 }}>
             <GrantList summary={recipientSummary} />
           </Grid>
-          <FeatureFlag flag="monitoring">
-            {activeGrants.map((grant) => (
-              <React.Fragment key={grant.number}>
-                {hasMonitoringData(grant.number) || hasClassData(grant.number) ? (
-                  <Grid desktop={{ col: 12 }}>
-                    <h2 className="smart-hub-title-big-serif">
-                      Grant number
-                      {' '}
-                      {grant.number}
-                    </h2>
-                  </Grid>
-                ) : null}
-                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                  <div>
-                    <ClassReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
+          {activeGrants.map((grant) => (
+            <React.Fragment key={grant.number}>
+              {hasMonitoringData(grant.number) || hasClassData(grant.number) ? (
+                <Grid desktop={{ col: 12 }}>
+                  <h2 className="smart-hub-title-big-serif">
+                    Grant number
+                    {' '}
+                    {grant.number}
+                  </h2>
                 </Grid>
-                <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
-                  <div>
-                    <MonitoringReview
-                      grantNumber={grant.number}
-                      regionId={regionId}
-                      recipientId={recipientId}
-                    />
-                  </div>
-                </Grid>
-              </React.Fragment>
-            ))}
-          </FeatureFlag>
+              ) : null}
+              <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                <div>
+                  <ClassReview
+                    grantNumber={grant.number}
+                    regionId={regionId}
+                    recipientId={recipientId}
+                  />
+                </div>
+              </Grid>
+              <Grid desktop={{ col: 6 }} tabletLg={{ col: 12 }}>
+                <div>
+                  <MonitoringReview
+                    grantNumber={grant.number}
+                    regionId={regionId}
+                    recipientId={recipientId}
+                  />
+                </div>
+              </Grid>
+            </React.Fragment>
+          ))}
         </Grid>
       </div>
     </>

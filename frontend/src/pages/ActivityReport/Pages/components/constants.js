@@ -19,6 +19,7 @@ export const NEW_OBJECTIVE = () => ({
   isNew: true,
   closeSuspendReason: null,
   closeSuspendContext: null,
+  objectiveCreatedHere: true,
 });
 
 export const OBJECTIVE_PROP = PropTypes.shape({

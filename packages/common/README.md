@@ -21,7 +21,11 @@ Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update 
 
 ## Versions
 
-## 1.4.0 
+## 2.1.6
+
+Remove constants related to ElasticSearch.
+
+## 1.4.0
 Add SUPPORT_TYPE
 
 ### 1.1.9/1.2.0
@@ -40,7 +44,7 @@ Distinguish between training report url params and training report statuses
 Add "event target populations"
 
 ###  1.1.2
-#### 1.1.1 
+#### 1.1.1
 - Add COLLABORATOR_TRAINING_REPORTS permissions
 
 

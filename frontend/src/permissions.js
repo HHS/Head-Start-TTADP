@@ -198,6 +198,22 @@ const canEditOrCreateSessionReports = (user, region) => {
 const getUserRegions = (user) => allRegionsUserHasPermissionTo(user);
 
 const canChangeGoalStatus = (user, region) => canEditOrCreateGoals(user, region);
+const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, region);
+
+/**
+ * can see behind feature flag
+ * @param {object} user
+ * @param {string} flag
+ */
+
+const canSeeBehindFeatureFlag = (user, flag) => {
+  if (!user || !user.flags) {
+    return false;
+  }
+
+  const { flags } = user;
+  return flags.includes(flag) || isAdmin(user);
+};
 
 export {
   isAdmin as default,
@@ -206,7 +222,9 @@ export {
   getUserRegions,
   canEditOrCreateGoals,
   canChangeGoalStatus,
+  canChangeObjectiveStatus,
   canEditOrCreateSessionReports,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
+  canSeeBehindFeatureFlag,
 };

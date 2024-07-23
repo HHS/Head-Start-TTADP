@@ -14,7 +14,6 @@ interface ISimilarGoal {
   endDate: string;
   source: string;
   isCuratedTemplate?: boolean;
-  closeSuspendReasons: string[] | null[];
 }
 
 interface ISimilarResult {
@@ -81,7 +80,6 @@ export default async function nudge(
       'name',
       'status',
       'goalTemplateId',
-      [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.closeSuspendReason')), 'closeSuspendReasons'],
       [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.id')), 'ids'],
       [sequelize.literal('FALSE'), 'isCuratedTemplate'],
     ],
@@ -125,7 +123,6 @@ export default async function nudge(
         isCuratedTemplate: true,
         endDate: '',
         source: template.source,
-        closeSuspendReasons: [null],
       });
     }
   });

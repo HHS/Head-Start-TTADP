@@ -4,6 +4,7 @@ import {
   UNAUTHORIZED,
   BAD_REQUEST,
 } from 'http-codes';
+import db from '../../models';
 import { getUserReadRegions } from '../../services/accessValidation';
 import {
   getRecipient,
@@ -24,7 +25,7 @@ import {
   recipientsByUserId,
   allArUserIdsByRecipientAndRegion,
 } from '../../services/recipient';
-import { goalsByIdAndRecipient } from '../../goalServices/goals';
+import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import SCOPES from '../../middleware/scopeConstants';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
@@ -50,9 +51,7 @@ jest.mock('../../services/recipient', () => ({
   allArUserIdsByRecipientAndRegion: jest.fn(),
 }));
 
-jest.mock('../../goalServices/goals', () => ({
-  goalsByIdAndRecipient: jest.fn(),
-}));
+jest.mock('../../goalServices/goalsByIdAndRecipient');
 
 jest.mock('../../services/accessValidation');
 
@@ -66,6 +65,7 @@ jest.mock('../../services/users', () => ({
 }));
 
 describe('getRecipient', () => {
+  afterAll(() => db.sequelize.close());
   const recipientWhere = { name: 'Mr Thaddeus Q Recipient', grants: [{ regionId: 1 }] };
 
   const mockResponse = {

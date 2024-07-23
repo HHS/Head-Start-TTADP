@@ -9,6 +9,7 @@ import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
 import userEvent from '@testing-library/user-event';
 import { v4 as uuidv4 } from 'uuid';
+import { SCOPE_IDS } from '@ttahub/common';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
 import Landing, { getAppliedRegion } from '../index';
@@ -371,7 +372,43 @@ describe('Landing page table menus & selections', () => {
         };
 
         renderLanding(user);
-        expect(await screen.findByRole('heading', { name: /activity reports - all regions/i })).toBeVisible();
+        expect(await screen.findByRole('heading', { name: /activity reports - your regions/i })).toBeVisible();
+      });
+
+      it('user with one region shows the correct label', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: 3,
+              regionId: 1,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        expect(await screen.findByRole('heading', { name: /activity reports - your region/i })).toBeVisible();
+      });
+
+      it('user with multiple region shows the correct label', async () => {
+        const user = {
+          name: 'test@test.com',
+          homeRegionId: 1,
+          permissions: [
+            {
+              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+              regionId: 1,
+            },
+            {
+              scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+              regionId: 3,
+            },
+          ],
+        };
+
+        renderLanding(user);
+        expect(await screen.findByRole('heading', { name: /activity reports - your regions/i })).toBeVisible();
       });
     });
   });

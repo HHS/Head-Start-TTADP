@@ -13,11 +13,11 @@ import {
   GoalTemplate,
   ActivityReportObjective,
   Objective,
-  ObjectiveTopic,
   Topic,
   EventReportPilot,
   EventReportPilotGoal,
   SessionReportPilot,
+  ActivityReportObjectiveTopic,
 } from '../models';
 import { getGoalsByActivityRecipient } from '../services/recipient';
 import { OBJECTIVE_STATUS, CREATION_METHOD } from '../constants';
@@ -565,12 +565,20 @@ describe('Goals by Recipient Test', () => {
       ],
     );
 
-    const objective1 = objectives[0];
     topic = await Topic.create({
       name: 'Arcane Mastery',
     });
-    await ObjectiveTopic.create({
-      objectiveId: objective1.id,
+
+    // AR 1 Obj 1.
+    const aro = await ActivityReportObjective.create({
+      objectiveId: objectives[0].id,
+      activityReportId: savedGoalReport1.id,
+      ttaProvided: 'Objective for Goal 1',
+      status: objectives[0].status,
+    });
+
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aro.id,
       topicId: topic.id,
     });
 
@@ -580,13 +588,6 @@ describe('Goals by Recipient Test', () => {
     // AR Objectives.
     await Promise.all(
       [
-        // AR 1 Obj 1.
-        ActivityReportObjective.create({
-          objectiveId: objectives[0].id,
-          activityReportId: savedGoalReport1.id,
-          ttaProvided: 'Objective for Goal 1',
-          status: objectives[0].status,
-        }),
         // AR 1 Obj 2.
         ActivityReportObjective.create({
           objectiveId: objectives[1].id,
@@ -721,16 +722,12 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
-
     await Topic.destroy({
       where: {
         id: topic.id,
       },
+      individualHooks: true,
+      force: true,
     });
 
     // Delete Objectives.

@@ -36,6 +36,10 @@ describe('HeaderUserMenu', () => {
 
     render(<App />);
 
+    // Use BrowserRouter to go to the home page '/'.
+    // This is necessary because the 404 hides the avatar (as it should).
+    window.history.pushState({}, 'Home page', '/');
+
     await screen.findByText('Office of Head Start TTA Hub');
     fireEvent.click(screen.getByTestId('header-avatar'));
   };

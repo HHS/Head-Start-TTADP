@@ -6,7 +6,6 @@ import { withReasons, withoutReasons } from './reasons';
 import { withRecipientName, withoutRecipientName } from './recipient';
 import { withRecipientId } from './recipientId';
 import { withRegion, withoutRegion } from './region';
-import { withRoles, withoutRoles } from './role';
 import {
   containsGrantNumber, doesNotContainGrantNumber, withGrantNumber, withoutGrantNumber,
 } from './grantNumber';
@@ -73,10 +72,6 @@ export const topicToQuery = {
   region: {
     in: (query) => withRegion(query),
     nin: (query) => withoutRegion(query),
-  },
-  role: {
-    in: (query) => withRoles(query),
-    nin: (query) => withoutRoles(query),
   },
   group: {
     in: (query, _options, userId) => withGroup(query, userId),

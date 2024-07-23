@@ -8,6 +8,7 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const { ADMIN } = SCOPE_IDS;
 
@@ -18,9 +19,17 @@ describe('feature flag', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
-            <h1>This is a test</h1>
-          </FeatureFlag>
+          <SomethingWentWrongContext.Provider value={{
+            errorResponseCode: null,
+            setErrorResponseCode: jest.fn(),
+            setShowingNotFound: jest.fn(),
+            showingNotFoundL: false,
+          }}
+          >
+            <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
+              <h1>This is a test</h1>
+            </FeatureFlag>
+          </SomethingWentWrongContext.Provider>
         </UserContext.Provider>
       </Router>,
     );
@@ -71,6 +80,7 @@ describe('feature flag', () => {
     };
     const renderNotFound = true;
     renderFeatureFlag(flag, user, renderNotFound);
-    expect(screen.getByRole('link', { name: /home page/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /404 error/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /page not found/i })).toBeVisible();
   });
 });
