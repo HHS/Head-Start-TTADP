@@ -191,19 +191,28 @@ const dropAndRecreateEnum = async (
 };
 
 /**
- *  Updates all users' flags by removing the specified values and adding all the values
- *  from the source of truth, which is the FEATURE_FLAGS constant in src/constants.js
- *   - so you only specify the values you want to remove here.
+ * Updates all users' flags by removing specified values and adding values from a
+ * given set of feature flags.
+ * If no set is provided, the default FEATURE_FLAGS constant is used.
  *
  * @param {sequelize.queryInterface} queryInterface
+ * @param {sequelize.transaction} transaction
  * @param {string[]} valuesToRemove
+ * @param {string[]} specificFlags - Optional specific set of feature flags to use,
+ * defaults to FEATURE_FLAGS.
  * @returns Promise<any>
  */
-const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove = []) => {
+const updateUsersFlagsEnum = async (
+  queryInterface,
+  transaction,
+  valuesToRemove = [],
+  specificFlags = FEATURE_FLAGS,
+) => {
   const enumName = 'enum_Users_flags';
   const tableName = 'Users';
   const columnName = 'flags';
 
+  // Use specificFlags for the operation
   if (valuesToRemove && valuesToRemove.length) {
     const existingEnums = await Promise.all(
       valuesToRemove.map(async (value) => {
@@ -222,21 +231,15 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
         `, { transaction });
 
         const enumIsValid = result[0][0].exists;
-
-        if (enumIsValid) {
-          return value;
-        }
-
-        return null;
+        return enumIsValid ? value : null;
       }),
     );
 
     const validForRemove = existingEnums.filter((value) => value);
-
     await Promise.all(validForRemove.map((value) => queryInterface.sequelize.query(`
       UPDATE "${tableName}" SET "${columnName}" = array_remove(${columnName}, '${value}')
         WHERE '${value}' = ANY(${columnName});
-  `, { transaction })));
+    `, { transaction })));
 
     return dropAndRecreateEnum(
       queryInterface,
@@ -244,7 +247,7 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
       enumName,
       tableName,
       columnName,
-      FEATURE_FLAGS,
+      specificFlags,
     );
   }
 
@@ -252,7 +255,7 @@ const updateUsersFlagsEnum = async (queryInterface, transaction, valuesToRemove 
     queryInterface,
     transaction,
     enumName,
-    FEATURE_FLAGS,
+    specificFlags,
   );
 };
 

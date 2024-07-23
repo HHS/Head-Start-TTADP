@@ -48,9 +48,10 @@ export default function GoalNudge({
 
   useEffect(() => {
     if (useOhsInitiativeGoal && initiativeRef.current) {
+      onUpdateText('');
       initiativeRef.current.focus();
     }
-  }, [useOhsInitiativeGoal]);
+  }, [onUpdateText, useOhsInitiativeGoal]);
 
   // using DeepCompareEffect to avoid unnecessary fetches
   // as we have an object (selectedGrants) in the dependency array
@@ -108,6 +109,8 @@ export default function GoalNudge({
 
   // what a hack
   const checkboxZed = similar.length && !useOhsInitiativeGoal && !dismissSimilar ? 'z-bottom' : '';
+  const showOhsInitiativeGoalCheckbox = goalTemplates && goalTemplates.length > 0;
+  const buttonGroupFlex = showOhsInitiativeGoalCheckbox ? 'flex-justify' : 'flex-justify-end';
 
   return (
     <div className="ttahub-goal-nudge--container position-relative margin-bottom-3">
@@ -131,8 +134,8 @@ export default function GoalNudge({
         onSelectNudgedGoal={onSelectNudgedGoal}
         initiativeRef={initiativeRef}
       />
-      <div className="desktop:display-flex flex-justify margin-top-1 smart-hub-maxw-form-field">
-        { (goalTemplates && goalTemplates.length > 0) && (
+      <div className={`desktop:display-flex ${buttonGroupFlex} margin-top-1 smart-hub-maxw-form-field`}>
+        { (showOhsInitiativeGoalCheckbox) && (
         <Checkbox
           id="use-ohs-initiative-goal"
           name="use-ohs-initiative-goal"

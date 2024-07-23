@@ -137,6 +137,7 @@ class ActivityReportObjectives{
  arOrder : integer : 1
  closeSuspendContext : text
  closeSuspendReason : enum
+ objectiveCreatedHere : boolean
  status : varchar(255)
  supportType : enum
  title : text
@@ -240,6 +241,7 @@ class Courses{
  mapsTo : integer : REFERENCES "Courses".id
  * createdAt : timestamp with time zone : now()
  * name : text
+ * persistsOnUpload : boolean : false
  * updatedAt : timestamp with time zone : now()
  deletedAt : timestamp with time zone
 }
@@ -349,16 +351,16 @@ class GoalSimilarityGroups{
 
 class GoalStatusChanges{
  * id : integer : <generated>
+ userId : integer : REFERENCES "Users".id
  * goalId : integer : REFERENCES "Goals".id
- * userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone : now()
- * newStatus : varchar(255)
- * reason : text
  * updatedAt : timestamp with time zone : now()
- * userName : varchar(255)
- * userRoles : varchar(255)[]
  context : text
+ newStatus : varchar(255)
  oldStatus : varchar(255)
+ reason : text
+ userName : varchar(255)
+ userRoles : varchar(255)[]
 }
 
 class GoalTemplateFieldPrompts{
@@ -422,25 +424,12 @@ class Goals{
  * onApprovedAR : boolean : false
  * onAR : boolean : false
  * updatedAt : timestamp with time zone
- closeSuspendContext : text
- closeSuspendReason : enum
  createdVia : enum
  deletedAt : timestamp with time zone
  endDate : date
- firstCeasedSuspendedAt : timestamp with time zone
- firstClosedAt : timestamp with time zone
- firstCompletedAt : timestamp with time zone
- firstInProgressAt : timestamp with time zone
- firstNotStartedAt : timestamp with time zone
  isFromSmartsheetTtaPlan : boolean
  isRttapa : enum
- lastCeasedSuspendedAt : timestamp with time zone
- lastClosedAt : timestamp with time zone
- lastCompletedAt : timestamp with time zone
- lastInProgressAt : timestamp with time zone
- lastNotStartedAt : timestamp with time zone
  name : text
- previousStatus : text
  rtrOrder : integer : 1
  source : enum
  status : varchar(255)
@@ -587,8 +576,29 @@ class MonitoringClassSummaries{
  sourceDeletedAt : timestamp with time zone
 }
 
+class MonitoringFindingGrants{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
 class MonitoringFindingHistories{
  * id : integer : <generated>
+ findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
  * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * findingHistoryId : text
@@ -596,17 +606,106 @@ class MonitoringFindingHistories{
  * sourceUpdatedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  deletedAt : timestamp with time zone
+ determination : text
  hash : text
+ narrative : text
+ ordinal : integer
  sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingHistoryStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingHistoryStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * findingId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStandards{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * createdAt : timestamp with time zone
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatusLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * statusId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringFindingStatuses{
+ * id : integer : <generated>
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * name : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringFindings{
+ * id : integer : <generated>
+ * findingId : text : REFERENCES "MonitoringFindingLinks"."findingId"
+ * statusId : integer : REFERENCES "MonitoringFindingStatusLinks"."statusId"
+ * createdAt : timestamp with time zone
+ * findingType : text
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ closedDate : timestamp with time zone
+ correctionDeadLine : timestamp with time zone
+ deletedAt : timestamp with time zone
+ reportedDate : timestamp with time zone
+ source : text
+ sourceDeletedAt : timestamp with time zone
+}
+
+class MonitoringGranteeLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * granteeId : text
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
 }
 
 class MonitoringReviewGrantees{
  * id : integer : <generated>
+ * granteeId : text : REFERENCES "MonitoringGranteeLinks"."granteeId"
  * grantNumber : text : REFERENCES "GrantNumberLinks"."grantNumber"
  * reviewId : text : REFERENCES "MonitoringReviewLinks"."reviewId"
  * createdAt : timestamp with time zone
  * createTime : timestamp with time zone
- * granteeId : text
  * sourceCreatedAt : timestamp with time zone
  * sourceUpdatedAt : timestamp with time zone
  * updateBy : text
@@ -656,11 +755,38 @@ class MonitoringReviews{
  deletedAt : timestamp with time zone
  endDate : date
  hash : text
+ name : text
  outcome : text
+ reportAttachmentId : text
  reportDeliveryDate : timestamp with time zone
  reviewType : text
  sourceDeletedAt : timestamp with time zone
  startDate : date
+}
+
+class MonitoringStandardLinks{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * standardId : integer
+ * updatedAt : timestamp with time zone
+ deletedAt : timestamp with time zone
+}
+
+class MonitoringStandards{
+ * id : integer : <generated>
+ * standardId : integer : REFERENCES "MonitoringStandardLinks"."standardId"
+ * citable : integer
+ * contentId : text
+ * createdAt : timestamp with time zone
+ * hash : text
+ * sourceCreatedAt : timestamp with time zone
+ * sourceUpdatedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ citation : text
+ deletedAt : timestamp with time zone
+ guidance : text
+ sourceDeletedAt : timestamp with time zone
+ text : text
 }
 
 class NationalCenterUsers{
@@ -716,74 +842,6 @@ class ObjectiveCollaborators{
  linkBack : jsonb
 }
 
-class ObjectiveCourses{
- * id : integer : <generated>
- * courseId : integer : REFERENCES "Courses".id
- * objectiveId : integer : REFERENCES "Objectives".id
- * createdAt : timestamp with time zone : now()
- * updatedAt : timestamp with time zone : now()
-}
-
-class ObjectiveFiles{
- * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * objectiveId : integer : REFERENCES "Objectives".id
- * createdAt : timestamp with time zone
- * onApprovedAR : boolean : false
- * onAR : boolean : false
- * updatedAt : timestamp with time zone
-}
-
-class ObjectiveResources{
- * id : integer : <generated>
- * objectiveId : integer : REFERENCES "Objectives".id
- * resourceId : integer : REFERENCES "Resources".id
- * createdAt : timestamp with time zone
- * onApprovedAR : boolean : false
- * onAR : boolean : false
- * updatedAt : timestamp with time zone
- sourceFields : enum[]
-}
-
-enum enum_ObjectiveResources_sourceFields {
- resource
- title
-}
-
-enum_ObjectiveResources_sourceFields <|-- ObjectiveResources
-
-class ObjectiveTemplateFiles{
- * id : integer : <generated>
- * fileId : integer : REFERENCES "Files".id
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
-}
-
-class ObjectiveTemplateResources{
- * id : integer : <generated>
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * resourceId : integer : REFERENCES "Resources".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
- sourceFields : enum[]
-}
-
-enum enum_ObjectiveTemplateResources_sourceFields {
- resource
- title
-}
-
-enum_ObjectiveTemplateResources_sourceFields <|-- ObjectiveTemplateResources
-
-class ObjectiveTemplateTopics{
- * id : integer : <generated>
- * objectiveTemplateId : integer : REFERENCES "ObjectiveTemplates".id
- * topicId : integer : REFERENCES "Topics".id
- * createdAt : timestamp with time zone
- * updatedAt : timestamp with time zone
-}
-
 class ObjectiveTemplates{
  * id : integer : <generated>
  regionId : integer : REFERENCES "Regions".id
@@ -794,16 +852,6 @@ class ObjectiveTemplates{
  * templateTitleModifiedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
  lastUsed : timestamp with time zone
-}
-
-class ObjectiveTopics{
- * id : integer : <generated>
- * objectiveId : integer : REFERENCES "Objectives".id
- * topicId : integer : REFERENCES "Topics".id
- * createdAt : timestamp with time zone
- * onApprovedAR : boolean : false
- * onAR : boolean : false
- * updatedAt : timestamp with time zone
 }
 
 class Objectives{
@@ -830,7 +878,6 @@ class Objectives{
  lastSuspendedAt : timestamp with time zone
  rtrOrder : integer : 1
  status : varchar(255)
- supportType : enum
  title : text
 }
 
@@ -1059,10 +1106,8 @@ class Users{
 enum enum_Users_flags {
  anv_statistics
  closed_goal_merge_override
- merge_goals
- monitoring
+ quality_assurance_dashboard
  regional_goal_dashboard
- resources_dashboard
  training_reports_dashboard
 }
 
@@ -1732,7 +1777,133 @@ class ZALMonitoringClassSummaries{
  session_sig : text
 }
 
+class ZALMonitoringFindingGrants{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALMonitoringFindingHistories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistoryStatusLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingHistoryStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStandards{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStatusLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindingStatuses{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringFindings{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringGranteeLinks{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -1816,6 +1987,34 @@ class ZALMonitoringReviews{
  session_sig : text
 }
 
+class ZALMonitoringStandardLinks{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALMonitoringStandards{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALNationalCenterUsers{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1886,105 +2085,7 @@ class ZALObjectiveCollaborators{
  session_sig : text
 }
 
-class ZALObjectiveCourses{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveFiles{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveResources{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveTemplateFiles{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveTemplateResources{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveTemplateTopics{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
 class ZALObjectiveTemplates{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
-class ZALObjectiveTopics{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2377,15 +2478,12 @@ CollaboratorTypes "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborato
 CommunicationLogs "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : communicationLog, communicationLogFiles
 Courses "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCourses : course, activityReportObjectiveCourses
 Courses "1" --[#black,dashed,thickness=2]--{  "n" Courses : mapsFromCourse, mapsToCourse
-Courses "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCourses : objectiveCourses, course
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGoals : event, eventReportPilotGoals
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : event, eventReportPilotNationalCenterUsers
 EventReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilots : sessionReports, event
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportFiles : file, reportFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : file, reportObjectiveFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
-Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objectiveFiles, file
-Files "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplateFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
 GoalSimilarityGroups "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroupGoals : goalSimilarityGroup, goalSimilarityGroups
@@ -2420,27 +2518,33 @@ Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrant
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
 Imports "1" --[#black,dashed,thickness=2]--{  "n" ImportFiles : import, importFiles
 MaintenanceLogs "1" --[#black,dashed,thickness=2]--{  "n" MaintenanceLogs : triggeredBy, triggered
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingStatusLink, monitoringFindingHistories
+MonitoringFindingHistoryStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistoryStatuses : monitoringFindingHistoryStatuses, statusLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : findingLink, monitoringFindingGrants
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringFindingLink, monitoringFindingHistories
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : monitoringFindingStandards, findingLink
+MonitoringFindingLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, findingLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : statusLink, monitoringFindingGrants
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStatuses : monitoringFindingStatuses, statusLink
+MonitoringFindingStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindings : monitoringFindings, statusLink
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingGrants : granteeLink, monitoringFindingGrants
+MonitoringGranteeLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, monitoringGranteeLink
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringReviewLink, monitoringClassSummaries
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingHistories : monitoringReviewLink, monitoringFindingHistories
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewLink, monitoringReviewGrantees
 MonitoringReviewLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, monitoringReviewLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewStatuses : monitoringReviewStatuses, statusLink
 MonitoringReviewStatusLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviews : monitoringReviews, statusLink
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringFindingStandards : statusLink, monitoringFindingStandards
+MonitoringStandardLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringStandards : monitoringStandardes, statusLink
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNationalCenterUsers : nationalCenter, eventReportPilotNationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
-ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateFiles : objectiveTemplate, objectiveTemplateFiles
-ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : objectiveTemplate, objectiveTemplateResources
-ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : objectiveTemplate, objectiveTemplateTopics
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, originalObjective, activityReportObjectives, reassignedActivityReportObjectives
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : objective, objectiveCollaborators
-Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCourses : objective, objectiveCourses
-Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveFiles : objective, objectiveFiles
-Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : objective, objectiveResources
-Objectives "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : objective, objectiveTopics
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" Objectives : parentObjective, childObjectives
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : otherEntity, activityRecipients
 OtherEntities "1" --[#black,dashed,thickness=2]--{  "n" Objectives : otherEntity, objectives
@@ -2449,7 +2553,7 @@ Programs "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : program, p
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogs : recipient, communicationLogs
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" GoalSimilarityGroups : recipient, goalSimilarityGroups
 Recipients "1" --[#black,dashed,thickness=2]--{  "n" Grants : recipient, grants
-Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : recipient
+Recipients "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : simScores, recipient
 Regions "1" --[#black,dashed,thickness=2]--{  "n" ActivityReports : region, activityReports
 Regions "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplates : region, goalTemplates
 Regions "1" --[#black,dashed,thickness=2]--{  "n" Grants : region, grants
@@ -2462,8 +2566,6 @@ Resources "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : re
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalResources : resource, goalResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateResources : resource, goalTemplateResources
 Resources "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : resource, nextStepResources
-Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveResources : resource, objectiveResources
-Resources "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateResources : resource, objectiveTemplateResources
 Roles "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : role, collaboratorRoles
 Roles "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : role, roleTopics
 Roles "1" --[#black,dashed,thickness=2]--{  "n" UserRoles : userRoles, role
@@ -2472,8 +2574,6 @@ SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotGo
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionReport, sessionFiles
 SessionReportPilots "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : sessionReport, sessionSupportingAttachments
 Topics "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveTopics : topic, activityReportObjectiveTopics
-Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTemplateTopics : topic, objectiveTemplateTopics
-Topics "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveTopics : topic, objectiveTopics
 Topics "1" --[#black,dashed,thickness=2]--{  "n" RoleTopics : topic, roleTopics
 UserSettings "1" --[#black,dashed,thickness=2]--{  "n" UserSettingOverrides : setting, userSettingOverrides
 Users "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportApprovers : user, reportApprovers
@@ -2511,15 +2611,11 @@ CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, col
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, collaboratorTypes
 CollaboratorTypes "n" }--[#black,dotted,thickness=2]--{ "n" Users : usersThroughGoalCollaborators, usersThroughGroupCollaborators, usersThroughObjectiveCollaborators, collaboratorTypesThroughGoalCollaborator, collaboratorTypesThroughGroupCollaborator, collaboratorTypesThroughObjectiveCollaborator
 CommunicationLogs "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, logs
-Courses "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, courses
 EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, eventReportPilots
 EventReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Grants : grants, eventReports
-Files "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : objectiveTemplates, files
-Files "n" }--[#black,dotted,thickness=2]--{ "n" Objectives : objectives, files
 Files "n" }--[#black,dotted,thickness=2]--{ "n" SessionReportPilots : sessions, sessionsWithSupportingAttachments, files, supportingAttachments
 GoalSimilarityGroups "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, similarityGroups
 GoalTemplateFieldPrompts "n" }--[#black,dotted,thickness=2]--{ "n" Goals : goals, prompts
-GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" ObjectiveTemplates : goalTemplates
 GoalTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goalTemplates
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, goals
 Goals "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, goals
@@ -2527,10 +2623,6 @@ Grants "n" }--[#black,dotted,thickness=2]--{ "n" Groups : groups, grants
 Groups "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, groups
 NationalCenters "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, nationalCenters
 NextSteps "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, nextSteps
-ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectiveTemplates
-ObjectiveTemplates "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectiveTemplates
-Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, objectives
-Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, objectives
 Objectives "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, objectives
 Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles

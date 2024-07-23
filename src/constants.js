@@ -149,12 +149,6 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
 };
 
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
-};
-
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
 };
@@ -220,10 +214,6 @@ const RESOURCE_DOMAIN = {
   ECLKC: 'eclkc.ohs.acf.hhs.gov',
 };
 
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
-};
-
 const GRANT_INACTIVATION_REASONS = {
   REPLACED: 'Replaced',
   TERMINATED: 'Terminated',
@@ -244,13 +234,11 @@ const MAINTENANCE_TYPE = {
 };
 
 const FEATURE_FLAGS = [
-  'resources_dashboard',
   'anv_statistics',
   'regional_goal_dashboard',
-  'merge_goals',
-  'monitoring',
   'closed_goal_merge_override',
   'training_reports_dashboard',
+  'quality_assurance_dashboard',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -261,7 +249,7 @@ const MAINTENANCE_CATEGORY = {
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 2;
+const CURRENT_GOAL_SIMILARITY_VERSION = 4;
 
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,
@@ -287,14 +275,12 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   EMAIL_ACTIONS,
-  AWS_ELASTICSEARCH_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
   PROMPT_FIELD_TYPE,
   SOURCE_FIELD,
   RESOURCE_DOMAIN,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,

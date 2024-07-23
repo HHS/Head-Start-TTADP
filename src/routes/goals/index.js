@@ -4,7 +4,6 @@ import {
   changeGoalStatus,
   reopenGoal,
   retrieveGoalsByIds,
-  retrieveGoalByIdAndRecipient,
   deleteGoal,
   mergeGoalHandler,
   getSimilarGoalsForRecipient,
@@ -17,7 +16,6 @@ import { checkRegionIdParam, checkRecipientIdParam } from '../../middleware/chec
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
 router.get('/', transactionWrapper(retrieveGoalsByIds));
-router.get('/:goalId/recipient/:recipientId', transactionWrapper(retrieveGoalByIdAndRecipient));
 router.get(
   '/recipient/:recipientId/region/:regionId/nudge',
   checkRegionIdParam,

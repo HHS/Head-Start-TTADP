@@ -24,6 +24,11 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
+    persistsOnUpload: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    },
     mapsTo: {
       type: DataTypes.INTEGER,
       allowNull: true,

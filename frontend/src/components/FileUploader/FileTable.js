@@ -80,23 +80,19 @@ const FileTable = ({ onFileRemoved, files }) => {
                 {getStatus(file.status)}
               </td>
               <td>
-                {file.showDelete
-                  ? (
-                    <Button
-                      type="button"
-                      className="smart-hub--file-tag-button"
-                      unstyled
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleDelete(currentIndex);
-                      }}
-                    >
-                      <span className="fa-sm">
-                        <FontAwesomeIcon color={colors.textInk} icon={faTrash} aria-label={`remove ${file.originalFileName}`} />
-                      </span>
-                    </Button>
-                  )
-                  : null }
+                <Button
+                  type="button"
+                  className="smart-hub--file-tag-button"
+                  unstyled
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleDelete(currentIndex);
+                  }}
+                >
+                  <span className="fa-sm">
+                    <FontAwesomeIcon color={colors.textInk} icon={faTrash} aria-label={`remove ${file.originalFileName}`} />
+                  </span>
+                </Button>
               </td>
             </tr>
           ))}

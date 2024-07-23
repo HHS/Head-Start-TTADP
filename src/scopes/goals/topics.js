@@ -12,8 +12,9 @@ const topicFilter = (topics, options) => {
             ar."topics" && (ARRAY[${topics.map((t) => sequelize.escape(t)).join(',')}::varchar])
           UNION ALL
           SELECT DISTINCT "Goal"."id" FROM "Objectives" "Objectives" 
-            INNER JOIN "ObjectiveTopics" "ObjectiveTopics" ON "Objectives"."id" = "ObjectiveTopics"."objectiveId" 
-            INNER JOIN "Topics" "Topics" ON "ObjectiveTopics"."topicId" = "Topics"."id" 
+            INNER JOIN "ActivityReportObjectives" "ActivityReportObjectives" ON "Objectives"."id" = "ActivityReportObjectives"."objectiveId" 
+            INNER JOIN "ActivityReportObjectiveTopics" "ActivityReportObjectiveTopics" ON "ActivityReportObjectives"."id" = "ActivityReportObjectiveTopics"."activityReportObjectiveId" 
+            INNER JOIN "Topics" "Topics" ON "ActivityReportObjectiveTopics"."topicId" = "Topics"."id" 
             INNER JOIN "Goals" "Goal" ON "Objectives"."goalId" = "Goal"."id" 
             WHERE "Topics"."name" IN (${topics.map((t) => sequelize.escape(t)).join(',')})
         )`;

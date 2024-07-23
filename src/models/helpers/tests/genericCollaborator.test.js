@@ -3,7 +3,6 @@ const {
   getCollaboratorRecord,
   findOrCreateCollaborator,
   getIdForCollaboratorType,
-  currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../genericCollaborator');
 

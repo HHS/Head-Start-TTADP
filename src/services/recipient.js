@@ -25,6 +25,8 @@ import {
   Role,
   ActivityReportCollaborator,
   ActivityReportApprover,
+  ActivityReportObjective,
+  GoalTemplateFieldPrompt,
 } from '../models';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
 import {
@@ -40,6 +42,7 @@ import {
   findOrFailExistingGoal,
   responsesForComparison,
 } from '../goalServices/helpers';
+import getCachedResponse from '../lib/cache';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -332,6 +335,20 @@ function reduceTopicsOfDifferingType(topics) {
   return newTopics;
 }
 
+function combineObjectiveIds(existing, objective) {
+  let ids = [...existing.ids];
+
+  if (objective.ids && Array.isArray(objective.ids)) {
+    ids = [...ids, ...objective.ids];
+  }
+
+  if (objective.id) {
+    ids.push(objective.id);
+  }
+
+  return ids;
+}
+
 /**
  *
  * @param {Object} currentModel
@@ -348,7 +365,6 @@ export function reduceObjectivesForRecipientRecord(
   currentModel,
   goal,
   grantNumbers,
-
 ) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
@@ -363,7 +379,6 @@ export function reduceObjectivesForRecipientRecord(
     .reduce((acc, objective) => {
       // we grab the support types from the activity report objectives,
       // filtering out empty strings
-      const { supportType } = objective;
 
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
@@ -382,13 +397,13 @@ export function reduceObjectivesForRecipientRecord(
       const objectiveStatus = objective.status;
 
       // get our objective topics
-
-      const objectiveTopics = (objective.topics || []);
+      const objectiveTopics = (
+        objective.activityReportObjectives?.flatMap((aro) => aro.topics) || []
+      );
 
       const existing = acc.objectives.find((o) => (
         o.title === objectiveTitle
         && o.status === objectiveStatus
-        && o.supportType === supportType
       ));
 
       if (existing) {
@@ -398,6 +413,7 @@ export function reduceObjectivesForRecipientRecord(
         existing.topics = [...existing.topics, ...reportTopics, ...objectiveTopics];
         existing.topics.sort();
         existing.grantNumbers = grantNumbers;
+        existing.ids = combineObjectiveIds(existing, objective);
 
         return { ...acc, topics: [...acc.topics, ...objectiveTopics] };
       }
@@ -417,7 +433,7 @@ export function reduceObjectivesForRecipientRecord(
         reasons: uniq(reportReasons),
         activityReports: objective.activityReports || [],
         topics: [...reportTopics, ...objectiveTopics],
-        supportType: supportType || null,
+        ids: combineObjectiveIds({ ids: [] }, objective),
       };
 
       formattedObjective.topics.sort();
@@ -451,10 +467,6 @@ export function reduceObjectivesForRecipientRecord(
 }
 
 function wasGoalPreviouslyClosed(goal) {
-  if (goal.previousStatus && goal.previousStatus === GOAL_STATUS.CLOSED) {
-    return true;
-  }
-
   if (goal.statusChanges) {
     return goal.statusChanges.some((statusChange) => statusChange.oldStatus === GOAL_STATUS.CLOSED);
   }
@@ -463,12 +475,7 @@ function wasGoalPreviouslyClosed(goal) {
 }
 
 function calculatePreviousStatus(goal) {
-  // if we have a previous status recorded, return that
-  if (goal.previousStatus) {
-    return goal.previousStatus;
-  }
-
-  if (goal.statusChanges) {
+  if (goal.statusChanges && goal.statusChanges.length > 0) {
     // statusChanges is an array of { oldStatus, newStatus }.
     const lastStatusChange = goal.statusChanges[goal.statusChanges.length - 1];
     if (lastStatusChange) {
@@ -479,7 +486,7 @@ function calculatePreviousStatus(goal) {
   // otherwise we check to see if there is the goal is on an activity report,
   // and also check the status
   if (goal.objectives.length) {
-    const onAr = goal.objectives.some((objective) => objective.activityReports.length);
+    const onAr = goal.objectives.some((objective) => objective.onApprovedAR);
     const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
 
     if (onAr && isCompletedOrInProgress) {
@@ -506,6 +513,24 @@ export async function getGoalsByActivityRecipient(
     ...filters
   },
 ) {
+  // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
+  const feiCacheKey = 'feiRootCauseFieldPrompt';
+  const feiResponse = await getCachedResponse(
+    feiCacheKey,
+    async () => {
+      const feiRootCauseFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+        attributes: ['goalTemplateId'],
+        where: {
+          title: 'FEI root cause',
+        },
+      });
+      return JSON.stringify({
+        feiRootCauseFieldPrompt,
+      });
+    },
+    JSON.parse,
+  );
+
   // Scopes.
   const { goal: scopes } = await filtersToScopes(filters, { goal: { recipientId } });
 
@@ -584,6 +609,7 @@ export async function getGoalsByActivityRecipient(
           ELSE 7 END`),
       'status_sort'],
       [sequelize.literal(`CASE WHEN "Goal"."id" IN (${sanitizedIds}) THEN 1 ELSE 2 END`), 'merged_id'],
+      [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiResponse.feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
     ],
     where: goalWhere,
     include: [
@@ -673,15 +699,23 @@ export async function getGoalsByActivityRecipient(
           'status',
           'goalId',
           'onApprovedAR',
-          'supportType',
         ],
         model: Objective,
         as: 'objectives',
         required: false,
         include: [
           {
-            model: Topic,
-            as: 'topics',
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            attributes: ['id', 'objectiveId'],
+            separate: true,
+            include: [
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: ['name'],
+              },
+            ],
           },
           {
             attributes: [
@@ -700,25 +734,6 @@ export async function getGoalsByActivityRecipient(
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
-            include: [
-              {
-                model: ActivityRecipient,
-                as: 'activityRecipients',
-                attributes: ['activityReportId', 'grantId'],
-                required: true,
-                include: [
-                  {
-                    required: true,
-                    model: Grant,
-                    as: 'grant',
-                    attributes: ['id', 'recipientId'],
-                    where: {
-                      recipientId,
-                    },
-                  },
-                ],
-              },
-            ],
           },
         ],
       },
@@ -856,6 +871,8 @@ export async function getGoalsByActivityRecipient(
       collaborators: [],
       onAR: current.onAR,
       sessionObjectives: [],
+      responses: current.responses,
+      isFei: current.dataValues.isFei,
     };
 
     goalToAdd.collaborators.push(...createCollaborators(current));
@@ -882,12 +899,21 @@ export async function getGoalsByActivityRecipient(
     },
   });
 
+  // For checkbox selection we only need the primary goal id.
+  const rolledUpGoalIds = r.goalRows.map((goal) => {
+    const bucket = {
+      id: goal.id,
+      goalIds: goal.ids,
+    };
+    return bucket;
+  });
+
   if (limitNum) {
     return {
       count: r.goalRows.length,
       goalRows: r.goalRows.slice(offSetNum, offSetNum + limitNum),
       statuses,
-      allGoalIds,
+      allGoalIds: rolledUpGoalIds,
     };
   }
 
@@ -895,7 +921,7 @@ export async function getGoalsByActivityRecipient(
     count: r.goalRows.length,
     goalRows: r.goalRows.slice(offSetNum),
     statuses,
-    allGoalIds,
+    allGoalIds: rolledUpGoalIds,
   };
 }
 

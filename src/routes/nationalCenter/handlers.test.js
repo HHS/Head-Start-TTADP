@@ -2,6 +2,7 @@ import httpCodes from 'http-codes';
 import {
   getHandler,
 } from './handlers';
+import db from '../../models';
 import { findAll } from '../../services/nationalCenters';
 import { findAllUsersWithScope } from '../../services/users';
 
@@ -14,6 +15,7 @@ jest.mock('../../services/users', () => ({
 }));
 
 describe('nationalCenter route', () => {
+  afterAll(() => db.sequelize.close());
   const mockResponse = {
     attachment: jest.fn(),
     json: jest.fn(),

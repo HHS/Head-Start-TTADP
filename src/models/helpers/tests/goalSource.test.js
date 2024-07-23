@@ -1,6 +1,3 @@
-const { Sequelize, DataTypes } = require('sequelize');
-const db = require('../..');
-
 // Import the functions to be tested
 const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../goalSource');
 

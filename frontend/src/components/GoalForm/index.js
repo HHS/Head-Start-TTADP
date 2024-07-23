@@ -7,7 +7,6 @@ import React, {
 } from 'react';
 import moment from 'moment';
 import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
-import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
@@ -18,13 +17,10 @@ import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
 import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
-import { uploadObjectivesFile } from '../../fetchers/File';
-import { getTopics } from '../../fetchers/topics';
 import Form from './Form';
 import {
   FORM_FIELD_INDEXES,
   FORM_FIELD_DEFAULT_ERRORS,
-  validateListOfResources,
   OBJECTIVE_ERROR_MESSAGES,
   GOAL_NAME_ERROR,
   GOAL_DATE_ERROR,
@@ -40,14 +36,9 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import VanillaModal from '../VanillaModal';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
-const [
-  objectiveTextError,
-  objectiveTopicsError,
-  objectiveResourcesError,
-  objectiveSupportTypeError,
-  objectiveStatusError,
-] = OBJECTIVE_ERROR_MESSAGES;
+const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function GoalForm({
   recipient,
@@ -68,7 +59,7 @@ export default function GoalForm({
     objectives: [],
     id: 'new',
     onApprovedAR: false,
-    onAnyReport: false,
+    onAR: false,
     prompts: {},
     isCurated: false,
     source: {},
@@ -83,9 +74,6 @@ export default function GoalForm({
 
   // this will store our created goals (vs the goal that's occupying the form at present)
   const [createdGoals, setCreatedGoals] = useState([]);
-
-  // this is for the topic options returned from the API
-  const [topicOptions, setTopicOptions] = useState([]);
   const [goalName, setGoalName] = useState(goalDefaults.name);
   const [endDate, setEndDate] = useState(goalDefaults.endDate);
   const [prompts, setPrompts] = useState(
@@ -97,9 +85,17 @@ export default function GoalForm({
   const [goalTemplateId, setGoalTemplateId] = useState(goalDefaults.goalTemplateId);
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
-  const [goalOnAnyReport, setGoalOnAnyReport] = useState(goalDefaults.onAnyReport);
+  const [goalOnAR, setGoalonAR] = useState(goalDefaults.onAR);
   const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
   const [isReopenedGoal, setIsReopenedGoal] = useState(goalDefaults.isReopenedGoal);
+  // we need to set this key to get the component to re-render (uncontrolled input)
+  const [datePickerKey, setDatePickerKey] = useState('DPK-00');
+  const [status, setStatus] = useState(goalDefaults.status);
+  const [objectives, setObjectives] = useState(goalDefaults.objectives);
+  const [alert, setAlert] = useState({ message: '', type: 'success' });
+  const [goalNumbers, setGoalNumbers] = useState('');
+  const [goalCollaborators, setGoalCollaborators] = useState([]);
+  const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
 
   useDeepCompareEffect(() => {
     const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
@@ -115,22 +111,9 @@ export default function GoalForm({
     }
   }, [selectedGrants, source]);
 
-  // we need to set this key to get the component to re-render (uncontrolled input)
-  const [datePickerKey, setDatePickerKey] = useState('DPK-00');
-
-  const [status, setStatus] = useState(goalDefaults.status);
-  const [objectives, setObjectives] = useState(goalDefaults.objectives);
-
-  const [alert, setAlert] = useState({ message: '', type: 'success' });
-  const [goalNumbers, setGoalNumbers] = useState('');
-
-  const [goalCollaborators, setGoalCollaborators] = useState([]);
-
-  const [errors, setErrors] = useState(FORM_FIELD_DEFAULT_ERRORS);
-
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
-
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const canView = useMemo(() => user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
@@ -153,9 +136,14 @@ export default function GoalForm({
     async function fetchGoal() {
       setFetchAttempted(true); // as to only fetch once
       try {
-        const [goal] = await goalsByIdAndRecipient(
-          ids, recipient.id.toString(),
-        );
+        let goal = null;
+        try {
+          [goal] = await goalsByIdAndRecipient(
+            ids, recipient.id.toString(),
+          );
+        } catch (err) {
+          setErrorResponseCode(err.status);
+        }
 
         const selectedGoalGrants = goal.grants ? goal.grants : [goal.grant];
 
@@ -168,7 +156,7 @@ export default function GoalForm({
         setSelectedGrants(selectedGoalGrants);
         setGoalNumbers(goal.goalNumbers);
         setGoalOnApprovedReport(goal.onApprovedAR);
-        setGoalOnAnyReport(goal.onAnyReport);
+        setGoalonAR(goal.onAR);
         setIsCurated(goal.isCurated);
         setGoalTemplateId(goal.goalTemplateId);
         setSource(grantsToMultiValue(selectedGoalGrants, goal.source, ''));
@@ -183,21 +171,7 @@ export default function GoalForm({
           objectiveErrors, // and we need a matching error for each objective
         ] = goal.objectives.reduce((previous, objective) => {
           const [newObjs, objErrors] = previous;
-          let newObjective = objective;
-
-          if (!objective.resources.length) {
-            newObjective = {
-              ...objective,
-              resources: [
-                // this is the expected format of a blank resource
-                // all objectives start off with one
-                {
-                  key: uuidv4(),
-                  value: '',
-                },
-              ],
-            };
-          }
+          const newObjective = objective;
 
           newObjs.push(newObjective);
           // this is the format of an objective error
@@ -233,20 +207,8 @@ export default function GoalForm({
     ids,
     setAppLoadingText,
     setIsAppLoading,
+    setErrorResponseCode,
   ]);
-
-  // for fetching topic options from API
-  useEffect(() => {
-    async function fetchTopics() {
-      try {
-        const topics = await getTopics();
-        setTopicOptions(topics);
-      } catch (err) {
-        setFetchError('There was an error loading topics');
-      }
-    }
-    fetchTopics();
-  }, []);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
     const newErrors = [...errors];
@@ -387,12 +349,6 @@ export default function GoalForm({
     let isValid = true;
 
     const newObjectiveErrors = objectives.map((objective) => {
-      if (objective.status === 'Complete' || (objective.activityReports && objective.activityReports.length)) {
-        return [
-          ...OBJECTIVE_DEFAULT_ERRORS,
-        ];
-      }
-
       if (!objective.title) {
         isValid = false;
         return [
@@ -405,85 +361,6 @@ export default function GoalForm({
         ];
       }
 
-      if (!objective.topics.length) {
-        isValid = false;
-        return [
-          <></>,
-          <span className="usa-error-message">{objectiveTopicsError}</span>,
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-        ];
-      }
-
-      if (!validateListOfResources(objective.resources)) {
-        isValid = false;
-        return [
-          <></>,
-          <></>,
-          <span className="usa-error-message">{objectiveResourcesError}</span>,
-          <></>,
-          <></>,
-          <></>,
-        ];
-      }
-
-      if (!objective.status) {
-        isValid = false;
-        return [
-          <></>,
-          <></>,
-          <></>,
-          <span className="usa-error-message">{objectiveStatusError}</span>,
-          <></>,
-          <></>,
-        ];
-      }
-
-      if (!objective.supportType) {
-        isValid = false;
-        return [
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-          <></>,
-          <span className="usa-error-message">{objectiveSupportTypeError}</span>,
-        ];
-      }
-
-      return [
-        ...OBJECTIVE_DEFAULT_ERRORS,
-      ];
-    });
-
-    newErrors.splice(FORM_FIELD_INDEXES.OBJECTIVES, 1, newObjectiveErrors);
-    setErrors(newErrors);
-
-    return isValid;
-  };
-
-  const validateResourcesOnly = () => {
-    if (!objectives.length) {
-      return true;
-    }
-
-    const newErrors = [...errors];
-    let isValid = true;
-
-    const newObjectiveErrors = objectives.map((objective) => {
-      if (!validateListOfResources(objective.resources)) {
-        isValid = false;
-        return [
-          <></>,
-          <></>,
-          <span className="usa-error-message">{objectiveResourcesError}</span>,
-          <></>,
-          <></>,
-          <></>,
-        ];
-      }
       return [
         ...OBJECTIVE_DEFAULT_ERRORS,
       ];
@@ -514,7 +391,6 @@ export default function GoalForm({
   const isValidDraft = () => (
     validateGrantNumbers()
     && validateGoalName()
-    && validateResourcesOnly()
   );
 
   const updateObjectives = (updatedObjectives) => {
@@ -542,6 +418,7 @@ export default function GoalForm({
   const onSubmit = async (e) => {
     e.preventDefault();
     setAppLoadingText('Submitting');
+    setAlert({ message: '', type: 'success' });
     setIsAppLoading(true);
     try {
       // if the goal is a draft, submission should move it to "not started"
@@ -578,88 +455,6 @@ export default function GoalForm({
     } finally {
       setIsAppLoading(false);
     }
-  };
-
-  const onUploadFiles = async (files, objective, setFileUploadErrorMessage, index) => {
-    // The first thing we need to know is... does this objective need to be created?
-    setAppLoadingText('Uploading');
-    setIsAppLoading(true);
-
-    // there is some weirdness where an objective may or may not have the "ids" property
-    let objectiveIds = objective.ids ? objective.ids : [];
-    if (!objectiveIds.length && objective.id) {
-      objectiveIds = [objective.id];
-    }
-
-    if (objective.isNew) {
-      // if so, we save the objective to the database first
-      try {
-        // but to do that, we first need to save the goals
-        const newGoals = grantsToGoals({
-          selectedGrants,
-          name: goalName,
-          status,
-          source,
-          isCurated,
-          endDate,
-          regionId,
-          recipient,
-          objectives,
-          ids,
-          prompts,
-        });
-
-        // so we save them, as before creating one for each grant
-        const savedGoals = await createOrUpdateGoals(newGoals);
-
-        // and then we pluck out the objectives from the newly saved goals
-        // (there will be only "one")
-        objectiveIds = savedGoals.reduce((p, c) => {
-          const newObjectives = c.objectives.reduce((prev, o) => {
-            if (objective.title === o.title) {
-              return [
-                ...prev,
-                o.id,
-                ...o.ids,
-              ];
-            }
-
-            return prev;
-          }, []);
-
-          return Array.from(new Set([...p, ...newObjectives]));
-        }, []);
-      } catch (err) {
-        setFileUploadErrorMessage('File could not be uploaded');
-      }
-    }
-
-    try {
-      // an objective that's been saved should have a set of IDS
-      // in the case that it has been rolled up to match a goal for multiple grants
-      const data = new FormData();
-      data.append('objectiveIds', JSON.stringify(objectiveIds));
-      files.forEach((file) => {
-        data.append('file', file);
-      });
-
-      const response = await uploadObjectivesFile(data);
-      setFileUploadErrorMessage(null);
-
-      return {
-        ...response,
-        objectives,
-        setObjectives,
-        objectiveIds,
-        index,
-      };
-    } catch (error) {
-      setFileUploadErrorMessage('File(s) could not be uploaded');
-    } finally {
-      setIsAppLoading(false);
-    }
-
-    return null;
   };
 
   const onSaveDraft = async () => {
@@ -754,6 +549,7 @@ export default function GoalForm({
   };
 
   const onSaveAndContinue = async (redirect = false) => {
+    setAlert({ message: '', type: 'success' });
     if (!isValidNotStarted()) {
       // attempt to focus on the first invalid field
       const invalid = document.querySelector('.usa-form :invalid:not(fieldset), .usa-form-group--error textarea, .usa-form-group--error input, .usa-error-message + .ttahub-resource-repeater input');
@@ -806,9 +602,7 @@ export default function GoalForm({
         ...goal,
         ids: goal.goalIds,
         grants: goal.grants,
-        objectives: goal.objectives.map((objective) => ({
-          ...objective,
-        })),
+        objectives: goal.objectives,
       })));
 
       if (redirect) {
@@ -849,6 +643,7 @@ export default function GoalForm({
     setPrompts(goal.prompts);
     setSource(goal.source);
     setCreatedVia(goal.createdVia);
+    setIds(goal.ids);
 
     // we need to update the date key so it re-renders all the
     // date pickers, as they are uncontrolled inputs
@@ -979,6 +774,20 @@ export default function GoalForm({
     );
   }
 
+  const createdGoalsForReadOnly = createdGoals.map((goal) => {
+    const { objectives: goalObjectives } = goal;
+    const newObjectives = goalObjectives.map((obj) => {
+      const copy = { ...obj };
+      delete copy.status;
+      return copy;
+    });
+
+    return {
+      ...goal,
+      objectives: newObjectives,
+    };
+  });
+
   return (
     <>
       { showRTRnavigation ? (
@@ -1001,10 +810,10 @@ export default function GoalForm({
       </h1>
 
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
-        { createdGoals.length ? (
+        { createdGoalsForReadOnly.length ? (
           <>
             <ReadOnly
-              createdGoals={createdGoals}
+              createdGoals={createdGoalsForReadOnly}
               onRemove={onRemove}
               onEdit={onEdit}
             />
@@ -1087,13 +896,11 @@ export default function GoalForm({
               setObjectives={setObjectives}
               setObjectiveError={setObjectiveError}
               clearEmptyObjectiveError={clearEmptyObjectiveError}
-              topicOptions={topicOptions}
-              isOnReport={goalOnAnyReport}
+              isOnReport={goalOnAR}
               isOnApprovedReport={goalOnApprovedAR}
               isCurated={isCurated}
               status={status || 'Needs status'}
               goalNumbers={goalNumbers}
-              onUploadFiles={onUploadFiles}
               userCanEdit={canEdit}
               validatePrompts={validatePrompts}
               source={source}

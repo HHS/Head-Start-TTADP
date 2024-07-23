@@ -77,9 +77,11 @@ const testData = {
 };
 
 const renderResourceUse = (data) => {
-  render(<ResourceUse
-    data={data}
-  />);
+  render(
+    <ResourceUse
+      data={data}
+    />,
+  );
 };
 
 describe('Resource Use Widget', () => {

@@ -43,7 +43,7 @@ const colors = {
   textVisited: '#8C39DB',
 };
 
-function isCamelCase(str) {
+export function isCamelCase(str) {
   // Check if the first character is lowercase
   if (str.charAt(0) !== str.charAt(0).toLowerCase()) {
     return false;
@@ -63,19 +63,7 @@ function isCamelCase(str) {
   return true;
 }
 
-function toCamelCase(str) {
-  return str
-    // Replace any dashes or underscores with spaces
-    .replace(/[-_]/g, ' ')
-    // Split the string into an array of words
-    .split(' ')
-    // Capitalize the first letter of each word (except the first word)
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    // Join the words back together with no spaces
-    .join('');
-}
-
-function processEnum(name, table, schemaEnum, modelEnum) {
+export function processEnum(name, table, schemaEnum, modelEnum) {
   let uml = modelEnum
     ? `enum ${name} {\n`
     : `!issue='${name} enum missing for table ${table}'\nenum ${name} #pink;line:red;line.bold;text:red {\n`;
@@ -86,17 +74,19 @@ function processEnum(name, table, schemaEnum, modelEnum) {
     }
     uml += ` ${sEnum}\n`;
   });
-  modelEnum?.forEach((mEnum) => {
-    if (!schemaEnum?.includes(mEnum)) {
-      uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
-    }
-  });
+  if (Array.isArray(modelEnum)) {
+    modelEnum?.forEach((mEnum) => {
+      if (!schemaEnum?.includes(mEnum)) {
+        uml += ` !issue='value missing from schema enum: ${mEnum}'\n`;
+      }
+    });
+  }
   uml += '}\n\n';
   uml += `${name} <|-- ${table}\n\n`;
   return uml;
 }
 
-function processClassDefinition(schema, key) {
+export function processClassDefinition(schema, key) {
   let uml = schema.model
     ? `class ${key}{\n`
     : `!issue='model missing for table'\nclass ${key} #pink;line:red;line.bold;text:red {\n`;
@@ -189,7 +179,7 @@ function processClassDefinition(schema, key) {
   return uml;
 }
 
-function processAssociations(associations, tables, schemas) {
+export function processAssociations(associations, tables, schemas) {
   let uml = '\n\' Associations\n\n';
 
   interface Association {
@@ -281,7 +271,7 @@ function processAssociations(associations, tables, schemas) {
     });
     const issues:string[] = [];
 
-    relationKey = sourceTarget[key].map((association) => association.as).join(', ');
+    relationKey = sourceTarget[key].map((association) => association.as).join(',');
 
     let lineColor;
     if (relationKey?.split(',').length === 1) {
@@ -373,13 +363,10 @@ function processAssociations(associations, tables, schemas) {
   return uml;
 }
 
-function writeUml(uml, dbRoot) {
+export function writeUml(uml, dbRoot) {
   fs.writeFileSync(path.join(dbRoot, 'logical_data_model.puml'), uml);
   // update readme with uml
-  let root = path.dirname((require.main || {}).filename || './');
-  if (root.endsWith('mocha/bin')) {
-    root = path.join('./');
-  }
+  const root = path.dirname((require.main || {}).filename || './');
   if (fs.existsSync(path.join(root, 'README.md'))) {
     let readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
     const umlRegex = /``` ?plantuml([\s\S]*?)\'db\/uml\.puml\n```/; // eslint-disable-line no-useless-escape

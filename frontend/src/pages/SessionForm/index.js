@@ -10,7 +10,7 @@ import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
 import { defaultValues } from './constants';
@@ -21,7 +21,7 @@ import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import { isValidResourceUrl } from '../../components/GoalForm/constants';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -97,6 +97,7 @@ export default function SessionForm({ match }) {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -159,14 +160,14 @@ export default function SessionForm({ match }) {
         resetFormData(hookForm.reset, session);
         reportId.current = session.id;
       } catch (e) {
-        setError('Error fetching session');
+        setErrorResponseCode(e.status);
       } finally {
         setReportFetched(true);
         setDatePickerKey(`f${Date.now().toString()}`);
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId]);
+  }, [currentPage, hookForm.reset, reportFetched, sessionId, setErrorResponseCode]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);

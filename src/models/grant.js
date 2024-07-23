@@ -136,7 +136,7 @@ export default (sequelize, DataTypes) => {
       get() {
         const programsList = this.programTypes.length > 0 ? `${this.programTypes.join(', ')}` : '';
         return this.recipient
-          ? `${this.recipient.name} - ${this.number} - ${programsList}`
+          ? `${this.recipient.name} - ${this.number}${programsList ? ` - ${programsList}` : ''}`
           : `${this.number} - ${this.recipientId}`;
       },
     },

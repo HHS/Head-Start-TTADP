@@ -6,7 +6,7 @@
   }
 }
 
-.usa-error-message + .ttahub-resource-repeater input[type="url"] {
+.ttahub-resource__error input[type="url"] {
     @include mixins.error;
 }
 

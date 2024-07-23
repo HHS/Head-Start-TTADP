@@ -13,14 +13,14 @@ const {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   Objective,
-  ObjectiveFile,
-  ObjectiveResource,
-  ObjectiveTopic,
+  sequelize,
 } = require('../models');
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
-  const fileIds = files.map((file) => file.fileId);
+  const fileIds = files.map((file) => file.id);
   const filesSet = new Set(fileIds);
   const originalAROFiles = await ActivityReportObjectiveFile.findAll({
     where: { activityReportObjectiveId },
@@ -46,41 +46,20 @@ const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) =>
         hookMetadata: { objectiveId },
       })
       : Promise.resolve(),
-    newFilesIds.length > 0
-      ? ObjectiveFile.update(
-        { onAR: true },
-        {
-          where: { fileId: { [Op.in]: newFilesIds } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
-      : Promise.resolve(),
   ]);
 };
 
-const cacheResources = async (objectiveId, activityReportObjectiveId, resources = []) => {
+const cacheResources = async (_objectiveId, activityReportObjectiveId, resources = []) => {
+  // Get resource urls.
   const resourceUrls = resources
     .map((r) => {
       if (r.resource && r.resource.url) return r.resource.url;
       if (r.url) return r.url;
+      if (r.value) return r.value;
       return null;
     })
     .filter((url) => url);
+
   const resourceIds = resources
     .map((r) => {
       if (r.resource && r.resource.id) return r.resource.id;
@@ -88,85 +67,16 @@ const cacheResources = async (objectiveId, activityReportObjectiveId, resources 
       return null;
     })
     .filter((id) => id);
-  const originalAROResources = await getResourcesForActivityReportObjectives(
-    activityReportObjectiveId,
-    true,
-  );
-  const aroResources = await processActivityReportObjectiveForResourcesById(
+
+  return processActivityReportObjectiveForResourcesById(
     activityReportObjectiveId,
     resourceUrls,
     resourceIds,
   );
-  const newAROResourceIds = aroResources
-    && aroResources.length > 0
-    ? aroResources
-      .filter((r) => !!originalAROResources.find((oR) => oR.id === r.id))
-      .map((r) => r.resourceId)
-    : [];
-  const removedAROResourceIds = originalAROResources
-    .filter((oR) => !aroResources?.find((r) => oR.id === r.id))
-    .map((r) => r.resourceId);
-
-  return Promise.all([
-    newAROResourceIds.length > 0
-      ? ObjectiveResource.update(
-        { onAR: true },
-        {
-          where: {
-            id: objectiveId,
-            onAR: false,
-            resourceId: { [Op.in]: newAROResourceIds },
-          },
-        },
-      )
-      : Promise.resolve(),
-    removedAROResourceIds.length > 0
-      ? (async () => {
-        const resourceNotOnARs = await ObjectiveResource.findAll({
-          attributes: ['id'],
-          where: {
-            [Op.and]: [
-              { objectiveId },
-              { onAR: true },
-              { resourceId: { [Op.in]: removedAROResourceIds } },
-              { '$"objective.activityReportObjectives".id$': { [Op.is]: null } },
-            ],
-          },
-          include: [{
-            attributes: [],
-            model: Objective,
-            as: 'objective',
-            required: true,
-            include: [{
-              attributes: [],
-              model: ActivityReportObjective,
-              as: 'activityReportObjectives',
-              required: false,
-              where: { id: { [Op.not]: activityReportObjectiveId } },
-              include: [{
-                attributes: [],
-                model: ActivityReportObjectiveResource,
-                as: 'activityReportObjectiveResources',
-                required: false,
-                where: { resourceId: { [Op.in]: removedAROResourceIds } },
-              }],
-            }],
-          }],
-          raw: true,
-        });
-        return resourceNotOnARs && resourceNotOnARs.length > 0
-          ? ObjectiveResource.update(
-            { onAR: false },
-            { where: { id: resourceNotOnARs.map((r) => r.id) } },
-          )
-          : Promise.resolve();
-      })()
-      : Promise.resolve(),
-  ]);
 };
 
 export const cacheCourses = async (objectiveId, activityReportObjectiveId, courses = []) => {
-  const courseIds = courses.map((course) => course.courseId);
+  const courseIds = courses.map((course) => course.id);
   const courseSet = new Set(courseIds);
   const originalAroCourses = await ActivityReportObjectiveCourse.findAll({
     where: { activityReportObjectiveId },
@@ -197,15 +107,16 @@ export const cacheCourses = async (objectiveId, activityReportObjectiveId, cours
 };
 
 const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) => {
-  const topicIds = topics.map((topic) => topic.topicId);
+  const topicIds = topics.map((topic) => topic.id);
   const topicsSet = new Set(topicIds);
   const originalAROTopics = await ActivityReportObjectiveTopic.findAll({
     where: { activityReportObjectiveId },
-    raw: true,
   });
   const originalTopicIds = originalAROTopics.map((originalAROTopic) => originalAROTopic.topicId)
     || [];
+  // Get topics for ARO we need to delete.
   const removedTopicIds = originalTopicIds.filter((topicId) => !topicsSet.has(topicId));
+  // Get topics to keep.
   const currentTopicIds = new Set(originalTopicIds.filter((topicId) => topicsSet.has(topicId)));
   const newTopicsIds = topicIds.filter((topicId) => !currentTopicIds.has(topicId));
 
@@ -224,30 +135,6 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
         hookMetadata: { objectiveId },
       })
       : Promise.resolve(),
-    newTopicsIds.length > 0
-      ? ObjectiveTopic.update(
-        { onAR: true },
-        {
-          where: { topicId: { [Op.in]: newTopicsIds } },
-          include: [
-            {
-              model: Objective,
-              as: 'objective',
-              required: true,
-              where: { id: objectiveId },
-              include: [
-                {
-                  model: ActivityReportObjective,
-                  as: 'activityReportObjectives',
-                  required: true,
-                  where: { id: activityReportObjectiveId },
-                },
-              ],
-            },
-          ],
-        },
-      )
-      : Promise.resolve(),
   ]);
 };
 
@@ -263,6 +150,7 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     supportType,
     closeSuspendContext,
     closeSuspendReason,
+    objectiveCreatedHere,
   } = metadata;
 
   const objectiveId = objective.dataValues
@@ -293,10 +181,12 @@ const cacheObjectiveMetadata = async (objective, reportId, metadata) => {
     arOrder: order + 1,
     closeSuspendContext: closeSuspendContext || null,
     closeSuspendReason: closeSuspendReason || null,
+    objectiveCreatedHere,
   }, {
     where: { id: activityReportObjectiveId },
     individualHooks: true,
   });
+
   return Promise.all([
     Objective.update({ onAR: true }, {
       where: { id: objectiveId },
@@ -445,22 +335,40 @@ const cacheGoalMetadata = async (
     Goal.update({ onAR: true }, { where: { id: goal.id }, individualHooks: true }),
   ];
 
-  if (!isMultiRecipientReport && prompts && prompts.length) {
+  if (isMultiRecipientReport) {
+    // Check for fei goal prompts we need to update on the activity report goal.
+    const goalPrompts = await GoalFieldResponse.findAll({
+      attributes: [
+        ['goalTemplateFieldPromptId', 'promptId'],
+        [sequelize.col('prompt."title"'), 'title'],
+        'response',
+      ],
+      where: { goalId: goal.id },
+      raw: true,
+      include: [
+        {
+          model: GoalTemplateFieldPrompt,
+          as: 'prompt',
+          required: true,
+          attributes: [],
+          where: {
+            title: 'FEI root cause',
+          },
+        },
+      ],
+    });
+
+    // if we have goal prompts call cache prompts with the goals prompts
+    if (goalPrompts && goalPrompts.length) {
+      finalPromises.push(
+        cachePrompts(goal.id, arg.id, goalPrompts),
+      );
+    }
+  } else if (prompts && prompts.length) {
     finalPromises.push(
       cachePrompts(goal.id, arg.id, prompts),
     );
   }
-
-  if (isMultiRecipientReport) {
-    finalPromises.push(
-      ActivityReportGoalFieldResponse.destroy({
-        where: { activityReportGoalId: arg.id },
-        individualHooks: true,
-        hookMetadata: { goalId: goal.id },
-      }),
-    );
-  }
-
   return Promise.all(finalPromises);
 };
 

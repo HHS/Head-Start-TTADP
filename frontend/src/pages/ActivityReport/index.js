@@ -34,17 +34,19 @@ import {
   submitReport,
   saveReport,
   getReport,
-  getRecipients,
+  getRecipientsForExistingAR,
   createReport,
   getCollaborators,
   getApprovers,
   reviewReport,
   resetToDraft,
   getGroupsForActivityReport,
+  getRecipients,
 } from '../../fetchers/activityReports';
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -90,6 +92,7 @@ export const formatReportWithSaveBeforeConversion = async (
   userHasOneRole,
   reportId,
   approverIds,
+  forceUpdate,
 ) => {
   // if it isn't a new report, we compare it to the last response from the backend (formData)
   // and pass only the updated to save report
@@ -104,7 +107,7 @@ export const formatReportWithSaveBeforeConversion = async (
   // formData stores them as MM/DD/YYYY so we are good in that instance
   const thereIsANeedToParseDates = !isEmpty;
 
-  const updatedReport = isEmpty
+  const updatedReport = isEmpty && !forceUpdate
     ? { ...formData }
     : await saveReport(
       reportId.current, {
@@ -201,6 +204,7 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -255,7 +259,13 @@ function ActivityReport({
         reportId.current = activityReportId;
 
         if (activityReportId !== 'new') {
-          const fetchedReport = await getReport(activityReportId);
+          let fetchedReport;
+          try {
+            fetchedReport = await getReport(activityReportId);
+          } catch (e) {
+            // If error retrieving the report show the "something went wrong" page.
+            setErrorResponseCode(e.status);
+          }
           report = convertReportToFormData(fetchedReport);
         } else {
           report = {
@@ -268,8 +278,16 @@ function ActivityReport({
           };
         }
 
+        const getRecips = async () => {
+          if (reportId.current && reportId.current !== 'new') {
+            return getRecipientsForExistingAR(reportId.current);
+          }
+
+          return getRecipients(report.regionId);
+        };
+
         const apiCalls = [
-          getRecipients(report.regionId),
+          getRecips(),
           getCollaborators(report.regionId),
           getApprovers(report.regionId),
           getGroupsForActivityReport(report.regionId),
@@ -455,7 +473,7 @@ function ActivityReport({
     history.push(newPath, state);
   };
 
-  const onSave = async (data) => {
+  const onSave = async (data, forceUpdate = false) => {
     const approverIds = data.approvers.map((a) => a.user.id);
     try {
       if (reportId.current === 'new') {
@@ -490,6 +508,7 @@ function ActivityReport({
           userHasOneRole,
           reportId,
           approverIds,
+          forceUpdate,
         );
 
         let reportData = updatedReport;

@@ -59,6 +59,9 @@ const Participants = ({ formData }) => {
   const isIstVisit = watch('isIstVisit') === 'yes';
   const isNotIstVisit = watch('isIstVisit') === 'no';
 
+  const regionId = watch('regionId');
+  const eventRegionId = formData.event ? formData.event.regionId : null;
+
   // handle existing sessions
   useDeepCompareEffect(() => {
     const {
@@ -141,7 +144,9 @@ const Participants = ({ formData }) => {
 
       {isNotIstVisit && (
         <>
-          <RecipientsWithGroups />
+          <RecipientsWithGroups
+            regionId={regionId || eventRegionId}
+          />
           <div className="margin-top-2">
             <FormItem
               label="Recipient participants"
@@ -184,7 +189,6 @@ const Participants = ({ formData }) => {
 
       {(isIstVisit || isNotIstVisit) && (
       <>
-
         <ParticipantsNumberOfParticipants
           isHybrid={isHybrid}
           register={register}
@@ -251,6 +255,7 @@ Participants.propTypes = {
     recipients: PropTypes.arrayOf(PropTypes.shape({
       label: PropTypes.string,
     })),
+    regionId: PropTypes.number,
     istSelectionComplete: PropTypes.bool,
     event: PropTypes.shape({
       id: PropTypes.number,
@@ -258,6 +263,7 @@ Participants.propTypes = {
       displayId: PropTypes.string,
       status: PropTypes.string,
       pageState: PropTypes.objectOf(PropTypes.string),
+      regionId: PropTypes.number,
     }),
     numberOfParticipants: PropTypes.number,
     numberOfParticipantsInPerson: PropTypes.number,

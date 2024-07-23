@@ -1,4 +1,4 @@
-const { prepMigration, updateUsersFlagsEnum, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {

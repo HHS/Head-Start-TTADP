@@ -11,7 +11,6 @@ describe('GoalDataController', () => {
   const DEFAULT_USER = {
     name: '',
     id: 1,
-    flags: ['merge_goals'],
   };
 
   const REGION_ID = 1;

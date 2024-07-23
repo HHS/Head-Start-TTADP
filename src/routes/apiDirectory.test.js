@@ -32,6 +32,9 @@ const mockUser = {
   lastLogin: new Date(),
 };
 
+jest.mock('axios');
+jest.mock('smartsheet');
+
 describe('apiDirectory tests', () => {
   beforeAll(async () => {
     await User.create(mockUser, { include: [{ model: Permission, as: 'permissions' }] });

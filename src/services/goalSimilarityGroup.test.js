@@ -70,7 +70,14 @@ describe('goalSimilarityGroup services', () => {
 
     await GoalSimilarityGroupGoal.destroy({ where: { goalSimilarityGroupId: groupIds } });
     await GoalSimilarityGroup.destroy({ where: { recipientId: recipient.id } });
-    await Goal.destroy({ where: { grantId: [grant.id, grant2.id] }, force: true });
+    await Goal.destroy({
+      where: {
+        grantId: [grant.id, grant2.id],
+      },
+      force: true,
+      paranoid: true,
+      individualHooks: true,
+    });
     await Grant.destroy({ where: { recipientId: recipient.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
@@ -168,7 +175,7 @@ describe('goalSimilarityGroup services', () => {
 
       expect(result).toEqual({
         id: 'group-id',
-        goals: ['goal-1', 'goal-3', 'goal-4'],
+        goals: ['goal-1', 'goal-2', 'goal-3', 'goal-4'],
       });
     });
   });
