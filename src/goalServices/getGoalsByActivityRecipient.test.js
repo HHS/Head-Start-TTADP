@@ -15,7 +15,6 @@ import {
   Objective,
   Topic,
   EventReportPilot,
-  EventReportPilotGoal,
   SessionReportPilot,
   ActivityReportObjectiveTopic,
 } from '../models';
@@ -461,18 +460,6 @@ describe('Goals by Recipient Test', () => {
           onApprovedAR: false,
           goalTemplateId: curatedGoalTemplate.id,
         }),
-
-        // 14, goal from template
-        Goal.create({
-          name: 'This is a goal created on a TR',
-          status: 'In Progress',
-          timeframe: '1 month',
-          isFromSmartsheetTtaPlan: true,
-          grantId: 300,
-          createdAt: '2021-03-10T19:16:15.842Z',
-          onApprovedAR: false,
-          createdVia: 'tr',
-        }),
       ],
     );
 
@@ -654,8 +641,6 @@ describe('Goals by Recipient Test', () => {
       ],
     );
 
-    const trGoal = goals.find((g) => g.createdVia === 'tr');
-
     event = await EventReportPilot.create({
       ownerId: 1,
       regionId: 1,
@@ -664,46 +649,6 @@ describe('Goals by Recipient Test', () => {
       imported: {},
       pocIds: [],
     });
-
-    const session = await SessionReportPilot.create({
-      eventId: event.id,
-      data: {
-        objectiveTopics: ['Buttering', 'Breading'],
-        objective: 'This is a session objective',
-        grantNumbers: [grant1.number],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        eventDisplayId: '12345',
-        status: 'Complete',
-      },
-    });
-
-    const session2 = await SessionReportPilot.create({
-      eventId: event.id,
-      data: {
-        objectiveTopics: ['Buttering', 'Breading'],
-        objective: 'This is a session objective',
-        grantNumbers: [grant1.number],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        eventDisplayId: '12345',
-        status: 'Complete',
-      },
-    });
-
-    await EventReportPilotGoal.create({
-      eventId: event.id,
-      goalId: trGoal.id,
-      grantId: trGoal.grantId,
-      sessionId: session.id,
-    });
-
-    await EventReportPilotGoal.create({
-      eventId: event.id,
-      goalId: trGoal.id,
-      grantId: trGoal.grantId,
-      sessionId: session2.id,
-    });
   });
 
   afterAll(async () => {
@@ -711,7 +656,6 @@ describe('Goals by Recipient Test', () => {
     const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
 
-    await EventReportPilotGoal.destroy({ where: { goalId: goalIds } });
     await SessionReportPilot.destroy({ where: { eventId: event.id } });
     await EventReportPilot.destroy({ where: { ownerId: 1 } });
 

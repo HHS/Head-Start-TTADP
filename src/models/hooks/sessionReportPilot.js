@@ -132,61 +132,6 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
   }
 };
 
-const extractEventData = (sessionReport) => {
-  const data = sessionReport?.data?.val ? JSON.parse(sessionReport.data.val) : sessionReport?.data;
-  const event = data?.event;
-  const recipients = Array.isArray(data?.recipients) ? data.recipients : [data?.recipients].filter(Boolean);
-
-  return { event, recipients };
-};
-
-const createOrUpdateGoal = async (sequelize, event, grantId, sessionReport, options) => {
-  const eventId = Number(event.id);
-  const existingGoal = await sequelize.models.EventReportPilotGoal.findOne({
-    where: { eventId, grantId },
-  });
-
-  if (existingGoal) {
-    return existingGoal.goalId;
-  }
-
-  const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
-  if (!grant) throw new Error('Grant not found');
-
-  const sessionId = sessionReport.id;
-
-  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
-    where: { eventId, 'data.status': TRAINING_REPORT_STATUSES.COMPLETE },
-    transaction: options.transaction,
-  });
-
-  const status = hasCompleteSession ? 'In Progress' : 'Draft';
-  const onApprovedAR = !!(hasCompleteSession);
-
-  const newGoal = await sequelize.models.Goal.create({
-    name: event.data.goal,
-    grantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    status,
-    createdVia: 'tr',
-    source: GOAL_SOURCES[4], // Training event
-    onAR: true,
-    onApprovedAR,
-  }, { transaction: options.transaction });
-
-  await sequelize.models.EventReportPilotGoal.create({
-    goalId: newGoal.id,
-    eventId,
-    sessionId,
-    grantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }, { transaction: options.transaction });
-
-  return newGoal.id;
-};
-
 const updateCreatorCollaborator = async (sequelize, eventRecord, existingCollaborators, creatorTypeId, options) => {
   const creatorCollaborator = existingCollaborators.find((c) => c.collaboratorTypeId === creatorTypeId.id);
 
