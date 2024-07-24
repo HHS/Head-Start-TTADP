@@ -1195,7 +1195,7 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(1);
     });
-    it('trVisionAndGoal on CI', async () => {
+    it('trVision on CI', async () => {
       process.env.CI = 'true';
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trVisionComplete(mockEvent);
