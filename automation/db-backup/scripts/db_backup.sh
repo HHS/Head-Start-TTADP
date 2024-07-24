@@ -697,13 +697,14 @@ backup_retention() {
     }
 
     declare -A backup_sets
+    declare -A processed_dates
 
     while IFS= read -r line; do
         KEY=$(echo $line | awk '{print $1}')
         LAST_MODIFIED=$(echo $line | awk '{print $2}')
 
         BASE_NAME=$(get_base_name "$KEY")
-        if [ -z "${backup_sets[$BASE_NAME]}" ]; then
+        if [ -z "${backup_sets[$BASE_NAME]+isset}" ]; then
             backup_sets[$BASE_NAME]="$LAST_MODIFIED"
         fi
     done <<< "$BACKUPS"
@@ -721,8 +722,6 @@ backup_retention() {
         done
     }
 
-    declare -A processed_dates
-
     for BASE_NAME in "${!backup_sets[@]}"; do
         LAST_MODIFIED=${backup_sets[$BASE_NAME]}
         AGE=$(date_diff $NOW $LAST_MODIFIED)
@@ -731,7 +730,7 @@ backup_retention() {
             continue
         elif [ $AGE -le 60 ]; then
             DATE=$(date -d $LAST_MODIFIED +%Y-%m-%d)
-            if [ "${processed_dates[$DATE]}" ]; then
+            if [ "${processed_dates[$DATE]+isset}" ]; then
                 delete_backup_set $BASE_NAME || {
                     log "ERROR" "Failed to delete backup set for $BASE_NAME"
                     set -e
