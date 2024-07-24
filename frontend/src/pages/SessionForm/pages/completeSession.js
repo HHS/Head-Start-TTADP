@@ -54,7 +54,7 @@ const CompleteSession = ({
       return;
     }
 
-    if (!formData.event.data.goal) {
+    if (!formData.event.data.vision) {
       const eventId = getEventIdSlug(formData.event.data.eventId);
       setError('status', {
         message: (
@@ -160,7 +160,7 @@ CompleteSession.propTypes = {
     event: PropTypes.shape({
       data: PropTypes.shape({
         eventId: PropTypes.string,
-        goal: PropTypes.string,
+        vision: PropTypes.string,
       }),
     }),
     id: PropTypes.number,
