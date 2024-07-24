@@ -340,6 +340,11 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Monitor Logs
+          command: |
+            cf logs tta-automation
+          background: true
+      - run:
           name: cf_lambda - script to trigger backup
           command: |
             set -x
