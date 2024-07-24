@@ -11,7 +11,7 @@ module.exports = {
       await queryInterface.sequelize.query(/* sql */`
         -- Remove goals that were createdVia 'tr':
         DELETE FROM "Goals"
-        WHERE "createdVia" = 'tr';
+        WHERE "createdVia"::text = 'tr';
       `, { transaction });
     },
   ),
