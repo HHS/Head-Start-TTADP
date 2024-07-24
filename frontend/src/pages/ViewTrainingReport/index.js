@@ -145,10 +145,9 @@ export default function ViewTrainingReport({ match }) {
     },
     striped: true,
   }, {
-    heading: 'Vision and goal',
+    heading: 'Vision',
     data: {
       Vision: event.data.vision,
-      Goal: event.data.goal,
     },
   }] : [];
 

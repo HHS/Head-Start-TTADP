@@ -59,9 +59,9 @@ const CompleteSession = ({
       setError('status', {
         message: (
           <span>
-            Vision and goal for
+            Vision for
             {' '}
-            <Link to={`/training-report/${eventId}/vision-goal`}>{formData.event.data.eventId}</Link>
+            <Link to={`/training-report/${eventId}/vision`}>{formData.event.data.eventId}</Link>
             {' '}
             must be completed before completing session
           </span>),
