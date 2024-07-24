@@ -650,20 +650,6 @@ export async function getGoalsByActivityRecipient(
         ],
       },
       {
-        model: EventReportPilot,
-        as: 'eventReportPilots',
-        required: false,
-        attributes: ['id'],
-        include: [
-          {
-            model: SessionReportPilot,
-            as: 'sessionReports',
-            attributes: ['id', 'data'],
-            required: false,
-          },
-        ],
-      },
-      {
         model: GoalFieldResponse,
         as: 'responses',
         required: false,
