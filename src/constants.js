@@ -247,7 +247,7 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
 const CURRENT_GOAL_SIMILARITY_VERSION = 4;
 
