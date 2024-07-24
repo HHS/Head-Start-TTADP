@@ -50,6 +50,7 @@ jest.mock('../../../models', () => ({
   },
   File: {
     create: jest.fn(),
+    findOne: jest.fn(),
   },
   ZALImportFile: {
     findAll: jest.fn().mockReturnValue([]),
@@ -275,35 +276,50 @@ describe('record', () => {
       const maxAttempts = 3;
       const mockImportFile = {
         id: 123,
-        fileId: 'file123',
+        fileId: 1,
+        importId: 1,
         status: 'collected',
         processAttempts: 1,
       };
+      const mockFile = {
+        id: mockImportFile.fileId,
+        key: '/import/1/cc74c8a9-9fe7-4bf4-bde7-1ba1962e9e2d.zip',
+      };
+      const mockImport = {
+        id: mockImportFile.fileId,
+        definitions: [
+          {
+            keys: [
+              'statusId',
+            ],
+            path: '.',
+            encoding: 'utf16le',
+            fileName: 'AMS_ReviewStatus.xml',
+            remapDef: {
+              Name: 'name',
+              StatusId: 'statusId',
+            },
+            tableName: 'MonitoringReviewStatuses',
+          },
+        ],
+      };
       ImportFile.findOne.mockResolvedValue(mockImportFile);
+      File.findOne.mockResolvedValue(mockFile);
+      Import.findOne.mockResolvedValue(mockImport);
 
       const result = await getNextFileToProcess(importId, maxAttempts);
 
       expect(ImportFile.findOne).toHaveBeenCalledWith({
         attributes: [
-          ['id', 'importFileId'],
+          'id',
           'fileId',
           'status',
           'processAttempts',
-        ],
-        include: [
-          {
-            model: File,
-            as: 'file',
-            attributes: ['key'],
-          },
-          {
-            model: Import,
-            as: 'import',
-            attributes: ['definitions'],
-          },
+          'importId',
         ],
         where: {
           importId,
+          fileId: { [Op.ne]: null },
           [Op.or]: [
             { status: IMPORT_STATUSES.COLLECTED },
             {
@@ -315,9 +331,33 @@ describe('record', () => {
         order: [['createdAt', 'ASC']],
         limit: 1,
         lock: true,
+        raw: true,
       });
 
-      expect(result).toEqual(mockImportFile);
+      expect(File.findOne).toHaveBeenCalledWith({
+        attributes: ['key'],
+        where: {
+          id: mockImportFile.fileId,
+        },
+        raw: true,
+      });
+
+      expect(Import.findOne).toHaveBeenCalledWith({
+        attributes: ['definitions'],
+        where: {
+          id: mockImportFile.importId,
+        },
+        raw: true,
+      });
+
+      expect(result).toEqual({
+        importFileId: mockImportFile.id,
+        fileId: mockImportFile.fileId,
+        status: mockImportFile.status,
+        processAttempts: mockImportFile.processAttempts,
+        fileKey: mockFile?.key,
+        importDefinitions: mockImport?.definitions,
+      });
     });
 
     it('should return null when no import file is found', async () => {
@@ -332,17 +372,46 @@ describe('record', () => {
     it('should use the default maxAttempts value when not provided', async () => {
       const importId = 3;
       const defaultMaxAttempts = 5;
+      const mockValues = {
+        id: 456,
+        fileId: 1,
+        importId,
+        status: 'collected',
+        processAttempts: 2,
+      };
       ImportFile.findOne.mockImplementation((options) => {
         const processAttemptsCondition = options.where[Op.or][1].processAttempts;
         if (processAttemptsCondition[Op.lt] === defaultMaxAttempts) {
-          return Promise.resolve({ id: 456 });
+          return Promise.resolve();
         }
         return Promise.resolve(null);
       });
 
       const result = await getNextFileToProcess(importId);
-
-      expect(result).toEqual({ id: 456 });
+      expect(ImportFile.findOne).toHaveBeenCalledWith({
+        attributes: [
+          'id',
+          'fileId',
+          'status',
+          'processAttempts',
+          'importId',
+        ],
+        where: {
+          importId,
+          fileId: { [Op.ne]: null },
+          [Op.or]: [
+            { status: IMPORT_STATUSES.COLLECTED },
+            {
+              status: IMPORT_STATUSES.PROCESSING_FAILED,
+              processAttempts: { [Op.lt]: defaultMaxAttempts },
+            },
+          ],
+        },
+        order: [['createdAt', 'ASC']],
+        limit: 1,
+        lock: true,
+        raw: true,
+      });
     });
   });
 
@@ -622,9 +691,7 @@ describe('record', () => {
       ImportFile.findOne.mockResolvedValue({
         id: 1,
         fileId: null,
-        dataValues: {
-          downloadAttempts: 0,
-        },
+        downloadAttempts: 0,
       });
 
       File.create.mockResolvedValue({
@@ -665,7 +732,7 @@ describe('record', () => {
       expect(result).toEqual({
         importFileId: 1,
         key: '/import/123/uuid-mock.txt',
-        attempts: 0,
+        attempts: 1,
       });
     });
 
@@ -673,14 +740,12 @@ describe('record', () => {
       ImportFile.findOne.mockResolvedValue({
         id: 1,
         fileId: 2,
-        file: {
-          dataValues: {
-            key: '/import/123/uuid-mock.txt',
-          },
-        },
-        dataValues: {
-          downloadAttempts: 1,
-        },
+        downloadAttempts: 1,
+      });
+
+      File.findOne.mockResolvedValue({
+        id: 2,
+        key: '/import/123/uuid-mock.txt',
       });
 
       const result = await logFileToBeCollected(importId, availableFile);
@@ -696,7 +761,7 @@ describe('record', () => {
       expect(result).toEqual({
         importFileId: 1,
         key: '/import/123/uuid-mock.txt',
-        attempts: 1,
+        attempts: 2,
       });
     });
   });

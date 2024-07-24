@@ -2,8 +2,6 @@ import newQueue, { increaseListeners } from '../lib/queue';
 import { RESOURCE_ACTIONS } from '../constants';
 import { logger, auditLogger } from '../logger';
 import { getResourceMetaDataJob } from '../lib/resource';
-import transactionQueueWrapper from '../workers/transactionWrapper';
-import referenceData from '../workers/referenceData';
 
 const resourceQueue = newQueue('resource');
 
@@ -19,7 +17,6 @@ const addGetResourceMetadataToQueue = async (id, url) => {
     resourceId: id,
     resourceUrl: url,
     key: RESOURCE_ACTIONS.GET_METADATA,
-    ...referenceData(),
   };
   return resourceQueue.add(
     RESOURCE_ACTIONS.GET_METADATA,
@@ -50,10 +47,7 @@ const processResourceQueue = () => {
   // Get resource metadata.
   resourceQueue.process(
     RESOURCE_ACTIONS.GET_METADATA,
-    transactionQueueWrapper(
-      getResourceMetaDataJob,
-      RESOURCE_ACTIONS.GET_METADATA,
-    ),
+    getResourceMetaDataJob,
   );
 };
 
