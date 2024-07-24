@@ -597,6 +597,9 @@ If you see nothing there, you'll need to add an appropriate policy.
 ```cf add-network-policy tta-smarthub-APP_NAME clamav-api-ttahub-APP_NAME --protocol tcp --port 9443```
 ex:
 ```cf add-network-policy tta-smarthub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
+You may need to connect across spaces (for example, our clamav-api-ttahub-dev app is shared by all of our ephemeral environments). If so, use the -s flag.
+ex:
+```cf add-network-policy tta-smarthub-staging -s ttahub-dev clamav-api-ttahub-dev --protocol tcp --port 9443```
 
 
 <!-- Links -->
