@@ -28,7 +28,7 @@ export async function allCourses(req: Request, res: Response) {
     const courses = await getAllCourses();
     res.json(courses);
   } catch (err) {
-    await handleErrors(req, res, err, logContext);
+    await handleErrors(err, req, res, logContext);
   }
 }
 
@@ -38,7 +38,7 @@ export async function getCourseById(req: Request, res: Response) {
     const course = await getById(Number(id));
     res.json(course);
   } catch (err) {
-    await handleErrors(req, res, err, logContext);
+    await handleErrors(err, req, res, logContext);
   }
 }
 
@@ -70,7 +70,7 @@ export async function updateCourseById(req: Request, res: Response) {
 
     res.json(newCourse);
   } catch (err) {
-    await handleErrors(req, res, err, logContext);
+    await handleErrors(err, req, res, logContext);
   }
 }
 
@@ -90,7 +90,7 @@ export async function createCourseByName(req: Request, res: Response) {
 
     res.json(course);
   } catch (err) {
-    await handleErrors(req, res, err, logContext);
+    await handleErrors(err, req, res, logContext);
   }
 }
 
@@ -119,7 +119,7 @@ export async function deleteCourseById(req: Request, res: Response) {
     }
     res.status(204).send();
   } catch (err) {
-    await handleErrors(req, res, err, logContext);
+    await handleErrors(err, req, res, logContext);
   }
 }
 
