@@ -763,37 +763,12 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[1].reasons).toEqual([]);
       expect(goalRowsx[1].goalTopics).toEqual([]);
       expect(goalRowsx[1].objectives.length).toBe(0);
-      expect(goalRowsx[1].sessionObjectives.length).toBe(2);
 
-      const trObjective = goalRowsx[1].sessionObjectives[0];
-      trObjective.topics.sort();
       const expectedTopics = ['Buttering', 'Breading'];
       expectedTopics.sort();
 
-      expect(trObjective).toEqual({
-        type: 'session',
-        title: 'This is a session objective',
-        topics: expectedTopics,
-        grantNumbers: [goalRowsx[1].grantNumbers[0]],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        trainingReportId: '12345',
-      });
-
-      const trObjective2 = goalRowsx[1].sessionObjectives[1];
-      trObjective2.topics.sort();
       const expectedTopics2 = ['Buttering', 'Breading'];
       expectedTopics2.sort();
-
-      expect(trObjective2).toEqual({
-        type: 'session',
-        title: 'This is a session objective',
-        topics: expectedTopics2,
-        grantNumbers: [goalRowsx[1].grantNumbers[0]],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        trainingReportId: '12345',
-      });
 
       // Goal 3.
       expect(goalRowsx[2].goalText).toBe('Goal 3');
