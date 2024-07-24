@@ -14,7 +14,6 @@ import {
   ActivityReportCollaborator,
   ActivityReportFile,
   sequelize,
-  Sequelize,
   ActivityRecipient,
   File,
   Grant,
@@ -1073,6 +1072,7 @@ export async function setStatus(report, status) {
  * @returns {*} Grants and Other entities
  */
 export async function possibleRecipients(regionId, activityReportId = null) {
+  const inactiveDayDuration = 61;
   const grants = await Recipient.findAll({
     attributes: [
       'id',
@@ -1110,7 +1110,18 @@ export async function possibleRecipients(regionId, activityReportId = null) {
       '$grants.regionId$': regionId,
       [Op.or]: [
         { '$grants.status$': 'Active' },
-        { '$grants->activityRecipients.activityReportId$': activityReportId },
+        { ...(activityReportId ? { '$grants.activityRecipients.activityReportId$': activityReportId } : {}) },
+        {
+          '$grants.inactivationDate$': {
+            [Op.gte]: sequelize.literal(`
+          CASE
+            WHEN ${activityReportId ? 'true' : 'false'}
+            THEN (SELECT COALESCE("startDate", NOW() - INTERVAL '${inactiveDayDuration} days') FROM "ActivityReports" WHERE "id" = ${activityReportId})
+            ELSE date_trunc('day', NOW()) - interval '${inactiveDayDuration} days'
+          END
+            `),
+          },
+        },
       ],
     },
   });
