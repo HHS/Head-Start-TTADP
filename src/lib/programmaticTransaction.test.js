@@ -252,7 +252,6 @@ describe('Programmatic Transaction', () => {
   });
 
   it('should correctly handle JSON strings and arrays during reversion', async () => {
-    await sequelize.query("DO $$ BEGIN RAISE WARNING  'start test'; END $$;");
     const snapshot = await transactionModule.captureSnapshot();
     const jsonArray = ['elem3', 'elem4'];
 
@@ -282,42 +281,20 @@ describe('Programmatic Transaction', () => {
       grantId: grant.id,
       goalTemplateId: goalTemplateFieldPrompt.goalTemplateId,
     });
-    await sequelize.query(/* sql */`DO $$
-      DECLARE
-          result RECORD;
-      BEGIN
-          RAISE WARNING 'BEFORE GoalFieldResponse';
-          FOR result IN SELECT * FROM "ZALGoalFieldResponses" ORDER BY id LOOP
-              RAISE WARNING 'Row: %', result;
-          END LOOP;
-      END;
-      $$ LANGUAGE plpgsql;`);
     const gfResponse = await GoalFieldResponse.create({
       goalId: goal.id,
       goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
       response: jsonArray,
     });
-    await sequelize.query(/* sql */`DO $$
-      DECLARE
-          result RECORD;
-      BEGIN
-          RAISE WARNING 'AFTER GoalFieldResponse';
-          FOR result IN SELECT * FROM "ZALGoalFieldResponses" ORDER BY id LOOP
-              RAISE WARNING 'Row: %', result;
-          END LOOP;
-      END;
-      $$ LANGUAGE plpgsql;`);
     expect(gfResponse).not.toBeNull();
 
     let goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).not.toBeNull();
     expect(goalFieldResponse.response).toEqual(jsonArray);
 
-    await sequelize.query("DO $$ BEGIN RAISE WARNING  'before roll back'; END $$;");
     await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
     goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).toBeNull();
-    await sequelize.query("DO $$ BEGIN RAISE WARNING  'end test'; END $$;");
   });
 
   it('should log and rethrow error if JSON parsing fails during reversion', async () => {
