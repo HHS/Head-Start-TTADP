@@ -1,6 +1,4 @@
 #!/bin/bash
-# Script to retrieve information from latest-backup.txt in S3, get presigned URLs for the files listed,
-# and then delete the service key created. Optionally lists all ZIP files in the same S3 path.
 
 # Function to check if the installed version of cf CLI is at least version 8
 check_cf_version() {
@@ -133,8 +131,15 @@ list_all_zip_files() {
         echo "No ZIP files found in S3 bucket."
     else
         echo "ZIP files in S3 bucket:"
-        printf "%-75s %-5s %-5s %-5s %-10s\n" "Name" "pwd" "md5" "sha256" "size"
-        echo "${zip_files}" | awk '
+        printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
+        current_date=$(date +%s)
+        echo "${zip_files}" | awk -v current_date="$current_date" '
+        function get_age(date_str, time_str) {
+            split(date_str, date_parts, "-")
+            split(time_str, time_parts, ":")
+            file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " " time_parts[3])
+            return int((current_date - file_time) / 86400)
+        }
         {
             split($4, parts, "/")
             file = parts[length(parts)]
@@ -146,6 +151,7 @@ list_all_zip_files() {
             ext = nameparts[length(nameparts)]
             files[base][ext] = 1
             sizes[base] = $3
+            ages[base] = get_age($1, $2)
         }
         END {
             for (base in files) {
@@ -156,7 +162,7 @@ list_all_zip_files() {
                 cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
                 cmd | getline human_readable_size
                 close(cmd)
-                data[base] = sprintf("%-75s %-5s %-5s %-5s %-10s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size)
+                data[base] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
             }
             n = asorti(data, sorted)
             for (i = 1; i <= n; i++) {
