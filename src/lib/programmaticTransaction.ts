@@ -12,7 +12,7 @@ interface MaxIdRecord {
 const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(/* sql */ `
   SELECT
       cls.relname AS table_name,
-      seq_data.last_value AS max_id
+      COALESCE(seq_data.last_value, 0) AS max_id
   FROM pg_class seq
   JOIN pg_depend dep ON dep.objid = seq.oid
   JOIN pg_class cls ON cls.oid = dep.refobjid
@@ -44,7 +44,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   }) => sequelize.query<ChangeRecord>(/* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
-    WHERE id > :maxId
+    WHERE id > COALESCE(:maxId, 0)
     ORDER BY dml_timestamp DESC
   `, {
     replacements: { maxId: max_id },
