@@ -136,10 +136,18 @@ generate_presigned_urls() {
     local bucket_name=$1
     local files=("$@")
     local urls=()
+
     for file in "${files[@]:1}"; do
-        local url=$(aws s3 presign "s3://${bucket_name}/${file}" --expires-in 3600)
-        urls+=("$url")
+        # Check if the file exists in the S3 bucket
+        if aws s3 ls "s3://${bucket_name}/${file}" >/dev/null 2>&1; then
+            local url=$(aws s3 presign "s3://${bucket_name}/${file}" --expires-in 3600)
+            urls+=("$url")
+        else
+            echo "Error: File s3://${bucket_name}/${file} does not exist."
+            exit 1
+        fi
     done
+
     echo "${urls[@]}"
 }
 
@@ -347,6 +355,7 @@ fetch_latest_backup_info_and_cleanup() {
 
             # Extract the names of the latest backup and password files
             local backup_file_name=$(awk 'NR==1' /tmp/latest-backup.txt)
+            backup_file_name=${backup_file_name#"$bucket_name/"}
         fi
 
         local md5_file_name="${backup_file_name%.zip}.md5"
