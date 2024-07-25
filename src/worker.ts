@@ -33,20 +33,22 @@ async function start(context: { id: number }) {
 
   httpContext.ns.run(() => {
     httpContext.set('workerId', context.id);
-  // File Scanning Queue
-  processScanQueue();
 
-  // S3 Queue.
-  processS3Queue();
+    // File Scanning Queue
+    processScanQueue();
 
-  // Resource Queue.
-  processResourceQueue();
+    // S3 Queue.
+    processS3Queue();
 
-  // Notifications Queue
-  processNotificationQueue();
+    // Resource Queue.
+    processResourceQueue();
 
-  // Maintenance Queue
-  processMaintenanceQueue();
+    // Notifications Queue
+    processNotificationQueue();
+
+    // Maintenance Queue
+    processMaintenanceQueue();
+  });
 }
 
 // spawn workers and start them

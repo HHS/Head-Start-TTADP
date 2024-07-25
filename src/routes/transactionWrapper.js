@@ -1,3 +1,4 @@
+import httpContext from 'express-http-context';
 import { sequelize } from '../models';
 import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
