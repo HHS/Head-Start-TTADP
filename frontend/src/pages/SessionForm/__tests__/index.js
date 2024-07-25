@@ -196,7 +196,9 @@ describe('SessionReportForm', () => {
         3: COMPLETE,
       },
       event: {
-        data: {},
+        data: {
+          vision: 'world peace',
+        },
       },
       sessionName: 'Test session',
       duration: 1,
@@ -292,7 +294,7 @@ describe('SessionReportForm', () => {
 
     expect(await screen.findByText(/Status must be complete to submit session/i)).toBeInTheDocument();
   });
-  it('will submit if every page & the status  is complete', async () => {
+  it('will submit if every page & the status is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');
     const formData = {
       eventId: 1,
@@ -301,7 +303,9 @@ describe('SessionReportForm', () => {
       ownerId: 1,
       eventName: 'Test event',
       event: {
-        data: {},
+        data: {
+          vision: 'world peace',
+        },
       },
       status: 'In progress',
       pageState: {
