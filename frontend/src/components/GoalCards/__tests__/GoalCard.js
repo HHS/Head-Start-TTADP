@@ -43,6 +43,19 @@ describe('GoalCard', () => {
         grantNumbers: ['G-1'],
         topics: [],
       },
+      {
+        id: 2,
+        ids: [2],
+        endDate: '2022-01-01',
+        title: 'Objective 2',
+        arNumber: 'AR-1',
+        ttaProvided: 'TTA 1',
+        reasons: ['Reason 1', 'Reason 2'],
+        status: 'Closed',
+        activityReports: [],
+        grantNumbers: ['G-1'],
+        topics: [],
+      },
     ],
     previousStatus: null,
     collaborators: [
@@ -102,7 +115,7 @@ describe('GoalCard', () => {
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 
-  it('properly sorts objectives', async () => {
+  it('properly shows objectives', async () => {
     renderGoalCard();
     const expandObjectives = await screen.findByRole('button', { name: /View objectives for goal/i });
     act(() => {
