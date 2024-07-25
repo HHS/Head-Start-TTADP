@@ -37,7 +37,7 @@ To use this script, you may need to provide various arguments based on the requi
 5. **specific_file**: The specific backup file to process (optional).
 6. **download_and_verify**: Whether to download and verify the specific backup file. Set this to 'yes' to enable download and verification (optional, default: `no`).
 7. **erase_file**: The specific file to erase from S3 (optional).
-8. **delete_old_keys**: Whether to delete old service keys (older than 6 hours). Set this to 'yes' to enable deletion (optional, default: `no`).
+8. **delete_old_keys**: Whether to delete old service keys. Set this to 'yes' to enable deletion (optional, default: `no`).
 
 ### Basic Command
 
