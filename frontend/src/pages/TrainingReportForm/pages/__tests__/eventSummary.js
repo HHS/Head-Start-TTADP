@@ -10,7 +10,7 @@ import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
-import eventSummary, { isPageComplete } from '../eventSummary';
+import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 
@@ -25,31 +25,6 @@ const defaultUser = {
 };
 
 describe('eventSummary', () => {
-  describe('isPageComplete', () => {
-    it('returns true if form state is valid', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({
-          pocIds: [1],
-          collaboratorIds: [1],
-          reasons: [1],
-          targetPopulations: [1],
-        })),
-      })).toBe(true);
-    });
-
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
-    });
-  });
-  describe('review', () => {
-    it('renders correctly', async () => {
-      act(() => {
-        render(<>{eventSummary.reviewSection()}</>);
-      });
-
-      expect(await screen.findByRole('heading', { name: /event summary/i })).toBeInTheDocument();
-    });
-  });
   describe('render', () => {
     const onSaveDraft = jest.fn();
 
@@ -64,42 +39,43 @@ describe('eventSummary', () => {
         defaultValues: defaultFormValues,
       });
 
+      const additionalData = {
+        users: {
+          pointOfContact: [{
+            id: 1,
+            fullName: 'Ted User',
+            nameWithNationalCenters: 'Ted User',
+          }],
+          collaborators: [
+            {
+              id: 2,
+              fullName: 'Tedwina User',
+              nameWithNationalCenters: 'Tedwina User',
+            },
+          ],
+          creators: [
+            { id: 1, name: 'IST 1' },
+            { id: 2, name: 'IST 2' },
+          ],
+        },
+      };
+
       return (
         <FormProvider {...hookForm}>
           <UserContext.Provider value={user}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
-              {eventSummary.render(
-                {
-                  users: {
-                    pointOfContact: [{
-                      id: 1,
-                      fullName: 'Ted User',
-                      nameWithNationalCenters: 'Ted User',
-                    }],
-                    collaborators: [
-                      {
-                        id: 2,
-                        fullName: 'Tedwina User',
-                        nameWithNationalCenters: 'Tedwina User',
-                      },
-                    ],
-                    creators: [
-                      { id: 1, name: 'IST 1' },
-                      { id: 2, name: 'IST 2' },
-                    ],
-                  },
-                },
-                defaultFormValues,
-                1,
-                false,
-                jest.fn(),
-                onSaveDraft,
-                jest.fn(),
-                false,
-                'key',
-                jest.fn(),
-                () => <></>,
-              )}
+              <EventSummary
+                additionalData={additionalData}
+                formData={defaultFormValues}
+                reportId={1}
+                isAppLoading={false}
+                onFormSubmit={jest.fn()}
+                onSaveDraft={onSaveDraft}
+                onUpdatePage={jest.fn()}
+                weAreAutoSaving={false}
+                datePickerKey="key"
+                Alert={() => <></>}
+              />
             </NetworkContext.Provider>
           </UserContext.Provider>
         </FormProvider>
