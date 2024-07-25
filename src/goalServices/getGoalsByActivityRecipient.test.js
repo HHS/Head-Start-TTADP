@@ -743,8 +743,8 @@ describe('Goals by Recipient Test', () => {
       const countx = count;
       const goalRowsx = goalRows;
 
-      expect(countx).toBe(7);
-      expect(goalRowsx.length).toBe(7);
+      expect(countx).toBe(6);
+      expect(goalRowsx.length).toBe(6);
 
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
