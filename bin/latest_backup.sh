@@ -77,14 +77,15 @@ delete_service_key() {
     fi
 }
 
-# Function to delete service keys older than 6 hours
+# Function to delete older service keys
 delete_old_service_keys() {
     local cf_s3_service_name=$1
+    local current_service_key=$1
     local current_time=$(date +%s)
     local six_hours_in_seconds=21600
-    echo "Deleting service keys older than 6 hours for service instance ${cf_s3_service_name}..."
+    echo "Deleting older service keys for service instance ${cf_s3_service_name}..."
     
-    cf service-keys "${cf_s3_service_name}" | awk 'NR>1 {print $1}' | while read -r key_name; do
+    cf service-keys "${cf_s3_service_name}" | grep -v $current_service_key | awk 'NR>1 {print $1}' | while read -r key_name; do
         if [[ $key_name =~ ^${cf_s3_service_name}-key- ]]; then
             local key_creation_time=$(cf service-key "${cf_s3_service_name}" "${key_name}" | grep -oP '(?<=created:\s).+')
             local key_creation_timestamp=$(date --date="$key_creation_time" +%s)
@@ -324,10 +325,8 @@ fetch_latest_backup_info_and_cleanup() {
     verify_aws_credentials
 
     if [ "${delete_old_keys}" = "yes" ]; then
-        delete_old_service_keys "$cf_s3_service_name"
-    fi
-
-    if [ "${erase_file}" != "" ]; then
+        delete_old_service_keys "$cf_s3_service_name" "$key_name"
+    elif [ "${erase_file}" != "" ]; then
         # Erase the specified file along with its corresponding pwd, md5, and sha256 files
         erase_files "$bucket_name" "$s3_folder" "$erase_file"
     elif [ "${list_zip_files}" = "yes" ]; then
