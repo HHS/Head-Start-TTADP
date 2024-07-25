@@ -77,6 +77,26 @@ delete_service_key() {
     fi
 }
 
+# Function to delete service keys older than 6 hours
+delete_old_service_keys() {
+    local cf_s3_service_name=$1
+    local current_time=$(date +%s)
+    local six_hours_in_seconds=21600
+    echo "Deleting service keys older than 6 hours for service instance ${cf_s3_service_name}..."
+    
+    cf service-keys "${cf_s3_service_name}" | awk 'NR>1 {print $1}' | while read -r key_name; do
+        if [[ $key_name =~ ^${cf_s3_service_name}-key- ]]; then
+            local key_creation_time=$(cf service-key "${cf_s3_service_name}" "${key_name}" | grep -oP '(?<=created:\s).+')
+            local key_creation_timestamp=$(date --date="$key_creation_time" +%s)
+            local key_age=$((current_time - key_creation_timestamp))
+            if (( key_age > six_hours_in_seconds )); then
+                echo "Deleting old service key ${key_name}..."
+                cf delete-service-key "${cf_s3_service_name}" "${key_name}" -f
+            fi
+        fi
+    done
+}
+
 # Verify AWS Credentials by checking the identity associated with them
 verify_aws_credentials() {
     local retries=5
@@ -280,6 +300,7 @@ fetch_latest_backup_info_and_cleanup() {
     local specific_file="${specific_file:-}"
     local download_and_verify="${download_and_verify:-no}"
     local erase_file="${erase_file:-}"
+    local delete_old_keys="${delete_old_keys:-no}"
 
     # Generate a unique service key name using UUID
     local key_name="${cf_s3_service_name}-key-$(uuidgen)"
@@ -301,6 +322,10 @@ fetch_latest_backup_info_and_cleanup() {
     export AWS_SECRET_ACCESS_KEY="$aws_secret_access_key"
     export AWS_DEFAULT_REGION="$aws_default_region"
     verify_aws_credentials
+
+    if [ "${delete_old_keys}" = "yes" ]; then
+        delete_old_service_keys "$cf_s3_service_name"
+    fi
 
     if [ "${erase_file}" != "" ]; then
         # Erase the specified file along with its corresponding pwd, md5, and sha256 files
@@ -360,9 +385,10 @@ while [[ "$#" -gt 0 ]]; do
         -a|--allow-deletion) deletion_allowed="yes" ;;
         -l|--list-zip-files) list_zip_files="yes" ;;
         -f|--specific-file) specific_file="$2"; shift ;;
-        -d|--download-and-verify) download_and_verify="yes" ;;
+        -d|--download-and-verify) download_and_verify="yes"; deletion_allowed="yes" ;;
         -e|--erase-file) erase_file="$2"; shift ;;
-        -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-zip-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>]"; exit 0 ;;
+        -k|--delete-old-keys) delete_old_keys="yes" ;;
+        -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-zip-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>] [-k | --delete-old-keys]"; exit 0 ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
