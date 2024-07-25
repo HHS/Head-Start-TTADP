@@ -4,13 +4,13 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import {
+  Alert, Grid, Form, Button, ModalToggleButton,
+} from '@trussworks/react-uswds';
+import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
@@ -19,16 +19,12 @@ import {
 import { getTrainingReportUsers } from '../../fetchers/users';
 import { eventById, updateEvent } from '../../fetchers/event';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
-import UserContext from '../../UserContext';
-import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
-import pages from './pages';
+import EventSummary from './pages/eventSummary';
 import AppLoadingContext from '../../AppLoadingContext';
-import useHookFormPageState from '../../hooks/useHookFormPageState';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
-
-// websocket publish location interval
-const INTERVAL_DELAY = 10000; // TEN SECONDS
+import Modal from '../../components/VanillaModal';
+import ReportLink from '../../components/ReportLink';
 
 /**
  * this is just a simple handler to "flatten"
@@ -62,8 +58,9 @@ const resetFormData = (reset, event) => {
 };
 
 export default function TrainingReportForm({ match }) {
-  const { params: { currentPage, trainingReportId } } = match;
+  const { params: { trainingReportId } } = match;
   const reportId = useRef();
+  const modalRef = useRef();
 
   // for redirects if a page is not provided
   const history = useHistory();
@@ -77,17 +74,11 @@ export default function TrainingReportForm({ match }) {
   // this error is for errors fetching reports, its the top error
   const [error, setError] = useState();
 
-  // this is the error that appears in the sidebar
-  const [errorMessage, updateErrorMessage] = useState();
-
   /* ============ */
 
   // this attempts to track whether or not we're online
   // (or at least, if the backend is responding)
   const [connectionActive] = useState(true);
-
-  const [lastSaveTime, updateLastSaveTime] = useState(null);
-  const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   /* ============
    * this hook handles the interface with
@@ -124,26 +115,8 @@ export default function TrainingReportForm({ match }) {
   const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
 
-  const { user } = useContext(UserContext);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
-
-  const {
-    socket,
-    setSocketPath,
-    socketPath,
-    messageStore,
-  } = useSocket(user);
-
-  useEffect(() => {
-    if (!trainingReportId) {
-      return;
-    }
-    const newPath = `/training-reports/${trainingReportId}`;
-    setSocketPath(newPath);
-  }, [currentPage, setSocketPath, trainingReportId]);
-
-  usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
   useEffect(() => {
     const loading = !reportFetched || !additionalDataFetched;
@@ -161,7 +134,7 @@ export default function TrainingReportForm({ match }) {
         const users = await getTrainingReportUsers(eventRegion, trainingReportId);
         updateAdditionalData({ users });
       } catch (e) {
-        updateErrorMessage('Error fetching collaborators and points of contact');
+        setError('Error fetching collaborators and points of contact');
       } finally {
         setAdditionalDataFetched(true);
       }
@@ -173,7 +146,7 @@ export default function TrainingReportForm({ match }) {
   useEffect(() => {
     // fetch event report data
     async function fetchReport() {
-      if (!trainingReportId || !currentPage || reportFetched) {
+      if (!trainingReportId || reportFetched) {
         return;
       }
       try {
@@ -188,8 +161,7 @@ export default function TrainingReportForm({ match }) {
       }
     }
     fetchReport();
-  }, [currentPage,
-    hookForm.reset,
+  }, [hookForm.reset,
     isAppLoading,
     reportFetched,
     trainingReportId,
@@ -201,26 +173,6 @@ export default function TrainingReportForm({ match }) {
       setError('No training report id provided');
     }
   }, [trainingReportId]);
-
-  // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
-
-  const updatePage = (position) => {
-    const state = {};
-    if (reportId.current) {
-      state.showLastUpdatedTime = true;
-    }
-
-    const page = pages.find((p) => p.position === position);
-    const newPath = `/training-report/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
-  };
-
-  if (!currentPage) {
-    return (
-      <Redirect to={`/training-report/${trainingReportId}/event-summary`} />
-    );
-  }
 
   const onSave = async (updatedStatus = null) => {
     // if the event is complete, don't allow saving it
@@ -264,8 +216,6 @@ export default function TrainingReportForm({ match }) {
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, dataToPut);
       resetFormData(hookForm.reset, updatedEvent);
-      updateLastSaveTime(moment(updatedEvent.updatedAt));
-      updateShowSavedDraft(true);
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -273,17 +223,9 @@ export default function TrainingReportForm({ match }) {
     }
   };
 
-  const onSaveAndContinue = async () => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
-    await onSave();
-    updateShowSavedDraft(false);
-    if (nextPage) {
-      updatePage(nextPage.position);
-    }
-  };
-
-  const onFormSubmit = async (updatedStatus) => {
+  const okFormSubmit = async () => {
+    // Get isValid from the form.
+    console.log('---hook form: ', hookForm.formState);
     try {
       // reset the error message
       setError('');
@@ -297,33 +239,30 @@ export default function TrainingReportForm({ match }) {
         regionId,
         ...data
       } = hookForm.getValues();
-
+      console.log('before put');
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
         data: {
           ...data,
-          status: updatedStatus,
+          // status: updatedStatus,
         },
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
       });
+      console.log('after put');
       resetFormData(hookForm.reset, updatedEvent);
 
-      updateLastSaveTime(moment(updatedEvent.updatedAt));
       history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
     } catch (err) {
+      console.log('error', err);
       setError('There was an error saving the training report. Please try again later.');
     } finally {
       setIsAppLoading(false);
+      modalRef.current.toggleModal(false);
     }
   };
-
-  const reportCreator = { name: user.name, roles: user.roles };
-
-  // retrieve the last time the data was saved to local storage
-  const savedToStorageTime = formData ? formData.savedToStorageTime : null;
 
   const backLinkUrl = (() => {
     if (!formData || !formData.status) {
@@ -333,6 +272,15 @@ export default function TrainingReportForm({ match }) {
     return `/training-reports/${formData.status.replace(' ', '-').toLowerCase()}`;
   })();
 
+  const showSubmitModal = async () => {
+    const valid = await hookForm.trigger();
+    if (valid) {
+      // Toggle the modal only if the form is valid.
+      modalRef.current.toggleModal(true);
+    }
+  };
+
+  console.log('form data: ', formData);
   return (
     <div className="smart-hub-training-report">
       { error
@@ -347,10 +295,11 @@ export default function TrainingReportForm({ match }) {
       </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <div className="margin-top-3 margin-bottom-5">
+          <div className="margin-top-2 margin-bottom-2">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Training report - Event
             </h1>
+            <ReportLink reportId={formData.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
           </div>
         </Grid>
       </Grid>
@@ -363,35 +312,33 @@ export default function TrainingReportForm({ match }) {
       >
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
-          <Navigator
-            datePickerKey={datePickerKey}
-            socketMessageStore={messageStore}
-            key={currentPage}
-            editable
-            updatePage={updatePage}
-            reportCreator={reportCreator}
-            lastSaveTime={lastSaveTime}
-            updateLastSaveTime={updateLastSaveTime}
-            reportId={reportId.current}
-            currentPage={currentPage}
-            additionalData={additionalData}
-            formData={formData}
-            pages={pages}
-            onFormSubmit={onFormSubmit}
-            onSave={onSave}
-            onResetToDraft={() => {}}
-            isApprover={false}
-            isPendingApprover={false}
-            onReview={() => {}}
-            errorMessage={errorMessage}
-            updateErrorMessage={updateErrorMessage}
-            savedToStorageTime={savedToStorageTime}
-            onSaveDraft={onSave}
-            onSaveAndContinue={onSaveAndContinue}
-            showSavedDraft={showSavedDraft}
-            updateShowSavedDraft={updateShowSavedDraft}
-            formDataStatusProp="status"
-          />
+          <Modal
+            modalRef={modalRef}
+            heading="Are you sure you want to continue?"
+          >
+            <p>You will not be able to make changes once you save the event.</p>
+
+            <Button
+              type="submit"
+              className="margin-right-1"
+              onClick={() => okFormSubmit()}
+            >
+              Yes, continue
+            </Button>
+            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, cancel</ModalToggleButton>
+          </Modal>
+          <Form
+            className="smart-hub--form-large smart-hub--form__activity-report-form"
+          >
+            <EventSummary
+              additionalData={additionalData}
+              formData={formData}
+              isAppLoading={isAppLoading}
+              onSaveDraft={onSave}
+              datePickerKey={datePickerKey}
+              showSubmitModal={showSubmitModal}
+            />
+          </Form>
         </FormProvider>
       </NetworkContext.Provider>
     </div>
