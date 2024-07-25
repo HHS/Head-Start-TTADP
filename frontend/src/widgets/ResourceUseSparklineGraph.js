@@ -24,15 +24,25 @@ ResourceLink.defaultProps = {
   url: '',
 };
 
+function LegendIndicator({ color }) {
+  return (
+    <div className={`ttahub-resource-use-sparkline--legend__item width-3 height-3 radius-md ttahub-resource-use-sparkline--legend__item--${color}`} />
+  );
+}
+
+LegendIndicator.propTypes = {
+  color: PropTypes.string.isRequired,
+};
+
 export default function ResourceUseSparklineGraph({ data }) {
   const headings = data.headers.map((header) => <span key={uniqueId('resource-use-sparkline-headings-')} className="ttahub-resource-use-sparkline__heading usa-prose display-flex flex-justify-center flex-align-center">{header}</span>);
 
   return (
     <>
       <div className="ttahub-resource-use-sparkline--legend padding-left-3 display-flex margin-y-2">
-        <div className="ttahub-resource-use-sparkline--legend__item ttahub-resource-use-sparkline--legend__item--blue" />
+        <LegendIndicator color="blue" />
         <span className="usa-prose">Activity reports citing resource</span>
-        <div className="ttahub-resource-use-sparkline--legend__item ttahub-resource-use-sparkline--legend__item--orange" />
+        <LegendIndicator color="orange" />
         <span className="usa-prose">Highest count during date range</span>
       </div>
       <div className="ttahub-resource-use-sparkline overflow-x-scroll">
