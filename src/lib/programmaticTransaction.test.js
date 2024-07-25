@@ -333,7 +333,7 @@ try {
       auditLogger.error.mockRestore();
     });
   });
-} catch(e) {
+} catch (e) {
   auditLogger.error(e);
   throw e;
 }
