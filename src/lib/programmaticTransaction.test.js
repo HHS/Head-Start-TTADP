@@ -252,7 +252,7 @@ describe('Programmatic Transaction', () => {
   });
 
   it('should correctly handle JSON strings and arrays during reversion', async () => {
-    await sequelize.query("DO $$ BEGIN RAISE NOTICE 'start test'; END $$;");
+    await sequelize.query("DO $$ BEGIN RAISE WARNING  'start test'; END $$;");
     const snapshot = await transactionModule.captureSnapshot();
     const jsonArray = ['elem3', 'elem4'];
 
@@ -291,11 +291,11 @@ describe('Programmatic Transaction', () => {
     expect(goalFieldResponse).not.toBeNull();
     expect(goalFieldResponse.response).toEqual(jsonArray);
 
-    await sequelize.query("DO $$ BEGIN RAISE NOTICE 'before roll back'; END $$;");
+    await sequelize.query("DO $$ BEGIN RAISE WARNING  'before roll back'; END $$;");
     await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
     goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).toBeNull();
-    await sequelize.query("DO $$ BEGIN RAISE NOTICE 'end test'; END $$;");
+    await sequelize.query("DO $$ BEGIN RAISE WARNING  'end test'; END $$;");
   });
 
   it('should log and rethrow error if JSON parsing fails during reversion', async () => {
