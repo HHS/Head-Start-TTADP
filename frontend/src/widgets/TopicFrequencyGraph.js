@@ -8,6 +8,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
 import MediaCaptureButton from '../components/MediaCaptureButton';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -150,11 +151,6 @@ export function TopicFrequencyGraphWidget({
     setOrder(selected.value);
   };
 
-  // toggle the data table
-  function toggleType() {
-    setShowAccessibleData(!showAccessibleData);
-  }
-
   return (
     <Container className="ttahub--topic-frequency-graph width-full" loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="margin-bottom-2 bg-white">
@@ -199,16 +195,11 @@ export function TopicFrequencyGraphWidget({
               />
             )
             : null}
-          <button
-            type="button"
-            className="usa-button--unstyled margin-top-2"
-            onClick={toggleType}
-            data-html2canvas-ignore
-            id="rd-display-table-topic-frequency"
-            aria-label={showAccessibleData ? `Display ${title} as graph` : `Display ${title} as table`}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={title}
+            displayTable={showAccessibleData}
+            setDisplayTable={setShowAccessibleData}
+          />
         </Grid>
 
       </Grid>
