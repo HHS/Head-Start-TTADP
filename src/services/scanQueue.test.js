@@ -29,12 +29,6 @@ describe('addToScanQueue', () => {
     expect(scanQueue.add).toHaveBeenCalledWith(
       {
         key: 'test.txt',
-        referenceData: {
-          impersonationId: undefined,
-          sessionSig: undefined,
-          transactionId: undefined,
-          userId: undefined,
-        },
       },
       expect.objectContaining({
         attempts: expect.any(Number),
