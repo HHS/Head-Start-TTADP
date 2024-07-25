@@ -163,6 +163,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
+    sequelize.query(`DO $$ BEGIN RAISE WARNING  '${JSON.stringify(allChanges)}'; END $$;`);
     await revertChange(allChanges);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);
