@@ -355,18 +355,14 @@ check_cf_version
 # Main execution block
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --service-name) cf_s3_service_name="$2"; shift ;;
-        --s3-folder) s3_folder="$2"; shift ;;
-        --allow-deletion) deletion_allowed="yes" ;;
-        -l) list_zip_files="yes" ;;
-        --list-zip-files) list_zip_files="yes" ;;
-        -f) specific_file="$2"; shift ;;
-        --specific-file) specific_file="$2"; shift ;;
-        -d) download_and_verify="yes" ;;
-        --download-and-verify) download_and_verify="yes" ;;
-        -e) erase_file="$2"; shift ;;
-        --erase-file) erase_file="$2"; shift ;;
-        -h|--help) echo "Usage: $0 [--service-name <CF_S3_SERVICE_NAME>] [--s3-folder <s3_folder>] [--allow-deletion] [--list-zip-files] [--specific-file <file_name>] [--download-and-verify] [--erase-file <zip_file>]"; exit 0 ;;
+        -n|--service-name) cf_s3_service_name="$2"; shift ;;
+        -s|--s3-folder) s3_folder="$2"; shift ;;
+        -a|--allow-deletion) deletion_allowed="yes" ;;
+        -l|--list-zip-files) list_zip_files="yes" ;;
+        -f|--specific-file) specific_file="$2"; shift ;;
+        -d|--download-and-verify) download_and_verify="yes" ;;
+        -e|--erase-file) erase_file="$2"; shift ;;
+        -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-zip-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>]"; exit 0 ;;
         *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
