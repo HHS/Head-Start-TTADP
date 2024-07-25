@@ -282,12 +282,31 @@ describe('Programmatic Transaction', () => {
       grantId: grant.id,
       goalTemplateId: goalTemplateFieldPrompt.goalTemplateId,
     });
-
+    await sequelize.query(/* sql */`DO $$
+      DECLARE
+          result RECORD;
+      BEGIN
+          RAISE WARNING 'BEFORE GoalFieldResponse';
+          FOR result IN SELECT * FROM "ZALGoalFieldResponses" ORDER BY id LOOP
+              RAISE WARNING 'Row: %', result;
+          END LOOP;
+      END;
+      $$ LANGUAGE plpgsql;`);
     const gfResponse = await GoalFieldResponse.create({
       goalId: goal.id,
       goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
       response: jsonArray,
     });
+    await sequelize.query(/* sql */`DO $$
+      DECLARE
+          result RECORD;
+      BEGIN
+          RAISE WARNING 'AFTER GoalFieldResponse';
+          FOR result IN SELECT * FROM "ZALGoalFieldResponses" ORDER BY id LOOP
+              RAISE WARNING 'Row: %', result;
+          END LOOP;
+      END;
+      $$ LANGUAGE plpgsql;`);
     expect(gfResponse).not.toBeNull();
 
     let goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
