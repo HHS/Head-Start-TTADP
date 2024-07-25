@@ -258,6 +258,7 @@ describe('Programmatic Transaction', () => {
 
     const goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
       where: { title: 'FEI root cause' },
+      raw: true,
     });
 
     // Ensure the prompt is found before proceeding
@@ -279,13 +280,15 @@ describe('Programmatic Transaction', () => {
       name: 'This is some serious goal text',
       status: 'Draft',
       grantId: grant.id,
+      goalTemplateId: goalTemplateFieldPrompt.goalTemplateId,
     });
 
-    await GoalFieldResponse.create({
+    const gfResponse = await GoalFieldResponse.create({
       goalId: goal.id,
       goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
       response: jsonArray,
     });
+    expect(gfResponse).not.toBeNull();
 
     let goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).not.toBeNull();
