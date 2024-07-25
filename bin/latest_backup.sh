@@ -1,6 +1,6 @@
 #!/bin/bash
 # Script to retrieve information from latest-backup.txt in S3, get presigned URLs for the files listed,
-# and then delete the service key created.
+# and then delete the service key created. Optionally lists all ZIP files in the same S3 path.
 
 # Function to check if the installed version of cf CLI is at least version 8
 check_cf_version() {
@@ -118,17 +118,162 @@ generate_presigned_urls() {
     local files=("$@")
     local urls=()
     for file in "${files[@]:1}"; do
-        local url=$(aws s3 presign "s3://${file}" --expires-in 3600)
+        local url=$(aws s3 presign "s3://${bucket_name}/${file}" --expires-in 3600)
         urls+=("$url")
     done
     echo "${urls[@]}"
 }
 
+# Function to list all ZIP files in the same S3 path as the latest backup
+list_all_zip_files() {
+    local bucket_name=$1
+    local s3_folder=$2
+    local zip_files=$(aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | grep '.zip\|.pwd\|.md5\|.sha256')
+    if [ -z "${zip_files}" ]; then
+        echo "No ZIP files found in S3 bucket."
+    else
+        echo "ZIP files in S3 bucket:"
+        printf "%-75s %-5s %-5s %-5s %-10s\n" "Name" "pwd" "md5" "sha256" "size"
+        echo "${zip_files}" | awk '
+        {
+            split($4, parts, "/")
+            file = parts[length(parts)]
+            split(file, nameparts, ".")
+            base = nameparts[1]
+            for (i=2; i<length(nameparts); i++) {
+                base = base "." nameparts[i]
+            }
+            ext = nameparts[length(nameparts)]
+            files[base][ext] = 1
+            sizes[base] = $3
+        }
+        END {
+            for (base in files) {
+                pwd_file = (files[base]["pwd"] ? "x" : " ")
+                md5_file = (files[base]["md5"] ? "x" : " ")
+                sha256_file = (files[base]["sha256"] ? "x" : " ")
+                human_readable_size = sizes[base] " B"
+                cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
+                cmd | getline human_readable_size
+                close(cmd)
+                data[base] = sprintf("%-75s %-5s %-5s %-5s %-10s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size)
+            }
+            n = asorti(data, sorted)
+            for (i = 1; i <= n; i++) {
+                printf "%s", data[sorted[i]]
+            }
+        }'
+    fi
+}
+
+# Function to verify that a file exists in S3
+verify_file_exists() {
+    local bucket_name=$1
+    local file_name=$2
+    if aws s3 ls "s3://${bucket_name}/${file_name}" > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+# Function to download and verify files
+download_and_verify() {
+    local zip_url=$1
+    local zip_file_name=$2
+    local password_url=$3
+    local md5_url=$4
+    local sha256_url=$5
+
+    # Download the zip file
+    wget -O "$zip_file_name" "$zip_url"
+
+    # Download password, SHA-256 checksum, and MD5 checksum directly into variables
+    local password=$(curl -s "$password_url")
+    local checksum_sha256=$(curl -s "$sha256_url")
+    local checksum_md5=$(curl -s "$md5_url")
+
+    # Verify SHA-256 checksum
+    echo "Verifying SHA-256 checksum..."
+    echo "$checksum_sha256 $zip_file_name" | sha256sum -c
+    if [ $? -ne 0 ]; then
+        echo "SHA-256 checksum verification failed."
+        exit 1
+    else
+        echo "SHA-256 checksum verified."
+    fi
+
+    # Verify MD5 checksum
+    echo "Verifying MD5 checksum..."
+    echo "$checksum_md5 $zip_file_name" | md5sum -c
+    if [ $? -ne 0 ]; then
+        echo "MD5 checksum verification failed."
+        exit 1
+    else
+        echo "MD5 checksum verified."
+    fi
+
+    # Unzip the file
+    echo "Unzipping the file..."
+    unzip -P "$password" "$zip_file_name"
+    if [ $? -eq 0 ]; then
+        echo "File unzipped successfully."
+
+        # Rename the extracted file
+        extracted_file="-"
+        new_name="${zip_file_name%.zip}"
+        mv "$extracted_file" "$new_name"
+        if [ $? -eq 0 ]; then
+            echo "File renamed to $new_name."
+        else
+            echo "Failed to rename the file."
+            exit 1
+        fi
+    else
+        echo "Failed to unzip the file."
+        exit 1
+    fi
+}
+
+# Function to erase a set of files from S3
+erase_files() {
+    local bucket_name=$1
+    local s3_folder=$2
+    local zip_file=$3
+
+    local pwd_file="${zip_file%.zip}.pwd"
+    local md5_file="${zip_file%.zip}.md5"
+    local sha256_file="${zip_file%.zip}.sha256"
+
+    local files_to_delete=("$zip_file" "$pwd_file" "$md5_file" "$sha256_file")
+
+    echo "Deleting files from S3:"
+    for file in "${files_to_delete[@]}"; do
+        local file_path="${s3_folder}/${file}"
+        if aws s3 ls "s3://${bucket_name}/${file_path}" > /dev/null 2>&1; then
+            echo "Deleting ${file_path}..."
+            if aws s3 rm "s3://${bucket_name}/${file_path}"; then
+                echo "${file_path} deleted successfully."
+            else
+                echo "Failed to delete ${file_path}."
+                exit 9
+            fi
+        else
+            echo "${file_path} does not exist, skipping deletion."
+        fi
+    done
+}
+
+
 # Function to retrieve and use S3 service credentials
 fetch_latest_backup_info_and_cleanup() {
-    local cf_s3_service_name="${1:-ttahub-db-backups}"  # Default to 'db-backups' if not provided
-    local s3_folder="${2:-production}"  # Default to root of the bucket if not provided
-    local deletion_allowed="${3:-no}"  # Default to no deletion if not provided
+    local cf_s3_service_name="${cf_s3_service_name:-ttahub-db-backups}"  # Default to 'db-backups' if not provided
+    local s3_folder="${s3_folder:-production}"  # Default to root of the bucket if not provided
+    local deletion_allowed="${deletion_allowed:-no}"  # Default to no deletion if not provided
+    local list_zip_files="${list_zip_files:-no}"  # Default to no listing of ZIP files if not provided
+    local specific_file="${specific_file:-}"
+    local download_and_verify="${download_and_verify:-no}"
+    local erase_file="${erase_file:-}"
 
     # Generate a unique service key name using UUID
     local key_name="${cf_s3_service_name}-key-$(uuidgen)"
@@ -151,26 +296,49 @@ fetch_latest_backup_info_and_cleanup() {
     export AWS_DEFAULT_REGION="$aws_default_region"
     verify_aws_credentials
 
-    local latest_backup_file_path=$(find_latest_backup_file_path "$bucket_name" "$s3_folder")
+    if [ "${erase_file}" != "" ]; then
+        # Erase the specified file along with its corresponding pwd, md5, and sha256 files
+        erase_files "$bucket_name" "$s3_folder" "$erase_file"
+    elif [ "${list_zip_files}" = "yes" ]; then
+        # List all ZIP files if the option is enabled
+        list_all_zip_files "$bucket_name" "$s3_folder"
+    else
+        if [ -n "$specific_file" ]; then
+            backup_file_name="${s3_folder}/${specific_file}"
+            if ! verify_file_exists "$bucket_name" "$backup_file_name"; then
+                echo "Specified file does not exist in S3 bucket."
+                exit 8
+            fi
+        else
+            local latest_backup_file_path=$(find_latest_backup_file_path "$bucket_name" "$s3_folder")
 
-    # Download and read the latest-backup.txt file using the full path
-    aws s3 cp "s3://${bucket_name}/${latest_backup_file_path}" /tmp/latest-backup.txt
+            # Download and read the latest-backup.txt file using the full path
+            aws s3 cp "s3://${bucket_name}/${latest_backup_file_path}" /tmp/latest-backup.txt
 
-    # Extract the names of the latest backup and password files
-    local backup_file_name=$(awk 'NR==1' /tmp/latest-backup.txt)
-    local md5_file_name=$(awk 'NR==2' /tmp/latest-backup.txt)
-    local sha256_file_name=$(awk 'NR==3' /tmp/latest-backup.txt)
-    local password_file_name=$(awk 'NR==4' /tmp/latest-backup.txt)
+            # Extract the names of the latest backup and password files
+            local backup_file_name=$(awk 'NR==1' /tmp/latest-backup.txt)
+        fi
 
-    # Generate presigned URLs for these files
-    local urls=$(generate_presigned_urls "$bucket_name" "$backup_file_name" "$password_file_name" "$md5_file_name" "$sha256_file_name")
+        local md5_file_name="${backup_file_name%.zip}.md5"
+        local sha256_file_name="${backup_file_name%.zip}.sha256"
+        local password_file_name="${backup_file_name%.zip}.pwd"
 
-    # Print presigned URLs
-    echo "Presigned URLs for the files:"
-    for url in ${urls[@]}; do
-        echo "$url"
-        echo ""
-    done
+        # Generate presigned URLs for these files
+        local urls
+        IFS=' ' read -r -a urls <<< "$(generate_presigned_urls "$bucket_name" "$backup_file_name" "$password_file_name" "$md5_file_name" "$sha256_file_name")"
+
+        if [ "${download_and_verify}" = "yes" ]; then
+            # Perform download and verify functionality
+            download_and_verify "${urls[0]}" "$(basename "$backup_file_name")" "${urls[1]}" "${urls[2]}" "${urls[3]}"
+        else
+            # Print presigned URLs
+            echo "Presigned URLs for the files:"
+            for url in "${urls[@]}"; do
+                echo "$url"
+                echo ""
+            done
+        fi
+    fi
 
     # Clean up by deleting the service key
     delete_service_key "$cf_s3_service_name" "$key_name" "$deletion_allowed"
@@ -179,10 +347,24 @@ fetch_latest_backup_info_and_cleanup() {
 check_cf_version
 
 # Main execution block
-if [ "$#" -gt 3 ]; then
-    echo "Usage: $0 [<CF_S3_SERVICE_NAME> [<s3_folder> [<DELETION_ALLOWED>]]]"
-    exit 1
-fi
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --service-name) cf_s3_service_name="$2"; shift ;;
+        --s3-folder) s3_folder="$2"; shift ;;
+        --allow-deletion) deletion_allowed="yes" ;;
+        -l) list_zip_files="yes" ;;
+        --list-zip-files) list_zip_files="yes" ;;
+        -f) specific_file="$2"; shift ;;
+        --specific-file) specific_file="$2"; shift ;;
+        -d) download_and_verify="yes" ;;
+        --download-and-verify) download_and_verify="yes" ;;
+        -e) erase_file="$2"; shift ;;
+        --erase-file) erase_file="$2"; shift ;;
+        -h|--help) echo "Usage: $0 [--service-name <CF_S3_SERVICE_NAME>] [--s3-folder <s3_folder>] [--allow-deletion] [--list-zip-files] [--specific-file <file_name>] [--download-and-verify] [--erase-file <zip_file>]"; exit 0 ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+    esac
+    shift
+done
 
 # Check for required dependencies (cf CLI and AWS CLI)
 if ! type cf >/dev/null 2>&1 || ! type aws >/dev/null 2>&1; then
@@ -191,4 +373,4 @@ if ! type cf >/dev/null 2>&1 || ! type aws >/dev/null 2>&1; then
 fi
 
 # Fetch the latest backup information, generate URLs, and clean up the service key
-fetch_latest_backup_info_and_cleanup "$1" "$2" "$3"
+fetch_latest_backup_info_and_cleanup
