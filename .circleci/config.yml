@@ -405,13 +405,13 @@ commands:
 
             if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-              export MESSAGE_TEXT=":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!
+              echo ":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!
               - [Backup ZIP]($ZIP_URL)
               - [Password File]($PASSWORD_URL)
               - [MD5 Checksum]($MD5_URL)
               - [SHA256 Checksum]($SHA256_URL)"
             else
-              export MESSAGE_TEXT=":download::database: Production backup successful!
+              echo ":download::database: Production backup successful!
               - [Backup ZIP]($ZIP_URL)
               - [Password File]($PASSWORD_URL)
               - [MD5 Checksum]($MD5_URL)
@@ -907,10 +907,11 @@ jobs:
                 message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to sandbox was successful!"
+                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to sandbox was successful!"
                   else
-                    export MESSAGE_TEXT=":rocket: Deployment to sandbox was successful!"
+                    echo ":rocket: Deployment to sandbox was successful!"
                   fi
+
       - when:  # dev
           condition:
             and:
@@ -971,10 +972,11 @@ jobs:
                 message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to dev was successful!"
+                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to dev was successful!"
                   else
-                    export MESSAGE_TEXT=":rocket: Deployment to dev was successful!"
+                    echo ":rocket: Deployment to dev was successful!"
                   fi
+
       - when:  # staging
           condition:
             and:
@@ -1033,10 +1035,11 @@ jobs:
                 message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to staging was successful!"
+                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to staging was successful!"
                   else
-                    export MESSAGE_TEXT=":rocket: Deployment to staging was successful!"
+                    echo ":rocket: Deployment to staging was successful!"
                   fi
+
       - when:  # prod
           condition:
             and:
@@ -1095,10 +1098,11 @@ jobs:
                 message_text_script: |
                   if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    export MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
                   else
-                    export MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+                    echo ":rocket: Deployment to production was successful!"
                   fi
+
     resource_class: large
   backup_upload_production:
     docker:
