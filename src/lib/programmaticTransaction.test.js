@@ -26,7 +26,6 @@ describe('Programmatic Transaction', () => {
     auditLogger.error('Before All: Mocks reset');
     try {
       await sequelize.authenticate();
-      auditLogger.info('Database connection established');
     } catch (error) {
       auditLogger.error('Unable to connect to the database:', error);
       throw error;
@@ -37,33 +36,24 @@ describe('Programmatic Transaction', () => {
     await sequelize.close();
     jest.resetModules();
     jest.resetAllMocks();
-    auditLogger.error('After All: Modules reset and sequelize closed');
   });
 
-  auditLogger.error('Before: Insert');
   it('Insert', async () => {
     try {
-      auditLogger.error('Starting Insert test');
       const snapshot = await transactionModule.captureSnapshot();
-      auditLogger.error('Snapshot captured');
       await Topic.create({
         name: 'Test Topic',
       });
-      auditLogger.error('Topic created');
       let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
       expect(topic).not.toBeNull();
-      auditLogger.error('Topic found');
       await transactionModule.rollbackToSnapshot(snapshot);
-      auditLogger.error('Rollback to snapshot');
       topic = await Topic.findOne({ where: { name: 'Test Topic' } });
       expect(topic).toBeNull();
-      auditLogger.error('Topic not found after rollback');
     } catch (e) {
       auditLogger.error('Error in Insert test:', e);
       throw e;
     }
   });
-  auditLogger.error('After: Insert');
 
   it('Update', async () => {
     const snapshot = await transactionModule.captureSnapshot();
