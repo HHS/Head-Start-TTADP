@@ -8,7 +8,14 @@ export default function ReportLink({
 }) {
   return (
     <div className="usa-prose">
-      <Link className="no-print ttahub-back-link text-ttahub-blue margin-bottom-2 margin-top-2 display-inline-block" to={to}>{reportId}</Link>
+      <Link
+        className="no-print ttahub-back-link text-ttahub-blue margin-bottom-2 margin-top-2 display-inline-block"
+        to={to}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        {reportId}
+      </Link>
       {`: ${reportName}`}
     </div>
   );
