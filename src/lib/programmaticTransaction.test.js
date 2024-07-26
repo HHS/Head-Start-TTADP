@@ -30,6 +30,7 @@ describe('Programmatic Transaction', () => {
     auditLogger.error('After All: Modules reset and sequelize closed');
   });
 
+  auditLogger.error('Before: Insert');
   it('Insert', async () => {
     try {
       auditLogger.error('Starting Insert test');
@@ -52,6 +53,7 @@ describe('Programmatic Transaction', () => {
       throw e;
     }
   });
+  auditLogger.error('After: Insert');
 
   it('Update', async () => {
     const snapshot = await transactionModule.captureSnapshot();
