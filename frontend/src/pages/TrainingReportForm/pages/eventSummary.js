@@ -11,6 +11,7 @@ import {
   REASONS,
   TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
+
 import { useFormContext, Controller } from 'react-hook-form';
 import {
   Label,
@@ -19,6 +20,7 @@ import {
   Radio,
   TextInput,
   Button,
+  Textarea,
 } from '@trussworks/react-uswds';
 import MultiSelect from '../../../components/MultiSelect';
 import FormItem from '../../../components/FormItem';
@@ -66,7 +68,6 @@ const EventSummary = ({
     getValues,
     watch,
     setValue,
-    // handleSubmit,
   } = useFormContext();
 
   const data = getValues();
@@ -86,7 +87,6 @@ const EventSummary = ({
   };
 
   const {
-    eventId,
     eventName,
     owner,
     status,
@@ -96,9 +96,41 @@ const EventSummary = ({
 
   const hasAdminRights = isAdmin(user);
   const { users: { collaborators, pointOfContact, creators } } = additionalData;
-
-  const adminCanEdit = hasAdminRights || status === TRAINING_REPORT_STATUSES.DRAFT;
+  const adminCanEdit = hasAdminRights && (status !== TRAINING_REPORT_STATUSES.COMPLETE);
   const ownerName = owner && owner.name ? owner.name : '';
+
+  const getIntendedAudience = (value) => {
+    let audience = '';
+    if (value) {
+      audience = data.eventIntendedAudience.charAt(0).toUpperCase()
+              + data.eventIntendedAudience.slice(1);
+    }
+    return audience;
+  };
+
+  const getPointOfContacts = (pocs) => {
+    let pocsToDisplay = [];
+    if (pocs && pocs.length) {
+      pocsToDisplay = pointOfContact.filter(
+        (poc) => pocs.includes(poc.id),
+      ).map((poc) => poc.fullName);
+    }
+    return pocsToDisplay.join(', ');
+  };
+
+  const getReadOnlyReasons = (reasons) => {
+    if (!reasons || reasons.length === 0) {
+      return '';
+    }
+    return reasons.join(', ');
+  };
+
+  const getReadOnlyTargetPopulations = (tvalue) => {
+    if (!tvalue || tvalue.length === 0) {
+      return '';
+    }
+    return tvalue.join(', ');
+  };
 
   return (
     <div className="bg-white radius-md shadow-2 padding-bottom-3">
@@ -236,7 +268,7 @@ const EventSummary = ({
             </>
           )}
 
-        <div className="margin-top-2">
+        <div className="margin-top-2" data-testid="collaborator-select">
           <FormItem
             label="Event collaborators "
             name="collaboratorIds"
@@ -281,7 +313,7 @@ const EventSummary = ({
 
           </FormItem>
         </div>
-        { hasAdminRights ? (
+        { adminCanEdit ? (
           <>
             <div className="margin-top-2">
               <Label htmlFor="pocIds">
@@ -356,11 +388,10 @@ const EventSummary = ({
         ) : (
           <>
             <ReadOnlyField label="Event region point of contact">
-              {pointOfContact.map((poc) => poc.fullName).join(', ')}
+              {getPointOfContacts(data.pocIds)}
             </ReadOnlyField>
             <ReadOnlyField label="Event intended audience">
-              {data.eventIntendedAudience.charAt(0).toUpperCase()
-              + data.eventIntendedAudience.slice(1)}
+              {getIntendedAudience(data.eventIntendedAudience)}
             </ReadOnlyField>
           </>
         )}
@@ -410,47 +441,79 @@ const EventSummary = ({
             />
           </FormItem>
         </div>
-
-        <div className="margin-top-2">
-          <Label htmlFor="trainingType">
-            Training type
-            <Req />
-          </Label>
-          <Dropdown required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
-            <option>Series</option>
-          </Dropdown>
-        </div>
-
-        <div className="margin-top-2">
-          <FormItem
-            label="Reasons"
-            name="reasons"
-          >
-            <MultiSelect
-              name="reasons"
-              control={control}
-              options={REASONS.map((reason) => ({ value: reason, label: reason }))}
-              required="Select at least on reason"
-              placeholderText={placeholderText}
-            />
-          </FormItem>
-        </div>
-
-        <div className="margin-top-2">
-          <FormItem
-            label="Target populations addressed"
-            name="targetPopulations"
-            required
-          >
-            <MultiSelect
-              name="targetPopulations"
-              control={control}
-              required="Select at least one target population"
-              options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
-              placeholderText="- Select -"
-            />
-          </FormItem>
-        </div>
+        {adminCanEdit ? (
+          <>
+            <div className="margin-top-2">
+              <Label htmlFor="trainingType">
+                Training type
+                <Req />
+              </Label>
+              <Dropdown required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
+                <option>Series</option>
+              </Dropdown>
+            </div>
+            <div className="margin-top-2">
+              <FormItem
+                label="Reasons"
+                name="reasons"
+              >
+                <MultiSelect
+                  name="reasons"
+                  control={control}
+                  options={REASONS.map((reason) => ({ value: reason, label: reason }))}
+                  required="Select at least on reason"
+                  placeholderText={placeholderText}
+                />
+              </FormItem>
+            </div>
+            <div className="margin-top-2">
+              <FormItem
+                label="Target populations addressed"
+                name="targetPopulations"
+                required
+              >
+                <MultiSelect
+                  name="targetPopulations"
+                  control={control}
+                  required="Select at least one target population"
+                  options={targetPopulations.map((tp) => ({ value: tp, label: tp }))}
+                  placeholderText="- Select -"
+                />
+              </FormItem>
+            </div>
+            <div className="margin-top-2">
+              <FormItem
+                label="Event vision "
+                name="vision"
+                required
+              >
+                <Textarea
+                  id="vision"
+                  name="vision"
+                  required
+                  inputRef={register({
+                    required: 'Describe the event vision',
+                  })}
+                />
+              </FormItem>
+            </div>
+          </>
+        ) : (
+          <>
+            <ReadOnlyField label="Training type">
+              Series
+            </ReadOnlyField>
+            <ReadOnlyField label="Reasons">
+              {getReadOnlyReasons(data.reasons)}
+            </ReadOnlyField>
+            <ReadOnlyField label="Target populations addressed">
+              {getReadOnlyTargetPopulations(data.targetPopulations)}
+            </ReadOnlyField>
+            <ReadOnlyField label="Event vision">
+              {data.vision}
+            </ReadOnlyField>
+          </>
+        )}
         <div className="display-flex">
           <Button id="review-and-submit" className="margin-right-1" type="button" disabled={isAppLoading} onClick={() => showSubmitModal()}>Review and submit</Button>
           <Button id="save-draft" className="usa-button--outline" type="button" disabled={isAppLoading} onClick={() => onSaveDraft()}>Save draft</Button>
