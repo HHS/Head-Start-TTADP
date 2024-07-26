@@ -7,7 +7,7 @@ export default function ReportLink({
   reportId, reportName, to,
 }) {
   return (
-    <div className="usa-prose">
+    <div className="lead-paragraph">
       <Link
         className="no-print ttahub-back-link text-ttahub-blue margin-bottom-2 margin-top-2 display-inline-block"
         to={to}
