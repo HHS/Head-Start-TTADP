@@ -130,7 +130,7 @@ commands:
 
             # Evaluate message_text_script if provided
             if [ -n "<< parameters.message_text_script >>" ]; then
-              eval "<< parameters.message_text_script >>"
+              MESSAGE_TEXT=$(eval "<< parameters.message_text_script >>")
             else
               MESSAGE_TEXT="<< parameters.message_text >>"
             fi
