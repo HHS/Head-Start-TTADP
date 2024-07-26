@@ -17,10 +17,20 @@ import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
+// Mock the Queue from 'bull'
+jest.mock('bull');
+
 describe('Programmatic Transaction', () => {
   beforeAll(async () => {
     jest.resetAllMocks();
     auditLogger.error('Before All: Mocks reset');
+    try {
+      await sequelize.authenticate();
+      auditLogger.info('Database connection established');
+    } catch (error) {
+      auditLogger.error('Unable to connect to the database:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
