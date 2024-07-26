@@ -101,7 +101,7 @@ commands:
               }
             }"
   notify_slack:
-    description: "Notify Slack of a deploy to production"
+    description: "Notify Slack with message"
     parameters:
       slack_bot_token:
         description: "Slack bot token"
@@ -121,6 +121,11 @@ commands:
       - run:
           name: Notify Slack
           command: |
+            # Ensure the $BASH_ENV file exists
+            if [ ! -f $BASH_ENV ]; then
+              touch $BASH_ENV
+            fi
+            
             source $BASH_ENV
 
             # Evaluate message_text_script if provided
