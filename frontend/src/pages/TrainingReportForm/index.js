@@ -11,6 +11,9 @@ import {
 } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
+import {
+  TRAINING_REPORT_STATUSES,
+} from '@ttahub/common';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
@@ -225,7 +228,6 @@ export default function TrainingReportForm({ match }) {
 
   const okFormSubmit = async () => {
     // Get isValid from the form.
-    console.log('---hook form: ', hookForm.formState);
     try {
       // reset the error message
       setError('');
@@ -239,24 +241,23 @@ export default function TrainingReportForm({ match }) {
         regionId,
         ...data
       } = hookForm.getValues();
-      console.log('before put');
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
         data: {
           ...data,
-          // status: updatedStatus,
+          status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
+            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
+            : data.status,
         },
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
         regionId: regionId || null,
       });
-      console.log('after put');
       resetFormData(hookForm.reset, updatedEvent);
 
       history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
     } catch (err) {
-      console.log('error', err);
       setError('There was an error saving the training report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -280,7 +281,6 @@ export default function TrainingReportForm({ match }) {
     }
   };
 
-  console.log('form data: ', formData);
   return (
     <div className="smart-hub-training-report">
       { error

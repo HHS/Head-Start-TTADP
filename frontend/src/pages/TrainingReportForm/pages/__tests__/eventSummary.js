@@ -31,6 +31,16 @@ describe('eventSummary', () => {
     const defaultFormValues = {
       eventId: 'Event-id-1',
       eventName: 'Event-name-1',
+      ownerName: 'Owner-name-1',
+      pocIds: [1],
+      reasons: ['Complaint'],
+      targetPopulations: ['target population1', 'target population2'],
+      vision: 'This is a sample vision.',
+      eventIntendedAudience: 'recipient',
+      eventOrganizer: 'Sample organizer',
+      owner: {
+        name: 'Owner-name-1',
+      },
     };
 
     const RenderEventSummary = (user = defaultUser) => {
@@ -60,13 +70,15 @@ describe('eventSummary', () => {
         },
       };
 
+      // set the hook form data that is returned from getValues().
+      hookForm.getValues = () => defaultFormValues;
+
       return (
         <FormProvider {...hookForm}>
           <UserContext.Provider value={user}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               <EventSummary
                 additionalData={additionalData}
-                formData={defaultFormValues}
                 reportId={1}
                 isAppLoading={false}
                 onFormSubmit={jest.fn()}
@@ -83,8 +95,14 @@ describe('eventSummary', () => {
     };
 
     it('renders event summary', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: ADMIN },
+        ],
+      };
       act(() => {
-        render(<RenderEventSummary />);
+        render(<RenderEventSummary user={adminUser} />);
       });
 
       const selections = document.querySelectorAll('button, input, textarea, select, a');
@@ -113,7 +131,7 @@ describe('eventSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('admin users can edit title and owner fields', async () => {
+    it('admin users can edit all fields', async () => {
       const adminUser = {
         ...defaultUser,
         permissions: [
@@ -124,34 +142,56 @@ describe('eventSummary', () => {
         render(<RenderEventSummary user={adminUser} />);
       });
 
-      // Event name.
-      const eventName = await screen.findByRole('textbox', { name: /event name required/i });
-      expect(eventName).toBeInTheDocument();
+      // Event ID.
+      expect(await screen.findByRole('textbox', { name: /event id required/i })).toBeInTheDocument();
 
-      // Change the value in the event name field.
-      const creatorSelect = await screen.findByTestId('creator-select');
-      expect(creatorSelect).toBeInTheDocument();
+      // Event Name.
+      expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
 
-      // Update event name field.
-      userEvent.clear(eventName);
-      userEvent.type(eventName, 'Event name 2');
+      // Event creator.
+      expect(await screen.findByTestId('creator-select')).toBeInTheDocument();
 
-      // Assert new event name.
-      expect(eventName).toHaveValue('Event name 2');
+      // Event Organizer.
+      expect(await screen.findByRole('combobox', { name: /event organizer/i })).toBeInTheDocument();
+
+      // Event Collaborator.
+      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+
+      // Event Point of Contact.
+      expect(await screen.findByRole('combobox', { name: /event region point of contact/i })).toBeInTheDocument();
+
+      // Event Intended Audience.
+      expect(await screen.findByRole('group', { name: /event intended audience required/i })).toBeInTheDocument();
+
+      // Event Training Type.
+      expect(await screen.findByRole('combobox', { name: /training type/i })).toBeInTheDocument();
+
+      // Event Reason.
+      expect(await screen.findByRole('combobox', { name: /reasons required complaint/i })).toBeInTheDocument();
+
+      // Event Target Population.
+      expect(await screen.findByRole('combobox', { name: /target populations addressed required target population1 target population2/i })).toBeInTheDocument();
+
+      // Event Vision.
+      expect(await screen.findByRole('textbox', { name: /event vision required/i })).toBeInTheDocument();
     });
 
-    it('non admin users cant edit title and owner fields', async () => {
-      const adminUser = {
+    it('non admin users cant edit certain fields', async () => {
+      const nonAdminUser = {
         ...defaultUser,
         permissions: [
           { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
         ],
       };
       act(() => {
-        render(<RenderEventSummary user={adminUser} />);
+        render(<RenderEventSummary user={nonAdminUser} />);
       });
-      expect(screen.queryAllByRole('textbox', { name: /event name required/i }).length).toBe(0);
-      expect(screen.queryAllByTestId('creator-select').length).toBe(0);
+
+      // Event Collaborator.
+      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+
+      // Nine additional read only fields.
+      expect(screen.queryAllByTestId('read-only-label').length).toBe(9);
     });
   });
 });

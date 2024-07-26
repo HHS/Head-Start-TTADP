@@ -72,7 +72,7 @@ describe('TrainingReportForm', () => {
     fetchMock.get('/api/events/id/1', 500);
     const setErrorResponseCode = jest.fn();
     act(() => {
-      renderTrainingReportForm('1',setErrorResponseCode);
+      renderTrainingReportForm('1', setErrorResponseCode);
     });
     await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
   });
