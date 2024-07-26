@@ -17,28 +17,41 @@ import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
-try {
-  describe('Programmatic Transaction', () => {
-    beforeAll(async () => {
-      jest.resetAllMocks();
-    });
-    afterAll(async () => {
-      await sequelize.close();
-      jest.resetModules();
-      jest.resetAllMocks();
-    });
+describe('Programmatic Transaction', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+    auditLogger.error('Before All: Mocks reset');
+  });
 
-    it('Insert', async () => {
+  afterAll(async () => {
+    await sequelize.close();
+    jest.resetModules();
+    jest.resetAllMocks();
+    auditLogger.error('After All: Modules reset and sequelize closed');
+  });
+
+  it('Insert', async () => {
+    try {
+      auditLogger.error('Starting Insert test');
       const snapshot = await transactionModule.captureSnapshot();
+      auditLogger.error('Snapshot captured');
       await Topic.create({
         name: 'Test Topic',
       });
+      auditLogger.error('Topic created');
       let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
       expect(topic).not.toBeNull();
+      auditLogger.error('Topic found');
       await transactionModule.rollbackToSnapshot(snapshot);
+      auditLogger.error('Rollback to snapshot');
       topic = await Topic.findOne({ where: { name: 'Test Topic' } });
       expect(topic).toBeNull();
-    });
+      auditLogger.error('Topic not found after rollback');
+    } catch (e) {
+      auditLogger.error('Error in Insert test:', e);
+      throw e;
+    }
+  });
 
     it('Update', async () => {
       const snapshot = await transactionModule.captureSnapshot();
