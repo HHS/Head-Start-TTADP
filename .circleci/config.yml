@@ -121,6 +121,7 @@ commands:
       - run:
           name: Notify Slack
           command: |
+            set -x
             # Ensure the $BASH_ENV file exists
             if [ ! -f $BASH_ENV ]; then
               touch $BASH_ENV
@@ -332,7 +333,7 @@ commands:
             sudo apt-get update
             # Install uuid-runtime to have access to uuidgen
             # Install pv wget
-            sudo apt-get install pv uuid-runtime wget
+            sudo apt-get install pv uuid-runtime wget coreutils jq
             # Install Cloud Foundry CLI
             wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
             echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
@@ -392,6 +393,7 @@ commands:
           slack_bot_token: $SLACK_BOT_TOKEN
           slack_channel: "acf-head-start-eng"
           message_text_script: |
+            set -x
             if [ -f /tmp/presigned_urls.json ]; then
               PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
             else
