@@ -669,6 +669,24 @@ perform_backup_and_upload() {
 
 # -----------------------------------------------------------------------------
 
+encode_file_to_base64() {
+    local file_path="$1"
+    local file_name="$2"
+    
+    if [[ ! -f "$file_path" ]]; then
+        echo "Error: File not found."
+        return 1
+    fi
+    
+    base64_content=$(base64 "$file_path")
+    sha256_hash=$(sha256sum "$file_path" | awk '{print $1}')
+    md5_hash=$(md5sum "$file_path" | awk '{print $1}')
+    json_output=$(printf '{"fileName": "%s", "content": "%s", "sha256": "%s", "md5": "%s"}\n' "$file_name" "$base64_content" "$sha256_hash" "$md5_hash")
+    echo "TransferFile: $json_output"
+}
+
+# -----------------------------------------------------------------------------
+
 generate_presigned_urls() {
   local aws_s3_server=$1
   local backup_filename_prefix=$2
@@ -751,7 +769,9 @@ function main() {
 
   log "INFO" "generate presigned URLs"
   generate_presigned_urls "${aws_s3_server}" "${backup_filename_prefix}" "${duration}"
-  log "INFO" "Presigned URLs JSON written to /tmp/presigned_urls.json: $(cat /tmp/presigned_urls.json)"
+  encode_file_to_base64 "/tmp/" "presigned_urls.json"
+  log "INFO" "Presigned URLs JSON written to /tmp/presigned_urls.json"
+  encode_file_to_base64 "/tmp/" "presigned_urls.json"
 
   log "INFO" "clear the populated env vars"
   rds_clear
