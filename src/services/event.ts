@@ -503,10 +503,9 @@ const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(B
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
-  // Creator: 'creator',
   'IST/Creator': 'creator',
-  // 'Edit Title': 'eventName',
   'Event Title': 'eventName',
+  'Event Duration': 'trainingType',
   'Event Duration/#NC Days of Support': 'trainingType',
   'Event Duration/# NC Days of Support': 'trainingType',
   'Event ID': 'eventId',
@@ -545,7 +544,7 @@ const mapLineToData = (line: Record<string, string>) => {
   return data;
 };
 
-const checkUserExists = async (identifier: string, userWhere: UserWhereOptions) => {
+const checkUserExists = async (userWhere: UserWhereOptions) => {
   const user = await db.User.findOne({
     where: userWhere,
     include: [
@@ -560,15 +559,24 @@ const checkUserExists = async (identifier: string, userWhere: UserWhereOptions) 
     ],
   });
 
-  if (!user) throw new Error(`User ${identifier} does not exist`);
+  if (!user) {
+    throw new Error(`User with ${
+      Object.keys(userWhere).map((key) => `${key}: ${userWhere[key]}`).join('AND ')
+    } does not exist`);
+  }
   return user;
 };
 
 const checkUserExistsByNationalCenter = async (identifier: string) => {
   const user = await db.User.findOne({
-    attributes: ['id'],
+    attributes: ['id', 'name'],
     include: [
       {
+        model: db.Permission,
+        as: 'permissions',
+      },
+      {
+        attributes: ['name'],
         model: db.NationalCenter,
         as: 'nationalCenters',
         where: {
@@ -579,16 +587,16 @@ const checkUserExistsByNationalCenter = async (identifier: string) => {
     ],
   });
 
-  if (!user) throw new Error(`User ${identifier} does not exist`);
+  if (!user) throw new Error(`User associated with National Center: ${identifier} does not exist`);
   return user;
 };
 
-const checkUserExistsByName = async (name: string) => checkUserExists(name, {
+const checkUserExistsByName = async (name: string) => checkUserExists({
   name: {
     [Op.iLike]: name,
   },
 });
-const checkUserExistsByEmail = async (email: string) => checkUserExists(email, { email });
+const checkUserExistsByEmail = async (email: string) => checkUserExists({ email });
 
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
@@ -619,10 +627,13 @@ export async function csvImport(buffer: Buffer) {
       const eventId = cleanLine['Event ID'];
 
       // If the eventId doesn't start with the prefix R and two numbers, it's invalid.
-      if (!eventId.match(/^R\d{2}/i)) {
+      const match = eventId.match(/^R\d{2}/i);
+      if (match === null) {
         skipped.push(`Invalid "Event ID" format expected R##-TR-#### received ${eventId}`);
         return false;
       }
+
+      await checkEventExists(eventId);
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
@@ -659,6 +670,14 @@ export async function csvImport(buffer: Buffer) {
         // eslint-disable-next-line no-restricted-syntax
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
+          const policy = new EventReport(poc, {
+            regionId,
+          });
+
+          if (!policy.hasPocInRegion()) {
+            errors.push(`User ${pocName} does not have POC permission in region ${regionId}`);
+            return false;
+          }
           pocs.push(poc.id);
         }
       }
@@ -668,6 +687,14 @@ export async function csvImport(buffer: Buffer) {
         // eslint-disable-next-line no-restricted-syntax
         for await (const center of nationalCenterNames) {
           const collaborator = await checkUserExistsByNationalCenter(center);
+          const policy = new EventReport(collaborator, {
+            regionId,
+          });
+
+          if (!policy.canWriteInRegion()) {
+            errors.push(`User ${collaborator.name} does not have permission to write in region ${regionId}`);
+            return false;
+          }
           collaborators.push(collaborator.id);
         }
       }
@@ -676,7 +703,6 @@ export async function csvImport(buffer: Buffer) {
         errors.push(`No collaborators found for ${eventId}`);
         return false;
       }
-      await checkEventExists(eventId);
 
       const data = mapLineToData(cleanLine);
 
@@ -697,9 +723,9 @@ export async function csvImport(buffer: Buffer) {
 
       return true;
     } catch (error) {
-      auditLogger.error(error);
-      if (error.message.startsWith('User')) {
-        errors.push(error.message);
+      const message = (error.message || '').replace(/\/t/g, '');
+      if (message.startsWith('User')) {
+        errors.push(message);
       } else if (error.message.startsWith('Event')) {
         skipped.push(line['Event ID']);
       }
