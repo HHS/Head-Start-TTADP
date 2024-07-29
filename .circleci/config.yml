@@ -395,6 +395,7 @@ commands:
           message_text_script: |
             set -x
             if [ -f /tmp/presigned_urls.json ]; then
+              cat /tmp/presigned_urls.json
               PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
             else
               echo "Presigned URLs JSON file not found!"
@@ -907,9 +908,9 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
                 message_text_script: |
-                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to sandbox was successful!"
+                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to sandbox was successful!"
                   else
                     echo ":rocket: Deployment to sandbox was successful!"
                   fi
@@ -972,9 +973,9 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
                 message_text_script: |
-                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to dev was successful!"
+                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to dev was successful!"
                   else
                     echo ":rocket: Deployment to dev was successful!"
                   fi
@@ -1035,9 +1036,9 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
                 message_text_script: |
-                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to staging was successful!"
+                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to staging was successful!"
                   else
                     echo ":rocket: Deployment to staging was successful!"
                   fi
@@ -1098,9 +1099,9 @@ jobs:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
                 message_text_script: |
-                  if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                     PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
+                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!"
                   else
                     echo ":rocket: Deployment to production was successful!"
                   fi
