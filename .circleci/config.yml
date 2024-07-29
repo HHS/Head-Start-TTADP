@@ -113,8 +113,8 @@ commands:
         description: "Message text to post to Slack"
         type: string
         default: ""
-      message_text_script:
-        description: "Script to generate message text"
+      message_text_file:
+        description: "message text_file"
         type: string
         default: ""
     steps:
@@ -126,16 +126,16 @@ commands:
             if [ ! -f $BASH_ENV ]; then
               touch $BASH_ENV
             fi
-            
+
             source $BASH_ENV
 
             # Evaluate message_text_script if provided
-            if [ -n "<< parameters.message_text_script >>" ]; then
-              MESSAGE_TEXT=$(eval "<< parameters.message_text_script >>")
+            if [ -n "<< parameters.message_text_file >>" ]; then
+              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
             else
               MESSAGE_TEXT="<< parameters.message_text >>"
             fi
-            
+
             echo $MESSAGE_TEXT
 
             # Ensure all parameters are provided
@@ -165,42 +165,30 @@ commands:
         description: "Name of environment"
         type: string
     steps:
+      - run:
+          name: Generate Message
+          command: |
+            if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
+                PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+
+                if [ ! -z "${PR_TITLE}" ]; then
+                    JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to production was successful!" > /tmp/message_file
+                    if [ ! -z "${JIRA_URLS}" ]; then
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}" >> /tmp/message_file
+                    fi
+                else
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!" > /tmp/message_file
+                fi
+            else
+                MESSAGE_TEXT=":rocket: Deployment to production was successful!" > /tmp/message_file
+            fi
       - notify_slack:
           slack_bot_token: << parameters.slack_bot_token >>
           slack_channel: << parameters.slack_channel >>
-          message_text_script: |
-            # Function to extract JIRA URLs from PR description
-            extract_jira_urls() {
-                local pr_description="$1"
-                echo "\$pr_description" | sed -n '/## Issue(s)/,/##/p' | grep -o 'https://jira\.acf\.gov/browse/[A-Z0-9-]*'
-            }
-
-            # Check if the script is running in a CircleCI environment and there is a pull request
-            if [ ! -z "\${CIRCLE_PULL_REQUEST}" ]; then
-                PR_NUMBER=\${CIRCLE_PULL_REQUEST##*/}
-                
-                # Fetch the PR information using GitHub API
-                PR_INFO=$(curl -s -H "Authorization: token \${GITHUB_TOKEN}" "\${CIRCLE_PULL_REQUEST}")
-
-                PR_DESCRIPTION=\$(echo "\${PR_INFO}" | jq -r '.body')
-                PR_TITLE=$(echo "\${PR_INFO}" | jq -r '.title')
-
-                if [ ! -z "\${PR_DESCRIPTION}" ]; then
-                    JIRA_URLS=\$(extract_jira_urls "\${PR_DESCRIPTION}")
-                    echo ":rocket: Deployment of PR <\${CIRCLE_PULL_REQUEST}|\${PR_NUMBER}> (\${PR_TITLE}) to production was successful!"
-                    if [ ! -z "\${JIRA_URLS}" ]; then
-                        echo "JIRA URLs in the PR description:"
-                        echo "\${JIRA_URLS}"
-                    else
-                        echo "No JIRA URLs found in the PR description."
-                    fi
-                else
-                    echo ":rocket: Deployment of PR <\${CIRCLE_PULL_REQUEST}|\${PR_NUMBER}> (\${PR_TITLE}) to production was successful!"
-                    echo "No PR description found."
-                fi
-            else
-                echo ":rocket: Deployment to production was successful!"
-            fi
+          message_text_file: "/tmp/message_file"
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
@@ -438,10 +426,9 @@ commands:
           environment:
             CF_RDS_SERVICE_NAME: ttahub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
-      - notify_slack:
-          slack_bot_token: $SLACK_BOT_TOKEN
-          slack_channel: "acf-head-start-eng"
-          message_text_script: |
+      - run:
+          name: Generate Message
+          command: |
             set -x
             if [ -f /tmp/presigned_urls.json ]; then
               cat /tmp/presigned_urls.json
@@ -461,14 +448,18 @@ commands:
               - [Backup ZIP]($ZIP_URL)
               - [Password File]($PASSWORD_URL)
               - [MD5 Checksum]($MD5_URL)
-              - [SHA256 Checksum]($SHA256_URL)"
+              - [SHA256 Checksum]($SHA256_URL)" > /tmp/message_file
             else
               echo ":download::database: Production backup successful!
               - [Backup ZIP]($ZIP_URL)
               - [Password File]($PASSWORD_URL)
               - [MD5 Checksum]($MD5_URL)
-              - [SHA256 Checksum]($SHA256_URL)"
+              - [SHA256 Checksum]($SHA256_URL)" > /tmp/message_file
             fi
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_file: "/tmp/message_file"
       - run:
           name: Logout of service account
           command: |
