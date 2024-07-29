@@ -175,20 +175,24 @@ commands:
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to production was successful!" > /tmp/message_file
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to production was successful!"
                     if [ ! -z "${JIRA_URLS}" ]; then
-                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}" >> /tmp/message_file
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                     fi
                 else
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!" > /tmp/message_file
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!"
                 fi
             else
-                MESSAGE_TEXT=":rocket: Deployment to production was successful!" > /tmp/message_file
+                MESSAGE_TEXT=":rocket: Deployment to production was successful!"
             fi
+
+            echo -e "${MESSAGE_TEXT}" > /tmp/message_file
+
       - notify_slack:
           slack_bot_token: << parameters.slack_bot_token >>
           slack_channel: << parameters.slack_channel >>
           message_text_file: "/tmp/message_file"
+
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
