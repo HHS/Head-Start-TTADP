@@ -184,15 +184,15 @@ commands:
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to production was successful!"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to << parameters.environment_name >> was successful!"
                     if [ ! -z "${JIRA_URLS}" ]; then
                         MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                     fi
                 else
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to << parameters.environment_name >> was successful!"
                 fi
             else
-                MESSAGE_TEXT=":rocket: Deployment to production was successful!"
+                MESSAGE_TEXT=":rocket: Deployment to << parameters.environment_name >> was successful!"
             fi
 
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
