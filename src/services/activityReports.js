@@ -984,7 +984,9 @@ export async function createOrUpdate(newActivityReport, report) {
   if (!!recipientNextSteps) {
     // Filter out objects with null id and empty string note
     const filteredNextSteps = recipientNextSteps.filter(
-      (step) => step.id !== null && step.note !== '',
+      (step) => step.id !== null
+        && ((step.note !== '' && step.note)
+          || (step.completeDate !== '' && step.completeDate)),
     );
 
     if (filteredNextSteps.length > 0) {
@@ -997,7 +999,9 @@ export async function createOrUpdate(newActivityReport, report) {
   if (!!specialistNextSteps) {
     // Filter out objects with null id and empty string note
     const filteredNextSteps = specialistNextSteps.filter(
-      (step) => step.id !== null && step.note !== '',
+      (step) => step.id !== null
+        && ((step.note !== '' && step.note)
+          || (step.completeDate !== '' && step.completeDate)),
     );
 
     if (filteredNextSteps.length > 0) {
