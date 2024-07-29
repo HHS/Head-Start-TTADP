@@ -153,6 +153,55 @@ commands:
                 \"text\": \"$MESSAGE_TEXT\"
               }" \
               https://slack.com/api/chat.postMessage
+  notify_slack_deploy:
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+      environment_name:
+        description: "Name of environment"
+        type: string
+    steps:
+      - notify_slack:
+          slack_bot_token: << parameters.slack_bot_token >>
+          slack_channel: << parameters.slack_channel >>
+          message_text_script: |
+            # Function to extract JIRA URLs from PR description
+            extract_jira_urls() {
+                local pr_description="$1"
+                echo "\$pr_description" | sed -n '/## Issue(s)/,/##/p' | grep -o 'https://jira\.acf\.gov/browse/[A-Z0-9-]*'
+            }
+
+            # Check if the script is running in a CircleCI environment and there is a pull request
+            if [ ! -z "\${CIRCLE_PULL_REQUEST}" ]; then
+                PR_NUMBER=\${CIRCLE_PULL_REQUEST##*/}
+                
+                # Fetch the PR information using GitHub API
+                PR_INFO=$(curl -s -H "Authorization: token \${GITHUB_TOKEN}" "\${CIRCLE_PULL_REQUEST}")
+
+                PR_DESCRIPTION=\$(echo "\${PR_INFO}" | jq -r '.body')
+                PR_TITLE=$(echo "\${PR_INFO}" | jq -r '.title')
+
+                if [ ! -z "\${PR_DESCRIPTION}" ]; then
+                    JIRA_URLS=\$(extract_jira_urls "\${PR_DESCRIPTION}")
+                    echo ":rocket: Deployment of PR <\${CIRCLE_PULL_REQUEST}|\${PR_NUMBER}> (\${PR_TITLE}) to production was successful!"
+                    if [ ! -z "\${JIRA_URLS}" ]; then
+                        echo "JIRA URLs in the PR description:"
+                        echo "\${JIRA_URLS}"
+                    else
+                        echo "No JIRA URLs found in the PR description."
+                    fi
+                else
+                    echo ":rocket: Deployment of PR <\${CIRCLE_PULL_REQUEST}|\${PR_NUMBER}> (\${PR_TITLE}) to production was successful!"
+                    echo "No PR description found."
+                fi
+            else
+                echo ":rocket: Deployment to production was successful!"
+            fi
+
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -904,16 +953,10 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
+            - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
-                message_text_script: |
-                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
-                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to sandbox was successful!"
-                  else
-                    echo ":rocket: Deployment to sandbox was successful!"
-                  fi
+                environment_name: "sandbox"
 
       - when:  # dev
           condition:
@@ -969,16 +1012,10 @@ jobs:
                 env_name: dev
                 new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
+            - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
-                message_text_script: |
-                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
-                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to dev was successful!"
-                  else
-                    echo ":rocket: Deployment to dev was successful!"
-                  fi
+                environment_name: "dev"
 
       - when:  # staging
           condition:
@@ -1032,16 +1069,10 @@ jobs:
                 env_name: staging
                 new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
+            - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
-                message_text_script: |
-                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
-                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to staging was successful!"
-                  else
-                    echo ":rocket: Deployment to staging was successful!"
-                  fi
+                environment_name: "production"
 
       - when:  # prod
           condition:
@@ -1095,16 +1126,10 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
+            - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
-                message_text_script: |
-                  if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
-                    PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                    echo ":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to production was successful!"
-                  else
-                    echo ":rocket: Deployment to production was successful!"
-                  fi
+                environment_name: "production"
 
     resource_class: large
   backup_upload_production:
