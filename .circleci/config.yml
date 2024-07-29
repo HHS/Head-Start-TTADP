@@ -121,7 +121,6 @@ commands:
       - run:
           name: Notify Slack
           command: |
-            set -x
             # Ensure the $BASH_ENV file exists
             if [ ! -f $BASH_ENV ]; then
               touch $BASH_ENV
@@ -144,15 +143,25 @@ commands:
               exit 1
             fi
 
-            curl \
-              -X POST \
+            response=$(curl -s -X POST \
               -H "Authorization: Bearer << parameters.slack_bot_token >>" \
               -H 'Content-type: application/json;charset=utf-8' \
               --data "{
                 \"channel\": \"<< parameters.slack_channel >>\",
                 \"text\": \"$MESSAGE_TEXT\"
               }" \
-              https://slack.com/api/chat.postMessage
+              https://slack.com/api/chat.postMessage)
+
+            ok=$(echo $response | jq -r '.ok')
+            error=$(echo $response | jq -r '.error')
+
+            if [ "$ok" != "true" ]; then
+              echo "Slack notification failed: $error"
+              exit 1
+            else
+              echo "Slack notification sent successfully"
+            fi
+
   notify_slack_deploy:
     parameters:
       slack_bot_token:
