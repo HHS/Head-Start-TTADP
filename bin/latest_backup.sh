@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 # Script to retrieve information from latest-backup.txt in S3, get presigned URLs for the files listed,
 # and then delete the service key created.
 
