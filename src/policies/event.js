@@ -159,7 +159,9 @@ export default class EventReport {
   }
 
   canSeeAlerts() {
-    return this.isAdmin() || this.canWriteInRegion() || !!this.permissions.find(
+    return this.isAdmin() || !!this.permissions.find(
+      (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
+    ) || !!this.permissions.find(
       (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
     );
   }

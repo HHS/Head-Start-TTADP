@@ -433,4 +433,27 @@ describe('Event Report policies', () => {
       expect(policy.canReadInRegion()).toBe(false);
     });
   });
+
+  describe('canSeeAlerts', () => {
+    it('is true if the user is an admin', () => {
+      const policy = new EventReport(admin, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is true if the user has read_write_training reports in any region', () => {
+      const policy = new EventReport(authorRegion1, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is true if the user has poc_training reports in any region', () => {
+      const policy = new EventReport(pocRegion1, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const user = createUser({ read: true, regionId: 1 });
+      const policy = new EventReport(user, {});
+      expect(policy.canSeeAlerts()).toBe(false);
+    });
+  });
 });
