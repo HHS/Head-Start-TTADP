@@ -45,11 +45,12 @@ commands:
           command: |
             git clone --no-checkout --filter=blob:none << pipeline.project.git_url >> .git .
       - run:
-          name: Setup Sparse Checkout
+          name: Sparse Checkout
+          environment:
+            DIRECTORIES: "<< parameters.directories >>"
           command: |
             git config core.sparseCheckout true
-            DIRS="<< parameters.directories >>"
-            IFS=',' read -ra DIR_ARRAY \<<< "$DIRS"
+            IFS=',' read -ra DIR_ARRAY <<< "$DIRECTORIES"
             for dir in "${DIR_ARRAY[@]}"; do
               echo "$dir" >> .git/info/sparse-checkout
             done
