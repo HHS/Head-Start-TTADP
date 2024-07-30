@@ -127,6 +127,7 @@ commands:
             fi
 
             source $BASH_ENV
+            cat $BASH_ENV
 
             # Evaluate message_text_script if provided
             if [ -n "<< parameters.message_text_file >>" ]; then
@@ -136,20 +137,28 @@ commands:
             fi
 
             # Add user reference if available
-            CHANNEL_MEMBERS=$(curl -s -X GET "https://slack.com/api/conversations.members?channel=${slack_channel}" \
-              -H "Authorization: Bearer ${slack_bot_token}" | jq -r '.members[]')
+           CHANNEL_MEMBERS_RESPONSE=$(curl -s -X GET "https://slack.com/api/conversations.members?channel=${slack_channel}" \
+              -H "Authorization: Bearer ${slack_bot_token}" \
+              -H 'Content-type: application/json;charset=utf-8')
+
+            CHANNEL_MEMBERS=$(echo "${CHANNEL_MEMBERS_RESPONSE}" | jq -r '.members[]' 2>/dev/null || echo "")
 
             declare -A GITHUB_TO_SLACK_MAP
 
             for MEMBER in ${CHANNEL_MEMBERS}; do
               PROFILE=$(curl -s -X GET "https://slack.com/api/users.profile.get?user=${MEMBER}" \
-                -H "Authorization: Bearer ${slack_bot_token}")
-              GITHUB_ID=$(echo "${PROFILE}" | jq -r '.profile.fields[] | select(.label=="GitHub") | .value')
-
-              if [[ -n "${GITHUB_ID}" ]]; then
-                GITHUB_TO_SLACK_MAP[${GITHUB_ID}]="${MEMBER}"
+                -H "Authorization: Bearer ${slack_bot_token}" \
+                -H 'Content-type: application/json;charset=utf-8')
+              
+              if [[ -n "${PROFILE}" && "${PROFILE}" != "null" ]]; then
+                GITHUB_ID=$(echo "${PROFILE}" | jq -r '.profile.fields // {} | to_entries[] | select(.value.label=="GitHub") | .value.value' 2>/dev/null || echo "")
+                
+                if [[ -n "${GITHUB_ID}" ]]; then
+                  GITHUB_TO_SLACK_MAP[${GITHUB_ID}]="${MEMBER}"
+                fi
               fi
             done
+
 
             slack_id=${GITHUB_TO_SLACK_MAP[${GITHUB_USERNAME}]}
 
