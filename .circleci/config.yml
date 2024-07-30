@@ -27,11 +27,11 @@ executors:
       - image: cimg/aws:2024.03
 commands:
   sparse_checkout:
-    description: "Checkout a sparse directory from a specific branch."
+    description: "Checkout sparse directories from a specific branch."
     parameters:
-      directory:
+      directories:
         type: string
-        description: "Directory to checkout sparsely"
+        description: "Comma-separated list of directories to checkout sparsely"
       branch:
         type: string
         description: "Branch to checkout"
@@ -43,12 +43,15 @@ commands:
       - run:
           name: Clone Repository
           command: |
-            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >> .git .
       - run:
           name: Setup Sparse Checkout
           command: |
             git config core.sparseCheckout true
-            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
+            IFS=',' read -ra DIRS <<< "<< parameters.directories >>"
+            for dir in "${DIRS[@]}"; do
+              echo "$dir/*" >> .git/info/sparse-checkout
+            done
       - run:
           name: Checkout Branch
           command: |
@@ -198,6 +201,8 @@ commands:
                     ;;
             esac
 
+            env_name="<< parameters.environment_name >>"
+
             if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
@@ -206,15 +211,15 @@ commands:
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
 
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|<< parameters.environment_name >> was successful!"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
                     if [ ! -z "${JIRA_URLS}" ]; then
                         MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                     fi
                 else
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|<< parameters.environment_name >> was successful!"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
                 fi
             else
-                MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|<< parameters.environment_name >> was successful!"
+                MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
             fi
 
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
@@ -464,18 +469,58 @@ commands:
       - run:
           name: Generate Message
           command: |
-            set -x
-            if [ -f /tmp/presigned_urls.json ]; then
-              cat /tmp/presigned_urls.json
-              PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
-            else
-              echo "Presigned URLs JSON file not found!"
+            # set -x
+            # if [ -f /tmp/presigned_urls.json ]; then
+            #   cat /tmp/presigned_urls.json
+            #   PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
+            # else
+            #   echo "Presigned URLs JSON file not found!"
+            #   exit 1
+            # fi
+            # ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
+            # PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
+            # MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
+            # SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
+
+            # Execute the latest_backup.sh script and capture its output
+
+            output=$(bash ./bin/latest_backup.sh)
+
+            # Check if the script executed successfully
+            if [ $? -ne 0 ]; then
+              echo "Failed to execute latest_backup.sh"
               exit 1
             fi
-            ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
-            PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
-            MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
-            SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
+
+            # Initialize variables to store the URLs
+            ZIP_URL=""
+            PASSWORD_URL=""
+            MD5_URL=""
+            SHA256_URL=""
+
+            # Parse the output to extract the URLs based on their file extensions
+            while IFS= read -r line; do
+              case "$line" in
+                *.sql.zip?*)
+                  ZIP_URL="$line"
+                  ;;
+                *.sql.password?*)
+                  PASSWORD_URL="$line"
+                  ;;
+                *.sql.md5?*)
+                  MD5_URL="$line"
+                  ;;
+                *.sql.sha256?*)
+                  SHA256_URL="$line"
+                  ;;
+              esac
+            done <<< "$output"
+
+            # Check if all URLs are extracted successfully
+            if [ -z "$ZIP_URL" ] || [ -z "$PASSWORD_URL" ] || [ -z "$MD5_URL" ] || [ -z "$SHA256_URL" ]; then
+              echo "Failed to extract one or more URLs from the script output"
+              exit 1
+            fi
 
             if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
@@ -1163,7 +1208,7 @@ jobs:
       - image: cimg/base:2024.05
     steps:
     - sparse_checkout:
-          directory: 'automation'
+          directories: 'automation,bin'
           branch: << pipeline.git.branch >>
     - cf_backup:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
