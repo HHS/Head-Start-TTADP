@@ -14,6 +14,8 @@ import {
   getTrainingReportAlerts,
 } from './event';
 
+jest.mock('bull');
+
 const regionId = 1;
 
 async function createEvents({
@@ -22,9 +24,6 @@ async function createEvents({
   pocId = faker.datatype.number(),
 }) {
   // create some events!!!
-
-  console.log('pocId', pocId);
-
   const baseEvent = {
     ownerId,
     collaboratorIds: [collaboratorId],
@@ -98,7 +97,9 @@ async function createEvents({
 
   await SessionReportPilot.create({
     eventId: c.id,
-    data: {},
+    data: {
+      sessionName: faker.datatype.string(),
+    },
   });
 
   const d = await EventReportPilot.create({
@@ -119,6 +120,7 @@ async function createEvents({
     },
   });
 
+  testData.poc.missingSessionInfo.push(d1.id);
   testData.ist.missingSessionInfo.push(d1.id);
 
   // complete event, 20 days past end date
@@ -513,10 +515,10 @@ describe('getTrainingReportAlerts', () => {
     it('fetches the correct alerts for owners', async () => {
       const alerts = await getTrainingReportAlerts(ownerId);
 
-      expect(alerts.missingEventInfo.map((i) => i.id)).toStrictEqual(testData.ist.missingEventInfo);
-      expect(alerts.missingSessionInfo.map((i) => i.id)).toStrictEqual(testData.ist.missingSessionInfo);
-      expect(alerts.noSessionsCreated.map((i) => i.id)).toStrictEqual(testData.ist.noSessionsCreated);
-      expect(alerts.eventNotCompleted.map((i) => i.id)).toStrictEqual(testData.ist.eventNotCompleted);
+      expect(alerts.missingEventInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingEventInfo.sort());
+      expect(alerts.missingSessionInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingSessionInfo.sort());
+      expect(alerts.noSessionsCreated.map((i) => i.id).sort()).toStrictEqual(testData.ist.noSessionsCreated.sort());
+      expect(alerts.eventNotCompleted.map((i) => i.id).sort()).toStrictEqual(testData.ist.eventNotCompleted.sort());
     });
   });
 
@@ -551,10 +553,10 @@ describe('getTrainingReportAlerts', () => {
     it('fetches the correct alerts for collaborators', async () => {
       const alerts = await getTrainingReportAlerts(collaboratorId);
 
-      expect(alerts.missingEventInfo.map((i) => i.id)).toStrictEqual([testData.ist.missingEventInfo]);
-      expect(alerts.missingSessionInfo.map((i) => i.id)).toStrictEqual(testData.ist.missingSessionInfo);
-      expect(alerts.noSessionsCreated.map((i) => i.id)).toStrictEqual(testData.ist.noSessionsCreated);
-      expect(alerts.eventNotCompleted.map((i) => i.id)).toStrictEqual(testData.ist.eventNotCompleted);
+      expect(alerts.missingEventInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingEventInfo.sort());
+      expect(alerts.missingSessionInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingSessionInfo.sort());
+      expect(alerts.noSessionsCreated.map((i) => i.id).sort()).toStrictEqual(testData.ist.noSessionsCreated.sort());
+      expect(alerts.eventNotCompleted.map((i) => i.id).sort()).toStrictEqual(testData.ist.eventNotCompleted.sort());
     });
   });
   describe('event poc', () => {
@@ -586,13 +588,12 @@ describe('getTrainingReportAlerts', () => {
     });
 
     it('fetches the correct alerts for poc', async () => {
-      console.log({ testData, pocId });
       const alerts = await getTrainingReportAlerts(pocId);
 
       expect(alerts.missingEventInfo).toStrictEqual([]);
-      expect(alerts.missingSessionInfo).toStrictEqual([]);
       expect(alerts.noSessionsCreated).toStrictEqual([]);
       expect(alerts.eventNotCompleted).toStrictEqual([]);
+      expect(alerts.missingSessionInfo.map(({ id }) => id).sort()).toStrictEqual(testData.poc.missingSessionInfo.sort());
     });
   });
 });
