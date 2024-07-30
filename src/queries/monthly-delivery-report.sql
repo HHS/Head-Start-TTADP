@@ -1,10 +1,14 @@
 /**
+* @name: Delivery report
+* @description: A time boxed report of services delivered by user and role
+* @defaultOutputName: delivery_report
+*
 * This query collects all the Monitoring goals used on approved reports within the defined time range.
 *
 * The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
-* - ssdi.regionIds - one or more values for 1 through 12
-* - ssdi.startDate - two dates defining a range for the startDate to be within
+* - ssdi.regionIds - integer[] - one or more values for 1 through 12
+* - ssdi.startDate - date[] - two dates defining a range for the startDate to be within
 *
 * zero or more SSDI flags can be set within the same transaction as the query is executed.
 * The following is an example of how to set a SSDI flag:
