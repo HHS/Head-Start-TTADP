@@ -149,18 +149,24 @@ commands:
               PROFILE=$(curl -s -X GET "https://slack.com/api/users.profile.get?user=${MEMBER}" \
                 -H "Authorization: Bearer ${slack_bot_token}" \
                 -H 'Content-type: application/json;charset=utf-8')
-              
+
               if [[ -n "${PROFILE}" && "${PROFILE}" != "null" ]]; then
                 GITHUB_ID=$(echo "${PROFILE}" | jq -r '.profile.fields // {} | to_entries[] | select(.value.label=="GitHub") | .value.value' 2>/dev/null || echo "")
-                
+
                 if [[ -n "${GITHUB_ID}" ]]; then
-                  GITHUB_TO_SLACK_MAP[${GITHUB_ID}]="${MEMBER}"
+                  GITHUB_TO_SLACK_MAP["${GITHUB_ID}"]="${MEMBER}"
                 fi
               fi
             done
 
-
-            slack_id=${GITHUB_TO_SLACK_MAP[${GITHUB_USERNAME}]}
+            # Check if the GitHub username exists in the associative array
+            if [ "${GITHUB_TO_SLACK_MAP[${CIRCLE_PR_USERNAME}]+abc}" ]; then
+              slack_id=${GITHUB_TO_SLACK_MAP["${CIRCLE_PR_USERNAME}"]}
+            else
+              echo "GitHub username ${CIRCLE_PR_USERNAME} not found in the Slack channel."
+              # Handle the case where the GitHub username is not found
+              slack_id="" # or some other appropriate action
+            fi
 
             if [[ -n "${slack_id}" ]]; then
               MESSAGE_TEXT="<@${slack_id}>\n${MESSAGE_TEXT}"
