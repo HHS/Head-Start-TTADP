@@ -43,7 +43,7 @@ commands:
       - run:
           name: Clone Repository
           command: |
-            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >> .git .
+            git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
       - run:
           name: Sparse Checkout
           environment:
