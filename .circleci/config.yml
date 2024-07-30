@@ -50,8 +50,7 @@ commands:
             DIRECTORIES: "<< parameters.directories >>"
           command: |
             git config core.sparseCheckout true
-            IFS=',' read -ra DIR_ARRAY <<< "$DIRECTORIES"
-            for dir in "${DIR_ARRAY[@]}"; do
+            IFS=','; for dir in $DIRECTORIES; do
               echo "$dir" >> .git/info/sparse-checkout
             done
       - run:
