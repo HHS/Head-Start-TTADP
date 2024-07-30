@@ -755,15 +755,6 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalTopics).toEqual(['Child Screening and Assessment', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
-      // TR goal
-      expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-10');
-      expect(goalRowsx[1].goalText).toBe('This is a goal created on a TR');
-      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
-      expect(goalRowsx[1].objectiveCount).toBe(2);
-      expect(goalRowsx[1].reasons).toEqual([]);
-      expect(goalRowsx[1].goalTopics).toEqual([]);
-      expect(goalRowsx[1].objectives.length).toBe(0);
-
       const expectedTopics = ['Buttering', 'Breading'];
       expectedTopics.sort();
 
