@@ -500,7 +500,7 @@ commands:
             SHA256_URL=""
 
             # Parse the output to extract the URLs based on their file extensions
-            while IFS= read -r line; do
+            echo "$output" | while IFS= read -r line; do
               case "$line" in
                 *.sql.zip?*)
                   ZIP_URL="$line"
@@ -515,7 +515,7 @@ commands:
                   SHA256_URL="$line"
                   ;;
               esac
-            done <<< "$output"
+            done
 
             # Check if all URLs are extracted successfully
             if [ -z "$ZIP_URL" ] || [ -z "$PASSWORD_URL" ] || [ -z "$MD5_URL" ] || [ -z "$SHA256_URL" ]; then
