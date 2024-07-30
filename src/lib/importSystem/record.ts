@@ -1,13 +1,9 @@
 import {
   Sequelize,
   fn,
-  cast,
-  col,
   literal,
   Op,
-  where,
 } from 'sequelize';
-import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
 import { FileInfo as FTPFileInfo, FileListing } from '../stream/sftp';
 import { SchemaNode } from '../stream/xml';
@@ -197,32 +193,18 @@ const getNextFileToProcess = async (
     },
   );
 
-  // Find the next import file to process
+  // Find the next import file to process without join and locking mechanism
   const importFile = await ImportFile.findOne({
     attributes: [
-      ['id', 'importFileId'],
+      'id',
       'fileId',
       'status',
       'processAttempts',
-    ],
-    include: [
-      {
-        model: File,
-        as: 'file',
-        attributes: [
-          'key',
-        ],
-      },
-      {
-        model: Import,
-        as: 'import',
-        attributes: [
-          'definitions',
-        ],
-      },
+      'importId',
     ],
     where: {
       importId,
+      fileId: { [Op.ne]: null }, // Ensure fileId is not null
       [Op.or]: [
         // New Work
         { status: IMPORT_STATUSES.COLLECTED }, // Import file is in the "collected" status
@@ -240,9 +222,38 @@ const getNextFileToProcess = async (
     ],
     limit: 1, // Limit the result to 1 record
     lock: true, // Lock the row for update to prevent race conditions
+    raw: true,
   });
 
-  return importFile;
+  if (!importFile) {
+    return null;
+  }
+
+  // Fetch the associated File data
+  const file = await File.findOne({
+    attributes: ['key'],
+    where: {
+      id: importFile.fileId,
+    },
+    raw: true,
+  });
+
+  // Fetch the associated Import data
+  const importData = await Import.findOne({
+    attributes: ['definitions'],
+    where: {
+      id: importFile.importId,
+    },
+    raw: true,
+  });
+  return {
+    importFileId: importFile.id,
+    fileId: importFile.fileId,
+    status: importFile.status,
+    processAttempts: importFile.processAttempts,
+    fileKey: file?.key,
+    importDefinitions: importData?.definitions,
+  };
 };
 
 /**
@@ -381,11 +392,10 @@ const recordAvailableDataFiles = async (
   });
 
   const fileMatches = (currentImportDataFile, availableFile) => (
-    importFileId === currentImportDataFile.importFileId
+    importFileId === currentImportDataFile?.importFileId
     && availableFile.path === currentImportDataFile.fileInfo.path
     && availableFile.name === currentImportDataFile.fileInfo.name
   );
-
   // Separate the available files into new, matched, and removed files
   // New files are those that are not already recorded in the database
   const newFiles = availableFiles
@@ -508,13 +518,10 @@ const logFileToBeCollected = async (
 }> => {
   let key;
 
-  // Find the import file record based on the import ID and available file information
+  // Step 1: Find and lock the import file record based on the import ID and available
+  // file information
   const importFile = await ImportFile.findOne({
-    attributes: [
-      'id',
-      'fileId',
-      'downloadAttempts',
-    ],
+    attributes: ['id', 'fileId', 'downloadAttempts'],
     where: {
       importId,
       ftpFileInfo: {
@@ -524,14 +531,15 @@ const logFileToBeCollected = async (
         },
       },
     },
-    include: [{
-      model: File,
-      as: 'file',
-      attributes: ['key'],
-      require: false,
-    }],
     lock: true, // Lock the row for update to prevent race conditions
+    raw: true,
   });
+
+  if (!importFile) {
+    throw new Error('Import file not found');
+  }
+
+  const downloadAttempts = importFile.downloadAttempts + 1;
 
   if (!importFile.fileId) {
     // Generate a unique key for the file using the import ID, a UUID, and the file extension
@@ -551,39 +559,35 @@ const logFileToBeCollected = async (
     await ImportFile.update(
       {
         fileId: fileRecord.id,
-        downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        downloadAttempts,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
-          importId,
-          ftpFileInfo: {
-            [Op.contains]: {
-              path: availableFile.fileInfo.path,
-              name: availableFile.fileInfo.name,
-            },
-          },
+          id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
       },
     );
   } else {
+    // Step 2: Fetch the associated file record
+    const file = await File.findOne({
+      attributes: ['key'],
+      where: {
+        id: importFile.fileId,
+      },
+    });
+
     // Retrieve the key from the existing import file record
-    key = importFile.file.dataValues.key;
+    key = file ? file.key : null;
     await ImportFile.update(
       {
-        downloadAttempts: importFile.dataValues.downloadAttempts + 1,
+        downloadAttempts,
         status: IMPORT_STATUSES.COLLECTING,
       },
       {
         where: {
-          importId,
-          ftpFileInfo: {
-            [Op.contains]: {
-              path: availableFile.fileInfo.path,
-              name: availableFile.fileInfo.name,
-            },
-          },
+          id: importFile.id,
         },
         lock: true, // Lock the row for update to prevent race conditions
       },
@@ -593,7 +597,7 @@ const logFileToBeCollected = async (
   return {
     importFileId: importFile.id,
     key,
-    attempts: importFile.dataValues.downloadAttempts,
+    attempts: downloadAttempts,
   };
 };
 
