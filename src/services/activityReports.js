@@ -235,7 +235,8 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       completeDate: !note.completeDate ? null : note.completeDate,
       activityReportId,
       noteType,
-    }));
+    }))
+      .filter(({ id, note, completeDate }) => id || (note && note.length > 0) || completeDate);
     await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
   }
 }
@@ -980,34 +981,14 @@ export async function createOrUpdate(newActivityReport, report) {
     await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
   }
 
-  // eslint-disable-next-line no-extra-boolean-cast
-  if (!!recipientNextSteps) {
-    // Filter out objects with null id and empty string note
-    const filteredNextSteps = recipientNextSteps.filter(
-      (step) => step.id !== null
-        && ((step.note !== '' && step.note)
-          || (step.completeDate !== '' && step.completeDate)),
-    );
-
-    if (filteredNextSteps.length > 0) {
-      const { id } = savedReport;
-      await saveNotes(id, filteredNextSteps, true);
-    }
+  if (recipientNextSteps) {
+    const { id } = savedReport;
+    await saveNotes(id, recipientNextSteps, true);
   }
 
-  // eslint-disable-next-line no-extra-boolean-cast
-  if (!!specialistNextSteps) {
-    // Filter out objects with null id and empty string note
-    const filteredNextSteps = specialistNextSteps.filter(
-      (step) => step.id !== null
-        && ((step.note !== '' && step.note)
-          || (step.completeDate !== '' && step.completeDate)),
-    );
-
-    if (filteredNextSteps.length > 0) {
-      const { id } = savedReport;
-      await saveNotes(id, filteredNextSteps, false);
-    }
+  if (specialistNextSteps) {
+    const { id } = savedReport;
+    await saveNotes(id, specialistNextSteps, false);
   }
 
   /**
