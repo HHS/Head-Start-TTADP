@@ -39,20 +39,15 @@ describe('Programmatic Transaction', () => {
   });
 
   it('Insert', async () => {
-    try {
-      const snapshot = await transactionModule.captureSnapshot();
-      await Topic.create({
-        name: 'Test Topic',
-      });
-      let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
-      expect(topic).not.toBeNull();
-      await transactionModule.rollbackToSnapshot(snapshot);
-      topic = await Topic.findOne({ where: { name: 'Test Topic' } });
-      expect(topic).toBeNull();
-    } catch (e) {
-      auditLogger.error('Error in Insert test:', e);
-      throw e;
-    }
+    const snapshot = await transactionModule.captureSnapshot();
+    await Topic.create({
+      name: 'Test Topic',
+    });
+    let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
+    expect(topic).not.toBeNull();
+    await transactionModule.rollbackToSnapshot(snapshot);
+    topic = await Topic.findOne({ where: { name: 'Test Topic' } });
+    expect(topic).toBeNull();
   });
 
   it('Update', async () => {
