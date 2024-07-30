@@ -8,12 +8,14 @@ import {
   TARGET_POPULATIONS,
   EVENT_AUDIENCE,
 } from '@ttahub/common';
+import moment from 'moment';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
   UpdateEventRequest,
+  SessionShape,
 } from './types/event';
 import EventReport from '../policies/event';
 
@@ -348,6 +350,177 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
     ],
   };
   return findEventHelper(where) as Promise<EventShape>;
+}
+
+export async function getTrainingReportAlerts(userId: number, scopes: WhereOptions[] = []) {
+  const where = {
+    [Op.and]: [
+      {
+        [Op.or]: [
+          {
+            ownerId: userId,
+          },
+          {
+            collaboratorIds: {
+              [Op.contains]: [userId],
+            },
+          },
+          {
+            pocIds: {
+              [Op.contains]: [userId],
+            },
+          },
+        ],
+      },
+      {
+        data: {
+          status: {
+            [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+          },
+        },
+      },
+      ...scopes,
+    ],
+  };
+  const events = await findEventHelper(where, true) as EventShape[];
+
+  const alerts = {
+    missingEventInfo: [], // Missing event info (IST Creator or Collaborator) - 20 days past event start date
+    missingSessionInfo: [], // Missing session info (IST Creator or Collaborator or POC) - 20 days past session start date
+    noSessionsCreated: [], // No sessions created (IST Creator) - 20 days past event start date
+    eventNotCompleted: [], // Event not completed (IST Creator or Collaborator) - 20 days past event end date
+  };
+
+  const eventInfoToCheck = ['startDate', 'endDate'];
+  const eventArraysToCheck = ['collaboratorIds'];
+  const istSessionInfoToCheck = [
+    'startDate',
+    'endDate',
+    'sessionName',
+    'duration',
+    'objective',
+    'objectiveTopics',
+    'objectiveTrainers',
+    (sessionData: SessionShape['data']) => {
+      if (sessionData.useIpdCourses) {
+        return sessionData.courses;
+      }
+
+      return true;
+    },
+    'ttaProvided',
+    'supportType',
+  ];
+  const pocSessionInfoToCheck = [
+    'deliveryMethod',
+    (sessionData : SessionShape['data']) => {
+      if (sessionData.isIstVisit === 'yes') {
+        return sessionData.regionalOfficeTta;
+      }
+
+      if (sessionData.isIstVisit === 'no') {
+        return sessionData.participants?.length;
+      }
+
+      return false;
+    },
+    'language',
+    (sessionData: SessionShape['data']) => {
+      const { nextSteps } = sessionData;
+      if (!nextSteps?.length) {
+        return false;
+      }
+
+      return nextSteps.every((step) => step.note && step.completeDate);
+    },
+  ];
+
+  const today = moment().startOf('day');
+
+  events.forEach((event: EventShape) => {
+    // some alerts only trigger for the owner or the collaborators
+    if (event.ownerId === userId || event.collaboratorIds.includes(userId)) {
+      const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
+      const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+
+      // if we are 20 days past the start date
+      if (today.isAfter(nineteenDaysAfterStart)) {
+        // and there are no sessions
+        if (event.sessionReports.length === 0) {
+          alerts.noSessionsCreated.push(event);
+        }
+
+        // or we are missing event data
+        if (eventInfoToCheck.some((field) => !(event.data[field])) || eventArraysToCheck.some((field) => !(event[field]?.length))) {
+          alerts.missingEventInfo.push(event);
+        }
+      }
+
+      // if we are 20 days past the end date, and the event is not completed
+      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+        alerts.eventNotCompleted.push(event);
+      }
+
+      const sessions = event.sessionReports;
+      sessions.forEach((session) => {
+        if (alerts.missingSessionInfo.find((alert) => alert.isSession && alert.id === session.id)) return;
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+          // eslint-disable-next-line no-restricted-syntax
+          for (const field of istSessionInfoToCheck) {
+            if (typeof field === 'function') {
+              if (!field(session.data)) {
+                alerts.missingSessionInfo.push({
+                  eventId: event.data.eventId,
+                  isSession: true,
+                  ...session,
+                });
+                break;
+              }
+            } else if (!(session.data[field])) {
+              alerts.missingSessionInfo.push({
+                eventId: event.data.eventId,
+                isSession: true,
+                ...session,
+              });
+              break;
+            }
+          }
+        }
+      });
+    }
+
+    // the other event triggers for everyone
+    const sessions = event.sessionReports;
+    sessions.forEach((session) => {
+      if (alerts.missingSessionInfo.find((alert) => alert.isSession && alert.id === session.id)) return;
+      const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+      if (today.isAfter(nineteenDaysAfterStart)) {
+        // eslint-disable-next-line no-restricted-syntax
+        for (const field of pocSessionInfoToCheck) {
+          if (typeof field === 'function') {
+            if (!field(session.data)) {
+              alerts.missingSessionInfo.push({
+                eventId: event.data.eventId,
+                isSession: true,
+                ...session,
+              });
+              break;
+            }
+          } else if (!(session.data[field])) {
+            alerts.missingSessionInfo.push({
+              eventId: event.data.eventId,
+              isSession: true,
+              ...session,
+            });
+            break;
+          }
+        }
+      }
+    });
+  });
+
+  return alerts;
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
