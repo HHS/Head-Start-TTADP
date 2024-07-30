@@ -121,6 +121,7 @@ commands:
       - run:
           name: Notify Slack
           command: |
+            set -x
             # Ensure the $BASH_ENV file exists
             if [ ! -f $BASH_ENV ]; then
               touch $BASH_ENV
@@ -160,7 +161,7 @@ commands:
             done
 
             # Check if the GitHub username exists in the associative array
-            if [ "${GITHUB_TO_SLACK_MAP[${CIRCLE_PR_USERNAME}]+abc}" ]; then
+            if [ "${GITHUB_TO_SLACK_MAP[${CIRCLE_PR_USERNAME+abc}]+abc}" ]; then
               slack_id=${GITHUB_TO_SLACK_MAP["${CIRCLE_PR_USERNAME}"]}
             else
               echo "GitHub username ${CIRCLE_PR_USERNAME} not found in the Slack channel."
