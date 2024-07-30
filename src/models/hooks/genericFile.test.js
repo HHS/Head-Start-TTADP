@@ -17,10 +17,6 @@ jest.mock('../../services/s3Queue', () => ({
 }));
 
 describe('propagateDestroyToFile', () => {
-  beforeAll(async () => {
-    await sequelize.authenticate();
-  });
-
   afterAll(async () => {
     await sequelize.close();
   });
@@ -29,32 +25,26 @@ describe('propagateDestroyToFile', () => {
     // eslint-disable-next-line global-require
     const { addDeleteFileToQueue } = require('../../services/s3Queue');
     const transaction = await sequelize.transaction();
+    const file = await File.create({
+      originalFileName: 'test.pdf',
+      key: 'test.pdf',
+      status: FILE_STATUSES.UPLOADED,
+      fileSize: 123445,
+    }, { transaction });
 
-    try {
-      const file = await File.create({
-        originalFileName: 'test.pdf',
-        key: 'test.pdf',
-        status: FILE_STATUSES.UPLOADED,
-        fileSize: 123445,
-      }, { transaction });
+    const mockInstance = { fileId: file.id };
+    const mockOptions = { transaction };
 
-      const mockInstance = { fileId: file.id };
-      const mockOptions = { transaction };
+    await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
-      await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
+    const foundFile = await File.findOne({
+      where: { id: file.id },
+      transaction,
+    });
 
-      expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
-      const foundFile = await File.findOne({
-        where: { id: file.id },
-        transaction,
-      });
-
-      expect(foundFile).toBeNull();
-      await transaction.commit();
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    expect(foundFile).toBeNull();
+    await transaction.commit();
   });
 
   it('won\'t destroy the file if its on a report', async () => {
