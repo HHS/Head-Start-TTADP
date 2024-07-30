@@ -16,6 +16,7 @@ import {
   CreateEventRequest,
   UpdateEventRequest,
   SessionShape,
+  TRAlertShape,
 } from './types/event';
 import EventReport from '../policies/event';
 
@@ -352,7 +353,62 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
   return findEventHelper(where) as Promise<EventShape>;
 }
 
-export async function getTrainingReportAlerts(userId: number, scopes: WhereOptions[] = []) {
+const parseMinimalEventForAlert = (
+  event: {
+    id: number;
+    data: {
+      eventId: string;
+      eventName: string;
+    },
+  },
+  alertType: string,
+  sessionName = '--',
+) => ({
+  id: event.id,
+  eventId: event.data.eventId,
+  eventName: event.data.eventName,
+  alertType,
+  sessionName,
+  isSession: sessionName !== '--',
+});
+
+// type for an array of either strings of functions that return a boolean
+type Checkers = (string | ((data: SessionShape['data']) => boolean))[];
+
+const checkSessionForCompletion = (
+  session: SessionShape,
+  event: EventShape,
+  checkers: Checkers,
+  missingSessionInfo: TRAlertShape[],
+) => {
+  let sessionValid = true;
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const field of checkers) {
+    if (typeof field === 'function') {
+      if (!field(session.data)) {
+        sessionValid = false;
+        break;
+      }
+    } else if (!(session.data[field])) {
+      sessionValid = false;
+      break;
+    }
+  }
+
+  if (!sessionValid) {
+    missingSessionInfo.push({
+      id: session.id,
+      eventId: event.data.eventId,
+      isSession: true,
+      sessionName: session.data.sessionName,
+      eventName: event.data.eventName,
+      alertType: 'missingSessionInfo',
+    });
+  }
+};
+
+export async function getTrainingReportAlerts(userId: number) {
   const where = {
     [Op.and]: [
       {
@@ -379,9 +435,10 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
           },
         },
       },
-      ...scopes,
     ],
   };
+
+  // get all events that the user is a part of and that are not complete/suspended
   const events = await findEventHelper(where, true) as EventShape[];
 
   const alerts = {
@@ -391,6 +448,7 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
     eventNotCompleted: [], // Event not completed (IST Creator or Collaborator) - 20 days past event end date
   };
 
+  // the only fields that aren't read only
   const eventInfoToCheck = ['startDate', 'endDate'];
   const eventArraysToCheck = ['collaboratorIds'];
   const istSessionInfoToCheck = [
@@ -403,7 +461,7 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
     'objectiveTrainers',
     (sessionData: SessionShape['data']) => {
       if (sessionData.useIpdCourses) {
-        return sessionData.courses;
+        return !!(sessionData.courses?.length);
       }
 
       return true;
@@ -415,11 +473,11 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
     'deliveryMethod',
     (sessionData : SessionShape['data']) => {
       if (sessionData.isIstVisit === 'yes') {
-        return sessionData.regionalOfficeTta;
+        return !!(sessionData.regionalOfficeTta)?.length;
       }
 
       if (sessionData.isIstVisit === 'no') {
-        return sessionData.participants?.length;
+        return !!(sessionData.participants?.length);
       }
 
       return false;
@@ -447,18 +505,18 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
       if (today.isAfter(nineteenDaysAfterStart)) {
         // and there are no sessions
         if (event.sessionReports.length === 0) {
-          alerts.noSessionsCreated.push(event);
+          alerts.noSessionsCreated.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
         }
 
         // or we are missing event data
         if (eventInfoToCheck.some((field) => !(event.data[field])) || eventArraysToCheck.some((field) => !(event[field]?.length))) {
-          alerts.missingEventInfo.push(event);
+          alerts.missingEventInfo.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
       // if we are 20 days past the end date, and the event is not completed
       if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
-        alerts.eventNotCompleted.push(event);
+        alerts.eventNotCompleted.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
 
       const sessions = event.sessionReports;
@@ -466,26 +524,7 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
         if (alerts.missingSessionInfo.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          // eslint-disable-next-line no-restricted-syntax
-          for (const field of istSessionInfoToCheck) {
-            if (typeof field === 'function') {
-              if (!field(session.data)) {
-                alerts.missingSessionInfo.push({
-                  eventId: event.data.eventId,
-                  isSession: true,
-                  ...session,
-                });
-                break;
-              }
-            } else if (!(session.data[field])) {
-              alerts.missingSessionInfo.push({
-                eventId: event.data.eventId,
-                isSession: true,
-                ...session,
-              });
-              break;
-            }
-          }
+          checkSessionForCompletion(session, event, istSessionInfoToCheck, alerts.missingSessionInfo);
         }
       });
     }
@@ -497,28 +536,10 @@ export async function getTrainingReportAlerts(userId: number, scopes: WhereOptio
       const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
       if (today.isAfter(nineteenDaysAfterStart)) {
         // eslint-disable-next-line no-restricted-syntax
-        for (const field of pocSessionInfoToCheck) {
-          if (typeof field === 'function') {
-            if (!field(session.data)) {
-              alerts.missingSessionInfo.push({
-                eventId: event.data.eventId,
-                isSession: true,
-                ...session,
-              });
-              break;
-            }
-          } else if (!(session.data[field])) {
-            alerts.missingSessionInfo.push({
-              eventId: event.data.eventId,
-              isSession: true,
-              ...session,
-            });
-            break;
-          }
-        }
+        checkSessionForCompletion(session, event, pocSessionInfoToCheck, alerts.missingSessionInfo);
       }
-    });
-  });
+    }); // for each session
+  }); // for each event
 
   return alerts;
 }
