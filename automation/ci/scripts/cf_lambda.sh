@@ -506,6 +506,9 @@ decode_and_write_files() {
                     log "INFO" "File $file_name written and verified successfully."
                 else
                     log "ERROR" "File $file_name verification failed."
+                    if [ -f "$output_directory/$file_name" ]; then
+                      rm -rf "$output_directory/$file_name"
+                    fi
                 fi
             fi
         fi
