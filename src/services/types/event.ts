@@ -1,6 +1,7 @@
 export type SessionShape = {
   id: number;
   data: {
+    sessionName: string;
     status: string;
     endDate: string;
     startDate: string;
@@ -33,6 +34,7 @@ export type EventShape = {
     endDate: string;
     status: string;
     eventId: string;
+    eventName: string;
   };
   updatedAt: string;
   sessionReports: SessionShape[];
@@ -51,3 +53,12 @@ export type CreateEventRequest = {
 };
 
 export type UpdateEventRequest = CreateEventRequest;
+
+export type TRAlertShape = {
+  id: number;
+  eventId: string;
+  eventName: string;
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted';
+  sessionName: string;
+  isSession: boolean;
+};
