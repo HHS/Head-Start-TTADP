@@ -154,7 +154,7 @@ commands:
             slack_id=${GITHUB_TO_SLACK_MAP[${GITHUB_USERNAME}]}
 
             if [[ -n "${slack_id}" ]]; then
-              MESSAGE_TEXT="<@${slack_id}> ${MESSAGE_TEXT}"
+              MESSAGE_TEXT="<@${slack_id}>\n${MESSAGE_TEXT}"
             fi
 
             echo $MESSAGE_TEXT
@@ -199,6 +199,25 @@ commands:
       - run:
           name: Generate Message
           command: |
+            # Determine the environment URL
+            case "<< parameters.environment_name >>" in
+                sandbox)
+                    ENV_URL="https://tta-smarthub-sandbox.app.cloud.gov/"
+                    ;;
+                dev)
+                    ENV_URL="https://tta-smarthub-dev.app.cloud.gov/"
+                    ;;
+                staging)
+                    ENV_URL="https://tta-smarthub-staging.app.cloud.gov/"
+                    ;;
+                production)
+                    ENV_URL="https://ttahub.ohs.acf.hhs.gov"
+                    ;;
+                *)
+                    ENV_URL="#"
+                    ;;
+            esac
+
             if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
@@ -206,15 +225,16 @@ commands:
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to << parameters.environment_name >> was successful!"
+
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|<< parameters.environment_name >> was successful!"
                     if [ ! -z "${JIRA_URLS}" ]; then
                         MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                     fi
                 else
-                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to << parameters.environment_name >> was successful!"
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|<< parameters.environment_name >> was successful!"
                 fi
             else
-                MESSAGE_TEXT=":rocket: Deployment to << parameters.environment_name >> was successful!"
+                MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|<< parameters.environment_name >> was successful!"
             fi
 
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
@@ -1098,7 +1118,7 @@ jobs:
             - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-head-start-github"
-                environment_name: "production"
+                environment_name: "staging"
 
       - when:  # prod
           condition:
