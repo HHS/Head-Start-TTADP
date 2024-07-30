@@ -137,7 +137,7 @@ commands:
             fi
 
             # Add user reference if available
-           CHANNEL_MEMBERS_RESPONSE=$(curl -s -X GET "https://slack.com/api/conversations.members?channel=${slack_channel}" \
+            CHANNEL_MEMBERS_RESPONSE=$(curl -s -X GET "https://slack.com/api/conversations.members?channel=${slack_channel}" \
               -H "Authorization: Bearer ${slack_bot_token}" \
               -H 'Content-type: application/json;charset=utf-8')
 
