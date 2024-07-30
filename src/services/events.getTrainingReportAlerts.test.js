@@ -513,7 +513,7 @@ describe('getTrainingReportAlerts', () => {
     });
 
     it('fetches the correct alerts for owners', async () => {
-      const alerts = await getTrainingReportAlerts(ownerId);
+      const alerts = await getTrainingReportAlerts(ownerId, [regionId]);
 
       expect(alerts.missingEventInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingEventInfo.sort());
       expect(alerts.missingSessionInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingSessionInfo.sort());
@@ -551,7 +551,7 @@ describe('getTrainingReportAlerts', () => {
     });
 
     it('fetches the correct alerts for collaborators', async () => {
-      const alerts = await getTrainingReportAlerts(collaboratorId);
+      const alerts = await getTrainingReportAlerts(collaboratorId, [regionId]);
 
       expect(alerts.missingEventInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingEventInfo.sort());
       expect(alerts.missingSessionInfo.map((i) => i.id).sort()).toStrictEqual(testData.ist.missingSessionInfo.sort());
@@ -588,7 +588,7 @@ describe('getTrainingReportAlerts', () => {
     });
 
     it('fetches the correct alerts for poc', async () => {
-      const alerts = await getTrainingReportAlerts(pocId);
+      const alerts = await getTrainingReportAlerts(pocId, [regionId]);
 
       expect(alerts.missingEventInfo).toStrictEqual([]);
       expect(alerts.noSessionsCreated).toStrictEqual([]);

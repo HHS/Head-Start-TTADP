@@ -408,7 +408,7 @@ const checkSessionForCompletion = (
   }
 };
 
-export async function getTrainingReportAlerts(userId: number) {
+export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<{ missingEventInfo: TRAlertShape[]; missingSessionInfo: TRAlertShape[]; noSessionsCreated: TRAlertShape[]; eventNotCompleted: TRAlertShape[]; }> {
   const where = {
     [Op.and]: [
       {
@@ -429,6 +429,9 @@ export async function getTrainingReportAlerts(userId: number) {
         ],
       },
       {
+        regionId: {
+          [Op.in]: regions,
+        },
         data: {
           status: {
             [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],

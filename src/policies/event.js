@@ -157,4 +157,10 @@ export default class EventReport {
   canSuspendOrCompleteEvent() {
     return this.isAdmin() || this.isAuthor();
   }
+
+  canSeeAlerts() {
+    return this.isAdmin() || this.canWriteInRegion() || !!this.permissions.find(
+      (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
+    );
+  }
 }
