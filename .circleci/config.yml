@@ -446,31 +446,31 @@ commands:
               -p ${<< parameters.cloudgov_password >>} \
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
-      - run:
-          name: cf_lambda - script to trigger backup
-          command: |
-            set -x
-            json_data=$(jq -n \
-              --arg automation_dir "./automation" \
-              --arg manifest "manifest.yml" \
-              --arg task_name "backup" \
-              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
-              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
-              '{
-                automation_dir: $automation_dir,
-                manifest: $manifest,
-                task_name: $task_name,
-                command: $command,
-                args: $args
-              }')
+      # - run:
+      #     name: cf_lambda - script to trigger backup
+      #     command: |
+      #       set -x
+      #       json_data=$(jq -n \
+      #         --arg automation_dir "./automation" \
+      #         --arg manifest "manifest.yml" \
+      #         --arg task_name "backup" \
+      #         --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
+      #         --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
+      #         '{
+      #           automation_dir: $automation_dir,
+      #           manifest: $manifest,
+      #           task_name: $task_name,
+      #           command: $command,
+      #           args: $args
+      #         }')
 
-            # Set execute permission
-            find ./automation -name "*.sh" -exec chmod +x {} \;
+      #       # Set execute permission
+      #       find ./automation -name "*.sh" -exec chmod +x {} \;
 
-            ./automation/ci/scripts/cf_lambda.sh "$json_data"
-          environment:
-            CF_RDS_SERVICE_NAME: ttahub-prod
-            CF_S3_SERVICE_NAME: ttahub-db-backups
+      #       ./automation/ci/scripts/cf_lambda.sh "$json_data"
+      #     environment:
+      #       CF_RDS_SERVICE_NAME: ttahub-prod
+      #       CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
           name: Generate Message
           command: |
