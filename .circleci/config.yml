@@ -135,6 +135,28 @@ commands:
               MESSAGE_TEXT="<< parameters.message_text >>"
             fi
 
+            # Add user reference if available
+            CHANNEL_MEMBERS=$(curl -s -X GET "https://slack.com/api/conversations.members?channel=${slack_channel}" \
+              -H "Authorization: Bearer ${slack_bot_token}" | jq -r '.members[]')
+
+            declare -A GITHUB_TO_SLACK_MAP
+
+            for MEMBER in ${CHANNEL_MEMBERS}; do
+              PROFILE=$(curl -s -X GET "https://slack.com/api/users.profile.get?user=${MEMBER}" \
+                -H "Authorization: Bearer ${slack_bot_token}")
+              GITHUB_ID=$(echo "${PROFILE}" | jq -r '.profile.fields[] | select(.label=="GitHub") | .value')
+
+              if [[ -n "${GITHUB_ID}" ]]; then
+                GITHUB_TO_SLACK_MAP[${GITHUB_ID}]="${MEMBER}"
+              fi
+            done
+
+            slack_id=${GITHUB_TO_SLACK_MAP[${GITHUB_USERNAME}]}
+
+            if [[ -n "${slack_id}" ]]; then
+              MESSAGE_TEXT="<@${slack_id}> ${MESSAGE_TEXT}"
+            fi
+
             echo $MESSAGE_TEXT
 
             # Ensure all parameters are provided
