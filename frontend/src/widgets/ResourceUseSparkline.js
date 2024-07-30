@@ -42,7 +42,7 @@ export default function ResourceUseSparkline({ dataPoints }) {
     bargap: 0.05,
     height: 37.75,
     width,
-    barcornerradius: 4,
+    barcornerradius: 2,
     margin: {
       l: 0,
       pad: 0,
