@@ -10,7 +10,7 @@ check_cf_version() {
         echo "Current cf version ($current_version) is greater than or equal to $minimum_version." >&2
     else
         echo "Current cf version ($current_version) is less than $minimum_version. Please update your cf CLI." >&2
-        return 1  # Return 1 to indicate error
+        exit 1  # Return 1 to indicate error
     fi
 }
 
@@ -181,13 +181,13 @@ check_cf_version
 # Main execution block
 if [ "$#" -gt 3 ]; then
     echo "Usage: $0 [<CF_S3_SERVICE_NAME> [<s3_folder> [<DELETION_ALLOWED>]]]"
-    exit 1
+    exit 12
 fi
 
 # Check for required dependencies (cf CLI and AWS CLI)
 if ! type cf >/dev/null 2>&1 || ! type aws >/dev/null 2>&1; then
     echo "Error: Make sure both Cloud Foundry CLI and AWS CLI are installed."
-    exit 1
+    exit 12
 fi
 
 # Fetch the latest backup information, generate URLs, and clean up the service key
