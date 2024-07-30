@@ -48,9 +48,10 @@ commands:
           name: Setup Sparse Checkout
           command: |
             git config core.sparseCheckout true
-            IFS=',' read -ra DIRS <<< "${CIRCLE_PARAMETERS_DIRECTORIES}"
-            for dir in "${DIRS[@]}"; do
-              echo "$dir/*" >> .git/info/sparse-checkout
+            DIRS="<< parameters.directories >>"
+            IFS=',' read -ra DIR_ARRAY <<< "$DIRS"
+            for dir in "${DIR_ARRAY[@]}"; do
+              echo "$dir" >> .git/info/sparse-checkout
             done
       - run:
           name: Checkout Branch
