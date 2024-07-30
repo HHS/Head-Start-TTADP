@@ -1,7 +1,10 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import ResourceUseSparkline from './ResourceUseSparkline';
+import colors from '../colors';
 import './ResourceUseSparklineGraph.scss';
 
 const ResourceLink = ({ url, title }) => {
@@ -10,7 +13,14 @@ const ResourceLink = ({ url, title }) => {
   }
 
   return (
-    <a href={url} className="usa-prose padding-x-3 padding-y-1 text-overflow-ellipsis display-block border-bottom smart-hub-border-base-lighter" key={uniqueId('ttahub-resource-use-sparkline-resource-title')}>{title || url}</a>
+    <div className="padding-x-3 display-flex  padding-y-1 border-bottom smart-hub-border-base-lighter flex-justify flex-align-center">
+      <a href={url} className="usa-prose text-overflow-ellipsis ttahub-resource-use-sparkline-resource-title" key={uniqueId('ttahub-resource-use-sparkline-resource-title')}>{title || url}</a>
+      <FontAwesomeIcon
+        color={colors.ttahubBlue}
+        icon={faArrowUpRightFromSquare}
+        size="xs"
+      />
+    </div>
   );
 };
 
