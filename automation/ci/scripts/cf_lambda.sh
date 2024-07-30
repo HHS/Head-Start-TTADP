@@ -488,7 +488,7 @@ decode_and_write_files() {
 
     while IFS= read -r line; do
         if echo "$line" | grep -q "$keyword"; then
-            json_part=$(echo "$line" | sed -e "s/^$keyword //")
+            json_part=$(echo "$line" | grep -oP '{[^}]+}')
             validate_json "$json_part"
             file_name=$(echo "$json_part" | jq -r '.fileName')
             base64_content=$(echo "$json_part" | jq -r '.content')
