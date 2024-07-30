@@ -678,7 +678,7 @@ encode_file_to_base64() {
         return 1
     fi
     
-    base64_content=$(base64 "$file_path")
+    base64_content=$(base64 -w 0 "$file_path")
     sha256_hash=$(sha256sum "$file_path" | awk '{print $1}')
     md5_hash=$(md5sum "$file_path" | awk '{print $1}')
     json_output=$(printf '{"fileName": "%s", "content": "%s", "sha256": "%s", "md5": "%s"}\n' "$file_name" "$base64_content" "$sha256_hash" "$md5_hash")
