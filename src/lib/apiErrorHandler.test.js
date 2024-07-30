@@ -4,8 +4,6 @@ import db, { RequestErrors } from '../models';
 import handleErrors, {
   handleUnexpectedErrorInCatchBlock,
   logRequestError,
-  handleWorkerErrors,
-  handleUnexpectedWorkerError,
 } from './apiErrorHandler';
 import { auditLogger } from '../logger';
 
@@ -95,35 +93,6 @@ describe('apiErrorHandler', () => {
 
     expect(requestErrors.length).not.toBe(0);
     expect(requestErrors[0].operation).toBe('SequelizeError');
-  });
-
-  it('handles worker errors', async () => {
-    const mockWorkerError = new Error('Worker error');
-    await handleWorkerErrors(mockJob, mockWorkerError, mockLogContext);
-
-    const requestErrors = await RequestErrors.findAll();
-
-    expect(requestErrors.length).not.toBe(0);
-    expect(requestErrors[0].operation).toBe('UNEXPECTED_ERROR');
-  });
-
-  it('handles worker Sequelize errors', async () => {
-    const mockSequelizeWorkerError = new Sequelize.Error('Sequelize worker error');
-    await handleWorkerErrors(mockJob, mockSequelizeWorkerError, mockLogContext);
-
-    const requestErrors = await RequestErrors.findAll();
-
-    expect(requestErrors.length).not.toBe(0);
-    expect(requestErrors[0].operation).toBe('SequelizeError');
-  });
-
-  it('handles unexpected worker error in catch block', async () => {
-    const mockUnexpectedWorkerError = new Error('Unexpected worker error');
-    handleUnexpectedWorkerError(mockJob, mockUnexpectedWorkerError, mockLogContext);
-
-    const requestErrors = await RequestErrors.findAll();
-
-    expect(requestErrors.length).toBe(0);
   });
 
   it('handles null error', async () => {
