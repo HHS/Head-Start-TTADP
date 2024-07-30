@@ -14,6 +14,7 @@ import {
   updateEvent,
   destroyEvent,
   findEventsByStatus,
+  getTrainingReportAlerts,
 } from '../../services/event';
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
@@ -181,6 +182,22 @@ export const deleteHandler = async (req, res) => {
 
     await destroyEvent(event.id);
     return res.status(httpCodes.OK).send({ message: 'Event deleted' });
+  } catch (error) {
+    return handleErrors(req, res, error, logContext);
+  }
+};
+
+export const getTrainingReportAlertsHandler = async (req, res) => {
+  try {
+    const auth = await getEventAuthorization(req, res);
+
+    if (!auth.canSeeAlerts()) {
+      return res.sendStatus(httpCodes.FORBIDDEN);
+    }
+
+    const userId = auth.user.id;
+    const alerts = await getTrainingReportAlerts(userId, auth.readableRegions);
+    return res.status(httpCodes.OK).send(alerts);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }
