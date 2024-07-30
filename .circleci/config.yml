@@ -411,14 +411,18 @@ commands:
             sudo apt-get update
             # Install uuid-runtime to have access to uuidgen
             # Install pv wget
-            sudo apt-get install pv uuid-runtime wget coreutils jq
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
+
             # Install Cloud Foundry CLI
             wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
             echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
             sudo apt-get update
-            sudo apt-get install cf8-cli
+            sudo apt-get install -y cf8-cli
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
+
+            # Install AWS CLI
+            sudo apt-get install -y awscli
 
             # The line you want to ensure exists in the /etc/hosts file
             line="127.0.0.1        localhost"
