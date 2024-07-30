@@ -770,7 +770,6 @@ function main() {
   log "INFO" "generate presigned URLs"
   generate_presigned_urls "${aws_s3_server}" "${backup_filename_prefix}" "${duration}"
   log "INFO" "Presigned URLs JSON written to /tmp/presigned_urls.json"
-  set -x
   encode_file_to_base64 "/tmp/presigned_urls.json" "presigned_urls.json"
 
   log "INFO" "clear the populated env vars"
