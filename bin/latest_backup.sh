@@ -163,11 +163,25 @@ list_all_zip_files() {
         printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
         current_date=$(date +%s)
         echo "${zip_files}" | awk -v current_date="$current_date" '
-            function get_age(date_str, time_str) {
+            BEGIN {
+                # Convert current_date from seconds since epoch to day number
+                current_day = int(current_date / 86400)
+            }
+            function parse_date(date_str, time_str) {
                 split(date_str, date_parts, "-")
                 split(time_str, time_parts, ":")
-                file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " 00")
-                return int((current_date - file_time) / 86400)
+                year = date_parts[1]
+                month = date_parts[2]
+                day = date_parts[3]
+                hour = time_parts[1]
+                minute = time_parts[2]
+                second = time_parts[3]
+                # Use a simple formula to approximate the day number
+                return int((mktime(year " " month " " day " " hour " " minute " " second) / 86400))
+            }
+            function get_age(date_str, time_str) {
+                file_day = parse_date(date_str, time_str)
+                return current_day - file_day
             }
             {
                 split($4, parts, "/")
