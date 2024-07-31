@@ -8,7 +8,7 @@ check_cf_version() {
         echo "Current cf version ($current_version) is greater than or equal to $minimum_version." >&2
     else
         echo "Current cf version ($current_version) is less than $minimum_version. Please update your cf CLI." >&2
-        return 1  # Return 1 to indicate error
+        exit 1  # Return 1 to indicate error
     fi
 }
 
