@@ -169,14 +169,21 @@ list_all_zip_files() {
         sort -rk5 |\
         sed ':a;N;$!ba;s/\n/ /g' |\
         sed 's~ zip ~\nzip ~g' |\
-        while read line; do\
-          zip_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');\
-          has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");\
-          has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "");\
-          has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "");\
-          zip_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));\
-          zip_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ));\
-          printf "%-50s %-5s %-5s %-5s  %-15s %-5s\n" "$zip_file" "$has_pwd" "$has_md5" "$has_sha256" "$zip_size" "$zip_age";\
+        while read line; do
+          zip_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
+          has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");
+          has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "");
+          has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "");
+          zip_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));
+
+          # Determine OS and use appropriate date command
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            zip_age=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+          else
+            zip_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+          fi
+
+          printf "%-50s %-5s %-5s %-5s  %-15s %-5s\n" "$zip_file" "$has_pwd" "$has_md5" "$has_sha256" "$zip_size" "$zip_age";
         done |\
         sort -k1
     fi
