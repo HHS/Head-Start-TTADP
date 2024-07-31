@@ -408,7 +408,7 @@ const checkSessionForCompletion = (
   }
 };
 
-export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<{ alerts: TRAlertShape[], raw: EventShape[] }> {
+export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<TRAlertShape[]> {
   const where = {
     [Op.and]: [
       {
@@ -548,7 +548,7 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
     }); // for each session
   }); // for each event
 
-  return { alerts, raw: events };
+  return alerts;
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
