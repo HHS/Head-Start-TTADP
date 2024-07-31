@@ -4,6 +4,8 @@ const singleLineLogger = (
   queryString,
 ) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
+const suppressSuccessMessage = process.env.SUPPRESS_SUCCESS_MESSAGE === 'true';
+
 const connectionValidation = async (connection) => {
   try {
     /*
@@ -28,8 +30,11 @@ const connectionValidation = async (connection) => {
     };
 
     const result = await connection.query(queryConfig);
-    // eslint-disable-next-line no-console
-    console.info('Connection validated successfully');
+
+    if (!suppressSuccessMessage) {
+      // eslint-disable-next-line no-console
+      console.info('Connection validated successfully');
+    }
     return !!result;
   } catch (error) {
     // eslint-disable-next-line no-console
