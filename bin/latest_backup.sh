@@ -56,7 +56,6 @@ fetch_service_key() {
         echo "No JSON data found." >&2
         exit 5
     fi
-    echo "Credentials JSON: $credentials_json"
     echo "${credentials_json}"
 }
 
