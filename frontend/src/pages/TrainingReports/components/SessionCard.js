@@ -99,7 +99,7 @@ function SessionCard({
             isWriteable && !statusIsComplete
               ? (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
-                  <Link to={`/training-report/${eventId}/session/${session.id}/session-summary`} className="margin-right-4">
+                  <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">
                     <Pencil />
                     Edit session
                   </Link>

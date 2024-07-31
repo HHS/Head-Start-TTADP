@@ -19,9 +19,12 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
+import ReportLink from '../../components/ReportLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
+import isAdmin from '../../permissions';
+import sessionSummary from './pages/sessionSummary';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -106,6 +109,43 @@ export default function SessionForm({ match }) {
     messageStore,
   } = useSocket(user);
 
+  const isAdminUser = isAdmin(user);
+
+  const {
+    isPoc,
+    isCollaborator,
+    isOwner,
+  } = (() => {
+    let isPocUser = false;
+    let isCollaboratorUser = false;
+    let isOwnerUser = false;
+
+    if (formData && formData.event) {
+      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
+        isPocUser = true;
+      }
+
+      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
+        isCollaboratorUser = true;
+      }
+
+      if (formData.event.ownerId && formData.event.ownerId === user.id) {
+        isOwnerUser = true;
+      }
+    }
+
+    return {
+      isPoc: isPocUser,
+      isCollaborator: isCollaboratorUser,
+      isOwner: isOwnerUser,
+    };
+  })();
+
+  // eslint-disable-next-line max-len
+  const applicationPages = isPoc ? [pages.participants, pages.supportingAttachments, pages.nextSteps] : [sessionSummary];
+  const showNavigation = isAdminUser || isPoc;
+  const redirectPagePath = showNavigation ? 'participants' : 'session-summary';
+
   useEffect(() => {
     if (!trainingReportId || !sessionId) {
       return;
@@ -170,7 +210,7 @@ export default function SessionForm({ match }) {
   }, [currentPage, hookForm.reset, reportFetched, sessionId, setErrorResponseCode]);
 
   // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
+  useHookFormPageState(hookForm, applicationPages, currentPage);
 
   const updatePage = (position) => {
     const state = {};
@@ -178,14 +218,14 @@ export default function SessionForm({ match }) {
       state.showLastUpdatedTime = true;
     }
 
-    const page = pages.find((p) => p.position === position);
+    const page = Object.values(applicationPages).find((p) => p.position === position);
     const newPath = `/training-report/${trainingReportId}/session/${reportId.current}/${page.path}`;
     history.push(newPath, state);
   };
 
   if (!currentPage) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
+      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
   }
 
@@ -220,11 +260,11 @@ export default function SessionForm({ match }) {
   };
 
   const onSaveAndContinue = async () => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
+    const whereWeAre = applicationPages.find((p) => p.path === currentPage);
+    const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
     updateShowSavedDraft(false);
-    if (nextPage) {
+    if (showNavigation && nextPage) {
       updatePage(nextPage.position);
     }
   };
@@ -269,7 +309,9 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
+  const nonFormUser = !isOwner || !isAdminUser || !isPoc !== !isCollaborator;
+
+  if (reportFetched && (formData.status === TRAINING_REPORT_STATUSES.COMPLETE || nonFormUser)) {
     return (
       <Redirect to={`/training-report/view/${trainingReportId}`} />
     );
@@ -289,10 +331,11 @@ export default function SessionForm({ match }) {
       </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <div className="margin-top-3 margin-bottom-5">
+          <div className="margin-y-2">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Training report - Session
             </h1>
+            <ReportLink reportId={formData.event.data.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
           </div>
         </Grid>
       </Grid>
@@ -312,7 +355,7 @@ export default function SessionForm({ match }) {
             currentPage={currentPage}
             additionalData={{}}
             formData={formData}
-            pages={pages}
+            pages={applicationPages}
             onFormSubmit={onFormSubmit}
             onSave={onSave}
             onResetToDraft={() => {}}
@@ -327,6 +370,7 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
+            hideSideNav={!showNavigation}
           />
         </FormProvider>
       </NetworkContext.Provider>
