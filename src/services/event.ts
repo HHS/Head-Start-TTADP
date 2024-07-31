@@ -408,7 +408,7 @@ const checkSessionForCompletion = (
   }
 };
 
-export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<TRAlertShape[]> {
+export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<{ alerts: TRAlertShape[], raw: EventShape[] }> {
   const where = {
     [Op.and]: [
       {
@@ -440,6 +440,8 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
       },
     ],
   };
+
+  auditLogger.info({ where });
 
   // get all events that the user is a part of and that are not complete/suspended
   const events = await findEventHelper(where, true) as EventShape[];
@@ -546,7 +548,7 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
     }); // for each session
   }); // for each event
 
-  return alerts;
+  return { alerts, raw: events };
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
