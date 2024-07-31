@@ -474,7 +474,7 @@ function delete_app {
 
 main() {
   # Check dependencies first
-  check_dependencies cf awk date grep jq sleep uuidgen base64 sha256sum md5sum
+  check_dependencies cf awk date grep jq sleep uuidgen
 
   local json_input="$1"
 
