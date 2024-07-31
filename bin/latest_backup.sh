@@ -51,7 +51,6 @@ fetch_service_key() {
     local cf_s3_service_name=$1
     local key_name=$2
     local full_output=$(cf service-key "${cf_s3_service_name}" "${key_name}" 2>&1)
-    echo "Service key full output: $full_output"
     local credentials_json=$(echo "${full_output}" | awk '/\{/,0')
     if [ -z "${credentials_json}" ]; then
         echo "No JSON data found." >&2
