@@ -446,80 +446,80 @@ commands:
               -p ${<< parameters.cloudgov_password >>} \
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
-      # - run:
-      #     name: cf_lambda - script to trigger backup
-      #     command: |
-      #       set -x
-      #       json_data=$(jq -n \
-      #         --arg automation_dir "./automation" \
-      #         --arg manifest "manifest.yml" \
-      #         --arg task_name "backup" \
-      #         --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
-      #         --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
-      #         '{
-      #           automation_dir: $automation_dir,
-      #           manifest: $manifest,
-      #           task_name: $task_name,
-      #           command: $command,
-      #           args: $args
-      #         }')
+      - run:
+          name: cf_lambda - script to trigger backup
+          command: |
+            set -x
+            json_data=$(jq -n \
+              --arg automation_dir "./automation" \
+              --arg manifest "manifest.yml" \
+              --arg task_name "backup" \
+              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
+              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
+              '{
+                automation_dir: $automation_dir,
+                manifest: $manifest,
+                task_name: $task_name,
+                command: $command,
+                args: $args
+              }')
 
-      #       # Set execute permission
-      #       find ./automation -name "*.sh" -exec chmod +x {} \;
+            # Set execute permission
+            find ./automation -name "*.sh" -exec chmod +x {} \;
 
-      #       ./automation/ci/scripts/cf_lambda.sh "$json_data"
-      #     environment:
-      #       CF_RDS_SERVICE_NAME: ttahub-prod
-      #       CF_S3_SERVICE_NAME: ttahub-db-backups
+            ./automation/ci/scripts/cf_lambda.sh "$json_data"
+          environment:
+            CF_RDS_SERVICE_NAME: ttahub-prod
+            CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
           name: Generate Message
           command: |
-            # set -x
-            # if [ -f /tmp/presigned_urls.json ]; then
-            #   cat /tmp/presigned_urls.json
-            #   PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
-            # else
-            #   echo "Presigned URLs JSON file not found!"
-            #   exit 1
-            # fi
-            # ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
-            # PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
-            # MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
-            # SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
-
-            # Execute the latest_backup.sh script and capture its output
-
-            output=$(bash ./bin/latest_backup.sh)
-
-            # Check if the script executed successfully
-            if [ $? -ne 0 ]; then
-              echo "Failed to execute latest_backup.sh"
+            set -x
+            if [ -f /tmp/presigned_urls.json ]; then
+              cat /tmp/presigned_urls.json
+              PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
+            else
+              echo "Presigned URLs JSON file not found!"
               exit 1
             fi
+            ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
+            PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
+            MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
+            SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
 
-            # Initialize variables to store the URLs
-            ZIP_URL=""
-            PASSWORD_URL=""
-            MD5_URL=""
-            SHA256_URL=""
+            # # Execute the latest_backup.sh script and capture its output
 
-            # Parse the output to extract the URLs based on their file extensions
-            echo "$output" | while IFS= read -r line; do
-              case "$line" in
-                *.sql.zip?*)
-                  ZIP_URL="$line"
-                  ;;
-                *.sql.password?*)
-                  PASSWORD_URL="$line"
-                  ;;
-                *.sql.md5?*)
-                  MD5_URL="$line"
-                  ;;
-                *.sql.sha256?*)
-                  SHA256_URL="$line"
-                  ;;
-              esac
-            done
+            # output=$(bash ./bin/latest_backup.sh)
+
+            # # Check if the script executed successfully
+            # if [ $? -ne 0 ]; then
+            #   echo "Failed to execute latest_backup.sh"
+            #   exit 1
+            # fi
+
+            # # Initialize variables to store the URLs
+            # ZIP_URL=""
+            # PASSWORD_URL=""
+            # MD5_URL=""
+            # SHA256_URL=""
+
+            # # Parse the output to extract the URLs based on their file extensions
+            # echo "$output" | while IFS= read -r line; do
+            #   case "$line" in
+            #     *.sql.zip?*)
+            #       ZIP_URL="$line"
+            #       ;;
+            #     *.sql.password?*)
+            #       PASSWORD_URL="$line"
+            #       ;;
+            #     *.sql.md5?*)
+            #       MD5_URL="$line"
+            #       ;;
+            #     *.sql.sha256?*)
+            #       SHA256_URL="$line"
+            #       ;;
+            #   esac
+            # done
 
             # Check if all URLs are extracted successfully
             if [ -z "$ZIP_URL" ] || [ -z "$PASSWORD_URL" ] || [ -z "$MD5_URL" ] || [ -z "$SHA256_URL" ]; then
