@@ -166,7 +166,7 @@ list_all_zip_files() {
             function get_age(date_str, time_str) {
                 split(date_str, date_parts, "-")
                 split(time_str, time_parts, ":")
-                file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " " time_parts[3])
+                file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " 00")
                 return int((current_date - file_time) / 86400)
             }
             {
@@ -174,7 +174,7 @@ list_all_zip_files() {
                 file = parts[length(parts)]
                 split(file, nameparts, ".")
                 base = nameparts[1]
-                for (i=2; i<length(nameparts); i++) {
+                for (i = 2; i < length(nameparts); i++) {
                     base = base "." nameparts[i]
                 }
                 ext = nameparts[length(nameparts)]
@@ -187,9 +187,14 @@ list_all_zip_files() {
                     split(key, keys, ",")
                     base = keys[1]
                     ext = keys[2]
-                    if (ext == "pwd") pwd_file = "x"; else pwd_file = " "
-                    if (ext == "md5") md5_file = "x"; else md5_file = " "
-                    if (ext == "sha256") sha256_file = "x"; else sha256_file = " "
+                    if (ext == "pwd") pwd_files[base] = "x"
+                    if (ext == "md5") md5_files[base] = "x"
+                    if (ext == "sha256") sha256_files[base] = "x"
+                }
+                for (base in sizes) {
+                    pwd_file = (pwd_files[base] ? "x" : " ")
+                    md5_file = (md5_files[base] ? "x" : " ")
+                    sha256_file = (sha256_files[base] ? "x" : " ")
                     human_readable_size = sizes[base] " B"
                     cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
                     cmd | getline human_readable_size
