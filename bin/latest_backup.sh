@@ -162,60 +162,23 @@ list_all_zip_files() {
         echo "ZIP files in S3 bucket:"
         printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
         current_date=$(date +%s)
-        echo "${zip_files}" | awk -v current_date="$(date +%Y-%m-%d)" '
-            function parse_date(date_str,   cmd, file_date) {
-                cmd = "date -d \"" date_str "\" +%s 2>/dev/null || date -j -f \"%Y-%m-%d\" \"" date_str "\" +%s"
-                cmd | getline file_date
-                close(cmd)
-                return file_date
-            }
-            function get_age(date_str) {
-                file_date = parse_date(date_str)
-                current_date_sec = parse_date(current_date)
-                return int((current_date_sec - file_date) / 86400)
-            }
-            function manual_sort(ind, n, i, j, temp) {
-                for (i = 1; i <= n; i++) {
-                    for (j = i + 1; j <= n; j++) {
-                        if (ind[i] > ind[j]) {
-                            temp = ind[i]
-                            ind[i] = ind[j]
-                            ind[j] = temp
-                        }
-                    }
-                }
-            }
-            {
-                split($4, parts, "/")
-                file = parts[length(parts)]
-                split(file, nameparts, ".")
-                base = nameparts[1]
-                for (i = 2; i < length(nameparts); i++) {
-                    base = base "." nameparts[i]
-                }
-                ext = nameparts[length(nameparts)]
-                files[base][ext] = 1
-                sizes[base] = $3
-                ages[base] = get_age($1)
-            }
-            END {
-                n = 0
-                for (base in sizes) {
-                    pwd_file = (files[base]["pwd"] ? "x" : " ")
-                    md5_file = (files[base]["md5"] ? "x" : " ")
-                    sha256_file = (files[base]["sha256"] ? "x" : " ")
-                    human_readable_size = sizes[base] " B"
-                    cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
-                    cmd | getline human_readable_size
-                    close(cmd)
-                    data[++n] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
-                }
-                manual_sort(data, n)
-                for (i = 1; i <= n; i++) {
-                    printf "%s", data[i]
-                }
-            }'
-
+        echo "${zip_files}" | \
+        while read line; do \
+          echo "${line##*.} ${line}";\
+        done |\
+        sort -rk5 |\
+        sed ':a;N;$!ba;s/\n/ /g' |\
+        sed 's~ zip ~\nzip ~g' |\
+        while read line; do\
+          zip_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');\
+          has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");\
+          has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "");\
+          has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "");\
+          zip_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));\
+          zip_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ));\
+          printf "%-50s %-5s %-5s %-5s  %-15s %-5s\n" "$zip_file" "$has_pwd" "$has_md5" "$has_sha256" "$zip_size" "$zip_age";\
+        done |\
+        sort -k1
     fi
 }
 
