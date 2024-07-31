@@ -84,7 +84,7 @@ delete_old_service_keys() {
     local current_time=$(date +%s)
     local six_hours_in_seconds=21600
     echo "Deleting older service keys for service instance ${cf_s3_service_name}..."
-    
+
     cf service-keys "${cf_s3_service_name}" | grep -v $current_service_key | awk 'NR>1 {print $1}' | while read -r key_name; do
         if [[ $key_name =~ ^${cf_s3_service_name}-key- ]]; then
             local key_creation_time=$(cf service-key "${cf_s3_service_name}" "${key_name}" | grep -oP '(?<=created:\s).+')
@@ -163,41 +163,44 @@ list_all_zip_files() {
         printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
         current_date=$(date +%s)
         echo "${zip_files}" | awk -v current_date="$current_date" '
-        function get_age(date_str, time_str) {
-            split(date_str, date_parts, "-")
-            split(time_str, time_parts, ":")
-            file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " " time_parts[3])
-            return int((current_date - file_time) / 86400)
-        }
-        {
-            split($4, parts, "/")
-            file = parts[length(parts)]
-            split(file, nameparts, ".")
-            base = nameparts[1]
-            for (i=2; i<length(nameparts); i++) {
-                base = base "." nameparts[i]
+            function get_age(date_str, time_str) {
+                split(date_str, date_parts, "-")
+                split(time_str, time_parts, ":")
+                file_time = mktime(date_parts[1] " " date_parts[2] " " date_parts[3] " " time_parts[1] " " time_parts[2] " " time_parts[3])
+                return int((current_date - file_time) / 86400)
             }
-            ext = nameparts[length(nameparts)]
-            files[base][ext] = 1
-            sizes[base] = $3
-            ages[base] = get_age($1, $2)
-        }
-        END {
-            for (base in files) {
-                pwd_file = (files[base]["pwd"] ? "x" : " ")
-                md5_file = (files[base]["md5"] ? "x" : " ")
-                sha256_file = (files[base]["sha256"] ? "x" : " ")
-                human_readable_size = sizes[base] " B"
-                cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
-                cmd | getline human_readable_size
-                close(cmd)
-                data[base] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
+            {
+                split($4, parts, "/")
+                file = parts[length(parts)]
+                split(file, nameparts, ".")
+                base = nameparts[1]
+                for (i=2; i<length(nameparts); i++) {
+                    base = base "." nameparts[i]
+                }
+                ext = nameparts[length(nameparts)]
+                files[base "," ext] = 1
+                sizes[base] = $3
+                ages[base] = get_age($1, $2)
             }
-            n = asorti(data, sorted)
-            for (i = 1; i <= n; i++) {
-                printf "%s", data[sorted[i]]
-            }
-        }'
+            END {
+                for (key in files) {
+                    split(key, keys, ",")
+                    base = keys[1]
+                    ext = keys[2]
+                    if (ext == "pwd") pwd_file = "x"; else pwd_file = " "
+                    if (ext == "md5") md5_file = "x"; else md5_file = " "
+                    if (ext == "sha256") sha256_file = "x"; else sha256_file = " "
+                    human_readable_size = sizes[base] " B"
+                    cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
+                    cmd | getline human_readable_size
+                    close(cmd)
+                    data[base] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
+                }
+                n = asorti(data, sorted)
+                for (i = 1; i <= n; i++) {
+                    printf "%s", data[sorted[i]]
+                }
+            }'
     fi
 }
 
