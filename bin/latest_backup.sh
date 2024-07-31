@@ -208,8 +208,15 @@ download_and_verify() {
     local md5_url=$4
     local sha256_url=$5
 
-    # Download the zip file
-    wget -O "$zip_file_name" "$zip_url"
+    # Check if wget is installed
+    if command -v wget &>/dev/null; then
+        echo "Using wget to download the file."
+        wget -O "$zip_file_name" "$zip_url"
+    else
+        # If wget is not installed, use curl
+        echo "wget is not installed. Using curl to download the file."
+        curl -o "$zip_file_name" "$zip_url"
+    fi
 
     # Download password, SHA-256 checksum, and MD5 checksum directly into variables
     local password=$(curl -s "$password_url")
