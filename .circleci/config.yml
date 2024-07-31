@@ -474,72 +474,11 @@ commands:
       - run:
           name: Generate Message
           command: |
-            set -x
-            if [ -f /tmp/presigned_urls.json ]; then
-              cat /tmp/presigned_urls.json
-              PRESIGNED_URLS_JSON=$(cat /tmp/presigned_urls.json)
-            else
-              echo "Presigned URLs JSON file not found!"
-              exit 1
-            fi
-            ZIP_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.zip_url')
-            PASSWORD_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.password_url')
-            MD5_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.md5_url')
-            SHA256_URL=$(echo $PRESIGNED_URLS_JSON | jq -r '.sha256_url')
-
-            # # Execute the latest_backup.sh script and capture its output
-
-            # output=$(bash ./bin/latest_backup.sh)
-
-            # # Check if the script executed successfully
-            # if [ $? -ne 0 ]; then
-            #   echo "Failed to execute latest_backup.sh"
-            #   exit 1
-            # fi
-
-            # # Initialize variables to store the URLs
-            # ZIP_URL=""
-            # PASSWORD_URL=""
-            # MD5_URL=""
-            # SHA256_URL=""
-
-            # # Parse the output to extract the URLs based on their file extensions
-            # echo "$output" | while IFS= read -r line; do
-            #   case "$line" in
-            #     *.sql.zip?*)
-            #       ZIP_URL="$line"
-            #       ;;
-            #     *.sql.password?*)
-            #       PASSWORD_URL="$line"
-            #       ;;
-            #     *.sql.md5?*)
-            #       MD5_URL="$line"
-            #       ;;
-            #     *.sql.sha256?*)
-            #       SHA256_URL="$line"
-            #       ;;
-            #   esac
-            # done
-
-            # Check if all URLs are extracted successfully
-            if [ -z "$ZIP_URL" ] || [ -z "$PASSWORD_URL" ] || [ -z "$MD5_URL" ] || [ -z "$SHA256_URL" ]; then
-              echo "Failed to extract one or more URLs from the script output"
-              exit 1
-            fi
-
             if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-              echo ":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!
-              - <$ZIP_URL|Backup ZIP>
-              - <$PASSWORD_URL|Password File>
-              - <$MD5_URL|MD5 Checksum>
-              - <$SHA256_URL|SHA256 Checksum>" > /tmp/message_file
+              echo ":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
             else
-              echo ":download::database: Production backup successful!
-              - <$ZIP_URL|Backup ZIP>
-              - <$PASSWORD_URL|Password File>
-              - <$MD5_URL|MD5 Checksum>
-              - <$SHA256_URL|SHA256 Checksum>" > /tmp/message_file
+              echo ":download::database: Production backup successful!" > /tmp/message_file
             fi
       - notify_slack:
           slack_bot_token: $SLACK_BOT_TOKEN

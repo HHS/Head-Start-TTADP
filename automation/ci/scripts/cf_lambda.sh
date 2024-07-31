@@ -541,9 +541,6 @@ main() {
 
   if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
       log "INFO" "Task execution succeeded."
-      local logs
-      logs=$(fetch_logs "$app_name")
-      decode_and_write_files "$logs" "/tmp/"
   else
       log "ERROR" "Task execution failed."
       stop_app "$app_name"
