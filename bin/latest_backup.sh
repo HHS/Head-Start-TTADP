@@ -145,12 +145,6 @@ fetch_latest_backup_info_and_cleanup() {
     local aws_default_region=$(echo "${credentials_json}" | jq -r '.credentials.region')
     local bucket_name=$(echo "${credentials_json}" | jq -r '.credentials.bucket')
 
-    # Debugging output
-    echo "AWS_ACCESS_KEY_ID: $aws_access_key_id"
-    echo "AWS_SECRET_ACCESS_KEY: $aws_secret_access_key"
-    echo "AWS_DEFAULT_REGION: $aws_default_region"
-    echo "BUCKET_NAME: $bucket_name"
-
     # Set AWS environment variables to use AWS CLI
     export AWS_ACCESS_KEY_ID="$aws_access_key_id"
     export AWS_SECRET_ACCESS_KEY="$aws_secret_access_key"
