@@ -421,9 +421,6 @@ commands:
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
 
-            # Install AWS CLI
-            sudo apt-get install -y awscli
-
             # The line you want to ensure exists in the /etc/hosts file
             line="127.0.0.1        localhost"
 
