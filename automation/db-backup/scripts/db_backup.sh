@@ -672,12 +672,12 @@ perform_backup_and_upload() {
 encode_file_to_base64() {
     local file_path="$1"
     local file_name="$2"
-    
+
     if [[ ! -f "$file_path" ]]; then
         echo "Error: File not found."
         return 1
     fi
-    
+
     base64_content=$(base64 -w 0 "$file_path")
     sha256_hash=$(sha256sum "$file_path" | awk '{print $1}')
     md5_hash=$(md5sum "$file_path" | awk '{print $1}')
@@ -716,6 +716,49 @@ generate_presigned_urls() {
   sha256_file_path=$(awk 'NR==3' /tmp/latest-backup.txt)
   password_file_path=$(awk 'NR==4' /tmp/latest-backup.txt)
 
+  log "INFO" "Creating IAM role and attaching policy."
+
+  # Define the role name and assume role policy document
+  local role_name="S3AccessRole"
+  local trust_policy_file="/tmp/trust-policy.json"
+
+  # Create the trust policy file
+  cat <<EOF > $trust_policy_file
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+
+  # Create the IAM role
+  aws iam create-role --role-name $role_name --assume-role-policy-document file://$trust_policy_file
+
+  # Attach the S3 read-only access policy to the role
+  aws iam attach-role-policy --role-name $role_name --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+  log "INFO" "Assuming IAM role to get temporary credentials."
+
+  # Assume the role and get temporary credentials
+  local role_arn="arn:aws:iam::account-id:role/$role_name"
+  local session_name="AssumeRoleSession1"
+  local assume_role_output=$(aws sts assume-role --role-arn $role_arn --role-session-name $session_name)
+  local aws_access_key_id=$(echo $assume_role_output | jq -r '.Credentials.AccessKeyId')
+  local aws_secret_access_key=$(echo $assume_role_output | jq -r '.Credentials.SecretAccessKey')
+  local aws_session_token=$(echo $assume_role_output | jq -r '.Credentials.SessionToken')
+
+  # Export temporary credentials
+  export AWS_ACCESS_KEY_ID=$aws_access_key_id
+  export AWS_SECRET_ACCESS_KEY=$aws_secret_access_key
+  export AWS_SESSION_TOKEN=$aws_session_token
+
   log "INFO" "Generating presigned URLs."
   local zip_url md5_url sha256_url password_url
   zip_url=$(aws s3 presign "s3://${AWS_DEFAULT_BUCKET}/${zip_file_path}" --expires-in "${duration}")
@@ -728,7 +771,14 @@ generate_presigned_urls() {
   urls_json=$(jq -n --arg zip_url "$zip_url" --arg md5_url "$md5_url" --arg sha256_url "$sha256_url" --arg password_url "$password_url" '{zip_url: $zip_url, md5_url: $md5_url, sha256_url: $sha256_url, password_url: $password_url}')
 
   echo "${urls_json}" > /tmp/presigned_urls.json
+
+  log "INFO" "Cleaning up temporary credentials and IAM role."
+  unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+  aws iam detach-role-policy --role-name $role_name --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+  aws iam delete-role --role-name $role_name
+  rm $trust_policy_file
 }
+
 # -----------------------------------------------------------------------------
 
 function main() {
