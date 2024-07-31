@@ -199,8 +199,10 @@ export const getTrainingReportAlertsHandler = async (req, res) => {
     const userId = auth.user.id;
 
     auditLogger.info(userId, auth.readableRegions);
-    const alerts = await getTrainingReportAlerts(userId, auth.readableRegions);
-    return res.status(httpCodes.OK).send(alerts);
+    const { alerts, raw } = await getTrainingReportAlerts(userId, auth.readableRegions);
+    return res.status(httpCodes.OK).send({
+      eventAlerts: alerts, raw, userId, regions: auth.readableRegions,
+    });
   } catch (error) {
     return handleErrors(req, res, error, logContext);
   }

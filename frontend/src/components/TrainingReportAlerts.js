@@ -1,4 +1,9 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, {
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+} from 'react';
 import { Link } from 'react-router-dom';
 import UserContext from '../UserContext';
 import { hasTrainingReportWritePermissions } from '../permissions';
@@ -19,12 +24,13 @@ export default function TrainingReportAlerts() {
   const [alerts, setAlerts] = useState(null);
   const { user } = useContext(UserContext);
 
-  const shouldSeeAlerts = hasTrainingReportWritePermissions(user);
+  // sadly have to memoize this to prevent double fetching
+  const shouldSeeAlerts = useMemo(() => hasTrainingReportWritePermissions(user), [user]);
 
   useEffect(() => {
     async function fetchAlerts() {
       try {
-        const eventAlerts = await getEventAlerts();
+        const { eventAlerts } = await getEventAlerts();
         setAlerts(eventAlerts);
       } catch (err) {
         // eslint-disable-next-line no-console
