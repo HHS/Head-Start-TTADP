@@ -46,7 +46,7 @@ export default function ResourceUseSparkline({ dataPoints }) {
     margin: {
       l: 0,
       pad: 0,
-      t: 0,
+      t: 12,
       b: 0,
       r: 0,
     },
