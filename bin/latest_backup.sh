@@ -174,6 +174,17 @@ list_all_zip_files() {
                 current_date_sec = parse_date(current_date)
                 return int((current_date_sec - file_date) / 86400)
             }
+            function manual_sort(ind, n, i, j, temp) {
+                for (i = 1; i <= n; i++) {
+                    for (j = i + 1; j <= n; j++) {
+                        if (ind[i] > ind[j]) {
+                            temp = ind[i]
+                            ind[i] = ind[j]
+                            ind[j] = temp
+                        }
+                    }
+                }
+            }
             {
                 split($4, parts, "/")
                 file = parts[length(parts)]
@@ -183,36 +194,27 @@ list_all_zip_files() {
                     base = base "." nameparts[i]
                 }
                 ext = nameparts[length(nameparts)]
-                files[base "," ext] = 1
+                files[base][ext] = 1
                 sizes[base] = $3
                 ages[base] = get_age($1)
             }
             END {
-                for (key in files) {
-                    split(key, keys, ",")
-                    base = keys[1]
-                    ext = keys[2]
-                    if (ext == "pwd") pwd_files[base] = "x"
-                    if (ext == "md5") md5_files[base] = "x"
-                    if (ext == "sha256") sha256_files[base] = "x"
-                }
+                n = 0
                 for (base in sizes) {
-                    pwd_file = (pwd_files[base] ? "x" : " ")
-                    md5_file = (md5_files[base] ? "x" : " ")
-                    sha256_file = (sha256_files[base] ? "x" : " ")
+                    pwd_file = (files[base]["pwd"] ? "x" : " ")
+                    md5_file = (files[base]["md5"] ? "x" : " ")
+                    sha256_file = (files[base]["sha256"] ? "x" : " ")
                     human_readable_size = sizes[base] " B"
                     cmd = "numfmt --to=iec-i --suffix=B " sizes[base]
                     cmd | getline human_readable_size
                     close(cmd)
-                    data[base] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
+                    data[++n] = sprintf("%-50s %-5s %-5s %-5s  %-15s %-5s\n", base".zip", pwd_file, md5_file, sha256_file, human_readable_size, ages[base])
                 }
-                n = asorti(data, sorted)
+                manual_sort(data, n)
                 for (i = 1; i <= n; i++) {
-                    printf "%s", data[sorted[i]]
+                    printf "%s", data[i]
                 }
             }'
-
-
 
     fi
 }
