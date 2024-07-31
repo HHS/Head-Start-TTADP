@@ -30,8 +30,13 @@ async function createEvents({
     pocIds: [pocId],
     regionId: 1,
     data: {
+      eventName: faker.datatype.string(),
       eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      trainingType: 'Series',
+      targetPopulations: ['Children & Families'],
+      reasons: ['Coaching'],
+      vision: 'Testing!',
     },
   };
 
@@ -66,6 +71,7 @@ async function createEvents({
     data: {
       ...baseEvent.data,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      endDate: null,
     },
   });
 

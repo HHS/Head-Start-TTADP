@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
-import _ from 'lodash';
+import { get } from 'lodash';
 import {
   TRAINING_REPORT_STATUSES as TRS,
   REASONS,
@@ -441,12 +441,8 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
     ],
   };
 
-  auditLogger.info({ where });
-
   // get all events that the user is a part of and that are not complete/suspended
   const events = await findEventHelper(where, true) as EventShape[];
-
-  auditLogger.info({ events });
 
   const alerts = [];
 
@@ -455,9 +451,27 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
   // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
   // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
+  const checkEventInfo = (event, field, isArray) => {
+    if (isArray) {
+      return !(get(event, field, []).length === 0);
+    }
+
+    return !!(get(event, field, null));
+  };
+
   // the only fields that aren't read only
-  const eventInfoToCheck = ['startDate', 'endDate'];
-  const eventArraysToCheck = ['collaboratorIds'];
+  const eventInfoToCheck = [
+    'data.eventName',
+    'data.startDate',
+    'data.endDate',
+    'data.trainingType',
+    'data.vision',
+  ];
+  const eventArraysToCheck = [
+    'collaboratorIds',
+    'data.reasons',
+    'data.targetPopulations',
+  ];
   const istSessionInfoToCheck = [
     'startDate',
     'endDate',
@@ -516,7 +530,7 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
         }
 
         // or we are missing event data
-        if (eventInfoToCheck.some((field) => !(event.data[field])) || eventArraysToCheck.some((field) => !(event[field]?.length))) {
+        if (eventInfoToCheck.some((field) => !(checkEventInfo(event, field, false))) || eventArraysToCheck.some((field) => !(checkEventInfo(event, field, true)))) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
