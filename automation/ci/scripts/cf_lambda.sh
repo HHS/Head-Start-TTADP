@@ -470,51 +470,6 @@ function delete_app {
         log "INFO" "App $app_name deleted successfully."
     fi
 }
-
-# -----------------------------------------------------------------------------
-
-fetch_logs() {
-    local app_name="$1"
-    log "INFO" "Fetching logs for app: $app_name"
-    cf logs "$app_name" --recent
-}
-
-decode_and_write_files() {
-    local logs="$1"
-    local output_directory="$2"
-    local keyword="TransferFile:"
-
-    mkdir -p "$output_directory"
-
-    while IFS= read -r line; do
-        if echo "$line" | grep -q "$keyword"; then
-            json_part=$(echo "$line" | grep -oP '{[^}]+}')
-            validate_json "$json_part"
-            file_name=$(echo "$json_part" | jq -r '.fileName')
-            base64_content=$(echo "$json_part" | jq -r '.content')
-            sha256_hash=$(echo "$json_part" | jq -r '.sha256')
-            md5_hash=$(echo "$json_part" | jq -r '.md5')
-
-            if [[ -n "$file_name" && -n "$base64_content" ]]; then
-                echo "$base64_content" | base64 --decode > "$output_directory/$file_name"
-
-                # Verify hashes
-                computed_sha256=$(sha256sum "$output_directory/$file_name" | awk '{print $1}')
-                computed_md5=$(md5sum "$output_directory/$file_name" | awk '{print $1}')
-
-                if [[ "$computed_sha256" == "$sha256_hash" && "$computed_md5" == "$md5_hash" ]]; then
-                    log "INFO" "File $file_name written and verified successfully."
-                else
-                    log "ERROR" "File $file_name verification failed."
-                    if [ -f "$output_directory/$file_name" ]; then
-                      rm -rf "$output_directory/$file_name"
-                    fi
-                fi
-            fi
-        fi
-    done <<< "$logs"
-}
-
 # -----------------------------------------------------------------------------
 
 main() {
