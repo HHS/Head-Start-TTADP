@@ -35,7 +35,7 @@ const SimpleSortableTable = ({
       });
     }
     return sortableItems;
-  }, [data, sortConfig]);
+  }, [data, sortConfig, elementSortProp]);
 
   const requestSort = (key) => {
     let direction = 'asc';
