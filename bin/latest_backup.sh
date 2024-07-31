@@ -162,26 +162,17 @@ list_all_zip_files() {
         echo "ZIP files in S3 bucket:"
         printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
         current_date=$(date +%s)
-        echo "${zip_files}" | awk -v current_date="$current_date" '
-            BEGIN {
-                # Convert current_date from seconds since epoch to day number
-                current_day = int(current_date / 86400)
+        echo "${zip_files}" | awk -v current_date="$(date +%Y-%m-%d)" '
+            function parse_date(date_str,   cmd, file_date) {
+                cmd = "date -d \"" date_str "\" +%s 2>/dev/null || date -j -f \"%Y-%m-%d\" \"" date_str "\" +%s"
+                cmd | getline file_date
+                close(cmd)
+                return file_date
             }
-            function parse_date(date_str, time_str) {
-                split(date_str, date_parts, "-")
-                split(time_str, time_parts, ":")
-                year = date_parts[1]
-                month = date_parts[2]
-                day = date_parts[3]
-                hour = time_parts[1]
-                minute = time_parts[2]
-                second = time_parts[3]
-                # Use a simple formula to approximate the day number
-                return int((mktime(year " " month " " day " " hour " " minute " " second) / 86400))
-            }
-            function get_age(date_str, time_str) {
-                file_day = parse_date(date_str, time_str)
-                return current_day - file_day
+            function get_age(date_str) {
+                file_date = parse_date(date_str)
+                current_date_sec = parse_date(current_date)
+                return int((current_date_sec - file_date) / 86400)
             }
             {
                 split($4, parts, "/")
@@ -194,7 +185,7 @@ list_all_zip_files() {
                 ext = nameparts[length(nameparts)]
                 files[base "," ext] = 1
                 sizes[base] = $3
-                ages[base] = get_age($1, $2)
+                ages[base] = get_age($1)
             }
             END {
                 for (key in files) {
@@ -220,6 +211,9 @@ list_all_zip_files() {
                     printf "%s", data[sorted[i]]
                 }
             }'
+
+
+
     fi
 }
 
