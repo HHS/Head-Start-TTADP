@@ -686,6 +686,30 @@ encode_file_to_base64() {
 }
 
 # -----------------------------------------------------------------------------
+check_permissions() {
+  local required_permissions=(
+    "iam:CreateRole"
+    "iam:AttachRolePolicy"
+    "iam:AssumeRole"
+    "iam:DetachRolePolicy"
+    "iam:DeleteRole"
+    "sts:AssumeRole"
+  )
+
+  local user_arn=$(aws sts get-caller-identity --query Arn --output text)
+  log "INFO" "Checking permissions for user: ${user_arn}"
+
+  for permission in "${required_permissions[@]}"; do
+    local result=$(aws iam simulate-principal-policy --policy-source-arn "$user_arn" --action-names "$permission" --query "EvaluationResults[0].EvalDecision" --output text)
+    if [ "$result" != "allowed" ]; then
+      log "ERROR" "User does not have required permission: $permission"
+      return 1
+    fi
+  done
+
+  log "INFO" "User has all required permissions."
+  return 0
+}
 
 generate_presigned_urls() {
   local aws_s3_server=$1
@@ -696,6 +720,12 @@ generate_presigned_urls() {
   parameters_validate "${aws_s3_server}"
   parameters_validate "${backup_filename_prefix}"
   parameters_validate "${duration}"
+
+  log "INFO" "Checking if user has necessary permissions."
+  if ! check_permissions; then
+    log "ERROR" "User does not have necessary permissions."
+    exit 1
+  fi
 
   log "INFO" "Finding latest backup files in S3."
   local latest_backup_file_path
