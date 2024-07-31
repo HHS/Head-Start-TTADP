@@ -2,7 +2,12 @@ import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 
-const SimpleSortableTable = ({ data, columns, className }) => {
+const SimpleSortableTable = ({
+  data,
+  columns,
+  className,
+  elementSortProp,
+}) => {
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'asc',
@@ -15,10 +20,10 @@ const SimpleSortableTable = ({ data, columns, className }) => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
         if (React.isValidElement(aValue)) {
-          aValue = aValue.props.children.props['aria-label'];
+          aValue = aValue.props.children.props[elementSortProp];
         }
         if (React.isValidElement(bValue)) {
-          bValue = bValue.props.children.props['aria-label'];
+          bValue = bValue.props.children.props[elementSortProp];
         }
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -92,10 +97,12 @@ SimpleSortableTable.propTypes = {
     }),
   ).isRequired,
   className: PropTypes.string,
+  elementSortProp: PropTypes.string,
 };
 
 SimpleSortableTable.defaultProps = {
   className: '',
+  elementSortProp: 'aria-label',
 };
 
 export default SimpleSortableTable;

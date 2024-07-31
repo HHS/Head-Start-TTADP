@@ -408,7 +408,7 @@ const checkSessionForCompletion = (
   }
 };
 
-export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<{ missingEventInfo: TRAlertShape[]; missingSessionInfo: TRAlertShape[]; noSessionsCreated: TRAlertShape[]; eventNotCompleted: TRAlertShape[]; }> {
+export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<TRAlertShape[]> {
   const where = {
     [Op.and]: [
       {
@@ -444,12 +444,12 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
   // get all events that the user is a part of and that are not complete/suspended
   const events = await findEventHelper(where, true) as EventShape[];
 
-  const alerts = {
-    missingEventInfo: [], // Missing event info (IST Creator or Collaborator) - 20 days past event start date
-    missingSessionInfo: [], // Missing session info (IST Creator or Collaborator or POC) - 20 days past session start date
-    noSessionsCreated: [], // No sessions created (IST Creator) - 20 days past event start date
-    eventNotCompleted: [], // Event not completed (IST Creator or Collaborator) - 20 days past event end date
-  };
+  const alerts = [];
+
+  // missingEventInfo: Missing event info (IST Creator or Collaborator) - 20 days past event start date
+  // missingSessionInfo: Missing session info (IST Creator or Collaborator or POC) - 20 days past session start date
+  // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
+  // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
   // the only fields that aren't read only
   const eventInfoToCheck = ['startDate', 'endDate'];
@@ -508,26 +508,26 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
       if (today.isAfter(nineteenDaysAfterStart)) {
         // and there are no sessions
         if (event.sessionReports.length === 0) {
-          alerts.noSessionsCreated.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
+          alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
         }
 
         // or we are missing event data
         if (eventInfoToCheck.some((field) => !(event.data[field])) || eventArraysToCheck.some((field) => !(event[field]?.length))) {
-          alerts.missingEventInfo.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
+          alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
 
       // if we are 20 days past the end date, and the event is not completed
       if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
-        alerts.eventNotCompleted.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
+        alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
 
       const sessions = event.sessionReports;
       sessions.forEach((session) => {
-        if (alerts.missingSessionInfo.find((alert) => alert.isSession && alert.id === session.id)) return;
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, istSessionInfoToCheck, alerts.missingSessionInfo);
+          checkSessionForCompletion(session, event, istSessionInfoToCheck, alerts);
         }
       });
     }
@@ -535,11 +535,11 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
     // the other event triggers for everyone
     const sessions = event.sessionReports;
     sessions.forEach((session) => {
-      if (alerts.missingSessionInfo.find((alert) => alert.isSession && alert.id === session.id)) return;
+      if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
       const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
       if (today.isAfter(nineteenDaysAfterStart)) {
         // eslint-disable-next-line no-restricted-syntax
-        checkSessionForCompletion(session, event, pocSessionInfoToCheck, alerts.missingSessionInfo);
+        checkSessionForCompletion(session, event, pocSessionInfoToCheck, alerts);
       }
     }); // for each session
   }); // for each event
