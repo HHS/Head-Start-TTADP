@@ -30,7 +30,7 @@ export default function TrainingReportAlerts() {
   useEffect(() => {
     async function fetchAlerts() {
       try {
-        const { eventAlerts } = await getEventAlerts();
+        const eventAlerts = await getEventAlerts();
         setAlerts(eventAlerts);
       } catch (err) {
         // eslint-disable-next-line no-console
