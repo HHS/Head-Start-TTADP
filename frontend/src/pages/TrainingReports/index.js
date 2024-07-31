@@ -26,6 +26,7 @@ import useFilters from '../../hooks/useFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import TrainingReportAlerts from '../../components/TrainingReportAlerts';
 
 const FILTER_KEY = 'training-report-filters';
 
@@ -219,6 +220,9 @@ export default function TrainingReports({ match }) {
               allUserRegions={regions}
             />
           </Grid>
+
+          <TrainingReportAlerts />
+
           <Grid row>
             <WidgetContainer
               title="Events"

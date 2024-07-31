@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import UserContext from '../UserContext';
 import { hasTrainingReportWritePermissions } from '../permissions';
 import { getEventAlerts } from '../fetchers/event';
-import WidgetCard from './WidgetCard';
-import WidgetHeader from './WidgetHeader';
+import WidgetContainer from './WidgetContainer';
 import SimpleSortableTable from './SimpleSortableTable';
 
 const idForLink = (eventId) => eventId.split('-').pop();
@@ -53,8 +52,12 @@ export default function TrainingReportAlerts() {
   }));
 
   return (
-    <WidgetCard
-      header={<WidgetHeader>Training Report Alerts</WidgetHeader>}
+    <WidgetContainer
+      title="My training report alerts"
+      subtitle="Events or sessions that require timely action"
+      showPagingBottom={false}
+      showPagingTop={false}
+      loading={false}
     >
       {alertsForTable.length ? (
         <SimpleSortableTable
@@ -67,7 +70,7 @@ export default function TrainingReportAlerts() {
           data={alertsForTable}
           elementSortProp="data-sort"
         />
-      ) : <p className="usa-prose">You do not have any overdue tasks.</p>}
-    </WidgetCard>
+      ) : <p className="usa-prose margin-x-3 margin-y-0 padding-y-3">You do not have any overdue tasks.</p>}
+    </WidgetContainer>
   );
 }

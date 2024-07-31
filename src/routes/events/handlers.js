@@ -19,6 +19,7 @@ import {
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
 import filtersToScopes from '../../scopes';
+import { auditLogger } from '../../logger';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -196,6 +197,8 @@ export const getTrainingReportAlertsHandler = async (req, res) => {
     }
 
     const userId = auth.user.id;
+
+    auditLogger.info(userId, auth.readableRegions);
     const alerts = await getTrainingReportAlerts(userId, auth.readableRegions);
     return res.status(httpCodes.OK).send(alerts);
   } catch (error) {
