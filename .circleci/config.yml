@@ -1149,7 +1149,7 @@ jobs:
       - image: cimg/base:2024.05
     steps:
     - sparse_checkout:
-          directories: 'automation,bin'
+          directories: 'automation'
           branch: << pipeline.git.branch >>
     - cf_backup:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
