@@ -52,13 +52,13 @@ export default function WidgetContainer(
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
+      {error && (
       <Grid row>
-        {error && (
         <Alert className="width-full margin-x-3 margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
-        )}
       </Grid>
+      )}
       <div className="margin-top-0">
         {children}
       </div>

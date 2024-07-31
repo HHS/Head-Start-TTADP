@@ -444,6 +444,8 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
   // get all events that the user is a part of and that are not complete/suspended
   const events = await findEventHelper(where, true) as EventShape[];
 
+  auditLogger.info({ events });
+
   const alerts = [];
 
   // missingEventInfo: Missing event info (IST Creator or Collaborator) - 20 days past event start date
