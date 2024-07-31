@@ -167,7 +167,7 @@ list_all_zip_files() {
           echo "${line##*.} ${line}";\
         done |\
         sort -rk5 |\
-        sed ':a;N;$!ba;s/\n/ /g' |\
+        tr '\n' ' ' | \
         sed 's~ zip ~\nzip ~g' |\
         while read line; do
           zip_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
