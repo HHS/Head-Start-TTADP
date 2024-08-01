@@ -52,7 +52,7 @@ module.exports = {
       JOIN "Grants" gr
         ON g."grantId" = gr.id
       ;
-      
+
       -- As a protective step, this will create a divide by zero error and
       -- rollback the transaction if there is more than
       -- one recipient found with 'Transportation' responses
@@ -64,6 +64,7 @@ module.exports = {
       ;
 
       -- Perform the actual updates to ActivityReportGoalFieldResponses
+      DROP TABLE IF EXISTS argfr_updates;
       CREATE TEMP TABLE argfr_updates
       AS
       WITH updater AS (
@@ -78,6 +79,7 @@ module.exports = {
       ;
 
       -- Perform the actual updates to GoalFieldResponses
+      DROP TABLE IF EXISTS gfr_updates;
       CREATE TEMP TABLE gfr_updates
       AS
       WITH updater AS (
@@ -90,7 +92,7 @@ module.exports = {
         'GoalFieldResponses' tablename
       ) SELECT * FROM updater
       ;
-     
+
 
       -- A quick count of the results that is expected to be:
       -- update_cnt |            tablename
@@ -109,8 +111,12 @@ module.exports = {
       FROM argfr_updates
       GROUP BY 2
       ;
-      
 
+      DROP TABLE IF EXISTS argfr_to_update;
+      DROP TABLE IF EXISTS gfr_to_update;
+      DROP TABLE IF EXISTS recipient_list;
+      DROP TABLE IF EXISTS argfr_updates;
+      DROP TABLE IF EXISTS gfr_updates;
         `, { transaction });
     },
   ),
