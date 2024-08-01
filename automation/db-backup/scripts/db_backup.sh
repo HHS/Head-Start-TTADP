@@ -666,6 +666,7 @@ perform_backup_and_upload() {
   fi
   set -e
 }
+
 # -----------------------------------------------------------------------------
 
 # -----------------------------------------------------------------------------
@@ -776,11 +777,13 @@ function main() {
   local backup_filename_prefix=$1
   local rds_server=$2
   local aws_s3_server=$3
+  local duration=${4-86400}  # Default duration to 24 hours
 
   log "INFO" "Validate parameters and exports"
   parameters_validate "${backup_filename_prefix}"
   parameters_validate "${rds_server}"
   parameters_validate "${aws_s3_server}"
+  parameters_validate "${duration}"
 
   export_validate "VCAP_SERVICES"
 
