@@ -60,7 +60,7 @@ module.exports = {
         JOIN er_to_update
           ON erpg."eventId" = erid
         ;
-        
+
         -- 4. Delete the EventReportPilotGoal records
         DROP TABLE IF EXISTS erpg_deletions;
         CREATE TEMP TABLE erpg_deletions
@@ -90,6 +90,7 @@ module.exports = {
         ;
 
         -- 6. Update any "Complete" session statuses back to "In Progress"
+        DROP TABLE IF EXISTS sr_updates;
         CREATE TEMP TABLE sr_updates
         AS
         WITH updater AS (
@@ -105,6 +106,7 @@ module.exports = {
         ;
 
         -- 6. Update any "Complete" event statuses back to "In Progress"
+        DROP TABLE IF EXISTS er_updates;
         CREATE TEMP TABLE er_updates
         AS
         WITH updater AS (
@@ -118,7 +120,7 @@ module.exports = {
           'EventReportPilots reset' operation
         ) SELECT * FROM updater
         ;
-      
+
 
         -- A quick count of the results that is expected to be:
         --  cnt |           operation
@@ -135,8 +137,14 @@ module.exports = {
         UNION
         SELECT COUNT(*), operation FROM er_updates GROUP BY 2
         ;
-      
 
+        DROP TABLE IF EXISTS er_to_update;
+        DROP TABLE IF EXISTS sr_to_update;
+        DROP TABLE IF EXISTS goals_to_delete;
+        DROP TABLE IF EXISTS erpg_deletions;
+        DROP TABLE IF EXISTS goal_deletions;
+        DROP TABLE IF EXISTS sr_updates;
+        DROP TABLE IF EXISTS er_updates;
         `, { transaction });
     },
   ),
