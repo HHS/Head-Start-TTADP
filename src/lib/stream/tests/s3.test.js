@@ -50,14 +50,11 @@ describe('S3ClientWrapper', () => {
       await s3ClientWrapper.uploadFileAsStream(key, stream);
 
       expect(mockS3.send).toHaveBeenCalledWith(expect.any(PutObjectCommand));
-      const command = mockS3.send.mock.calls[0][0];
-      expect(command).toEqual(expect.objectContaining({
-        input: expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: key,
-          Body: stream,
-        }),
-      }));
+      expect(PutObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: key,
+        Body: stream,
+      });
     });
 
     it('should throw error and log if upload fails', async () => {
@@ -82,13 +79,10 @@ describe('S3ClientWrapper', () => {
       const result = await s3ClientWrapper.downloadFileAsStream(key);
 
       expect(mockS3.send).toHaveBeenCalledWith(expect.any(GetObjectCommand));
-      const command = mockS3.send.mock.calls[0][0];
-      expect(command).toEqual(expect.objectContaining({
-        input: expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: key,
-        }),
-      }));
+      expect(GetObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: key,
+      });
       expect(result).toBeInstanceOf(Readable);
     });
 
@@ -111,13 +105,10 @@ describe('S3ClientWrapper', () => {
       const result = await s3ClientWrapper.getFileMetadata(key);
 
       expect(mockS3.send).toHaveBeenCalledWith(expect.any(HeadObjectCommand));
-      const command = mockS3.send.mock.calls[0][0];
-      expect(command).toEqual(expect.objectContaining({
-        input: expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: key,
-        }),
-      }));
+      expect(HeadObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: key,
+      });
       expect(result).toEqual(response);
     });
 
@@ -140,13 +131,10 @@ describe('S3ClientWrapper', () => {
       await s3ClientWrapper.deleteFile(key);
 
       expect(mockS3.send).toHaveBeenCalledWith(expect.any(DeleteObjectCommand));
-      const command = mockS3.send.mock.calls[0][0];
-      expect(command).toEqual(expect.objectContaining({
-        input: expect.objectContaining({
-          Bucket: 'test-bucket',
-          Key: key,
-        }),
-      }));
+      expect(DeleteObjectCommand).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+        Key: key,
+      });
     });
 
     it('should throw error and log if deleting file fails', async () => {
@@ -167,12 +155,9 @@ describe('S3ClientWrapper', () => {
       const result = await s3ClientWrapper.listFiles();
 
       expect(mockS3.send).toHaveBeenCalledWith(expect.any(ListObjectsV2Command));
-      const command = mockS3.send.mock.calls[0][0];
-      expect(command).toEqual(expect.objectContaining({
-        input: expect.objectContaining({
-          Bucket: 'test-bucket',
-        }),
-      }));
+      expect(ListObjectsV2Command).toHaveBeenCalledWith({
+        Bucket: 'test-bucket',
+      });
       expect(result).toEqual(response);
     });
 
