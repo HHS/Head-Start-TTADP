@@ -1,7 +1,12 @@
 import Sequelize from 'sequelize';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db, { RequestErrors } from '../models';
-import handleErrors, { handleUnexpectedErrorInCatchBlock, handleWorkerErrors, handleUnexpectedWorkerError, logRequestError } from './apiErrorHandler';
+import handleErrors, {
+  handleUnexpectedErrorInCatchBlock,
+  handleWorkerErrors,
+  handleUnexpectedWorkerError,
+  logRequestError,
+} from './apiErrorHandler';
 import { auditLogger as logger } from '../logger';
 
 const mockUser = {
