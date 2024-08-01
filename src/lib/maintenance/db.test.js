@@ -11,8 +11,12 @@ const {
   dbMaintenance,
 } = require('./db');
 const { sequelize, MaintenanceLog } = require('../../models');
+const { auditLogger } = require('../../logger');
 
 describe('maintenance', () => {
+  afterAll(async () => {
+    await sequelize.close();
+  });
   describe('maintenanceCommand', () => {
     it('should create a maintenance log entry and execute the command', async () => {
       const category = MAINTENANCE_CATEGORY.DB;
@@ -58,7 +62,7 @@ describe('maintenance', () => {
       await tableMaintenanceCommand(command, category, type, model);
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
-
+      auditLogger.error(`tableMaintenanceCommand: should execute the maintenance command with the table name: ${JSON.stringify(log)}`);
       expect(log.type).toBe(type);
       expect(log.isSuccessful).toBe(true);
       expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
