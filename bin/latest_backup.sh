@@ -380,7 +380,6 @@ fetch_latest_backup_info_and_cleanup() {
 
 check_cf_version
 
-# Main execution block
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         -n|--service-name) cf_s3_service_name="$2"; shift ;;
@@ -392,7 +391,7 @@ while [[ "$#" -gt 0 ]]; do
         -e|--erase-file) erase_file="$2"; shift ;;
         -k|--delete-old-keys) delete_old_keys="yes" ;;
         -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-zip-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>] [-k | --delete-old-keys]"; exit 0 ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        *) echo "Unknown parameter passed: $1"; exit 12 ;;
     esac
     shift
 done
@@ -400,7 +399,7 @@ done
 # Check for required dependencies (cf CLI and AWS CLI)
 if ! type cf >/dev/null 2>&1 || ! type aws >/dev/null 2>&1; then
     echo "Error: Make sure both Cloud Foundry CLI and AWS CLI are installed."
-    exit 1
+    exit 12
 fi
 
 # Fetch the latest backup information, generate URLs, and clean up the service key
