@@ -210,7 +210,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
 
-      
+
       -- Merge objective topics
       DROP TABLE IF EXISTS relinked_objective_topics;
       CREATE TEMP TABLE relinked_objective_topics
@@ -335,6 +335,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
       -- Delete duplicate objective files
+      DROP TABLE IF EXISTS deleted_objective_files;
       CREATE TEMP TABLE deleted_objective_files
       AS
       WITH updater AS (
@@ -469,7 +470,20 @@ module.exports = {
       UNION SELECT 13,'deleted_goals', COUNT(*) FROM deleted_goals
       ORDER BY 1
       ;
-        
+
+      DROP TABLE IF EXISTS corrected_goals;
+      DROP TABLE IF EXISTS updated_target_objectives;
+      DROP TABLE IF EXISTS relinked_objective_topics;
+      DROP TABLE IF EXISTS relinked_objective_resources;
+      DROP TABLE IF EXISTS relinked_objective_files;
+      DROP TABLE IF EXISTS deleted_objective_topics;
+      DROP TABLE IF EXISTS deleted_objective_resources;
+      DROP TABLE IF EXISTS deleted_objective_files;
+      DROP TABLE IF EXISTS relinked_objectives;
+      DROP TABLE IF EXISTS updated_target_goals;
+      DROP TABLE IF EXISTS relinked_args;
+      DROP TABLE IF EXISTS deleted_args;
+      DROP TABLE IF EXISTS deleted_goals;
 
       `, { transaction });
     });

@@ -77,7 +77,7 @@ module.exports = {
           donor_gid
       ) SELECT * FROM updater
       ;
-      
+
       -- Merge goal collaborators
       DROP TABLE IF EXISTS relinked_goal_collaborators;
       CREATE TEMP TABLE relinked_goal_collaborators
@@ -152,7 +152,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
 
-      
+
       -- Merge objective topics
       DROP TABLE IF EXISTS relinked_objective_topics;
       CREATE TEMP TABLE relinked_objective_topics
@@ -428,7 +428,22 @@ module.exports = {
       ORDER BY 1
       ;
 
-      
+      DROP TABLE IF EXISTS deleted_gfrs;
+      DROP TABLE IF EXISTS updated_target_objectives;
+      DROP TABLE IF EXISTS relinked_objective_topics;
+      DROP TABLE IF EXISTS relinked_objective_resources;
+      DROP TABLE IF EXISTS relinked_objective_files;
+      DROP TABLE IF EXISTS deleted_objective_topics;
+      DROP TABLE IF EXISTS deleted_objective_resources;
+      DROP TABLE IF EXISTS deleted_objective_files;
+      DROP TABLE IF EXISTS relinked_objectives;
+      DROP TABLE IF EXISTS updated_target_goals;
+      DROP TABLE IF EXISTS relinked_args;
+      DROP TABLE IF EXISTS deleted_args;
+      DROP TABLE IF EXISTS deleted_goals;
+      DROP TABLE IF EXISTS relinked_goal_collaborators;
+      DROP TABLE IF EXISTS deleted_goal_collaborators;
+
       `, { transaction });
     });
   },

@@ -60,7 +60,7 @@ module.exports = {
         1/(LEAST(COUNT(*),1) - 1)
       FROM deleted_gfrs
       ;
-      
+
       -- Merge goal collaborators
       DROP TABLE IF EXISTS relinked_goal_collaborators;
       CREATE TEMP TABLE relinked_goal_collaborators
@@ -108,7 +108,7 @@ module.exports = {
         AND donor_obj.title = target_obj.title
       WHERE donor_obj.id != target_obj.id
       ;
-      
+
       -- Merge goal collaborators
       DROP TABLE IF EXISTS relinked_objective_collaborators;
       CREATE TEMP TABLE relinked_objective_collaborators
@@ -168,7 +168,7 @@ module.exports = {
       ) SELECT * FROM updater
       ;
 
-      
+
       -- Merge objective topics
       DROP TABLE IF EXISTS relinked_objective_topics;
       CREATE TEMP TABLE relinked_objective_topics
@@ -459,7 +459,24 @@ module.exports = {
       UNION SELECT 17,'deleted_objective_collaborators', COUNT(*) FROM deleted_objective_collaborators
       ORDER BY 1
       ;
-      
+
+      DROP TABLE IF EXISTS deleted_gfrs;
+      DROP TABLE IF EXISTS updated_target_objectives;
+      DROP TABLE IF EXISTS relinked_objective_topics;
+      DROP TABLE IF EXISTS relinked_objective_resources;
+      DROP TABLE IF EXISTS relinked_objective_files;
+      DROP TABLE IF EXISTS deleted_objective_topics;
+      DROP TABLE IF EXISTS deleted_objective_resources;
+      DROP TABLE IF EXISTS deleted_objective_files;
+      DROP TABLE IF EXISTS relinked_objectives;
+      DROP TABLE IF EXISTS updated_target_goals;
+      DROP TABLE IF EXISTS relinked_args;
+      DROP TABLE IF EXISTS deleted_args;
+      DROP TABLE IF EXISTS deleted_goals;
+      DROP TABLE IF EXISTS relinked_goal_collaborators;
+      DROP TABLE IF EXISTS deleted_goal_collaborators;
+      DROP TABLE IF EXISTS relinked_objective_collaborators;
+      DROP TABLE IF EXISTS deleted_objective_collaborators;
       `, { transaction });
     });
   },
