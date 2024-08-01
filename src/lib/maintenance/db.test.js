@@ -13,12 +13,11 @@ const {
 const { sequelize, MaintenanceLog } = require('../../models');
 const { auditLogger } = require('../../logger');
 
-// Mock the Queue from 'bull'
-jest.mock('bull');
-
 describe('maintenance', () => {
   beforeAll(async () => {
     jest.resetAllMocks();
+    // Mock the Queue from 'bull'
+    jest.mock('bull');
   });
   describe('maintenanceCommand', () => {
     it('should create a maintenance log entry and execute the command', async () => {
