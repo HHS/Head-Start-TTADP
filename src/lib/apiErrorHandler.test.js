@@ -1,7 +1,7 @@
 import Sequelize from 'sequelize';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db, { RequestErrors } from '../models';
-import handleErrors, { handleUnexpectedErrorInCatchBlock, handleWorkerErrors, handleUnexpectedWorkerError } from './apiErrorHandler';
+import handleErrors, { handleUnexpectedErrorInCatchBlock, handleWorkerErrors, handleUnexpectedWorkerError, logRequestError } from './apiErrorHandler';
 import { auditLogger as logger } from '../logger';
 
 const mockUser = {
@@ -187,5 +187,94 @@ describe('apiErrorHandler', () => {
 
     expect(requestErrors.length).not.toBe(0);
     expect(requestErrors[0].operation).toBe('SequelizeError');
+  });
+});
+
+describe('logRequestError suppression', () => {
+  beforeEach(() => {
+    process.env.SUPPRESS_ERROR_LOGGING = 'true';
+  });
+
+  afterEach(() => {
+    delete process.env.SUPPRESS_ERROR_LOGGING;
+  });
+
+  it('should suppress error logging and return 0', async () => {
+    const mockError = new Error('Test error');
+    const result = await logRequestError(mockRequest, 'TestOperation', mockError, mockLogContext);
+    expect(result).toBe(0);
+  });
+
+  it('should not suppress logging for SequelizeError regardless of SUPPRESS_ERROR_LOGGING', async () => {
+    const result = await logRequestError(mockRequest, 'SequelizeError', mockSequelizeError, mockLogContext);
+    expect(result).not.toBe(0);
+  });
+});
+
+describe('logRequestError failure handling', () => {
+  beforeEach(() => {
+    jest.spyOn(logger, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('logs an error and returns null on failure to store RequestError', async () => {
+    // Simulate a failure by mocking createRequestError to throw an error
+    jest.spyOn(RequestErrors, 'create').mockRejectedValue(new Error('Database error'));
+
+    const result = await logRequestError(mockRequest, 'TestOperation', new Error('Test error'), mockLogContext);
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('unable to store RequestError'));
+    expect(result).toBeNull();
+  });
+});
+
+describe('handleError development logging', () => {
+  beforeEach(() => {
+    process.env.NODE_ENV = 'development';
+    jest.spyOn(logger, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    delete process.env.NODE_ENV;
+    jest.restoreAllMocks();
+  });
+
+  it('logs the error in development environment', async () => {
+    const mockError = new Error('Development error');
+    await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
+
+    expect(logger.error).toHaveBeenCalledWith(mockError);
+  });
+});
+
+describe('handleError Sequelize connection errors', () => {
+  beforeEach(() => {
+    jest.spyOn(logger, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('logs connection pool info on Sequelize.ConnectionError', async () => {
+    const mockConnectionError = new Sequelize.ConnectionError('Connection error');
+    await handleErrors(mockRequest, mockResponse, mockConnectionError, mockLogContext);
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Connection Pool'));
+  });
+
+  it('logs connection pool info on Sequelize.ConnectionAcquireTimeoutError', async () => {
+    const mockConnectionAcquireTimeoutError = new Sequelize.ConnectionAcquireTimeoutError('Connection acquire timeout error');
+    await handleErrors(
+      mockRequest,
+      mockResponse,
+      mockConnectionAcquireTimeoutError,
+      mockLogContext,
+    );
+
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Connection Pool'));
   });
 });

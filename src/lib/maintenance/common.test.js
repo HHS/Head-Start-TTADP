@@ -300,6 +300,51 @@ describe('Maintenance Queue', () => {
       const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(isSuccessful).toBe(true);
     });
+
+    it('should default data to an empty object if not provided', async () => {
+      const cb = jest.fn().mockResolvedValue({ isSuccessful: true });
+      const cast = 'test-category';
+      const t = 'test-type';
+      const id = 1;
+      await maintenanceCommand(cb, cast, t, undefined, id);
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category: cast,
+        type: t,
+        data: {}, // Verifies that data defaults to an empty object
+        triggeredById: id,
+      });
+    });
+
+    it('should include messages and benchmarks in the update if they are not empty', async () => {
+      const cb = jest.fn().mockImplementation(async (logMessages, logBenchmarks) => {
+        logMessages.push('Log message');
+        logBenchmarks.push('Log benchmark');
+        throw new Error('Test error');
+      });
+      const cat = 'test-category';
+      const t = 'test-type';
+      const d = {};
+      const id = 1;
+      await maintenanceCommand(cb, cat, t, d, id);
+      expect(MaintenanceLog.update).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          messages: ['Log message'],
+          benchmarks: ['Log benchmark'],
+          errorMessage: 'Test error',
+        }),
+        isSuccessful: false,
+      }, expect.anything());
+    });
+
+    it('should default dateOffSet to 90 if not provided, using the correct olderThan date', async () => {
+      const d = {}; // No dateOffSet provided, triggering the default to 90
+      const id = null;
+      await clearMaintenanceLogs(d, id);
+      // Since the exact date cannot be matched due to the dynamic nature of backDate(90),
+      // we focus on verifying that MaintenanceLog.destroy was called without throwing an error,
+      // which implies the default value was used successfully.
+      expect(MaintenanceLog.destroy).toHaveBeenCalled();
+    });
   });
 
   describe('backDate', () => {

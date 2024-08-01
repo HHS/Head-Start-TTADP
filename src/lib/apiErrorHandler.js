@@ -12,7 +12,8 @@ import { sequelize } from '../models';
  * @param {Object} logContext - The logging context.
  * @returns {Promise<number|null>} - The ID of the stored request error, or null if storing failed.
  */
-async function logRequestError(req, operation, error, logContext) {
+export async function logRequestError(req, operation, error, logContext) {
+  // Check if error logging should be suppressed
   if (
     operation !== 'SequelizeError'
     && process.env.SUPPRESS_ERROR_LOGGING
