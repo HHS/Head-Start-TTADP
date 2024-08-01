@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
 
@@ -176,7 +177,7 @@ function setupQueueEventHandlers(queue) {
   process.on('unhandledRejection', rejectionListener);
 }
 
-function setRedisConnectionName(queue, connectionName) {
+export function setRedisConnectionName(queue, connectionName) {
   const { client } = queue;
   if (client && client.call) {
     client.call('client', 'setname', connectionName).catch((err) => {
