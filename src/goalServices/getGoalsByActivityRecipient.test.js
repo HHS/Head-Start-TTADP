@@ -762,48 +762,48 @@ describe('Goals by Recipient Test', () => {
       expectedTopics2.sort();
 
       // Goal 3.
-      expect(goalRowsx[2].goalText).toBe('Goal 3');
-      expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
-      expect(goalRowsx[2].goalText).toBe('Goal 3');
-      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
-      expect(goalRowsx[2].objectiveCount).toBe(2);
-      expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRowsx[2].grantNumbers.length).toBe(1);
-      expect(goalRowsx[2].grantNumbers[0]).toBe('12345');
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
+      expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
+      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
+      expect(goalRowsx[1].objectiveCount).toBe(2);
+      expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[1].grantNumbers.length).toBe(1);
+      expect(goalRowsx[1].grantNumbers[0]).toBe('12345');
 
       // Get objective 4.
-      expect(goalRowsx[2].objectives.length).toBe(2);
-      const objective4 = goalRowsx[2].objectives.find((o) => o.title === 'objective 4');
+      expect(goalRowsx[1].objectives.length).toBe(2);
+      const objective4 = goalRowsx[1].objectives.find((o) => o.title === 'objective 4');
       expect(objective4.title).toBe('objective 4');
       expect(objective4.endDate).toBe('09/01/2020');
       expect(objective4.reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(objective4.status).toEqual(OBJECTIVE_STATUS.COMPLETE);
 
       // Get objective 3.
-      const objective3 = goalRowsx[2].objectives.find((o) => o.title === 'objective 3');
+      const objective3 = goalRowsx[1].objectives.find((o) => o.title === 'objective 3');
       expect(objective3.title).toBe('objective 3');
       expect(objective3.endDate).toBe('09/01/2020');
       expect(objective3.reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(objective3.status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
 
       // Goal 2.
-      expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
-      expect(goalRowsx[3].goalText).toBe('Goal 2');
+      expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
+      expect(goalRowsx[2].goalText).toBe('Goal 2');
+      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
+      expect(goalRowsx[2].objectiveCount).toBe(1);
+      expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[2].objectives.length).toBe(1);
+
+      // Goal 1.
+      expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRowsx[3].goalText).toBe('Goal 1');
       expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[3].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
-
-      // Goal 1.
-      expect(moment(goalRowsx[4].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
-      expect(goalRowsx[4].goalText).toBe('Goal 1');
-      expect(goalRowsx[4].goalNumbers).toStrictEqual([`G-${goalRowsx[4].id}`]);
-      expect(goalRowsx[4].objectiveCount).toBe(1);
-      expect(goalRowsx[4].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[4].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRowsx[4].objectives.length).toBe(1);
 
       goalRowsx.forEach((g) => {
         expect(g.onAR).toBeDefined();
