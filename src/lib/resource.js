@@ -40,18 +40,15 @@ const commonAuthNames = [
  * @param {boolean} filtered - Indicates whether the list is filtered or not. Default is false.
  * @returns {number} - The updated status code.
  */
-const overrideStatusCodeOnAuthRequired = (statusCode, list, data, filtered = false) => {
-  // Check if authentication is required based on the list and data
+export const overrideStatusCodeOnAuthRequired = (statusCode, list, data, filtered = false) => {
   const requiresAuth = list
-    .filter((commonAuthName) => !(filtered || commonAuthName === 'auth'))
-    .some((commonAuthName) => data && data?.includes(commonAuthName));
+    .filter((commonAuthName) => (filtered ? commonAuthName !== 'auth' : true))
+    .some((commonAuthName) => data && data.includes(commonAuthName));
 
-  // If authentication is required and the original status code is OK, return UNAUTHORIZED
   if (statusCode === httpCodes.OK && requiresAuth) {
     return httpCodes.UNAUTHORIZED;
   }
 
-  // Otherwise, return the original status code
   return statusCode || httpCodes.SERVICE_UNAVAILABLE;
 };
 
