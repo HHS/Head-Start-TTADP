@@ -18,6 +18,20 @@ describe('maintenance', () => {
     jest.resetAllMocks();
     // Mock the Queue from 'bull'
     jest.mock('bull');
+    try {
+      await sequelize.authenticate();
+    } catch (error) {
+      auditLogger.error('Unable to connect to the database:', error);
+      throw error;
+    }
+  });
+  beforeEach(async () => {
+    jest.clearAllMocks();
+  });
+  afterAll(async () => {
+    await sequelize.close();
+    jest.resetModules();
+    jest.resetAllMocks();
   });
   describe('maintenanceCommand', () => {
     it('should create a maintenance log entry and execute the command', async () => {
