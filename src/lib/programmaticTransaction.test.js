@@ -23,7 +23,6 @@ jest.mock('bull');
 describe('Programmatic Transaction', () => {
   beforeAll(async () => {
     jest.resetAllMocks();
-    auditLogger.error('Before All: Mocks reset');
     try {
       await sequelize.authenticate();
     } catch (error) {
