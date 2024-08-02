@@ -449,7 +449,7 @@ commands:
             #!/bin/bash
             CONTROL_FILE="/tmp/stop_tail"
             rm -f $CONTROL_FILE
-            
+
             # Start tailing logs
             cf logs tta-automation &
 
@@ -509,7 +509,7 @@ commands:
             # Signal the log monitoring to stop
             CONTROL_FILE="/tmp/stop_tail"
             touch $CONTROL_FILE
-            
+
             # Wait for the log monitoring process to terminate
             sleep 5
 
@@ -790,11 +790,6 @@ jobs:
           name: Install playwright dependencies
           command: |
             npx playwright install
-      - run:
-          name: Monitor database
-          command: |
-            docker attach  $(docker ps | grep postgres | awk '{print $1}')
-          background: true
       - run:
           name: Run playwright tests
           command: yarn e2e:ci
