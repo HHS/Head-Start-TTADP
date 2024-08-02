@@ -8,6 +8,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Readable } from 'stream';
 import { auditLogger } from '../../../logger';
+import { generateS3Config } from '../../s3';
 import S3ClientWrapper from '../s3';
 
 jest.mock('@aws-sdk/client-s3');
@@ -30,12 +31,36 @@ describe('S3ClientWrapper', () => {
       send: jest.fn(),
     };
     S3Client.mockImplementation(() => mockS3);
-
-    s3ClientWrapper = new S3ClientWrapper({ bucketName: 'test-bucket', s3Config: { signatureVersion: 'v4', s3ForcePathStyle: true } });
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('constructor', () => {
+    it('should create an S3 client with default configuration', () => {
+      const s3Config = generateS3Config();
+      const client = new S3ClientWrapper();
+      expect(S3Client).toHaveBeenCalledWith(s3Config.s3Config);
+      expect(client.bucketName).toBe(s3Config.bucketName);
+    });
+
+    it('should create an S3 client with custom configuration', () => {
+      const customConfig = {
+        bucketName: 'custom-bucket',
+        s3Config: {
+          accessKeyId: 'customAccessKeyId',
+          endpoint: 'customEndpoint',
+          region: 'customRegion',
+          secretAccessKey: 'customSecretAccessKey',
+          signatureVersion: 'v4',
+          s3ForcePathStyle: true,
+        },
+      };
+      const client = new S3ClientWrapper(customConfig);
+      expect(S3Client).toHaveBeenCalledWith(customConfig.s3Config);
+      expect(client.bucketName).toBe(customConfig.bucketName);
+    });
   });
 
   describe('uploadFileAsStream', () => {
