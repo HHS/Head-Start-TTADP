@@ -167,7 +167,6 @@ commands:
             else
               echo "Slack notification sent successfully"
             fi
-
   notify_slack_deploy:
     parameters:
       slack_bot_token:
@@ -229,8 +228,6 @@ commands:
           slack_bot_token: << parameters.slack_bot_token >>
           slack_channel: << parameters.slack_channel >>
           message_text_file: "/tmp/message_file"
-
-
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -369,33 +366,38 @@ commands:
       #     name: Push maintenance application
       #     command: |
       #       cd maintenance_page && cf push -s cflinuxfs4 --vars-file ../<<parameters.deploy_config_file >>
-  cf_backup:
-    description: "Login to cloud foundry space with service account credentials, Connect to DB & S3, backup DB to S3"
+  cf_automation_task:
+    description: "Login to Cloud Foundry space, run automation task, and send notification"
     parameters:
       auth_client_secret:
-        description: "Name of CircleCi project environment variable that
-          holds authentication client secret, a required application variable"
+        description: "Name of CircleCi project environment variable that holds authentication client secret"
         type: env_var_name
       cloudgov_username:
-        description: "Name of CircleCi project environment variable that
-          holds deployer username for cloudgov space"
+        description: "Name of CircleCi project environment variable that holds deployer username for Cloud Foundry space"
         type: env_var_name
       cloudgov_password:
-        description: "Name of CircleCi project environment variable that
-          holds deployer password for cloudgov space"
+        description: "Name of CircleCi project environment variable that holds deployer password for Cloud Foundry space"
         type: env_var_name
       cloudgov_space:
-        description: "Name of CircleCi project environment variable that
-          holds name of cloudgov space to target for application deployment"
+        description: "Name of CircleCi project environment variable that holds name of Cloud Foundry space to target for application deployment"
         type: env_var_name
-      rds_service_name:
-        description: "Name of the rds service to backup"
+      task_name:
+        description: "Name of the automation task to run"
         type: string
-      s3_service_name:
-        description: "Name of the s3 service access"
+      task_command:
+        description: "Command to run for the automation task"
         type: string
-      backup_prefix:
-        description: "prefix name to use for backups"
+      task_args:
+        description: "Arguments for the automation task"
+        type: string
+      manifest:
+        description: "Manifest file for the automation task"
+        type: string
+      success_message:
+        description: "Success message for Slack notification"
+        type: string
+      fail_message:
+        description: "Fail message for Slack notification"
         type: string
     steps:
       - run:
@@ -449,7 +451,7 @@ commands:
             #!/bin/bash
             CONTROL_FILE="/tmp/stop_tail"
             rm -f $CONTROL_FILE
-            
+
             # Start tailing logs
             cf logs tta-automation &
 
@@ -466,15 +468,15 @@ commands:
             echo "cf logs command for tta-automation has been terminated."
           background: true
       - run:
-          name: cf_lambda - script to trigger backup
+          name: cf_lambda - script to trigger task
           command: |
             set -x
             json_data=$(jq -n \
               --arg automation_dir "./automation" \
-              --arg manifest "manifest.yml" \
-              --arg task_name "backup" \
-              --arg command "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh" \
-              --argjson args '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]' \
+              --arg manifest "<< parameters.manifest >>" \
+              --arg task_name "<< parameters.task_name >>" \
+              --arg command "<< parameters.task_command >>" \
+              --argjson args '<< parameters.task_args >>' \
               '{
                 automation_dir: $automation_dir,
                 manifest: $manifest,
@@ -487,17 +489,14 @@ commands:
             find ./automation -name "*.sh" -exec chmod +x {} \;
 
             ./automation/ci/scripts/cf_lambda.sh "$json_data"
-          environment:
-            CF_RDS_SERVICE_NAME: ttahub-prod
-            CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
           name: Generate Message
           command: |
             if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
               PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-              echo ":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
+              echo "<< parameters.success_message >> before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
             else
-              echo ":download::database: Production backup successful!" > /tmp/message_file
+              echo "<< parameters.success_message >> successful!" > /tmp/message_file
             fi
       - notify_slack:
           slack_bot_token: $SLACK_BOT_TOKEN
@@ -509,13 +508,82 @@ commands:
             # Signal the log monitoring to stop
             CONTROL_FILE="/tmp/stop_tail"
             touch $CONTROL_FILE
-            
+
             # Wait for the log monitoring process to terminate
             sleep 5
 
             # Logout from Cloud Foundry
             cf logout
-
+  cf_backup:
+    description: "Backup database to S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "backup"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          manifest: "manifest.yml"
+          success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
+  cf_restore:
+    description: "Restore backup database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - run:
+          name: Validate Parameters
+          command: |
+            if [ "<< parameters.rds_service_name >>" = "ttahub-prod" ]; then
+              echo "Error: rds_service_name cannot be 'ttahub-prod'"
+              exit 1
+            fi
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "restore"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          manifest: "manifest-restore.yml"
+          success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+  cf_process:
+    description: "process database from S3"
+    parameters:
+      auth_client_secret: { type: env_var_name }
+      cloudgov_username: { type: env_var_name }
+      cloudgov_password: { type: env_var_name }
+      cloudgov_space: { type: env_var_name }
+      rds_service_name: { type: string }
+      s3_service_name: { type: string }
+      backup_prefix: { type: string }
+    steps:
+      - cf_automation_task:
+          auth_client_secret: << parameters.auth_client_secret >>
+          cloudgov_username: << parameters.cloudgov_username >>
+          cloudgov_password: << parameters.cloudgov_password >>
+          cloudgov_space: << parameters.cloudgov_space >>
+          task_name: "process"
+          task_command: "cd /home/vcap/app/db-restore/scripts; bash ./db_restore.sh"
+          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          manifest: "manifest-process.yml"
+          success_message: ':database: "<< parameters.backup_prefix >>" Restored'
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -569,6 +637,9 @@ parameters:
     default: "867346799"
     type: string
   manual-trigger:
+    type: boolean
+    default: false
+  manual-process:
     type: boolean
     default: false
 jobs:
@@ -1190,10 +1261,64 @@ jobs:
           rds_service_name: ttahub-prod
           s3_service_name: ttahub-db-backups
           backup_prefix: production
+  restore_production_for_processing:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_restore:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: production
+  process_production:
+    executor: docker-executor
+    steps:
+      - checkout
+      - create_combined_yarnlock
+      - restore_cache:
+          keys:
+            # To manually bust the cache, increment the version e.g. v7-yarn...
+            - v14-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+            # If checksum is new, restore partial cache
+            - v14-yarn-deps-
+      - run: yarn deps
+      - run:
+          name: Build backend assets
+          command: yarn build
+      - cf_process:
+            auth_client_secret: PROD_AUTH_CLIENT_SECRET
+            cloudgov_username: CLOUDGOV_PROD_USERNAME
+            cloudgov_password: CLOUDGOV_PROD_PASSWORD
+            cloudgov_space: CLOUDGOV_PROD_SPACE
+            rds_service_name: ttahub-process
+            s3_service_name: ttahub-db-backups
+  process_backup:
+    docker:
+      - image: cimg/base:2024.05
+    steps:
+    - sparse_checkout:
+          directories: 'automation'
+          branch: << pipeline.git.branch >>
+    - cf_backup:
+          auth_client_secret: PROD_AUTH_CLIENT_SECRET
+          cloudgov_username: CLOUDGOV_PROD_USERNAME
+          cloudgov_password: CLOUDGOV_PROD_PASSWORD
+          cloudgov_space: CLOUDGOV_PROD_SPACE
+          rds_service_name: ttahub-process
+          s3_service_name: ttahub-db-backups
+          backup_prefix: processed
 workflows:
   build_test_deploy:
     when:
-      equal: [false, << pipeline.parameters.manual-trigger >>]
+      and:
+        - equal: [false, << pipeline.parameters.manual-trigger >>]
+        - equal: [false, << pipeline.parameters.manual-process >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1301,3 +1426,10 @@ workflows:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  manual_process_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-process >>]
+    jobs:
+      - restore_production_for_processing
+      - process_production
+      - process_backup
