@@ -583,8 +583,6 @@ function perform_restore() {
         exit 1
     }
 
-    cat latest_backup.txt
-
     log "INFO" "Reading backup file paths from the latest backup file list"
     local zip_file_path md5_file_path sha256_file_path password_file_path
     zip_file_path=$(awk 'NR==1' latest_backup.txt)
@@ -612,7 +610,11 @@ function perform_restore() {
     }
 
     log "INFO" "Restoring the database from the backup file"
-    aws s3 cp "s3://${zip_file_path}" - | funzip -P "${zip_password}" | psql || {
+    set -x
+    set -o pipefail
+    aws s3 cp "s3://${zip_file_path}" - |\
+    funzip -P "${zip_password}" |\
+    PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" || {
         log "ERROR" "Database restore failed"
         set -e
         exit 1
