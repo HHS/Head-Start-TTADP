@@ -3,7 +3,7 @@ const config = {
   testDir: '.',
   outputDir: './test-results',
   reporter: [
-    ['html', { outputFolder: './api-html-report', outputFile: 'api-report.html', open: 'never' }],
+    ['html', { outputFolder: './api-html-report', open: 'never' }],
   ],
   workers: 1,
 };
