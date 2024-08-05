@@ -13,6 +13,6 @@ applications:
   services:
     - ttahub-db-backups
     - ttahub-process
-    - ttahub-staging
-    - ttahub-dev
-    - ttahub-sandbox
+    # - ttahub-staging
+    # - ttahub-dev
+    # - ttahub-sandbox
