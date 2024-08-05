@@ -15,8 +15,7 @@ const config = {
   fullyParallel: true,
   reporter: [
     ['list'],
-    ['html', { outputFolder: './test-results/report', outputFile: 'e2e-report.html', open: 'never' }],
-    ['json', { outputFolder: './test-results/report', outputFile: 'e2e-report.json', open: 'never' }],
+    ['html', { outputFolder: './e2e-html-report', outputFile: 'e2e-report.html', open: 'never' }],
   ],
   timeout: 300000,
   globalTimeout: 900000,
