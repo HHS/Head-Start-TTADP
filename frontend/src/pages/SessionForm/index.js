@@ -309,7 +309,7 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  const nonFormUser = !isOwner || !isAdminUser || !isPoc !== !isCollaborator;
+  const nonFormUser = !isOwner && !isAdminUser && (!isPoc !== !isCollaborator);
 
   if (reportFetched && (formData.status === TRAINING_REPORT_STATUSES.COMPLETE || nonFormUser)) {
     return (
@@ -335,7 +335,11 @@ export default function SessionForm({ match }) {
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Training report - Session
             </h1>
-            <ReportLink reportId={formData.event.data.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
+            {
+              formData && formData.event && (
+              <ReportLink reportId={formData.event.data.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
+              )
+            }
           </div>
         </Grid>
       </Grid>
