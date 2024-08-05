@@ -13,7 +13,11 @@ const config = {
     timeout: 20000,
   },
   fullyParallel: true,
-  reporter: [['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [
+    ['list'],
+    ['html', { outputFolder: './report', open: 'never' }],
+    ['json', { outputFolder: './report', outputFile: 'report.json', open: 'never' }],
+  ],
   timeout: 300000,
   globalTimeout: 900000,
   globalSetup: './init/globalSetup.ts',
