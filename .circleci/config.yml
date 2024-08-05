@@ -801,7 +801,7 @@ jobs:
       - store_artifacts:
           path: tests/e2e
       - store_test_results:
-          path: tests/e2e/report/
+          path: tests/e2e/test-results/
     resource_class: large
   test_api:
     executor: docker-postgres-executor
@@ -840,7 +840,7 @@ jobs:
       - store_artifacts:
           path: tests/api
       - store_test_results:
-          path: tests/api/report/
+          path: tests/api/test-results/
     resource_class: large
   test_utils:
     executor: docker-postgres-executor
