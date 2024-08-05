@@ -313,27 +313,27 @@ function unbind_all_services() {
     local app_name="$1"
     validate_parameters "$app_name"
 
-    log "INFO" "Unbinding all services from application $app_name..."
+    # log "INFO" "Unbinding all services from application $app_name..."
 
     # Get the list of services bound to the application
     local services
     services=$(cf services | grep "$app_name" | awk '{print $1}')
 
     if [[ -z "$services" ]]; then
-        log "INFO" "No services are bound to the application $app_name."
+        # log "INFO" "No services are bound to the application $app_name."
         return 0
     fi
 
     # Loop through each service and unbind it from the application
     for service in $services; do
-        log "INFO" "Unbinding service $service from application $app_name..."
+        # log "INFO" "Unbinding service $service from application $app_name..."
         if ! cf unbind-service "$app_name" "$service"; then
             log "ERROR" "Failed to unbind service $service from application $app_name."
             return 1
         fi
     done
 
-    log "INFO" "Successfully unbound all services from application $app_name."
+    # log "INFO" "Successfully unbound all services from application $app_name."
     return 0
 }
 
