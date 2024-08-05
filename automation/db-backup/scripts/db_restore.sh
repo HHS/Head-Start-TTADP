@@ -587,7 +587,10 @@ function perform_restore() {
 
     log "INFO" "Reading backup file paths from the latest backup file list"
     local zip_file_path md5_file_path sha256_file_path password_file_path
-    read zip_file_path md5_file_path sha256_file_path password_file_path < latest_backup.txt
+    zip_file_path=$(awk 'NR==1' latest_backup.txt)
+    md5_file_path="${backup_file_name%.zip}.md5"
+    sha256_file_path="${backup_file_name%.zip}.sha256"
+    password_file_path="${backup_file_name%.zip}.pwd"
     parameters_validate "${zip_file_path}"
     parameters_validate "${md5_file_path}"
     parameters_validate "${sha256_file_path}"
