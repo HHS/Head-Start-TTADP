@@ -308,6 +308,35 @@ function check_app_running {
     fi
 }
 
+# Unbind all services from the application
+function unbind_all_services() {
+    local app_name="$1"
+    validate_parameters "$app_name"
+
+    log "INFO" "Unbinding all services from application $app_name..."
+
+    # Get the list of services bound to the application
+    local services
+    services=$(cf services | grep "$app_name" | awk '{print $1}')
+
+    if [[ -z "$services" ]]; then
+        log "INFO" "No services are bound to the application $app_name."
+        return 0
+    fi
+
+    # Loop through each service and unbind it from the application
+    for service in $services; do
+        log "INFO" "Unbinding service $service from application $app_name..."
+        if ! cf unbind-service "$app_name" "$service"; then
+            log "ERROR" "Failed to unbind service $service from application $app_name."
+            return 1
+        fi
+    done
+
+    log "INFO" "Successfully unbound all services from application $app_name."
+    return 0
+}
+
 # Push the app using a manifest from a specific directory
 function push_app {
     local original_dir=$(pwd)  # Save the original directory
@@ -320,7 +349,11 @@ function push_app {
     cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
 
     # Extract app name from the manifest file
-    local app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
+    local app_name
+    app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
+
+    # Unbind all services before pushing the app
+    unbind_all_services "$app_name"
 
     # Push the app without routing or starting it, capturing output
     local push_output
@@ -339,7 +372,6 @@ function push_app {
     log "INFO" "The app name is: $app_name"
     echo $app_name
 }
-
 
 # Function to start an app
 function start_app {
@@ -367,6 +399,9 @@ function stop_app {
     else
         log "INFO" "Application '$app_name' stopped successfully."
     fi
+
+    # Unbind all services after stopping the app
+    unbind_all_services "$app_name"
 }
 
 # Function to manage the state of the application (start, restage, stop)
