@@ -420,12 +420,28 @@ function aws_s3_get_latest_backup() {
     log "INFO" "Downloading latest backup file list from S3..."
     if aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${backup_filename_prefix}/${latest_backup_filename}" - > latest_backup.txt; then
         log "INFO" "Successfully downloaded latest backup file list."
+
+        # Check if the file exists and is not empty
+        if [ -f latest_backup.txt ]; then
+            if [ -s latest_backup.txt ]; then
+                log "INFO" "Latest backup file list exists and is not empty."
+            else
+                log "ERROR" "Downloaded latest backup file list is empty."
+                set -e
+                return 1
+            fi
+        else
+            log "ERROR" "Downloaded latest backup file list does not exist."
+            set -e
+            return 1
+        fi
     else
         log "ERROR" "Failed to download latest backup file list."
         set -e
         return 1
     fi
 }
+
 
 # Function to download the backup password from S3
 function aws_s3_download_password() {
@@ -566,6 +582,8 @@ function perform_restore() {
         set -e
         exit 1
     }
+
+    cat latest_backup.txt
 
     log "INFO" "Reading backup file paths from the latest backup file list"
     local zip_file_path md5_file_path sha256_file_path password_file_path
