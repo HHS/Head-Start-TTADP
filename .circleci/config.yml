@@ -27,11 +27,11 @@ executors:
       - image: cimg/aws:2024.03
 commands:
   sparse_checkout:
-    description: "Checkout a sparse directory from a specific branch."
+    description: "Checkout sparse directories from a specific branch."
     parameters:
-      directory:
+      directories:
         type: string
-        description: "Directory to checkout sparsely"
+        description: "Comma-separated list of directories to checkout sparsely"
       branch:
         type: string
         description: "Branch to checkout"
@@ -45,10 +45,14 @@ commands:
           command: |
             git clone --no-checkout --filter=blob:none << pipeline.project.git_url >>.git .
       - run:
-          name: Setup Sparse Checkout
+          name: Sparse Checkout
+          environment:
+            DIRECTORIES: "<< parameters.directories >>"
           command: |
             git config core.sparseCheckout true
-            echo "<< parameters.directory >>/*" >> .git/info/sparse-checkout
+            echo $DIRECTORIES | tr ',' '\n' | while read dir; do
+              echo "$dir" | tee -a .git/info/sparse-checkout
+            done
       - run:
           name: Checkout Branch
           command: |
@@ -101,7 +105,7 @@ commands:
               }
             }"
   notify_slack:
-    description: "Notify slack of a deploy to production"
+    description: "Notify Slack with message"
     parameters:
       slack_bot_token:
         description: "Slack bot token"
@@ -109,24 +113,123 @@ commands:
       slack_channel:
         description: "Slack channel name to post the message to"
         type: string
+      message_text:
+        description: "Message text to post to Slack"
+        type: string
+        default: ""
+      message_text_file:
+        description: "message text_file"
+        type: string
+        default: ""
     steps:
-    - run:
-        name: Notify Slack of Deployment
-        command: |
-          # Check if the CIRCLE_PULL_REQUEST variable is set and extract the PR number from it
-          if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-            MESSAGE_TEXT=":rocket: Deployment of PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> to production was successful!"
-          else
-            MESSAGE_TEXT=":rocket: Deployment to production was successful!"
-          fi
+      - run:
+          name: Notify Slack
+          command: |
+            set -x
+            # Ensure the $BASH_ENV file exists
+            if [ ! -f $BASH_ENV ]; then
+              touch $BASH_ENV
+            fi
 
-          curl -X POST -H "Authorization: Bearer << parameters.slack_bot_token >>" \
-          -H 'Content-type: application/json;charset=utf-8' \
-          --data "{
-            \"channel\": \"<< parameters.slack_channel >>\",
-            \"text\": \"$MESSAGE_TEXT\"
-          }" https://slack.com/api/chat.postMessage
+            source $BASH_ENV
+            cat $BASH_ENV
+
+            # Evaluate message_text_script if provided
+            if [ -n "<< parameters.message_text_file >>" ]; then
+              MESSAGE_TEXT=$(cat "<< parameters.message_text_file >>")
+            else
+              MESSAGE_TEXT="<< parameters.message_text >>"
+            fi
+
+            echo $MESSAGE_TEXT
+
+            # Ensure all parameters are provided
+            if [ -z "<< parameters.slack_bot_token >>" ] || [ -z "<< parameters.slack_channel >>" ] || [ -z "$MESSAGE_TEXT" ]; then
+              echo "Missing required parameters. Notification will not be sent."
+              exit 1
+            fi
+
+            response=$(curl -s -X POST \
+              -H "Authorization: Bearer << parameters.slack_bot_token >>" \
+              -H 'Content-type: application/json;charset=utf-8' \
+              --data "{
+                \"channel\": \"<< parameters.slack_channel >>\",
+                \"text\": \"$MESSAGE_TEXT\"
+              }" \
+              https://slack.com/api/chat.postMessage)
+
+            ok=$(echo $response | jq -r '.ok')
+            error=$(echo $response | jq -r '.error')
+
+            if [ "$ok" != "true" ]; then
+              echo "Slack notification failed: $error"
+              exit 1
+            else
+              echo "Slack notification sent successfully"
+            fi
+
+  notify_slack_deploy:
+    parameters:
+      slack_bot_token:
+        description: "Slack bot token"
+        type: string
+      slack_channel:
+        description: "Slack channel name to post the message to"
+        type: string
+      environment_name:
+        description: "Name of environment"
+        type: string
+    steps:
+      - run:
+          name: Generate Message
+          command: |
+            # Determine the environment URL
+            case "<< parameters.environment_name >>" in
+                sandbox)
+                    ENV_URL="https://tta-smarthub-sandbox.app.cloud.gov/"
+                    ;;
+                dev)
+                    ENV_URL="https://tta-smarthub-dev.app.cloud.gov/"
+                    ;;
+                staging)
+                    ENV_URL="https://tta-smarthub-staging.app.cloud.gov/"
+                    ;;
+                production)
+                    ENV_URL="https://ttahub.ohs.acf.hhs.gov"
+                    ;;
+                *)
+                    ENV_URL="#"
+                    ;;
+            esac
+
+            env_name="<< parameters.environment_name >>"
+
+            if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
+                PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+
+                if [ ! -z "${PR_TITLE}" ]; then
+                    JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
+                    if [ ! -z "${JIRA_URLS}" ]; then
+                        MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                    fi
+                else
+                    MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
+                fi
+            else
+                MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
+            fi
+
+            echo -e "${MESSAGE_TEXT}" > /tmp/message_file
+
+      - notify_slack:
+          slack_bot_token: << parameters.slack_bot_token >>
+          slack_channel: << parameters.slack_channel >>
+          message_text_file: "/tmp/message_file"
+
 
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
@@ -308,12 +411,13 @@ commands:
             sudo apt-get update
             # Install uuid-runtime to have access to uuidgen
             # Install pv wget
-            sudo apt-get install pv uuid-runtime wget
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
+
             # Install Cloud Foundry CLI
             wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
             echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
             sudo apt-get update
-            sudo apt-get install cf8-cli
+            sudo apt-get install -y cf8-cli
             # Install plugin needed for connect-to-service
             cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.3/cf-service-connect_linux_amd64
 
@@ -340,6 +444,28 @@ commands:
               -o << pipeline.parameters.cg_org >> \
               -s ${<< parameters.cloudgov_space >>}
       - run:
+          name: Start Log Monitoring
+          command: |
+            #!/bin/bash
+            CONTROL_FILE="/tmp/stop_tail"
+            rm -f $CONTROL_FILE
+            
+            # Start tailing logs
+            cf logs tta-automation &
+
+            # Get the PID of the cf logs command
+            TAIL_PID=$!
+
+            # Wait for the control file to be created
+            while [ ! -f $CONTROL_FILE ]; do
+              sleep 1
+            done
+
+            # Kill the cf logs command
+            kill -9 $TAIL_PID
+            echo "cf logs command for tta-automation has been terminated."
+          background: true
+      - run:
           name: cf_lambda - script to trigger backup
           command: |
             set -x
@@ -365,9 +491,31 @@ commands:
             CF_RDS_SERVICE_NAME: ttahub-prod
             CF_S3_SERVICE_NAME: ttahub-db-backups
       - run:
+          name: Generate Message
+          command: |
+            if [ ! -z "$CIRCLE_PULL_REQUEST" ]; then
+              PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+              echo ":download::database: Production backup before PR <$CIRCLE_PULL_REQUEST|$PR_NUMBER> successful!" > /tmp/message_file
+            else
+              echo ":download::database: Production backup successful!" > /tmp/message_file
+            fi
+      - notify_slack:
+          slack_bot_token: $SLACK_BOT_TOKEN
+          slack_channel: "acf-head-start-eng"
+          message_text_file: "/tmp/message_file"
+      - run:
           name: Logout of service account
           command: |
+            # Signal the log monitoring to stop
+            CONTROL_FILE="/tmp/stop_tail"
+            touch $CONTROL_FILE
+            
+            # Wait for the log monitoring process to terminate
+            sleep 5
+
+            # Logout from Cloud Foundry
             cf logout
+
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
@@ -406,7 +554,7 @@ parameters:
     default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "gh/cfignore-keep-sql-drop-tests"
+    default: "mb/TTAHUB-3198/training-report-alerts"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -634,6 +782,11 @@ jobs:
           name: Wait for server to start
           command: ./bin/ping-server 3000
       - run:
+          name: Monitor database
+          command: |
+            docker attach  $(docker ps | grep postgres | awk '{print $1}')
+          background: true
+      - run:
           name: Install playwright dependencies
           command: |
             npx playwright install
@@ -843,6 +996,11 @@ jobs:
                 env_name: sandbox
                 new_relic_app_id: << pipeline.parameters.sandbox_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack_deploy:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                environment_name: "sandbox"
+
       - when:  # dev
           condition:
             and:
@@ -897,6 +1055,11 @@ jobs:
                 env_name: dev
                 new_relic_app_id: << pipeline.parameters.dev_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack_deploy:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                environment_name: "dev"
+
       - when:  # staging
           condition:
             and:
@@ -949,6 +1112,11 @@ jobs:
                 env_name: staging
                 new_relic_app_id: << pipeline.parameters.staging_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
+            - notify_slack_deploy:
+                slack_bot_token: $SLACK_BOT_TOKEN
+                slack_channel: "acf-head-start-github"
+                environment_name: "staging"
+
       - when:  # prod
           condition:
             and:
@@ -1001,16 +1169,18 @@ jobs:
                 env_name: prod
                 new_relic_app_id: << pipeline.parameters.prod_new_relic_app_id >>
                 new_relic_api_key: $NEW_RELIC_REST_API_KEY
-            - notify_slack:
+            - notify_slack_deploy:
                 slack_bot_token: $SLACK_BOT_TOKEN
                 slack_channel: "acf-ohs-ttahub--contractor-customer-team"
+                environment_name: "production"
+
     resource_class: large
   backup_upload_production:
     docker:
       - image: cimg/base:2024.05
     steps:
     - sparse_checkout:
-          directory: 'automation'
+          directories: 'automation'
           branch: << pipeline.git.branch >>
     - cf_backup:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
