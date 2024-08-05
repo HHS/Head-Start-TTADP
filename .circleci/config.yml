@@ -449,7 +449,7 @@ commands:
             #!/bin/bash
             CONTROL_FILE="/tmp/stop_tail"
             rm -f $CONTROL_FILE
-            
+
             # Start tailing logs
             cf logs tta-automation &
 
@@ -509,7 +509,7 @@ commands:
             # Signal the log monitoring to stop
             CONTROL_FILE="/tmp/stop_tail"
             touch $CONTROL_FILE
-            
+
             # Wait for the log monitoring process to terminate
             sleep 5
 
@@ -799,7 +799,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright/e2e
+          path: tests/e2e
       - store_test_results:
           path: tests/e2e/report/
     resource_class: large
@@ -838,7 +838,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:api
       - store_artifacts:
-          path: playwright/api
+          path: tests/api
       - store_test_results:
           path: tests/api/report/
     resource_class: large
@@ -872,7 +872,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:utils
       - store_artifacts:
-          path: playwright/utilsTests
+          path: tests/utilsTests
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor
