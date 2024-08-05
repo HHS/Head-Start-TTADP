@@ -800,6 +800,8 @@ jobs:
           command: yarn e2e:ci
       - store_artifacts:
           path: playwright/e2e
+      - store_test_results:
+          path: tests/e2e/report/
     resource_class: large
   test_api:
     executor: docker-postgres-executor
@@ -837,6 +839,8 @@ jobs:
           command: yarn e2e:api
       - store_artifacts:
           path: playwright/api
+      - store_test_results:
+          path: tests/api/report/
     resource_class: large
   test_utils:
     executor: docker-postgres-executor
