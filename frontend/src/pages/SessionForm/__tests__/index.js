@@ -91,7 +91,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1, data: { eventName: 'Tis an event' } },
+      url, { eventId: 1, event: { ownerId: 1, data: { eventName: 'Tis an event', eventId: 1 } } },
     );
 
     act(() => {
@@ -122,7 +122,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1 },
+      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
     );
 
     act(() => {
@@ -143,7 +143,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1 },
+      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
     );
 
     act(() => {
@@ -165,7 +165,7 @@ describe('SessionReportForm', () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(
-      url, { eventId: 1 },
+      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1 } } },
     );
 
     act(() => {
@@ -177,7 +177,7 @@ describe('SessionReportForm', () => {
     expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
 
     fetchMock.put(url, { eventId: 1 });
-    const saveSession = screen.getByText(/Save and continue/i);
+    const saveSession = screen.getByText(/Review and submit/i);
     userEvent.click(saveSession);
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
@@ -226,4 +226,5 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
     expect(history.location.pathname).toBe('/training-report/view/1');
   });
+  // TODO: Add tests to make sure we show the correct pages for coresponding roles POC , Collab.
 });
