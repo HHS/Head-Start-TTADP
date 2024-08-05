@@ -569,7 +569,6 @@ commands:
       cloudgov_space: { type: env_var_name }
       rds_service_name: { type: string }
       s3_service_name: { type: string }
-      backup_prefix: { type: string }
     steps:
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
@@ -577,10 +576,10 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "process"
-          task_command: "cd /home/vcap/app/db-restore/scripts; bash ./db_restore.sh"
-          task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_process.sh"
+          task_args: '["<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           manifest: "manifest-process.yml"
-          success_message: ':database: "<< parameters.backup_prefix >>" Restored'
+          success_message: ':database: Restored data processed'
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
