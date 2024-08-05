@@ -462,7 +462,7 @@ test.describe('Activity Report', () => {
 
     await expect(page.getByText("This goal is used on an activity report, so some fields can't be edited.")).toBeVisible();
     await expect(page.getByText('g2', { exact: true })).toBeVisible();
-    await expect(page.getByText('g2o1')).not.toBeVisible();
+    await expect(page.getByText('g2o1')).toBeVisible();
   });
 
   test('multi recipient goal used on an AR', async ({ page }) => {
