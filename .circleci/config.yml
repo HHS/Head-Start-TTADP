@@ -567,8 +567,6 @@ commands:
       cloudgov_username: { type: env_var_name }
       cloudgov_password: { type: env_var_name }
       cloudgov_space: { type: env_var_name }
-      rds_service_name: { type: string }
-      s3_service_name: { type: string }
     steps:
       - cf_automation_task:
           auth_client_secret: << parameters.auth_client_secret >>
@@ -576,8 +574,8 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "process"
-          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_process.sh"
-          task_args: '["<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
+          task_command: "yarn processData:local"
+          task_args: ''
           manifest: "manifest-process.yml"
           success_message: ':database: Restored data processed'
 parameters:
@@ -1292,8 +1290,6 @@ jobs:
             cloudgov_username: CLOUDGOV_PROD_USERNAME
             cloudgov_password: CLOUDGOV_PROD_PASSWORD
             cloudgov_space: CLOUDGOV_PROD_SPACE
-            rds_service_name: ttahub-process
-            s3_service_name: ttahub-db-backups
   process_backup:
     docker:
       - image: cimg/base:2024.05
@@ -1427,5 +1423,5 @@ workflows:
       equal: [true, << pipeline.parameters.manual-process >>]
     jobs:
       - restore_production_for_processing
-      - process_production
-      - process_backup
+      # - process_production
+      # - process_backup
