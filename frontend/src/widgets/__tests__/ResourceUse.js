@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import ResourceUse from '../ResourceUse';
 
 const testData = {
@@ -89,6 +90,12 @@ describe('Resource Use Widget', () => {
     const data = { headers: ['Jan-22', 'Feb-22', 'Mar-22'], resources: [] };
     renderResourceUse(data);
 
+    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+
+    act(() => {
+      userEvent.click(button);
+    });
+
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
     expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
@@ -100,6 +107,11 @@ describe('Resource Use Widget', () => {
 
   it('renders correctly with data', async () => {
     renderResourceUse(testData);
+
+    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+    act(() => {
+      userEvent.click(button);
+    });
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
     expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
