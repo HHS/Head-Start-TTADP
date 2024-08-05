@@ -396,9 +396,6 @@ commands:
       success_message:
         description: "Success message for Slack notification"
         type: string
-      fail_message:
-        description: "Fail message for Slack notification"
-        type: string
     steps:
       - run:
           name: Install Dependencies
@@ -564,7 +561,7 @@ commands:
           manifest: "manifest-restore.yml"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
   cf_process:
-    description: "process database from S3"
+    description: "Process database from S3"
     parameters:
       auth_client_secret: { type: env_var_name }
       cloudgov_username: { type: env_var_name }
