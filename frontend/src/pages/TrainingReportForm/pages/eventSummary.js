@@ -58,7 +58,6 @@ const EventSummary = ({
   additionalData,
   datePickerKey,
   isAppLoading,
-  // reviewAndSubmit,
   showSubmitModal,
   onSaveDraft,
 }) => {
