@@ -392,6 +392,9 @@ function stop_app {
     local app_name=$1
     validate_parameters "$app_name"
 
+    # Unbind all services after stopping the app
+    unbind_all_services "$app_name"
+
     log "INFO" "Stopping application '$app_name'..."
     if ! cf stop "$app_name"; then
         log "ERROR" "Failed to stop application '$app_name'."
@@ -399,9 +402,6 @@ function stop_app {
     else
         log "INFO" "Application '$app_name' stopped successfully."
     fi
-
-    # Unbind all services after stopping the app
-    unbind_all_services "$app_name"
 }
 
 # Function to manage the state of the application (start, restage, stop)
