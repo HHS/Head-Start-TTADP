@@ -613,8 +613,11 @@ function perform_restore() {
     set -x
     set -o pipefail
     aws s3 cp "s3://${zip_file_path}" - |\
-    funzip -P "${zip_password}" |\
-    PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" || {
+    funzip |\
+    dd of=/dev/stdout |\
+    unzip -p - -P "${zip_password}" -- - |\
+    PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" ||\
+    {
         log "ERROR" "Database restore failed"
         set -e
         exit 1
