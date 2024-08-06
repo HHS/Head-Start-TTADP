@@ -223,7 +223,7 @@ export default function SessionForm({ match }) {
     history.push(newPath, state);
   };
 
-  if (!currentPage) {
+  if (!currentPage || (isPoc && currentPage === 'session-summary')) {
     return (
       <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
@@ -309,8 +309,7 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  const nonFormUser = !isOwner && !isAdminUser && (!isPoc !== !isCollaborator);
-
+  const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
   if (reportFetched && (formData.status === TRAINING_REPORT_STATUSES.COMPLETE || nonFormUser)) {
     return (
       <Redirect to={`/training-report/view/${trainingReportId}`} />

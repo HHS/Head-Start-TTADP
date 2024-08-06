@@ -226,5 +226,39 @@ describe('SessionReportForm', () => {
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
     expect(history.location.pathname).toBe('/training-report/view/1');
   });
-  // TODO: Add tests to make sure we show the correct pages for coresponding roles POC , Collab.
+
+  it('redirects when user is a POC', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    // Ensure redirect for POC was called.
+    expect(history.location.pathname).toMatch(/\/participants$/);
+  });
+
+  it('renders all the pages for a POC', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'participants', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    expect(screen.queryAllByText('Event summary').length).toBe(0);
+    expect(screen.queryAllByText('Participants').length).toBe(2);
+    expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+    expect(screen.getByText('Next steps')).toBeInTheDocument();
+  });
 });
