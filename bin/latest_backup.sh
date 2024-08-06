@@ -80,7 +80,7 @@ delete_service_key() {
 # Function to delete older service keys
 delete_old_service_keys() {
     local cf_s3_service_name=$1
-    local current_service_key=$1
+    local current_service_key=$2
     local current_time=$(date +%s)
     local six_hours_in_seconds=21600
     echo "Deleting older service keys for service instance ${cf_s3_service_name}..."
@@ -228,10 +228,9 @@ download_and_verify() {
     # Download file and generate hashes simultaneously
     echo "Downloading file and generating hashes..."
     $downloader "$backup_url" |\
-      tee
-        >(sha256sum | awk '{print $1}' > "${backup_file_name}.sha256") \
-        >(md5sum | awk '{print $1}' > "${backup_file_name}.md5") \
-        > "$backup_file_name"
+      tee >(sha256sum | awk '{print $1}' > "${backup_file_name}.sha256") \
+          >(md5sum | awk '{print $1}' > "${backup_file_name}.md5") \
+          > "$backup_file_name"
 
     # Verify SHA-256 checksum
     echo "Verifying SHA-256 checksum..."
@@ -279,7 +278,7 @@ download_and_verify() {
         openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${password}" -in "$backup_file_name" |\
           gzip -d -c > "${backup_file_name%.zenc}"
         if [ $? -eq 0 ]; then
-            echo "File decrypted and decompressed successfully."
+            echo "File decrypted and decompressed successfully: ${backup_file_name%.zenc}"
         else
             echo "Failed to decrypt and decompress the file."
             exit 1
@@ -319,7 +318,6 @@ erase_files() {
         fi
     done
 }
-
 
 # Function to retrieve and use S3 service credentials
 fetch_latest_backup_info_and_cleanup() {
