@@ -457,7 +457,7 @@ function aws_s3_download_password() {
 
 # Verify the integrity of the file downloaded from S3
 function aws_s3_verify_file_integrity() {
-    local zip_file_path="$1"
+    local backup_file_path="$1"
     local md5_file_path="$2"
     local sha256_file_path="$3"
 
@@ -469,7 +469,7 @@ function aws_s3_verify_file_integrity() {
     log "INFO" "Prepare the command to stream the S3 file and calculate hashes"
     set +e
     log "INFO" "Execute the command and capture its exit status"
-    aws s3 cp "s3://${zip_file_path}" - |\
+    aws s3 cp "s3://${backup_file_path}" - |\
         tee \
           >(sha256sum |\
             awk '{print $1}' > /tmp/computed_sha256 &\
@@ -548,7 +548,7 @@ function perform_restore() {
     add_to_path '/tmp/local/bin'
 
     log "INFO" "check dependencies"
-    check_dependencies aws md5sum pg_restore unzip sha256sum
+    check_dependencies aws md5sum pg_restore sha256sum gzip openssl
 
     log "INFO" "collect and configure credentials"
     rds_prep "${VCAP_SERVICES}" "${rds_server}" || {
@@ -584,26 +584,26 @@ function perform_restore() {
     }
 
     log "INFO" "Reading backup file paths from the latest backup file list"
-    local zip_file_path md5_file_path sha256_file_path password_file_path
-    zip_file_path=$(awk 'NR==1' latest_backup.txt)
-    md5_file_path="${zip_file_path%.zip}.md5"
-    sha256_file_path="${zip_file_path%.zip}.sha256"
-    password_file_path="${zip_file_path%.zip}.pwd"
-    parameters_validate "${zip_file_path}"
+    local backup_file_path md5_file_path sha256_file_path password_file_path
+    backup_file_path=$(awk 'NR==1' latest_backup.txt)
+    md5_file_path="${backup_file_path%.gzenc}.md5"
+    sha256_file_path="${backup_file_path%.gzenc}.sha256"
+    password_file_path="${backup_file_path%.gzenc}.pwd"
+    parameters_validate "${backup_file_path}"
     parameters_validate "${md5_file_path}"
     parameters_validate "${sha256_file_path}"
     parameters_validate "${password_file_path}"
 
     log "INFO" "Downloading backup password"
-    local zip_password
-    zip_password=$(aws_s3_download_password "${password_file_path}") || {
+    local backup_password
+    backup_password=$(aws_s3_download_password "${password_file_path}") || {
         log "ERROR" "Failed to download backup password"
         set -e
         exit 1
     }
 
     log "INFO" "Verifying the backup file from S3"
-    aws_s3_verify_file_integrity "${zip_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
+    aws_s3_verify_file_integrity "${backup_file_path}" "${md5_file_path}" "${sha256_file_path}" || {
         log "ERROR" "Failed to verify the backup file"
         set -e
         exit 1
@@ -613,27 +613,10 @@ function perform_restore() {
     set -x
     set -o pipefail
 
-    mkfifo temp_fifo
-
-    if aws s3 cp "s3://${zip_file_path}" - | unzip -P "${zip_password}" -p - -- - > temp_fifo & then
-         log "INFO" "Streamed and extracted file successfully."
-    else
-         log "ERROR" "Error during streaming or extraction."
-        rm temp_fifo
-        set -e
-        exit 1
-    fi
-
-    if PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" < temp_fifo; then
-         log "INFO" "Data restored successfully."
-    else
-         log "ERROR" "Error during data restoration."
-        rm temp_fifo
-        set -e
-        exit 1
-    fi
-
-    rm temp_fifo
+    aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${backup_file_path}" - |\
+     openssl enc -d -aes-256-cbc -k "${backup_password}" |\
+     gzip -d |\
+     PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}"
 
     log "INFO" "Database restore completed successfully"
 

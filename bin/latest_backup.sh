@@ -151,39 +151,40 @@ generate_presigned_urls() {
     echo "${urls[@]}"
 }
 
-# Function to list all ZIP files in the same S3 path as the latest backup
-list_all_zip_files() {
+# Function to list all ZIP and ZENC files in the same S3 path as the latest backup
+list_all_backup_files() {
     local bucket_name=$1
     local s3_folder=$2
-    local zip_files=$(aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | grep '.zip\|.pwd\|.md5\|.sha256')
-    if [ -z "${zip_files}" ]; then
-        echo "No ZIP files found in S3 bucket."
+    local backup_files=$(aws s3 ls "s3://${bucket_name}/${s3_folder}" --recursive | grep -E '\.zip|\.zenc|\.pwd|\.md5|\.sha256')
+    if [ -z "${backup_files}" ]; then
+        echo "No backup files found in S3 bucket."
     else
-        echo "ZIP files in S3 bucket:"
-        printf "%-50s %-5s %-5s %-5s %-15s %-5s\n" "Name" "pwd" "md5" "sha256" "size(zip)" "age(days)"
+        echo "Backup files in S3 bucket:"
+        printf "%-50s %-7s %-5s %-5s %-5s %-15s %-5s\n" "Name" "Format" "pwd" "md5" "sha256" "size" "age(days)"
         current_date=$(date +%s)
-        echo "${zip_files}" | \
+        echo "${backup_files}" | \
         while read line; do \
           echo "${line##*.} ${line}";\
         done |\
         sort -rk5 |\
         tr '\n' ' ' | \
-        sed 's~ zip ~\nzip ~g' |\
+        sed 's~ \(zip\|zenc\) ~\n& ~g' |\
         while read line; do
-          zip_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
+          backup_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
+          format=$(echo ${line} | awk '{print $1}')
           has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");
           has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "");
           has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "");
-          zip_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));
+          backup_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));
 
           # Determine OS and use appropriate date command
           if [[ "$OSTYPE" == "darwin"* ]]; then
-            zip_age=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+            backup_age=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
           else
-            zip_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+            backup_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
           fi
 
-          printf "%-50s %-5s %-5s %-5s  %-15s %-5s\n" "$zip_file" "$has_pwd" "$has_md5" "$has_sha256" "$zip_size" "$zip_age";
+          printf "%-50s %-7s %-5s %-5s %-5s %-15s %-5s\n" "$backup_file" "$format" "$has_pwd" "$has_md5" "$has_sha256" "$backup_size" "$backup_age";
         done |\
         sort -k1
     fi
@@ -202,20 +203,21 @@ verify_file_exists() {
 
 # Function to download and verify files
 download_and_verify() {
-    local zip_url=$1
-    local zip_file_name=$2
+    local backup_url=$1
+    local backup_file_name=$2
     local password_url=$3
     local md5_url=$4
     local sha256_url=$5
+    local format=$6
 
     # Check if wget is installed
     if command -v wget &>/dev/null; then
         echo "Using wget to download the file."
-        wget -O "$zip_file_name" "$zip_url"
+        downloader="wget -O -"
     else
         # If wget is not installed, use curl
         echo "wget is not installed. Using curl to download the file."
-        curl -o "$zip_file_name" "$zip_url"
+        downloader="curl -s"
     fi
 
     # Download password, SHA-256 checksum, and MD5 checksum directly into variables
@@ -223,59 +225,83 @@ download_and_verify() {
     local checksum_sha256=$(curl -s "$sha256_url")
     local checksum_md5=$(curl -s "$md5_url")
 
+    # Download file and generate hashes simultaneously
+    echo "Downloading file and generating hashes..."
+    $downloader "$backup_url" |\
+      tee
+        >(sha256sum | awk '{print $1}' > "${backup_file_name}.sha256") \
+        >(md5sum | awk '{print $1}' > "${backup_file_name}.md5") \
+        > "$backup_file_name"
+
     # Verify SHA-256 checksum
     echo "Verifying SHA-256 checksum..."
-    echo "$checksum_sha256 $zip_file_name" | sha256sum -c
-    if [ $? -ne 0 ]; then
+    if [[ $(cat "${backup_file_name}.sha256") != "$checksum_sha256" ]]; then
         echo "SHA-256 checksum verification failed."
         exit 1
     else
         echo "SHA-256 checksum verified."
     fi
+    rm "${backup_file_name}.sha256"
 
     # Verify MD5 checksum
     echo "Verifying MD5 checksum..."
-    echo "$checksum_md5 $zip_file_name" | md5sum -c
-    if [ $? -ne 0 ]; then
+    if [[ $(cat "${backup_file_name}.md5") != "$checksum_md5" ]]; then
         echo "MD5 checksum verification failed."
         exit 1
     else
         echo "MD5 checksum verified."
     fi
+    rm "${backup_file_name}.md5"
 
-    # Unzip the file
-    echo "Unzipping the file..."
-    unzip -P "$password" "$zip_file_name"
-    if [ $? -eq 0 ]; then
-        echo "File unzipped successfully."
-
-        # Rename the extracted file
-        extracted_file="-"
-        new_name="${zip_file_name%.zip}"
-        mv "$extracted_file" "$new_name"
+    if [ "$format" = "zip" ]; then
+        # Unzip the file
+        echo "Unzipping the file..."
+        unzip -P "$password" "$backup_file_name"
         if [ $? -eq 0 ]; then
-            echo "File renamed to $new_name."
+            echo "File unzipped successfully."
+            # Rename the extracted file
+            extracted_file=$(unzip -l "$backup_file_name" | awk 'NR==4 {print $4}')
+            new_name="${backup_file_name%.zip}"
+            mv "$extracted_file" "$new_name"
+            if [ $? -eq 0 ]; then
+                echo "File renamed to $new_name."
+            else
+                echo "Failed to rename the file."
+                exit 1
+            fi
         else
-            echo "Failed to rename the file."
+            echo "Failed to unzip the file."
+            exit 1
+        fi
+    elif [ "$format" = "zenc" ]; then
+        # Decrypt and decompress the already downloaded file
+        echo "Decrypting and decompressing the file..."
+        openssl enc -d -aes-256-cbc -k "$password" -in "$backup_file_name" |\
+          gzip -d -c > "${backup_file_name%.zenc}"
+        if [ $? -eq 0 ]; then
+            echo "File decrypted and decompressed successfully."
+        else
+            echo "Failed to decrypt and decompress the file."
             exit 1
         fi
     else
-        echo "Failed to unzip the file."
+        echo "Unknown backup format: $format"
         exit 1
     fi
 }
+
 
 # Function to erase a set of files from S3
 erase_files() {
     local bucket_name=$1
     local s3_folder=$2
-    local zip_file=$3
+    local backup_file=$3
 
-    local pwd_file="${zip_file%.zip}.pwd"
-    local md5_file="${zip_file%.zip}.md5"
-    local sha256_file="${zip_file%.zip}.sha256"
+    local pwd_file="${backup_file%.zip}.pwd"
+    local md5_file="${backup_file%.zip}.md5"
+    local sha256_file="${backup_file%.zip}.sha256"
 
-    local files_to_delete=("$zip_file" "$pwd_file" "$md5_file" "$sha256_file")
+    local files_to_delete=("$backup_file" "$pwd_file" "$md5_file" "$sha256_file")
 
     echo "Deleting files from S3:"
     for file in "${files_to_delete[@]}"; do
@@ -300,7 +326,7 @@ fetch_latest_backup_info_and_cleanup() {
     local cf_s3_service_name="${cf_s3_service_name:-ttahub-db-backups}"  # Default to 'db-backups' if not provided
     local s3_folder="${s3_folder:-production}"  # Default to root of the bucket if not provided
     local deletion_allowed="${deletion_allowed:-no}"  # Default to no deletion if not provided
-    local list_zip_files="${list_zip_files:-no}"  # Default to no listing of ZIP files if not provided
+    local list_backup_files="${list_backup_files:-no}"  # Default to no listing of ZIP files if not provided
     local specific_file="${specific_file:-}"
     local download_and_verify="${download_and_verify:-no}"
     local erase_file="${erase_file:-}"
@@ -332,9 +358,9 @@ fetch_latest_backup_info_and_cleanup() {
     elif [ "${erase_file}" != "" ]; then
         # Erase the specified file along with its corresponding pwd, md5, and sha256 files
         erase_files "$bucket_name" "$s3_folder" "$erase_file"
-    elif [ "${list_zip_files}" = "yes" ]; then
-        # List all ZIP files if the option is enabled
-        list_all_zip_files "$bucket_name" "$s3_folder"
+    elif [ "${list_backup_files}" = "yes" ]; then
+        # List all ZIP and ZENC files if the option is enabled
+        list_all_backup_files "$bucket_name" "$s3_folder"
     else
         if [ -n "$specific_file" ]; then
             backup_file_name="${s3_folder}/${specific_file}"
@@ -357,13 +383,22 @@ fetch_latest_backup_info_and_cleanup() {
         local sha256_file_name="${backup_file_name%.zip}.sha256"
         local password_file_name="${backup_file_name%.zip}.pwd"
 
+        # Determine the backup format
+        local format="zip"
+        if [[ "$backup_file_name" == *.zenc ]]; then
+            format="zenc"
+            md5_file_name="${backup_file_name%.zenc}.md5"
+            sha256_file_name="${backup_file_name%.zenc}.sha256"
+            password_file_name="${backup_file_name%.zenc}.pwd"
+        fi
+
         # Generate presigned URLs for these files
         local urls
         IFS=' ' read -r -a urls <<< "$(generate_presigned_urls "$bucket_name" "$backup_file_name" "$password_file_name" "$md5_file_name" "$sha256_file_name")"
 
         if [ "${download_and_verify}" = "yes" ]; then
             # Perform download and verify functionality
-            download_and_verify "${urls[0]}" "$(basename "$backup_file_name")" "${urls[1]}" "${urls[2]}" "${urls[3]}"
+            download_and_verify "${urls[0]}" "$(basename "$backup_file_name")" "${urls[1]}" "${urls[2]}" "${urls[3]}" "$format"
         else
             # Print presigned URLs
             echo "Presigned URLs for the files:"
@@ -385,12 +420,12 @@ while [[ "$#" -gt 0 ]]; do
         -n|--service-name) cf_s3_service_name="$2"; shift ;;
         -s|--s3-folder) s3_folder="$2"; shift ;;
         -a|--allow-deletion) deletion_allowed="yes" ;;
-        -l|--list-zip-files) list_zip_files="yes" ;;
+        -l|--list-backup-files) list_backup_files="yes" ;;
         -f|--specific-file) specific_file="$2"; shift ;;
         -d|--download-and-verify) download_and_verify="yes"; deletion_allowed="yes" ;;
         -e|--erase-file) erase_file="$2"; shift ;;
         -k|--delete-old-keys) delete_old_keys="yes" ;;
-        -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-zip-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>] [-k | --delete-old-keys]"; exit 0 ;;
+        -h|--help) echo "Usage: $0 [-n | --service-name <CF_S3_SERVICE_NAME>] [-s | --s3-folder <s3_folder>] [-a | --allow-deletion] [-l | --list-backup-files] [-f | --specific-file <file_name>] [-d | --download-and-verify] [-e | --erase-file <zip_file>] [-k | --delete-old-keys]"; exit 0 ;;
         *) echo "Unknown parameter passed: $1"; exit 12 ;;
     esac
     shift
