@@ -612,16 +612,28 @@ function perform_restore() {
     log "INFO" "Restoring the database from the backup file"
     set -x
     set -o pipefail
-    aws s3 cp "s3://${zip_file_path}" - |\
-    funzip |\
-    dd of=/dev/stdout |\
-    unzip -p - -P "${zip_password}" -- - |\
-    PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" ||\
-    {
-        log "ERROR" "Database restore failed"
+
+    mkfifo temp_fifo
+
+    if aws s3 cp "s3://${zip_file_path}" - | unzip -P "${zip_password}" -p - -- - > temp_fifo & then
+         log "INFO" "Streamed and extracted file successfully."
+    else
+         log "ERROR" "Error during streaming or extraction."
+        rm temp_fifo
         set -e
         exit 1
-    }
+    fi
+
+    if PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}" < temp_fifo; then
+         log "INFO" "Data restored successfully."
+    else
+         log "ERROR" "Error during data restoration."
+        rm temp_fifo
+        set -e
+        exit 1
+    fi
+
+    rm temp_fifo
 
     log "INFO" "Database restore completed successfully"
 
