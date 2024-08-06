@@ -276,7 +276,7 @@ download_and_verify() {
     elif [ "$format" = "zenc" ]; then
         # Decrypt and decompress the already downloaded file
         echo "Decrypting and decompressing the file..."
-        openssl enc -d -aes-256-cbc -k "$password" -in "$backup_file_name" |\
+        openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${password}" -in "$backup_file_name" |\
           gzip -d -c > "${backup_file_name%.zenc}"
         if [ $? -eq 0 ]; then
             echo "File decrypted and decompressed successfully."

@@ -574,7 +574,7 @@ perform_backup_and_upload() {
   set +e
   pg_dump |\
     gzip |\
-    openssl enc -aes-256-cbc -salt -k "${backup_password}" |\
+    openssl enc -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
     tee \
       >(md5sum |\
         awk '{print $1}' |\
