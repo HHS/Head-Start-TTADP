@@ -616,7 +616,11 @@ function perform_restore() {
     aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${backup_file_path}" - |\
      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
      gzip -d |\
-     PGPASSWORD="${PGPASSWORD}" psql -h "${PGHOST}" -U "${PGUSER}" -d "${PGDATABASE}" -p "${PGPORT}"
+     psql  || {
+        log "ERROR" "failed to restore"
+        set -e
+        exit 1
+    }
 
     log "INFO" "Database restore completed successfully"
 
