@@ -596,7 +596,7 @@ main() {
   app_name=$(push_app "$automation_dir" "$manifest")
   start_app "$app_name"
 
-  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
+  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name" $timeout_active_tasks; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
