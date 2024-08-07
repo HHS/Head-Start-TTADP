@@ -3,8 +3,8 @@ applications:
 - name: tta-automation
   stack: cflinuxfs4
   health-check-type: process
-  memory: 512M
-  disk_quota: 512M
+  memory: 64M
+  disk_quota: 128M
   instances: 1
   no-route: true
   buildpacks:
