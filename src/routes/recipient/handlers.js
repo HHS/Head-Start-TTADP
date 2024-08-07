@@ -229,8 +229,7 @@ export async function markRecipientGoalGroupInvalid(req, res) {
 
 export async function markSimilarGoalsByIdForRecipient(req, res) {
   try {
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
+    const user = await userById(await currentUserId(req, res));
     const hasManualMarkGoalsSimilar = !!(user && new Users(user).canSeeBehindFeatureFlag('manual_mark_goals_similar'));
 
     if (res.headersSent) {
@@ -245,10 +244,11 @@ export async function markSimilarGoalsByIdForRecipient(req, res) {
     const { recipientId } = req.params;
     const { goalIds } = req.query;
 
-    await createSimilarityGroup(recipientId,{ goalIds });
+    await createSimilarityGroup(recipientId, { ids: goalIds });
 
-    res.json({ message: `Goal group created.` });
+    res.json({ message: 'Goal group created.' });
   } catch (error) {
+    console.log(error);
     await handleErrors(req, res, error, logContext);
   }
 }
