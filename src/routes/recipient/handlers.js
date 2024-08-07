@@ -248,7 +248,6 @@ export async function markSimilarGoalsByIdForRecipient(req, res) {
 
     res.json({ message: 'Goal group created.' });
   } catch (error) {
-    console.log(error);
     await handleErrors(req, res, error, logContext);
   }
 }
