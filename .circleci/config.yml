@@ -568,7 +568,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           manifest: "manifest-restore.yml"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: "600"
+          timeout: "900"
   cf_process:
     description: "Process database from S3"
     parameters:
@@ -642,7 +642,13 @@ parameters:
   manual-trigger:
     type: boolean
     default: false
+  manual-restore:
+    type: boolean
+    default: false
   manual-process:
+    type: boolean
+    default: false
+  manual-backup:
     type: boolean
     default: false
 jobs:
@@ -1319,7 +1325,9 @@ workflows:
     when:
       and:
         - equal: [false, << pipeline.parameters.manual-trigger >>]
+        - equal: [false, << pipeline.parameters.manual-restore >>]
         - equal: [false, << pipeline.parameters.manual-process >>]
+        - equal: [false, << pipeline.parameters.manual-backup >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1427,10 +1435,18 @@ workflows:
       equal: [true, << pipeline.parameters.manual-trigger >>]
     jobs:
       - backup_upload_production
+  manual_restore_production:
+    when:
+      equal: [true, << pipeline.parameters.manual-restore >>]
+    jobs:
+      - restore_production_for_processing
   manual_process_production:
     when:
       equal: [true, << pipeline.parameters.manual-process >>]
     jobs:
-      - restore_production_for_processing
-      # - process_production
-      # - process_backup
+      - process_production
+  manual_process_backup:
+    when:
+      equal: [true, << pipeline.parameters.manual-backup >>]
+    jobs:
+      - process_backup
