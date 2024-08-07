@@ -565,15 +565,17 @@ main() {
   local json_input="$1"
 
   validate_parameters "$json_input"
-  validate_json "$json_input"
+  validate_json("$json_input")
 
   # Parse JSON and assign to variables
-  local automation_dir manifest task_name command args app_name
+  local automation_dir manifest task_name command args app_name timeout_active_tasks timeout_ensure_app_stopped
   automation_dir=$(echo "$json_input" | jq -r '.automation_dir // "./automation"')
   manifest=$(echo "$json_input" | jq -r '.manifest // "manifest.yml"')
   task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
   command=$(echo "$json_input" | jq -r '.command // "bash /path/to/default-script.sh"')
   args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
+  timeout_active_tasks=$(echo "$json_input" | jq -r '.timeout_active_tasks // 300')
+  timeout_ensure_app_stopped=$(echo "$json_input" | jq -r '.timeout_ensure_app_stopped // 300')
 
   local service_credentials
 
@@ -581,11 +583,11 @@ main() {
 
   # Check for active tasks and ensure the app is stopped before pushing
   if check_app_exists "$app_name"; then
-      if ! check_active_tasks "$app_name" 300; then
+      if ! check_active_tasks "$app_name" "$timeout_active_tasks"; then
           log "ERROR" "Cannot proceed with pushing the app due to active tasks."
           exit 1
       fi
-      if ! ensure_app_stopped "$app_name" 300; then
+      if ! ensure_app_stopped "$app_name" "$timeout_ensure_app_stopped"; then
           log "ERROR" "Cannot proceed with pushing the app as it is still running."
           exit 1
       fi
@@ -594,16 +596,16 @@ main() {
   app_name=$(push_app "$automation_dir" "$manifest")
   start_app "$app_name"
 
-  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
+  if run_task("$app_name" "$task_name" "$command" "$args") && monitor_task("$app_name" "$task_name"); then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
-      stop_app "$app_name"
+      stop_app("$app_name")
       exit 1
   fi
 
   # Clean up
-  stop_app "$app_name"
+  stop_app("$app_name")
   # Currently only turning off to aid in speeding up cycle time
   # delete_app "$app_name"
 }
