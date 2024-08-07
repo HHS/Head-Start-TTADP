@@ -106,11 +106,11 @@ export default function GoalCardsHeader({
       (bucket) => similarGoals.includes(bucket.id),
     ).map((bucket) => bucket.goalIds).flat();
 
-    // TODO: put similarGoals to /recipient/:recipientId/markSimilarGoals
+    // TODO: put similarGoals to put:/recipient/:recipientId/markSimilarGoals
     // TODO: reload page or refresh merge suggestions
   }
 
-  const hasManualMarkGoalsSimilar = false; // TODO: needs to check if /users/feature-flags returns 'manual_mark_goals_similar' in the array of results
+  const hasManualMarkGoalsSimilar = false; // TODO: needs to check if get:/users/feature-flags returns 'manual_mark_goals_similar' in the array of results
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
