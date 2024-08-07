@@ -220,6 +220,16 @@ export default function GoalCardsHeader({
         >
           {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
+        { hasManualMarkGoalsSimilar
+          && (
+            <Button
+              unstyled
+              className="display-flex flex-align-center margin-left-3 margin-y-0"
+              onClick={markSimilarGoals}
+            >
+              Mark goals as similar
+            </Button>
+          )}
       </div>
       <div>
         {showRttapaValidation && (
