@@ -14,12 +14,16 @@ jest.mock('../../logger', () => ({
 }));
 
 describe('Sequelize Tests', () => {
+  let processEnvCI;
   beforeAll(() => {
     jest.spyOn(sequelize, 'close').mockResolvedValue();
+    processEnvCI = process.env.CI;
+    process.env.CI = undefined;
   });
 
   afterAll(() => {
     jest.restoreAllMocks();
+    process.env.CI = processEnvCI;
   });
 
   describe('Sequelize Hooks', () => {
