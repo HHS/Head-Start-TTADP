@@ -612,8 +612,8 @@ function perform_restore() {
     log "INFO" "Restoring the database from the backup file"
     set -x
     set -o pipefail
-
-    aws s3 cp "s3://${AWS_DEFAULT_BUCKET}/${backup_file_path}" - |\
+    
+    aws s3 cp "s3://${backup_file_path}" - |\
      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
      gzip -d |\
      psql  || {
