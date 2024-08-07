@@ -584,7 +584,7 @@ commands:
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "process"
           task_command: "yarn processData:local"
-          task_args: ''
+          task_args: '{}'
           manifest: "manifest-process.yml"
           success_message: ':database: Restored data processed'
 parameters:
