@@ -565,7 +565,7 @@ main() {
   local json_input="$1"
 
   validate_parameters "$json_input"
-  validate_json("$json_input")
+  validate_json "$json_input"
 
   # Parse JSON and assign to variables
   local automation_dir manifest task_name command args app_name timeout_active_tasks timeout_ensure_app_stopped
