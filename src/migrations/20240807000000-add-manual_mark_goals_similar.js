@@ -15,9 +15,11 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return Promise.all(Object.values(FEATURE_FLAGS).map((action) => queryInterface.sequelize.query(/*sql*/`
-         ALTER TYPE "enum_Users_flags" ADD VALUE IF NOT EXISTS '${action}';
-      `)));
+      return Promise.all(Object.values(FEATURE_FLAGS)
+        .map((action) => queryInterface.sequelize.query(/* sql */`
+          ALTER TYPE "enum_Users_flags"
+          ADD VALUE IF NOT EXISTS '${action}';
+        `)));
     });
   },
 
