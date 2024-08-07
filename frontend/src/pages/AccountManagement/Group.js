@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import colors from '../../colors';
@@ -11,8 +10,8 @@ import WidgetCard from '../../components/WidgetCard';
 import ReadOnlyField from '../../components/ReadOnlyField';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
-export default function Group({ match }) {
-  const { groupId } = match.params;
+export default function Group() {
+  const { groupId } = useParams();
 
   const [group, setGroup] = useState({
     name: '',
@@ -107,7 +106,3 @@ export default function Group({ match }) {
     </>
   );
 }
-
-Group.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

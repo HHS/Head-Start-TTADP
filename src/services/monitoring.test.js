@@ -1,4 +1,3 @@
-import sequelize from 'sequelize';
 import { classScore, monitoringData } from './monitoring';
 import db from '../models';
 
@@ -118,7 +117,7 @@ describe('monitoring services', () => {
 
   afterAll(async () => {
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
-    await sequelize.close();
+    await db.sequelize.close();
   });
 
   describe('classScore', () => {

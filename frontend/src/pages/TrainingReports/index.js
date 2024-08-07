@@ -3,9 +3,8 @@ import React, {
 } from 'react';
 import { TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import './index.scss';
@@ -33,8 +32,9 @@ const tabValues = Object.keys(TRAINING_REPORT_STATUSES_URL_PARAMS).map((status) 
   key: TRAINING_REPORT_STATUSES_URL_PARAMS[status], value: status,
 }));
 
-export default function TrainingReports({ match }) {
-  const { params: { status } } = match;
+export default function TrainingReports() {
+  const location = useLocation();
+  const { status } = useParams();
   const { user } = useContext(UserContext);
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -87,10 +87,8 @@ export default function TrainingReports({ match }) {
     return '';
   };
 
-  const history = useHistory();
-
   let msg;
-  const message = history.location.state && history.location.state.message;
+  const message = location.state && location.state.message;
 
   if (message) {
     msg = (
@@ -244,7 +242,6 @@ export default function TrainingReports({ match }) {
 }
 
 TrainingReports.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
   user: PropTypes.shape({
     id: PropTypes.number,
     name: PropTypes.string,

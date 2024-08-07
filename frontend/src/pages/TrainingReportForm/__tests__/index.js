@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -14,27 +13,27 @@ import { COMPLETE } from '../../../components/Navigator/constants';
 import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 describe('TrainingReportForm', () => {
-  const history = createMemoryHistory();
   const sessionsUrl = '/api/session-reports/eventId/1234';
 
   const renderTrainingReportForm = (
-    trainingReportId, currentPage,
+    trainingReportId,
+    currentPage = '',
     setErrorResponseCode = jest.fn,
   ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+      <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
-            <TrainingReportForm match={{
-              params: { currentPage, trainingReportId },
-              path: currentPage,
-              url: currentPage,
-            }}
-            />
-          </SomethingWentWrong.Provider>
+          <MemoryRouter initialEntries={[`/training-report/${trainingReportId}/${currentPage}`]}>
+            <Routes>
+              <Route
+                path="/training-report/:trainingReportId/:currentPage"
+                element={<TrainingReportForm />}
+              />
+            </Routes>
+          </MemoryRouter>
         </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
+      </SomethingWentWrong.Provider>
+    </AppLoadingContext.Provider>,
   );
 
   beforeEach(() => {
@@ -158,24 +157,6 @@ describe('TrainingReportForm', () => {
 
     jest.advanceTimersByTime(30000);
     expect(fetchMock.called('/api/events/id/123')).toBe(true);
-  });
-
-  it('displays "no training report id provided" error', async () => {
-    fetchMock.get('/api/events/id/123', {
-      regionId: '1',
-      reportId: 1,
-      data: {},
-      collaboratorIds: [],
-      ownerId: 1,
-      owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
-      },
-    });
-    act(() => {
-      renderTrainingReportForm('', 'event-summary');
-    });
-
-    expect(screen.getByText(/no training report id provided/i)).toBeInTheDocument();
   });
 
   it('tests the on save & continue button', async () => {

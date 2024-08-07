@@ -5,10 +5,9 @@ import React, {
   useRef,
 } from 'react';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Grid } from '@trussworks/react-uswds';
-import { useHistory, Redirect } from 'react-router-dom';
+import { useNavigate, Navigate, useParams } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -61,12 +60,13 @@ const resetFormData = (reset, event) => {
   });
 };
 
-export default function TrainingReportForm({ match }) {
-  const { params: { currentPage, trainingReportId } } = match;
+export default function TrainingReportForm() {
+  const { currentPage, trainingReportId } = useParams();
+
   const reportId = useRef();
 
   // for redirects if a page is not provided
-  const history = useHistory();
+  const navigate = useNavigate();
 
   /* ============
 
@@ -195,13 +195,6 @@ export default function TrainingReportForm({ match }) {
     trainingReportId,
     setErrorResponseCode]);
 
-  useEffect(() => {
-    // set error if no training report id
-    if (!trainingReportId) {
-      setError('No training report id provided');
-    }
-  }, [trainingReportId]);
-
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, pages, currentPage);
 
@@ -213,12 +206,12 @@ export default function TrainingReportForm({ match }) {
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/training-report/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   if (!currentPage) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/event-summary`} />
+      <Navigate to={`/training-report/${trainingReportId}/event-summary`} />
     );
   }
 
@@ -312,7 +305,7 @@ export default function TrainingReportForm({ match }) {
       resetFormData(hookForm.reset, updatedEvent);
 
       updateLastSaveTime(moment(updatedEvent.updatedAt));
-      history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
+      navigate('/training-reports/complete', { message: 'You successfully submitted the event.' });
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
@@ -397,7 +390,3 @@ export default function TrainingReportForm({ match }) {
     </div>
   );
 }
-
-TrainingReportForm.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-};

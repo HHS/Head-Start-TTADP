@@ -1,14 +1,18 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
-import { Router } from 'react-router';
+import {
+  MemoryRouter,
+  useLocation,
+  Routes,
+  Route,
+} from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import { createMemoryHistory } from 'history';
 import EventCard from '../EventCard';
 import UserContext from '../../../../UserContext';
 
 describe('EventCard', () => {
-  const history = createMemoryHistory();
   const defaultEvent = {
     id: 1,
     ownerId: 1,
@@ -52,21 +56,37 @@ describe('EventCard', () => {
     ],
   };
 
+  let location;
+
+  const TestComponent = ({ user, event, onDeleteEvent }) => {
+    location = useLocation();
+    return (
+      <UserContext.Provider value={{ user }}>
+        <EventCard
+          event={event}
+          onRemoveSession={jest.fn()}
+          onDeleteEvent={onDeleteEvent}
+          zIndex={1}
+        />
+      </UserContext.Provider>
+    );
+  };
+
   const renderEventCard = (
     event = defaultEvent,
     user = DEFAULT_USER,
     onDeleteEvent = jest.fn(),
   ) => {
-    render((
-      <UserContext.Provider value={{ user }}>
-        <Router history={history}>
-          <EventCard
-            event={event}
-            onRemoveSession={jest.fn()}
-            onDeleteEvent={onDeleteEvent}
+    render(
+      <MemoryRouter>
+        <Routes>
+          <Route
+            path="*"
+            element={(<TestComponent user={user} event={event} onDeleteEvent={onDeleteEvent} />)}
           />
-        </Router>
-      </UserContext.Provider>));
+        </Routes>
+      </MemoryRouter>,
+    );
   };
 
   it('renders correctly', () => {
@@ -207,8 +227,7 @@ describe('EventCard', () => {
     expect(onDeleteEvent).toHaveBeenCalledWith('1234', 1);
   });
 
-  it('calls the appropriate context menu paths', () => {
-    history.push = jest.fn();
+  it('calls the event summary path', () => {
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -218,20 +237,30 @@ describe('EventCard', () => {
     const editEvent = screen.queryByText(/edit event/i);
     expect(editEvent).toBeInTheDocument();
     userEvent.click(editEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/event-summary');
+    expect(location.pathname).toBe('/training-report/1234/event-summary');
+  });
+  it('calls the new session path', () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
 
     // Create session.
-    userEvent.click(contextBtn);
     const createSession = screen.queryByText(/create session/i);
     expect(createSession).toBeInTheDocument();
     userEvent.click(createSession);
-    expect(history.push).toHaveBeenCalledWith('/training-report/1234/session/new/');
+    expect(location.pathname).toBe('/training-report/1234/session/new/');
+  });
+  it('calls the view session path', () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Not started' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
 
     // View event.
-    contextBtn.click();
     const viewEvent = screen.queryByText(/view event/i);
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
-    expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
+    expect(location.pathname).toBe('/training-report/view/1234');
   });
 });

@@ -8,7 +8,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import { GROUP_SHARED_WITH } from '@ttahub/common/src/constants';
 import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
@@ -23,19 +23,25 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = null, setErrorResponseCode = jest.fn()) => {
+  const renderMyGroups = (groupId = '', setErrorResponseCode = jest.fn()) => {
     render(
-      <MemoryRouter>
-        <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-            <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-              <MyGroupsProvider>
-                <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-              </MyGroupsProvider>
-            </AppLoadingContext.Provider>
-          </SomethingWentWrongContext.Provider>
-        </UserContext.Provider>
-      </MemoryRouter>,
+      <UserContext.Provider value={{ user }}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <MyGroupsProvider>
+            <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+              <MemoryRouter initialEntries={[`/my-groups/${groupId}`]}>
+                <Routes>
+                  <Route
+                    path="/my-groups/:groupId?"
+                    element={<MyGroups />}
+                  />
+                </Routes>
+              </MemoryRouter>
+            </SomethingWentWrongContext.Provider>
+          </MyGroupsProvider>
+        </AppLoadingContext.Provider>
+      </UserContext.Provider>
+      ,
     );
   };
 

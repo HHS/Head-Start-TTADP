@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   LOCAL_STORAGE_DATA_KEY,
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
@@ -9,7 +9,7 @@ import {
 import './index.scss';
 
 function NewReport() {
-  const history = useHistory();
+  const navigate = useNavigate();
   const key = 'new';
   const onClick = () => {
     try {
@@ -21,7 +21,7 @@ function NewReport() {
       // eslint-disable-next-line no-console
       console.log(e);
     } finally {
-      history.push('/activity-reports/new/activity-summary');
+      navigate('/activity-reports/new/activity-summary');
     }
   }; return (
     <Button

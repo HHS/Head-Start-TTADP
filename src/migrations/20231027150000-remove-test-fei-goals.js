@@ -15,7 +15,7 @@ module.exports = {
       -- PROCESS:
       -- Mark objectives deletedAt
       -- Mark goals deletedAt
-
+      DROP TABLE IF EXISTS goals_for_deletion;
       CREATE TEMP TABLE goals_for_deletion
       AS
       SELECT * FROM (
@@ -40,7 +40,8 @@ module.exports = {
       FROM goals_for_deletion
       WHERE id = gid
       ;
-      
+
+      DROP TABLE IF EXISTS goals_for_deletion;
       `, { transaction });
     });
   },
@@ -55,6 +56,7 @@ module.exports = {
       -- Unmark objectives deletedAt
       -- Unmark goals deletedAt
 
+      DROP TABLE IF EXISTS goals_for_deletion;
       CREATE TEMP TABLE goals_for_deletion
       AS
       SELECT * FROM (
@@ -79,7 +81,8 @@ module.exports = {
       FROM goals_for_deletion
       WHERE id = gid
       ;
-      
+
+      DROP TABLE IF EXISTS goals_for_deletion;
       `, { transaction });
     });
   },

@@ -10,6 +10,8 @@ import { useIdleTimer } from 'react-idle-timer';
 import { Alert } from '@trussworks/react-uswds';
 import Modal from './Modal';
 
+const modalId = 'IdleReportModal';
+
 // list of events to determine activity
 // https://github.com/SupremeTechnopriest/react-idle-timer#default-events
 const EVENTS = [
@@ -74,17 +76,19 @@ function IdleModal({ modalTimeout, logoutTimeout, logoutUser }) {
     <Modal
       modalRef={modalRef}
       onOk={false}
-      modalId="IdleReportModal"
+      modalId={modalId}
       title="Are you still there?"
       showOkButton={false}
       cancelButtonText="Stay logged in"
     >
       <Alert role="alert" type="warning">
-        You will be automatically logged out due to inactivity in
-        {' '}
-        {timeToLogoutMsg}
-        {' '}
-        unless you become active again.
+        <span id={`${modalId}-desc`}>
+          You will be automatically logged out due to inactivity in
+          {' '}
+          {timeToLogoutMsg}
+          {' '}
+          unless you become active again.
+        </span>
       </Alert>
     </Modal>
   );

@@ -2,8 +2,7 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { act, render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import userEvent from '@testing-library/user-event';
 import HeaderUserMenu from '../HeaderUserMenu';
 import UserContext from '../../UserContext';
@@ -14,16 +13,14 @@ describe('HeaderUserMenu notifications', () => {
     setAreThereUnreadNotifications: jest.fn(),
   };
 
-  const history = createMemoryHistory();
-
   const user = { name: 'harry potter', permissions: [] };
 
   const renderHeaderUserMenu = (props = defaultProps) => render(
-    <Router history={history}>
+    <MemoryRouter>
       <UserContext.Provider value={{ user }}>
         <HeaderUserMenu {...props} />
       </UserContext.Provider>
-    </Router>,
+    </MemoryRouter>,
   );
 
   it('renders the notification link', () => {

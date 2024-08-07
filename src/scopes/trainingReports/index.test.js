@@ -5,6 +5,7 @@ import filtersToScopes from '../index';
 import {
   User,
   EventReportPilot,
+  EventReportPilotNationalCenterUser,
   NationalCenterUser,
   NationalCenter,
   sequelize,
@@ -347,6 +348,11 @@ describe('filtersToScopes', () => {
         reportWithOtherCollaborator.id];
     });
     afterAll(async () => {
+      await EventReportPilotNationalCenterUser.destroy({
+        where: {
+          nationalCenterId: [nationalCenterToFind.id, nationalCenterToNotFind.id],
+        },
+      });
       // destroy national centers users.
       await NationalCenterUser.destroy({
         where: {

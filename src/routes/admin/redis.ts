@@ -1,17 +1,12 @@
 /* eslint-disable import/prefer-default-export */
-import { createClient } from 'redis';
+import { createClient, RedisClientType } from 'redis';
 import express, { Response, Request } from 'express';
 import { generateRedisConfig } from '../../lib/queue';
 import { auditLogger } from '../../logger';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 
-let redisClient = {
-  connect: () => Promise.resolve(),
-  quit: () => Promise.resolve(),
-  info: () => Promise.resolve(''),
-  flushAll: () => Promise.resolve(''),
-};
+let redisClient: RedisClientType | null = null;
 
 const namespace = 'ADMIN:REDIS:INFO';
 const logContext = { namespace };

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import {
   Alert,
   Button,
-  Dropdown,
+  Select,
   Fieldset,
   Form,
   Grid,
@@ -146,7 +146,7 @@ function CustomizeEmailPreferencesForm({ disabled, roles }) {
               </div>
             </Grid>
             <Grid tablet={{ col: 12 }} desktop={{ col: 3 }}>
-              <Dropdown
+              <Select
                 id={keyName}
                 name={keyName}
                 data-testid={`${keyName}-dropdown`}
@@ -157,7 +157,7 @@ function CustomizeEmailPreferencesForm({ disabled, roles }) {
                     {label}
                   </option>
                 ))}
-              </Dropdown>
+              </Select>
               <p className="usa-error-message">{errors[keyName] && errors[keyName].message}</p>
             </Grid>
           </Grid>

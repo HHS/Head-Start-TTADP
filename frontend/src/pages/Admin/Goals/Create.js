@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet';
 import {
   Alert,
   Button,
-  Checkbox, Dropdown, FormGroup, Label, Textarea,
+  Checkbox, Select, FormGroup, Label, Textarea,
 } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import Container from '../../../components/Container';
@@ -229,7 +229,7 @@ export default function Create() {
                 {' '}
                 <Req />
               </Label>
-              <Dropdown id="region" name="region" inputRef={register({ required: true })} required>
+              <Select id="region" name="region" inputRef={register({ required: true })} required>
                 <option value="" disabled selected hidden>Select</option>
                 {REGIONS.map((r) => (
                   <option key={`region${r}`} value={r}>
@@ -238,7 +238,7 @@ export default function Create() {
                     {r}
                   </option>
                 ))}
-              </Dropdown>
+              </Select>
             </FormGroup>
             <FormGroup className="usa-form-group" required>
               <Label htmlFor="group">
@@ -246,14 +246,14 @@ export default function Create() {
                 {' '}
                 <Req />
               </Label>
-              <Dropdown id="group" name="group" inputRef={register({ required: true })} required>
+              <Select id="group" name="group" inputRef={register({ required: true })} required>
                 <option value="" disabled selected hidden>Select</option>
                 {groupOptions.map((g) => (
                   <option key={`group${g.id}`} value={g.id}>
                     {g.name}
                   </option>
                 ))}
-              </Dropdown>
+              </Select>
               {(group && selectedGroup) && (
                 <>
                   <ul className="usa-list">
@@ -282,14 +282,14 @@ export default function Create() {
                 {' '}
                 <Req />
               </Label>
-              <Dropdown id="creator" name="creator" inputRef={register({ required: true })} required>
+              <Select id="creator" name="creator" inputRef={register({ required: true })} required>
                 <option value="" disabled selected hidden>Select</option>
                 {creatorOptions.map((c) => (
                   <option key={`user${c.id}`} value={c.id}>
                     {c.name}
                   </option>
                 ))}
-              </Dropdown>
+              </Select>
             </FormGroup>
             )}
 
@@ -301,13 +301,13 @@ export default function Create() {
                     {' '}
                     <Req />
                   </Label>
-                  <Dropdown id="templateId" name="templateId" inputRef={register({ required: true })} required>
+                  <Select id="templateId" name="templateId" inputRef={register({ required: true })} required>
                     {curatedGoalOptions.map((g) => (
                       <option key={`curatedGoalOption${g.id}`} value={g.id}>
                         {g.label}
                       </option>
                     ))}
-                  </Dropdown>
+                  </Select>
                 </>
               ) : (
                 <>

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
-  Label, Dropdown,
+  Label, Select,
 } from '@trussworks/react-uswds';
 
 import { ALL_REGIONS, REGIONS } from '../Constants';
@@ -17,7 +17,7 @@ function RegionDropdown({
   return (
     <>
       <Label htmlFor={id}>Region</Label>
-      <Dropdown id={id} name={name} value={value} onChange={onChange}>
+      <Select id={id} name={name} value={value} onChange={onChange}>
         <option name="default" disabled hidden value={0}>Select a region...</option>
         {REGIONS.map((number) => (
           <option key={number} value={number}>{number}</option>
@@ -26,7 +26,7 @@ function RegionDropdown({
         && <option name="central-office" value={14}>Central Office</option>}
         {includeAll
         && <option name="central-office" value={ALL_REGIONS}>All</option>}
-      </Dropdown>
+      </Select>
     </>
   );
 }

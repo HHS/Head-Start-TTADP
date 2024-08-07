@@ -3,21 +3,19 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 
 import supportingAttachments from '../supportingAttachments';
 
 // eslint-disable-next-line react/prop-types
 const RenderSupportingAttachments = ({ data }) => {
-  const history = createMemoryHistory();
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: data,
   });
   // eslint-disable-next-line react/prop-types
   return (
-    <Router history={history}>
+    <MemoryRouter>
       <FormProvider {...hookForm}>
         {supportingAttachments.render(
           null,
@@ -33,24 +31,23 @@ const RenderSupportingAttachments = ({ data }) => {
           () => <></>,
         )}
       </FormProvider>
-    </Router>
+    </MemoryRouter>
   );
 };
 
 // eslint-disable-next-line react/prop-types
 const RenderSupportingAttachmentsReview = ({ data }) => {
-  const history = createMemoryHistory();
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: data,
   });
   // eslint-disable-next-line react/prop-types
   return (
-    <Router history={history}>
+    <MemoryRouter>
       <FormProvider {...hookForm}>
         {supportingAttachments.reviewSection()}
       </FormProvider>
-    </Router>
+    </MemoryRouter>
   );
 };
 

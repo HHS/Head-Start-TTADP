@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import { mockWindowProperty } from '../../../testHelpers';
 import { ReportsRow } from '../MyAlerts';
 import activityReports from '../mocks';
@@ -36,17 +35,16 @@ describe('ReportsRow', () => {
       reportId: report.id,
       status: 'unlocked',
     };
-    const history = createMemoryHistory();
 
     render(
       <UserContext.Provider value={{ user }}>
-        <Router history={history}>
+        <MemoryRouter>
           <ReportsRow
             reports={[report, activityReports[1]]}
             removeAlert={removeAlert}
             message={message}
           />
-        </Router>
+        </MemoryRouter>
       </UserContext.Provider>,
     );
   };

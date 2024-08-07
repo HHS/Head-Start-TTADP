@@ -1,6 +1,5 @@
-const simpleGit = require('simple-git');
-const fs = require('fs');
-const path = require('path');
+import simpleGit from 'simple-git';
+import path from 'path';
 
 function getRenameCommand(file, date) {
   const dateTimePrefix = new Date()

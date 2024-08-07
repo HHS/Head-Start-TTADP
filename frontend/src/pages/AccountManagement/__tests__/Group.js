@@ -7,7 +7,7 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
 import SomethingWentWrong from '../../../SomethingWentWrongContext';
@@ -21,13 +21,15 @@ describe('Group', () => {
 
   const renderGroup = (groupId, setErrorResponseCode = jest.fn()) => {
     render(
-      <MemoryRouter>
+      <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
-            <Group match={{ params: { groupId }, path: '', url: '' }} />
-          </SomethingWentWrong.Provider>
+          <MemoryRouter initialEntries={[`/groups/${groupId}`]}>
+            <Routes>
+              <Route path="/groups/:groupId" element={<Group />} />
+            </Routes>
+          </MemoryRouter>
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </SomethingWentWrong.Provider>,
     );
   };
 

@@ -9,7 +9,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(/* sql */`
         ---------------------------------------------------
         -- NOTE:
         -- Files and Resources are most properly managed by
@@ -97,6 +97,7 @@ module.exports = {
         )
         SELECT id FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportapprovers;
         CREATE TEMP TABLE deleted_activityreportapprovers AS
         WITH deletes AS (
           DELETE FROM "ActivityReportApprovers"
@@ -107,6 +108,7 @@ module.exports = {
         )
         SELECT id FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportcollaborators;
         CREATE TEMP TABLE deleted_activityreportcollaborators AS
         WITH deletes AS (
           DELETE FROM "ActivityReportCollaborators"
@@ -117,6 +119,7 @@ module.exports = {
         )
         SELECT id FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportfiles;
         CREATE TEMP TABLE deleted_activityreportfiles AS
         WITH deletes AS (
           DELETE FROM "ActivityReportFiles"
@@ -128,6 +131,7 @@ module.exports = {
         )
         SELECT id, fid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportresources;
         CREATE TEMP TABLE deleted_activityreportresources AS
         WITH deletes AS (
           DELETE FROM "ActivityReportResources"
@@ -153,6 +157,7 @@ module.exports = {
           ON "activityReportId" = arid
         ;
         -- Remove NextSteps link records: -------------
+        DROP TABLE IF EXISTS deleted_nextstepresources;
         CREATE TEMP TABLE deleted_nextstepresources AS
         WITH deletes AS (
           DELETE FROM "NextStepResources"
@@ -165,6 +170,7 @@ module.exports = {
         SELECT id, resourceid FROM deletes
         ;
         -- remove NextSteps -------------
+        DROP TABLE IF EXISTS deleted_nextsteps;
         CREATE TEMP TABLE deleted_nextsteps AS
         WITH deletes AS (
           DELETE FROM "NextSteps"
@@ -189,6 +195,7 @@ module.exports = {
           ON "activityReportId" = arid
         ;
         -- Remove ARO link records: -------------
+        DROP TABLE IF EXISTS deleted_activityreportobjectivefiles;
         CREATE TEMP TABLE deleted_activityreportobjectivefiles AS
         WITH deletes AS (
           DELETE FROM "ActivityReportObjectiveFiles"
@@ -200,6 +207,7 @@ module.exports = {
         )
         SELECT id, fid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportobjectiveresources;
         CREATE TEMP TABLE deleted_activityreportobjectiveresources AS
         WITH deletes AS (
           DELETE FROM "ActivityReportObjectiveResources"
@@ -211,6 +219,7 @@ module.exports = {
         )
         SELECT id, resourceid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportobjectivetopics;
         CREATE TEMP TABLE deleted_activityreportobjectivetopics AS
         WITH deletes AS (
           DELETE FROM "ActivityReportObjectiveTopics"
@@ -222,6 +231,7 @@ module.exports = {
         SELECT id FROM deletes
         ;
         -- remove AROs -------------------
+        DROP TABLE IF EXISTS deleted_aros;
         CREATE TEMP TABLE deleted_aros AS
         WITH deletes AS (
           DELETE FROM "ActivityReportObjectives"
@@ -235,6 +245,7 @@ module.exports = {
         ;
 
         -- Create the orphaned Objective deletion list
+        DROP TABLE IF EXISTS objectives_to_delete;
         CREATE TEMP TABLE objectives_to_delete
         AS
         SELECT DISTINCT oid
@@ -244,6 +255,7 @@ module.exports = {
         FROM "ActivityReportObjectives"
         ;
         -- Remove Objective link records: -------------
+        DROP TABLE IF EXISTS deleted_objectivefiles;
         CREATE TEMP TABLE deleted_objectivefiles AS
         WITH deletes AS (
           DELETE FROM "ObjectiveFiles"
@@ -255,6 +267,7 @@ module.exports = {
         )
         SELECT id, fid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_objectiveresources;
         CREATE TEMP TABLE deleted_objectiveresources AS
         WITH deletes AS (
           DELETE FROM "ObjectiveResources"
@@ -266,6 +279,7 @@ module.exports = {
         )
         SELECT id, resourceid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_objectivetopics;
         CREATE TEMP TABLE deleted_objectivetopics AS
         WITH deletes AS (
           DELETE FROM "ObjectiveTopics"
@@ -277,6 +291,7 @@ module.exports = {
         SELECT id FROM deletes
         ;
         -- remove Objectives -------------------
+        DROP TABLE IF EXISTS deleted_objectives;
         CREATE TEMP TABLE deleted_objectives AS
         WITH deletes AS (
           DELETE FROM "Objectives"
@@ -302,6 +317,7 @@ module.exports = {
           ON "activityReportId" = arid
         ;
         -- Remove ARG link records: -------------
+        DROP TABLE IF EXISTS deleted_activityreportgoalfieldresponses;
         CREATE TEMP TABLE deleted_activityreportgoalfieldresponses AS
         WITH deletes AS (
           DELETE FROM "ActivityReportGoalFieldResponses"
@@ -312,6 +328,7 @@ module.exports = {
         )
         SELECT id FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_activityreportgoalresources;
         CREATE TEMP TABLE deleted_activityreportgoalresources AS
         WITH deletes AS (
           DELETE FROM "ActivityReportGoalResources"
@@ -324,6 +341,7 @@ module.exports = {
         SELECT id, resourceid FROM deletes
         ;
         -- remove ARGs -------------------
+        DROP TABLE IF EXISTS deleted_args;
         CREATE TEMP TABLE deleted_args AS
         WITH deletes AS (
           DELETE FROM "ActivityReportGoals"
@@ -337,6 +355,7 @@ module.exports = {
         ;
 
         -- Create the orphaned Goal deletions list
+        DROP TABLE IF EXISTS goals_to_delete;
         CREATE TEMP TABLE goals_to_delete
         AS
         SELECT DISTINCT gid
@@ -356,6 +375,7 @@ module.exports = {
         ) keepers
         ;
         -- Remove Goal link records: -------------
+        DROP TABLE IF EXISTS deleted_goalfieldresponses;
         CREATE TEMP TABLE deleted_goalfieldresponses AS
         WITH deletes AS (
           DELETE FROM "GoalFieldResponses"
@@ -366,6 +386,7 @@ module.exports = {
         )
         SELECT id FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_goalresources;
         CREATE TEMP TABLE deleted_goalresources AS
         WITH deletes AS (
           DELETE FROM "GoalResources"
@@ -378,6 +399,7 @@ module.exports = {
         SELECT id, resourceid FROM deletes
         ;
         -- remove Goals -------------------
+        DROP TABLE IF EXISTS deleted_goals;
         CREATE TEMP TABLE deleted_goals AS
         WITH deletes AS (
           DELETE FROM "Goals"
@@ -391,6 +413,7 @@ module.exports = {
         ;
 
         -- Create the orphaned ObjectiveTemplate deletion list
+        DROP TABLE IF EXISTS ots_to_delete;
         CREATE TEMP TABLE ots_to_delete
         AS
         SELECT DISTINCT otid
@@ -400,6 +423,7 @@ module.exports = {
         FROM "Objectives"
         ;
         -- Remove ObjectiveTemplate link records: -------------
+        DROP TABLE IF EXISTS deleted_objectivetemplatefiles;
         CREATE TEMP TABLE deleted_objectivetemplatefiles AS
         WITH deletes AS (
           DELETE FROM "ObjectiveTemplateFiles"
@@ -411,6 +435,7 @@ module.exports = {
         )
         SELECT id, fid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_objectivetemplateresources;
         CREATE TEMP TABLE deleted_objectivetemplateresources AS
         WITH deletes AS (
           DELETE FROM "ObjectiveTemplateResources"
@@ -422,6 +447,7 @@ module.exports = {
         )
         SELECT id, resourceid FROM deletes
         ;
+        DROP TABLE IF EXISTS deleted_objectivetemplatetopics;
         CREATE TEMP TABLE deleted_objectivetemplatetopics AS
         WITH deletes AS (
           DELETE FROM "ObjectiveTemplateTopics"
@@ -434,6 +460,7 @@ module.exports = {
         ;
 
         -- Create the orphaned GoalTemplate deletion list
+        DROP TABLE IF EXISTS gts_to_delete;
         CREATE TEMP TABLE gts_to_delete
         AS
         SELECT DISTINCT gtid
@@ -443,6 +470,7 @@ module.exports = {
         FROM "Goals"
         ;
         -- Remove GoalTemplate link records: -------------
+        DROP TABLE IF EXISTS deleted_goaltemplateobjectivetemplates;
         CREATE TEMP TABLE deleted_goaltemplateobjectivetemplates AS
         WITH unified_deletes AS (
           SELECT DISTINCT id gtotid
@@ -465,6 +493,7 @@ module.exports = {
         SELECT id FROM deletes
         ;
         -- Remove ObjectiveTemplates --------
+        DROP TABLE IF EXISTS deleted_objectivetemplates;
         CREATE TEMP TABLE deleted_objectivetemplates AS
         WITH deletes AS (
           DELETE FROM "ObjectiveTemplates"
@@ -476,6 +505,7 @@ module.exports = {
         SELECT id FROM deletes
         ;
         -- Remove GoalTemplates -------------
+        DROP TABLE IF EXISTS deleted_goaltemplates;
         CREATE TEMP TABLE deleted_goaltemplates AS
         WITH deletes AS (
           DELETE FROM "GoalTemplates"
@@ -488,6 +518,7 @@ module.exports = {
         ;
 
         -- Remove ARs -------------
+        DROP TABLE IF EXISTS deleted_ars;
         CREATE TEMP TABLE deleted_ars AS
         WITH deletes AS (
           DELETE FROM "ActivityReports"
@@ -572,7 +603,42 @@ module.exports = {
         SELECT 35,'deleted_ars', count(*) FROM deleted_ars
         ORDER BY 1
         ;
-
+        
+        DROP TABLE IF EXISTS ars_to_delete;
+        DROP TABLE IF EXISTS deleted_activityreportapprovers;
+        DROP TABLE IF EXISTS deleted_activityreportcollaborators;
+        DROP TABLE IF EXISTS deleted_activityreportfiles;
+        DROP TABLE IF EXISTS deleted_activityreportresources;
+        DROP TABLE IF EXISTS nextsteps_to_delete;
+        DROP TABLE IF EXISTS deleted_nextstepresources;
+        DROP TABLE IF EXISTS deleted_nextsteps;
+        DROP TABLE IF EXISTS aros_to_delete;
+        DROP TABLE IF EXISTS deleted_activityreportobjectivefiles;
+        DROP TABLE IF EXISTS deleted_activityreportobjectiveresources;
+        DROP TABLE IF EXISTS deleted_activityreportobjectivetopics;
+        DROP TABLE IF EXISTS deleted_aros;
+        DROP TABLE IF EXISTS objectives_to_delete;
+        DROP TABLE IF EXISTS deleted_objectivefiles;
+        DROP TABLE IF EXISTS deleted_objectiveresources;
+        DROP TABLE IF EXISTS deleted_objectivetopics;
+        DROP TABLE IF EXISTS deleted_objectives;
+        DROP TABLE IF EXISTS args_to_delete;
+        DROP TABLE IF EXISTS deleted_activityreportgoalfieldresponses;
+        DROP TABLE IF EXISTS deleted_activityreportgoalresources;
+        DROP TABLE IF EXISTS deleted_args;
+        DROP TABLE IF EXISTS goals_to_delete;
+        DROP TABLE IF EXISTS deleted_goalfieldresponses;
+        DROP TABLE IF EXISTS deleted_goalresources;
+        DROP TABLE IF EXISTS deleted_goals;
+        DROP TABLE IF EXISTS ots_to_delete;
+        DROP TABLE IF EXISTS deleted_objectivetemplatefiles;
+        DROP TABLE IF EXISTS deleted_objectivetemplateresources;
+        DROP TABLE IF EXISTS deleted_objectivetemplatetopics;
+        DROP TABLE IF EXISTS gts_to_delete;
+        DROP TABLE IF EXISTS deleted_goaltemplateobjectivetemplates;
+        DROP TABLE IF EXISTS deleted_objectivetemplates;
+        DROP TABLE IF EXISTS deleted_goaltemplates;
+        DROP TABLE IF EXISTS deleted_ars;
       `, { transaction });
     });
   },

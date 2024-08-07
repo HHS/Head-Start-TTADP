@@ -4,8 +4,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import DisplayWithPermission from '../DisplayWithPermission';
 import UserContext from '../../UserContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
@@ -14,10 +13,8 @@ const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
 describe('display with permissions', () => {
   const renderDisplayWithPermission = (scopes, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <SomethingWentWrongContext.Provider value={{
             errorResponseCode: null,
@@ -32,7 +29,7 @@ describe('display with permissions', () => {
             </DisplayWithPermission>
           </SomethingWentWrongContext.Provider>
         </UserContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

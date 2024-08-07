@@ -10,6 +10,7 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import ApprovedActivityReport from '../index';
@@ -106,17 +107,16 @@ describe('Activity report print and share view', () => {
   };
 
   function renderApprovedActivityReport(id, passedUser = user, setErrorResponseCode = jest.fn()) {
-    const match = {
-      path: '',
-      url: '',
-      params: {
-        activityReportId: id,
-      },
-    };
-
     render(
       <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-        <ApprovedActivityReport user={passedUser} match={match} />
+        <MemoryRouter initialEntries={[`/activity-reports/${id}`]}>
+          <Routes>
+            <Route
+              path="/activity-reports/:activityReportId"
+              element={<ApprovedActivityReport user={passedUser} />}
+            />
+          </Routes>
+        </MemoryRouter>
       </SomethingWentWrongContext.Provider>,
     );
   }

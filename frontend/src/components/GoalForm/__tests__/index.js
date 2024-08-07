@@ -11,8 +11,7 @@ import {
 import { SCOPE_IDS } from '@ttahub/common';
 import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import CreateGoal from '../index';
 import UserContext from '../../../UserContext';
@@ -103,11 +102,14 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, goalId = 'new', setErrorResponseCode = jest.fn()) {
-    const history = createMemoryHistory();
+  function renderForm(
+    recipient = defaultRecipient,
+    goalId = 'new',
+    setErrorResponseCode = jest.fn(),
+  ) {
     render((
-      <Router history={history}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+        <MemoryRouter>
           <UserContext.Provider value={{
             user: {
               permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
@@ -129,8 +131,8 @@ describe('create goal', () => {
               />
             </AppLoadingContext.Provider>
           </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
-      </Router>
+        </MemoryRouter>
+      </SomethingWentWrongContext.Provider>
     ));
   }
 
