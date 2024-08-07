@@ -308,6 +308,33 @@ function check_app_running {
     fi
 }
 
+# Ensure the application is stopped
+function ensure_app_stopped() {
+    local app_name=$1
+    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
+    validate_parameters "$app_name"
+
+    log "INFO" "Ensuring application '$app_name' is stopped..."
+    local start_time=$(date +%s)
+    local current_time
+
+    while true; do
+        if ! check_app_running "$app_name"; then
+            log "INFO" "Application '$app_name' is already stopped."
+            return 0  # App is stopped
+        fi
+
+        current_time=$(date +%s)
+        if (( current_time - start_time >= timeout )); then
+            log "ERROR" "Timeout reached while waiting for application '$app_name' to stop."
+            return 1  # Timeout reached
+        fi
+
+        log "INFO" "Application '$app_name' is running. Waiting for it to stop..."
+        sleep 10
+    done
+}
+
 # Unbind all services from the application
 function unbind_all_services() {
     local app_name="$1"
@@ -331,7 +358,6 @@ function unbind_all_services() {
 
     return 0
 }
-
 
 # Push the app using a manifest from a specific directory
 function push_app {
@@ -451,8 +477,6 @@ function run_task {
     fi
 }
 
-
-
 # Function to monitor task
 function monitor_task {
     local app_name=$1
@@ -486,6 +510,37 @@ function monitor_task {
     done
 }
 
+# Check for active tasks in the application
+function check_active_tasks() {
+    local app_name=$1
+    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
+    validate_parameters "$app_name"
+
+    log "INFO" "Checking for active tasks in application '$app_name'..."
+    local start_time=$(date +%s)
+    local current_time
+    local active_tasks
+
+    while true; do
+        active_tasks=$(cf tasks "$app_name" | grep -E "RUNNING|PENDING")
+
+        if [ -z "$active_tasks" ]; then
+            log "INFO" "No active tasks found in application '$app_name'."
+            return 0  # No active tasks
+        fi
+
+        current_time=$(date +%s)
+        if (( current_time - start_time >= timeout )); then
+            log "ERROR" "Timeout reached while waiting for active tasks to complete in application '$app_name'."
+            return 1  # Timeout reached
+        fi
+
+        log "INFO" "Active tasks found. Waiting for tasks to complete..."
+        sleep 10
+    done
+}
+
+
 # Function to delete the app
 function delete_app {
     local app_name=$1
@@ -513,7 +568,7 @@ main() {
   validate_json "$json_input"
 
   # Parse JSON and assign to variables
-  local automation_dir manifest task_name command args
+  local automation_dir manifest task_name command args app_name
   automation_dir=$(echo "$json_input" | jq -r '.automation_dir // "./automation"')
   manifest=$(echo "$json_input" | jq -r '.manifest // "manifest.yml"')
   task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
@@ -521,6 +576,18 @@ main() {
   args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
 
   local service_credentials
+
+  # Check for active tasks and ensure the app is stopped before pushing
+  if check_app_exists "$app_name"; then
+      if ! check_active_tasks "$app_name" 300; then
+          log "ERROR" "Cannot proceed with pushing the app due to active tasks."
+          exit 1
+      fi
+      if ! ensure_app_stopped "$app_name" 300; then
+          log "ERROR" "Cannot proceed with pushing the app as it is still running."
+          exit 1
+      fi
+  fi
 
   app_name=$(push_app "$automation_dir" "$manifest")
   start_app "$app_name"
@@ -535,8 +602,9 @@ main() {
 
   # Clean up
   stop_app "$app_name"
-  # Currently only turing off to aid in speeding up cycle time
+  # Currently only turning off to aid in speeding up cycle time
   # delete_app "$app_name"
 }
 
 main "$@"
+
