@@ -21,12 +21,12 @@ const similarityGroupAttributes = [
 ];
 
 interface IGoalShape {
-  name: string;
-  source: string;
-  status: string;
-  responsesForComparison: string;
+  name?: string;
+  source?: string;
+  status?: string;
+  responsesForComparison?: string;
   ids: number[];
-  excludedIfNotAdmin: boolean;
+  excludedIfNotAdmin?: boolean;
 }
 
 interface SimilarityGroup {
