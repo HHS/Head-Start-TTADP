@@ -577,6 +577,8 @@ main() {
 
   local service_credentials
 
+  app_name=$(grep 'name:' "${automation_dir}/${manifest}" | awk '{print $3}' | tr -d '"')
+
   # Check for active tasks and ensure the app is stopped before pushing
   if check_app_exists "$app_name"; then
       if ! check_active_tasks "$app_name" 300; then
