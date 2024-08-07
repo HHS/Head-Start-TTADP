@@ -913,3 +913,160 @@ describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
   });
 });
+
+describe('markSimilarGoalsByIdForRecipient', () => {
+  afterAll(() => db.sequelize.close());
+
+  const mockResponse = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+    status: jest.fn(() => ({
+      end: jest.fn(),
+    })),
+  };
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('marks goals as similar successfully', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      query: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(createSimilarityGroup).toHaveBeenCalledWith(1, { goalIds: [1, 2, 3] });
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Goal group created.' });
+  });
+
+  it('returns 401 if user is not authorized to mark goals as similar', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      query: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    const hasManualMarkGoalsSimilar = false;
+
+    jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValueOnce(hasManualMarkGoalsSimilar);
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+  });
+
+  it('handles errors', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      query: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    createSimilarityGroup.mockImplementationOnce(() => {
+      throw new Error('test error');
+    });
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('does not execute if headers are already sent', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      query: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    const mockResponse = {
+      headersSent: true,
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(createSimilarityGroup).not.toHaveBeenCalled();
+    expect(mockResponse.json).not.toHaveBeenCalled();
+  });
+});
