@@ -189,7 +189,7 @@ export function setRedisConnectionName(queue, connectionName) {
 export default function newQueue(queName) {
   const queue = new Queue(queName, `redis://${host}:${port}`, {
     ...redisOpts,
-    maxRetriesPerRequest: 50, // Adjust this value as needed
+    maxRetriesPerRequest: 15, // Adjust this value as needed
     retryStrategy(times) {
       const delay = Math.min(times * 50, 2000);
       auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
