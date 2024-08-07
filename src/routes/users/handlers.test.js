@@ -389,10 +389,10 @@ describe('User handlers', () => {
     it('returns all feature flags for admin users', async () => {
       const user = {
         id: 1,
-        isAdmin: jest.fn().mockReturnValue(true),
         flags: { feature1: true },
       };
       userById.mockResolvedValue(user);
+      User.prototype.isAdmin = jest.fn().mockResolvedValue(true);
       currentUserId.mockResolvedValue(1);
 
       await getFeatureFlags(mockRequest, mockResponse);
@@ -402,7 +402,6 @@ describe('User handlers', () => {
     it('returns user-specific feature flags for non-admin users', async () => {
       const user = {
         id: 1,
-        isAdmin: jest.fn().mockReturnValue(false),
         flags: { feature1: true },
       };
       userById.mockResolvedValue(user);
