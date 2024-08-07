@@ -92,6 +92,26 @@ export default function GoalCardsHeader({
     });
   };
 
+  const onMarkSimilarGoals = () => {
+    let similarGoals = Object.keys(allSelectedGoalIds).filter(
+      (key) => allSelectedGoalIds[key],
+    ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // If we don't just print the page.
+    if (!similarGoals.length) {
+      similarGoals = pageGoalIds;
+    }
+    // Get all the goals and associated goals from the buckets.
+    similarGoals = goalBuckets.filter(
+      (bucket) => similarGoals.includes(bucket.id),
+    ).map((bucket) => bucket.goalIds).flat();
+
+    // TODO: put similarGoals to /recipient/:recipientId/markSimilarGoals
+    // TODO: reload page or refresh merge suggestions
+  }
+
+  const hasManualMarkGoalsSimilar = false; // TODO: needs to check if /users/feature-flags returns 'manual_mark_goals_similar' in the array of results
+
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     requestSort(sortBy, direction);
@@ -225,7 +245,7 @@ export default function GoalCardsHeader({
             <Button
               unstyled
               className="display-flex flex-align-center margin-left-3 margin-y-0"
-              onClick={markSimilarGoals}
+              onClick={onMarkSimilarGoals}
             >
               Mark goals as similar
             </Button>
