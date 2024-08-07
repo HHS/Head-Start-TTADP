@@ -396,6 +396,10 @@ commands:
       success_message:
         description: "Success message for Slack notification"
         type: string
+      timeout:
+        description: "Max duration allowed for task"
+        type: integer
+        default: 300
     steps:
       - run:
           name: Install Dependencies
@@ -473,12 +477,16 @@ commands:
               --arg manifest "<< parameters.manifest >>" \
               --arg task_name "<< parameters.task_name >>" \
               --arg command "<< parameters.task_command >>" \
+              --arg timeout_active_tasks "<< parameters.timeout >>" \
+              --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
               --argjson args '<< parameters.task_args >>' \
               '{
                 automation_dir: $automation_dir,
                 manifest: $manifest,
                 task_name: $task_name,
                 command: $command,
+                timeout_active_tasks: $timeout_active_tasks,
+                timeout_ensure_app_stopped: $timeout_ensure_app_stopped,
                 args: $args
               }')
 
@@ -560,6 +568,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           manifest: "manifest-restore.yml"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
+          timeout: 600
   cf_process:
     description: "Process database from S3"
     parameters:
