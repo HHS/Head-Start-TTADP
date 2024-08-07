@@ -16,6 +16,7 @@ import {
   getMergeGoalPermissions,
   markRecipientGoalGroupInvalid,
   getGoalsFromRecipientGoalSimilarityGroup,
+  markSimilarGoalsByIdForRecipient,
 } from './handlers';
 import {
   getGoalsByActivityRecipient,
@@ -32,7 +33,9 @@ import { userById } from '../../services/users';
 import {
   setSimilarityGroupAsUserInvalidated,
   getSimilarityGroupById,
+  createSimilarityGroup,
 } from '../../services/goalSimilarityGroup';
+import Users from '../../policies/user';
 
 jest.mock('../../services/goalSimilarityGroup');
 
@@ -948,6 +951,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
         },
       ],
       permissions: [],
+      flags: ['manual_mark_goals_similar'],
     };
 
     currentUserId.mockResolvedValue(1000);
@@ -955,7 +959,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
 
     await markSimilarGoalsByIdForRecipient(req, mockResponse);
 
-    expect(createSimilarityGroup).toHaveBeenCalledWith(1, { goalIds: [1, 2, 3] });
+    expect(createSimilarityGroup).toHaveBeenCalledWith(1, { ids: [1, 2, 3] });
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Goal group created.' });
   });
 
@@ -1055,7 +1059,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
     currentUserId.mockResolvedValue(1000);
     userById.mockResolvedValue(user);
 
-    const mockResponse = {
+    const mockResponse2 = {
       headersSent: true,
       sendStatus: jest.fn(),
       json: jest.fn(),
@@ -1064,9 +1068,9 @@ describe('markSimilarGoalsByIdForRecipient', () => {
       })),
     };
 
-    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+    await markSimilarGoalsByIdForRecipient(req, mockResponse2);
 
     expect(createSimilarityGroup).not.toHaveBeenCalled();
-    expect(mockResponse.json).not.toHaveBeenCalled();
+    expect(mockResponse2.json).not.toHaveBeenCalled();
   });
 });
