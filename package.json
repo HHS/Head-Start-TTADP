@@ -226,8 +226,7 @@
     "setupFiles": [
       "./src/setupTest.js",
       "./src/env.js"
-    ],
-    "verbose": true
+    ]
   },
   "keywords": [],
   "author": "",
