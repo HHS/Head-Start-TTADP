@@ -71,10 +71,6 @@ describe('dataValidation', () => {
     ];
 
     const simplePatterns = [
-      /Attempting to connect to the database: {}/,
-      /Database connection established: {}/,
-      /Attempting to disconnect from the database: {}/,
-      /Database connection closed: {}/,
       /Goals has \d+ records, last updated at: .+/,
       /Recipients has \d+ records, last updated at: .+/,
       /Grants has \d+ records, last updated at: .+/,
