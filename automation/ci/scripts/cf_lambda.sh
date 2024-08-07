@@ -596,16 +596,16 @@ main() {
   app_name=$(push_app "$automation_dir" "$manifest")
   start_app "$app_name"
 
-  if run_task("$app_name" "$task_name" "$command" "$args") && monitor_task("$app_name" "$task_name"); then
+  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
-      stop_app("$app_name")
+      stop_app "$app_name"
       exit 1
   fi
 
   # Clean up
-  stop_app("$app_name")
+  stop_app "$app_name"
   # Currently only turning off to aid in speeding up cycle time
   # delete_app "$app_name"
 }
