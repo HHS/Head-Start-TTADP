@@ -7,12 +7,22 @@ module.exports = {
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
       await queryInterface.sequelize.query(/* sql */`
-        -- First, set it at the event level.
+        -- Four sessions are not editable because they have already been
+        -- marked complete by POC. A support request has asked us to
+        -- revert this completion status so that they can be edited.
+
+        -- To do this, we set:
+
+        -- * pocComplete to false
+        -- * pocCompleteId to ""
+        -- * pocCompleteDate to ""
+
+        -- ...on both the event and the session
+
         UPDATE "EventReportPilots"
         SET data = jsonb_set(jsonb_set(jsonb_set(data, '{pocComplete}', 'false'), '{pocCompleteId}', '""'), '{pocCompleteDate}', '""')
         WHERE id = 39;
 
-        -- Then, set it at the session level
         UPDATE "SessionReportPilots"
         SET data = jsonb_set(
             jsonb_set(
