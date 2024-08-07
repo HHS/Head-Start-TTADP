@@ -398,8 +398,8 @@ commands:
         type: string
       timeout:
         description: "Max duration allowed for task"
-        type: integer
-        default: 300
+        type: string
+        default: "300"
     steps:
       - run:
           name: Install Dependencies
@@ -568,7 +568,7 @@ commands:
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           manifest: "manifest-restore.yml"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
-          timeout: 600
+          timeout: "600"
   cf_process:
     description: "Process database from S3"
     parameters:
