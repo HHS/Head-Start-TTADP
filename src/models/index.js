@@ -55,18 +55,22 @@ const descriptiveDetails = () => {
 };
 
 sequelize.addHook('beforeConnect', () => {
+  if (process.env.CI) return;
   auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('afterConnect', () => {
+  if (process.env.CI) return;
   auditLogger.info(`Database connection established: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('beforeDisconnect', () => {
+  if (process.env.CI) return;
   auditLogger.info(`Attempting to disconnect from the database: ${JSON.stringify(descriptiveDetails())}`);
 });
 
 sequelize.addHook('afterDisconnect', () => {
+  if (process.env.CI) return;
   auditLogger.info(`Database connection closed: ${JSON.stringify(descriptiveDetails())}`);
 });
 
