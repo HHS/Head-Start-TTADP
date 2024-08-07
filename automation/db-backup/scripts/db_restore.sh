@@ -612,7 +612,10 @@ function perform_restore() {
     log "INFO" "Restoring the database from the backup file"
     set -x
     set -o pipefail
-    
+
+    SQL_COMMAND="DROP DATABASE IF EXISTS \"${PGDATABASE}\"; CREATE DATABASE \"${PGDATABASE}\";"
+    psql -d postgres -c "$SQL_COMMAND"
+
     aws s3 cp "s3://${backup_file_path}" - |\
      openssl enc -d -aes-256-cbc -salt -pbkdf2 -k "${backup_password}" |\
      gzip -d |\
