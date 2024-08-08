@@ -19,6 +19,7 @@ describe('GoalDataController', () => {
   beforeEach(() => {
     const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
+    fetchMock.get('/api/users/feature-flags', []);
   });
 
   afterEach(() => fetchMock.restore());
