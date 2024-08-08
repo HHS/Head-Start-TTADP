@@ -11,7 +11,8 @@ import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
-import { similarity, markSimilarGoals } from '../../fetchers/goals';
+import { similarity } from '../../fetchers/goals';
+import { markSimilarGoals } from '../../fetchers/recipeint';
 import { getFeatureFlags } from '../../fetchers/users';
 
 export default function GoalCardsHeader({
