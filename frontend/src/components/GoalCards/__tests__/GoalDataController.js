@@ -87,6 +87,7 @@ describe('GoalDataController', () => {
       },
     );
     fetchMock.get(`/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`, []);
+    fetchMock.get('/api/users/feature-flags', []);
   });
 
   afterEach(async () => {
@@ -123,7 +124,6 @@ describe('GoalDataController', () => {
   it('shows what tell it to', async () => {
     const url = ` /api/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10`;
     fetchMock.get(url, response);
-    fetchMock.get('/api/users/feature-flags', []);
     act(() => {
       renderTest(
         {}, // props
