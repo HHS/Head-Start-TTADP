@@ -12,7 +12,7 @@ interface MaxIdRecord {
 const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(/* sql */ `
   SELECT
       cls.relname AS table_name,
-      seq_data.last_value AS max_id
+      COALESCE(seq_data.last_value, 0) AS max_id
   FROM pg_class seq
   JOIN pg_depend dep ON dep.objid = seq.oid
   JOIN pg_class cls ON cls.oid = dep.refobjid
@@ -44,7 +44,7 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   }) => sequelize.query<ChangeRecord>(/* sql */ `
     SELECT *, '${table_name}' AS source_table
     FROM "${table_name}"
-    WHERE id > :maxId
+    WHERE id > COALESCE(:maxId, 0)
     ORDER BY dml_timestamp DESC
   `, {
     replacements: { maxId: max_id },
@@ -66,6 +66,29 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   }
   const tableName = change.source_table.replace('ZAL', '');
   try {
+    const generateReplacements = (delta) => Object.entries(delta.old_row_data).reduce(
+      (acc, [key, value]) => {
+        let parsedValue;
+
+        // Try to parse the value as JSON
+        try {
+          // @ts-ignore
+          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+          parsedValue = JSON.parse(value);
+        } catch (error) {
+          parsedValue = value; // If parsing fails, use the original value
+        }
+
+        return {
+          ...acc,
+          [key]: Array.isArray(parsedValue)
+            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+            : parsedValue,
+        };
+      },
+      { id: delta.data_id },
+    );
+
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
@@ -81,11 +104,7 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}"`)
             .join(', ');
 
-          const replacements = Object.entries(change.old_row_data)
-            .reduce((acc, [key, value]) => ({
-              ...acc,
-              [key]: value,
-            }), {});
+          const replacements = generateReplacements(change);
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
@@ -100,11 +119,13 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}" = :${key}`)
             .join(', ');
 
+          const replacements = generateReplacements(change);
+
           await sequelize.query(/* sql */ `
             UPDATE "${tableName}"
             SET ${setClause}
             WHERE id = :id;
-          `, { replacements: { ...change.old_row_data, id: change.data_id } });
+          `, { replacements });
         }
         break;
       default:

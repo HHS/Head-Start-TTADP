@@ -5,7 +5,7 @@ import {
   trCollaboratorAdded,
   trPocAdded,
   trPocEventComplete,
-  trVisionAndGoalComplete,
+  trVisionComplete,
 } from '../../lib/mailer';
 import { auditLogger } from '../../logger';
 import db from '..';
@@ -15,7 +15,7 @@ jest.mock('../../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),
   trPocAdded: jest.fn(),
   trPocEventComplete: jest.fn(),
-  trVisionAndGoalComplete: jest.fn(),
+  trVisionComplete: jest.fn(),
 }));
 
 describe('eventReportPilot', () => {
@@ -210,7 +210,7 @@ describe('eventReportPilot', () => {
           },
         };
         await afterUpdate(null, instance, mockOptions);
-        expect(trVisionAndGoalComplete).toHaveBeenCalled();
+        expect(trVisionComplete).toHaveBeenCalled();
       });
       it('does not notify when the poc does not mark event complete', async () => {
         const instance = {
@@ -229,7 +229,7 @@ describe('eventReportPilot', () => {
           },
         };
         await afterUpdate(null, instance, mockOptions);
-        expect(trVisionAndGoalComplete).not.toHaveBeenCalled();
+        expect(trVisionComplete).not.toHaveBeenCalled();
       });
       it('quits when changed doesn\'t have data in it', async () => {
         const instance = {
@@ -248,11 +248,11 @@ describe('eventReportPilot', () => {
           },
         };
         await afterUpdate(null, instance, mockOptions);
-        expect(trVisionAndGoalComplete).not.toHaveBeenCalled();
+        expect(trVisionComplete).not.toHaveBeenCalled();
       });
       it('handles errors', async () => {
         await afterUpdate(null, null, mockOptions);
-        expect(trVisionAndGoalComplete).not.toHaveBeenCalled();
+        expect(trVisionComplete).not.toHaveBeenCalled();
       });
     });
   });

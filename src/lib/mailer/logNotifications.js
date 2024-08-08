@@ -61,12 +61,13 @@ export default async function logEmailNotification(job, success, result) {
       case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
       case EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED:
       case EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE:
-      case EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE:
+      case EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE:
         emailTo = data.emailTo;
         template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
       default:
-        break;
+        logger.error(`Unknown job name: ${job.name}`);
+        throw new Error(`Unknown job name: ${job.name}`);
     }
     subject = compileFile(template)(report);
     const mailerLogEntry = await createMailerLog({
@@ -80,7 +81,7 @@ export default async function logEmailNotification(job, success, result) {
     });
     return mailerLogEntry;
   } catch (err) {
-    logger.error(`Unable to create a log notification record: ${err}`);
+    logger.error(`Unable to create a log notification record: ${err} ${err.stack}`);
     return null;
   }
 }
