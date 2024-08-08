@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import moment from 'moment';
@@ -132,8 +133,11 @@ describe('nextSteps', () => {
     };
 
     const defaultUser = { user: { id: userId, roles: [{ name: 'GSM' }] } };
-    // eslint-disable-next-line react/prop-types
-    const RenderNextSteps = ({ formValues = defaultFormValues, user = defaultUser }) => {
+    const RenderNextSteps = ({
+      formValues = defaultFormValues,
+      user = defaultUser,
+      additionalData = null,
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -148,7 +152,7 @@ describe('nextSteps', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {nextSteps.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -234,6 +238,16 @@ describe('nextSteps', () => {
       expect(await screen.findByText('01/01/2022')).toBeVisible();
       expect(await screen.findByText(/other note/i)).toBeVisible();
       expect(await screen.findByText('01/01/2021')).toBeVisible();
+    });
+
+    it('shows incomplete pages message if we have pages in additionalData.incompletePages', async () => {
+      act(() => {
+        render(<RenderNextSteps additionalData={{ incompletePages: ['Incomplete page 1', 'Incomplete page 2'] }} />);
+      });
+
+      expect(await screen.findByText(/incomplete session/i)).toBeVisible();
+      expect(await screen.findByText('Incomplete page 1')).toBeVisible();
+      expect(await screen.findByText('Incomplete page 2')).toBeVisible();
     });
   });
 });
