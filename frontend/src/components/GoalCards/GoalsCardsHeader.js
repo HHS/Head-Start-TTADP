@@ -12,7 +12,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import { similarity } from '../../fetchers/goals';
-import { markSimilarGoals } from '../../fetchers/recipeint';
+import { markSimilarGoals } from '../../fetchers/recipient';
 import { getFeatureFlags } from '../../fetchers/users';
 
 export default function GoalCardsHeader({
