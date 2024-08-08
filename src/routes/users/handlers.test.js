@@ -386,13 +386,17 @@ describe('User handlers', () => {
   });
 
   describe('getFeatureFlags', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
     it('returns all feature flags for admin users', async () => {
       const user = {
         id: 1,
         flags: ['feature1'],
+        permissions: [{ scopeId: SCOPES.ADMIN }],
       };
       userById.mockResolvedValue(user);
-      User.prototype.isAdmin = jest.fn().mockResolvedValue(true);
       currentUserId.mockResolvedValue(1);
 
       await getFeatureFlags(mockRequest, mockResponse);
@@ -403,9 +407,9 @@ describe('User handlers', () => {
       const user = {
         id: 1,
         flags: ['feature1'],
+        permissions: [],
       };
       userById.mockResolvedValue(user);
-      User.prototype.isAdmin = jest.fn().mockResolvedValue(false);
       currentUserId.mockResolvedValue(1);
 
       await getFeatureFlags(mockRequest, mockResponse);
