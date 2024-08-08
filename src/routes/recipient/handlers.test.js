@@ -935,7 +935,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
       params: {
         recipientId: 1,
       },
-      query: {
+      body: {
         goalIds: [1, 2, 3],
       },
       session: {
@@ -971,7 +971,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
       params: {
         recipientId: 1,
       },
-      query: {
+      body: {
         goalIds: [1, 2, 3],
       },
       session: {
@@ -1006,7 +1006,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
       params: {
         recipientId: 1,
       },
-      query: {
+      body: {
         goalIds: [1, 2, 3],
       },
       session: {
@@ -1041,7 +1041,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
       params: {
         recipientId: 1,
       },
-      query: {
+      body: {
         goalIds: [1, 2, 3],
       },
       session: {
