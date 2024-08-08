@@ -85,7 +85,7 @@ const notifyPocEventComplete = async (_sequelize, instance) => {
   }
 };
 
-const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
+const notifyVisionComplete = async (_sequelize, instance) => {
   try {
     // first we need to see if the session is newly complete
     if (instance.changed().includes('data')) {
@@ -95,94 +95,13 @@ const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
       if (
         current.pocComplete && !previous.pocComplete) {
         // imported inside function to prevent circular ref
-        const { trVisionAndGoalComplete } = require('../../lib/mailer');
-        await trVisionAndGoalComplete(instance.dataValues);
+        const { trVisionComplete } = require('../../lib/mailer');
+        await trVisionComplete(instance.dataValues);
       }
     }
   } catch (err) {
-    auditLogger.error(`Error in notifyVisionAndGoalComplete: ${err}`);
+    auditLogger.error(`Error in notifyVisionComplete: ${err}`);
   }
-};
-
-/**
- * This hook updates `Goal.name` for all goals that are associated with this training report.
- */
-const updateGoalText = async (sequelize, instance, options) => {
-  const { transaction } = options;
-
-  // Compare the previous and current goal text field.
-  const previous = instance.previous().data || null;
-  let current;
-  if (instance.data?.val) {
-    current = JSON.parse(instance.data.val) || null;
-  } else {
-    current = instance.data || null;
-  }
-
-  if (!current || !previous) {
-    return;
-  }
-
-  // Get all SessionReportPilot instances for this event.
-  const sessions = await sequelize.models.SessionReportPilot.findAll({
-    where: {
-      eventId: instance.id,
-    },
-    transaction,
-  });
-
-  await Promise.all(sessions.map((session) => createGoalsForSessionRecipientsIfNecessary(
-    sequelize,
-    session,
-    options,
-    instance,
-  )));
-
-  if (current.goal === previous.goal) {
-    return;
-  }
-
-  // Disallow goal name propagation if any session on this event has been completed,
-  // effectively locking down this goal text.
-  // The UI also prevents this.
-  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
-    where: {
-      eventId: instance.id,
-      'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
-    },
-    transaction,
-  });
-
-  if (hasCompleteSession) {
-    current.goal = previous.goal;
-    instance.set('data', previous);
-    return;
-  }
-
-  // Propagate the goal name to all goals associated with this event
-  const name = current.goal;
-  if (!name) return;
-
-  await sequelize.models.Goal.update(
-    { name },
-    {
-      where: {
-        [Op.and]: [
-          { name: { [Op.ne]: name } },
-          {
-            id: {
-              [Op.in]: sequelize.literal(`(
-                SELECT "goalId"
-                FROM "EventReportPilotGoals"
-                WHERE "eventId" = ${instance.id}
-              )`),
-            },
-          },
-        ],
-      },
-      transaction,
-    },
-  );
 };
 
 const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, options) => {
@@ -265,7 +184,6 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
-  await updateGoalText(sequelize, instance, options);
   purifyDataFields(instance, fieldsToEscape);
 };
 
@@ -276,7 +194,7 @@ const beforeCreate = async (_sequelize, instance) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
   await notifyPocEventComplete(sequelize, instance, options);
-  await notifyVisionAndGoalComplete(sequelize, instance, options);
+  await notifyVisionComplete(sequelize, instance, options);
   await notifyNewPoc(sequelize, instance, options);
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };

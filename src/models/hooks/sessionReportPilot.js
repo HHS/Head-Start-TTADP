@@ -132,61 +132,6 @@ const participantsAndNextStepsComplete = async (sequelize, instance, options) =>
   }
 };
 
-const extractEventData = (sessionReport) => {
-  const data = sessionReport?.data?.val ? JSON.parse(sessionReport.data.val) : sessionReport?.data;
-  const event = data?.event;
-  const recipients = Array.isArray(data?.recipients) ? data.recipients : [data?.recipients].filter(Boolean);
-
-  return { event, recipients };
-};
-
-const createOrUpdateGoal = async (sequelize, event, grantId, sessionReport, options) => {
-  const eventId = Number(event.id);
-  const existingGoal = await sequelize.models.EventReportPilotGoal.findOne({
-    where: { eventId, grantId },
-  });
-
-  if (existingGoal) {
-    return existingGoal.goalId;
-  }
-
-  const grant = await sequelize.models.Grant.findByPk(grantId, { transaction: options.transaction });
-  if (!grant) throw new Error('Grant not found');
-
-  const sessionId = sessionReport.id;
-
-  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
-    where: { eventId, 'data.status': TRAINING_REPORT_STATUSES.COMPLETE },
-    transaction: options.transaction,
-  });
-
-  const status = hasCompleteSession ? 'In Progress' : 'Draft';
-  const onApprovedAR = !!(hasCompleteSession);
-
-  const newGoal = await sequelize.models.Goal.create({
-    name: event.data.goal,
-    grantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    status,
-    createdVia: 'tr',
-    source: GOAL_SOURCES[4], // Training event
-    onAR: true,
-    onApprovedAR,
-  }, { transaction: options.transaction });
-
-  await sequelize.models.EventReportPilotGoal.create({
-    goalId: newGoal.id,
-    eventId,
-    sessionId,
-    grantId,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  }, { transaction: options.transaction });
-
-  return newGoal.id;
-};
-
 const updateCreatorCollaborator = async (sequelize, eventRecord, existingCollaborators, creatorTypeId, options) => {
   const creatorCollaborator = existingCollaborators.find((c) => c.collaboratorTypeId === creatorTypeId.id);
 
@@ -267,182 +212,15 @@ export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sess
   }
 };
 
-export const createGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options, eventCurrentRecord = null) => {
-  const processSessionReport = async (sessionReport) => {
-    const { event, recipients } = extractEventData(sessionReport);
-    if (!event?.data?.goal || !event.id) return;
-
-    const eventId = Number(event.id);
-    const eventRecord = eventCurrentRecord || await sequelize.models.EventReportPilot.findByPk(eventId, { transaction: options.transaction });
-    if (!eventRecord) throw new Error('Event not found');
-
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const { value: grantValue } of recipients) {
-      const grantId = Number(grantValue);
-      const goalId = await createOrUpdateGoal(sequelize, event, grantId, sessionReport, options);
-      await syncGoalCollaborators(sequelize, eventRecord, goalId, sessionReport, options);
-    }
-  };
-
-  try {
-    if (sequelize.Sequelize && sessionReportOrInstance instanceof sequelize.Sequelize.Model) {
-      await processSessionReport(sessionReportOrInstance);
-    } else {
-      const instance = await sequelize.models.SessionReportPilot.findByPk(sessionReportOrInstance.id, { transaction: options.transaction });
-      if (!instance) throw new Error('SessionReportPilot instance not found');
-      await processSessionReport(instance);
-    }
-  } catch (error) {
-    auditLogger.error(`Error in createGoalsForSessionRecipientsIfNecessary: ${error}`);
-    throw error;
-  }
-};
-
-export const removeGoalsForSessionRecipientsIfNecessary = async (sequelize, sessionReportOrInstance, options) => {
-  const processSessionReport = async (sessionReport) => {
-    let event;
-    let nextSessionRecipients = [];
-
-    if (sessionReport && sessionReport.data) {
-      const data = (typeof sessionReport.data.val === 'string')
-        ? JSON.parse(sessionReport.data.val)
-        : sessionReport.data;
-
-      event = data.event;
-      nextSessionRecipients = data.recipients || [];
-    }
-
-    if (!event || !event.id || !sessionReport || !sessionReport.id) return;
-
-    nextSessionRecipients = nextSessionRecipients.map((r) => r.value);
-
-    const recipients = await sequelize.models.EventReportPilotGoal.findAll({
-      where: { eventId: event.id, sessionId: sessionReport.id },
-      transaction: options.transaction,
-      raw: true,
-    });
-
-    if (!recipients || !recipients.length) return;
-
-    // eslint-disable-next-line no-restricted-syntax
-    for await (const entry of recipients) {
-      if (!nextSessionRecipients.includes(entry.grantId)) {
-        const args = await sequelize.models.ActivityReportGoal.findAll({
-          where: { goalId: entry.goalId },
-          transaction: options.transaction,
-          raw: true,
-        });
-
-        const otherSessionsUsingGoal = await sequelize.models.EventReportPilotGoal.findAll({
-          where: {
-            goalId: entry.goalId,
-            sessionId: { [sequelize.Sequelize.Op.ne]: sessionReport.id },
-          },
-          transaction: options.transaction,
-          raw: true,
-        });
-
-        if ((!args || !args.length) && (!otherSessionsUsingGoal || !otherSessionsUsingGoal.length)) {
-          await sequelize.models.Goal.destroy({
-            where: { id: entry.goalId },
-            transaction: options.transaction,
-          });
-
-          await sequelize.models.EventReportPilotGoal.destroy({
-            where: { goalId: entry.goalId },
-            transaction: options.transaction,
-          });
-        }
-      }
-    }
-  };
-
-  try {
-    if (sequelize.Sequelize && sessionReportOrInstance instanceof sequelize.Sequelize.Model) {
-      await processSessionReport(sessionReportOrInstance);
-    } else {
-      const instance = await sequelize.models.SessionReportPilot.findByPk(sessionReportOrInstance.id, { transaction: options.transaction });
-      if (!instance) throw new Error('SessionReportPilot instance not found');
-      await processSessionReport(instance);
-    }
-  } catch (error) {
-    auditLogger.error(`Error in removeGoalsForSessionRecipientsIfNecessary: ${error}`);
-  }
-};
-
-const makeGoalsInProgressIfThisIsTheFirstCompletedSession = async (sequelize, instance, options) => {
-  const { transaction } = options;
-
-  const previous = instance.previous('data') || null;
-  const current = JSON.parse(instance.data.val);
-
-  // If old status is complete, return.
-  if (previous?.status === TRAINING_REPORT_STATUSES.COMPLETE) { return; }
-  if (current?.status !== TRAINING_REPORT_STATUSES.COMPLETE) { return; }
-
-  const otherSessions = await sequelize.models.SessionReportPilot.findAll({
-    where: {
-      eventId: instance.eventId,
-      id: {
-        [Op.ne]: instance.id,
-      },
-    },
-    transaction,
-  });
-
-  // Are any of them complete?
-  const anyComplete = otherSessions.some((s) => {
-    const { status } = s.dataValues.data;
-    if (!status) return false;
-    return status === TRAINING_REPORT_STATUSES.COMPLETE;
-  });
-
-  if (anyComplete) { return; }
-
-  const data = JSON.parse(instance.data.val) || null;
-  if (!data) return;
-
-  // No other sessions are complete, but this one is about
-  // to become complete.
-  // Find all the goals that were created from this EventReportPilot, and
-  // update their status to In Progress. They are no longer considered Draft
-  // when a session is marked as complete.
-  const junctionGoals = await sequelize.models.EventReportPilotGoal.findAll({
-    where: { eventId: instance.eventId },
-    transaction,
-  });
-
-  // Now find actual Goals that are Draft.
-  const goals = await sequelize.models.Goal.findAll({
-    where: {
-      id: {
-        [Op.in]: junctionGoals.map((jg) => jg.goalId),
-      },
-      status: 'Draft',
-    },
-    transaction,
-  });
-
-  // Update them all to In Progress.
-  await Promise.all(goals.map((goal) => goal.update({
-    status: 'In Progress',
-    onApprovedAR: true,
-    previousStatus: 'Draft',
-  }, { transaction })));
-};
-
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
-  await createGoalsForSessionRecipientsIfNecessary(sequelize, instance, options);
 };
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifyPocIfSessionComplete(sequelize, instance, options);
   await participantsAndNextStepsComplete(sequelize, instance, options);
-  await createGoalsForSessionRecipientsIfNecessary(sequelize, instance, options);
-  await removeGoalsForSessionRecipientsIfNecessary(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
@@ -451,7 +229,6 @@ const beforeCreate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
-  await makeGoalsInProgressIfThisIsTheFirstCompletedSession(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {

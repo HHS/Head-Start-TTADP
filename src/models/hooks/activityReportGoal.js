@@ -4,7 +4,6 @@ const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -163,11 +162,6 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
-};
-
-const beforeUpdate = async (sequelize, instance, options) => {
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
@@ -187,7 +181,6 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 export {
   beforeValidate,
-  beforeUpdate,
   processForEmbeddedResources,
   recalculateOnAR,
   propagateDestroyToMetadata,
