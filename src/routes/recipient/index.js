@@ -44,7 +44,7 @@ router.get(
   transactionWrapper(getGoalsByIdandRecipient),
 );
 router.put(
-  '/:recipientId/markSimilarGoals',
+  '/:recipientId/mark-similar-goals',
   checkRecipientIdParam,
   transactionWrapper(markSimilarGoalsByIdForRecipient),
 );
