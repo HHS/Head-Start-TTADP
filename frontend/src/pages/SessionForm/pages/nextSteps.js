@@ -12,7 +12,6 @@ import {
 } from '../constants';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
 import UserContext from '../../../UserContext';
-import PocCompleteView from '../../../components/PocCompleteView';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import ReadOnlyField from '../../../components/ReadOnlyField';
@@ -25,7 +24,7 @@ const NextSteps = ({ formData }) => {
 
   if (showReadOnlyView) {
     return (
-      <PocCompleteView formData={formData} userId={user.id}>
+      <>
         <Helmet>
           <title>Next Steps</title>
         </Helmet>
@@ -53,7 +52,7 @@ const NextSteps = ({ formData }) => {
             </ReadOnlyField>
           </div>
         ))}
-      </PocCompleteView>
+      </>
     );
   }
 

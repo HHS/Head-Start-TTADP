@@ -220,10 +220,6 @@ describe('participants', () => {
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
 
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
       // confirm in-person is capitalized
       const inPerson = await screen.findByText('In-person');
       expect(inPerson).toBeVisible();
@@ -257,10 +253,6 @@ describe('participants', () => {
         render(<RenderParticipants formValues={readOnlyFormValues} />);
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
 
       // confirm hybrid is capitalized
       const inPerson = await screen.findByText('Hybrid');
@@ -302,10 +294,6 @@ describe('participants', () => {
         render(<RenderParticipants formValues={readOnlyFormValues} />);
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
 
       const regionalOfficeTta = await screen.findByText(/aa, ttac/i);
       expect(regionalOfficeTta).toBeVisible();

@@ -2,16 +2,15 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { capitalize } from 'lodash';
-import PocCompleteView from '../../../components/PocCompleteView';
 import ReadOnlyField from '../../../components/ReadOnlyField';
 
-export default function ParticipantsReadOnly({ formData, userId }) {
+export default function ParticipantsReadOnly({ formData }) {
   const isHybrid = formData.deliveryMethod === 'hybrid';
   const isIstVisit = formData.isIstVisit === 'yes';
   const isNotIstVisit = formData.isIstVisit === 'no';
 
   return (
-    <PocCompleteView formData={formData} userId={userId}>
+    <>
       <Helmet>
         <title>Session Participants</title>
       </Helmet>
@@ -49,7 +48,7 @@ export default function ParticipantsReadOnly({ formData, userId }) {
       <ReadOnlyField label="Language used">
         {formData.language.join('\n')}
       </ReadOnlyField>
-    </PocCompleteView>
+    </>
   );
 }
 
@@ -67,5 +66,4 @@ ParticipantsReadOnly.propTypes = {
     isIstVisit: PropTypes.string,
     regionalOfficeTta: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
-  userId: PropTypes.number.isRequired,
 };
