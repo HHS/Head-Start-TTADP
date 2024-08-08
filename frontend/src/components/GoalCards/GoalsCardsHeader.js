@@ -251,7 +251,8 @@ export default function GoalCardsHeader({
         >
           {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
-        { hasManualMarkGoalsSimilar
+        { numberOfSelectedGoals > 1
+          && hasManualMarkGoalsSimilar
           && (
             <Button
               unstyled
