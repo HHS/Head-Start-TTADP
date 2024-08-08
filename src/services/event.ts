@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
-import _ from 'lodash';
+import { get } from 'lodash';
 import {
   TRAINING_REPORT_STATUSES as TRS,
   REASONS,
@@ -9,12 +9,15 @@ import {
   EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
 } from '@ttahub/common';
+import moment from 'moment';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
   UpdateEventRequest,
+  SessionShape,
+  TRAlertShape,
 } from './types/event';
 import EventReport from '../policies/event';
 
@@ -354,6 +357,218 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
     ],
   };
   return findEventHelper(where) as Promise<EventShape>;
+}
+
+const parseMinimalEventForAlert = (
+  event: {
+    id: number;
+    data: {
+      eventId: string;
+      eventName: string;
+    },
+  },
+  alertType: string,
+  sessionName = '--',
+) => ({
+  id: event.id,
+  eventId: event.data.eventId,
+  eventName: event.data.eventName,
+  alertType,
+  sessionName,
+  isSession: sessionName !== '--',
+});
+
+// type for an array of either strings of functions that return a boolean
+type Checkers = (string | ((data: SessionShape['data']) => boolean))[];
+
+const checkSessionForCompletion = (
+  session: SessionShape,
+  event: EventShape,
+  checkers: Checkers,
+  missingSessionInfo: TRAlertShape[],
+) => {
+  let sessionValid = true;
+
+  // eslint-disable-next-line no-restricted-syntax
+  for (const field of checkers) {
+    if (typeof field === 'function') {
+      if (!field(session.data)) {
+        sessionValid = false;
+        break;
+      }
+    } else if (!(session.data[field])) {
+      sessionValid = false;
+      break;
+    }
+  }
+
+  if (!sessionValid) {
+    missingSessionInfo.push({
+      id: session.id,
+      eventId: event.data.eventId,
+      isSession: true,
+      sessionName: session.data.sessionName,
+      eventName: event.data.eventName,
+      alertType: 'missingSessionInfo',
+    });
+  }
+};
+
+export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<TRAlertShape[]> {
+  const where = {
+    [Op.and]: [
+      {
+        [Op.or]: [
+          {
+            ownerId: userId,
+          },
+          {
+            collaboratorIds: {
+              [Op.contains]: [userId],
+            },
+          },
+          {
+            pocIds: {
+              [Op.contains]: [userId],
+            },
+          },
+        ],
+      },
+      {
+        regionId: {
+          [Op.in]: regions,
+        },
+        data: {
+          status: {
+            [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+          },
+        },
+      },
+    ],
+  };
+
+  // get all events that the user is a part of and that are not complete/suspended
+  const events = await findEventHelper(where, true) as EventShape[];
+
+  const alerts = [];
+
+  // missingEventInfo: Missing event info (IST Creator or Collaborator) - 20 days past event start date
+  // missingSessionInfo: Missing session info (IST Creator or Collaborator or POC) - 20 days past session start date
+  // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
+  // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
+
+  const checkEventInfo = (event, field, isArray) => {
+    if (isArray) {
+      return !(get(event, field, []).length === 0);
+    }
+
+    return !!(get(event, field, null));
+  };
+
+  // the only fields that aren't read only
+  const eventInfoToCheck = [
+    'data.eventName',
+    'data.startDate',
+    'data.endDate',
+    'data.trainingType',
+    'data.vision',
+  ];
+  const eventArraysToCheck = [
+    'collaboratorIds',
+    'data.reasons',
+    'data.targetPopulations',
+  ];
+  const istSessionInfoToCheck = [
+    'startDate',
+    'endDate',
+    'sessionName',
+    'duration',
+    'objective',
+    'objectiveTopics',
+    'objectiveTrainers',
+    (sessionData: SessionShape['data']) => {
+      if (sessionData.useIpdCourses) {
+        return !!(sessionData.courses?.length);
+      }
+
+      return true;
+    },
+    'ttaProvided',
+    'supportType',
+  ];
+  const pocSessionInfoToCheck = [
+    'deliveryMethod',
+    (sessionData : SessionShape['data']) => {
+      if (sessionData.isIstVisit === 'yes') {
+        return !!(sessionData.regionalOfficeTta)?.length;
+      }
+
+      if (sessionData.isIstVisit === 'no') {
+        return !!(sessionData.participants?.length);
+      }
+
+      return false;
+    },
+    'language',
+    (sessionData: SessionShape['data']) => {
+      const { nextSteps } = sessionData;
+      if (!nextSteps?.length) {
+        return false;
+      }
+
+      return nextSteps.every((step) => step.note && step.completeDate);
+    },
+  ];
+
+  const today = moment().startOf('day');
+
+  events.forEach((event: EventShape) => {
+    // some alerts only trigger for the owner or the collaborators
+    if (event.ownerId === userId || event.collaboratorIds.includes(userId)) {
+      const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
+      const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+
+      // if we are 20 days past the start date
+      if (today.isAfter(nineteenDaysAfterStart)) {
+        // and there are no sessions
+        if (event.sessionReports.length === 0) {
+          alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
+        }
+
+        // or we are missing event data
+        if (eventInfoToCheck.some((field) => !(checkEventInfo(event, field, false))) || eventArraysToCheck.some((field) => !(checkEventInfo(event, field, true)))) {
+          alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
+        }
+      }
+
+      // if we are 20 days past the end date, and the event is not completed
+      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+        alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
+      }
+
+      const sessions = event.sessionReports;
+      sessions.forEach((session) => {
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+          checkSessionForCompletion(session, event, istSessionInfoToCheck, alerts);
+        }
+      });
+    }
+
+    // the other event triggers for everyone
+    const sessions = event.sessionReports;
+    sessions.forEach((session) => {
+      if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+      const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+      if (today.isAfter(nineteenDaysAfterStart)) {
+        // eslint-disable-next-line no-restricted-syntax
+        checkSessionForCompletion(session, event, pocSessionInfoToCheck, alerts);
+      }
+    }); // for each session
+  }); // for each event
+
+  return alerts;
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {

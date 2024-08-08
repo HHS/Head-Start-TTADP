@@ -1,8 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
+import './SimpleSortableTable.css';
 
-const SimpleSortableTable = ({ data, columns, className }) => {
+const SimpleSortableTable = ({
+  data,
+  columns,
+  className,
+  elementSortProp,
+}) => {
   const [sortConfig, setSortConfig] = useState({
     key: null,
     direction: 'asc',
@@ -15,10 +21,10 @@ const SimpleSortableTable = ({ data, columns, className }) => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
         if (React.isValidElement(aValue)) {
-          aValue = aValue.props.children.props['aria-label'];
+          aValue = aValue.props.children.props[elementSortProp];
         }
         if (React.isValidElement(bValue)) {
-          bValue = bValue.props.children.props['aria-label'];
+          bValue = bValue.props.children.props[elementSortProp];
         }
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -30,7 +36,7 @@ const SimpleSortableTable = ({ data, columns, className }) => {
       });
     }
     return sortableItems;
-  }, [data, sortConfig]);
+  }, [data, sortConfig, elementSortProp]);
 
   const requestSort = (key) => {
     let direction = 'asc';
@@ -50,7 +56,7 @@ const SimpleSortableTable = ({ data, columns, className }) => {
         <button
           type="button"
           onClick={() => requestSort(column.key)}
-          className={`sortable ${sortClassName} position-relative`}
+          className={`sortable ${sortClassName} position-relative bg-white border-0 text-bold`}
           aria-label={`${column.name} Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           <span>{column.name}</span>
@@ -60,25 +66,27 @@ const SimpleSortableTable = ({ data, columns, className }) => {
   };
 
   return (
-    <Table fullWidth striped stackedStyle="default" className={className}>
-      <thead>
-        <tr>
-          {columns.map((column) => renderColumnHeader(column))}
-        </tr>
-      </thead>
-      <tbody>
-        {sortedData.map((item, index) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <tr key={index}>
-            {columns.map((column) => (
-              <td key={column.key} data-label={column.name}>
-                {item[column.key]}
-              </td>
-            ))}
+    <div className="ttahub-simple-sortable-table">
+      <Table fullWidth striped stackedStyle="default" className={className}>
+        <thead>
+          <tr>
+            {columns.map((column) => renderColumnHeader(column))}
           </tr>
-        ))}
-      </tbody>
-    </Table>
+        </thead>
+        <tbody>
+          {sortedData.map((item, index) => (
+          // eslint-disable-next-line react/no-array-index-key
+            <tr key={index}>
+              {columns.map((column) => (
+                <td key={column.key} data-label={column.name}>
+                  {item[column.key]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    </div>
   );
 };
 
@@ -92,10 +100,12 @@ SimpleSortableTable.propTypes = {
     }),
   ).isRequired,
   className: PropTypes.string,
+  elementSortProp: PropTypes.string,
 };
 
 SimpleSortableTable.defaultProps = {
   className: '',
+  elementSortProp: 'aria-label',
 };
 
 export default SimpleSortableTable;

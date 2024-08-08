@@ -9,6 +9,7 @@ import isAdmin, {
   canChangeObjectiveStatus,
   canChangeGoalStatus,
   canEditOrCreateGoals,
+  hasTrainingReportWritePermissions,
 } from '../permissions';
 
 describe('permissions', () => {
@@ -374,6 +375,44 @@ describe('permissions', () => {
       const flag = 'flag1';
       const result = canSeeBehindFeatureFlag(user, flag);
       expect(result).toBe(false);
+    });
+  });
+
+  describe('hasTrainingReportWritePermissions', () => {
+    it('returns true if the user has read_write_training_repotrs', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasTrainingReportWritePermissions(user)).toBeTruthy();
+    });
+
+    it('returns true if the user has POC training reports', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.POC_TRAINING_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasTrainingReportWritePermissions(user)).toBeTruthy();
+    });
+
+    it('returns false otherwise', () => {
+      const user = {
+        permissions: [
+          {
+            scopeId: SCOPE_IDS.READ_REPORTS,
+            regionId: 1,
+          },
+        ],
+      };
+      expect(hasTrainingReportWritePermissions(user)).toBeFalsy();
     });
   });
 });
