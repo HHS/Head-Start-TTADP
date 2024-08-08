@@ -240,6 +240,7 @@ export async function deleteSimilarityGroup(similarityGroupId: number) {
 export async function createSimilarityGroup(
   recipientId: number,
   goals: IGoalShape[],
+  byPassChecks = false,
 ) {
   // check for existing similarity group
   let group;
@@ -256,7 +257,7 @@ export async function createSimilarityGroup(
     );
   }
 
-  if (group) {
+  if (!byPassChecks && group) {
     return group;
   }
 

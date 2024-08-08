@@ -240,7 +240,7 @@ export async function markSimilarGoalsByIdForRecipient(req, res) {
     const { recipientId } = req.params;
     const { goalIds } = req.body;
 
-    await createSimilarityGroup(recipientId, goalIds.map((goalId) => ({ ids: [goalId] })));
+    await createSimilarityGroup(recipientId, goalIds.map((goalId) => ({ ids: [goalId] })), true);
 
     res.json({ message: 'Goal group created.' });
   } catch (error) {
