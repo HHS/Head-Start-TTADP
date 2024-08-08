@@ -962,6 +962,7 @@ describe('markSimilarGoalsByIdForRecipient', () => {
     expect(createSimilarityGroup).toHaveBeenCalledWith(
       1,
       [{ ids: [1] }, { ids: [2] }, { ids: [3] }],
+      true,
     );
     expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Goal group created.' });
   });
