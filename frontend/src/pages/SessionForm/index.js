@@ -262,7 +262,26 @@ export default function SessionForm({ match }) {
     }
   };
 
+  const updateIncompletePages = () => {
+    // If this is a POC user, make sure all pages have isPageComplete true.
+    if (isPoc) {
+      const foundIncompletePages = applicationPages.filter(
+        (page) => !page.isPageComplete(hookForm),
+      );
+
+      if (foundIncompletePages.length) {
+        // Set incompletePages with the pages that are not complete.
+        setIncompletePages(foundIncompletePages);
+        // return;
+      } else {
+        setIncompletePages([]);
+      }
+    }
+    return true;
+  };
+
   const onSaveAndContinue = async () => {
+    updateIncompletePages();
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
     const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
@@ -320,22 +339,10 @@ export default function SessionForm({ match }) {
   }
 
   const showSubmitModal = async () => {
+    updateIncompletePages();
     const isValidForm = await hookForm.trigger();
-    // If this is a POC user, make sure all pages have isPageComplete true.
-    if (isPoc) {
-      const foundIncompletePages = applicationPages.filter(
-        (page) => !page.isPageComplete(hookForm),
-      );
 
-      if (foundIncompletePages.length) {
-        // Set incompletePages with the pages that are not complete.
-        setIncompletePages(foundIncompletePages);
-        return;
-      }
-      setIncompletePages([]);
-    }
-
-    if (isValidForm) {
+    if (isValidForm && !incompletePages.length) {
       // Toggle the modal only if the form is valid.
       modalRef.current.toggleModal(true);
     }
@@ -414,6 +421,7 @@ export default function SessionForm({ match }) {
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
             hideSideNav={!isPoc}
+            preFlightForNavigation={updateIncompletePages}
           />
         </FormProvider>
       </NetworkContext.Provider>
