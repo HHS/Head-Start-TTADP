@@ -12,7 +12,7 @@ import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import { similarity, markSimilarGoals } from '../../fetchers/goals';
-import { getFeatureFlags } from '../../fetchers/user';
+import { getFeatureFlags } from '../../fetchers/users';
 
 export default function GoalCardsHeader({
   title,
@@ -120,7 +120,7 @@ export default function GoalCardsHeader({
     await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
     selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
     window.location.reload(); // Reload the page
-  }
+  };
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
