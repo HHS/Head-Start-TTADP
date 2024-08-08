@@ -165,7 +165,7 @@ const SessionSummary = ({ datePickerKey }) => {
     name: 'courses',
     defaultValue: courses || [],
     rules: {
-      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+      validate: (value) => !objectiveUseIpdCourses || (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
     },
   });
 
@@ -658,19 +658,19 @@ export default {
     _formData,
     _reportId,
     isAppLoading,
-    onContinue,
+    _onContinue,
     onSaveDraft,
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
-    _onFormSubmit,
+    onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Review and submit</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
       </div>
     </div>
