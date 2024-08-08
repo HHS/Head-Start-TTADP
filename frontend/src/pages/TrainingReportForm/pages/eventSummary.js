@@ -385,6 +385,8 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
         </Label>
         <Dropdown required id="trainingType" name="trainingType" inputRef={register({ required: 'Select a training type' })}>
           <option>Series</option>
+          <option>Multi-Day single event</option>
+          <option>1 day or less</option>
         </Dropdown>
       </div>
 
