@@ -5,8 +5,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 import {} from 'dotenv/config';
-import throng from 'throng';
 import httpContext from 'express-http-context';
+import throng from 'throng';
+import { registerEventListener } from './processHandler';
 import {
   processScanQueue,
 } from './services/scanQueue';
@@ -28,6 +29,8 @@ const workers = process.env.WORKER_CONCURRENCY || 2;
 
 // Wrap your process functions to use httpContext
 async function start(context: { id: number }) {
+  registerEventListener();
+
   httpContext.ns.run(() => {
     httpContext.set('workerId', context.id);
 
@@ -39,7 +42,6 @@ async function start(context: { id: number }) {
 
     // Resource Queue.
     processResourceQueue();
-
     // Notifications Queue
     processNotificationQueue();
 
