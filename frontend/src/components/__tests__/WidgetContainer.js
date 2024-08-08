@@ -83,7 +83,7 @@ describe('Widget Container', () => {
   it('hides header border', async () => {
     renderWidgetContainer('Widget container header', null, true, () => {}, null, false);
     const containerElement = screen.getByRole('heading', { name: /widget container header/i }).parentElement;
-    expect(containerElement).not.toHaveClass('smart-hub-widget-container-header-border');
+    expect(containerElement).not.toHaveClass('ttahub-border-base-lighter');
   });
 
   it('call exportRows with the correct values', async () => {
