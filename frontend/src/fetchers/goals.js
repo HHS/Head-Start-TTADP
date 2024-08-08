@@ -127,3 +127,9 @@ export async function reopenGoal(goalId, reason, context) {
   const response = await put(url, { goalId, reason, context });
   return response.json();
 }
+
+export async function markSimilarGoals(recipientId, goalIds) {
+  const url = join(goalsUrl, 'recipient', String(recipientId), 'mark-similar-goals');
+  const response = await put(url, { goalIds });
+  return response.json();
+}
