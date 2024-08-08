@@ -242,7 +242,7 @@ export async function markSimilarGoalsByIdForRecipient(req, res) {
     }
 
     const { recipientId } = req.params;
-    const { goalIds } = req.query;
+    const { goalIds } = req.body;
 
     await createSimilarityGroup(recipientId, { ids: goalIds });
 
