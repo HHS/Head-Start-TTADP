@@ -232,10 +232,6 @@ export async function markSimilarGoalsByIdForRecipient(req, res) {
     const user = await userById(await currentUserId(req, res));
     const hasManualMarkGoalsSimilar = !!(user && new Users(user).canSeeBehindFeatureFlag('manual_mark_goals_similar'));
 
-    if (res.headersSent) {
-      return;
-    }
-
     if (!hasManualMarkGoalsSimilar) {
       res.sendStatus(httpCodes.UNAUTHORIZED);
       return;
