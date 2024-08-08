@@ -388,34 +388,4 @@ describe('TrainingReportForm', () => {
     const body = JSON.parse(options.body);
     expect(body.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
   });
-
-  it('shows the admin warning when the user is an admin', async () => {
-    fetchMock.get('/api/events/id/1', completedForm);
-    act(() => {
-      renderTrainingReportForm('1', 'event-summary', {
-        id: 1,
-        permissions: [
-          { regionId: 1, scopeId: SCOPE_IDS.ADMIN },
-        ],
-        name: 'Ted User',
-      });
-    });
-    await waitFor(() => expect(screen.getByText(/You are viewing the report as an administrator./i)).toBeInTheDocument());
-  });
-
-  it('hides the admin warning when the user is an admin', async () => {
-    fetchMock.get('/api/events/id/1', completedForm);
-    act(() => {
-      renderTrainingReportForm('1', 'event-summary', {
-        id: 1,
-        permissions: [
-          { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS },
-        ],
-        name: 'Ted User',
-      });
-    });
-
-    // Expect the admin warning to not be in the document.
-    await waitFor(() => expect(screen.queryByText(/You are viewing the report as an administrator./i)).toBeNull());
-  });
 });

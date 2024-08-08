@@ -28,10 +28,6 @@ import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 import Modal from '../../components/VanillaModal';
 import ReportLink from '../../components/ReportLink';
-import isAdmin from '../../permissions';
-import UserContext from '../../UserContext';
-import AdminWarning from '../../components/AdminWarning';
-
 /**
  * this is just a simple handler to "flatten"
  * the JSON column data into the form
@@ -120,8 +116,6 @@ export default function TrainingReportForm({ match }) {
 
   const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
-  const { user } = useContext(UserContext);
-  const hasAdminRights = isAdmin(user);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
   const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
@@ -289,10 +283,6 @@ export default function TrainingReportForm({ match }) {
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>
-      { hasAdminRights
-      && (
-        <AdminWarning />
-      )}
       <Grid row className="flex-justify">
         <Grid col="auto">
           <div className="margin-y-2">

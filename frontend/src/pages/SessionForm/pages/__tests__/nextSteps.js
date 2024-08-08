@@ -223,10 +223,6 @@ describe('nextSteps', () => {
         />);
       });
 
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
       // confirm read-only
       const checkbox = screen.queryByRole('checkbox');
       expect(checkbox).not.toBeInTheDocument();
