@@ -169,6 +169,7 @@ describe('mailer tests', () => {
   afterAll(async () => {
     process.env = oldEnv;
     await db.sequelize.close();
+    jest.clearAllMocks();
   });
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {

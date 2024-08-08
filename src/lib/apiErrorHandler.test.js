@@ -38,6 +38,13 @@ const mockLogContext = {
   namespace: 'TEST',
 };
 
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+    info: jest.fn(),
+  },
+}));
+
 describe('apiErrorHandler', () => {
   beforeEach(async () => {
     await RequestErrors.destroy({ where: {} });
