@@ -467,7 +467,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 /**
  * @param {db.models.EventReportPilot.dataValues} event
  */
-export const trVisionAndGoalComplete = async (event) => {
+export const trVisionComplete = async (event) => {
   if (process.env.CI) return;
   try {
     const thoseWhoRequireNotifying = uniq([
@@ -488,11 +488,10 @@ export const trVisionAndGoalComplete = async (event) => {
         reportPath,
         emailTo: [user.email],
         debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
-        templatePath: 'tr_poc_vision_goal_complete',
-        ...referenceData(),
+        templatePath: 'tr_poc_vision_complete',
       };
 
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE, data);
+      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE, data);
     }));
   } catch (err) {
     auditLogger.error(err);
@@ -1129,10 +1128,10 @@ export const processNotificationQueue = () => {
   );
 
   notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE,
     transactionQueueWrapper(
       sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
+      EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE,
     ),
   );
 
