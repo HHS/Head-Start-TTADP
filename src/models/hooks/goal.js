@@ -4,7 +4,6 @@ const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
-const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (_sequelize, instance) => {
   // eslint-disable-next-line global-require
@@ -298,13 +297,11 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
