@@ -106,7 +106,7 @@ export default function GoalCardsHeader({
       (bucket) => similarGoals.includes(bucket.id),
     ).map((bucket) => bucket.goalIds).flat();
 
-    // TODO: put similarGoals to put:/recipient/:recipientId/markSimilarGoals
+    // TODO: put similarGoals to put:/recipient/:recipientId/mark-similar-goals
     // TODO: reload page or refresh merge suggestions
   }
 
