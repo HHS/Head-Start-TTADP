@@ -269,6 +269,7 @@ describe('Goals Table', () => {
       ...oldWindowLocation,
       assign: jest.fn(),
     };
+    fetchMock.get('/api/users/feature-flags', []);
   });
   afterAll(() => {
     window.location = oldWindowLocation;
