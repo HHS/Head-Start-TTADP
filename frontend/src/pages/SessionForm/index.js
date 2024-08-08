@@ -7,7 +7,9 @@ import React, {
 import moment from 'moment';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Alert, Grid } from '@trussworks/react-uswds';
+import {
+  Alert, Grid, Button, ModalToggleButton,
+} from '@trussworks/react-uswds';
 import { useHistory, Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
@@ -19,9 +21,13 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
+import ReportLink from '../../components/ReportLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
+import isAdmin from '../../permissions';
+import sessionSummary from './pages/sessionSummary';
+import Modal from '../../components/VanillaModal';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -55,6 +61,7 @@ export default function SessionForm({ match }) {
   const { params: { sessionId, currentPage, trainingReportId } } = match;
 
   const reportId = useRef(sessionId);
+  const modalRef = useRef();
 
   // for redirects if a page is not provided
   const history = useHistory();
@@ -75,6 +82,7 @@ export default function SessionForm({ match }) {
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
+  const [incompletePages, setIncompletePages] = useState([]);
 
   // we use both of these to determine if we're in the loading screen state
   // (see the use effect below)
@@ -105,6 +113,41 @@ export default function SessionForm({ match }) {
     socketPath,
     messageStore,
   } = useSocket(user);
+
+  const isAdminUser = isAdmin(user);
+
+  const {
+    isPoc,
+    isCollaborator,
+    isOwner,
+  } = (() => {
+    let isPocUser = false;
+    let isCollaboratorUser = false;
+    let isOwnerUser = false;
+    if (formData && formData.event) {
+      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
+        isPocUser = true;
+      }
+
+      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
+        isCollaboratorUser = true;
+      }
+
+      if (formData.event.ownerId && formData.event.ownerId === user.id) {
+        isOwnerUser = true;
+      }
+    }
+
+    return {
+      isPoc: isPocUser,
+      isCollaborator: isCollaboratorUser,
+      isOwner: isOwnerUser,
+    };
+  })();
+
+  // eslint-disable-next-line max-len
+  const applicationPages = isPoc ? [pages.participants, pages.supportingAttachments, pages.nextSteps] : [sessionSummary];
+  const redirectPagePath = isPoc ? 'participants' : 'session-summary';
 
   useEffect(() => {
     if (!trainingReportId || !sessionId) {
@@ -170,7 +213,7 @@ export default function SessionForm({ match }) {
   }, [currentPage, hookForm.reset, reportFetched, sessionId, setErrorResponseCode]);
 
   // hook to update the page state in the sidebar
-  useHookFormPageState(hookForm, pages, currentPage);
+  useHookFormPageState(hookForm, applicationPages, currentPage);
 
   const updatePage = (position) => {
     const state = {};
@@ -178,14 +221,14 @@ export default function SessionForm({ match }) {
       state.showLastUpdatedTime = true;
     }
 
-    const page = pages.find((p) => p.position === position);
+    const page = Object.values(applicationPages).find((p) => p.position === position);
     const newPath = `/training-report/${trainingReportId}/session/${reportId.current}/${page.path}`;
     history.push(newPath, state);
   };
 
-  if (!currentPage) {
+  if (!currentPage || (isPoc && currentPage === 'session-summary')) {
     return (
-      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/session-summary`} />
+      <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );
   }
 
@@ -220,11 +263,11 @@ export default function SessionForm({ match }) {
   };
 
   const onSaveAndContinue = async () => {
-    const whereWeAre = pages.find((p) => p.path === currentPage);
-    const nextPage = pages.find((p) => p.position === whereWeAre.position + 1);
+    const whereWeAre = applicationPages.find((p) => p.path === currentPage);
+    const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
     await onSave();
     updateShowSavedDraft(false);
-    if (nextPage) {
+    if (isPoc && nextPage) {
       updatePage(nextPage.position);
     }
   };
@@ -269,11 +312,34 @@ export default function SessionForm({ match }) {
     return null;
   }
 
-  if (reportFetched && formData.status === TRAINING_REPORT_STATUSES.COMPLETE) {
+  const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
+  if (reportFetched && (formData.status === TRAINING_REPORT_STATUSES.COMPLETE || nonFormUser)) {
     return (
       <Redirect to={`/training-report/view/${trainingReportId}`} />
     );
   }
+
+  const showSubmitModal = async () => {
+    const isValidForm = await hookForm.trigger();
+    // If this is a POC user, make sure all pages have isPageComplete true.
+    if (isPoc) {
+      const foundIncompletePages = applicationPages.filter(
+        (page) => !page.isPageComplete(hookForm),
+      );
+
+      if (foundIncompletePages.length) {
+        // Set incompletePages with the pages that are not complete.
+        setIncompletePages(foundIncompletePages);
+        return;
+      }
+      setIncompletePages([]);
+    }
+
+    if (isValidForm) {
+      // Toggle the modal only if the form is valid.
+      modalRef.current.toggleModal(true);
+    }
+  };
 
   return (
     <div className="smart-hub-training-report--session">
@@ -289,16 +355,36 @@ export default function SessionForm({ match }) {
       </BackLink>
       <Grid row className="flex-justify">
         <Grid col="auto">
-          <div className="margin-top-3 margin-bottom-5">
+          <div className="margin-y-2">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Training report - Session
             </h1>
+            {
+              formData && formData.event && (
+              <ReportLink reportId={formData.event.data.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
+              )
+            }
           </div>
         </Grid>
       </Grid>
       <NetworkContext.Provider value={{ connectionActive: isOnlineMode() }}>
         {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
+          <Modal
+            modalRef={modalRef}
+            heading="Are you sure you want to continue?"
+          >
+            <p>You will not be able to make changes once you save the session.</p>
+
+            <Button
+              type="submit"
+              className="margin-right-1"
+              onClick={() => onFormSubmit()}
+            >
+              Yes, continue
+            </Button>
+            <ModalToggleButton className="usa-button--subtle" closer modalRef={modalRef} data-focus="true">No, cancel</ModalToggleButton>
+          </Modal>
           <Navigator
             datePickerKey={datePickerKey}
             socketMessageStore={messageStore}
@@ -310,10 +396,10 @@ export default function SessionForm({ match }) {
             updateLastSaveTime={updateLastSaveTime}
             reportId={reportId.current}
             currentPage={currentPage}
-            additionalData={{}}
+            additionalData={{ incompletePages: incompletePages.map((page) => page.label) }}
             formData={formData}
-            pages={pages}
-            onFormSubmit={onFormSubmit}
+            pages={applicationPages}
+            onFormSubmit={showSubmitModal}
             onSave={onSave}
             onResetToDraft={() => {}}
             isApprover={false}
@@ -327,6 +413,7 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
+            hideSideNav={!isPoc}
           />
         </FormProvider>
       </NetworkContext.Provider>

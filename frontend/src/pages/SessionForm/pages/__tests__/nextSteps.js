@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import moment from 'moment';
@@ -6,7 +7,6 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useForm, FormProvider } from 'react-hook-form';
 import nextSteps, { isPageComplete } from '../nextSteps';
 import { nextStepsFields } from '../../constants';
@@ -133,8 +133,11 @@ describe('nextSteps', () => {
     };
 
     const defaultUser = { user: { id: userId, roles: [{ name: 'GSM' }] } };
-    // eslint-disable-next-line react/prop-types
-    const RenderNextSteps = ({ formValues = defaultFormValues, user = defaultUser }) => {
+    const RenderNextSteps = ({
+      formValues = defaultFormValues,
+      user = defaultUser,
+      additionalData = null,
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -149,7 +152,7 @@ describe('nextSteps', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {nextSteps.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -181,21 +184,6 @@ describe('nextSteps', () => {
       expect(textAreas.length).toBe(2);
     });
 
-    it('shows checkbox for poc', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      expect(await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i)).toBeVisible();
-    });
-
     it('hides checkbox for poc if roles are invalid', async () => {
       act(() => {
         const updatedValues = {
@@ -210,35 +198,6 @@ describe('nextSteps', () => {
       });
 
       expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
-    });
-
-    it('allows selection of checkbox and sets alternate values', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      const checkbox = await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i);
-      expect(checkbox).not.toBeChecked();
-
-      act(() => {
-        userEvent.click(checkbox);
-      });
-
-      expect(checkbox).toBeChecked();
-
-      const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
-      expect(hiddenInputs.length).toBe(2);
-
-      const hiddenInputValues = Array.from(hiddenInputs).map((input) => input.value);
-      expect(hiddenInputValues.includes(todaysDate)).toBe(true);
-      expect(hiddenInputValues.includes(userId.toString())).toBe(true);
     });
 
     it('shows read only for pocs when pocComplete', async () => {
@@ -279,6 +238,16 @@ describe('nextSteps', () => {
       expect(await screen.findByText('01/01/2022')).toBeVisible();
       expect(await screen.findByText(/other note/i)).toBeVisible();
       expect(await screen.findByText('01/01/2021')).toBeVisible();
+    });
+
+    it('shows incomplete pages message if we have pages in additionalData.incompletePages', async () => {
+      act(() => {
+        render(<RenderNextSteps additionalData={{ incompletePages: ['Incomplete page 1', 'Incomplete page 2'] }} />);
+      });
+
+      expect(await screen.findByText(/incomplete session/i)).toBeVisible();
+      expect(await screen.findByText('Incomplete page 1')).toBeVisible();
+      expect(await screen.findByText('Incomplete page 2')).toBeVisible();
     });
   });
 });

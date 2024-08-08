@@ -110,6 +110,7 @@ describe('Navigator', () => {
     formData,
     onUpdateError,
     editable,
+    hideSideNav,
   }) => {
     const hookForm = useForm({
       defaultValues: formData,
@@ -151,6 +152,7 @@ describe('Navigator', () => {
                 isPendingApprover={false}
                 updateShowSavedDraft={jest.fn()}
                 showSavedDraft={false}
+                hideSideNav={hideSideNav}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
@@ -172,6 +174,7 @@ describe('Navigator', () => {
     formData = initialData,
     onUpdateError = jest.fn(),
     editable = true,
+    hideSideNav = false,
   ) => {
     render(
       <NavigatorWithForm
@@ -186,6 +189,7 @@ describe('Navigator', () => {
         formData={formData}
         onUpdateError={onUpdateError}
         editable={editable}
+        hideSideNav={hideSideNav}
       />,
     );
   };
@@ -211,5 +215,50 @@ describe('Navigator', () => {
     });
 
     expect(onSaveAndContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('hides the side nav when the hideSideNav prop is true', async () => {
+    const onSaveAndContinue = jest.fn();
+    act(() => {
+      renderNavigator(
+        onSaveAndContinue,
+        'first',
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        defaultPages,
+        initialData,
+        jest.fn(),
+        true,
+        true,
+      );
+    });
+
+    // Expect not to find the class 'smart-hub-sidenav-wrapper' in the document.
+    expect(screen.queryAllByTestId('side-nav').length).toBe(0);
+  });
+  it('shows the side nav when the hideSideNav prop is false', async () => {
+    const onSaveAndContinue = jest.fn();
+    act(() => {
+      renderNavigator(
+        onSaveAndContinue,
+        'first',
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        jest.fn(),
+        defaultPages,
+        initialData,
+        jest.fn(),
+        true,
+        false,
+      );
+    });
+
+    // Expect to find the className 'smart-hub-sidenav-wrapper' in the document.
+    expect(screen.getByTestId('side-nav')).toBeInTheDocument();
   });
 });

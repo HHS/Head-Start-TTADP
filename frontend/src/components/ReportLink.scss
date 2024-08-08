@@ -1,0 +1,5 @@
+@use '../colors.scss' as *;
+
+.ttahub-report-link:visited {
+    color: $ttahub-blue;
+}

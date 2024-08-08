@@ -16,7 +16,7 @@ import PocCompleteView from '../../../components/PocCompleteView';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import ReadOnlyField from '../../../components/ReadOnlyField';
-import PocCompleteCheckbox from '../../../components/PocCompleteCheckbox';
+import IncompletePages from '../../../components/IncompletePages';
 
 const NextSteps = ({ formData }) => {
   const { user } = useContext(UserContext);
@@ -78,10 +78,6 @@ const NextSteps = ({ formData }) => {
           recipientType="recipient"
         />
       </Fieldset>
-      <PocCompleteCheckbox
-        userId={user.id}
-        isPoc={isPoc}
-      />
     </>
   );
 };
@@ -134,23 +130,28 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     formData,
     _reportId,
     isAppLoading,
-    onContinue,
+    _onContinue,
     onSaveDraft,
     onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
-    _onFormSubmit,
+    onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <NextSteps formData={formData} />
       <Alert />
+      {additionalData
+      && additionalData.incompletePages
+      && additionalData.incompletePages.length > 0 && (
+      <IncompletePages type="session" incompletePages={additionalData.incompletePages} />
+      )}
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
         <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
