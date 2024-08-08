@@ -11,7 +11,8 @@ import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
-import { similarity } from '../../fetchers/goals';
+import { similarity, markSimilarGoals } from '../../fetchers/goals';
+import { getFeatureFlags } from '../../fetchers/user';
 
 export default function GoalCardsHeader({
   title,
@@ -42,6 +43,7 @@ export default function GoalCardsHeader({
   goalBuckets,
 }) {
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
+  const [hasManualMarkGoalsSimilar, setHasManualMarkGoalsSimilar] = useState(false);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -71,6 +73,15 @@ export default function GoalCardsHeader({
     }
   }, [canMergeGoals, recipientId, regionId]);
 
+  useEffect(() => {
+    async function checkFeatureFlags() {
+      const flags = await getFeatureFlags();
+      setHasManualMarkGoalsSimilar(flags.includes('manual_mark_goals_similar'));
+    }
+
+    checkFeatureFlags();
+  }, []);
+
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
     // See if we have goals selected.
@@ -92,7 +103,7 @@ export default function GoalCardsHeader({
     });
   };
 
-  const onMarkSimilarGoals = () => {
+  const onMarkSimilarGoals = async () => {
     let similarGoals = Object.keys(allSelectedGoalIds).filter(
       (key) => allSelectedGoalIds[key],
     ).map((key) => parseInt(key, DECIMAL_BASE));
@@ -106,11 +117,10 @@ export default function GoalCardsHeader({
       (bucket) => similarGoals.includes(bucket.id),
     ).map((bucket) => bucket.goalIds).flat();
 
-    // TODO: put similarGoals to put:/recipient/:recipientId/mark-similar-goals
-    // TODO: reload page or refresh merge suggestions
+    await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
+    selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
+    window.location.reload(); // Reload the page
   }
-
-  const hasManualMarkGoalsSimilar = false; // TODO: needs to check if get:/users/feature-flags returns 'manual_mark_goals_similar' in the array of results
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
