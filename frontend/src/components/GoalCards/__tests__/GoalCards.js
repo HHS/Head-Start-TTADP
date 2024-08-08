@@ -547,6 +547,7 @@ describe('Goals Table', () => {
 
       renderTable({ goals: [baseGoals[0], baseGoals[3]], goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
+      fetchMock.get('/api/users/feature-flags', []);
     });
 
     afterEach(() => {
