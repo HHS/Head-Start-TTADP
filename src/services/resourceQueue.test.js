@@ -43,6 +43,12 @@ describe('Resource queue manager tests', () => {
         resourceId: resource.id,
         resourceUrl: resource.key,
         key: RESOURCE_ACTIONS.GET_METADATA,
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
       },
       {
         attempts: process.env.RESOURCE_METADATA_RETRIES || 3,

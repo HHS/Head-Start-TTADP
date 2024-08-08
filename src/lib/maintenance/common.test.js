@@ -21,6 +21,7 @@ const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 
 const { MaintenanceLog } = require('../../models');
 const { auditLogger, logger } = require('../../logger');
+const { default: transactionWrapper } = require('../../workers/transactionWrapper');
 
 jest.mock('../../models', () => ({
   MaintenanceLog: {
@@ -113,13 +114,25 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category1, processor1);
       addQueueProcessor(category2, processor2);
       processMaintenanceQueue();
+
       expect(maintenanceQueue.process).toHaveBeenCalledTimes(3);
-      expect(maintenanceQueue.process).toHaveBeenCalledWith(category1, processor1);
-      expect(maintenanceQueue.process).toHaveBeenCalledWith(category2, processor2);
       expect(maintenanceQueue.process)
-        .toHaveBeenCalledWith(
+        .toHaveBeenNthCalledWith(
+          1,
           MAINTENANCE_CATEGORY.MAINTENANCE,
-          maintenance,
+          expect.any(Function),
+        );
+      expect(maintenanceQueue.process)
+        .toHaveBeenNthCalledWith(
+          2,
+          category1,
+          expect.any(Function),
+        );
+      expect(maintenanceQueue.process)
+        .toHaveBeenNthCalledWith(
+          3,
+          category2,
+          expect.any(Function),
         );
     });
   });
@@ -129,7 +142,15 @@ describe('Maintenance Queue', () => {
       jest.clearAllMocks();
     });
     it('should add a job to the maintenance queue if a processor is defined for the given category', () => {
-      const data = { test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category' };
+      const data = {
+        test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category',
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
+      };
       const category = 'test-category';
       const processor = jest.fn();
       addQueueProcessor(category, processor);

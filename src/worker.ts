@@ -27,7 +27,7 @@ import {
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 
-// Pull jobs off the redis queue and process them.
+// Wrap your process functions to use httpContext
 async function start(context: { id: number }) {
   registerEventListener();
 
@@ -42,7 +42,6 @@ async function start(context: { id: number }) {
 
     // Resource Queue.
     processResourceQueue();
-
     // Notifications Queue
     processNotificationQueue();
 
