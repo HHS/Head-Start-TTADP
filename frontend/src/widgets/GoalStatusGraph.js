@@ -8,6 +8,7 @@ import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import colors from '../colors';
 import VanillaModal from '../components/VanillaModal';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 const GOAL_STATUSES = [
   'Not started',
@@ -86,11 +87,6 @@ export function GoalStatusChart({ data, loading }) {
     setBars(newBars);
   }, [data]);
 
-  // toggle the data table
-  function toggleAccessibleData() {
-    updateShowAccessibleData((current) => !current);
-  }
-
   if (!data) {
     return null;
   }
@@ -104,14 +100,11 @@ export function GoalStatusChart({ data, loading }) {
           </h2>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
-          <button
-            type="button"
-            className="usa-button--unstyled"
-            aria-label={showAccessibleData ? 'display goal statuses by number as a graph' : 'display goal statuses by number as a table'}
-            onClick={toggleAccessibleData}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title="goal statuses by number"
+            displayTable={showAccessibleData}
+            setDisplayTable={updateShowAccessibleData}
+          />
         </Grid>
       </Grid>
       <Grid row className="margin-bottom-2">

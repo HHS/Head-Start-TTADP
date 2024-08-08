@@ -80,7 +80,7 @@ app.use((req, res, next) => {
         'style-src',
         'font-src',
       ),
-      styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
+      styleSrc: ["'self'", "'unsafe-inline'"],
       fontSrc: ["'self'"],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", '*.googletagmanager.com'],
