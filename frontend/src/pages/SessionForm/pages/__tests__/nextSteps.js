@@ -6,7 +6,6 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { useForm, FormProvider } from 'react-hook-form';
 import nextSteps, { isPageComplete } from '../nextSteps';
 import { nextStepsFields } from '../../constants';
@@ -181,21 +180,6 @@ describe('nextSteps', () => {
       expect(textAreas.length).toBe(2);
     });
 
-    it('shows checkbox for poc', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      expect(await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i)).toBeVisible();
-    });
-
     it('hides checkbox for poc if roles are invalid', async () => {
       act(() => {
         const updatedValues = {
@@ -210,35 +194,6 @@ describe('nextSteps', () => {
       });
 
       expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
-    });
-
-    it('allows selection of checkbox and sets alternate values', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      const checkbox = await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i);
-      expect(checkbox).not.toBeChecked();
-
-      act(() => {
-        userEvent.click(checkbox);
-      });
-
-      expect(checkbox).toBeChecked();
-
-      const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
-      expect(hiddenInputs.length).toBe(2);
-
-      const hiddenInputValues = Array.from(hiddenInputs).map((input) => input.value);
-      expect(hiddenInputValues.includes(todaysDate)).toBe(true);
-      expect(hiddenInputValues.includes(userId.toString())).toBe(true);
     });
 
     it('shows read only for pocs when pocComplete', async () => {

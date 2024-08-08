@@ -179,6 +179,16 @@ describe('SessionReportForm', () => {
     fetchMock.put(url, { eventId: 1 });
     const saveSession = screen.getByText(/Review and submit/i);
     userEvent.click(saveSession);
+
+    // Wait for the modal to display.
+    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
+
+    // get the button with the text "Yes, continue".
+    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    act(() => {
+      userEvent.click(yesContinueButton);
+    });
+
     await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
   });
 
