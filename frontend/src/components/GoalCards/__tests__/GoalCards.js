@@ -276,6 +276,9 @@ describe('Goals Table', () => {
   });
 
   describe('Table displays data', () => {
+    beforeEach(() => {
+      fetchMock.get('/api/users/feature-flags', []);
+    });
     afterEach(() => {
       window.location.assign.mockReset();
       fetchMock.restore();
