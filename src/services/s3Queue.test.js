@@ -48,6 +48,12 @@ describe('s3 queue manager tests', () => {
         fileId: file.id,
         fileKey: file.key,
         key: S3_ACTIONS.DELETE_FILE,
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
       },
     );
   });
