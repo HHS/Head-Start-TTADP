@@ -47,6 +47,8 @@ jest.mock('../../services/token', () => ({
   validateVerificationToken: jest.fn(),
 }));
 
+const _isAdmin = User.prototype.isAdmin;
+
 const mockResponse = {
   json: jest.fn(),
   writeHead: jest.fn(),
@@ -68,8 +70,16 @@ const mockRequest = {
   },
 };
 
+let _IGNORE_CACHE = process.env.IGNORE_CACHE;
+
 describe('User handlers', () => {
-  afterAll(() => db.sequelize.close());
+  beforeAll(() => {
+    process.env.IGNORE_CACHE = true;
+  });
+  afterAll(() => {
+    process.env.IGNORE_CACHE = _IGNORE_CACHE;
+    db.sequelize.close();
+  });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -385,6 +395,19 @@ describe('User handlers', () => {
     });
   });
 
+  describe('isAdmin', () => {
+    it('works predictably (no prototype override)', async () => {
+      User.prototype.isAdmin = _isAdmin;
+      const user = {
+        id: 1,
+        flags: ['feature1'],
+        permissions: [{ scopeId: SCOPES.ADMIN }],
+      };
+      const policy = new User(user);
+      expect(policy.isAdmin()).toBe(true);
+    });
+  });
+
   describe('getFeatureFlags', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -396,6 +419,7 @@ describe('User handlers', () => {
         flags: ['feature1'],
         permissions: [{ scopeId: SCOPES.ADMIN }],
       };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
       userById.mockResolvedValue(user);
       currentUserId.mockResolvedValue(1);
 
@@ -409,6 +433,7 @@ describe('User handlers', () => {
         flags: ['feature1'],
         permissions: [],
       };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
       userById.mockResolvedValue(user);
       currentUserId.mockResolvedValue(1);
 
