@@ -34,8 +34,8 @@ Boundary(aws, "AWS GovCloud") {
         Container(auto_proc_restore, "<&layers> Automation (Restore processed data to lower environments)", "bash", "Streams processed database backup directly from s3(backup) in a password protected encrypted zip compressed format to lower environment DB") #green
       }
       note right of auto
-          At anyone time, a max of only one of these configurations is enabled.
-          They all connections are unbound when not in use.
+          At any one time, a max of only one of these configurations is enabled.
+          All connections are unbound when not in use.
           No routes are configured.
           Resources (RAM, Disk) are minimized to only what is needed for the singular automation task.
       end note
