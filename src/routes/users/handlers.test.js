@@ -47,7 +47,7 @@ jest.mock('../../services/token', () => ({
   validateVerificationToken: jest.fn(),
 }));
 
-const _isAdmin = User.prototype.isAdmin;
+const originalIsAdmin = User.prototype.isAdmin;
 
 const mockResponse = {
   json: jest.fn(),
@@ -70,14 +70,14 @@ const mockRequest = {
   },
 };
 
-let _IGNORE_CACHE = process.env.IGNORE_CACHE;
+const originalIgnoreCache = process.env.IGNORE_CACHE;
 
 describe('User handlers', () => {
   beforeAll(() => {
     process.env.IGNORE_CACHE = true;
   });
   afterAll(() => {
-    process.env.IGNORE_CACHE = _IGNORE_CACHE;
+    process.env.IGNORE_CACHE = originalIgnoreCache;
     db.sequelize.close();
   });
   afterEach(() => {
@@ -397,7 +397,7 @@ describe('User handlers', () => {
 
   describe('isAdmin', () => {
     it('works predictably (no prototype override)', async () => {
-      User.prototype.isAdmin = _isAdmin;
+      User.prototype.isAdmin = originalIsAdmin;
       const user = {
         id: 1,
         flags: ['feature1'],
