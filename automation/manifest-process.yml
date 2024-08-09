@@ -9,6 +9,6 @@ applications:
   no-route: true
   buildpacks:
     - https://github.com/cloudfoundry/nodejs-buildpack
-  command: find . -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'; ./automation/cf/scripts/idol.sh
+  command: find /. -print | sed -e 's;[^/]*/;|____;g;s;____|; |;g'; ./automation/cf/scripts/idol.sh
   services:
     - ttahub-process
