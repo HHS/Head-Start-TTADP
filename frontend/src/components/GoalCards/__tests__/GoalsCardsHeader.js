@@ -136,37 +136,47 @@ describe('GoalCardsHeader', () => {
     expect(fetchMock.calls(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`)).toHaveLength(1);
   });
 
-  it('does not display "Mark goals as similar" button if numberOfSelectedGoals is 1 or less', () => {
+  it('does not display "Mark goals as similar" button if numberOfSelectedGoals is 1 or less', async () => {
     const props = {
       numberOfSelectedGoals: 1,
       hasManualMarkGoalsSimilar: true,
     };
 
-    renderTest(props);
+    await act(async () => {
+      renderTest(props);
+    });
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
     expect(markSimilarButton).not.toBeInTheDocument();
   });
 
-  it('does not display "Mark goals as similar" button if hasManualMarkGoalsSimilar is false', () => {
+  it('does not display "Mark goals as similar" button if hasManualMarkGoalsSimilar is false', async () => {
     const props = {
       numberOfSelectedGoals: 2,
       hasManualMarkGoalsSimilar: false,
     };
 
-    renderTest(props);
+    fetchMock.config.overwriteRoutes = true;
+    fetchMock.get('/api/users/feature-flags', []);
+    fetchMock.config.overwriteRoutes = false;
+
+    await act(async () => {
+      renderTest(props);
+    });
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
     expect(markSimilarButton).not.toBeInTheDocument();
   });
 
-  it('does display "Mark goals as similar" button if hasManualMarkGoalsSimilar is true', () => {
+  it('does display "Mark goals as similar" button if hasManualMarkGoalsSimilar is true', async () => {
     const props = {
       numberOfSelectedGoals: 2,
       hasManualMarkGoalsSimilar: true,
     };
 
-    renderTest(props);
+    await act(async () => {
+      renderTest(props);
+    });
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
     expect(markSimilarButton).toBeInTheDocument();
