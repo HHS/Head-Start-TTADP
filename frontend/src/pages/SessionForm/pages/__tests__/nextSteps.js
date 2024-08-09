@@ -7,6 +7,7 @@ import {
   screen,
   act,
 } from '@testing-library/react';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useForm, FormProvider } from 'react-hook-form';
 import nextSteps, { isPageComplete } from '../nextSteps';
 import { nextStepsFields } from '../../constants';
@@ -244,6 +245,31 @@ describe('nextSteps', () => {
       expect(await screen.findByText(/incomplete session/i)).toBeVisible();
       expect(await screen.findByText('Incomplete page 1')).toBeVisible();
       expect(await screen.findByText('Incomplete page 2')).toBeVisible();
+    });
+
+    it('hides the save draft button if the session is complete', async () => {
+      act(() => {
+        render(<RenderNextSteps formValues={{
+          ...defaultFormValues,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        }}
+        />);
+      });
+
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the save draft button if the session is complete', async () => {
+      act(() => {
+        render(<RenderNextSteps formValues={{
+          ...defaultFormValues,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        }}
+        />);
+      });
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
   });
 });
