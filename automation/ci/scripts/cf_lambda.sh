@@ -308,6 +308,57 @@ function check_app_running {
     fi
 }
 
+# Ensure the application is stopped
+function ensure_app_stopped() {
+    local app_name=$1
+    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
+    validate_parameters "$app_name"
+
+    log "INFO" "Ensuring application '$app_name' is stopped..."
+    local start_time=$(date +%s)
+    local current_time
+
+    while true; do
+        if ! check_app_running "$app_name"; then
+            log "INFO" "Application '$app_name' is already stopped."
+            return 0  # App is stopped
+        fi
+
+        current_time=$(date +%s)
+        if (( current_time - start_time >= timeout )); then
+            log "ERROR" "Timeout reached while waiting for application '$app_name' to stop."
+            return 1  # Timeout reached
+        fi
+
+        log "INFO" "Application '$app_name' is running. Waiting for it to stop..."
+        sleep 10
+    done
+}
+
+# Unbind all services from the application
+function unbind_all_services() {
+    local app_name="$1"
+    validate_parameters "$app_name"
+
+    # Get the list of services bound to the application
+    local services
+    services=$(cf services | grep "$app_name" | awk '{print $1}') >&2
+
+    if [[ -z "$services" ]]; then
+        return 0
+    fi
+
+    # Loop through each service and unbind it from the application
+    for service in $services; do
+        if ! cf unbind-service "$app_name" "$service" >&2; then
+            log "ERROR" "Failed to unbind service $service from application $app_name."
+            return 1
+        fi
+    done
+
+    return 0
+}
+
 # Push the app using a manifest from a specific directory
 function push_app {
     local original_dir=$(pwd)  # Save the original directory
@@ -320,7 +371,11 @@ function push_app {
     cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
 
     # Extract app name from the manifest file
-    local app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
+    local app_name
+    app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
+
+    # Unbind all services before pushing the app
+    unbind_all_services "$app_name"
 
     # Push the app without routing or starting it, capturing output
     local push_output
@@ -337,9 +392,8 @@ function push_app {
 
     # Log and return the app name
     log "INFO" "The app name is: $app_name"
-    echo $app_name
+    echo "$app_name"  # Ensure only the app name is returned
 }
-
 
 # Function to start an app
 function start_app {
@@ -359,6 +413,9 @@ function start_app {
 function stop_app {
     local app_name=$1
     validate_parameters "$app_name"
+
+    # Unbind all services after stopping the app
+    unbind_all_services "$app_name"
 
     log "INFO" "Stopping application '$app_name'..."
     if ! cf stop "$app_name"; then
@@ -420,8 +477,6 @@ function run_task {
     fi
 }
 
-
-
 # Function to monitor task
 function monitor_task {
     local app_name=$1
@@ -455,6 +510,37 @@ function monitor_task {
     done
 }
 
+# Check for active tasks in the application
+function check_active_tasks() {
+    local app_name=$1
+    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
+    validate_parameters "$app_name"
+
+    log "INFO" "Checking for active tasks in application '$app_name'..."
+    local start_time=$(date +%s)
+    local current_time
+    local active_tasks
+
+    while true; do
+        active_tasks=$(cf tasks "$app_name" | grep -E "RUNNING|PENDING")
+
+        if [ -z "$active_tasks" ]; then
+            log "INFO" "No active tasks found in application '$app_name'."
+            return 0  # No active tasks
+        fi
+
+        current_time=$(date +%s)
+        if (( current_time - start_time >= timeout )); then
+            log "ERROR" "Timeout reached while waiting for active tasks to complete in application '$app_name'."
+            return 1  # Timeout reached
+        fi
+
+        log "INFO" "Active tasks found. Waiting for tasks to complete..."
+        sleep 10
+    done
+}
+
+
 # Function to delete the app
 function delete_app {
     local app_name=$1
@@ -482,19 +568,35 @@ main() {
   validate_json "$json_input"
 
   # Parse JSON and assign to variables
-  local automation_dir manifest task_name command args
+  local automation_dir manifest task_name command args app_name timeout_active_tasks timeout_ensure_app_stopped
   automation_dir=$(echo "$json_input" | jq -r '.automation_dir // "./automation"')
   manifest=$(echo "$json_input" | jq -r '.manifest // "manifest.yml"')
   task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
   command=$(echo "$json_input" | jq -r '.command // "bash /path/to/default-script.sh"')
   args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
+  timeout_active_tasks=$(echo "$json_input" | jq -r '.timeout_active_tasks // 300')
+  timeout_ensure_app_stopped=$(echo "$json_input" | jq -r '.timeout_ensure_app_stopped // 300')
 
   local service_credentials
+
+  app_name=$(grep 'name:' "${automation_dir}/${manifest}" | awk '{print $3}' | tr -d '"')
+
+  # Check for active tasks and ensure the app is stopped before pushing
+  if check_app_exists "$app_name"; then
+      if ! check_active_tasks "$app_name" "$timeout_active_tasks"; then
+          log "ERROR" "Cannot proceed with pushing the app due to active tasks."
+          exit 1
+      fi
+      if ! ensure_app_stopped "$app_name" "$timeout_ensure_app_stopped"; then
+          log "ERROR" "Cannot proceed with pushing the app as it is still running."
+          exit 1
+      fi
+  fi
 
   app_name=$(push_app "$automation_dir" "$manifest")
   start_app "$app_name"
 
-  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name"; then
+  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name" $timeout_active_tasks; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
@@ -504,8 +606,9 @@ main() {
 
   # Clean up
   stop_app "$app_name"
-  # Currently only turing off to aid in speeding up cycle time
+  # Currently only turning off to aid in speeding up cycle time
   # delete_app "$app_name"
 }
 
 main "$@"
+

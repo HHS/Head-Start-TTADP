@@ -11,5 +11,8 @@ applications:
     - binary_buildpack
   command: ./cf/scripts/idol.sh
   services:
-    - ttahub-prod
     - ttahub-db-backups
+    - ttahub-process
+    # - ttahub-staging
+    # - ttahub-dev
+    # - ttahub-sandbox
