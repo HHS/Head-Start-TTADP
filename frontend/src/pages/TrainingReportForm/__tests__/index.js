@@ -8,7 +8,6 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import {
   TRAINING_REPORT_STATUSES,
-  SCOPE_IDS,
 } from '@ttahub/common';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
