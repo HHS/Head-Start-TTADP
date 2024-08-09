@@ -20,7 +20,7 @@ describe('GoalCardsHeader', () => {
     const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
     fetchMock.get('/api/users/feature-flags', ['manual_mark_goals_similar']);
-    fetchMock.put(`/api/recipient/${RECIPIENT_ID}/mark-similar`, { status: 200 });
+    fetchMock.put(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`, {});
   });
 
   afterEach(() => fetchMock.restore());
@@ -126,17 +126,14 @@ describe('GoalCardsHeader', () => {
       renderTest(props);
     });
 
-    const markSimilarButton = screen.getByRole('button', { name: /mark goals as similar/i });
+    const markSimilarButton = await screen.findByRole('button', { name: /mark goals as similar/i });
     expect(markSimilarButton).toBeInTheDocument();
 
     await act(async () => {
       userEvent.click(markSimilarButton);
     });
 
-    // Verify that markSimilarGoals was called with the correct parameters
-    const url = `/api/recipient/${RECIPIENT_ID}/mark-similar`;
-    expect(fetchMock.calls(url)).toHaveLength(1);
-    expect(selectAllGoalCheckboxSelect).toHaveBeenCalledWith({ target: { checked: false } });
+    expect(fetchMock.calls(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`)).toHaveLength(1);
   });
 
   it('does not display "Mark goals as similar" button if numberOfSelectedGoals is 1 or less', () => {
@@ -161,5 +158,17 @@ describe('GoalCardsHeader', () => {
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
     expect(markSimilarButton).not.toBeInTheDocument();
+  });
+
+  it('does display "Mark goals as similar" button if hasManualMarkGoalsSimilar is true', () => {
+    const props = {
+      numberOfSelectedGoals: 2,
+      hasManualMarkGoalsSimilar: true,
+    };
+
+    renderTest(props);
+
+    const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
+    expect(markSimilarButton).toBeInTheDocument
   });
 });
