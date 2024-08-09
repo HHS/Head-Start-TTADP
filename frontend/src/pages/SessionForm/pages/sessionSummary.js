@@ -4,7 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { SUPPORT_TYPES } from '@ttahub/common';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -654,7 +654,7 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     _reportId,
     isAppLoading,
@@ -671,7 +671,15 @@ export default {
       <Alert />
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+        {
+          // if status is 'Completed' then don't show the save draft button.
+          additionalData
+          && additionalData.status
+          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+
+        }
       </div>
     </div>
   ),

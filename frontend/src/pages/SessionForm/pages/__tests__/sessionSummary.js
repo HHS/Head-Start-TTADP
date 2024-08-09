@@ -94,7 +94,7 @@ describe('sessionSummary', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderSessionSummary = ({ formValues = defaultFormValues }) => {
+    const RenderSessionSummary = ({ formValues = defaultFormValues, additionalData = { status: 'Not started' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -109,7 +109,7 @@ describe('sessionSummary', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {sessionSummary.render(
-                  null,
+                  additionalData,
                   defaultFormValues,
                   1,
                   false,
@@ -408,6 +408,28 @@ describe('sessionSummary', () => {
       });
 
       expect(await screen.findByText(/There was an error fetching objective trainers/i)).toBeInTheDocument();
+    });
+
+    it('hides the save draft button if the session status is complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'Complete',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete' }} />);
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
+
+    it('shows the save draft button if the session status is not complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'In progress',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
   });
 });

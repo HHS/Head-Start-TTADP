@@ -23,8 +23,6 @@ const NextSteps = ({ formData }) => {
   const { isPoc } = useTrainingReportRole(formData.event, user.id);
   const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
 
-  console.log('\n\n\n=====showReadOnlyView', showReadOnlyView);
-  console.log('\n\n\n=====form data', formData);
   if (showReadOnlyView) {
     return (
       <>
