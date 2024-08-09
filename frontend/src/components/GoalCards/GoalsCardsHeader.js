@@ -120,7 +120,7 @@ export default function GoalCardsHeader({
 
     await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
     selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
-    window.location.reload(); // Reload the page
+    history.go(0);
   };
 
   const setSortBy = (e) => {
