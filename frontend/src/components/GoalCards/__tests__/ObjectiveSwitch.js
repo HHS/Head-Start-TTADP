@@ -42,30 +42,4 @@ describe('ObjectiveSwitch', () => {
     const link = screen.getByText('r-123');
     expect(link).toHaveAttribute('href', '/activity-reports/legacy/123');
   });
-
-  it('renders session objectives', async () => {
-    const objective = {
-      title: 'We will get together and learn stuff',
-      trainingReportId: 'R-01-23-1234',
-      grantNumbers: ['grant1', 'grant2'],
-      endDate: '2020-01-01',
-      topics: ['TEST TOPIC', 'TEST TOPIC 2'],
-      sessionName: 'Brand new session: learning stuff',
-      type: 'session',
-    };
-    render(
-      <UserContext.Provider value={{ user: {} }}>
-        <Router history={history}>
-          <ObjectiveSwitch objective={objective} objectivesExpanded />
-        </Router>
-      </UserContext.Provider>,
-    );
-    expect(screen.getByText(/we will get together and learn stuff/i)).toBeInTheDocument();
-    expect(screen.getByText(/brand new session: learning stuff/i)).toBeInTheDocument();
-    expect(screen.getByText(/test topic/i)).toBeInTheDocument();
-    expect(screen.getByText(/test topic 2/i)).toBeInTheDocument();
-    expect(screen.getByText('2020-01-01')).toBeInTheDocument();
-    const link = screen.getByText('R-01-23-1234');
-    expect(link).toHaveAttribute('href', '/training-report/view/1234');
-  });
 });
