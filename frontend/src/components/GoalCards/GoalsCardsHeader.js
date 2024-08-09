@@ -51,7 +51,6 @@ export default function GoalCardsHeader({
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
   useEffect(() => {
-    console.log('in use effect!');
     async function getSimilarGoals() {
       const data = await similarity(regionId, recipientId);
       /*
