@@ -1,4 +1,5 @@
 import React from 'react';
+import moment from 'moment';
 import join from 'url-join';
 import {
   render, screen, act, waitFor,
@@ -14,6 +15,39 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
 import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
+
+const completeFormData = {
+  eventId: 1,
+  eventDisplayId: 'R-EVENT',
+  id: 1,
+  ownerId: 1,
+  eventName: 'Test event',
+  status: TRAINING_REPORT_STATUSES.COMPLETE,
+  pageState: {
+    1: IN_PROGRESS,
+    2: COMPLETE,
+    3: COMPLETE,
+  },
+  sessionName: 'Test session',
+  endDate: '01/01/2024',
+  startDate: '01/01/2024',
+  duration: 1,
+  context: 'asasfdsafasdfsdaf',
+  objective: 'test objective',
+  objectiveTopics: ['topic'],
+  objectiveTrainers: ['DTL'],
+  objectiveResources: [],
+  files: [],
+  objectiveSupportType: 'Planning',
+  regionId: 1,
+  participants: [1],
+  recipients: [1],
+  deliveryMethod: 'In-person',
+  numberOfParticipants: 1,
+  ttaProvided: 'oH YEAH',
+  specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
+  recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
+};
 
 describe('SessionReportForm', () => {
   const sessionsUrl = join('/', 'api', 'session-reports');
@@ -194,40 +228,8 @@ describe('SessionReportForm', () => {
 
   it('redirects if session is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');
-    const formData = {
-      eventId: 1,
-      eventDisplayId: 'R-EVENT',
-      id: 1,
-      ownerId: 1,
-      eventName: 'Test event',
-      status: TRAINING_REPORT_STATUSES.COMPLETE,
-      pageState: {
-        1: IN_PROGRESS,
-        2: COMPLETE,
-        3: COMPLETE,
-      },
-      sessionName: 'Test session',
-      endDate: '01/01/2024',
-      startDate: '01/01/2024',
-      duration: 1,
-      context: 'asasfdsafasdfsdaf',
-      objective: 'test objective',
-      objectiveTopics: ['topic'],
-      objectiveTrainers: ['DTL'],
-      objectiveResources: [],
-      files: [],
-      objectiveSupportType: 'Planning',
-      regionId: 1,
-      participants: [1],
-      recipients: [1],
-      deliveryMethod: 'In-person',
-      numberOfParticipants: 1,
-      ttaProvided: 'oH YEAH',
-      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
-      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
-    };
 
-    fetchMock.get(url, formData);
+    fetchMock.get(url, completeFormData);
 
     act(() => {
       renderSessionForm('1', 'session-summary', '1');
@@ -270,5 +272,153 @@ describe('SessionReportForm', () => {
     expect(screen.queryAllByText('Participants').length).toBe(2);
     expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
     expect(screen.getByText('Next steps')).toBeInTheDocument();
+  });
+
+  it('automatically sets the status to "In progress" when the session is submitted and has a current status of "Not started"', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1 });
+    const saveSession = screen.getByText(/Review and submit/i);
+    userEvent.click(saveSession);
+
+    // Wait for the modal to display.
+    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
+
+    // get the button with the text "Yes, continue".
+    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    act(() => {
+      userEvent.click(yesContinueButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    // verify the put body has status of "In progress".
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+    expect(putBodyJson.data.status).toBe('In progress');
+  });
+
+  it('automatically sets the status to "In progress" when the session is saved and has a current status of "Not started"', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1, event: { ownerId: 1, data: { eventId: 1, status: 'Not started' } } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1 });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    // verify the put body has status of "In progress".
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+    expect(putBodyJson.data.status).toBe('In progress');
+  });
+
+  it('sets poc complete values on submit', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { ...completeFormData, status: 'In progress', event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'next-steps', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1 });
+    const saveSession = screen.getByText(/Review and submit/i);
+    userEvent.click(saveSession);
+
+    // Wait for the modal to display.
+    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
+
+    // get the button with the text "Yes, continue".
+    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    act(() => {
+      userEvent.click(yesContinueButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+
+    // Assert the poc complete properties.
+    const putBodyJson = JSON.parse(putBody);
+    expect(putBodyJson.data.pocComplete).toBe(true);
+    expect(putBodyJson.data.pocCompleteId).toBe(1);
+    expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+
+    expect(putBodyJson.data.ownerComplete).toBe(false);
+    expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
+    expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
+  });
+
+  it('sets owner complete values on submit', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { ...completeFormData, status: 'In progress', event: { ownerId: 1, data: { eventId: 1 }, pocIds: [2] } },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1 });
+    const saveSession = screen.getByText(/Review and submit/i);
+    userEvent.click(saveSession);
+
+    // Wait for the modal to display.
+    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the session./i)).toBeInTheDocument());
+
+    // get the button with the text "Yes, continue".
+    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    act(() => {
+      userEvent.click(yesContinueButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+
+    // Assert the poc complete properties.
+    const putBodyJson = JSON.parse(putBody);
+    expect(putBodyJson.data.ownerComplete).toBe(true);
+    expect(putBodyJson.data.ownerCompleteId).toBe(1);
+    expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+
+    // Assert the poc complete properties are NOT set.
+    expect(putBodyJson.data.pocComplete).toBe(false);
+    expect(putBodyJson.data.pocCompleteId).toBe(undefined);
+    expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
 });

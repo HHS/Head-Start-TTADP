@@ -246,6 +246,10 @@ export default function SessionForm({ match }) {
       const updatedSession = await updateSession(sessionId, {
         data: {
           ...data,
+          status:
+            data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
+              ? TRAINING_REPORT_STATUSES.IN_PROGRESS
+              : data.status,
           objectiveResources: data.objectiveResources.filter((r) => (
             r && isValidResourceUrl(r.value))),
         },
@@ -291,7 +295,7 @@ export default function SessionForm({ match }) {
     }
   };
 
-  const onFormSubmit = async (updatedStatus) => {
+  const onFormSubmit = async () => {
     try {
       await hookForm.trigger();
 
@@ -304,11 +308,28 @@ export default function SessionForm({ match }) {
         ...data
       } = hookForm.getValues();
 
+      // If we are a POC submitting set POC submitted values in data.
+      if (isPoc || isAdminUser) {
+        data.pocComplete = true;
+        data.pocCompleteId = user.id;
+        data.pocCompleteDate = moment().format('YYYY-MM-DD');
+      }
+
+      // Owner, collaborator, and admin can submitted the session.
+      if (isOwner || isCollaborator || isAdminUser) {
+        data.ownerComplete = true;
+        data.ownerCompleteId = user.id;
+        data.ownerCompleteDate = moment().format('YYYY-MM-DD');
+      }
+
       // PUT it to the backend
       await updateSession(sessionId, {
         data: {
           ...data,
-          status: updatedStatus,
+          status:
+            data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
+              ? TRAINING_REPORT_STATUSES.IN_PROGRESS
+              : data.status,
         },
         trainingReportId,
         eventId: trainingReportId || null,
