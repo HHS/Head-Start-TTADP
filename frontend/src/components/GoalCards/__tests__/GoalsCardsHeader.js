@@ -169,6 +169,6 @@ describe('GoalCardsHeader', () => {
     renderTest(props);
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
-    expect(markSimilarButton).toBeInTheDocument
+    expect(markSimilarButton).toBeInTheDocument();
   });
 });
