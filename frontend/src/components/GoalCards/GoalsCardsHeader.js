@@ -43,6 +43,7 @@ export default function GoalCardsHeader({
   allSelectedGoalIds,
   goalBuckets,
 }) {
+  const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
   const [hasManualMarkGoalsSimilar, setHasManualMarkGoalsSimilar] = useState(false);
   const history = useHistory();
@@ -50,6 +51,7 @@ export default function GoalCardsHeader({
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
   useEffect(() => {
+    console.log('in use effect!');
     async function getSimilarGoals() {
       const data = await similarity(regionId, recipientId);
       /*
@@ -72,7 +74,7 @@ export default function GoalCardsHeader({
     if (canMergeGoals) {
       getSimilarGoals();
     }
-  }, [canMergeGoals, recipientId, regionId]);
+  }, [canMergeGoals, recipientId, regionId, retrieveSimilarGoals]);
 
   useEffect(() => {
     async function checkFeatureFlags() {
@@ -120,7 +122,8 @@ export default function GoalCardsHeader({
 
     await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
     selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
-    history.go(0);
+    // history.go(0);
+    setRetrieveSimilarGoals(!retrieveSimilarGoals);
   };
 
   const setSortBy = (e) => {
