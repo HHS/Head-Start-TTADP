@@ -122,7 +122,6 @@ export default function GoalCardsHeader({
 
     await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
     selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
-    // history.go(0);
     setRetrieveSimilarGoals(!retrieveSimilarGoals);
   };
 
