@@ -9,6 +9,7 @@ import {
   getMergeGoalPermissions,
   getGoalsFromRecipientGoalSimilarityGroup,
   markRecipientGoalGroupInvalid,
+  markSimilarGoalsByIdForRecipient,
 } from './handlers';
 import {
   checkRegionIdParam,
@@ -41,6 +42,11 @@ router.get(
   '/:recipientId/goals',
   checkRecipientIdParam,
   transactionWrapper(getGoalsByIdandRecipient),
+);
+router.put(
+  '/:recipientId/mark-similar-goals',
+  checkRecipientIdParam,
+  transactionWrapper(markSimilarGoalsByIdForRecipient),
 );
 router.get(
   '/:recipientId/region/:regionId/leadership',

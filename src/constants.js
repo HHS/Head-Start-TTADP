@@ -239,6 +239,7 @@ const FEATURE_FLAGS = [
   'closed_goal_merge_override',
   'training_reports_dashboard',
   'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
 ];
 
 const MAINTENANCE_CATEGORY = {

@@ -32,3 +32,8 @@ export const getStatistics = async () => {
   const res = await get(join('/', 'api', 'users', 'statistics'));
   return res.json();
 };
+
+export const getFeatureFlags = async () => {
+  const res = await get(join('/', 'api', 'users', 'feature-flags'));
+  return res.json();
+};
