@@ -269,12 +269,17 @@ describe('Goals Table', () => {
       ...oldWindowLocation,
       assign: jest.fn(),
     };
+    fetchMock.get('/api/users/feature-flags', []);
   });
   afterAll(() => {
     window.location = oldWindowLocation;
   });
 
   describe('Table displays data', () => {
+    beforeEach(() => {
+      fetchMock.restore();
+      fetchMock.get('/api/users/feature-flags', []);
+    });
     afterEach(() => {
       window.location.assign.mockReset();
       fetchMock.restore();
@@ -311,8 +316,12 @@ describe('Goals Table', () => {
   });
 
   describe('Table displays objective data', () => {
+    beforeEach(() => {
+      fetchMock.get('/api/users/feature-flags', []);
+    });
     afterEach(() => {
       window.location.assign.mockReset();
+      fetchMock.restore();
     });
 
     it('Shows the correct objective data', async () => {
@@ -406,12 +415,14 @@ describe('Goals Table', () => {
 
   describe('Table sorting', () => {
     beforeEach(async () => {
+      fetchMock.get('/api/users/feature-flags', []);
       renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
+      fetchMock.restore();
     });
 
     it('sorts by created on', async () => {
@@ -430,12 +441,14 @@ describe('Goals Table', () => {
 
   describe('Paging', () => {
     beforeEach(async () => {
+      fetchMock.get('/api/users/feature-flags', []);
       renderTable({ goals: baseGoals, goalsCount: 6 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
+      fetchMock.restore();
     });
 
     it('Pagination links are visible', async () => {
@@ -468,12 +481,14 @@ describe('Goals Table', () => {
     beforeEach(async () => {
       const allGoalIds = baseGoals.map((g) => g.id);
       allGoalIds.push(23);
+      fetchMock.get('/api/users/feature-flags', []);
       renderTable({ goals: baseGoals, goalsCount: 7, allGoalIds }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
 
     afterEach(() => {
       window.location.assign.mockReset();
+      fetchMock.restore();
     });
 
     it('Select page and all works', async () => {
@@ -543,7 +558,7 @@ describe('Goals Table', () => {
   describe('Context Menu', () => {
     beforeEach(async () => {
       fetchMock.restore();
-
+      fetchMock.get('/api/users/feature-flags', []);
       renderTable({ goals: [baseGoals[0], baseGoals[3]], goalsCount: 1 }, defaultUser);
       await screen.findByText('TTA goals and objectives');
     });
@@ -659,6 +674,13 @@ describe('Goals Table', () => {
   });
 
   describe('Context Menu with Different User Permissions', () => {
+    beforeAll(() => {
+      fetchMock.restore();
+      fetchMock.get('/api/users/feature-flags', []);
+    });
+    afterAll(() => {
+      fetchMock.restore();
+    });
     it('Hides the edit button if the user doesn\'t have permissions', async () => {
       const user = {
         ...defaultUser,

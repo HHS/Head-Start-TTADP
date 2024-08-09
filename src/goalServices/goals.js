@@ -688,19 +688,6 @@ export async function goalsForGrants(grantIds) {
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
       },
-      [Op.or]: [
-        {
-          createdVia: {
-            [Op.not]: 'tr',
-          },
-        },
-        {
-          createdVia: 'tr',
-          status: {
-            [Op.not]: 'Draft',
-          },
-        },
-      ],
     },
     include: [
       {
