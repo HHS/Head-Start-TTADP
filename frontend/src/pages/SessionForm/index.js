@@ -424,7 +424,10 @@ export default function SessionForm({ match }) {
             updateLastSaveTime={updateLastSaveTime}
             reportId={reportId.current}
             currentPage={currentPage}
-            additionalData={{ incompletePages: incompletePages.map((page) => page.label) }}
+            additionalData={{
+              status: formData.status,
+              incompletePages: incompletePages.map((page) => page.label),
+            }}
             formData={formData}
             pages={applicationPages}
             onFormSubmit={showSubmitModal}
