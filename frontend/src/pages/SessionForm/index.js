@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, {
   useEffect,
   useState,
@@ -66,6 +67,14 @@ export default function SessionForm({ match }) {
   // for redirects if a page is not provided
   const history = useHistory();
 
+  const [adminType, setAdminType] = useState(null);
+  useEffect(() => {
+    // Get all values after the ? in the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const passedAdminType = urlParams.get('type');
+    setAdminType(passedAdminType);
+  }, []);
+
   /* ============
 
      * the following errors are a bit confusingly named, but
@@ -125,7 +134,8 @@ export default function SessionForm({ match }) {
     let isCollaboratorUser = false;
     let isOwnerUser = false;
     if (formData && formData.event) {
-      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
+      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))
+          || (isAdminUser && adminType === 'poc')) {
         isPocUser = true;
       }
 
@@ -146,7 +156,9 @@ export default function SessionForm({ match }) {
   })();
 
   // eslint-disable-next-line max-len
-  const applicationPages = isPoc ? [pages.participants, pages.supportingAttachments, pages.nextSteps] : [sessionSummary];
+  const applicationPages = isPoc
+    ? [pages.participants, pages.supportingAttachments, pages.nextSteps]
+    : [sessionSummary];
   const redirectPagePath = isPoc ? 'participants' : 'session-summary';
 
   useEffect(() => {
@@ -233,36 +245,39 @@ export default function SessionForm({ match }) {
   }
 
   const onSave = async () => {
-    try {
-      // reset the error message
-      setError('');
-      setIsAppLoading(true);
-      hookForm.clearErrors();
+    // Only do this if the session is not complete.
+    if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
+      try {
+        // reset the error message
+        setError('');
+        setIsAppLoading(true);
+        hookForm.clearErrors();
 
-      // grab the newest data from the form
-      const data = hookForm.getValues();
+        // grab the newest data from the form
+        const data = hookForm.getValues();
 
-      // PUT it to the backend
-      const updatedSession = await updateSession(sessionId, {
-        data: {
-          ...data,
-          status:
+        // PUT it to the backend
+        const updatedSession = await updateSession(sessionId, {
+          data: {
+            ...data,
+            status:
             data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
               ? TRAINING_REPORT_STATUSES.IN_PROGRESS
               : data.status,
-          objectiveResources: data.objectiveResources.filter((r) => (
-            r && isValidResourceUrl(r.value))),
-        },
-        trainingReportId,
-        eventId: trainingReportId || null,
-      });
+            objectiveResources: data.objectiveResources.filter((r) => (
+              r && isValidResourceUrl(r.value))),
+          },
+          trainingReportId,
+          eventId: trainingReportId || null,
+        });
 
-      updateLastSaveTime(moment(updatedSession.updatedAt));
-      updateShowSavedDraft(true);
-    } catch (err) {
-      setError('There was an error saving the session. Please try again later.');
-    } finally {
-      setIsAppLoading(false);
+        updateLastSaveTime(moment(updatedSession.updatedAt));
+        updateShowSavedDraft(true);
+      } catch (err) {
+        setError('There was an error saving the session. Please try again later.');
+      } finally {
+        setIsAppLoading(false);
+      }
     }
   };
 
@@ -285,11 +300,15 @@ export default function SessionForm({ match }) {
   };
 
   const onSaveAndContinue = async () => {
-    updateIncompletePages();
+    if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
+      updateIncompletePages();
+
+      await onSave();
+      updateShowSavedDraft(false);
+    }
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
     const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
-    await onSave();
-    updateShowSavedDraft(false);
+
     if (isPoc && nextPage) {
       updatePage(nextPage.position);
     }
@@ -353,7 +372,10 @@ export default function SessionForm({ match }) {
   }
 
   const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
-  if (reportFetched && (formData.status === TRAINING_REPORT_STATUSES.COMPLETE || nonFormUser)) {
+  if (reportFetched
+      && ((formData.status === TRAINING_REPORT_STATUSES.COMPLETE
+        && (!isAdminUser && !adminType))
+      || nonFormUser)) {
     return (
       <Redirect to={`/training-report/view/${trainingReportId}`} />
     );

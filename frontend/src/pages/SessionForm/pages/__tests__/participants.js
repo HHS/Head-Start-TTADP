@@ -12,6 +12,7 @@ import fetchMock from 'fetch-mock';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import participants, { isPageComplete } from '../participants';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -91,7 +92,7 @@ describe('participants', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderParticipants = ({ formValues = defaultFormValues }) => {
+    const RenderParticipants = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -106,7 +107,7 @@ describe('participants', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -297,6 +298,41 @@ describe('participants', () => {
 
       const regionalOfficeTta = await screen.findByText(/aa, ttac/i);
       expect(regionalOfficeTta).toBeVisible();
+    });
+
+    it('only shows the continue button when the session status is complete', async () => {
+      const readOnlyFormValues = {
+        ...defaultFormValues,
+        pocComplete: true,
+        pocCompleteId: userId,
+        pocCompleteDate: todaysDate,
+        event: {
+          pocIds: [userId],
+        },
+        recipients: [
+          {
+            id: 1,
+            label: 'R1 R1 G1',
+          },
+        ],
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: 2,
+        numberOfParticipantsInPerson: 1,
+        numberOfParticipantsVirtually: 1,
+        participants: ['Home Visitor'],
+        language: ['English'],
+        isIstVisit: 'no',
+      };
+
+      act(() => {
+        render(<RenderParticipants
+          formValues={readOnlyFormValues}
+          additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
+        />);
+      });
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).toBeInTheDocument();
     });
 
     describe('groups', () => {

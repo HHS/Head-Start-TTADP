@@ -2,8 +2,9 @@ import React, {
   useContext,
 } from 'react';
 import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
-import { LANGUAGES } from '@ttahub/common';
+
 import { useFormContext } from 'react-hook-form';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
@@ -303,7 +304,7 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     formData,
     _reportId,
     isAppLoading,
@@ -319,9 +320,12 @@ export default {
       <Participants formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
-        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        {
+          additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+      }
       </div>
     </div>
   ),
