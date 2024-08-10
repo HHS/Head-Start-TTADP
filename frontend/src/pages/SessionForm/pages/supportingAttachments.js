@@ -3,6 +3,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import {
   ErrorMessage,
   Fieldset,
@@ -94,7 +95,7 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     reportId,
     isAppLoading,
@@ -110,7 +111,7 @@ export default {
       <SupportingAttachments reportId={reportId} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
     </div>

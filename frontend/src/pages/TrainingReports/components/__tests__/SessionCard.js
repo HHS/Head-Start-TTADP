@@ -1,9 +1,19 @@
 import React from 'react';
 import { Router } from 'react-router';
-import { SUPPORT_TYPES } from '@ttahub/common';
+import { SUPPORT_TYPES, SCOPE_IDS } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import SessionCard from '../SessionCard';
+import UserContext from '../../../../UserContext';
+
+const defaultUser = {
+  id: 1,
+  homeRegionId: 1,
+  permissions: [{
+    regionId: 2,
+    scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+  }],
+};
 
 describe('SessionCard', () => {
   const history = createMemoryHistory();
@@ -23,15 +33,18 @@ describe('SessionCard', () => {
   };
 
   const renderSessionCard = async (session = defaultSession, hasWritePermissions = true) => {
+    const user = defaultUser;
     render((
       <Router history={history}>
-        <SessionCard
-          eventId={1}
-          session={session}
-          isWriteable={hasWritePermissions}
-          onRemoveSession={jest.fn()}
-          expanded
-        />
+        <UserContext.Provider value={{ user }}>
+          <SessionCard
+            eventId={1}
+            session={session}
+            isWriteable={hasWritePermissions}
+            onRemoveSession={jest.fn()}
+            expanded
+          />
+        </UserContext.Provider>
       </Router>));
   };
 

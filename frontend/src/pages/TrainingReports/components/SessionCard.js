@@ -1,8 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Link } from 'react-router-dom';
 import { ModalToggleButton, Button } from '@trussworks/react-uswds';
+import UserContext from '../../../UserContext';
 import Modal from '../../../components/VanillaModal';
 import {
   InProgress,
@@ -11,6 +12,7 @@ import {
   Pencil,
   Trash,
 } from '../../../components/icons';
+import isAdmin from '../../../permissions';
 import './SessionCard.scss';
 
 const CardData = ({ label, children }) => (
@@ -58,6 +60,8 @@ function SessionCard({
   };
 
   const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
+  const { user } = useContext(UserContext);
+  const isAdminUser = isAdmin(user);
 
   const displaySessionStatus = getSessionDisplayStatusText();
 
@@ -96,8 +100,8 @@ function SessionCard({
             {sessionName}
           </p>
           {
-            isWriteable && !statusIsComplete
-              ? (
+            isWriteable && !statusIsComplete && !isAdminUser
+              && (
                 <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
                   <Link to={`/training-report/${eventId}/session/${session.id}`} className="margin-right-4">
                     <Pencil />
@@ -109,7 +113,24 @@ function SessionCard({
                   </ModalToggleButton>
                 </div>
               )
-              : null
+      }
+          {
+        isAdminUser && (
+          <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
+            <Link to={`/training-report/${eventId}/session/${session.id}/session-summary?type=ist`} className="margin-right-4">
+              <Pencil />
+              Edit session (IST)
+            </Link>
+            <Link to={`/training-report/${eventId}/session/${session.id}/participants?type=poc`} className="margin-right-4">
+              <Pencil />
+              Edit session (POC)
+            </Link>
+            <ModalToggleButton modalRef={modalRef} unstyled className="text-decoration-underline">
+              <Trash />
+              Delete session
+            </ModalToggleButton>
+          </div>
+        )
       }
         </div>
       </CardData>
