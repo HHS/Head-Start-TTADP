@@ -36,6 +36,7 @@ function SessionCard({
   expanded,
   isWriteable,
   onRemoveSession,
+  eventStatus,
 }) {
   const modalRef = useRef();
   const {
@@ -115,7 +116,7 @@ function SessionCard({
               )
       }
           {
-        isAdminUser && (
+        isAdminUser && eventStatus !== TRAINING_REPORT_STATUSES.COMPLETE && (
           <div className="padding-bottom-2 padding-top-1 desktop:padding-y-0">
             <Link to={`/training-report/${eventId}/session/${session.id}/session-summary?type=ist`} className="margin-right-4">
               <Pencil />
@@ -187,5 +188,6 @@ SessionCard.propTypes = {
   expanded: PropTypes.bool.isRequired,
   isWriteable: PropTypes.bool.isRequired,
   onRemoveSession: PropTypes.func.isRequired,
+  eventStatus: PropTypes.string.isRequired,
 };
 export default SessionCard;

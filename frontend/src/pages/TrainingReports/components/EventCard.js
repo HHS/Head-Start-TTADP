@@ -176,6 +176,7 @@ function EventCard({
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
             onRemoveSession={onRemoveSession}
+            eventStatus={data.status}
           />
         ))}
       </article>

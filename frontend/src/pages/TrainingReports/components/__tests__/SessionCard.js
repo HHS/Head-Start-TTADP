@@ -3,6 +3,7 @@ import { Router } from 'react-router';
 import { SUPPORT_TYPES, SCOPE_IDS } from '@ttahub/common';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import SessionCard from '../SessionCard';
 import UserContext from '../../../../UserContext';
 
@@ -32,8 +33,13 @@ describe('SessionCard', () => {
     },
   };
 
-  const renderSessionCard = async (session = defaultSession, hasWritePermissions = true) => {
-    const user = defaultUser;
+  const renderSessionCard = async (
+    session = defaultSession,
+    hasWritePermissions = true,
+    eventStatus = TRAINING_REPORT_STATUSES.IN_PROGRESS,
+    passedUser = defaultUser,
+  ) => {
+    const user = passedUser || defaultUser;
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
@@ -43,6 +49,7 @@ describe('SessionCard', () => {
             isWriteable={hasWritePermissions}
             onRemoveSession={jest.fn()}
             expanded
+            eventStatus={eventStatus}
           />
         </UserContext.Provider>
       </Router>));
@@ -106,5 +113,36 @@ describe('SessionCard', () => {
     expect(screen.getByText(/-/i)).toBeInTheDocument();
     expect(screen.getByText(/topics/i)).toBeInTheDocument();
     expect(screen.getByText(/trainers/i)).toBeInTheDocument();
+  });
+
+  it('hides the edit session links when the event is complete for admin', () => {
+    const adminUser = {
+      id: 1,
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      }],
+    };
+    renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.COMPLETE, adminUser);
+    expect(screen.queryByRole('link', { name: /edit session \(ist\)/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /edit session \(poc\)/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the edit session links when the event is not complete for admin', () => {
+    const adminUser = {
+      id: 1,
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      }],
+    };
+    renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, adminUser);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session \(ist\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session \(poc\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 });
