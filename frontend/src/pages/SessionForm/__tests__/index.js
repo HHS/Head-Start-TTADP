@@ -197,7 +197,7 @@ describe('SessionReportForm', () => {
       },
       event: {
         data: {
-          goal: 'test goal',
+          vision: 'world peace',
         },
       },
       sessionName: 'Test session',
@@ -256,9 +256,7 @@ describe('SessionReportForm', () => {
         3: COMPLETE,
       },
       event: {
-        data: {
-          goal: 'test goal',
-        },
+        data: {},
       },
       sessionName: 'Test session',
       duration: 1,
@@ -296,7 +294,7 @@ describe('SessionReportForm', () => {
 
     expect(await screen.findByText(/Status must be complete to submit session/i)).toBeInTheDocument();
   });
-  it('will submit if every page & the status & the event goal is complete', async () => {
+  it('will submit if every page & the status is complete', async () => {
     const url = join(sessionsUrl, 'id', '1');
     const formData = {
       eventId: 1,
@@ -306,7 +304,7 @@ describe('SessionReportForm', () => {
       eventName: 'Test event',
       event: {
         data: {
-          goal: 'test goal',
+          vision: 'world peace',
         },
       },
       status: 'In progress',
@@ -362,75 +360,6 @@ describe('SessionReportForm', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).toBe(true));
-  });
-
-  it('will not submit if the event\'s goal is not complete', async () => {
-    const url = join(sessionsUrl, 'id', '1');
-    const formData = {
-      eventId: 1,
-      eventDisplayId: 'R-EVENT-123',
-      event: {
-        data: {
-          goal: '',
-          eventId: 'R-EVENT-123',
-        },
-      },
-      id: 1,
-      ownerId: 1,
-      eventName: 'Test event',
-      status: 'In progress',
-      pageState: {
-        1: IN_PROGRESS,
-        2: COMPLETE,
-        3: COMPLETE,
-        4: COMPLETE,
-      },
-      'pageVisited-supporting-attachments': true,
-      sessionName: 'Test session',
-      endDate: '01/01/2024',
-      startDate: '01/01/2024',
-      duration: 1,
-      context: 'asasfdsafasdfsdaf',
-      objective: 'test objective',
-      objectiveTopics: ['topic'],
-      objectiveTrainers: ['DTL'],
-      objectiveResources: [],
-      files: [],
-      objectiveSupportType: SUPPORT_TYPES[1],
-      regionId: 1,
-      participants: [1],
-      recipients: [1],
-      deliveryMethod: 'In-person',
-      numberOfParticipants: 1,
-      ttaProvided: 'oH YEAH',
-      specialistNextSteps: [{ note: 'A', completeDate: '01/01/2024' }],
-      recipientNextSteps: [{ note: 'B', completeDate: '01/01/2024' }],
-      language: ['English'],
-    };
-
-    fetchMock.get(url, formData);
-
-    act(() => {
-      renderSessionForm('1', 'complete-session', '1');
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
-
-    const statusSelect = await screen.findByRole('combobox', { name: /status/i });
-    act(() => {
-      userEvent.selectOptions(statusSelect, 'Complete');
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
-    fetchMock.put(url, formData);
-    const submit = screen.getByRole('button', { name: /Submit/i });
-    act(() => {
-      userEvent.click(submit);
-    });
-
-    await waitFor(() => expect(fetchMock.called(url, { method: 'PUT' })).not.toBe(true));
-
-    expect(await screen.findByText(/Vision and goal for/i)).toBeInTheDocument();
   });
 
   it('redirects if session is complete', async () => {

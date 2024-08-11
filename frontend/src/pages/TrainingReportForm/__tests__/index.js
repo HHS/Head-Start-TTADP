@@ -313,10 +313,10 @@ describe('TrainingReportForm', () => {
 
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
 
-    const visionGoal = await screen.findByRole('button', { name: /vision and goal/i });
+    const vision = await screen.findByRole('button', { name: /vision/i });
 
     act(() => {
-      userEvent.click(visionGoal);
+      userEvent.click(vision);
     });
 
     await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
@@ -446,7 +446,6 @@ describe('TrainingReportForm', () => {
         targetPopulations: ['Target'],
         status: 'In progress',
         vision: 'asdf',
-        goal: 'afdf',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,
@@ -507,7 +506,6 @@ describe('TrainingReportForm', () => {
         targetPopulations: ['Target'],
         status: 'In progress',
         vision: 'asdf',
-        goal: 'afdf',
         eventId: 'R01-PD-1234',
         eventName: 'E-1 Event',
         pageState: {
@@ -569,7 +567,6 @@ describe('TrainingReportForm', () => {
         targetPopulations: ['Target'],
         status: 'In progress',
         vision: 'asdf',
-        goal: 'afdf',
         eventId: 'R01-PD-1234',
         eventName: 'E-1 Event',
         pageState: {
@@ -633,7 +630,6 @@ describe('TrainingReportForm', () => {
         targetPopulations: ['Target'],
         status: 'In progress',
         vision: 'asdf',
-        goal: 'afdf',
         eventName: 'E-1 Event',
         pageState: {
           1: COMPLETE,

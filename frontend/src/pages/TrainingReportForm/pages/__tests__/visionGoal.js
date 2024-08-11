@@ -5,12 +5,12 @@ import fetchMock from 'fetch-mock';
 import { render, screen, act } from '@testing-library/react';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
-import visionGoal, { isPageComplete } from '../visionGoal';
+import vision, { isPageComplete } from '../vision';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
-describe('visionGoal', () => {
+describe('vision', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({ getValues: jest.fn(() => true) })).toBe(true);
@@ -23,10 +23,10 @@ describe('visionGoal', () => {
   describe('review', () => {
     it('renders correctly', async () => {
       act(() => {
-        render(<>{visionGoal.reviewSection()}</>);
+        render(<>{vision.reviewSection()}</>);
       });
 
-      expect(await screen.findByRole('heading', { name: /vision and goal/i })).toBeInTheDocument();
+      expect(await screen.findByRole('heading', { name: /vision/i })).toBeInTheDocument();
     });
   });
   describe('render', () => {
@@ -38,14 +38,13 @@ describe('visionGoal', () => {
 
     const defaultFormValues = {
       vision: 'test vision',
-      goal: 'test goal',
       eventId: 'R01-TR-23-1111',
     };
 
     const defaultUser = { user: { id: userId, roles: [] } };
 
     // eslint-disable-next-line react/prop-types
-    const RenderVisionGoal = ({ formValues = defaultFormValues, user = defaultUser }) => {
+    const RenderVision = ({ formValues = defaultFormValues, user = defaultUser }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -56,7 +55,7 @@ describe('visionGoal', () => {
           <UserContext.Provider value={user}>
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
-                {visionGoal.render(
+                {vision.render(
                   {
                     users: {
                       pointOfContact: [{
@@ -89,17 +88,14 @@ describe('visionGoal', () => {
       );
     };
 
-    it('renders vision & goal', async () => {
+    it('renders vision', async () => {
       fetchMock.get('/api/session-reports/eventId/1111', []);
       act(() => {
-        render(<RenderVisionGoal />);
+        render(<RenderVision />);
       });
 
       const visionInput = await screen.findByLabelText(/vision/i);
       expect(visionInput).toHaveValue('test vision');
-
-      const goalInput = await screen.findByLabelText(/goal/i);
-      expect(goalInput).toHaveValue('test goal');
 
       userEvent.clear(visionInput);
       userEvent.type(visionInput, 'new vision');
@@ -117,14 +113,11 @@ describe('visionGoal', () => {
         pocComplete: false,
       };
       act(() => {
-        render(<RenderVisionGoal formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }, { name: 'GSM' }, { name: 'ECM' }] } }} />);
+        render(<RenderVision formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }, { name: 'GSM' }, { name: 'ECM' }] } }} />);
       });
 
       const visionInput = await screen.findByLabelText(/vision/i);
       expect(visionInput).toHaveValue('test vision');
-
-      const goalInput = await screen.findByLabelText(/goal/i);
-      expect(goalInput).toHaveValue('test goal');
 
       userEvent.clear(visionInput);
       userEvent.type(visionInput, 'new vision');
@@ -157,14 +150,11 @@ describe('visionGoal', () => {
         pocComplete: false,
       };
       act(() => {
-        render(<RenderVisionGoal formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }] } }} />);
+        render(<RenderVision formValues={updatedValues} user={{ user: { id: userId, roles: [{ name: 'TTT' }] } }} />);
       });
 
       const visionInput = await screen.findByLabelText(/vision/i);
       expect(visionInput).toHaveValue('test vision');
-
-      const goalInput = await screen.findByLabelText(/goal/i);
-      expect(goalInput).toHaveValue('test goal');
 
       userEvent.clear(visionInput);
       userEvent.type(visionInput, 'new vision');
@@ -187,10 +177,9 @@ describe('visionGoal', () => {
         pocCompleteId: userId,
         pocCompleteDate: todaysDate,
         vision: 'incredible new vision',
-        goal: 'thoughtful new goal',
       };
       act(() => {
-        render(<RenderVisionGoal formValues={updatedValues} />);
+        render(<RenderVision formValues={updatedValues} />);
       });
 
       // confirm alert
@@ -203,37 +192,8 @@ describe('visionGoal', () => {
       const textareas = document.querySelectorAll('textarea');
       expect(textareas.length).toBe(0);
 
-      const vision = await screen.findByText('incredible new vision');
-      expect(vision).toBeVisible();
-      const goal = await screen.findByText('thoughtful new goal');
-      expect(goal).toBeVisible();
-    });
-
-    it('shows the goal as read-only once the session is complete', async () => {
-      fetchMock.get('/api/session-reports/eventId/1111', [{
-        id: 1,
-        data: {
-          status: 'Complete',
-        },
-      }]);
-
-      const updatedValues = {
-        ...defaultFormValues,
-        goal: 'thoughtful new goal',
-      };
-
-      act(() => {
-        render(<RenderVisionGoal formValues={updatedValues} />);
-      });
-
-      const visionInput = await screen.findByLabelText(/vision/i);
-      expect(visionInput).toHaveValue('test vision');
-
-      const textareas = document.querySelectorAll('textarea');
-      expect(textareas.length).toBe(1);
-
-      const goal = await screen.findByText('thoughtful new goal');
-      expect(goal).toBeVisible();
+      const vis = await screen.findByText('incredible new vision');
+      expect(vis).toBeVisible();
     });
   });
 });
