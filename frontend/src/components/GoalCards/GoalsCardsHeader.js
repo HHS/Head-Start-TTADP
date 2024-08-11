@@ -12,6 +12,8 @@ import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import { similarity } from '../../fetchers/goals';
+import { markSimilarGoals } from '../../fetchers/recipient';
+import { getFeatureFlags } from '../../fetchers/users';
 
 export default function GoalCardsHeader({
   title,
@@ -41,7 +43,9 @@ export default function GoalCardsHeader({
   allSelectedGoalIds,
   goalBuckets,
 }) {
+  const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
+  const [hasManualMarkGoalsSimilar, setHasManualMarkGoalsSimilar] = useState(false);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -69,7 +73,16 @@ export default function GoalCardsHeader({
     if (canMergeGoals) {
       getSimilarGoals();
     }
-  }, [canMergeGoals, recipientId, regionId]);
+  }, [canMergeGoals, recipientId, regionId, retrieveSimilarGoals]);
+
+  useEffect(() => {
+    async function checkFeatureFlags() {
+      const flags = await getFeatureFlags();
+      setHasManualMarkGoalsSimilar(flags.includes('manual_mark_goals_similar'));
+    }
+
+    checkFeatureFlags();
+  }, []);
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
@@ -90,6 +103,25 @@ export default function GoalCardsHeader({
     history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
       sortConfig, selectedGoalIds: goalsToPrint,
     });
+  };
+
+  const onMarkSimilarGoals = async () => {
+    let similarGoals = Object.keys(allSelectedGoalIds).filter(
+      (key) => allSelectedGoalIds[key],
+    ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // If we don't just print the page.
+    if (!similarGoals.length) {
+      similarGoals = pageGoalIds;
+    }
+    // Get all the goals and associated goals from the buckets.
+    similarGoals = goalBuckets.filter(
+      (bucket) => similarGoals.includes(bucket.id),
+    ).map((bucket) => bucket.goalIds).flat();
+
+    await markSimilarGoals(recipientId, similarGoals); // PUT request to mark similar goals
+    selectAllGoalCheckboxSelect({ target: { checked: false } }); // Deselect all goals
+    setRetrieveSimilarGoals(!retrieveSimilarGoals);
   };
 
   const setSortBy = (e) => {
@@ -220,6 +252,17 @@ export default function GoalCardsHeader({
         >
           {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
+        { numberOfSelectedGoals > 1
+          && hasManualMarkGoalsSimilar
+          && (
+            <Button
+              unstyled
+              className="display-flex flex-align-center margin-left-3 margin-y-0"
+              onClick={onMarkSimilarGoals}
+            >
+              Mark goals as similar
+            </Button>
+          )}
       </div>
       <div>
         {showRttapaValidation && (

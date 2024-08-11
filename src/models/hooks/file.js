@@ -3,7 +3,7 @@ const { addDeleteFileToQueue } = require('../../services/s3Queue');
 
 const afterDestroy = async (_sequelize, instance) => {
   // Add delete job S3 queue.
-  addDeleteFileToQueue(instance.id, instance.key);
+  await addDeleteFileToQueue(instance.id, instance.key);
 };
 
 export {
