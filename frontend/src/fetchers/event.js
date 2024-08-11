@@ -13,6 +13,11 @@ export const eventById = async (id, readOnly = false) => {
   return res.json();
 };
 
+export const completeEvent = async (id) => {
+  const res = await put(`/api/events/id/${id}/complete`);
+  return res.json();
+};
+
 export const updateEvent = async (id, data) => {
   const res = await put(`/api/events/id/${id}`, data);
   return res.json();

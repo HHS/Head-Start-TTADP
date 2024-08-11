@@ -1,7 +1,8 @@
 import React from 'react';
 import { Router } from 'react-router';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import EventCard from '../EventCard';
@@ -64,10 +65,15 @@ describe('EventCard', () => {
             event={event}
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
+            zIndex={0}
           />
         </Router>
       </UserContext.Provider>));
   };
+
+  afterEach(() => {
+    fetchMock.restore();
+  });
 
   it('renders correctly', () => {
     renderEventCard();
@@ -233,5 +239,126 @@ describe('EventCard', () => {
     expect(viewEvent).toBeInTheDocument();
     userEvent.click(viewEvent);
     expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
+  });
+
+  it('does not show complete event if not owner', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, { ...DEFAULT_USER, id: 2 });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if no sessions', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress', sessionReports: [] } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if complete', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if sessions not complete', async () => {
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if poc not complete', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      data: { ...defaultEvent.data, status: 'In progress' },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if owner not complete', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      data: { ...defaultEvent.data, status: 'In progress', pocComplete: true },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('shows complete event if all of the above are true', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      data: {
+        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+      },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+  });
+
+  it('happy path: async complete event', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      data: {
+        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+      },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+    fetchMock.put('/api/events/id/1/complete', { message: 'success', id: 1 });
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/event completed successfully/i)).toBeInTheDocument();
+  });
+
+  it('sad path: async failure to complete event', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
+      data: {
+        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+      },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+    fetchMock.put('/api/events/id/1/complete', 500);
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/error completing event/i)).toBeInTheDocument();
   });
 });
