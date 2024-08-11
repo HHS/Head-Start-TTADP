@@ -6,6 +6,7 @@ import {
   updateEvent,
   getEventsByStatus,
   deleteEvent,
+  completeEvent,
 } from '../event';
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
 
@@ -110,5 +111,26 @@ describe('deleteEvent', () => {
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
     expect(fetchMock.called()).toBeTruthy();
+  });
+});
+
+describe('completeEvent', () => {
+  beforeEach(() => {
+    fetchMock.put('/api/events/id/1/complete', {
+      id: 1,
+      name: 'test event',
+    });
+  });
+
+  afterEach(() => {
+    fetchMock.reset();
+  });
+
+  it('completes the event on the server with the given id', async () => {
+    const event = await completeEvent(1);
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1/complete');
+    expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });
