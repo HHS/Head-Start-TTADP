@@ -14,24 +14,34 @@ export const eventById = async (id, readOnly = false) => {
   return res.json();
 };
 
-export const completeEvent = async (id, event) => {
-  const res = await put(
-    `/api/events/id/${id}`,
-    {
-      ...event,
-      data: {
-        ...event.data,
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-      },
-    },
-  );
-  return res.json();
-};
-
 export const updateEvent = async (id, data) => {
   const res = await put(`/api/events/id/${id}`, data);
   return res.json();
 };
+
+export const completeEvent = async (id, data) => updateEvent(id, {
+  ...data,
+  data: {
+    ...data.data,
+    status: TRAINING_REPORT_STATUSES.COMPLETE,
+  },
+});
+
+export const suspendEvent = async (id, data) => updateEvent(id, {
+  ...data,
+  data: {
+    ...data.data,
+    status: TRAINING_REPORT_STATUSES.SUSPENDED,
+  },
+});
+
+export const resumeEvent = async (id, data) => updateEvent(id, {
+  ...data,
+  data: {
+    ...data.data,
+    status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+  },
+});
 
 export const sessionsByEventId = async (id) => {
   const res = await get(`/api/session-reports/eventId/${String(id)}`);

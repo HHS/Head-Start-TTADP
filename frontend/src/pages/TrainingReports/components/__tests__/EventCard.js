@@ -5,6 +5,7 @@ import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import EventCard from '../EventCard';
 import UserContext from '../../../../UserContext';
 
@@ -360,5 +361,191 @@ describe('EventCard', () => {
 
     expect(fetchMock.called()).toBe(true);
     expect(await screen.findByText(/error completing event/i)).toBeInTheDocument();
+  });
+
+  it('shows suspend event for admin', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+    }, {
+      ...DEFAULT_USER,
+      id: 2,
+      permissions: [{
+        scopeId: SCOPE_IDS.ADMIN,
+        regionId: 1,
+      },
+      ],
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).toBeInTheDocument();
+  });
+
+  it('shows suspend event for owner', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).toBeInTheDocument();
+  });
+
+  it('does not show suspend event for owner if event is suspended', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).not.toBeInTheDocument();
+  });
+
+  it('does not shows suspend event for not-owner', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+    }, {
+      ...DEFAULT_USER,
+      id: 2,
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).not.toBeInTheDocument();
+  });
+
+  it('happy path: suspend success', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const suspendEvent = screen.queryByText(/suspend event/i);
+    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+
+    act(() => {
+      userEvent.click(suspendEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/event suspended successfully/i)).toBeInTheDocument();
+  });
+
+  it('sad path: suspend failure', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const suspendEvent = screen.queryByText(/suspend event/i);
+    fetchMock.put('/api/events/id/1234', 500);
+
+    act(() => {
+      userEvent.click(suspendEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/error suspending event/i)).toBeInTheDocument();
+  });
+
+  it('shows resume event for admin', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    }, {
+      ...DEFAULT_USER,
+      id: 2,
+      permissions: [{
+        scopeId: SCOPE_IDS.ADMIN,
+        regionId: 1,
+      },
+      ],
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/resume event/i)).toBeInTheDocument();
+  });
+
+  it('shows resume event for owner', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/resume event/i)).toBeInTheDocument();
+  });
+
+  it('does not show resume event for owner if event is not suspended', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.COMPLETE },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).not.toBeInTheDocument();
+  });
+
+  it('does not shows resume event for not-owner', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    }, {
+      ...DEFAULT_USER,
+      id: 2,
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    expect(screen.queryByText(/suspend event/i)).not.toBeInTheDocument();
+  });
+
+  it('happy path: resume success', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const resumeEvent = screen.queryByText(/resume event/i);
+    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
+
+    act(() => {
+      userEvent.click(resumeEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/event resumed successfully/i)).toBeInTheDocument();
+  });
+
+  it('sad path: resume failure', async () => {
+    renderEventCard({
+      ...defaultEvent,
+      data: { ...defaultEvent.data, status: TRAINING_REPORT_STATUSES.SUSPENDED },
+    });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+    const resumeEvent = screen.queryByText(/resume event/i);
+    fetchMock.put('/api/events/id/1234', 500);
+
+    act(() => {
+      userEvent.click(resumeEvent);
+    });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(await screen.findByText(/error resuming event/i)).toBeInTheDocument();
   });
 });

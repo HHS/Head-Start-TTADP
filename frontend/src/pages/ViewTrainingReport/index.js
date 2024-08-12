@@ -175,14 +175,7 @@ export default function ViewTrainingReport({ match }) {
       });
 
       setIsAppLoading(true);
-      await completeEvent(
-        match.params.trainingReportId,
-        {
-          ownerId: event.ownerId,
-          regionId: event.regionId,
-          data: event.data,
-        },
-      );
+      await completeEvent(match.params.trainingReportId, event);
       setEvent(null);
       setAlertMessage({
         type: 'success',
