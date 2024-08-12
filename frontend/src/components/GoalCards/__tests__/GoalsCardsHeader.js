@@ -11,6 +11,7 @@ describe('GoalCardsHeader', () => {
   const DEFAULT_USER = {
     name: '',
     id: 1,
+    flags: [],
   };
 
   const REGION_ID = 1;
@@ -66,11 +67,17 @@ describe('GoalCardsHeader', () => {
 
   const history = createMemoryHistory();
 
-  const renderTest = (props = {}, locationState = undefined) => {
+  const renderTest = (props = {}, locationState = undefined, userFlags = []) => {
     history.location.state = locationState;
 
     render(
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{
+        user: {
+          ...DEFAULT_USER,
+          flags: userFlags,
+        },
+      }}
+      >
         <Router history={history}>
           {/* eslint-disable-next-line react/jsx-props-no-spreading */}
           <GoalCardsHeader {...defaultProps} {...props} />
@@ -123,7 +130,7 @@ describe('GoalCardsHeader', () => {
     };
 
     act(() => {
-      renderTest(props);
+      renderTest(props, {}, ['manual_mark_goals_similar']);
     });
 
     const markSimilarButton = await screen.findByRole('button', { name: /mark goals as similar/i });
@@ -175,7 +182,7 @@ describe('GoalCardsHeader', () => {
     };
 
     await act(async () => {
-      renderTest(props);
+      renderTest(props, {}, ['manual_mark_goals_similar']);
     });
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
