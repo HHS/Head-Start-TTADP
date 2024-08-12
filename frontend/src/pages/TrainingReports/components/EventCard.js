@@ -4,7 +4,7 @@ import { Alert } from '@trussworks/react-uswds';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
-import { completeEvent } from '../../../fetchers/event';
+import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -46,10 +46,9 @@ function EventCard({
   const isOwnerOrCollaborator = isOwner || isCollaborator;
   const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
 
-  const isNotCompleteOrSuspended = ![
-    TRAINING_REPORT_STATUSES.COMPLETE,
-    TRAINING_REPORT_STATUSES.SUSPENDED,
-  ].includes(data.status);
+  const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
+  const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
+  const isNotCompleteOrSuspended = !isComplete && !isSuspended;
 
   const canEditEvent = (
     isNotCompleteOrSuspended
@@ -87,37 +86,13 @@ function EventCard({
     });
   }
 
-  if (canEditEvent) {
-    // Edit event.
-    menuItems.push({
-      label: 'Edit event',
-      onClick: () => {
-        history.push(`/training-report/${idForLink}/event-summary`);
-      },
-    });
-  }
-
-  // View event.
-  menuItems.push({
-    label: 'View event',
-    onClick: () => {
-      history.push(`/training-report/view/${idForLink}`);
-    },
-  });
-
   if (canCompleteEvent) {
     // Complete event.
     menuItems.push({
       label: 'Complete event',
       onClick: async () => {
         try {
-          await completeEvent(
-            String(idForLink), {
-              ownerId: event.ownerId,
-              regionId: event.regionId,
-              data: event.data,
-            },
-          );
+          await completeEvent(idForLink, event);
           setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
           setMessage({
             text: 'Event completed successfully',
@@ -141,6 +116,66 @@ function EventCard({
       },
     });
   }
+
+  if (canEditEvent) {
+    // Edit event.
+    menuItems.push({
+      label: 'Edit event',
+      onClick: () => {
+        history.push(`/training-report/${idForLink}/event-summary`);
+      },
+    });
+  }
+
+  if (isSuspended && (isOwner || hasAdminRights)) {
+    menuItems.push({
+      label: 'Resume event',
+      onClick: async () => {
+        try {
+          await resumeEvent(idForLink, event);
+          setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+          setMessage({
+            text: 'Event resumed successfully',
+            type: 'success',
+          });
+        } catch (err) {
+          setMessage({
+            text: 'Error resuming event',
+            type: 'error',
+          });
+        }
+      },
+    });
+  }
+
+  if (isNotCompleteOrSuspended && (isOwner || hasAdminRights)) {
+    menuItems.push({
+      label: 'Suspend event',
+      onClick: async () => {
+        try {
+          await suspendEvent(idForLink, event);
+          setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
+          setMessage({
+            text: 'Event suspended successfully',
+            type: 'success',
+          });
+        } catch (err) {
+          setMessage({
+            text: 'Error suspending event',
+            type: 'error',
+          });
+        }
+      },
+    });
+  }
+
+  // View event.
+  menuItems.push({
+    label: 'View event',
+    onClick: () => {
+      history.push(`/training-report/view/${idForLink}`);
+    },
+  });
 
   const [reportsExpanded, setReportsExpanded] = useState(false);
 
@@ -170,7 +205,7 @@ function EventCard({
         style={{ zIndex }}
       >
         {message.text && (
-        <Alert type={message.type}>
+        <Alert type={message.type} className="margin-bottom-2">
           {message.text}
         </Alert>
         )}
