@@ -10,6 +10,7 @@ import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import Recipient from '../../policies/recipient';
+import Users from '../../policies/user';
 import { userById } from '../../services/users';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
@@ -17,6 +18,7 @@ import { checkRecipientAccessAndExistence as checkAccessAndExistence, validateMe
 import {
   getSimilarityGroupById,
   setSimilarityGroupAsUserInvalidated,
+  createSimilarityGroup,
 } from '../../services/goalSimilarityGroup';
 
 const namespace = 'SERVICE:RECIPIENT';
@@ -220,6 +222,27 @@ export async function markRecipientGoalGroupInvalid(req, res) {
     await setSimilarityGroupAsUserInvalidated(goalGroupId);
 
     res.json({ message: `Goal group ${goalGroupId} marked as invalid.` });
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function markSimilarGoalsByIdForRecipient(req, res) {
+  try {
+    const user = await userById(await currentUserId(req, res));
+    const hasManualMarkGoalsSimilar = !!(user && new Users(user).canSeeBehindFeatureFlag('manual_mark_goals_similar'));
+
+    if (!hasManualMarkGoalsSimilar) {
+      res.sendStatus(httpCodes.UNAUTHORIZED);
+      return;
+    }
+
+    const { recipientId } = req.params;
+    const { goalIds } = req.body;
+
+    await createSimilarityGroup(recipientId, goalIds.map((goalId) => ({ ids: [goalId] })), true);
+
+    res.json({ message: 'Goal group created.' });
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
