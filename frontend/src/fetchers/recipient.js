@@ -115,3 +115,9 @@ export const getRecipientGoalGroup = async (
   const goals = await get(url);
   return goals.json();
 };
+
+export async function markSimilarGoals(recipientId, goalIds) {
+  const url = join(recipientUrl, String(recipientId), 'mark-similar-goals');
+  const response = await put(url, { goalIds });
+  return response.json();
+}
