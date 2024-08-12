@@ -1,5 +1,6 @@
 import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { get, put, destroy } from './index';
 
 const eventsUrl = join('/', 'api', 'events');
@@ -13,8 +14,17 @@ export const eventById = async (id, readOnly = false) => {
   return res.json();
 };
 
-export const completeEvent = async (id) => {
-  const res = await put(`/api/events/id/${id}/complete`);
+export const completeEvent = async (id, event) => {
+  const res = await put(
+    `/api/events/id/${id}`,
+    {
+      ...event,
+      data: {
+        ...event.data,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
+    },
+  );
   return res.json();
 };
 
