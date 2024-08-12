@@ -331,7 +331,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1/complete', { message: 'success', id: 1 });
+    fetchMock.put('/api/events/id/1234', { message: 'success', id: 1 });
     act(() => {
       userEvent.click(completeEvent);
     });
@@ -353,7 +353,7 @@ describe('EventCard', () => {
     userEvent.click(contextBtn);
     const completeEvent = screen.queryByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
-    fetchMock.put('/api/events/id/1/complete', 500);
+    fetchMock.put('/api/events/id/1234', 500);
     act(() => {
       userEvent.click(completeEvent);
     });

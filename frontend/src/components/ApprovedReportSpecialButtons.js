@@ -55,14 +55,14 @@ export default function ApprovedReportSpecialButtons({
         : null}
       <Grid row>
         {navigator && navigator.clipboard
-          ? <button id="approved-url" type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
+          ? <button id="approved-url" type="button" className="usa-button usa-button--outline no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
         <PrintToPdf
           id="approved-print"
           disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false}
         />
         {(showCompleteEvent && completeEvent) ? (
-          <Button onClick={completeEvent}>
+          <Button onClick={completeEvent} className="no-print">
             Complete event
           </Button>
         ) : null}

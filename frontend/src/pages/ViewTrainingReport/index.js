@@ -59,7 +59,10 @@ const FORBIDDEN = 403;
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
-  const [error, setError] = useState(null);
+  const [alertMessage, setAlertMessage] = useState({
+    type: 'error',
+    message: '',
+  });
   const [eventCollaborators, setEventCollaborators] = useState([]);
   const [eventPoc, setEventPoc] = useState([]);
 
@@ -81,7 +84,10 @@ export default function ViewTrainingReport({ match }) {
           message = 'You do not have permission to view this page';
         }
 
-        setError(message);
+        setAlertMessage({
+          type: 'error',
+          message,
+        });
       } finally {
         setIsAppLoading(false);
       }
@@ -136,7 +142,7 @@ export default function ViewTrainingReport({ match }) {
       return false;
     }
     const isOwner = event && event.ownerId === user.id;
-    const isNotCompleteOrSuspended = ![
+    const isCompleteOrSuspended = [
       TRAINING_REPORT_STATUSES.COMPLETE,
       TRAINING_REPORT_STATUSES.SUSPENDED,
     ].includes(event.data.status || '');
@@ -145,7 +151,7 @@ export default function ViewTrainingReport({ match }) {
     const ownerComplete = event && event.data && event.data.ownerComplete;
     const sessionReports = event && event.sessionReports ? event.sessionReports : [];
 
-    if (!isOwner && !isNotCompleteOrSuspended) {
+    if (!isOwner || isCompleteOrSuspended) {
       return false;
     }
 
@@ -163,11 +169,30 @@ export default function ViewTrainingReport({ match }) {
 
   const onCompleteEvent = async () => {
     try {
+      setAlertMessage({
+        type: '',
+        message: '',
+      });
+
       setIsAppLoading(true);
-      await completeEvent(event.id);
+      await completeEvent(
+        match.params.trainingReportId,
+        {
+          ownerId: event.ownerId,
+          regionId: event.regionId,
+          data: event.data,
+        },
+      );
       setEvent(null);
+      setAlertMessage({
+        type: 'success',
+        message: 'Event completed successfully',
+      });
     } catch (err) {
-      setError('Sorry, something went wrong');
+      setAlertMessage({
+        type: 'error',
+        message: 'Sorry, something went wrong',
+      });
     } finally {
       setIsAppLoading(false);
     }
@@ -271,9 +296,9 @@ export default function ViewTrainingReport({ match }) {
         completeEvent={onCompleteEvent}
       />
       <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
-        { error && (
-        <Alert type="error">
-          {error}
+        { alertMessage.message && (
+        <Alert type={alertMessage.type}>
+          {alertMessage.message}
         </Alert>
         )}
         <h1 className="landing">{pageTitle}</h1>

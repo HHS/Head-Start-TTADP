@@ -111,7 +111,13 @@ function EventCard({
       label: 'Complete event',
       onClick: async () => {
         try {
-          await completeEvent(String(id));
+          await completeEvent(
+            String(idForLink), {
+              ownerId: event.ownerId,
+              regionId: event.regionId,
+              data: event.data,
+            },
+          );
           setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
           setMessage({
             text: 'Event completed successfully',

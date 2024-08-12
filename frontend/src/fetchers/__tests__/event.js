@@ -116,7 +116,7 @@ describe('deleteEvent', () => {
 
 describe('completeEvent', () => {
   beforeEach(() => {
-    fetchMock.put('/api/events/id/1/complete', {
+    fetchMock.put('/api/events/id/1', {
       id: 1,
       name: 'test event',
     });
@@ -127,10 +127,10 @@ describe('completeEvent', () => {
   });
 
   it('completes the event on the server with the given id', async () => {
-    const event = await completeEvent(1);
+    const event = await completeEvent('1', { ownerId: 1, regionId: 1, data: {} });
 
     expect(fetchMock.called()).toBe(true);
-    expect(fetchMock.lastUrl()).toBe('/api/events/id/1/complete');
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
     expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });

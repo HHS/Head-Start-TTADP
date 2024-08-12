@@ -394,12 +394,12 @@ describe('ViewTrainingReport', () => {
     const completeEvent = await screen.findByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
 
-    fetchMock.putOnce('/api/events/id/1/complete', 200);
+    fetchMock.putOnce('/api/events/id/1', 200);
     act(() => {
       userEvent.click(completeEvent);
     });
 
-    expect(fetchMock.called('/api/events/id/1/complete')).toBe(true);
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
   });
 
   it('handles an error completing event', async () => {
@@ -421,12 +421,12 @@ describe('ViewTrainingReport', () => {
     const completeEvent = await screen.findByText(/complete event/i);
     expect(completeEvent).toBeInTheDocument();
 
-    fetchMock.putOnce('/api/events/id/1/complete', 500);
+    fetchMock.putOnce('/api/events/id/1', 500);
     act(() => {
       userEvent.click(completeEvent);
     });
 
-    expect(fetchMock.called('/api/events/id/1/complete')).toBe(true);
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
     expect(await screen.findByText('Sorry, something went wrong')).toBeInTheDocument();
   });
 
