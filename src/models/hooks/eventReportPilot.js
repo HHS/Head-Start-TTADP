@@ -182,65 +182,8 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
   }
 };
 
-/**
- * Just a helper function to check if we are safe to complete the training report
- * note that the assumption is that we check permissions elsewhere and we just
- * validate the completeness of the data here
- *
- * @param {*} sequelize
- * @param {*} instance
- */
-const checkBeforeComplete = async (sequelize, instance) => {
-  let safeToProceed = true;
-
-  try {
-    if (instance.changed().includes('data')) {
-      const previous = instance.previous('data');
-      const current = safeParse(instance);
-
-      // if we are changing the status to complete
-      // eslint-disable-next-line max-len
-      if (current.status === TRAINING_REPORT_STATUSES.COMPLETE && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        const { ownerComplete, pocComplete } = current;
-
-        if (!ownerComplete || !pocComplete) {
-          safeToProceed = false;
-        }
-
-        const sessionReports = await sequelize.models.SessionReportPilot.findAll({
-          attributes: [
-            'data',
-          ],
-          where: {
-            eventReportPilotId: instance.id,
-          },
-        });
-
-        // if we have no sessions
-        if (sessionReports.length === 0) {
-          safeToProceed = false;
-        }
-
-        // if we have sessions, they all must be complete
-        // eslint-disable-next-line max-len
-        if (!sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
-          safeToProceed = false;
-        }
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in checkBeforeComplete: ${err}`);
-    safeToProceed = false;
-  }
-
-  if (!safeToProceed) {
-    throw new Error('Unable to complete training report. Please validate all event and session data before trying again.');
-  }
-};
-
 const beforeUpdate = async (sequelize, instance, options) => {
   purifyDataFields(instance, fieldsToEscape);
-  await checkBeforeComplete(sequelize, instance);
 };
 
 const beforeCreate = async (_sequelize, instance) => {
@@ -265,5 +208,4 @@ export {
   beforeCreate,
   afterCreate,
   createOrUpdateNationalCenterUserCacheTable,
-  checkBeforeComplete,
 };
