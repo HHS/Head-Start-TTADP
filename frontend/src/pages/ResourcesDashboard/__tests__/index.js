@@ -305,6 +305,11 @@ describe('Resource Dashboard page', () => {
     renderResourcesDashboard(user);
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
+    const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
+    act(() => {
+      userEvent.click(button);
+    });
+
     // Overview (initial).
     expect(screen.getByText(/40.85%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();

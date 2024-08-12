@@ -20,7 +20,6 @@ import ExpanderButton from '../ExpanderButton';
 import './GoalCard.scss';
 import { goalPropTypes } from './constants';
 import colors from '../../colors';
-import SessionObjectiveCard from './SessionObjectiveCard';
 import Tooltip from '../Tooltip';
 import isAdmin, { hasApproveActivityReportInRegion, canEditOrCreateGoals } from '../../permissions';
 import UserContext from '../../UserContext';
@@ -29,34 +28,21 @@ import AppLoadingContext from '../../AppLoadingContext';
 import GoalStatusChangeAlert from './components/GoalStatusChangeAlert';
 import useObjectiveStatusMonitor from '../../hooks/useObjectiveStatusMonitor';
 
-const SESSION_TYPE = 'session';
-
 export const ObjectiveSwitch = ({
   objective,
   objectivesExpanded,
   regionId,
   goalStatus,
   dispatchStatusChange,
-}) => {
-  if (objective.type === SESSION_TYPE) {
-    return (
-      <SessionObjectiveCard
-        objective={objective}
-        objectivesExpanded={objectivesExpanded}
-      />
-    );
-  }
-
-  return (
-    <ObjectiveCard
-      objective={objective}
-      objectivesExpanded={objectivesExpanded}
-      goalStatus={goalStatus}
-      regionId={regionId}
-      dispatchStatusChange={dispatchStatusChange}
-    />
-  );
-};
+}) => (
+  <ObjectiveCard
+    objective={objective}
+    objectivesExpanded={objectivesExpanded}
+    goalStatus={goalStatus}
+    regionId={regionId}
+    dispatchStatusChange={dispatchStatusChange}
+  />
+);
 
 ObjectiveSwitch.propTypes = {
   objective: PropTypes.shape({
@@ -92,7 +78,6 @@ export default function GoalCard({
     objectiveCount,
     reasons,
     objectives,
-    sessionObjectives,
     previousStatus,
     createdVia,
     collaborators,
@@ -103,7 +88,7 @@ export default function GoalCard({
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [invalidStatusChangeAttempted, setInvalidStatusChangeAttempted] = useState();
-  const sortedObjectives = [...objectives, ...(sessionObjectives || [])];
+  const sortedObjectives = [...objectives];
   sortedObjectives.sort((a, b) => ((new Date(a.endDate) < new Date(b.endDate)) ? 1 : -1));
   const hasEditButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
   const {

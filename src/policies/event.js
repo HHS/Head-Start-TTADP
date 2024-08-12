@@ -26,6 +26,11 @@ export default class EventReport {
     ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
   }
 
+  hasPocInRegion() {
+    // eslint-disable-next-line max-len
+    return !!this.permissions.find((p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS && p.regionId === this.eventReport.regionId);
+  }
+
   /**
    * Determines if the user has write access to the specified region
    * or to the region of their current event report.

@@ -6,6 +6,7 @@ import {
   TRAINING_REPORT_STATUSES as TRS,
   REASONS,
   TARGET_POPULATIONS,
+  EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
 } from '@ttahub/common';
 import moment from 'moment';
@@ -26,6 +27,19 @@ const {
   User,
   EventReportPilotNationalCenterUser,
 } = db;
+
+type UserWhereOptions = {
+  name?: { [Op.iLike]: string };
+  email?: string;
+};
+
+type WhereOptions = {
+  id?: number;
+  ownerId?: number;
+  pocIds?: number;
+  collaboratorIds?: number[];
+  regionId?: number;
+};
 
 export const validateFields = (request, requiredFields) => {
   const missingFields = requiredFields.filter((field) => !request[field]);
@@ -269,14 +283,6 @@ async function findEventHelperBlob({
   // otherwise just return the events as-is, or null
   return events || null;
 }
-
-type WhereOptions = {
-  id?: number;
-  ownerId?: number;
-  pocIds?: number;
-  collaboratorIds?: number[];
-  regionId?: number;
-};
 
 /**
  * Updates an existing event in the database or creates a new one if it doesn't exist.
@@ -711,15 +717,17 @@ export async function findAllEvents(): Promise<EventShape[]> {
 const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(Boolean);
 
 const mappings: Record<string, string> = {
-  Audience: 'audience',
-  Creator: 'creator',
-  'Edit Title': 'eventName',
+  Audience: 'eventIntendedAudience',
+  'IST/Creator': 'creator',
   'Event Title': 'eventName',
-  'Event Duration/#NC Days of Support': 'eventDuration',
-  'Event Duration/# NC Days of Support': 'eventDuration',
+  'Event Duration': 'trainingType',
+  'Event Duration/#NC Days of Support': 'trainingType',
+  'Event Duration/# NC Days of Support': 'trainingType',
   'Event ID': 'eventId',
   'Overall Vision/Goal for the PD Event': 'vision',
+  'Vision/Goal/Outcomes for the PD Event': 'vision',
   'Reason for Activity': 'reasons',
+  'Reason(s) for PD': 'reasons',
   'Target Population(s)': 'targetPopulations',
   'Event Organizer - Type of Event': 'eventOrganizer',
   'IST Name:': 'istName',
@@ -751,9 +759,9 @@ const mapLineToData = (line: Record<string, string>) => {
   return data;
 };
 
-const checkUserExists = async (creator: string) => {
+const checkUserExists = async (userWhere: UserWhereOptions) => {
   const user = await db.User.findOne({
-    where: { email: creator },
+    where: userWhere,
     include: [
       {
         model: db.Permission,
@@ -765,12 +773,49 @@ const checkUserExists = async (creator: string) => {
       },
     ],
   });
-  if (!user) throw new Error(`User ${creator} does not exist`);
+
+  if (!user) {
+    throw new Error(`User with ${
+      Object.keys(userWhere).map((key) => `${key}: ${userWhere[key]}`).join('AND ')
+    } does not exist`);
+  }
   return user;
 };
 
+const checkUserExistsByNationalCenter = async (identifier: string) => {
+  const user = await db.User.findOne({
+    attributes: ['id', 'name'],
+    include: [
+      {
+        model: db.Permission,
+        as: 'permissions',
+      },
+      {
+        attributes: ['name'],
+        model: db.NationalCenter,
+        as: 'nationalCenters',
+        where: {
+          name: identifier,
+        },
+        required: true,
+      },
+    ],
+  });
+
+  if (!user) throw new Error(`User associated with National Center: ${identifier} does not exist`);
+  return user;
+};
+
+const checkUserExistsByName = async (name: string) => checkUserExists({
+  name: {
+    [Op.iLike]: name,
+  },
+});
+const checkUserExistsByEmail = async (email: string) => checkUserExists({ email });
+
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
+    attributes: ['id'],
     where: {
       id: {
         [Op.in]: sequelize.literal(
@@ -779,6 +824,7 @@ const checkEventExists = async (eventId: string) => {
       },
     },
   });
+
   if (event) throw new Error(`Event ${eventId} already exists`);
 };
 
@@ -796,10 +842,13 @@ export async function csvImport(buffer: Buffer) {
       const eventId = cleanLine['Event ID'];
 
       // If the eventId doesn't start with the prefix R and two numbers, it's invalid.
-      if (!eventId.match(/^R\d{2}/i)) {
+      const match = eventId.match(/^R\d{2}/i);
+      if (match === null) {
         skipped.push(`Invalid "Event ID" format expected R##-TR-#### received ${eventId}`);
         return false;
       }
+
+      await checkEventExists(eventId);
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
@@ -809,10 +858,15 @@ export async function csvImport(buffer: Buffer) {
 
       const regionId = Number(eventId.split('-')[0].replace(/\D/g, '').replace(/^0+/, ''));
 
-      const creator = cleanLine.Creator;
+      const creator = cleanLine['IST/Creator'] || cleanLine.Creator;
+      if (!creator) {
+        errors.push(`No creator listed on import for ${eventId}`);
+        return false;
+      }
       let owner;
       if (creator) {
-        owner = await checkUserExists(creator);
+        owner = await checkUserExistsByEmail(creator);
+
         const policy = new EventReport(owner, {
           regionId,
         });
@@ -823,33 +877,70 @@ export async function csvImport(buffer: Buffer) {
         }
       }
 
-      await checkEventExists(eventId);
+      const collaborators = [];
+      const pocs = [];
+
+      if (cleanLine['Designated Region POC for Event/Request']) {
+        const pocNames = cleanLine['Designated Region POC for Event/Request'].split('/').map((name) => name.trim());
+        // eslint-disable-next-line no-restricted-syntax
+        for await (const pocName of pocNames) {
+          const poc = await checkUserExistsByName(pocName);
+          const policy = new EventReport(poc, {
+            regionId,
+          });
+
+          if (!policy.hasPocInRegion()) {
+            errors.push(`User ${pocName} does not have POC permission in region ${regionId}`);
+            return false;
+          }
+          pocs.push(poc.id);
+        }
+      }
+
+      if (cleanLine['National Centers']) {
+        const nationalCenterNames = cleanLine['National Centers'].split('\n').map((name) => name.trim());
+        // eslint-disable-next-line no-restricted-syntax
+        for await (const center of nationalCenterNames) {
+          const collaborator = await checkUserExistsByNationalCenter(center);
+          const policy = new EventReport(collaborator, {
+            regionId,
+          });
+
+          if (!policy.canWriteInRegion()) {
+            errors.push(`User ${collaborator.name} does not have permission to write in region ${regionId}`);
+            return false;
+          }
+          collaborators.push(collaborator.id);
+        }
+      }
+
+      if (!collaborators.length) {
+        errors.push(`No collaborators found for ${eventId}`);
+        return false;
+      }
 
       const data = mapLineToData(cleanLine);
 
-      data.goals = []; // shape: { grantId: number, goalId: number, sessionId: number }[]
-      data.goal = '';
-
       // Reasons, remove duplicates and invalid values.
-      data.reasons = [...new Set(data.reasons as string[])];
-      data.reasons = (data.reasons as string[]).filter((reason) => REASONS.includes(reason));
+      data.reasons = [...new Set(data.reasons as string[])].filter((reason) => REASONS.includes(reason));
 
       // Target Populations, remove duplicates and invalid values.
-      data.targetPopulations = [...new Set(data.targetPopulations as string[])];
-      data.targetPopulations = (data.targetPopulations as string[]).filter((target) => TARGET_POPULATIONS.includes(target));
+      data.targetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS].includes(target));
 
       await db.EventReportPilot.create({
-        collaboratorIds: [],
+        collaboratorIds: collaborators,
         ownerId: owner.id,
         regionId,
+        pocIds: pocs,
         data: sequelize.cast(JSON.stringify(data), 'jsonb'),
         imported: sequelize.cast(JSON.stringify(cleanLine), 'jsonb'),
       });
 
       return true;
     } catch (error) {
-      if (error.message.startsWith('User')) {
-        errors.push(error.message);
+      const message = (error.message || '').replace(/\/t/g, '');
+      if (message.startsWith('User')) {
+        errors.push(message);
       } else if (error.message.startsWith('Event')) {
         skipped.push(line['Event ID']);
       }

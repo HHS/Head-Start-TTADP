@@ -5,6 +5,8 @@ const { MaintenanceLog } = require('../../models');
 const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 const { auditLogger, logger } = require('../../logger');
 const { default: LockManager } = require('../lockManager');
+const { default: transactionQueueWrapper } = require('../../workers/transactionWrapper');
+const { default: referenceData } = require('../../workers/referenceData');
 
 const maintenanceQueue = newQueue('maintenance');
 const maintenanceQueueProcessors = {};
@@ -62,10 +64,10 @@ const onCompletedMaintenance = (job, result) => {
  * @param {string} category - The category to add the processor to.
  * @param {function} processor - The function that processes the queue.
  */
-const addQueueProcessor = (category, processor) => {
+const addQueueProcessor = (category, processor, runInTransaction = true) => {
   // Assigns the processor function to the specified category in the queueProcessors object.
   if (!maintenanceQueueProcessors[category]) {
-    maintenanceQueueProcessors[category] = processor;
+    maintenanceQueueProcessors[category] = { processor, runInTransaction };
   }
 };
 
@@ -103,7 +105,15 @@ const processMaintenanceQueue = () => {
 
   // Process each category in the queue using its corresponding processor
   Object.entries(maintenanceQueueProcessors)
-    .map(([category, processor]) => maintenanceQueue.process(category, processor));
+    .map(([category, { processor, runInTransaction }]) => maintenanceQueue.process(
+      category,
+      runInTransaction
+        ? transactionQueueWrapper(
+          processor,
+          category,
+        )
+        : processor,
+    ));
 };
 
 /**
@@ -124,7 +134,7 @@ const enqueueMaintenanceJob = async (
     if (category in maintenanceQueueProcessors) {
       try {
         // Add the job to the maintenance queue
-        maintenanceQueue.add(category, data);
+        maintenanceQueue.add(category, { ...data, ...referenceData() });
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
         auditLogger.error(err);

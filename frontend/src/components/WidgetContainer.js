@@ -28,6 +28,8 @@ export default function WidgetContainer(
     enableCheckboxes,
     exportRows,
     footNote,
+    displayTable,
+    setDisplayTable,
   },
 ) {
   return (
@@ -37,6 +39,8 @@ export default function WidgetContainer(
         title={title}
         subtitle={subtitle}
         showHeaderBorder={showHeaderBorder}
+        displayTable={displayTable}
+        setDisplayTable={setDisplayTable}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -63,7 +67,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="smart-hub-widget-container-footer padding-3">
+        <div className="border-bottom smart-hub-border-base-lighter padding-3">
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -104,6 +108,8 @@ WidgetContainer.propTypes = {
   enableCheckboxes: PropTypes.bool,
   exportRows: PropTypes.func,
   footNote: PropTypes.string,
+  displayTable: PropTypes.bool,
+  setDisplayTable: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -116,13 +122,15 @@ WidgetContainer.defaultProps = {
   currentPage: 0,
   offset: 0,
   perPage: 10,
-  handlePageChange: () => { },
+  handlePageChange: null,
   showHeaderBorder: true,
   error: null,
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
   enableCheckboxes: false,
-  exportRows: () => {},
+  exportRows: null,
   footNote: null,
+  displayTable: false,
+  setDisplayTable: null,
 };
