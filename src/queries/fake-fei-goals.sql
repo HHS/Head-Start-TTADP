@@ -30,12 +30,15 @@ SELECT
 	COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') "approved reports",
 	COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) "pending reports",
 	GREATEST(
-		similarity('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)', g.name),
-		similarity('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)', LEFT(g.name, LENGTH('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)'))),
-		similarity('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)', RIGHT(g.name, LENGTH('(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)')))
+		similarity(gt."templateName", g.name),
+		similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
+		similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
 	) similarity,
 	g.name
 FROM "Goals" g
+JOIN "GoalTemplates" gt
+-- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
+ON gt.id = 19017
 JOIN "Grants" gr
 ON g."grantId" = gr.id
 JOIN "Recipients" r
@@ -47,8 +50,7 @@ ON arg."activityReportId" = a.id
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
 AND g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%','%FEI%'])
--- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
-AND COALESCE(g."goalTemplateId", 0) != 19017
+AND COALESCE(g."goalTemplateId", 0) != gt.id
 -- Filter for regionIds if ssdi.regionIds is defined
 AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
 	OR gr."regionId" in (
@@ -85,5 +87,5 @@ AND (NULLIF(current_setting('ssdi.status', true), '') IS NULL
         SELECT value::text AS my_array
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.status', true), ''),'[]')::json) AS value
       ))
-GROUP BY 1,2,3,4,5,6,7,8,12
+GROUP BY 1,2,3,4,5,6,7,8,11,12
 ORDER BY 5,11 desc;
