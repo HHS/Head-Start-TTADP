@@ -124,9 +124,8 @@ describe('SessionCard', () => {
         scopeId: SCOPE_IDS.ADMIN,
       }],
     };
-    renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.COMPLETE, adminUser);
-    expect(screen.queryByRole('link', { name: /edit session \(ist\)/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /edit session \(poc\)/i })).not.toBeInTheDocument();
+    renderSessionCard(defaultSession, false, TRAINING_REPORT_STATUSES.COMPLETE, adminUser);
+    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
   });
 
@@ -141,8 +140,7 @@ describe('SessionCard', () => {
     };
     renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, adminUser);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /edit session \(ist\)/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /edit session \(poc\)/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
   });
 });

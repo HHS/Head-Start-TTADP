@@ -246,7 +246,8 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
-      history.push('/training-reports/complete', { message: 'You successfully submitted the event.' });
+      const redirect = updatedEvent.data.status === TRAINING_REPORT_STATUSES.COMPLETE ? 'complete' : 'in-progress';
+      history.push(`/training-reports/${redirect}`, { message: 'You successfully submitted the event.' });
     } catch (err) {
       setError('There was an error saving the training report. Please try again later.');
     } finally {
