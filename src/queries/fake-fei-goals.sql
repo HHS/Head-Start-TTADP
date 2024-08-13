@@ -18,6 +18,7 @@
 * The following is an example of how to set a SSDI flag:
 * SELECT SET_CONFIG('ssdi.regionIds','[11]',TRUE);
 */
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 SELECT
 	r.name,
 	r.uei,
@@ -49,7 +50,8 @@ LEFT JOIN "ActivityReports" a
 ON arg."activityReportId" = a.id
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
-AND g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%','%FEI%'])
+AND g.name ~* '(^|[^a-zA-Z])(under[- ]?enrollment|Full[- ]?Enrollment|FEI)($|[^a-zA-Z])'
+-- AND g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%','%FEI%'])
 AND COALESCE(g."goalTemplateId", 0) != gt.id
 -- Filter for regionIds if ssdi.regionIds is defined
 AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
