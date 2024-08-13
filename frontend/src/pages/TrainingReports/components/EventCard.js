@@ -37,7 +37,7 @@ function EventCard({
   });
   const [eventStatus, setEventStatus] = useState(data.status);
 
-  const { eventId, pocComplete, ownerComplete } = data;
+  const { eventId, trainingReportComplete } = data;
   const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
@@ -64,12 +64,12 @@ function EventCard({
       return false;
     }
 
-    // eslint-disable-next-line max-len
-    if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
+    if (!trainingReportComplete) {
       return false;
     }
 
-    if (!pocComplete || !ownerComplete) {
+    // eslint-disable-next-line max-len
+    if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
       return false;
     }
 

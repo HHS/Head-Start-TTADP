@@ -278,24 +278,11 @@ describe('EventCard', () => {
     expect(completeEvent).not.toBeInTheDocument();
   });
 
-  it('does not show complete event if poc not complete', async () => {
-    renderEventCard({
-      ...defaultEvent,
-      sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
-      data: { ...defaultEvent.data, status: 'In progress' },
-    });
-    expect(screen.getByText('This is my event title')).toBeInTheDocument();
-    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
-    userEvent.click(contextBtn);
-    const completeEvent = screen.queryByText(/complete event/i);
-    expect(completeEvent).not.toBeInTheDocument();
-  });
-
   it('does not show complete event if owner not complete', async () => {
     renderEventCard({
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
-      data: { ...defaultEvent.data, status: 'In progress', pocComplete: true },
+      data: { ...defaultEvent.data, status: 'In progress', trainingReportComplete: false },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -309,7 +296,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -324,7 +311,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -346,7 +333,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', pocComplete: true, ownerComplete: true,
+        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
