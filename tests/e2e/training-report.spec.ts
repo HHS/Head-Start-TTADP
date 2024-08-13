@@ -22,8 +22,8 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByLabel('Event end date *mm/dd/yyyy').fill('02/02/2023');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
-  // event vision and goal
-  await page.getByLabel('Event goal *').fill('Event goal');
+  // event vision
+  await page.getByLabel('Event vision *').fill('Event vision');
   await page.getByRole('button', { name: 'Save and continue' }).click();
   await page.getByRole('button', { name: 'Submit event' }).click();
 

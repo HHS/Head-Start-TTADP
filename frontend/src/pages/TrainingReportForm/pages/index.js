@@ -1,10 +1,10 @@
 import eventSummary from './eventSummary';
-import visionGoal from './visionGoal';
+import vision from './vision';
 import completeEvent from './completeEvent';
 
 const pages = [
   eventSummary,
-  visionGoal,
+  vision,
   completeEvent,
 ];
 

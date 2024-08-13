@@ -235,7 +235,8 @@ async function saveNotes(activityReportId, notes, isRecipientNotes) {
       completeDate: !note.completeDate ? null : note.completeDate,
       activityReportId,
       noteType,
-    }));
+    }))
+      .filter(({ id, note, completeDate }) => id || (note && note.length > 0) || completeDate);
     await NextStep.bulkCreate(newNotes, { updateOnDuplicate: ['note', 'completeDate', 'updatedAt'] });
   }
 }
@@ -466,6 +467,21 @@ export async function activityReportAndRecipientsById(activityReportId) {
       [{ model: Objective, as: 'objectivesWithGoals' }, 'id', 'ASC'],
     ],
   });
+
+  if (report?.specialistNextSteps?.length === 0) {
+    report.specialistNextSteps[0] = {
+      dataValues: {
+        note: '',
+      },
+    };
+  }
+  if (report?.recipientNextSteps?.length === 0) {
+    report.recipientNextSteps[0] = {
+      dataValues: {
+        note: '',
+      },
+    };
+  }
 
   return [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals];
 }
@@ -762,7 +778,7 @@ export async function activityReportAlerts(userId, {
               ],
             },
             id: {
-              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara                
+              [Op.in]: sequelize.literal(`(SELECT ara."activityReportId" FROM "ActivityReportApprovers" ara
                 WHERE ara."userId" = ${userId} AND ara."activityReportId" = "ActivityReport"."id" AND ara."deletedAt" IS NULL)`),
             },
           },
@@ -780,7 +796,7 @@ export async function activityReportAlerts(userId, {
                   { userId },
                   {
                     id: {
-                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc                
+                      [Op.in]: sequelize.literal(`(SELECT arc."activityReportId" FROM "ActivityReportCollaborators" arc
                       WHERE arc."userId" = ${userId} AND arc."activityReportId" = "ActivityReport"."id")`),
                     },
                   },
@@ -962,7 +978,6 @@ export async function createOrUpdate(newActivityReport, report) {
     const activityRecipientIds = activityRecipients.map(
       (g) => g.activityRecipientId,
     );
-
     await saveReportRecipients(savedReportId, activityRecipientIds, typeOfRecipient);
   }
 

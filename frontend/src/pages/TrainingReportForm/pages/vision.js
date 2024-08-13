@@ -7,7 +7,7 @@ import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import {
-  visionGoalFields,
+  visionFields,
   pageTouched,
   pageComplete,
   getEventIdSlug,
@@ -21,49 +21,7 @@ import PocCompleteView from '../../../components/PocCompleteView';
 import { sessionsByEventId } from '../../../fetchers/event';
 import AppLoadingContext from '../../../AppLoadingContext';
 
-const SESSION_COMPLETE = 'Complete';
-
-const Goal = ({
-  showReadOnlyView,
-  atLeastOneSessionIsComplete,
-  formData,
-}) => {
-  const { register } = useFormContext();
-  if (showReadOnlyView || atLeastOneSessionIsComplete) {
-    return (
-      <ReadOnlyField label="Event goal">
-        {formData.goal}
-      </ReadOnlyField>
-    );
-  }
-
-  return (
-    <FormItem
-      label="Event goal "
-      name="goal"
-      required
-    >
-      <Textarea
-        id="goal"
-        name="goal"
-        required
-        inputRef={register({
-          required: 'Describe the event goal',
-        })}
-      />
-    </FormItem>
-  );
-};
-
-Goal.propTypes = {
-  showReadOnlyView: PropTypes.bool.isRequired,
-  atLeastOneSessionIsComplete: PropTypes.bool.isRequired,
-  formData: PropTypes.shape({
-    goal: PropTypes.string,
-  }).isRequired,
-};
-
-const VisionGoal = ({ formData }) => {
+const Vision = ({ formData }) => {
   const [sessions, setSessions] = useState();
   const { register } = useFormContext();
   const { user } = useContext(UserContext);
@@ -89,25 +47,16 @@ const VisionGoal = ({ formData }) => {
     }
   }, [formData.eventId, sessions, setIsAppLoading]);
 
-  const atLeastOneSessionIsComplete = (sessions && sessions.some(
-    (session) => session.data.status === SESSION_COMPLETE,
-  )) || false;
-
   if (showReadOnlyView) {
     return (
       <PocCompleteView formData={formData} userId={user.id} reportType="training">
         <Helmet>
-          <title>Vision and Goal</title>
+          <title>Vision</title>
         </Helmet>
         <>
           <ReadOnlyField label="Event vision">
             {formData.vision}
           </ReadOnlyField>
-          <Goal
-            formData={formData}
-            showReadOnlyView={!!(showReadOnlyView)}
-            atLeastOneSessionIsComplete={atLeastOneSessionIsComplete}
-          />
         </>
       </PocCompleteView>
     );
@@ -116,7 +65,7 @@ const VisionGoal = ({ formData }) => {
   return (
     <div className="padding-x-1">
       <Helmet>
-        <title>Vision and Goal</title>
+        <title>Vision</title>
       </Helmet>
       <IndicatesRequiredField />
 
@@ -136,14 +85,6 @@ const VisionGoal = ({ formData }) => {
           />
         </FormItem>
       </div>
-
-      <div className="margin-top-2">
-        <Goal
-          formData={formData}
-          showReadOnlyView={!!(showReadOnlyView)}
-          atLeastOneSessionIsComplete={atLeastOneSessionIsComplete}
-        />
-      </div>
       <PocCompleteCheckbox
         userId={user.id}
         isPoc={isPoc}
@@ -152,7 +93,7 @@ const VisionGoal = ({ formData }) => {
   );
 };
 
-VisionGoal.propTypes = {
+Vision.propTypes = {
   formData: PropTypes.shape({
     eventId: PropTypes.string,
     pocComplete: PropTypes.bool,
@@ -160,20 +101,19 @@ VisionGoal.propTypes = {
       id: PropTypes.number,
     }),
     vision: PropTypes.string,
-    goal: PropTypes.string,
   }).isRequired,
 };
 
-const ReviewSection = () => <><h2>Vision and goal</h2></>;
-const fields = Object.keys(visionGoalFields);
-const path = 'vision-goal';
+const ReviewSection = () => <><h2>Vision</h2></>;
+const fields = Object.keys(visionFields);
+const path = 'vision';
 const position = 2;
 
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
-  label: 'Vision and goal',
+  label: 'Vision',
   path,
   fields,
   isPageTouched: (hookForm) => pageTouched(hookForm.formState.touched, fields),
@@ -193,7 +133,7 @@ export default {
     Alert,
   ) => (
     <>
-      <VisionGoal formData={formData} />
+      <Vision formData={formData} />
       <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}
