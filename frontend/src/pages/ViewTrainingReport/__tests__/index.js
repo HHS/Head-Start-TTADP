@@ -319,29 +319,8 @@ describe('ViewTrainingReport', () => {
   it('does not show complete event if the event has sessions which are not complete', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        pocComplete: true,
-        ownerComplete: true,
+        trainingReportComplete: true,
       },
-    }));
-
-    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
-    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
-
-    act(() => {
-      renderTrainingReport();
-    });
-
-    const completeEvent = screen.queryByText(/complete event/i);
-    expect(completeEvent).not.toBeInTheDocument();
-  });
-
-  it('does not show complete event if the event is poc-incomplete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        pocComplete: false,
-        ownerComplete: true,
-      },
-      sessionReports: oneCompleteSession,
     }));
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
@@ -358,8 +337,7 @@ describe('ViewTrainingReport', () => {
   it('does not show complete event if the event is owner-incomplete', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        pocComplete: true,
-        ownerComplete: false,
+        trainingReportComplete: false,
       },
       sessionReports: oneCompleteSession,
     }));
@@ -378,8 +356,7 @@ describe('ViewTrainingReport', () => {
   it('shows and can complete event', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        pocComplete: true,
-        ownerComplete: true,
+        trainingReportComplete: true,
       },
       sessionReports: oneCompleteSession,
     }));
@@ -405,8 +382,7 @@ describe('ViewTrainingReport', () => {
   it('handles an error completing event', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        pocComplete: true,
-        ownerComplete: true,
+        trainingReportComplete: true,
       },
       sessionReports: oneCompleteSession,
     }));
