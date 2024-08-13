@@ -66,15 +66,6 @@ export default function SessionForm({ match }) {
 
   // for redirects if a page is not provided
   const history = useHistory();
-
-  const [adminType, setAdminType] = useState(null);
-  useEffect(() => {
-    // Get all values after the ? in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const passedAdminType = urlParams.get('type');
-    setAdminType(passedAdminType);
-  }, []);
-
   /* ============
 
      * the following errors are a bit confusingly named, but
@@ -91,7 +82,6 @@ export default function SessionForm({ match }) {
 
   const [lastSaveTime, updateLastSaveTime] = useState(null);
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
-  const [incompletePages, setIncompletePages] = useState([]);
 
   // we use both of these to determine if we're in the loading screen state
   // (see the use effect below)
@@ -103,7 +93,6 @@ export default function SessionForm({ match }) {
 
   /* ============
     */
-
   const hookForm = useForm({
     mode: 'onBlur',
     defaultValues,
@@ -134,8 +123,7 @@ export default function SessionForm({ match }) {
     let isCollaboratorUser = false;
     let isOwnerUser = false;
     if (formData && formData.event) {
-      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))
-          || (isAdminUser && adminType === 'poc')) {
+      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))) {
         isPocUser = true;
       }
 
@@ -155,10 +143,18 @@ export default function SessionForm({ match }) {
     };
   })();
 
-  // eslint-disable-next-line max-len
-  const applicationPages = isPoc
-    ? [pages.participants, pages.supportingAttachments, pages.nextSteps]
-    : [sessionSummary];
+  // Set pages based on user role.
+  let applicationPages = [];
+  if (isAdminUser) {
+    applicationPages = [pages.sessionSummary,
+      pages.participants,
+      pages.supportingAttachments,
+      pages.nextSteps];
+  } else if (isPoc) {
+    applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps];
+  } else {
+    applicationPages = [sessionSummary];
+  }
   const redirectPagePath = isPoc ? 'participants' : 'session-summary';
 
   useEffect(() => {
@@ -281,35 +277,15 @@ export default function SessionForm({ match }) {
     }
   };
 
-  const updateIncompletePages = () => {
-    // If this is a POC user, make sure all pages have isPageComplete true.
-    if (isPoc) {
-      const foundIncompletePages = applicationPages.filter(
-        (page) => !page.isPageComplete(hookForm),
-      );
-
-      if (foundIncompletePages.length) {
-        // Set incompletePages with the pages that are not complete.
-        setIncompletePages(foundIncompletePages);
-        // return;
-      } else {
-        setIncompletePages([]);
-      }
-    }
-    return true;
-  };
-
   const onSaveAndContinue = async () => {
     if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-      updateIncompletePages();
-
       await onSave();
       updateShowSavedDraft(false);
     }
     const whereWeAre = applicationPages.find((p) => p.path === currentPage);
     const nextPage = applicationPages.find((p) => p.position === whereWeAre.position + 1);
 
-    if (isPoc && nextPage) {
+    if ((isPoc || isAdminUser) && nextPage) {
       updatePage(nextPage.position);
     }
   };
@@ -339,6 +315,11 @@ export default function SessionForm({ match }) {
         data.ownerComplete = true;
         data.ownerCompleteId = user.id;
         data.ownerCompleteDate = moment().format('YYYY-MM-DD');
+      }
+
+      // If both are complete mark the session as complete.
+      if (data.pocComplete && data.ownerComplete) {
+        data.status = TRAINING_REPORT_STATUSES.COMPLETE;
       }
 
       // PUT it to the backend
@@ -374,7 +355,7 @@ export default function SessionForm({ match }) {
   const nonFormUser = !isOwner && !isAdminUser && !isPoc && !isCollaborator && (sessionId !== 'new') && !error;
   if (reportFetched
       && ((formData.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && (!isAdminUser && !adminType))
+        && (!isAdminUser))
       || nonFormUser)) {
     return (
       <Redirect to={`/training-report/view/${trainingReportId}`} />
@@ -382,10 +363,10 @@ export default function SessionForm({ match }) {
   }
 
   const showSubmitModal = async () => {
-    updateIncompletePages();
+    // updateIncompletePages();
     const isValidForm = await hookForm.trigger();
 
-    if (isValidForm && !incompletePages.length) {
+    if (isValidForm) {
       // Toggle the modal only if the form is valid.
       modalRef.current.toggleModal(true);
     }
@@ -448,7 +429,8 @@ export default function SessionForm({ match }) {
             currentPage={currentPage}
             additionalData={{
               status: formData.status,
-              incompletePages: incompletePages.map((page) => page.label),
+              pages: applicationPages,
+              isAdminUser,
             }}
             formData={formData}
             pages={applicationPages}
@@ -466,8 +448,7 @@ export default function SessionForm({ match }) {
             showSavedDraft={showSavedDraft}
             updateShowSavedDraft={updateShowSavedDraft}
             formDataStatusProp="status"
-            hideSideNav={!isPoc}
-            preFlightForNavigation={updateIncompletePages}
+            hideSideNav={!isPoc && !isAdminUser}
           />
         </FormProvider>
       </NetworkContext.Provider>

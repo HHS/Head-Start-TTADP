@@ -658,7 +658,7 @@ export default {
     _formData,
     _reportId,
     isAppLoading,
-    _onContinue,
+    onContinue,
     onSaveDraft,
     _onUpdatePage,
     _weAreAutoSaving,
@@ -670,7 +670,13 @@ export default {
       <SessionSummary datePickerKey={datePickerKey} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+        {
+          !additionalData.isAdminUser
+            ? (
+              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+            )
+            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        }
         {
           // if status is 'Completed' then don't show the save draft button.
           additionalData

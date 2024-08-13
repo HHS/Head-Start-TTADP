@@ -16,7 +16,6 @@ import UserContext from '../../../UserContext';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
 import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
 import ReadOnlyField from '../../../components/ReadOnlyField';
-import IncompletePages from '../../../components/IncompletePages';
 
 const NextSteps = ({ formData }) => {
   const { user } = useContext(UserContext);
@@ -130,7 +129,7 @@ export default {
   review: false,
   fields,
   render: (
-    additionalData,
+    _additionalData,
     formData,
     _reportId,
     isAppLoading,
@@ -145,11 +144,6 @@ export default {
     <div className="padding-x-1">
       <NextSteps formData={formData} />
       <Alert />
-      {additionalData
-      && additionalData.incompletePages
-      && additionalData.incompletePages.length > 0 && (
-      <IncompletePages type="session" incompletePages={additionalData.incompletePages} />
-      )}
       <div className="display-flex">
         <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
         {

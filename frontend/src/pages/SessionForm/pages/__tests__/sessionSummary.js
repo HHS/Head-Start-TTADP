@@ -431,5 +431,27 @@ describe('sessionSummary', () => {
       expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
+
+    it('shows the save and continue button if the admin is editing the session and the session status is not complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'In progress',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress', isAdminUser: true }} />);
+      expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
+    });
+
+    it('only shows the continue button if the admin is editing the session and the session status is complete', async () => {
+      const values = {
+        ...defaultFormValues,
+        status: 'Complete',
+      };
+
+      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'Complete', isAdminUser: true }} />);
+      expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
+    });
   });
 });
