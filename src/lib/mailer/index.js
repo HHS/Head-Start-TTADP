@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/return-await */
-import httpContext from 'express-http-context';
 import { createTransport } from 'nodemailer';
+import moment from 'moment';
 import { uniq } from 'lodash';
-import { QueryTypes } from 'sequelize';
+import { Op, QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
-import { sequelize } from '../../models';
+import {
+  sequelize,
+} from '../../models';
 import { auditLogger, logger } from '../../logger';
 import newQueue, { increaseListeners } from '../queue';
 import { EMAIL_ACTIONS, EMAIL_DIGEST_FREQ, USER_SETTINGS } from '../../constants';
@@ -676,17 +678,53 @@ export const trPocAdded = async (
  * @param {db.models.EventReportPilot.dataValues} report
  * @param {number} newCollaboratorId
  */
-export const trPocEventComplete = async (
+export const trOwnerAdded = async (
+  report,
+  ownerId,
+) => {
+  if (process.env.CI) return;
+  try {
+    const owner = await userById(ownerId);
+
+    // due to the way sequelize sends the JSON column :(
+    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+    const data = {
+      displayId: eventId,
+      reportPath,
+      emailTo: [owner.email],
+      debugMessage: `MAILER: Notifying ${owner.email} that they were added as an owner to TR ${report.id}`,
+      templatePath: 'tr_event_imported',
+      ...referenceData(),
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED, data);
+  } catch (err) {
+    auditLogger.error(err);
+  }
+};
+
+/**
+ *
+ * @param {db.models.EventReportPilot.dataValues} report
+ * @param {number} newCollaboratorId
+ */
+export const trEventComplete = async (
   event,
 ) => {
   if (process.env.CI) return;
   try {
-    if (!event.pocIds && !event.pocIds.length) {
-      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
-    }
+    const userIds = uniq([
+      ...event.collaboratorIds,
+      ...event.pocIds,
+    ]).filter((id) => id && id !== event.ownerId);
 
-    await Promise.all(event.pocIds.map(async (id) => {
+    await Promise.all(userIds.map(async (id) => {
       const user = await userById(id);
+      if (!user) return Promise.resolve();
+
       const parsedData = JSON.parse(event.data.val); // parse the JSON string
       const { eventId } = parsedData; // extract the pretty url
       const eId = eventId.split('-').pop();
@@ -950,6 +988,88 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
   }
 }
 
+const TR_NOTIFICATION_CONFIG_DICT = {
+  // noSessionsCreated: {
+  //   toDiff: 'startDate',
+  // },
+  missingEventInfo: {
+    toDiff: 'startDate',
+  },
+  // missingSessionInfo: {
+  //   toDiff: 'startDate',
+  // },
+  // eventNotCompleted: {
+  //   toDiff: 'startDate',
+  // },
+};
+
+export async function trainingReportTaskDueNotifications(freq) {
+  const date = frequencyToInterval(freq);
+  logger.info(`MAILER: Starting Training Report Task Due Notifications with freq ${freq}`);
+  try {
+    if (!date) {
+      throw new Error('date is null');
+    }
+
+    // we are going to store our users here
+    // so that we don't requery the same user multiple times
+    // for different reports
+    // const users = new Map();
+
+    // get all outstanding training reports
+    // eslint-disable-next-line global-require
+    const { getTrainingReportAlerts } = require('../../services/event');
+    // imported here to avoid circular dependency import
+
+    const alerts = await getTrainingReportAlerts();
+    const today = moment().startOf('day');
+    const emails = alerts.reduce((accumulatedEmails, alert) => {
+      const alertTypeConfig = TR_NOTIFICATION_CONFIG_DICT[alert.type];
+      if (!alertTypeConfig) {
+        return accumulatedEmails;
+      }
+
+      const { toDiff } = alertTypeConfig;
+      if (alert[toDiff]) {
+        const dateToDiff = moment(alert[toDiff], 'MM/DD/YYYY').startOf('day');
+        const diff = today.diff(dateToDiff, 'days');
+        if (diff >= 20) {
+          let prefix = '';
+
+          if (diff === 20) {
+            prefix = 'Reminder: ';
+          }
+
+          // if diff is 40 or ten days after 40...
+          if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
+            prefix = 'Past due: ';
+          }
+
+          const data = {
+            displayId: alert.eventId,
+            prefix,
+            //       reportPath,
+            //       emailTo: [user.email],
+            //       debugMessage: `MAILER: Notifying ${user.email} that...`,
+            //       templatePath: 'tr_poc_session_complete',
+            ...referenceData(),
+          }; // const data
+
+          accumulatedEmails.push(data);
+        } // if diff >= 20
+      } // if(alert[toDiff])
+
+      return accumulatedEmails;
+    }, []); // close reducer
+
+    // eslint-disable-next-line max-len
+    return Promise.all(emails.map((email) => notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, email)));
+  } catch (err) {
+    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    throw err;
+  }
+}
+
 /**
  * Retrieves the correct template based on parameters and send a digest email.
  *
@@ -1128,18 +1248,10 @@ export const processNotificationQueue = () => {
   );
 
   notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE,
+    EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
     transactionQueueWrapper(
       sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
+      EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
     ),
   );
 };

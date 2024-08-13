@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
+import { Op } from 'sequelize';
 import {
   TRAINING_REPORT_STATUSES,
 } from '@ttahub/common';
@@ -10,7 +11,7 @@ import {
   sequelize,
 } from '../models';
 import {
-  getTrainingReportAlerts,
+  getTrainingReportAlertsForUser,
 } from './event';
 
 jest.mock('bull');
@@ -490,7 +491,7 @@ async function createEvents({
   return testData;
 }
 
-describe('getTrainingReportAlerts', () => {
+describe('getTrainingReportAlertsForUser', () => {
   afterAll(async () => {
     await sequelize.close();
   });
@@ -518,7 +519,7 @@ describe('getTrainingReportAlerts', () => {
     });
 
     it('fetches the correct alerts for owners', async () => {
-      const alerts = await getTrainingReportAlerts();
+      const alerts = await getTrainingReportAlertsForUser(ownerId, [regionId]);
 
       expect(alerts.map((i) => i.id).sort()).toStrictEqual([
         ...testData.ist.missingEventInfo,
@@ -526,6 +527,79 @@ describe('getTrainingReportAlerts', () => {
         ...testData.ist.noSessionsCreated,
         ...testData.ist.eventNotCompleted,
       ].sort());
+    });
+  });
+
+  describe('event collaborator', () => {
+    const collaboratorId = faker.datatype.number();
+    let testData;
+    beforeAll(async () => {
+      await User.create({
+        id: collaboratorId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+      testData = await createEvents({ collaboratorId });
+    });
+
+    afterAll(async () => {
+      const events = await EventReportPilot.findAll({
+        where: {
+          collaboratorIds: {
+            [Op.contains]: collaboratorId,
+          },
+        },
+      });
+      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
+      await EventReportPilot.destroy({ where: { id: events.map(({ id }) => id) } });
+      await User.destroy({ where: { id: collaboratorId } });
+    });
+
+    it('fetches the correct alerts for collaborators', async () => {
+      const alerts = await getTrainingReportAlertsForUser(collaboratorId, [regionId]);
+
+      expect(alerts.map((i) => i.id).sort()).toStrictEqual([
+        ...testData.ist.missingEventInfo,
+        ...testData.ist.missingSessionInfo,
+        ...testData.ist.noSessionsCreated,
+        ...testData.ist.eventNotCompleted,
+      ].sort());
+    });
+  });
+  describe('event poc', () => {
+    const pocId = faker.datatype.number();
+    let testData;
+    beforeAll(async () => {
+      await User.create({
+        id: pocId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: faker.internet.email(),
+        lastLogin: new Date(),
+      });
+      testData = await createEvents({ pocId });
+    });
+
+    afterAll(async () => {
+      const events = await EventReportPilot.findAll({
+        where: {
+          pocIds: {
+            [Op.contains]: pocId,
+          },
+        },
+      });
+      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
+      await EventReportPilot.destroy({ where: { id: events.map(({ id }) => id) } });
+      await User.destroy({ where: { id: pocId } });
+    });
+
+    it('fetches the correct alerts for poc', async () => {
+      const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      expect(alerts.map(({ id }) => id).sort()).toStrictEqual(testData.poc.missingSessionInfo.sort());
     });
   });
 });

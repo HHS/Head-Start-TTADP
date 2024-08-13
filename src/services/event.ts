@@ -20,6 +20,7 @@ import {
   TRAlertShape,
 } from './types/event';
 import EventReport from '../policies/event';
+import { trEventComplete } from '../lib/mailer';
 
 const {
   EventReportPilot,
@@ -310,6 +311,8 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
+  const { status } = data;
+
   if (ownerId) {
     const newOwner = await User.findOne(
       {
@@ -335,7 +338,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     }
   }
 
-  await EventReportPilot.update(
+  const evt = await EventReportPilot.findByPk(id);
+
+  if (status === TRS.COMPLETE && event.status !== status) {
+    // enqueue completion notification
+    await trEventComplete(evt);
+  }
+
+  await evt.update(
     {
       ownerId,
       pocIds,
@@ -362,9 +372,14 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
 const parseMinimalEventForAlert = (
   event: {
     id: number;
+    ownerId: number;
+    pocIds: number[];
+    collaboratorIds: number[];
     data: {
       eventId: string;
       eventName: string;
+      startDate: string;
+      endDate: string;
     },
   },
   alertType: string,
@@ -376,6 +391,11 @@ const parseMinimalEventForAlert = (
   alertType,
   sessionName,
   isSession: sessionName !== '--',
+  ownerId: event.ownerId,
+  pocIds: event.pocIds,
+  collaboratorIds: event.collaboratorIds,
+  endDate: event.data.endDate,
+  startDate: event.data.startDate,
 });
 
 // type for an array of either strings of functions that return a boolean
@@ -410,34 +430,32 @@ const checkSessionForCompletion = (
       sessionName: session.data.sessionName,
       eventName: event.data.eventName,
       alertType: 'missingSessionInfo',
+      ownerId: event.ownerId,
+      pocIds: event.pocIds,
+      collaboratorIds: event.collaboratorIds,
+      endDate: session.data.startDate,
+      startDate: session.data.endDate,
     });
   }
 };
 
-export async function getTrainingReportAlerts(userId: number, regions: number[]): Promise<TRAlertShape[]> {
-  const where = {
+export async function getTrainingReportAlerts(
+  userId: number | undefined,
+  regions: number[] | undefined,
+  where: SequelizeWhereOptions[] = [],
+): Promise<TRAlertShape[]> {
+  // get all events that the user is a part of and that are not complete/suspended
+  const events = await findEventHelper({
     [Op.and]: [
+      ...where,
       {
-        [Op.or]: [
-          {
-            ownerId: userId,
-          },
-          {
-            collaboratorIds: {
-              [Op.contains]: [userId],
-            },
-          },
-          {
-            pocIds: {
-              [Op.contains]: [userId],
-            },
-          },
-        ],
-      },
-      {
-        regionId: {
-          [Op.in]: regions,
-        },
+        ...(
+          // we do not check regions.length here
+          // because we want an empty array to apply
+          regions
+            ? { regionId: { [Op.in]: regions } }
+            : {}
+        ),
         data: {
           status: {
             [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
@@ -445,10 +463,7 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
         },
       },
     ],
-  };
-
-  // get all events that the user is a part of and that are not complete/suspended
-  const events = await findEventHelper(where, true) as EventShape[];
+  }, true) as EventShape[];
 
   const alerts = [];
 
@@ -522,9 +537,25 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
 
   const today = moment().startOf('day');
 
+  const ownerUserIdFilter = (event, user: number | undefined) => {
+    if (!user || event.ownerId === user) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const collaboratorUserIdFilter = (event, user: number | undefined) => {
+    if (!user || event.collaboratorIds.includes(user)) {
+      return true;
+    }
+
+    return false;
+  };
+
   events.forEach((event: EventShape) => {
     // some alerts only trigger for the owner or the collaborators
-    if (event.ownerId === userId || event.collaboratorIds.includes(userId)) {
+    if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
       const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
       const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
 
@@ -569,6 +600,31 @@ export async function getTrainingReportAlerts(userId: number, regions: number[])
   }); // for each event
 
   return alerts;
+}
+
+export async function getTrainingReportAlertsForUser(
+  userId: number,
+  regions: number[],
+): Promise<TRAlertShape[]> {
+  const where = {
+    [Op.or]: [
+      {
+        ownerId: userId,
+      },
+      {
+        collaboratorIds: {
+          [Op.contains]: [userId],
+        },
+      },
+      {
+        pocIds: {
+          [Op.contains]: [userId],
+        },
+      },
+    ],
+  } as SequelizeWhereOptions;
+
+  return getTrainingReportAlerts(userId, regions, [where]);
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {

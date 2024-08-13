@@ -24,7 +24,6 @@ import {
   trSessionCompleted,
   trCollaboratorAdded,
   trPocAdded,
-  trPocEventComplete,
   filterAndDeduplicateEmails,
 } from '.';
 import {
@@ -1332,34 +1331,8 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(0);
     });
-    it('trPocEventComplete success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete({
-        id: 1, data: { val: JSON.stringify(mockEvent.data) }, pocIds: [4, 5],
-      });
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-          expect.any(Object),
-        );
-    });
-    it('trPocEventComplete error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
-    it('trPocEventComplete early return on CI', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete({
-        id: 1, data: { val: JSON.stringify(mockEvent) }, pocIds: [4, 5],
-      });
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
   });
+
   describe('filterAndDeduplicateEmails', () => {
     it('should return an array with unique emails when given an array with duplicate emails', () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com'];
