@@ -47,6 +47,7 @@ ON arg."activityReportId" = a.id
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
 AND g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%','%FEI%'])
+-- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
 AND COALESCE(g."goalTemplateId", 0) != 19017
 -- Filter for regionIds if ssdi.regionIds is defined
 AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
