@@ -20,22 +20,22 @@
 */
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 SELECT
-	r.name,
-	r.uei,
-	gr.number "grant number",
-	gr.status "grant status",
-	gr."regionId",
-	g.id "goal id",
-	g.status "goal status",
-	g."createdAt",
-	COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') "approved reports",
-	COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) "pending reports",
-	GREATEST(
-		similarity(gt."templateName", g.name),
-		similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
-		similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
-	) similarity,
-	g.name
+  r.name,
+  r.uei,
+  gr.number "grant number",
+  gr.status "grant status",
+  gr."regionId",
+  g.id "goal id",
+  g.status "goal status",
+  g."createdAt",
+  COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') "approved reports",
+  COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) "pending reports",
+  GREATEST(
+    similarity(gt."templateName", g.name),
+    similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
+    similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
+  ) similarity,
+  g.name
 FROM "Goals" g
 JOIN "GoalTemplates" gt
 -- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
@@ -50,15 +50,15 @@ LEFT JOIN "ActivityReports" a
 ON arg."activityReportId" = a.id
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
-AND g.name ~* '(^|[^a-zA-Z])(under[- ]?enrollment|Full[- ]?Enrollment|FEI)($|[^a-zA-Z])'
--- AND g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%','%FEI%'])
+AND (g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%'])
+  OR g.name LIKE '%FEI%')
 AND COALESCE(g."goalTemplateId", 0) != gt.id
 -- Filter for regionIds if ssdi.regionIds is defined
 AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-	OR gr."regionId" in (
-	SELECT value::integer AS my_array
-	  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-	))
+  OR gr."regionId" in (
+  SELECT value::integer AS my_array
+    FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+  ))
 -- Filter for createdAt dates between two values if ssdi.createdbetween is defined
 AND (NULLIF(current_setting('ssdi.createdbetween', true), '') IS NULL
       OR g."createdAt"::date <@ (
