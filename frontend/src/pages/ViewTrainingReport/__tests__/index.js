@@ -319,7 +319,7 @@ describe('ViewTrainingReport', () => {
   it('does not show complete event if the event has sessions which are not complete', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        trainingReportComplete: true,
+        eventSubmitted: true,
       },
     }));
 
@@ -337,7 +337,7 @@ describe('ViewTrainingReport', () => {
   it('does not show complete event if the event is owner-incomplete', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        trainingReportComplete: false,
+        eventSubmitted: false,
       },
       sessionReports: oneCompleteSession,
     }));
@@ -356,7 +356,7 @@ describe('ViewTrainingReport', () => {
   it('shows and can complete event', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        trainingReportComplete: true,
+        eventSubmitted: true,
       },
       sessionReports: oneCompleteSession,
     }));
@@ -382,7 +382,7 @@ describe('ViewTrainingReport', () => {
   it('handles an error completing event', async () => {
     fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
       data: {
-        trainingReportComplete: true,
+        eventSubmitted: true,
       },
       sessionReports: oneCompleteSession,
     }));

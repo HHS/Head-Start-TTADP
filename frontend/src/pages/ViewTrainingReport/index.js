@@ -147,10 +147,14 @@ export default function ViewTrainingReport({ match }) {
       TRAINING_REPORT_STATUSES.SUSPENDED,
     ].includes(event.data.status || '');
 
-    const trainingReportComplete = event && event.data && event.data.trainingReportComplete;
+    const eventSubmitted = event && event.data && event.data.eventSubmitted;
     const sessionReports = event && event.sessionReports ? event.sessionReports : [];
 
-    if (!isOwner || isCompleteOrSuspended) {
+    if (!isOwner) {
+      return false;
+    }
+
+    if (isCompleteOrSuspended) {
       return false;
     }
 
@@ -159,7 +163,7 @@ export default function ViewTrainingReport({ match }) {
       return false;
     }
 
-    if (!trainingReportComplete) {
+    if (!eventSubmitted) {
       return false;
     }
 

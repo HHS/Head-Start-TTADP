@@ -242,14 +242,14 @@ describe('EventCard', () => {
     expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
   });
 
-  it('hides edit if trainingReportComplete is set', () => {
+  it('hides edit if eventSubmitted is set', () => {
     history.push = jest.fn();
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, trainingReportComplete: true, status: 'Not started' } });
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, eventSubmitted: true, status: 'Not started' } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
 
-    // Edit event is not here because trainingReportComplete is true
+    // Edit event is not here because eventSubmitted is true
     const editEvent = screen.queryByText(/edit event/i);
     expect(editEvent).not.toBeInTheDocument();
 
@@ -300,7 +300,7 @@ describe('EventCard', () => {
     renderEventCard({
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
-      data: { ...defaultEvent.data, status: 'In progress', trainingReportComplete: false },
+      data: { ...defaultEvent.data, status: 'In progress', eventSubmitted: false },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
@@ -314,7 +314,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
+        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -329,7 +329,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
+        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
@@ -351,7 +351,7 @@ describe('EventCard', () => {
       ...defaultEvent,
       sessionReports: [{ ...defaultEvent.sessionReports[0], data: { ...defaultEvent.sessionReports[0].data, status: 'Complete' } }],
       data: {
-        ...defaultEvent.data, status: 'In progress', trainingReportComplete: true,
+        ...defaultEvent.data, status: 'In progress', eventSubmitted: true,
       },
     });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();

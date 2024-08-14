@@ -235,7 +235,7 @@ export default function TrainingReportForm({ match }) {
       const updatedEvent = await updateEvent(trainingReportId, {
         data: {
           ...data,
-          trainingReportComplete: true,
+          eventSubmitted: true,
           status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
             ? TRAINING_REPORT_STATUSES.IN_PROGRESS
             : data.status,
