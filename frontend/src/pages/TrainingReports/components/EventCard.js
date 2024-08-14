@@ -45,7 +45,6 @@ function EventCard({
   const isOwnerOrPoc = isOwner || isPoc;
   const isOwnerOrCollaborator = isOwner || isCollaborator;
   const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
-
   const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
   const isNotCompleteOrSuspended = !isComplete && !isSuspended;
@@ -117,7 +116,7 @@ function EventCard({
     });
   }
 
-  if (canEditEvent) {
+  if (canEditEvent && !trainingReportComplete) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',

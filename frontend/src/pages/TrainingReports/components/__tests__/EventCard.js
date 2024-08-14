@@ -242,6 +242,24 @@ describe('EventCard', () => {
     expect(history.push).toHaveBeenCalledWith('/training-report/view/1234');
   });
 
+  it('hides edit if trainingReportComplete is set', () => {
+    history.push = jest.fn();
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, trainingReportComplete: true, status: 'Not started' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+
+    // Edit event is not here because trainingReportComplete is true
+    const editEvent = screen.queryByText(/edit event/i);
+    expect(editEvent).not.toBeInTheDocument();
+
+    const createSession = screen.queryByText(/create session/i);
+    expect(createSession).toBeInTheDocument();
+
+    const viewEvent = screen.queryByText(/view event/i);
+    expect(viewEvent).toBeInTheDocument();
+  });
+
   it('does not show complete event if not owner', async () => {
     renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'In progress' } }, { ...DEFAULT_USER, id: 2 });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
