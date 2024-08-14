@@ -37,7 +37,7 @@ function EventCard({
   });
   const [eventStatus, setEventStatus] = useState(data.status);
 
-  const { eventId, trainingReportComplete } = data;
+  const { eventId, eventSubmitted } = data;
   const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
@@ -59,11 +59,15 @@ function EventCard({
   const menuItems = [];
 
   const canCompleteEvent = (() => {
-    if (!isOwner && !isNotCompleteOrSuspended) {
+    if (!isOwner) {
       return false;
     }
 
-    if (!trainingReportComplete) {
+    if (!isNotCompleteOrSuspended) {
+      return false;
+    }
+
+    if (!eventSubmitted) {
       return false;
     }
 
@@ -116,7 +120,7 @@ function EventCard({
     });
   }
 
-  if (canEditEvent && !trainingReportComplete) {
+  if (canEditEvent && !eventSubmitted) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',
