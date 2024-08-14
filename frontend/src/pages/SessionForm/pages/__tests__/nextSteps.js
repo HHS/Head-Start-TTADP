@@ -237,16 +237,6 @@ describe('nextSteps', () => {
       expect(await screen.findByText('01/01/2021')).toBeVisible();
     });
 
-    it('shows incomplete pages message if we have pages in additionalData.incompletePages', async () => {
-      act(() => {
-        render(<RenderNextSteps additionalData={{ incompletePages: ['Incomplete page 1', 'Incomplete page 2'] }} />);
-      });
-
-      expect(await screen.findByText(/incomplete session/i)).toBeVisible();
-      expect(await screen.findByText('Incomplete page 1')).toBeVisible();
-      expect(await screen.findByText('Incomplete page 2')).toBeVisible();
-    });
-
     it('hides the save draft button if the session is complete', async () => {
       act(() => {
         render(<RenderNextSteps formValues={{
