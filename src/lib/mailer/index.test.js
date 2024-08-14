@@ -351,7 +351,7 @@ describe('mailer tests', () => {
       process.env.CI = '';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -377,7 +377,7 @@ describe('mailer tests', () => {
       process.env.CI = '';
       const data = {
         emailTo: [`no-send_${mockNewCollaborator.email}`],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -395,7 +395,7 @@ describe('mailer tests', () => {
       process.env.SEND_NOTIFICATIONS = 'false';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -415,7 +415,7 @@ describe('mailer tests', () => {
       process.env.CI = 'true';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
