@@ -146,7 +146,7 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
   TRAINING_REPORT_SESSION_COMPLETED: 'trainingReportSessionCompleted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
-  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDue',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
 };
 
 const S3_ACTIONS = {
