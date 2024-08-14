@@ -20,7 +20,6 @@ describe('GoalCardsHeader', () => {
   beforeEach(() => {
     const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
-    fetchMock.get('/api/users/feature-flags', ['manual_mark_goals_similar']);
     fetchMock.put(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`, {});
   });
 
@@ -162,10 +161,6 @@ describe('GoalCardsHeader', () => {
       numberOfSelectedGoals: 2,
       hasManualMarkGoalsSimilar: false,
     };
-
-    fetchMock.config.overwriteRoutes = true;
-    fetchMock.get('/api/users/feature-flags', []);
-    fetchMock.config.overwriteRoutes = false;
 
     await act(async () => {
       renderTest(props);
