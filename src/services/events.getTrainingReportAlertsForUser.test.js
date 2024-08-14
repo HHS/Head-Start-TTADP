@@ -13,6 +13,7 @@ import {
 import {
   getTrainingReportAlertsForUser,
 } from './event';
+import * as transactionModule from '../lib/programmaticTransaction';
 
 jest.mock('bull');
 
@@ -492,7 +493,14 @@ async function createEvents({
 }
 
 describe('getTrainingReportAlertsForUser', () => {
+  let snapshot;
+
+  beforeAll(async () => {
+    snapshot = await transactionModule.captureSnapshot();
+  });
+
   afterAll(async () => {
+    await transactionModule.rollbackToSnapshot(snapshot);
     await sequelize.close();
   });
 
