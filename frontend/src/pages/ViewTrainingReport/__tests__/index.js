@@ -1,10 +1,62 @@
 import React from 'react';
 import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewTrainingReport, { formatOwnerName } from '..';
+import UserContext from '../../../UserContext';
+
+const oneCompleteSession = [{
+  id: 7,
+  eventId: 1,
+  data: {
+    id: 7,
+    files: [{
+      id: 25643,
+      key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
+      url: {
+        url: 'http://file-url',
+        error: null,
+      },
+      status: 'UPLOADING',
+      fileSize: 954060,
+      createdAt: '2023-06-27T13:48:54.745Z',
+      updatedAt: '2023-06-27T13:48:54.745Z',
+      originalFileName: 'test-file.pdf',
+    }],
+    status: 'Complete',
+    context: 'Session 1 context',
+    endDate: '06/16/2023',
+    eventId: 33,
+    ownerId: null,
+    duration: 1,
+    regionId: 3,
+    eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+    objective: 'Session 1 objective',
+    pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+    startDate: '06/12/2023',
+    eventOwner: 355,
+    recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+    sessionName: 'Session Name # 1',
+    ttaProvided: 'Session 1 TTA provided',
+    participants: ['Direct Service: Other'],
+    deliveryMethod: 'in-person',
+    eventDisplayId: 'R03-PD-23-1037',
+    objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
+    objectiveTrainers: ['HBHS', 'PFCE'],
+    objectiveResources: [{ value: 'http://random-resource-url' }],
+    recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
+    specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
+    numberOfParticipants: 3,
+    objectiveSupportType: SUPPORT_TYPES[2],
+    courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
+  },
+  createdAt: '2023-06-27T13:48:31.490Z',
+  updatedAt: '2023-06-27T13:49:18.579Z',
+}];
 
 const mockEvent = (data = {}) => ({
   id: 1,
@@ -26,7 +78,6 @@ const mockEvent = (data = {}) => ({
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
   sessionReports: [{
-
     id: 7,
     eventId: 1,
     data: {
@@ -82,7 +133,7 @@ const mockEvent = (data = {}) => ({
       status: 'In progress',
       context: 'Session 2 context',
       endDate: '06/23/2023',
-      eventId: 1,
+      eventId: '1',
       ownerId: null,
       duration: 0.5,
       regionId: 3,
@@ -113,14 +164,16 @@ const mockEvent = (data = {}) => ({
 });
 
 describe('ViewTrainingReport', () => {
-  const renderTrainingReport = () => {
+  const renderTrainingReport = (userId = 999) => {
     act(() => {
       render(
-        <MemoryRouter>
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-            <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
-          </AppLoadingContext.Provider>
-        </MemoryRouter>,
+        <UserContext.Provider value={{ user: { id: userId } }}>
+          <MemoryRouter>
+            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+              <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
+            </AppLoadingContext.Provider>
+          </MemoryRouter>
+        </UserContext.Provider>,
       );
     });
   };
@@ -226,6 +279,131 @@ describe('ViewTrainingReport', () => {
 
     expect(await screen.findByRole('button', { name: 'Copy URL Link' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Print to PDF' })).toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event is already complete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event has no sessions', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      sessionReports: [],
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event has sessions which are not complete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event is owner-incomplete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: false,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('shows and can complete event', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = await screen.findByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+
+    fetchMock.putOnce('/api/events/id/1', 200);
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
+  });
+
+  it('handles an error completing event', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = await screen.findByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+
+    fetchMock.putOnce('/api/events/id/1', 500);
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
+    expect(await screen.findByText('Sorry, something went wrong')).toBeInTheDocument();
   });
 
   it('handles an error fetching event', async () => {
