@@ -366,9 +366,9 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`A session has been completed for Training Report ${data.displayId}`);
+      expect(message.subject).toBe(`Action needed: Submit session details for Training Report ${data.displayId}`);
       expect(message.text).toContain(
-        `A session has been completed for Training Report ${data.displayId}`,
+        'Select the link below to review and submit the session details in the TTA Hub:',
       );
       expect(message.text).toContain('/asdf/');
     });
