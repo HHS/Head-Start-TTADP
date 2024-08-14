@@ -1,8 +1,10 @@
 import React, { useState, useContext, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { Alert } from '@trussworks/react-uswds';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Link, useHistory } from 'react-router-dom';
+import { completeEvent, resumeEvent, suspendEvent } from '../../../fetchers/event';
 import UserContext from '../../../UserContext';
 import { eventPropTypes } from '../constants';
 import TooltipList from '../../../components/TooltipList';
@@ -10,9 +12,9 @@ import ContextMenu from '../../../components/ContextMenu';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import SessionCard from './SessionCard';
-import './EventCard.scss';
 import Modal from '../../../components/Modal';
 import isAdmin from '../../../permissions';
+import './EventCard.scss';
 
 function EventCard({
   event,
@@ -23,28 +25,29 @@ function EventCard({
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
   const history = useHistory();
-
   const hasAdminRights = isAdmin(user);
   const {
     id,
     data,
     sessionReports,
   } = event;
+  const [message, setMessage] = useState({
+    text: '',
+    type: 'error',
+  });
+  const [eventStatus, setEventStatus] = useState(data.status);
 
-  const { eventId } = data;
+  const { eventId, eventSubmitted } = data;
   const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
   const isOwnerOrPoc = isOwner || isPoc;
   const isOwnerOrCollaborator = isOwner || isCollaborator;
-
   const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
-
-  const isNotCompleteOrSuspended = ![
-    TRAINING_REPORT_STATUSES.COMPLETE,
-    TRAINING_REPORT_STATUSES.SUSPENDED,
-  ].includes(data.status);
+  const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
+  const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
+  const isNotCompleteOrSuspended = !isComplete && !isSuspended;
 
   const canEditEvent = (
     isNotCompleteOrSuspended
@@ -54,6 +57,27 @@ function EventCard({
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
   const menuItems = [];
+
+  const canCompleteEvent = (() => {
+    if (!isOwner) {
+      return false;
+    }
+
+    if (!isNotCompleteOrSuspended) {
+      return false;
+    }
+
+    if (!eventSubmitted) {
+      return false;
+    }
+
+    // eslint-disable-next-line max-len
+    if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
+      return false;
+    }
+
+    return true;
+  })();
 
   if (canCreateSession) {
     // Create session.
@@ -65,12 +89,85 @@ function EventCard({
     });
   }
 
-  if (canEditEvent) {
+  if (canCompleteEvent) {
+    // Complete event.
+    menuItems.push({
+      label: 'Complete event',
+      onClick: async () => {
+        try {
+          await completeEvent(idForLink, event);
+          setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
+          setMessage({
+            text: 'Event completed successfully',
+            type: 'success',
+          });
+        } catch (err) {
+          setMessage({
+            text: 'Error completing event',
+            type: 'error',
+          });
+        }
+      },
+    });
+  }
+
+  if (canDeleteEvent) {
+    menuItems.push({
+      label: 'Delete event',
+      onClick: () => {
+        modalRef.current.toggleModal();
+      },
+    });
+  }
+
+  if (canEditEvent && !eventSubmitted) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
         history.push(`/training-report/${idForLink}/event-summary`);
+      },
+    });
+  }
+
+  if (isSuspended && (isOwner || hasAdminRights)) {
+    menuItems.push({
+      label: 'Resume event',
+      onClick: async () => {
+        try {
+          await resumeEvent(idForLink, event);
+          setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
+          setMessage({
+            text: 'Event resumed successfully',
+            type: 'success',
+          });
+        } catch (err) {
+          setMessage({
+            text: 'Error resuming event',
+            type: 'error',
+          });
+        }
+      },
+    });
+  }
+
+  if (isNotCompleteOrSuspended && (isOwner || hasAdminRights)) {
+    menuItems.push({
+      label: 'Suspend event',
+      onClick: async () => {
+        try {
+          await suspendEvent(idForLink, event);
+          setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
+          setMessage({
+            text: 'Event suspended successfully',
+            type: 'success',
+          });
+        } catch (err) {
+          setMessage({
+            text: 'Error suspending event',
+            type: 'error',
+          });
+        }
       },
     });
   }
@@ -82,15 +179,6 @@ function EventCard({
       history.push(`/training-report/view/${idForLink}`);
     },
   });
-
-  if (canDeleteEvent) {
-    menuItems.push({
-      label: 'Delete event',
-      onClick: () => {
-        modalRef.current.toggleModal();
-      },
-    });
-  }
 
   const [reportsExpanded, setReportsExpanded] = useState(false);
 
@@ -119,6 +207,12 @@ function EventCard({
         data-testid="eventCard"
         style={{ zIndex }}
       >
+        {message.text && (
+        <Alert type={message.type} className="margin-bottom-2">
+          {message.text}
+        </Alert>
+        )}
+
         <div className="ttahub-event-card__row position-relative">
           <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Event title</p>
@@ -176,7 +270,7 @@ function EventCard({
             expanded={reportsExpanded}
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
             onRemoveSession={onRemoveSession}
-            eventStatus={data.status}
+            eventStatus={eventStatus}
           />
         ))}
       </article>
