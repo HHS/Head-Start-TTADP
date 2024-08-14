@@ -1359,7 +1359,7 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
     transactionQueueWrapper(
-      trainingReportTaskDueNotifications,
+      sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
     ),
   );
