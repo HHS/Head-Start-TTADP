@@ -50,8 +50,7 @@ LEFT JOIN "ActivityReports" a
 ON arg."activityReportId" = a.id
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
-AND (g.name ILIKE ANY (ARRAY['%underenrollment%','%under-enrollment%','%under enrollment%','%Full Enrollment%','%Full-Enrollment%','%FullEnrollment%'])
-  OR g.name LIKE '%FEI%')
+AND g.name ~* '(^|[^a-zA-Z])(under[- ]?enrollment|Full[- ]?Enrollment|FEI)($|[^a-zA-Z])'
 AND COALESCE(g."goalTemplateId", 0) != gt.id
 -- Filter for regionIds if ssdi.regionIds is defined
 AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
