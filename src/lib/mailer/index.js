@@ -989,18 +989,61 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 }
 
 const TR_NOTIFICATION_CONFIG_DICT = {
-  // noSessionsCreated: {
-  //   toDiff: 'startDate',
-  // },
+  noSessionsCreated: {
+    toDiff: 'startDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that no sessions have been created for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_no_sessions',
+        users: 'ownerId',
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_no_sessions',
+        users: 'collaboratorIds',
+      },
+    ],
+  },
   missingEventInfo: {
     toDiff: 'startDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event info for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_event',
+        users: 'ownerId',
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_event',
+        users: 'collaboratorIds',
+      },
+    ],
   },
-  // missingSessionInfo: {
-  //   toDiff: 'startDate',
-  // },
-  // eventNotCompleted: {
-  //   toDiff: 'startDate',
-  // },
+  missingSessionInfo: {
+    toDiff: 'startDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete session info for TR ${eventId}`,
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_session',
+        users: 'ownerId',
+      },
+      {
+        templatePath: 'tr_collaborator_reminder_session',
+        users: 'collaboratorIds',
+      },
+      {
+        templatePath: 'tr_poc_reminder_session',
+        users: 'pocIds',
+      },
+    ],
+  },
+  eventNotCompleted: {
+    toDiff: 'endDate',
+    emails: [
+      {
+        templatePath: 'tr_owner_reminder_event_not_completed',
+        data: 'ownerId',
+      },
+    ],
+  },
 };
 
 export async function trainingReportTaskDueNotifications(freq) {
@@ -1014,7 +1057,7 @@ export async function trainingReportTaskDueNotifications(freq) {
     // we are going to store our users here
     // so that we don't requery the same user multiple times
     // for different reports
-    // const users = new Map();
+    const userMap = new Map();
 
     // get all outstanding training reports
     // eslint-disable-next-line global-require
@@ -1045,17 +1088,35 @@ export async function trainingReportTaskDueNotifications(freq) {
             prefix = 'Past due: ';
           }
 
-          const data = {
-            displayId: alert.eventId,
-            prefix,
-            //       reportPath,
-            //       emailTo: [user.email],
-            //       debugMessage: `MAILER: Notifying ${user.email} that...`,
-            //       templatePath: 'tr_poc_session_complete',
-            ...referenceData(),
-          }; // const data
+          const emailsForAlert = alertTypeConfig.emails;
+          emailsForAlert.forEach((emailConfig) => {
+            const { users, templatePath } = emailConfig;
 
-          accumulatedEmails.push(data);
+            // flatten the array and remove any nulls
+            const userIds = [alert[users]].flatMap((v) => Number(v)).filter((id) => id);
+
+            userIds.forEach(async (id) => {
+              // check our map to see if we have the user already
+              // if not, query the user and store it
+              let user = userMap.get(id);
+              if (!user) {
+                user = await userById(id);
+                userMap.set(id, user);
+              }
+
+              const data = {
+                displayId: alert.eventId,
+                prefix,
+                reportPat: `${process.env.TTA_SMART_HUB_URI}/training-report/${alert.eventId.split('-').pop()}`,
+                emailTo: [user.email],
+                debugMessage: alertTypeConfig.debug(user.email, alert.eventId),
+                templatePath,
+                ...referenceData(),
+              };
+
+              accumulatedEmails.push(data);
+            });
+          });
         } // if diff >= 20
       } // if(alert[toDiff])
 
@@ -1065,7 +1126,7 @@ export async function trainingReportTaskDueNotifications(freq) {
     // eslint-disable-next-line max-len
     return Promise.all(emails.map((email) => notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, email)));
   } catch (err) {
-    logger.info(`MAILER: ApprovedDigest with key ${USER_SETTINGS.EMAIL.KEYS.APPROVAL} freq ${freq} error ${err}`);
+    logger.info(`MAILER: trainingReportTaskDueNotifications with freq ${freq} error ${err}`);
     throw err;
   }
 }
@@ -1252,6 +1313,14 @@ export const processNotificationQueue = () => {
     transactionQueueWrapper(
       sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED,
+    ),
+  );
+
+  notificationQueue.process(
+    EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
+    transactionQueueWrapper(
+      trainingReportTaskDueNotifications,
+      EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE,
     ),
   );
 };
