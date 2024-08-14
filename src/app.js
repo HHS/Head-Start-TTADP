@@ -20,6 +20,12 @@ import runCronJobs from './lib/cron';
 
 const app = express();
 
+// Disable "X-Powered-By" header
+app.disable('x-powered-by');
+
+// Use helmet to hide 'X-Powered-By'
+app.use(helmet.hidePoweredBy());
+
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
 
@@ -79,9 +85,6 @@ if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
 
 app.use('/api/v1', require('./routes/externalApi').default);
 app.use('/api', require('./routes/apiDirectory').default);
-
-// Disable "X-Powered-By" header
-app.disable('x-powered-by');
 
 // TODO: change `app.get...` with `router.get...` once our oauth callback has been updated
 app.get(oauth2CallbackPath, cookieSession, async (req, res) => {
