@@ -380,22 +380,25 @@ const parseMinimalEventForAlert = (
       eventName: string;
       startDate: string;
       endDate: string;
+      status: string;
     },
   },
-  alertType: string,
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted',
   sessionName = '--',
-) => ({
+) : TRAlertShape => ({
   id: event.id,
   eventId: event.data.eventId,
   eventName: event.data.eventName,
   alertType,
   sessionName,
   isSession: sessionName !== '--',
+  sessionId: false,
   ownerId: event.ownerId,
   pocIds: event.pocIds,
   collaboratorIds: event.collaboratorIds,
   endDate: event.data.endDate,
   startDate: event.data.startDate,
+  eventStatus: event.data.status,
 });
 
 // type for an array of either strings of functions that return a boolean
@@ -435,6 +438,8 @@ const checkSessionForCompletion = (
       collaboratorIds: event.collaboratorIds,
       endDate: session.data.startDate,
       startDate: session.data.endDate,
+      sessionId: session.id,
+      eventStatus: event.data.status,
     });
   }
 };
@@ -472,7 +477,7 @@ export async function getTrainingReportAlerts(
   // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
   // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
-  const checkEventInfo = (event, field, isArray) => {
+  const checkEventInfo = (event: EventShape, field: string, isArray: boolean) => {
     if (isArray) {
       return !(get(event, field, []).length === 0);
     }
@@ -537,7 +542,7 @@ export async function getTrainingReportAlerts(
 
   const today = moment().startOf('day');
 
-  const ownerUserIdFilter = (event, user: number | undefined) => {
+  const ownerUserIdFilter = (event: EventShape, user: number | undefined) => {
     if (!user || event.ownerId === user) {
       return true;
     }
@@ -545,7 +550,7 @@ export async function getTrainingReportAlerts(
     return false;
   };
 
-  const collaboratorUserIdFilter = (event, user: number | undefined) => {
+  const collaboratorUserIdFilter = (event: EventShape, user: number | undefined) => {
     if (!user || event.collaboratorIds.includes(user)) {
       return true;
     }

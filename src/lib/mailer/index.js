@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/return-await */
 import { createTransport } from 'nodemailer';
 import moment from 'moment';
-import { uniq } from 'lodash';
+import { uniq, lowerCase } from 'lodash';
 import { Op, QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
@@ -996,10 +996,12 @@ const TR_NOTIFICATION_CONFIG_DICT = {
       {
         templatePath: 'tr_owner_reminder_no_sessions',
         users: 'ownerId',
+        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_no_sessions',
         users: 'collaboratorIds',
+        reportPath: ({ eventStatus }) => `${process.env.TTA_SMART_HUB_URI}/training-reports/${lowerCase(eventStatus).replace(' ', '-')}`,
       },
     ],
   },
@@ -1010,10 +1012,12 @@ const TR_NOTIFICATION_CONFIG_DICT = {
       {
         templatePath: 'tr_owner_reminder_event',
         users: 'ownerId',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_event',
         users: 'collaboratorIds',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}`,
       },
     ],
   },
@@ -1024,23 +1028,28 @@ const TR_NOTIFICATION_CONFIG_DICT = {
       {
         templatePath: 'tr_owner_reminder_session',
         users: 'ownerId',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_collaborator_reminder_session',
         users: 'collaboratorIds',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
       },
       {
         templatePath: 'tr_poc_reminder_session',
         users: 'pocIds',
+        reportPath: ({ eventId, sessionId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/${eventId.split('-').pop()}/session/${sessionId}`,
       },
     ],
   },
   eventNotCompleted: {
     toDiff: 'endDate',
+    debug: (email, eventId) => `MAILER: Notifying ${email} that they need to complete event ${eventId}`,
     emails: [
       {
         templatePath: 'tr_owner_reminder_event_not_completed',
-        data: 'ownerId',
+        reportPath: ({ eventId }) => `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eventId.split('-').pop()}`,
+        users: 'ownerId',
       },
     ],
   },
@@ -1054,77 +1063,108 @@ export async function trainingReportTaskDueNotifications(freq) {
       throw new Error('date is null');
     }
 
-    // we are going to store our users here
-    // so that we don't requery the same user multiple times
-    // for different reports
-    const userMap = new Map();
-
     // get all outstanding training reports
     // eslint-disable-next-line global-require
     const { getTrainingReportAlerts } = require('../../services/event');
     // imported here to avoid circular dependency import
 
     const alerts = await getTrainingReportAlerts();
+
     const today = moment().startOf('day');
-    const emails = alerts.reduce((accumulatedEmails, alert) => {
-      const alertTypeConfig = TR_NOTIFICATION_CONFIG_DICT[alert.type];
+    const emailData = alerts.reduce((accumulatedEmailData, alert) => {
+      const alertTypeConfig = TR_NOTIFICATION_CONFIG_DICT[alert.alertType];
+      // Some kind of garbage type got in the alerts,
+      // we don't know how to handle it
       if (!alertTypeConfig) {
-        return accumulatedEmails;
+        return accumulatedEmailData;
       }
 
       const { toDiff } = alertTypeConfig;
-      if (alert[toDiff]) {
-        const dateToDiff = moment(alert[toDiff], 'MM/DD/YYYY').startOf('day');
-        const diff = today.diff(dateToDiff, 'days');
-        if (diff >= 20) {
-          let prefix = '';
+      // If the alert[toDiff] is falsy, we do not have a date to diff against
+      // and can't send an email
+      if (!alert[toDiff]) {
+        return accumulatedEmailData;
+      }
 
-          if (diff === 20) {
-            prefix = 'Reminder: ';
-          }
+      const dateToDiff = moment(alert[toDiff], 'MM/DD/YYYY').startOf('day');
 
-          // if diff is 40 or ten days after 40...
-          if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
-            prefix = 'Past due: ';
-          }
+      const diff = today.diff(dateToDiff, 'days');
+      // Depending on the diff, the subject starts a certain way
+      // either "Reminder" or "Past due"
+      let prefix = '';
+      if (diff >= 20) {
+        if (diff === 20) {
+          prefix = 'Reminder: ';
+        }
 
-          const emailsForAlert = alertTypeConfig.emails;
-          emailsForAlert.forEach((emailConfig) => {
-            const { users, templatePath } = emailConfig;
+        // if diff is 40 or ten days after 40...
+        if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
+          prefix = 'Past due: ';
+        }
+      }
 
-            // flatten the array and remove any nulls
-            const userIds = [alert[users]].flatMap((v) => Number(v)).filter((id) => id);
+      // if we don't have a prefix, we don't send an email
+      if (!prefix) {
+        return accumulatedEmailData;
+      }
 
-            userIds.forEach(async (id) => {
-              // check our map to see if we have the user already
-              // if not, query the user and store it
-              let user = userMap.get(id);
-              if (!user) {
-                user = await userById(id);
-                userMap.set(id, user);
-              }
+      const emailsForAlert = alertTypeConfig.emails;
+      // we run this for a for loop first so we can format the data
+      // for easy promise-consumption
+      emailsForAlert.forEach((emailConfig) => {
+        const { users, templatePath, reportPath } = emailConfig;
 
-              const data = {
-                displayId: alert.eventId,
-                prefix,
-                reportPat: `${process.env.TTA_SMART_HUB_URI}/training-report/${alert.eventId.split('-').pop()}`,
-                emailTo: [user.email],
-                debugMessage: alertTypeConfig.debug(user.email, alert.eventId),
-                templatePath,
-                ...referenceData(),
-              };
+        // flatten the array and remove any nulls
+        const userIds = [alert[users]].flatMap((v) => Number(v)).filter((id) => id);
 
-              accumulatedEmails.push(data);
-            });
-          });
-        } // if diff >= 20
-      } // if(alert[toDiff])
+        userIds.forEach((id) => {
+          const data = {
+            displayId: alert.eventId,
+            prefix,
+            // send the alert and the users (remember, users is ownerId | collaboratorIds | pocIds)
+            // to obtain the specific destination
+            reportPath: reportPath(alert, users),
+            debugMessage: alertTypeConfig.debug,
+            alert,
+            templatePath,
+            userId: id,
+          };
 
-      return accumulatedEmails;
+          accumulatedEmailData.push(data);
+        });
+      });
+
+      return accumulatedEmailData;
     }, []); // close reducer
 
-    // eslint-disable-next-line max-len
-    return Promise.all(emails.map((email) => notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, email)));
+    // we are going to store our users here
+    // so that we don't requery the same user multiple times
+    // for different reports (small user pool for TRs, lots of duplication)
+    const userMap = new Map();
+
+    return Promise.all(emailData.map(async (mail) => {
+      // check our map to see if we have the user already
+      // if not, query the user and store it
+      const { userId } = mail;
+      let user = userMap.get(userId);
+      if (!user) {
+        user = await userById(userId);
+        userMap.set(userId, user);
+      }
+
+      const data = {
+        displayId: mail.displayId,
+        prefix: mail.prefix,
+        reportPath: mail.reportPath,
+        emailTo: [user.email],
+        debugMessage: mail.debugMessage(user.email, mail.displayId),
+        templatePath: mail.templatePath,
+      };
+
+      notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, data);
+
+      return data;
+    }));
   } catch (err) {
     logger.info(`MAILER: trainingReportTaskDueNotifications with freq ${freq} error ${err}`);
     throw err;
