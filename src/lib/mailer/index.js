@@ -469,40 +469,6 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 /**
  * @param {db.models.EventReportPilot.dataValues} event
  */
-export const trVisionComplete = async (event) => {
-  if (process.env.CI) return;
-  try {
-    const thoseWhoRequireNotifying = uniq([
-      event.ownerId,
-      ...event.collaboratorIds,
-    ]);
-
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(event.data.val); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
-      const user = await userById(id);
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id} | ${eId}`,
-        templatePath: 'tr_poc_vision_complete',
-      };
-
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
- */
 export const trPocSessionComplete = async (event) => {
   if (process.env.CI) return;
   try {
@@ -1094,12 +1060,12 @@ export async function trainingReportTaskDueNotifications(freq) {
       let prefix = '';
       if (diff >= 20) {
         if (diff === 20) {
-          prefix = 'Reminder: ';
+          prefix = 'Reminder:';
         }
 
         // if diff is 40 or ten days after 40...
         if (diff === 40 || (diff > 40 && (diff % 10 === 0))) {
-          prefix = 'Past due: ';
+          prefix = 'Past due:';
         }
       }
 
@@ -1125,7 +1091,6 @@ export async function trainingReportTaskDueNotifications(freq) {
             // to obtain the specific destination
             reportPath: reportPath(alert, users),
             debugMessage: alertTypeConfig.debug,
-            alert,
             templatePath,
             userId: id,
           };
@@ -1154,6 +1119,9 @@ export async function trainingReportTaskDueNotifications(freq) {
 
       const data = {
         displayId: mail.displayId,
+        report: {
+          displayId: mail.displayId,
+        },
         prefix: mail.prefix,
         reportPath: mail.reportPath,
         emailTo: [user.email],
