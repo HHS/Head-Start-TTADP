@@ -1,5 +1,4 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
+import React from 'react';
 import moment from 'moment';
 import { Helmet } from 'react-helmet';
 import {
@@ -12,93 +11,30 @@ import {
   nextStepsFields,
 } from '../constants';
 import NextStepsRepeater from '../../ActivityReport/Pages/components/NextStepsRepeater';
-import UserContext from '../../../UserContext';
-import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
-import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
-import ReadOnlyField from '../../../components/ReadOnlyField';
 
-const NextSteps = ({ formData }) => {
-  const { user } = useContext(UserContext);
-  const { isPoc } = useTrainingReportRole(formData.event, user.id);
-  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
-
-  if (showReadOnlyView) {
-    return (
-      <>
-        <Helmet>
-          <title>Next Steps</title>
-        </Helmet>
-
-        <h2>Specialist&apos;s next steps</h2>
-        { formData.specialistNextSteps.map((step, index) => (
-          <div key={`specialist-step${step.note}`}>
-            <ReadOnlyField label={`Step ${index + 1}`}>
-              {step.note}
-            </ReadOnlyField>
-            <ReadOnlyField label="Anticipated completion date">
-              {step.completeDate}
-            </ReadOnlyField>
-          </div>
-        ))}
-
-        <h2>Recipient&apos;s next steps</h2>
-        { formData.recipientNextSteps.map((step, index) => (
-          <div key={`receipient-step${step.note}`}>
-            <ReadOnlyField label={`Step ${index + 1}`}>
-              {step.note}
-            </ReadOnlyField>
-            <ReadOnlyField label="Anticipated completion date">
-              {step.completeDate}
-            </ReadOnlyField>
-          </div>
-        ))}
-      </>
-    );
-  }
-
-  return (
-    <>
-      <Helmet>
-        <title>Next Steps</title>
-      </Helmet>
-      <IndicatesRequiredField />
-      <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
-        <NextStepsRepeater
-          id="specialist-next-steps-repeater-id"
-          name="specialistNextSteps"
-          ariaName="Specialist Next Steps"
-        />
-      </Fieldset>
-      <Fieldset id="recipient-field-set" className="smart-hub--report-legend margin-top-3" legend={'Recipient\'s next steps'}>
-        <NextStepsRepeater
-          id="recipient-next-steps-repeater-id"
-          name="recipientNextSteps"
-          ariaName={'Recipient\'s next steps'}
-          recipientType="recipient"
-        />
-      </Fieldset>
-    </>
-  );
-};
-
-NextSteps.propTypes = {
-  formData: PropTypes.shape({
-    pocComplete: PropTypes.bool,
-    pocCompleteId: PropTypes.number,
-    pocCompleteDate: PropTypes.string,
-    event: PropTypes.shape({
-      pocIds: PropTypes.arrayOf(PropTypes.number),
-    }),
-    specialistNextSteps: PropTypes.arrayOf(PropTypes.shape({
-      note: PropTypes.string,
-      completeDate: PropTypes.string,
-    })),
-    recipientNextSteps: PropTypes.arrayOf(PropTypes.shape({
-      note: PropTypes.string,
-      completeDate: PropTypes.string,
-    })),
-  }).isRequired,
-};
+const NextSteps = () => (
+  <>
+    <Helmet>
+      <title>Next Steps</title>
+    </Helmet>
+    <IndicatesRequiredField />
+    <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
+      <NextStepsRepeater
+        id="specialist-next-steps-repeater-id"
+        name="specialistNextSteps"
+        ariaName="Specialist Next Steps"
+      />
+    </Fieldset>
+    <Fieldset id="recipient-field-set" className="smart-hub--report-legend margin-top-3" legend={'Recipient\'s next steps'}>
+      <NextStepsRepeater
+        id="recipient-next-steps-repeater-id"
+        name="recipientNextSteps"
+        ariaName={'Recipient\'s next steps'}
+        recipientType="recipient"
+      />
+    </Fieldset>
+  </>
+);
 
 const fields = Object.keys(nextStepsFields);
 const path = 'next-steps';
