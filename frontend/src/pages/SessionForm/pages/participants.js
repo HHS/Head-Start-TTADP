@@ -1,6 +1,4 @@
-import React, {
-  useContext,
-} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
@@ -20,11 +18,7 @@ import {
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ParticipantsNumberOfParticipants from '../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
-import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
-import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
-import UserContext from '../../../UserContext';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
-import ParticipantsReadOnly from '../components/ParticipantsReadOnly';
 
 const placeholderText = '- Select -';
 
@@ -53,9 +47,6 @@ const Participants = ({ formData }) => {
     setValue,
   } = useFormContext();
 
-  const { user } = useContext(UserContext);
-  const { isPoc } = useTrainingReportRole(formData.event, user.id);
-  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
   const isHybrid = watch('deliveryMethod') === 'hybrid';
   const isIstVisit = watch('isIstVisit') === 'yes';
   const isNotIstVisit = watch('isIstVisit') === 'no';
@@ -102,15 +93,6 @@ const Participants = ({ formData }) => {
       setValue('regionalOfficeTta', []);
     }
   }, [isIstVisit, isNotIstVisit, setValue]);
-
-  if (showReadOnlyView) {
-    return (
-      <ParticipantsReadOnly
-        formData={formData}
-        userId={user.id}
-      />
-    );
-  }
 
   return (
     <>
@@ -310,7 +292,7 @@ export default {
     isAppLoading,
     onContinue,
     onSaveDraft,
-    onUpdatePage,
+    _onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,

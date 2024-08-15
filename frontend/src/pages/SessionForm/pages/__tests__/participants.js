@@ -195,37 +195,6 @@ describe('participants', () => {
       await selectEvent.select(screen.getByLabelText(/Regional Office\/TTA/i), 'TTAC');
     });
 
-    it('shows read only mode', async () => {
-      const readOnlyFormValues = {
-        ...defaultFormValues,
-        pocComplete: true,
-        pocCompleteId: userId,
-        pocCompleteDate: todaysDate,
-        event: {
-          pocIds: [userId],
-        },
-        recipients: [
-          {
-            id: 1,
-            label: 'R1 R1 G1',
-          },
-        ],
-        deliveryMethod: 'in-person',
-        numberOfParticipants: 1,
-        participants: ['Home Visitor'],
-        language: ['English'],
-      };
-
-      act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
-      });
-      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      // confirm in-person is capitalized
-      const inPerson = await screen.findByText('In-person');
-      expect(inPerson).toBeVisible();
-    });
-
     it('shows read only mode correctly for hybrid', async () => {
       const readOnlyFormValues = {
         ...defaultFormValues,
@@ -264,40 +233,6 @@ describe('participants', () => {
       expect(inPersonLabel).toBeVisible();
       const virtuallyLabel = await screen.findByText(/Number of participants attending virtually/i);
       expect(virtuallyLabel).toBeVisible();
-    });
-
-    it('shows read only mode correctly for ist visit selection', async () => {
-      const readOnlyFormValues = {
-        ...defaultFormValues,
-        pocComplete: true,
-        pocCompleteId: userId,
-        pocCompleteDate: todaysDate,
-        event: {
-          pocIds: [userId],
-        },
-        recipients: [
-          {
-            id: 1,
-            label: 'R1 R1 G1',
-          },
-        ],
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: 2,
-        numberOfParticipantsInPerson: 1,
-        numberOfParticipantsVirtually: 1,
-        participants: ['Home Visitor'],
-        language: ['English'],
-        isIstVisit: 'yes',
-        regionalOfficeTta: ['AA', 'TTAC'],
-      };
-
-      act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
-      });
-      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      const regionalOfficeTta = await screen.findByText(/aa, ttac/i);
-      expect(regionalOfficeTta).toBeVisible();
     });
 
     it('only shows the continue button when the session status is complete', async () => {

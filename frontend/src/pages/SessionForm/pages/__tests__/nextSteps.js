@@ -113,7 +113,6 @@ describe('nextSteps', () => {
   describe('render', () => {
     const onSaveDraft = jest.fn();
     const userId = 1;
-    const todaysDate = moment().format('YYYY-MM-DD');
 
     const defaultFormValues = {
       id: 1,
@@ -199,42 +198,6 @@ describe('nextSteps', () => {
       });
 
       expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
-    });
-
-    it('shows read only for pocs when pocComplete', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-          pocComplete: true,
-          pocCompleteId: userId,
-          pocCompleteDate: todaysDate,
-          specialistNextSteps: [{
-            note: 'Very special note',
-            completeDate: '01/01/2022',
-          }],
-          recipientNextSteps: [{
-            note: 'Other note',
-            completeDate: '01/01/2021',
-          }],
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      // confirm read-only
-      const checkbox = screen.queryByRole('checkbox');
-      expect(checkbox).not.toBeInTheDocument();
-      const textareas = document.querySelectorAll('textarea');
-      expect(textareas.length).toBe(0);
-
-      // confirm content
-      expect(await screen.findByText(/very special note/i)).toBeVisible();
-      expect(await screen.findByText('01/01/2022')).toBeVisible();
-      expect(await screen.findByText(/other note/i)).toBeVisible();
-      expect(await screen.findByText('01/01/2021')).toBeVisible();
     });
 
     it('hides the save draft button if the session is complete', async () => {
