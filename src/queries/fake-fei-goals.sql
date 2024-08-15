@@ -1,9 +1,9 @@
 /**
 * @name: Fake FEI Goals
-* @description: A report of all goals realting to under/full enrollment that are not linked to the official FEI template.
+* @description: A report of all goals relating to under/full enrollment that are not linked to the official FEI template.
 * @defaultOutputName: fake_fei_report
 *
-* This query collects goals realting to under/full enrollment that are not linked to the official FEI template.
+* This query collects goals relating to under/full enrollment that are not linked to the official FEI template.
 *
 * The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
@@ -89,4 +89,8 @@ AND (NULLIF(current_setting('ssdi.status', true), '') IS NULL
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.status', true), ''),'[]')::json) AS value
       ))
 GROUP BY 1,2,3,4,5,6,7,8,11,12
+-- Ghost goal filter
+HAVING NOT (g."createdVia" = 'activityReport'
+	AND COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') = 0
+	AND COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) = 0)
 ORDER BY 5,11 desc;
