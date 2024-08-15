@@ -11,6 +11,7 @@ describe('GoalCardsHeader', () => {
   const DEFAULT_USER = {
     name: '',
     id: 1,
+    flags: [],
   };
 
   const REGION_ID = 1;
@@ -19,7 +20,6 @@ describe('GoalCardsHeader', () => {
   beforeEach(() => {
     const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
-    fetchMock.get('/api/users/feature-flags', ['manual_mark_goals_similar']);
     fetchMock.put(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`, {});
   });
 
@@ -66,11 +66,17 @@ describe('GoalCardsHeader', () => {
 
   const history = createMemoryHistory();
 
-  const renderTest = (props = {}, locationState = undefined) => {
+  const renderTest = (props = {}, locationState = undefined, userFlags = []) => {
     history.location.state = locationState;
 
     render(
-      <UserContext.Provider value={{ user: DEFAULT_USER }}>
+      <UserContext.Provider value={{
+        user: {
+          ...DEFAULT_USER,
+          flags: userFlags,
+        },
+      }}
+      >
         <Router history={history}>
           {/* eslint-disable-next-line react/jsx-props-no-spreading */}
           <GoalCardsHeader {...defaultProps} {...props} />
@@ -123,7 +129,7 @@ describe('GoalCardsHeader', () => {
     };
 
     act(() => {
-      renderTest(props);
+      renderTest(props, {}, ['manual_mark_goals_similar']);
     });
 
     const markSimilarButton = await screen.findByRole('button', { name: /mark goals as similar/i });
@@ -156,10 +162,6 @@ describe('GoalCardsHeader', () => {
       hasManualMarkGoalsSimilar: false,
     };
 
-    fetchMock.config.overwriteRoutes = true;
-    fetchMock.get('/api/users/feature-flags', []);
-    fetchMock.config.overwriteRoutes = false;
-
     await act(async () => {
       renderTest(props);
     });
@@ -175,7 +177,7 @@ describe('GoalCardsHeader', () => {
     };
 
     await act(async () => {
-      renderTest(props);
+      renderTest(props, {}, ['manual_mark_goals_similar']);
     });
 
     const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
