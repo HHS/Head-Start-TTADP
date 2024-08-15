@@ -271,6 +271,11 @@ function EventCard({
             isWriteable={isNotCompleteOrSuspended && (isOwnerOrCollaborator || isPoc)}
             onRemoveSession={onRemoveSession}
             eventStatus={eventStatus}
+            pocComplete={data.pocComplete}
+            ownerComplete={data.ownerComplete}
+            isPoc={isPoc}
+            isOwner={isOwner}
+            isCollaborator={isCollaborator}
           />
         ))}
       </article>

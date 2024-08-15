@@ -38,6 +38,9 @@ describe('SessionCard', () => {
     hasWritePermissions = true,
     eventStatus = TRAINING_REPORT_STATUSES.IN_PROGRESS,
     passedUser = defaultUser,
+    isOwner = true,
+    isPoc = false,
+    isCollaborator = false,
   ) => {
     const user = passedUser || defaultUser;
     render((
@@ -50,6 +53,9 @@ describe('SessionCard', () => {
             onRemoveSession={jest.fn()}
             expanded
             eventStatus={eventStatus}
+            isPoc={isPoc}
+            isOwner={isOwner}
+            isCollaborator={isCollaborator}
           />
         </UserContext.Provider>
       </Router>));
@@ -74,7 +80,15 @@ describe('SessionCard', () => {
   });
 
   it('hides edit link if session is complete', () => {
-    renderSessionCard({ id: 1, data: { ...defaultSession.data, status: 'Complete' } });
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        ownerComplete: true,
+        status: 'Complete',
+      },
+    });
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.queryByText(/edit session/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/delete session/i)).not.toBeInTheDocument();
@@ -139,6 +153,90 @@ describe('SessionCard', () => {
       }],
     };
     renderSessionCard(defaultSession, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, adminUser);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
+  });
+
+  it('hides the edit session button if the poc work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        ownerComplete: false,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /delete session/i })).not.toBeInTheDocument();
+  });
+
+  it('hides the edit session button if the owner work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        ownerComplete: true,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /delete session/i })).not.toBeInTheDocument();
+  });
+
+  it('hides the edit session button if the user is a collaborator and the owner work is complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        ownerComplete: true,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /edit session/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /delete session/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the edit session button if the owner work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: true,
+        ownerComplete: false,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, true);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
+  });
+
+  it('shows the edit session button if the poc work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        ownerComplete: true,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, true);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
+  });
+
+  it('shows the edit button if the user is a collaborator and the owner work is not complete', () => {
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        pocComplete: false,
+        ownerComplete: false,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, defaultUser, false, false, true);
     expect(screen.getByText('This is my session title')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
