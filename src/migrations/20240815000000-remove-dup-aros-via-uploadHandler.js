@@ -397,7 +397,6 @@ module.exports = {
 
         -- Insert non-matching records into ActivityReportObjectives
         -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure
-        -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure
         CREATE TEMP TABLE temp_inserted_objectives AS
         WITH inserted_rows AS (
             INSERT INTO "ActivityReportObjectives" (
