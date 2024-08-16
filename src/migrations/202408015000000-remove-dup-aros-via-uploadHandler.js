@@ -48,12 +48,12 @@ module.exports = {
         FROM "ZALActivityReportObjectives" zaro
         JOIN "ZADescriptor" zd
         ON zaro.descriptor_id = zd.id
-		LEFT JOIN "ZALActivityReportObjectives" zarod
-		ON zaro.data_id = zarod.data_id
-		AND zarod.dml_type = 'DELETE'
-        WHERE zaro.dml_type = 'INSERT'
-		AND zarod.id IS NULL
-		AND (zaro.new_row_data ->> 'activityReportId')::int = 46116
+        LEFT JOIN "ZALActivityReportObjectives" zarod
+        ON zaro.data_id = zarod.data_id
+        AND zarod.dml_type = 'DELETE'
+            WHERE zaro.dml_type = 'INSERT'
+        AND zarod.id IS NULL
+        AND (zaro.new_row_data ->> 'activityReportId')::int = 46116
         GROUP BY 1,2
         HAVING COUNT(zaro.id) > 1
         AND array_position(array_agg(DISTINCT zd.descriptor), 'uploadHandler') IS NOT NULL
