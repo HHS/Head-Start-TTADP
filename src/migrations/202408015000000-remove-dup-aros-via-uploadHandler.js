@@ -6,6 +6,9 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
 
       await queryInterface.sequelize.query(/* sql */`
+        -- This dedupes the AROs for one AR (46116) in an active support case 
+        -- other ARO deduping will come in a subsequent migration after the
+        -- team has reached agreement on how to handle ttaProvided values
         -- Drop temporary tables if they exist
         DROP TABLE IF EXISTS temp_dup_aro_sets;
         DROP TABLE IF EXISTS temp_reduced_arot;
