@@ -6,7 +6,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
 
       await queryInterface.sequelize.query(/* sql */`
-        -- This dedupes the AROs for one AR (46116) in an active support case 
+        -- This dedupes the AROs for one AR (46116) in an active support case
         -- other ARO deduping will come in a subsequent migration after the
         -- team has reached agreement on how to handle ttaProvided values
         -- Drop temporary tables if they exist
@@ -56,7 +56,7 @@ module.exports = {
         AND zarod.dml_type = 'DELETE'
             WHERE zaro.dml_type = 'INSERT'
         AND zarod.id IS NULL
-        AND (zaro.new_row_data ->> 'activityReportId')::int = 46116
+        AND (zaro.new_row_data ->> 'activityReportId')::int in (46116, 46266, 45907)
         GROUP BY 1,2
         HAVING COUNT(zaro.id) > 1
         AND array_position(array_agg(DISTINCT zd.descriptor), 'uploadHandler') IS NOT NULL
@@ -396,8 +396,8 @@ module.exports = {
         SELECT * FROM updated_rows;
 
         -- Insert non-matching records into ActivityReportObjectives
-        -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure 
-        -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure 
+        -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure
+        -- There should never be an INSERT performed here, but the code is present to complete the structure UID structure
         CREATE TEMP TABLE temp_inserted_objectives AS
         WITH inserted_rows AS (
             INSERT INTO "ActivityReportObjectives" (
