@@ -72,6 +72,7 @@ function GoalDataController({
   const [logs, setLogs] = useState([]);
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
 
   useEffect(() => {
     let isLoaded = false;
@@ -136,6 +137,7 @@ function GoalDataController({
         const goalBuckets = response.allGoalIds;
         setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
         setError('');
+
         // display success message if we have merged goals
         setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
       } catch (e) {
@@ -145,6 +147,18 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
+    console.log('currnetFilters', currentFilters);
+    console.log('new filterQuery', filterQuery);
+    // If filters is different from currentFilters, then reset the activePage and Offset.
+    if (filterQuery !== currentFilters) {
+      console.log('RESET PAGE!');
+      setSortConfig({
+        ...sortConfig,
+        activePage: 1,
+        offset: 0,
+      });
+      setCurrentFilters(filterQuery);
+    }
     fetchGoals(filterQuery);
   }, [
     sortConfig,
@@ -155,6 +169,7 @@ function GoalDataController({
     setSortConfig,
     goalsPerPage,
     history.location,
+    setCurrentFilters,
   ]);
 
   useEffect(() => {
