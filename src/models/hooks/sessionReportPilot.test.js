@@ -8,13 +8,11 @@ import {
   beforeDestroy,
   syncGoalCollaborators,
 } from './sessionReportPilot';
-import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../../lib/mailer';
+import { trSessionCreated } from '../../lib/mailer';
 import db from '..';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
-  trSessionCompleted: jest.fn(),
-  trPocSessionComplete: jest.fn(),
 }));
 
 jest.mock('express-http-context', () => {
