@@ -903,6 +903,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Clean previous reports
+          command: rm -rf reports/*
+      - run:
           name: Start up local server
           command: ./bin/prod-style-server
       - run:
