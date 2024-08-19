@@ -95,7 +95,8 @@ function EventCard({
       label: 'Complete event',
       onClick: async () => {
         try {
-          await completeEvent(idForLink, event);
+          const { sessionReports: sessions, ...eventReport } = event;
+          await completeEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
           setMessage({
             text: 'Event completed successfully',
@@ -135,7 +136,8 @@ function EventCard({
       label: 'Resume event',
       onClick: async () => {
         try {
-          await resumeEvent(idForLink, event);
+          const { sessionReports: sessions, ...eventReport } = event;
+          await resumeEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
           setMessage({
             text: 'Event resumed successfully',
@@ -156,7 +158,8 @@ function EventCard({
       label: 'Suspend event',
       onClick: async () => {
         try {
-          await suspendEvent(idForLink, event);
+          const { sessionReports: sessions, ...eventReport } = event;
+          await suspendEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
           setMessage({
             text: 'Event suspended successfully',

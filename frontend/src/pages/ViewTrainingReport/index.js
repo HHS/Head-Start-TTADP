@@ -178,7 +178,8 @@ export default function ViewTrainingReport({ match }) {
       });
 
       setIsAppLoading(true);
-      await completeEvent(match.params.trainingReportId, event);
+      const { sessionReports: sessions, ...eventReport } = event;
+      await completeEvent(match.params.trainingReportId, eventReport);
       setEvent(null);
       setAlertMessage({
         type: 'success',
