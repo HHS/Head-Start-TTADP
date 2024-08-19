@@ -105,6 +105,7 @@ function EventCard({
             type: 'success',
           });
           removeEventFromDisplay(id);
+          window.scrollTo(0, 0);
         } catch (err) {
           setMessage({
             text: 'Error completing event',
@@ -147,6 +148,7 @@ function EventCard({
             type: 'success',
           });
           removeEventFromDisplay(id);
+          window.scrollTo(0, 0);
         } catch (err) {
           setMessage({
             text: 'Error resuming event',
@@ -170,6 +172,7 @@ function EventCard({
             type: 'success',
           });
           removeEventFromDisplay(id);
+          window.scrollTo(0, 0);
         } catch (err) {
           setMessage({
             text: 'Error suspending event',
