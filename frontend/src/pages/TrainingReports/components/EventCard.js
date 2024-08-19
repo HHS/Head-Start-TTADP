@@ -21,6 +21,8 @@ function EventCard({
   onRemoveSession,
   onDeleteEvent,
   zIndex,
+  setParentMessage,
+  removeEventFromDisplay,
 }) {
   const modalRef = useRef(null);
   const { user } = useContext(UserContext);
@@ -98,10 +100,11 @@ function EventCard({
           const { sessionReports: sessions, ...eventReport } = event;
           await completeEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
-          setMessage({
+          setParentMessage({
             text: 'Event completed successfully',
             type: 'success',
           });
+          removeEventFromDisplay(id);
         } catch (err) {
           setMessage({
             text: 'Error completing event',
@@ -139,10 +142,11 @@ function EventCard({
           const { sessionReports: sessions, ...eventReport } = event;
           await resumeEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
-          setMessage({
+          setParentMessage({
             text: 'Event resumed successfully',
             type: 'success',
           });
+          removeEventFromDisplay(id);
         } catch (err) {
           setMessage({
             text: 'Error resuming event',
@@ -161,10 +165,11 @@ function EventCard({
           const { sessionReports: sessions, ...eventReport } = event;
           await suspendEvent(idForLink, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
-          setMessage({
+          setParentMessage({
             text: 'Event suspended successfully',
             type: 'success',
           });
+          removeEventFromDisplay(id);
         } catch (err) {
           setMessage({
             text: 'Error suspending event',
@@ -190,7 +195,7 @@ function EventCard({
   };
 
   // get the last four digits of the event id
-  const link = canEditEvent ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
+  const link = canEditEvent && !eventSubmitted ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
   const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
@@ -292,6 +297,8 @@ EventCard.propTypes = {
   onRemoveSession: PropTypes.func.isRequired,
   onDeleteEvent: PropTypes.func.isRequired,
   zIndex: PropTypes.number.isRequired,
+  setParentMessage: PropTypes.func.isRequired,
+  removeEventFromDisplay: PropTypes.func.isRequired,
 };
 
 export default EventCard;

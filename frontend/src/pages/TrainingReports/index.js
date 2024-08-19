@@ -125,6 +125,14 @@ export default function TrainingReports({ match }) {
     }
   };
 
+  const removeEventFromDisplay = (id) => {
+    // update the UI, exclude the deleted event.
+    const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
+
+    // update the events state.
+    setDisplayEvents(events);
+  };
+
   /**
    *
    * eventId is the number from smartsheet (used in queries)
@@ -137,12 +145,7 @@ export default function TrainingReports({ match }) {
     try {
       // delete the event
       await deleteEvent(String(eventId));
-
-      // update the UI, exclude the deleted event.
-      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
-
-      // update the events state.
-      setDisplayEvents(events);
+      removeEventFromDisplay(id);
     } catch (e) {
       updateError('Unable to delete event');
       // eslint-disable-next-line no-console
@@ -233,6 +236,7 @@ export default function TrainingReports({ match }) {
                 eventType={status}
                 onRemoveSession={onRemoveSession}
                 onDeleteEvent={onDeleteEvent}
+                removeEventFromDisplay={removeEventFromDisplay}
               />
             </WidgetContainer>
           </Grid>
