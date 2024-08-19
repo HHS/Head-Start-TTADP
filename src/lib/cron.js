@@ -18,7 +18,9 @@ import { logger, auditLogger } from '../logger';
 // Run at 4 am ET
 const schedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '1 16 * * 1-5';
+// const dailySched = '1 16 * * 1-5';
+// every minute for testing
+const dailySched = '* * * * *';
 // Run at 4 pm every Friday
 const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
@@ -36,6 +38,7 @@ const runJob = () => {
 };
 
 const runDailyEmailJob = () => {
+  console.log('running daily email job');
   (async () => {
     logger.info('Starting daily digests');
     try {
@@ -103,19 +106,19 @@ const runMonthlyEmailJob = () => {
  */
 export default function runCronJobs() {
   // Run only on one instance
-  if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
-    // disable updates for non-production environments
-    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(schedule, () => runJob(), null, true, timezone);
-      job.start();
-    }
-    const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
-    dailyJob.start();
-    const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
-    weeklyJob.start();
-    const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
-    monthlyJob.start();
-
-    runMaintenanceCronJobs(timezone);
+  // if (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') {
+  // disable updates for non-production environments
+  if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
+    const job = new CronJob(schedule, () => runJob(), null, true, timezone);
+    job.start();
   }
+  const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+  dailyJob.start();
+  // const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
+  // weeklyJob.start();
+  // const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
+  // monthlyJob.start();
+
+  runMaintenanceCronJobs(timezone);
+  // }
 }
