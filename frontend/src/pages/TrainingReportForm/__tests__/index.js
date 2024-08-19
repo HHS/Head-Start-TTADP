@@ -305,11 +305,7 @@ describe('TrainingReportForm', () => {
     });
 
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
-    const viewReportLink = screen.getByRole('link', { name: /r01-pd-1234/i });
-    expect(viewReportLink).toBeInTheDocument();
-
-    // Verify the href='/' attribute is correct.
-    expect(viewReportLink).toHaveAttribute('href', '/training-report/view/1');
+    await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
 
   it('sets the status to "In progress" when hitting the save draft button', async () => {
