@@ -22,7 +22,6 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
 import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
-import ReportLink from '../../components/ReportLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
@@ -392,7 +391,12 @@ export default function SessionForm({ match }) {
             </h1>
             {
               formData && formData.event && (
-              <ReportLink reportId={formData.event.data.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
+                <div className="lead-paragraph">
+                  {formData.event.data.eventId}
+                  :
+                  {' '}
+                  {formData.eventName}
+                </div>
               )
             }
           </div>

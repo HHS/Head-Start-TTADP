@@ -27,7 +27,7 @@ import EventSummary from './pages/eventSummary';
 import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 import Modal from '../../components/VanillaModal';
-import ReportLink from '../../components/ReportLink';
+
 /**
  * this is just a simple handler to "flatten"
  * the JSON column data into the form
@@ -292,7 +292,12 @@ export default function TrainingReportForm({ match }) {
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
               Training report - Event
             </h1>
-            <ReportLink reportId={formData.eventId} reportName={formData.eventName} to={`/training-report/view/${trainingReportId}`} />
+            <div className="lead-paragraph">
+              {formData.eventId}
+              :
+              {' '}
+              {formData.eventName}
+            </div>
           </div>
         </Grid>
       </Grid>
