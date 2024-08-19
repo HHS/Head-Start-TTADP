@@ -81,6 +81,7 @@ describe('EventCards', () => {
             eventType={eventType}
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
+            removeEventFromDisplay={jest.fn()}
           />
         </UserContext.Provider>
       </MemoryRouter>));

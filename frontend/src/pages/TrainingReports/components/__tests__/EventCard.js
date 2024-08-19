@@ -1,6 +1,8 @@
 import React from 'react';
 import { Router } from 'react-router';
-import { act, render, screen } from '@testing-library/react';
+import {
+  act, render, screen,
+} from '@testing-library/react';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import userEvent from '@testing-library/user-event';
@@ -59,7 +61,7 @@ describe('EventCard', () => {
     user = DEFAULT_USER,
     onDeleteEvent = jest.fn(),
   ) => {
-    render((
+    render(
       <UserContext.Provider value={{ user }}>
         <Router history={history}>
           <EventCard
@@ -67,9 +69,12 @@ describe('EventCard', () => {
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
             zIndex={0}
+            setParentMessage={jest.fn()}
+            removeEventFromDisplay={jest.fn()}
           />
         </Router>
-      </UserContext.Provider>));
+      </UserContext.Provider>,
+    );
   };
 
   afterEach(() => {
@@ -343,7 +348,6 @@ describe('EventCard', () => {
     });
 
     expect(fetchMock.called()).toBe(true);
-    expect(await screen.findByText(/event completed successfully/i)).toBeInTheDocument();
   });
 
   it('sad path: async failure to complete event', async () => {
@@ -439,7 +443,6 @@ describe('EventCard', () => {
     });
 
     expect(fetchMock.called()).toBe(true);
-    expect(await screen.findByText(/event suspended successfully/i)).toBeInTheDocument();
   });
 
   it('sad path: suspend failure', async () => {
@@ -532,7 +535,6 @@ describe('EventCard', () => {
     });
 
     expect(fetchMock.called()).toBe(true);
-    expect(await screen.findByText(/event resumed successfully/i)).toBeInTheDocument();
   });
 
   it('sad path: resume failure', async () => {
