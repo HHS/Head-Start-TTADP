@@ -26,4 +26,4 @@ docker run \
   --network=$network \
   -t softwaresecurityproject/zap-stable:latest zap-baseline.py \
   -t http://server:8080 \
-  -c zap.conf -I -i -r owasp_report_.html --ignore-rule 10096
+  -c zap.conf -I -i -r owasp_report_.html
