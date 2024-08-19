@@ -921,7 +921,7 @@ jobs:
           name: Run OWASP ZAP
           command: ./bin/run-owasp-scan
       - store_artifacts:
-          path: reports/owasp_report.html
+          path: reports/owasp_report_.html
     resource_class: large
   deploy:
     executor: docker-executor
