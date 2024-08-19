@@ -2,7 +2,7 @@
 import { createTransport } from 'nodemailer';
 import moment from 'moment';
 import { uniq, lowerCase } from 'lodash';
-import { Op, QueryTypes } from 'sequelize';
+import { QueryTypes } from 'sequelize';
 import Email from 'email-templates';
 import * as path from 'path';
 import {
@@ -530,38 +530,6 @@ export const trSessionCreated = async (event) => {
       };
 
       return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
- */
-export const trSessionCompleted = async (event) => {
-  if (process.env.CI) return;
-  try {
-    if (!event.pocIds && !event.pocIds.length) {
-      auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
-    }
-
-    await Promise.all(event.pocIds.map(async (id) => {
-      const user = await userById(id);
-
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a session was completed for TR ${event.id}`,
-        templatePath: 'tr_session_completed',
-        ...referenceData(),
-      };
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED, data);
     }));
   } catch (err) {
     auditLogger.error(err);
