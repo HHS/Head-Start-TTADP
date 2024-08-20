@@ -1,7 +1,7 @@
 /**
-* @name: Monitoring Report Data Fetcher
+* @name: Monitoring Grant Citation Report
 * @description: Retrieves monitoring report data based on various filters for compliance and audit purposes.
-* @defaultOutputName: monitoring_report_data
+* @defaultOutputName: monitoring_grant_citation_report
 * @technicalDescription: This query extracts monitoring report details including region, grant number, report delivery date, finding type, and citations, filtered by several parameters such as report delivery date, review outcomes, review types, finding reported date, and others.
 *
 * The query results are filterable by the following SSDI flags, which are passed as an array of values:
