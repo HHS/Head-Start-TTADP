@@ -167,7 +167,6 @@ function GoalDataController({
     setSortConfig,
     goalsPerPage,
     history.location,
-    setCurrentFilters,
   ]);
 
   useEffect(() => {
