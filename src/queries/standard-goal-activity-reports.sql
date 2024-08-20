@@ -18,7 +18,13 @@
 * SELECT SET_CONFIG('ssdi.startDate','["2023-10-01"]',TRUE);
 */
 WITH
-  DistinctIDs AS (
+  "FixedPartLength" AS (
+    SELECT
+      LENGTH('https://ttahub.ohs.acf.hhs.gov/api/activity-reports/download-all?' ||
+             'region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12' ||
+             '&reportId.ctn[]=') AS fixed_length
+  ),
+  "DistinctIDs" AS (
     SELECT DISTINCT
       a.id
     FROM "Goals" g
@@ -89,27 +95,32 @@ WITH
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.uei', true), ''),'[]')::json) AS value
       ))
   ),
-  NumberedIDs AS (
+  "MaxGroupSize" AS (
+    SELECT
+      (2048 - MAX(fixed_length)) / (MAX(LENGTH(id::text)) + 1) AS max_ids_per_group
+    FROM "FixedPartLength", "DistinctIDs"
+  ),
+  "NumberedIDs" AS (
       SELECT
         id,
         ROW_NUMBER() OVER (ORDER BY id) AS row_num
-      FROM DistinctIDs
+      FROM "DistinctIDs"
   ),
-  GroupedIDs AS (
+  "GroupedIDs" AS (
       SELECT
         id,
-        CEIL(row_num / 2000.0) AS group_num
-      FROM NumberedIDs
+        CEIL(row_num::numeric / max_ids_per_group::numeric) AS group_num
+      FROM "NumberedIDs", "MaxGroupSize"
   )
 SELECT
   group_num,
-    COUNT(id) AS report_count,
-    CONCAT(
+  COUNT(id) AS report_count,
+  CONCAT(
     'https://ttahub.ohs.acf.hhs.gov/api/activity-reports/download-all?',
     'region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12',
     '&reportId.ctn[]=',
-      STRING_AGG(id::text, '|')
-    ) AS download_url
-FROM GroupedIDs
+    STRING_AGG(id::text, '|')
+  ) AS download_url
+FROM "GroupedIDs"
 GROUP BY group_num
 ORDER BY group_num;
