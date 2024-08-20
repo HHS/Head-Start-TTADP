@@ -52,7 +52,7 @@ WITH
                     -- List of supported standard goals:
                     WHEN value = 'CLASS' THEN 18172 -- CLASS
                     WHEN value = 'FEI' THEN 19017 -- FEI
-                    -- Note: Add new standard goals above this line!!!!
+                    -- Note: Add new standard goals above this line
                     ELSE NULL
                   END::integer
                 FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.standardGoal', true), ''),'["CLASS"]')::json) AS value
