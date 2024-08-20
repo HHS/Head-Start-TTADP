@@ -4,6 +4,7 @@ const cheerio = require('cheerio');
 // Get command-line arguments for source and destination files
 const args = process.argv.slice(2);
 if (args.length < 2) {
+  // eslint-disable-next-line no-console
   console.error('Usage: node clean-zap-report.js <sourceFile> <destinationFile>');
   process.exit(1);
 }
@@ -16,7 +17,6 @@ const ignoreIds = ['10096'];
 
 fs.readFile(sourceFile, 'utf8', (err, data) => {
   if (err) {
-    console.error(`Error reading the source file: ${err.message}`);
     process.exit(1);
   }
 
@@ -41,9 +41,7 @@ fs.readFile(sourceFile, 'utf8', (err, data) => {
 
   fs.writeFile(destinationFile, $.html(), 'utf8', (error) => {
     if (error) {
-      console.error(`Error writing to the destination file: ${error.message}`);
       process.exit(1);
     }
-    console.log(`Cleaned report saved to ${destinationFile}`);
   });
 });
