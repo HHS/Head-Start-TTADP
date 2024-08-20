@@ -35,7 +35,7 @@ SELECT
     similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
     similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
   ) similarity,
-  STRINGAGG(DISTINCT u.name, ',') "goal user list",
+  STRINGAGG(DISTINCT u.name, ';') "goal user list",
   g.name "goal text"
 FROM "Goals" g
 JOIN "GoalTemplates" gt
