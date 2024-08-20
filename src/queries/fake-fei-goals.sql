@@ -19,49 +19,6 @@
 * SELECT SET_CONFIG('ssdi.regionIds','[11]',TRUE);
 */
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-------------------+------------
-WITH gnames AS (
-SELECT DISTINCT g.name gname
-FROM "Goals" g
-JOIN "Grants" gr
-  ON g."grantId" = gr.id
-WHERE g."deletedAt" IS NULL
-  AND gr.deleted = FALSE
-),
-oldest_name_instances AS (
-SELECT
-  gname,
-  MIN(id) firstgoalid
-FROM gnames
-JOIN "Goals"
-  ON gname = name
-GROUP BY 1
-),
-name_creations AS (
-SELECT
-  gname,
-  firstgoalid,
-  "createdVia" first_createdvia,
-  MIN(zag.id) firstzagid
-FROM oldest_name_instances
-JOIN "Goals" g
-  ON g.id = firstgoalid
-LEFT JOIN "ZALGoals" zag
-  ON data_id = firstgoalid
-  AND new_row_data->>'name' = gname
-GROUP BY 1,2,3
-),
-name_creators AS (
-SELECT
-  gname,
-  first_createdvia,
-  u.name creator_name
-FROM name_creations
-LEFT JOIN "ZALGoals" zag
-  ON firstzagid = zag.id
-LEFT JOIN "Users" u
-  ON zag.dml_as = u.id
-)
 SELECT
   r.name,
   r.uei,
@@ -70,7 +27,7 @@ SELECT
   gr."regionId",
   g.id "goal id",
   g.status "goal status",
-  g."createdAt",
+  g."createdAt" "goal creation time",
   COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') "approved reports",
   COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) "pending reports",
   GREATEST(
@@ -78,8 +35,8 @@ SELECT
     similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
     similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
   ) similarity,
-  COALESCE(nc.creator_name, 'unrecorded creator createdVia: ' || g."createdVia") "goal text creator",
-  g.name
+  STRINGAGG(DISTINCT u.name, ',') "goal user list",
+  g.name "goal text"
 FROM "Goals" g
 JOIN "GoalTemplates" gt
 -- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
@@ -92,8 +49,15 @@ LEFT JOIN "ActivityReportGoals" arg
 ON g.id = arg."goalId"
 LEFT JOIN "ActivityReports" a
 ON arg."activityReportId" = a.id
-LEFT JOIN name_creators nc
-ON g.name = nc.gname
+JOIN "CollaboratorTypes" ct
+ON "validForId" = 1
+AND ct.name = 'Linker'
+LEFT JOIN "GoalCollaborators" gc
+ON g.id = gc."goalId"
+AND gc."collaboratorTypeId" = ct.id
+LEFT JOIN "Users" u
+ON u.id = gc."userId"
+OR u.id = a."userId"
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
 -- excluding goals attached to deleted grants and goals only on TRs, because those are invisible to users
@@ -137,7 +101,7 @@ AND (NULLIF(current_setting('ssdi.status', true), '') IS NULL
         SELECT value::text AS my_array
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.status', true), ''),'[]')::json) AS value
       ))
-GROUP BY 1,2,3,4,5,6,7,8,11,12
+GROUP BY 1,2,3,4,5,6,7,8,11,13
 -- Ghost goal filter
 HAVING NOT (g."createdVia" = 'activityReport'
 	AND COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') = 0
