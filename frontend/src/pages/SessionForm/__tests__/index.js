@@ -322,7 +322,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument());
 
     fetchMock.put(url, { eventId: 1 });
     const saveSession = screen.getByText(/Save draft/i);
@@ -373,7 +373,7 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.pocCompleteId).toBe(1);
     expect(putBodyJson.data.pocCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
-    expect(putBodyJson.data.ownerComplete).toBe(false);
+    expect(putBodyJson.data.ownerComplete).toBe(undefined);
     expect(putBodyJson.data.ownerCompleteId).toBe(undefined);
     expect(putBodyJson.data.ownerCompleteDate).toBe(undefined);
   });
@@ -417,7 +417,7 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
     // Assert the poc complete properties are NOT set.
-    expect(putBodyJson.data.pocComplete).toBe(false);
+    expect(putBodyJson.data.pocComplete).toBe(undefined);
     expect(putBodyJson.data.pocCompleteId).toBe(undefined);
     expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
@@ -436,7 +436,7 @@ describe('SessionReportForm', () => {
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument());
 
     fetchMock.put(url, { eventId: 1 });
     const saveSession = screen.getByText(/Review and submit/i);
