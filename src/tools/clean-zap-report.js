@@ -4,8 +4,8 @@ const cheerio = require('cheerio');
 // Get command-line arguments for source and destination files
 const args = process.argv.slice(2);
 if (args.length < 2) {
-    console.error('Usage: node clean-zap-report.js <sourceFile> <destinationFile>');
-    process.exit(1);
+  console.error('Usage: node clean-zap-report.js <sourceFile> <destinationFile>');
+  process.exit(1);
 }
 
 const sourceFile = args[0];
@@ -15,42 +15,40 @@ const destinationFile = args[1];
 const ignoreIds = ['10096'];
 
 fs.readFile(sourceFile, 'utf8', (err, data) => {
-    if (err) {
-        console.error(`Error reading the source file: ${err.message}`);
-        process.exit(1);
+  if (err) {
+    console.error(`Error reading the source file: ${err.message}`);
+    process.exit(1);
+  }
+
+  const $ = cheerio.load(data);
+
+  ignoreIds.forEach((id) => {
+    // Remove summary table entries
+    $(`a[href="#${id}"]`).parents('tr').remove();
+
+    // Remove detailed sections
+    $(`#${id}`).parents('table.results').remove();
+
+    // Adjust the count in the summary table
+    const lowRiskCountCell = $('td:contains("Low")').next('td').find('div');
+    const lowRiskCount = parseInt(lowRiskCountCell.text(), 10);
+    if (!Number.isNaN(lowRiskCount) && lowRiskCount > 0) {
+      lowRiskCountCell.text(lowRiskCount - 1);
+    } else {
+      lowRiskCountCell.text(lowRiskCount);
     }
+  });
 
-    const $ = cheerio.load(data);
+  // Adjust the count of findings in the summary
+  const riskLowDiv = $('td.risk-1').next('td').find('div');
+  const currentCount = parseInt(riskLowDiv.text(), 10);
+  riskLowDiv.text(currentCount - 1);
 
-    ignoreIds.forEach(id => {
-        // Remove summary table entries
-        $(`a[href="#${id}"]`).parents('tr').remove();
-        
-        // Remove detailed sections
-        $(`#${id}`).parents('table.results').remove();
-
-        // Adjust the count in the summary table
-        const lowRiskCountCell = $('td:contains("Low")').next('td').find('div');
-        let lowRiskCount = parseInt(lowRiskCountCell.text(), 10);
-        if (!isNaN(lowRiskCount) && lowRiskCount > 0) {
-            lowRiskCountCell.text(lowRiskCount - 1);
-        }
-        else {
-            lowRiskCountCell.text(lowRiskCount);
-        }
-        
-    });
-
-    // Adjust the count of findings in the summary
-    const riskLowDiv = $('td.risk-1').next('td').find('div');
-    const currentCount = parseInt(riskLowDiv.text(), 10);
-    riskLowDiv.text(currentCount - 1);
-
-    fs.writeFile(destinationFile, $.html(), 'utf8', err => {
-        if (err) {
-            console.error(`Error writing to the destination file: ${err.message}`);
-            process.exit(1);
-        }
-        console.log(`Cleaned report saved to ${destinationFile}`);
-    });
+  fs.writeFile(destinationFile, $.html(), 'utf8', (error) => {
+    if (error) {
+      console.error(`Error writing to the destination file: ${error.message}`);
+      process.exit(1);
+    }
+    console.log(`Cleaned report saved to ${destinationFile}`);
+  });
 });
