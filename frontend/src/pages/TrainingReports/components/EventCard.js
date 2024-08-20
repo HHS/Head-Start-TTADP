@@ -44,17 +44,15 @@ function EventCard({
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
-  const isOwnerOrPoc = isOwner || isPoc;
+  // const isOwnerOrPoc = isOwner || isPoc;
   const isOwnerOrCollaborator = isOwner || isCollaborator;
   const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
   const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
   const isNotCompleteOrSuspended = !isComplete && !isSuspended;
 
-  const canEditEvent = (
-    isNotCompleteOrSuspended
-    && isOwnerOrPoc)
-    || (isNotComplete && (isOwner || hasAdminRights));
+  const canEditEvent = (isOwner && !eventSubmitted)
+    || (hasAdminRights && isNotComplete);
   const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
@@ -125,7 +123,7 @@ function EventCard({
     });
   }
 
-  if (canEditEvent && !eventSubmitted) {
+  if (canEditEvent) {
     // Edit event.
     menuItems.push({
       label: 'Edit event',
