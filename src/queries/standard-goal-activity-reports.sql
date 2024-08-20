@@ -3,6 +3,7 @@
 * @description: Generates downloadable URLs for approved reports based on various filters for standard goals.
 * @defaultOutputName: standard_goal_report_download_urls
 * @technicalDescription: Runs a query using the supplied filters to build a set of URLs. Pasting each URL to the browser downloads an Activity Report Export CSV from the TTA Hub containing filtered goals that use the desired standard goal template. Future standard goals will need to be added to the case statement where specified.
+
 * This query filters reports based on several SSDI flags and generates URLs for downloading the reports.
 *
 * The query results are filterable by the following SSDI flags, which are passed as an array of values:
