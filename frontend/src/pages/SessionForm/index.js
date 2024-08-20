@@ -157,12 +157,12 @@ export default function SessionForm({ match }) {
   const redirectPagePath = isPoc ? 'participants' : 'session-summary';
 
   useEffect(() => {
-    if (!trainingReportId || !sessionId) {
+    if (!trainingReportId || !sessionId || !currentPage) {
       return;
     }
-    const newPath = `/training-report/${trainingReportId}/session/${sessionId}`;
+    const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
-  }, [sessionId, setSocketPath, trainingReportId]);
+  }, [sessionId, setSocketPath, trainingReportId, currentPage]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
