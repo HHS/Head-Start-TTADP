@@ -16,7 +16,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
-import { defaultValues } from './constants';
+import { defaultValues, baseDefaultValues } from './constants';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
@@ -32,6 +32,43 @@ import Modal from '../../components/VanillaModal';
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
+const istKeys = [
+  'sessionName',
+  'startDate',
+  'endDate',
+  'duration',
+  'context',
+  'objective',
+  'objectiveTopics',
+  'objectiveTrainers',
+  'useIpdCourses',
+  'courses',
+  'objectiveResources',
+  'addObjectiveFilesYes',
+  'files',
+  'ttaProvided',
+  'objectiveSupportType',
+  'pocComplete',
+  'ownerComplete',
+];
+
+const pocKeys = [
+  'isIstVisit',
+  'regionalOfficeTta',
+  'recipients',
+  'participants',
+  'numberOfParticipants',
+  'numberOfParticipantsInPerson',
+  'numberOfParticipantsVirtually',
+  'deliveryMethod',
+  'language',
+  'supportingAttachments',
+  'recipientNextSteps',
+  'specialistNextSteps',
+  'pocComplete',
+  'ownerComplete',
+];
+
 /**
    * this is just a simple handler to "flatten"
    * the JSON column data into the form
@@ -41,16 +78,46 @@ const INTERVAL_DELAY = 10000; // TEN SECONDS
    * @param {*} event - not an HTML event, but the event object from the database, which has some
    * information stored at the top level of the object, and some stored in a data column
    */
-const resetFormData = (reset, updatedSession) => {
+const resetFormData = (reset, updatedSession, isPocFromSession, isAdminUser) => {
+  let keyArray;
+  if (isAdminUser) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isPocFromSession) {
+    keyArray = pocKeys;
+  } else {
+    keyArray = istKeys;
+  }
+
   const {
     data,
     updatedAt,
     ...fields
   } = updatedSession;
 
+  // Get all the default values that appear in the keyAarray.
+  let roleDefaultValues = keyArray.reduce((acc, key) => {
+    if (defaultValues[key]) {
+      acc[key] = defaultValues[key];
+    }
+    return acc;
+  }, {});
+
+  // Add the base default values to the role default values.
+  roleDefaultValues = {
+    ...roleDefaultValues,
+    ...baseDefaultValues,
+  };
+
+  const roleData = keyArray.reduce((acc, key) => {
+    if (data && data[key]) {
+      acc[key] = data[key];
+    }
+    return acc;
+  }, {});
+
   const form = {
-    ...defaultValues,
-    ...data,
+    ...roleDefaultValues,
+    ...roleData,
     ...fields,
   };
 
@@ -134,13 +201,21 @@ export default function SessionForm({ match }) {
         isOwnerUser = true;
       }
     }
-
     return {
       isPoc: isPocUser,
       isCollaborator: isCollaboratorUser,
       isOwner: isOwnerUser,
     };
   })();
+
+  const getKeyArray = () => {
+    if (isAdminUser) {
+      return [...istKeys, ...pocKeys];
+    } if (isPoc) {
+      return pocKeys;
+    }
+    return istKeys;
+  };
 
   // Set pages based on user role.
   let applicationPages = [];
@@ -180,10 +255,11 @@ export default function SessionForm({ match }) {
 
       try {
         const session = await createSession(trainingReportId);
+        const isPocFromSession = session.event.pocIds.includes(user.id);
 
         // we don't want to refetch if we've extracted the session data
         setReportFetched(true);
-        resetFormData(hookForm.reset, session);
+        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
         reportId.current = session.id;
         history.replace(`/training-report/${trainingReportId}/session/${session.id}/${currentPage}`);
       } catch (e) {
@@ -207,7 +283,8 @@ export default function SessionForm({ match }) {
       }
       try {
         const session = await getSessionBySessionId(sessionId);
-        resetFormData(hookForm.reset, session);
+        const isPocFromSession = (session.event.pocIds || []).includes(user.id);
+        resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
         reportId.current = session.id;
       } catch (e) {
         setErrorResponseCode(e.status);
@@ -239,6 +316,26 @@ export default function SessionForm({ match }) {
     );
   }
 
+  const keyArray = getKeyArray();
+  const getRoleData = (data) => keyArray.reduce((acc, key) => {
+    if (data && data[key]) {
+      acc[key] = data[key];
+    }
+    return acc;
+  }, {});
+
+  const removeCompleteDataBaseOnRole = (roleData) => {
+    const updatedRoleData = { ...roleData };
+    if (isPoc) {
+      // Remove ownerComplete as this is tracked from the owner.
+      delete updatedRoleData.ownerComplete;
+    } else {
+      // Remove pocComplete as this is tracked from the POC.
+      delete updatedRoleData.pocComplete;
+    }
+    return updatedRoleData;
+  };
+
   const onSave = async () => {
     // Only do this if the session is not complete.
     if (formData.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
@@ -251,16 +348,26 @@ export default function SessionForm({ match }) {
         // grab the newest data from the form
         const data = hookForm.getValues();
 
+        let roleData = getRoleData(data);
+        // Remove complete property data based on current role.
+        roleData = removeCompleteDataBaseOnRole(roleData);
+
+        if (!isPoc && roleData.objectiveResources) {
+          roleData = {
+            ...roleData,
+            objectiveResources: data.objectiveResources.filter((r) => (
+              r && isValidResourceUrl(r.value))),
+          };
+        }
+
         // PUT it to the backend
         const updatedSession = await updateSession(sessionId, {
           data: {
-            ...data,
+            ...roleData,
             status:
             data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
               ? TRAINING_REPORT_STATUSES.IN_PROGRESS
               : data.status,
-            objectiveResources: data.objectiveResources.filter((r) => (
-              r && isValidResourceUrl(r.value))),
           },
           trainingReportId,
           eventId: trainingReportId || null,
@@ -302,33 +409,40 @@ export default function SessionForm({ match }) {
         ...data
       } = hookForm.getValues();
 
+      // Get form data based on role IST vs POC.
+      let roleData = getRoleData(data);
+
       // If we are a POC submitting set POC submitted values in data.
       if (isPoc || isAdminUser) {
-        data.pocComplete = true;
-        data.pocCompleteId = user.id;
-        data.pocCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.pocComplete = true;
+        roleData.pocCompleteId = user.id;
+        roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
       }
 
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
-        data.ownerComplete = true;
-        data.ownerCompleteId = user.id;
-        data.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        roleData.ownerComplete = true;
+        roleData.ownerCompleteId = user.id;
+        roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
       }
 
       // If both are complete mark the session as complete.
-      if (data.pocComplete && data.ownerComplete) {
-        data.status = TRAINING_REPORT_STATUSES.COMPLETE;
+      roleData.status = data.status;
+      if (roleData.pocComplete && roleData.ownerComplete) {
+        roleData.status = TRAINING_REPORT_STATUSES.COMPLETE;
       }
+
+      // Remove complete property data based on current role.
+      roleData = removeCompleteDataBaseOnRole(roleData);
 
       // PUT it to the backend
       await updateSession(sessionId, {
         data: {
-          ...data,
+          ...roleData,
           status:
-            data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-              ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-              : data.status,
+          data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
+            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
+            : roleData.status,
         },
         trainingReportId,
         eventId: trainingReportId || null,
