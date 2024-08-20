@@ -17,12 +17,18 @@
 * The following is an example of how to set a SSDI flag:
 * SELECT SET_CONFIG('ssdi.startDate','["2023-10-01"]',TRUE);
 */
+
 WITH
+  "BaseURL" AS (
+    SELECT
+      'https://ttahub.ohs.acf.hhs.gov/api/activity-reports/download-all?' ||
+      'region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12' ||
+      '&reportId.ctn[]=' AS base_url
+  ),
   "FixedPartLength" AS (
     SELECT
-      LENGTH('https://ttahub.ohs.acf.hhs.gov/api/activity-reports/download-all?' ||
-             'region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12' ||
-             '&reportId.ctn[]=') AS fixed_length
+      LENGTH(base_url) AS fixed_length
+    FROM "BaseURL"
   ),
   "DistinctIDs" AS (
     SELECT DISTINCT
@@ -116,11 +122,9 @@ SELECT
   group_num,
   COUNT(id) AS report_count,
   CONCAT(
-    'https://ttahub.ohs.acf.hhs.gov/api/activity-reports/download-all?',
-    'region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12',
-    '&reportId.ctn[]=',
+    base_url,
     STRING_AGG(id::text, '|')
   ) AS download_url
-FROM "GroupedIDs"
-GROUP BY group_num
+FROM "GroupedIDs", "BaseURL"
+GROUP BY group_num, base_url
 ORDER BY group_num;
