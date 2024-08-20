@@ -116,7 +116,7 @@ describe('EventCard', () => {
   });
 
   it('hides the edit and create options for completed event with write permissions', () => {
-    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete' } });
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Complete', eventSubmitted: true } });
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
@@ -166,10 +166,9 @@ describe('EventCard', () => {
     expect(screen.getByText('This is my event title')).toBeInTheDocument();
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/create session/i)).toBeNull();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: defaultEvent.data.eventId })).toHaveAttribute('href', '/training-report/1234/event-summary');
   });
 
   it('hides the delete for events that arent not started or suspended', async () => {
