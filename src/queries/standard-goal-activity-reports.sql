@@ -1,6 +1,6 @@
 /**
 * @name: Standard Goal Report Download URL Generator
-* @description: Generates downloadable URLs for approved reports based on various filters.
+* @description: Generates downloadable URLs for approved reports based on various filters for standard goals.
 * @defaultOutputName: standard_goal_report_download_urls
 *
 * This query filters reports based on several SSDI flags and generates URLs for downloading the reports.
