@@ -39,11 +39,6 @@ fs.readFile(sourceFile, 'utf8', (err, data) => {
     }
   });
 
-  // Adjust the count of findings in the summary
-  const riskLowDiv = $('td.risk-1').next('td').find('div');
-  const currentCount = parseInt(riskLowDiv.text(), 10);
-  riskLowDiv.text(currentCount - 1);
-
   fs.writeFile(destinationFile, $.html(), 'utf8', (error) => {
     if (error) {
       console.error(`Error writing to the destination file: ${error.message}`);
