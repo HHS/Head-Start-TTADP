@@ -82,6 +82,11 @@ describe('EventCards', () => {
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
             removeEventFromDisplay={jest.fn()}
+            alerts={{
+              message: null,
+              setMessage: jest.fn(),
+              setParentMessage: jest.fn(),
+            }}
           />
         </UserContext.Provider>
       </MemoryRouter>));
