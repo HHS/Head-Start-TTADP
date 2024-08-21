@@ -21,7 +21,7 @@ function EventCard({
   onRemoveSession,
   onDeleteEvent,
   zIndex,
-  setParentMessage,
+  alerts,
   removeEventFromDisplay,
 }) {
   const modalRef = useRef(null);
@@ -57,6 +57,11 @@ function EventCard({
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
   const menuItems = [];
 
+  const setParentMessage = (msg) => {
+    alerts.setParentMessage(null);
+    alerts.setMessage(msg);
+  };
+
   const canCompleteEvent = (() => {
     if (!isOwner) {
       return false;
@@ -89,7 +94,7 @@ function EventCard({
   }
 
   if (canCompleteEvent) {
-    // Complete event.
+  // Complete event.
     menuItems.push({
       label: 'Complete event',
       onClick: async () => {
@@ -297,8 +302,15 @@ EventCard.propTypes = {
   onRemoveSession: PropTypes.func.isRequired,
   onDeleteEvent: PropTypes.func.isRequired,
   zIndex: PropTypes.number.isRequired,
-  setParentMessage: PropTypes.func.isRequired,
   removeEventFromDisplay: PropTypes.func.isRequired,
+  alerts: PropTypes.shape({
+    message: PropTypes.shape({
+      text: PropTypes.string,
+      type: PropTypes.string,
+    }),
+    setMessage: PropTypes.func.isRequired,
+    setParentMessage: PropTypes.func.isRequired,
+  }).isRequired,
 };
 
 export default EventCard;
