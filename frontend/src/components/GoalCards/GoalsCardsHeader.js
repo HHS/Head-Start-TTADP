@@ -13,7 +13,7 @@ import colors from '../../colors';
 import SelectPagination from '../SelectPagination';
 import { similarity } from '../../fetchers/goals';
 import { markSimilarGoals } from '../../fetchers/recipient';
-import { getFeatureFlags } from '../../fetchers/users';
+import FeatureFlag from '../FeatureFlag';
 
 export default function GoalCardsHeader({
   title,
@@ -45,7 +45,6 @@ export default function GoalCardsHeader({
 }) {
   const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
-  const [hasManualMarkGoalsSimilar, setHasManualMarkGoalsSimilar] = useState(false);
   const history = useHistory();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
@@ -74,15 +73,6 @@ export default function GoalCardsHeader({
       getSimilarGoals();
     }
   }, [canMergeGoals, recipientId, regionId, retrieveSimilarGoals]);
-
-  useEffect(() => {
-    async function checkFeatureFlags() {
-      const flags = await getFeatureFlags();
-      setHasManualMarkGoalsSimilar(flags.includes('manual_mark_goals_similar'));
-    }
-
-    checkFeatureFlags();
-  }, []);
 
   const showAddNewButton = hasActiveGrants && hasButtonPermissions;
   const onPrint = () => {
@@ -253,15 +243,16 @@ export default function GoalCardsHeader({
           {`Preview and print ${hasGoalsSelected ? 'selected' : ''}`}
         </Button>
         { numberOfSelectedGoals > 1
-          && hasManualMarkGoalsSimilar
           && (
-            <Button
-              unstyled
-              className="display-flex flex-align-center margin-left-3 margin-y-0"
-              onClick={onMarkSimilarGoals}
-            >
-              Mark goals as similar
-            </Button>
+            <FeatureFlag flag="manual_mark_goals_similar">
+              <Button
+                unstyled
+                className="display-flex flex-align-center margin-left-3 margin-y-0"
+                onClick={onMarkSimilarGoals}
+              >
+                Mark goals as similar
+              </Button>
+            </FeatureFlag>
           )}
       </div>
       <div>
