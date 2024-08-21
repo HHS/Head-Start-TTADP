@@ -543,6 +543,34 @@ describe('ViewTrainingReport', () => {
       const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });
       expect(result).toBe('');
     });
+
+    test('Returns the DB name if it is returned correctly as a virtual field', () => {
+      const event = {
+        owner: {
+          id: 1,
+          name: 'John Doe',
+          nameWithNationalCenters: 'John Doe, Center A',
+        },
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe, Center A');
+    });
+
     test('Returns the formatted owner name if owner is missing from eventReportPilotNationalCenterUsers', () => {
       const event = {
         data: {

@@ -20,6 +20,10 @@ import UserContext from '../../UserContext';
 
 export const formatOwnerName = (event) => {
   try {
+    if (event && event.owner && event.owner.nameWithNationalCenters) {
+      return event.owner.nameWithNationalCenters;
+    }
+
     if (event && event.data && event.data.owner) {
       if (event.eventReportPilotNationalCenterUsers) {
         const user = event.eventReportPilotNationalCenterUsers
