@@ -47,7 +47,7 @@ const Participants = ({ formData }) => {
     setValue,
   } = useFormContext();
 
-  const isHybrid = watch('deliveryMethod') === 'hybrid';
+  const deliveryMethod = watch('deliveryMethod');
   const isIstVisit = watch('isIstVisit') === 'yes';
   const isNotIstVisit = watch('isIstVisit') === 'no';
 
@@ -170,17 +170,9 @@ const Participants = ({ formData }) => {
       </div>
       )}
 
-      {(isIstVisit || isNotIstVisit) && (
-      <>
-        <ParticipantsNumberOfParticipants
-          isHybrid={isHybrid}
-          register={register}
-        />
-      </>
-      )}
       <div className="margin-top-2">
         <FormItem
-          label="How was the activity conducted?"
+          label="What was the delivery method for this activity?"
           name="deliveryMethod"
           fieldSetWrapper
         >
@@ -211,6 +203,13 @@ const Participants = ({ formData }) => {
             inputRef={register({ required: 'Select one' })}
           />
         </FormItem>
+
+        <ParticipantsNumberOfParticipants
+          isHybrid={deliveryMethod === 'hybrid'}
+          register={register}
+          isDeliveryMethodSelected={['virtual', 'hybrid', 'in-person'].includes(deliveryMethod)}
+        />
+
         <div className="margin-top-2">
           <FormItem
             label="Language used"
