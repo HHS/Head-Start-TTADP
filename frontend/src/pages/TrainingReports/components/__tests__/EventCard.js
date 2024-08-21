@@ -69,7 +69,11 @@ describe('EventCard', () => {
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
             zIndex={0}
-            setParentMessage={jest.fn()}
+            alerts={{
+              message: null,
+              setMessage: jest.fn(),
+              setParentMessage: jest.fn(),
+            }}
             removeEventFromDisplay={jest.fn()}
           />
         </Router>
@@ -216,6 +220,18 @@ describe('EventCard', () => {
     const confirmBtn = screen.getByRole('button', { name: /delete event/i });
     userEvent.click(confirmBtn);
     expect(onDeleteEvent).toHaveBeenCalledWith('1234', 1);
+  });
+
+  it('cannot edit suspended events', () => {
+    history.push = jest.fn();
+    renderEventCard({ ...defaultEvent, data: { ...defaultEvent.data, status: 'Suspended' } });
+    expect(screen.getByText('This is my event title')).toBeInTheDocument();
+    const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
+    userEvent.click(contextBtn);
+
+    // Edit event.
+    const editEvent = screen.queryByText(/edit event/i);
+    expect(editEvent).not.toBeInTheDocument();
   });
 
   it('calls the appropriate context menu paths', () => {
