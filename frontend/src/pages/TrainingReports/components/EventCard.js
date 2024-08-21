@@ -142,7 +142,12 @@ function EventCard({
       onClick: async () => {
         try {
           const { sessionReports: sessions, ...eventReport } = event;
-          await resumeEvent(idForLink, eventReport);
+          await resumeEvent(
+            idForLink,
+            eventReport,
+            // eslint-disable-next-line max-len
+            sessions.length ? TRAINING_REPORT_STATUSES.IN_PROGRESS : TRAINING_REPORT_STATUSES.NOT_STARTED,
+          );
           setEventStatus(TRAINING_REPORT_STATUSES.IN_PROGRESS);
           setParentMessage({
             text: 'Event resumed successfully',
