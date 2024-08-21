@@ -5,7 +5,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { TRAINING_REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
@@ -15,6 +15,39 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
 import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
+import { istKeys, pocKeys } from '../constants';
+
+const istAndPocFields = {
+  sessionName: 'test session',
+  startDate: '01/01/2024',
+  endDate: '01/01/2024',
+  duration: 1,
+  context: 'test context',
+  objective: 'test objective',
+  objectiveTopics: ['topic'],
+  objectiveTrainers: ['DTL'],
+  useIpdCourses: true,
+  courses: [],
+  objectiveResources: [],
+  addObjectiveFilesYes: true,
+  files: [],
+  ttaProvided: 'in person',
+  objectiveSupportType: 'Planning',
+  isIstVisit: true,
+  regionalOfficeTta: 'DTL',
+  recipients: [],
+  participants: [],
+  numberOfParticipants: 1,
+  numberOfParticipantsInPerson: 1,
+  numberOfParticipantsVirtually: 1,
+  deliveryMethod: 'In-person',
+  language: [],
+  supportingAttachments: [],
+  recipientNextSteps: [],
+  specialistNextSteps: [],
+  pocComplete: false,
+  ownerComplete: false,
+};
 
 const completeFormData = {
   eventId: 1,
@@ -58,11 +91,12 @@ describe('SessionReportForm', () => {
     currentPage,
     sessionId,
     setErrorResponseCode = jest.fn,
+    user = { user: { id: 1, permissions: [], name: 'Ted User' } },
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+          <UserContext.Provider value={user}>
             <SessionForm match={{
               params: { currentPage, trainingReportId, sessionId },
               path: currentPage,
@@ -458,5 +492,160 @@ describe('SessionReportForm', () => {
     // Assert the poc complete properties.
     const putBodyJson = JSON.parse(putBody);
     expect(putBodyJson.data.status).toBe('Complete');
+  });
+
+  it('renders all pages for the admin', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, { eventId: 1, event: { ownerId: 2, data: { eventId: 1 } } },
+    );
+
+    const adminUser = {
+      user: {
+        id: 1,
+        permissions: [{
+          userId: 1,
+          regionId: 1,
+          scopeId: SCOPE_IDS.ADMIN,
+        }],
+        name: 'Ted User',
+      },
+    };
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.queryAllByText('Session summary').length).toBe(2);
+    expect(screen.getByText('Participants')).toBeInTheDocument();
+    expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
+    expect(screen.getByText('Next steps')).toBeInTheDocument();
+  });
+
+  it('calls the resetFormData function with both IST and POC fields', async () => {
+    const adminUser = {
+      user: {
+        id: 1,
+        permissions: [{
+          userId: 1,
+          regionId: 1,
+          scopeId: SCOPE_IDS.ADMIN,
+        }],
+        name: 'Ted User',
+      },
+    };
+
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, {
+        eventId: 1,
+        data: {
+          eventId: 1,
+          ...istAndPocFields,
+        },
+        event: { ownerId: 1, data: { eventId: 1 } },
+      },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    // Assert the put contains the correct data
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+    const allKeys = [...istKeys, ...pocKeys];
+    allKeys.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+  });
+
+  it('calls the resetFormData function with IST and removes POC fields', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, {
+        eventId: 1,
+        data: {
+          eventId: 1,
+          ...istAndPocFields,
+        },
+        event: { ownerId: 1, data: { eventId: 1 } },
+      },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    // Assert the put contains the correct data
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+    // Assert the body has istkey porperties using the hasOwnProperty method
+    // create a variable to removes pocComplete.
+    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
+    istKeysWithoutPocComplete.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
+  });
+
+  it('calls the resetFormData function with POC and removes IST fields', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(
+      url, {
+        eventId: 1,
+        data: {
+          eventId: 1,
+          ...istAndPocFields,
+        },
+        event: { ownerId: 2, data: { eventId: 1 }, pocIds: [1] },
+      },
+    );
+
+    act(() => {
+      renderSessionForm('1', 'participants', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    // Assert the put contains the correct data
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+    // Assert the body has istkey porperties using the hasOwnProperty method
+    // create a variable to removes pocComplete.
+    const istKeysWithoutOwnerComplete = pocKeys.filter((key) => key !== 'ownerComplete');
+    istKeysWithoutOwnerComplete.forEach((key) => {
+      expect(Object.prototype.hasOwnProperty.call(putBodyJson.data, key)).toBe(true);
+    });
   });
 });
