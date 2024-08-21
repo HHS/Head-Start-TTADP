@@ -516,10 +516,17 @@ export const trSessionCreated = async (event) => {
       const eId = eventId.split('-').pop();
       const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
 
+      const emailTo = filterAndDeduplicateEmails([user.email]);
+
+      if (emailTo.length === 0) {
+        logger.info(`Did not send tr session created notification for ${eId} preferences are not set or marked as "no-send"`);
+        return null;
+      }
+
       const data = {
         displayId: eventId,
         reportPath,
-        emailTo: [user.email],
+        emailTo,
         debugMessage: `MAILER: Notifying ${user.email} that a session was created for TR ${event.id}`,
         templatePath: 'tr_session_created',
         report: {
@@ -924,7 +931,7 @@ export async function recipientApprovedDigest(freq, subjectFreq) {
 
 const TR_NOTIFICATION_CONFIG_DICT = {
   noSessionsCreated: {
-    toDiff: 'startDate',
+    toDiff: 'endDate',
     debug: (email, eventId) => `MAILER: Notifying ${email} that no sessions have been created for TR ${eventId}`,
     emails: [
       {

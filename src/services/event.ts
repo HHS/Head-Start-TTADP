@@ -566,15 +566,16 @@ export async function getTrainingReportAlerts(
 
       // if we are 20 days past the start date
       if (today.isAfter(nineteenDaysAfterStart)) {
-        // and there are no sessions
-        if (event.sessionReports.length === 0) {
-          alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
-        }
-
         // or we are missing event data
         if (eventInfoToCheck.some((field) => !(checkEventInfo(event, field, false))) || eventArraysToCheck.some((field) => !(checkEventInfo(event, field, true)))) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
+      }
+
+      // if we are 20 days past the end date
+      if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
+        // and there are no sessions
+        alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
       }
 
       // if we are 20 days past the end date, and the event is not completed

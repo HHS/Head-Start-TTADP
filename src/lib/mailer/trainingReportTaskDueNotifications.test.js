@@ -43,7 +43,7 @@ describe('trainingReportTaskDueNotifications', () => {
 
   it('adds noSessionsCreated jobs to the queue', async () => {
     getTrainingReportAlerts.mockResolvedValue([
-      // 20 days past event startDate: should send email
+      // 20 days past event endDate: should send email
       {
         id: 1,
         eventId: 'RO1-012-1234',
@@ -55,11 +55,11 @@ describe('trainingReportTaskDueNotifications', () => {
         pocIds: [2],
         collaboratorIds: [3],
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
-        endDate: today,
+        endDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // start Date is today, no email
+      // end Date is today, no email
       {
         id: 2,
         eventId: 'RO1-012-1235',
@@ -75,7 +75,7 @@ describe('trainingReportTaskDueNotifications', () => {
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // 30 days past event startDate: don't send email
+      // 30 days past event endDate: don't send email
       {
         id: 3,
         eventId: 'RO1-012-1236',
@@ -87,11 +87,11 @@ describe('trainingReportTaskDueNotifications', () => {
         pocIds: [2],
         collaboratorIds: [3],
         startDate: moment().subtract(30, 'days').format('MM/DD/YYYY'),
-        endDate: today,
+        endDate: moment().subtract(30, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // 43 days past event startDate: don't send email
+      // 43 days past event enddate: don't send email
       {
         id: 4,
         eventId: 'RO1-012-1237',
@@ -103,11 +103,11 @@ describe('trainingReportTaskDueNotifications', () => {
         pocIds: [2],
         collaboratorIds: [3],
         startDate: moment().subtract(43, 'days').format('MM/DD/YYYY'),
-        endDate: today,
+        endDate: moment().subtract(43, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // 40 days past event startDate: should send email
+      // 40 days past event end date: should send email
       {
         id: 5,
         eventId: 'RO1-012-1238',
@@ -119,11 +119,11 @@ describe('trainingReportTaskDueNotifications', () => {
         pocIds: [2],
         collaboratorIds: [3],
         startDate: moment().subtract(40, 'days').format('MM/DD/YYYY'),
-        endDate: today,
+        endDate: moment().subtract(40, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // 60 days past event startDate: should send email
+      // 60 days past event enddate: should send email
       {
         id: 6,
         eventId: 'RO1-012-1239',
@@ -135,11 +135,11 @@ describe('trainingReportTaskDueNotifications', () => {
         pocIds: [2],
         collaboratorIds: [3],
         startDate: moment().subtract(60, 'days').format('MM/DD/YYYY'),
-        endDate: today,
+        endDate: moment().subtract(60, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         sessionId: false,
       },
-      // missing start date, no email
+      // missing end date, no email
       {
         id: 7,
         eventId: 'RO1-012-1240',
