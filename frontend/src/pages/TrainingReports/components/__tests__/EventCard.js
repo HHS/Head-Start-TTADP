@@ -69,7 +69,11 @@ describe('EventCard', () => {
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
             zIndex={0}
-            setParentMessage={jest.fn()}
+            alerts={{
+              message: null,
+              setMessage: jest.fn(),
+              setParentMessage: jest.fn(),
+            }}
             removeEventFromDisplay={jest.fn()}
           />
         </Router>
