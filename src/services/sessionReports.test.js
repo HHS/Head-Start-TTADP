@@ -2,7 +2,6 @@ import faker from '@faker-js/faker';
 import db, {
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  EventReportPilotGoal,
   Grant,
   Recipient,
   SessionReportPilot,
@@ -42,7 +41,6 @@ describe('session reports service', () => {
   });
 
   afterAll(async () => {
-    await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
     await destroyEvent(event.id);
     await db.sequelize.close();
   });
@@ -98,8 +96,7 @@ describe('session reports service', () => {
   });
 
   describe('destroySession', () => {
-    let eventReportPilotGoal; let goal; let grant; let
-      createdSession;
+    let goal; let grant; let createdSession;
     const grantData = {
       id: 5555555,
       number: '1234',
@@ -114,19 +111,11 @@ describe('session reports service', () => {
     };
     beforeAll(async () => {
       createdSession = await createSession({ eventId: event.id, data: {} });
-      const eventReportPilotGoalData = {
-        goalId: 99_111,
-        eventId: event.id,
-        sessionId: createdSession.id,
-        grantId: 5555555,
-      };
       grant = await createGrant(grantData);
       goal = await createGoal(goalData);
-      eventReportPilotGoal = await EventReportPilotGoal.create(eventReportPilotGoalData);
     });
 
     afterAll(async () => {
-      await EventReportPilotGoal.destroy({ where: { eventId: event.id }, force: true });
       await SessionReportPilot.destroy({ where: { eventId: event.id }, force: true });
       await destroyGoal(goalData);
       await Grant.destroy({ where: { id: 5555555 }, force: true, individualHooks: true });
@@ -154,14 +143,8 @@ describe('session reports service', () => {
       );
     });
     it('should delete session', async () => {
-      // Verify the session and the corresponding EventReportPilotGoal record are present
+      // Verify the session record is present
       expect(createdSession).toBeDefined();
-      const evntRPGoal = await EventReportPilotGoal.findOne({
-        where: { sessionId: createdSession.id },
-      });
-
-      expect(evntRPGoal).toBeDefined();
-      expect(evntRPGoal.sessionId).toEqual(createdSession.id);
 
       // Delete the session
       await destroySession(createdSession.id);
@@ -169,11 +152,6 @@ describe('session reports service', () => {
       // Verify the session was deleted
       const session = await SessionReportPilot.findByPk(createdSession.id);
       expect(session).toBeNull();
-      const evntRPGoalAfterSessionDelete = await EventReportPilotGoal.findOne({
-        where: { eventId: event.id },
-      });
-      expect(evntRPGoalAfterSessionDelete).toBeDefined();
-      expect(evntRPGoalAfterSessionDelete.sessionId).toBeNull();
     });
   });
 

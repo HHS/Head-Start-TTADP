@@ -66,7 +66,28 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
   }
   const tableName = change.source_table.replace('ZAL', '');
   try {
-    auditLogger.log('info', JSON.stringify({ tableName, ...change }));
+    const generateReplacements = (delta) => Object.entries(delta.old_row_data).reduce(
+      (acc, [key, value]) => {
+        let parsedValue;
+
+        // Try to parse the value as JSON
+        try {
+          // @ts-ignore
+          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+          parsedValue = JSON.parse(value);
+        } catch (error) {
+          parsedValue = value; // If parsing fails, use the original value
+        }
+
+        return {
+          ...acc,
+          [key]: Array.isArray(parsedValue)
+            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+            : parsedValue,
+        };
+      },
+      { id: delta.data_id },
+    );
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
@@ -82,26 +103,7 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}"`)
             .join(', ');
 
-          const replacements = Object.entries(change.old_row_data).reduce(
-            (acc, [key, value]) => {
-              let parsedValue;
-
-              // Try to parse the value as JSON
-              try {
-                parsedValue = JSON.parse(value);
-              } catch (error) {
-                parsedValue = value; // If parsing fails, use the original value
-              }
-
-              return {
-                ...acc,
-                [key]: Array.isArray(parsedValue)
-                  ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
-                  : parsedValue,
-              };
-            },
-            { id: change.data_id },
-          );
+          const replacements = generateReplacements(change);
 
           await sequelize.query(/* sql */ `
             INSERT INTO "${tableName}" (${columns})
@@ -116,26 +118,7 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
             .map((key) => `"${key}" = :${key}`)
             .join(', ');
 
-          const replacements = Object.entries(change.old_row_data).reduce(
-            (acc, [key, value]) => {
-              let parsedValue;
-
-              // Try to parse the value as JSON
-              try {
-                parsedValue = JSON.parse(value);
-              } catch (error) {
-                parsedValue = value; // If parsing fails, use the original value
-              }
-
-              return {
-                ...acc,
-                [key]: Array.isArray(parsedValue)
-                  ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
-                  : parsedValue,
-              };
-            },
-            { id: change.data_id },
-          );
+          const replacements = generateReplacements(change);
 
           await sequelize.query(/* sql */ `
             UPDATE "${tableName}"

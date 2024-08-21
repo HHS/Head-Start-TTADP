@@ -146,10 +146,9 @@ export default function ViewTrainingReport() {
     },
     striped: true,
   }, {
-    heading: 'Vision and goal',
+    heading: 'Vision',
     data: {
       Vision: event.data.vision,
-      Goal: event.data.goal,
     },
   }] : [];
 
@@ -157,6 +156,7 @@ export default function ViewTrainingReport() {
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
+      displayStatus={session.data.status || 'Not started'}
       sections={[{
         heading: 'Session Summary',
         striped: true,

@@ -270,7 +270,6 @@ describe('Goals and Objectives', () => {
 
   it('will update goals status', async () => {
     fetchMock.restore();
-
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0, allGoalIds: [] },

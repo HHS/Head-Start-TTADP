@@ -8,7 +8,6 @@ const {
   EventReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  EventReportPilotGoal,
 } = db;
 
 const validateFields = (request, requiredFields) => {
@@ -29,13 +28,6 @@ export async function destroySession(id: number): Promise<void> {
   // Delete supporting attachments.
   await SessionReportPilotSupportingAttachment.destroy(
     { where: { sessionReportPilotId: id } },
-    { individualHooks: true },
-  );
-
-  // Disassociate session from goals.
-  await EventReportPilotGoal.update(
-    { sessionId: null },
-    { where: { sessionId: id } },
     { individualHooks: true },
   );
 

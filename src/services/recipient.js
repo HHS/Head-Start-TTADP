@@ -13,10 +13,7 @@ import {
   GoalStatusChange,
   GoalTemplate,
   ActivityReport,
-  EventReportPilot,
-  SessionReportPilot,
   Objective,
-  ActivityRecipient,
   Topic,
   Permission,
   ProgramPersonnel,
@@ -357,8 +354,6 @@ function combineObjectiveIds(existing, objective) {
  * a goal, either an pre built one or one we are building on the fly as we reduce goals
  * @param {String[]} grantNumbers
  * passed into here to avoid having to refigure anything else, they come from the goal
- * @param {Object[]} sessionObjectives
- * a bespoke data collection from the goal->eventReportPilots->sessionReports
  * @returns {Object[]} sorted objectives
  */
 export function reduceObjectivesForRecipientRecord(
@@ -545,12 +540,6 @@ export async function getGoalsByActivityRecipient(
       { isFromSmartsheetTtaPlan: true },
       { createdVia: ['rtr', 'admin', 'merge'] },
       { '$"goalTemplate"."creationMethod"$': CREATION_METHOD.CURATED },
-      {
-        createdVia: ['tr'],
-        status: {
-          [Op.not]: 'Draft',
-        },
-      },
     ],
     [Op.and]: scopes,
   };
@@ -652,20 +641,6 @@ export async function getGoalsByActivityRecipient(
                 attributes: ['id'],
               },
             ],
-          },
-        ],
-      },
-      {
-        model: EventReportPilot,
-        as: 'eventReportPilots',
-        required: false,
-        attributes: ['id'],
-        include: [
-          {
-            model: SessionReportPilot,
-            as: 'sessionReports',
-            attributes: ['id', 'data'],
-            required: false,
           },
         ],
       },
@@ -799,26 +774,6 @@ export async function getGoalsByActivityRecipient(
 
     allGoalIds.push(current.id);
 
-    const sessionObjectives = current.eventReportPilots
-    // shape the session objective, mold it into a form that
-    // satisfies the frontend's needs
-      .map((erp) => erp.sessionReports.map((sr) => {
-        if (!sr.data.objective) {
-          return null;
-        }
-
-        return {
-          type: 'session',
-          title: sr.data.objective,
-          topics: sr.data.objectiveTopics || [],
-          grantNumbers: [current.grant.number],
-          endDate: sr.data.endDate,
-          sessionName: sr.data.sessionName,
-          trainingReportId: sr.data.eventDisplayId,
-        };
-        // filter out nulls, and flatten the array
-      }).filter((sr) => sr)).flat();
-
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
@@ -831,9 +786,7 @@ export async function getGoalsByActivityRecipient(
         existingGoal,
         existingGoal.grantNumbers,
       );
-      existingGoal.sessionObjectives = [...existingGoal.sessionObjectives, ...sessionObjectives];
-      existingGoal.objectiveCount = existingGoal.objectives.length
-        + existingGoal.sessionObjectives.length;
+      existingGoal.objectiveCount = existingGoal.objectives.length;
       existingGoal.isCurated = isCurated || existingGoal.isCurated;
       existingGoal.collaborators = existingGoal.collaborators || [];
       existingGoal.collaborators = uniqBy([
@@ -870,7 +823,6 @@ export async function getGoalsByActivityRecipient(
       createdVia: current.createdVia,
       collaborators: [],
       onAR: current.onAR,
-      sessionObjectives: [],
       responses: current.responses,
       isFei: current.dataValues.isFei,
     };
@@ -883,8 +835,7 @@ export async function getGoalsByActivityRecipient(
       [current.grant.number],
     );
 
-    goalToAdd.sessionObjectives = sessionObjectives;
-    goalToAdd.objectiveCount = goalToAdd.objectives.length + goalToAdd.sessionObjectives.length;
+    goalToAdd.objectiveCount = goalToAdd.objectives.length;
 
     return {
       goalRows: [...previous.goalRows, goalToAdd],

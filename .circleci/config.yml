@@ -551,7 +551,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-2939-add-fei-root-cause-to-goal-card"
+    default: "TTAHUB-3097/transactions-for-workers-round-2"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
     default: "mb/TTAHUB-3198/training-report-alerts"
@@ -794,7 +794,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:ci
       - store_artifacts:
-          path: playwright/e2e
+          path: tests/e2e
     resource_class: large
   test_api:
     executor: docker-postgres-executor
@@ -831,7 +831,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:api
       - store_artifacts:
-          path: playwright/api
+          path: tests/api
     resource_class: large
   test_utils:
     executor: docker-postgres-executor
@@ -863,7 +863,7 @@ jobs:
           name: Run playwright tests
           command: yarn e2e:utils
       - store_artifacts:
-          path: playwright/utilsTests
+          path: tests/utilsTests
     resource_class: large
   cucumber_test:
     executor: docker-postgres-executor

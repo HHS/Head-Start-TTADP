@@ -7,10 +7,11 @@ import fetchMock from 'fetch-mock';
 import GoalCardsHeader from '../GoalsCardsHeader';
 import UserContext from '../../../UserContext';
 
-describe('GoalDataController', () => {
+describe('GoalCardsHeader', () => {
   const DEFAULT_USER = {
     name: '',
     id: 1,
+    flags: [],
   };
 
   const REGION_ID = 1;
@@ -19,11 +20,13 @@ describe('GoalDataController', () => {
   beforeEach(() => {
     const url = `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`;
     fetchMock.get(url, [{ ids: [1], goals: [2] }]);
+    fetchMock.put(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`, {});
   });
 
   afterEach(() => fetchMock.restore());
 
   const dismissMergeSuccess = jest.fn();
+  const selectAllGoalCheckboxSelect = jest.fn();
 
   const defaultProps = {
     title: 'TTA Goals',
@@ -42,11 +45,11 @@ describe('GoalDataController', () => {
     requestSort: jest.fn(),
     numberOfSelectedGoals: 0,
     allGoalsChecked: false,
-    selectAllGoalCheckboxSelect: jest.fn(),
+    selectAllGoalCheckboxSelect,
     selectAllGoals: jest.fn(),
     selectedGoalIds: [],
     perPageChange: jest.fn(),
-    pageGoalIds: 1,
+    pageGoalIds: [1],
     showRttapaValidation: false,
     draftSelectedRttapa: [],
     shouldDisplayMergeSuccess: true,
@@ -57,6 +60,8 @@ describe('GoalDataController', () => {
     hasActiveGrants: true,
     showNewGoals: false,
     canMergeGoals: true,
+    allSelectedGoalIds: { 1: true, 2: true },
+    goalBuckets: [{ id: 1, goalIds: [1, 2] }, { id: 2, goalIds: [3, 4] }],
   };
 
   let navigate;
@@ -105,5 +110,72 @@ describe('GoalDataController', () => {
     const resetSort = await screen.findByRole('button', { name: 'Reset goal sort order' });
     userEvent.click(resetSort);
     expect(dismissMergeSuccess).toHaveBeenCalled();
+  });
+
+  it('calls onMarkSimilarGoals when the button is clicked', async () => {
+    // Update props to meet the conditions for displaying the button
+    const props = {
+      numberOfSelectedGoals: 2,
+      allSelectedGoalIds: { 1: true, 2: true },
+      pageGoalIds: [1, 2],
+      goalBuckets: [{ id: 1, goalIds: [1, 2] }],
+      hasManualMarkGoalsSimilar: true,
+      canMergeGoals: true, // Ensure this is true
+    };
+
+    act(() => {
+      renderTest(props, {}, ['manual_mark_goals_similar']);
+    });
+
+    const markSimilarButton = await screen.findByRole('button', { name: /mark goals as similar/i });
+    expect(markSimilarButton).toBeInTheDocument();
+
+    await act(async () => {
+      userEvent.click(markSimilarButton);
+    });
+
+    expect(fetchMock.calls(`/api/recipient/${RECIPIENT_ID}/mark-similar-goals`)).toHaveLength(1);
+  });
+
+  it('does not display "Mark goals as similar" button if numberOfSelectedGoals is 1 or less', async () => {
+    const props = {
+      numberOfSelectedGoals: 1,
+      hasManualMarkGoalsSimilar: true,
+    };
+
+    await act(async () => {
+      renderTest(props);
+    });
+
+    const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
+    expect(markSimilarButton).not.toBeInTheDocument();
+  });
+
+  it('does not display "Mark goals as similar" button if hasManualMarkGoalsSimilar is false', async () => {
+    const props = {
+      numberOfSelectedGoals: 2,
+      hasManualMarkGoalsSimilar: false,
+    };
+
+    await act(async () => {
+      renderTest(props);
+    });
+
+    const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
+    expect(markSimilarButton).not.toBeInTheDocument();
+  });
+
+  it('does display "Mark goals as similar" button if hasManualMarkGoalsSimilar is true', async () => {
+    const props = {
+      numberOfSelectedGoals: 2,
+      hasManualMarkGoalsSimilar: true,
+    };
+
+    await act(async () => {
+      renderTest(props, {}, ['manual_mark_goals_similar']);
+    });
+
+    const markSimilarButton = screen.queryByText(/Mark goals as similar/i);
+    expect(markSimilarButton).toBeInTheDocument();
   });
 });

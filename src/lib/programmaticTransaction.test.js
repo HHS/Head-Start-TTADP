@@ -17,9 +17,24 @@ import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
+// Mock the Queue from 'bull'
+jest.mock('bull');
+
 describe('Programmatic Transaction', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+    try {
+      await sequelize.authenticate();
+    } catch (error) {
+      auditLogger.error('Unable to connect to the database:', error);
+      throw error;
+    }
+  });
+
   afterAll(async () => {
     await sequelize.close();
+    jest.resetModules();
+    jest.resetAllMocks();
   });
 
   it('Insert', async () => {
@@ -248,10 +263,11 @@ describe('Programmatic Transaction', () => {
 
   it('should correctly handle JSON strings and arrays during reversion', async () => {
     const snapshot = await transactionModule.captureSnapshot();
-    const jsonArray = ['elem1', 'elem2'];
+    const jsonArray = ['elem3', 'elem4'];
 
     const goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
       where: { title: 'FEI root cause' },
+      raw: true,
     });
 
     // Ensure the prompt is found before proceeding
@@ -273,13 +289,14 @@ describe('Programmatic Transaction', () => {
       name: 'This is some serious goal text',
       status: 'Draft',
       grantId: grant.id,
+      goalTemplateId: goalTemplateFieldPrompt.goalTemplateId,
     });
-
-    await GoalFieldResponse.create({
+    const gfResponse = await GoalFieldResponse.create({
       goalId: goal.id,
       goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
       response: jsonArray,
     });
+    expect(gfResponse).not.toBeNull();
 
     let goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
     expect(goalFieldResponse).not.toBeNull();
