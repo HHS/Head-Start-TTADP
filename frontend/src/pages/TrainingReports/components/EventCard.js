@@ -45,13 +45,12 @@ function EventCard({
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
   const isOwnerOrCollaborator = isOwner || isCollaborator;
-  const isNotComplete = data.status !== TRAINING_REPORT_STATUSES.COMPLETE;
   const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
   const isNotCompleteOrSuspended = !isComplete && !isSuspended;
 
-  const canEditEvent = (isOwnerOrCollaborator && !eventSubmitted)
-    || (hasAdminRights && isNotComplete);
+  const canEditEvent = ((isOwnerOrCollaborator && !eventSubmitted && isNotCompleteOrSuspended)
+    || (hasAdminRights && isNotCompleteOrSuspended));
   const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
   || data.status === TRAINING_REPORT_STATUSES.SUSPENDED);
