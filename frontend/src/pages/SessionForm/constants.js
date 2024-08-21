@@ -60,6 +60,22 @@ export const defaultValues = {
     4: NOT_STARTED,
   },
 };
+
+export const baseDefaultValues = {
+  id: 0,
+  ownerId: null,
+  eventId: '',
+  eventDisplayId: '',
+  eventName: '',
+  status: 'In progress',
+  pageState: {
+    1: NOT_STARTED,
+    2: NOT_STARTED,
+    3: NOT_STARTED,
+    4: NOT_STARTED,
+  },
+};
+
 export const pageComplete = (
   hookForm,
   fields,
