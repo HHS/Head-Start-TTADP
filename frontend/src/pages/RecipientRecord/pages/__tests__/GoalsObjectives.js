@@ -202,7 +202,6 @@ describe('Goals and Objectives', () => {
     ];
 
     fetchMock.get('/api/goals/similar/region/1/recipient/401?cluster=true', similarityResponse);
-    fetchMock.get('/api/users/feature-flags', []);
   });
 
   afterEach(() => {
@@ -261,8 +260,6 @@ describe('Goals and Objectives', () => {
 
   it('will update goals status', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
-
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0, allGoalIds: [] },
@@ -295,7 +292,6 @@ describe('Goals and Objectives', () => {
 
     const statusMenuToggle = await screen.findByRole('button', { name: 'Change status for goal 4598' });
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
     expect(fetchMock.called()).toBe(false);
     fetchMock.put('/api/goals/changeStatus', [response[0]]);
 
@@ -314,7 +310,6 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
 
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
     const sortCreated = await screen.findByTestId('sortGoalsBy');
@@ -355,7 +350,6 @@ describe('Goals and Objectives', () => {
 
   it('handles a fetch error', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
     // Created New Goal.
 
     fetchMock.get(
@@ -371,7 +365,6 @@ describe('Goals and Objectives', () => {
 
   it('adjusts items per page', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
