@@ -35,11 +35,11 @@ export const suspendEvent = async (id, data) => updateEvent(id, {
   },
 });
 
-export const resumeEvent = async (id, data) => updateEvent(id, {
+export const resumeEvent = async (id, data, status) => updateEvent(id, {
   ...data,
   data: {
     ...data.data,
-    status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+    status,
   },
 });
 

@@ -172,7 +172,7 @@ const Participants = ({ formData }) => {
 
       <div className="margin-top-2">
         <FormItem
-          label="What was the delivery method for this activity?"
+          label="Delivery method"
           name="deliveryMethod"
           fieldSetWrapper
         >
