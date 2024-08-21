@@ -1,9 +1,9 @@
 /**
 * @name: Fake FEI Goals
-* @description: A report of all goals realting to under/full enrollment that are not linked to the official FEI template.
+* @description: A report of all goals relating to under/full enrollment that are not linked to the official FEI template.
 * @defaultOutputName: fake_fei_report
 *
-* This query collects goals realting to under/full enrollment that are not linked to the official FEI template.
+* This query collects goals relating to under/full enrollment that are not linked to the official FEI template.
 *
 * The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
 * The following are the available flags within this script:
@@ -27,7 +27,7 @@ SELECT
   gr."regionId",
   g.id "goal id",
   g.status "goal status",
-  g."createdAt",
+  g."createdAt" "goal creation time",
   COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') "approved reports",
   COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) "pending reports",
   GREATEST(
@@ -35,7 +35,8 @@ SELECT
     similarity(gt."templateName", LEFT(g.name, LENGTH(gt."templateName"))),
     similarity(gt."templateName", RIGHT(g.name, LENGTH(gt."templateName")))
   ) similarity,
-  g.name
+  STRINGAGG(DISTINCT u.name, ';') "goal user list",
+  g.name "goal text"
 FROM "Goals" g
 JOIN "GoalTemplates" gt
 -- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
@@ -48,8 +49,20 @@ LEFT JOIN "ActivityReportGoals" arg
 ON g.id = arg."goalId"
 LEFT JOIN "ActivityReports" a
 ON arg."activityReportId" = a.id
+JOIN "CollaboratorTypes" ct
+ON "validForId" = 1
+AND ct.name = 'Linker'
+LEFT JOIN "GoalCollaborators" gc
+ON g.id = gc."goalId"
+AND gc."collaboratorTypeId" = ct.id
+LEFT JOIN "Users" u
+ON u.id = gc."userId"
+OR u.id = a."userId"
 WHERE g."deletedAt" IS NULL
 AND g."mapsToParentGoalId" IS NULL
+-- excluding goals attached to deleted grants and goals only on TRs, because those are invisible to users
+AND NOT gr.deleted
+AND NOT (g."createdVia" = 'tr' AND a.id IS NULL)
 AND g.name ~* '(^|[^a-zA-Z])(under[- ]?enrollment|full[- ]?enrollment|fei)($|[^a-zA-Z])'
 AND COALESCE(g."goalTemplateId", 0) != gt.id
 -- Filter for regionIds if ssdi.regionIds is defined
@@ -88,5 +101,9 @@ AND (NULLIF(current_setting('ssdi.status', true), '') IS NULL
         SELECT value::text AS my_array
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.status', true), ''),'[]')::json) AS value
       ))
-GROUP BY 1,2,3,4,5,6,7,8,11,12
+GROUP BY 1,2,3,4,5,6,7,8,11,13
+-- Ghost goal filter
+HAVING NOT (g."createdVia" = 'activityReport'
+	AND COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" = 'approved') = 0
+	AND COUNT(DISTINCT a.id) FILTER (WHERE a."calculatedStatus" IN ('draft', 'submitted')) = 0)
 ORDER BY 5,11 desc;
