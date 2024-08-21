@@ -16,7 +16,9 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { TRAINING_REPORT_STATUSES, isValidResourceUrl } from '@ttahub/common';
 import useSocket, { usePublishWebsocketLocationOnInterval } from '../../hooks/useSocket';
 import useHookFormPageState from '../../hooks/useHookFormPageState';
-import { defaultValues, baseDefaultValues } from './constants';
+import {
+  defaultValues, baseDefaultValues, istKeys, pocKeys,
+} from './constants';
 import { createSession, getSessionBySessionId, updateSession } from '../../fetchers/session';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
@@ -32,42 +34,24 @@ import Modal from '../../components/VanillaModal';
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
-const istKeys = [
-  'sessionName',
-  'startDate',
-  'endDate',
-  'duration',
-  'context',
-  'objective',
-  'objectiveTopics',
-  'objectiveTrainers',
-  'useIpdCourses',
-  'courses',
-  'objectiveResources',
-  'addObjectiveFilesYes',
-  'files',
-  'ttaProvided',
-  'objectiveSupportType',
-  'pocComplete',
-  'ownerComplete',
-];
+const reduceDataToMatchKeys = (keys, data) => keys.reduce((acc, key) => {
+  if (data && Object.prototype.hasOwnProperty.call(data, key)) {
+    acc[key] = data[key];
+  }
+  return acc;
+}, {});
 
-const pocKeys = [
-  'isIstVisit',
-  'regionalOfficeTta',
-  'recipients',
-  'participants',
-  'numberOfParticipants',
-  'numberOfParticipantsInPerson',
-  'numberOfParticipantsVirtually',
-  'deliveryMethod',
-  'language',
-  'supportingAttachments',
-  'recipientNextSteps',
-  'specialistNextSteps',
-  'pocComplete',
-  'ownerComplete',
-];
+const determineKeyArray = (isAdminUser, isPoc) => {
+  let keyArray;
+  if (isAdminUser) {
+    keyArray = [...istKeys, ...pocKeys];
+  } else if (isPoc) {
+    keyArray = pocKeys;
+  } else {
+    keyArray = istKeys;
+  }
+  return keyArray;
+};
 
 /**
    * this is just a simple handler to "flatten"
@@ -79,14 +63,7 @@ const pocKeys = [
    * information stored at the top level of the object, and some stored in a data column
    */
 const resetFormData = (reset, updatedSession, isPocFromSession, isAdminUser) => {
-  let keyArray;
-  if (isAdminUser) {
-    keyArray = [...istKeys, ...pocKeys];
-  } else if (isPocFromSession) {
-    keyArray = pocKeys;
-  } else {
-    keyArray = istKeys;
-  }
+  const keyArray = determineKeyArray(isAdminUser, isPocFromSession);
 
   const {
     data,
@@ -94,26 +71,16 @@ const resetFormData = (reset, updatedSession, isPocFromSession, isAdminUser) => 
     ...fields
   } = updatedSession;
 
-  // Get all the default values that appear in the keyAarray.
-  let roleDefaultValues = keyArray.reduce((acc, key) => {
-    if (defaultValues[key]) {
-      acc[key] = defaultValues[key];
-    }
-    return acc;
-  }, {});
+  // Get all the DEFAULT VALUES that appear in the keyAarray.
+  let roleDefaultValues = reduceDataToMatchKeys(keyArray, defaultValues);
 
   // Add the base default values to the role default values.
   roleDefaultValues = {
-    ...roleDefaultValues,
     ...baseDefaultValues,
+    ...roleDefaultValues,
   };
 
-  const roleData = keyArray.reduce((acc, key) => {
-    if (data && data[key]) {
-      acc[key] = data[key];
-    }
-    return acc;
-  }, {});
+  const roleData = reduceDataToMatchKeys(keyArray, data);
 
   const form = {
     ...roleDefaultValues,
@@ -207,15 +174,6 @@ export default function SessionForm({ match }) {
       isOwner: isOwnerUser,
     };
   })();
-
-  const getKeyArray = () => {
-    if (isAdminUser) {
-      return [...istKeys, ...pocKeys];
-    } if (isPoc) {
-      return pocKeys;
-    }
-    return istKeys;
-  };
 
   // Set pages based on user role.
   let applicationPages = [];
@@ -316,22 +274,16 @@ export default function SessionForm({ match }) {
     );
   }
 
-  const keyArray = getKeyArray();
-  const getRoleData = (data) => keyArray.reduce((acc, key) => {
-    if (data && data[key]) {
-      acc[key] = data[key];
-    }
-    return acc;
-  }, {});
-
   const removeCompleteDataBaseOnRole = (roleData) => {
     const updatedRoleData = { ...roleData };
-    if (isPoc) {
+    if (!isAdminUser) {
+      if (isPoc) {
       // Remove ownerComplete as this is tracked from the owner.
-      delete updatedRoleData.ownerComplete;
-    } else {
-      // Remove pocComplete as this is tracked from the POC.
-      delete updatedRoleData.pocComplete;
+        delete updatedRoleData.ownerComplete;
+      } else {
+        // Remove pocComplete as this is tracked from the POC.
+        delete updatedRoleData.pocComplete;
+      }
     }
     return updatedRoleData;
   };
@@ -348,7 +300,8 @@ export default function SessionForm({ match }) {
         // grab the newest data from the form
         const data = hookForm.getValues();
 
-        let roleData = getRoleData(data);
+        const keyArray = determineKeyArray(isAdminUser, isPoc);
+        let roleData = reduceDataToMatchKeys(keyArray, data);
         // Remove complete property data based on current role.
         roleData = removeCompleteDataBaseOnRole(roleData);
 
@@ -410,7 +363,8 @@ export default function SessionForm({ match }) {
       } = hookForm.getValues();
 
       // Get form data based on role IST vs POC.
-      let roleData = getRoleData(data);
+      const keyArray = determineKeyArray(isAdminUser, isPoc);
+      let roleData = reduceDataToMatchKeys(keyArray, data);
 
       // If we are a POC submitting set POC submitted values in data.
       if (isPoc || isAdminUser) {

@@ -88,3 +88,40 @@ export const pageComplete = (
 
   return !!(val);
 });
+
+export const istKeys = [
+  'sessionName',
+  'startDate',
+  'endDate',
+  'duration',
+  'context',
+  'objective',
+  'objectiveTopics',
+  'objectiveTrainers',
+  'useIpdCourses',
+  'courses',
+  'objectiveResources',
+  'addObjectiveFilesYes',
+  'files',
+  'ttaProvided',
+  'objectiveSupportType',
+  'pocComplete',
+  'ownerComplete',
+];
+
+export const pocKeys = [
+  'isIstVisit',
+  'regionalOfficeTta',
+  'recipients',
+  'participants',
+  'numberOfParticipants',
+  'numberOfParticipantsInPerson',
+  'numberOfParticipantsVirtually',
+  'deliveryMethod',
+  'language',
+  'supportingAttachments',
+  'recipientNextSteps',
+  'specialistNextSteps',
+  'pocComplete',
+  'ownerComplete',
+];
