@@ -243,7 +243,6 @@ describe('recipient record page', () => {
   it('navigates to the goals & objectives page', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/users/feature-flags', []);
     memoryHistory.push('/recipient-tta-records/1/region/45/rttapa');
     act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
