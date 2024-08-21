@@ -365,7 +365,7 @@ module.exports = {
               ELSE NULL -- optional, in case you want to handle cases where all are NULL
           END AS "supportType",
           bool_or(aro."objectiveCreatedHere") "objectiveCreatedHere",
-          array_agg(aro.id) "aroIds"
+          array_agg(aro.id order by aro.id) "aroIds"
         FROM temp_dup_aro_sets das
         JOIN "ActivityReportObjectives" aro
         ON aro.id = ANY (das."aroIds")
