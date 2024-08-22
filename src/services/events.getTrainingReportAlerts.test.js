@@ -12,7 +12,7 @@ import {
 import {
   getTrainingReportAlerts,
 } from './event';
-// import * as transactionModule from '../lib/programmaticTransaction';
+import * as transactionModule from '../lib/programmaticTransaction';
 
 jest.mock('bull');
 
@@ -232,21 +232,14 @@ async function createEvents({
 
 describe('getTrainingReportAlerts', () => {
   const ownerId = faker.datatype.number();
-  // let snapshot;
+  let snapshot;
 
   beforeAll(async () => {
-    // snapshot = await transactionModule.captureSnapshot();
+    snapshot = await transactionModule.captureSnapshot();
   });
 
   afterAll(async () => {
-    // await transactionModule.rollbackToSnapshot(snapshot);
-    const events = await EventReportPilot.findAll({
-      where: {
-        ownerId,
-      },
-    });
-    await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
-    await EventReportPilot.destroy({ where: { ownerId } });
+    await transactionModule.rollbackToSnapshot(snapshot);
     await sequelize.close();
   });
 
