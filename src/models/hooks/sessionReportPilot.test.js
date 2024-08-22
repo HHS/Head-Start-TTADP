@@ -1,5 +1,5 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import httpContext, { set } from 'express-http-context';
+import httpContext from 'express-http-context';
 import {
   afterCreate,
   afterUpdate,
