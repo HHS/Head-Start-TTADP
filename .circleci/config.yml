@@ -554,7 +554,7 @@ parameters:
     default: "TTAHUB-3097/transactions-for-workers-round-2"
     type: string
   sandbox_git_branch:  # change to feature branch to test deployment
-    default: "mb/TTAHUB-3198/training-report-alerts"
+    default: "mb/TTAHUB-3199/email-alerts"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -643,7 +643,7 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -U pip setuptools wheel
-            pip install -U -r requirements.txt
+            pip install -U --use-pep517 -r requirements.txt
       - run:
           name: Check python version compatibility  with buildpack
           command: |
