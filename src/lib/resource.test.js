@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
-// import { expect } from '@playwright/test';
 import { auditLogger } from '../logger';
 import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 import db, { Resource } from '../models';

@@ -1,6 +1,5 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import httpContext, { set } from 'express-http-context';
-import { literal } from 'sequelize';
+import httpContext from 'express-http-context';
 import {
   afterCreate,
   afterUpdate,
