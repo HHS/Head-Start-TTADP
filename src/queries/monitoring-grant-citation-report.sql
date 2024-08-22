@@ -25,6 +25,7 @@ SELECT DISTINCT
     gr."regionId",
     gr.number,
     mr."reportDeliveryDate",
+    mr."reviewType",
     mf."findingType",
     ms."citation"
 FROM "Grants" gr
