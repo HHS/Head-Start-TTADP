@@ -6,7 +6,6 @@ import {
 import {
   EventReportPilot,
   SessionReportPilot,
-  User,
   sequelize,
 } from '../models';
 import {
@@ -41,19 +40,8 @@ async function createEvents({
     },
   };
 
-  // event that has no start date (will not appear in alerts)
-  await EventReportPilot.create(baseEvent);
-
-  // event with no sessions and a start date of today (Will not appear in alerts)
-  await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(),
-    },
-  });
-
   const testData = {
+    ids: [],
     ist: {
       missingEventInfo: [],
       missingSessionInfo: [],
@@ -64,6 +52,21 @@ async function createEvents({
       missingSessionInfo: [],
     },
   };
+
+  // event that has no start date (will not appear in alerts)
+  const minus2 = await EventReportPilot.create(baseEvent);
+  testData.ids.push(minus2.id);
+
+  // event with no sessions and a start date of today (Will not appear in alerts)
+  const minus1 = await EventReportPilot.create({
+    ...baseEvent,
+    data: {
+      ...baseEvent.data,
+      startDate: new Date(),
+    },
+  });
+
+  testData.ids.push(minus1.id);
 
   // event with no sessions and a start date of one month ago (Will appear in alerts)
   // also missing event data
@@ -104,12 +107,15 @@ async function createEvents({
     },
   });
 
-  await SessionReportPilot.create({
+  const c1 = await SessionReportPilot.create({
     eventId: c.id,
     data: {
       sessionName: faker.datatype.string(),
     },
   });
+
+  testData.ids.push(c.id);
+  testData.ids.push(c1.id);
 
   // complete event, 20 days past end date
   const e = await EventReportPilot.create({
@@ -123,12 +129,13 @@ async function createEvents({
     },
   });
 
-  await SessionReportPilot.create({
+  const e1 = await SessionReportPilot.create({
     eventId: e.id,
     data: {},
   });
 
   testData.ist.eventNotCompleted.push(e.id);
+  testData.ids.push(e1.id);
 
   const f = await EventReportPilot.create({
     ...baseEvent,
@@ -139,6 +146,8 @@ async function createEvents({
       eventSubmitted: true,
     },
   });
+
+  testData.ids.push(f.id);
 
   // poc incomplete session
   const f1 = await SessionReportPilot.create({
@@ -177,6 +186,8 @@ async function createEvents({
     },
   });
 
+  testData.ids.push(g.id);
+
   // owner incomplete session
   const g1 = await SessionReportPilot.create({
     eventId: g.id,
@@ -204,7 +215,7 @@ async function createEvents({
   testData.ist.missingSessionInfo.push(g1.id);
 
   // should not appear in alerts, as it is compete
-  await SessionReportPilot.create({
+  const finalSesh = await SessionReportPilot.create({
     eventId: g.id,
     data: {
       status: TRAINING_REPORT_STATUSES.COMPLETE,
@@ -226,6 +237,16 @@ async function createEvents({
       ownerComplete: false,
     },
   });
+
+  testData.ids.push(finalSesh.id);
+
+  testData.ids = new Set([
+    ...testData.ids,
+    ...testData.ist.missingEventInfo,
+    ...testData.ist.missingSessionInfo,
+    ...testData.ist.noSessionsCreated,
+    ...testData.ist.eventNotCompleted,
+  ]);
 
   return testData;
 }
@@ -251,8 +272,9 @@ describe('getTrainingReportAlerts', () => {
 
     it('fetches the correct alerts', async () => {
       const alerts = await getTrainingReportAlerts();
+      const idsToCheck = alerts.map((i) => i.id).filter((i) => testData.ids.has(i));
 
-      expect(alerts.map((i) => i.id).sort()).toStrictEqual([
+      expect(idsToCheck.sort()).toStrictEqual([
         ...testData.ist.missingEventInfo,
         ...testData.ist.missingSessionInfo,
         ...testData.ist.noSessionsCreated,
