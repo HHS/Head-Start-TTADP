@@ -18,6 +18,8 @@ export type SessionShape = {
     regionalOfficeTta?: string;
     participants?: { value: string; label: string }[];
     nextSteps: { completeDate: string, note: string }[];
+    pocComplete: boolean;
+    ownerComplete: boolean;
   }
 };
 
@@ -42,6 +44,7 @@ export type EventShape = {
     status: string;
     eventId: string;
     eventName: string;
+    eventSubmitted: boolean;
   };
   updatedAt: string;
   sessionReports: SessionShape[];

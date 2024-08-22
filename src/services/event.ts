@@ -402,28 +402,15 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type Checkers = (string | ((data: SessionShape['data']) => boolean))[];
+type TChecker = 'ownerComplete' | 'pocComplete';
 
 const checkSessionForCompletion = (
   session: SessionShape,
   event: EventShape,
-  checkers: Checkers,
+  checker: TChecker,
   missingSessionInfo: TRAlertShape[],
 ) => {
-  let sessionValid = true;
-
-  // eslint-disable-next-line no-restricted-syntax
-  for (const field of checkers) {
-    if (typeof field === 'function') {
-      if (!field(session.data)) {
-        sessionValid = false;
-        break;
-      }
-    } else if (!(session.data[field])) {
-      sessionValid = false;
-      break;
-    }
-  }
+  const sessionValid = !!(session.data[checker]);
 
   if (!sessionValid) {
     missingSessionInfo.push({
@@ -477,69 +464,6 @@ export async function getTrainingReportAlerts(
   // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
   // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
 
-  const checkEventInfo = (event: EventShape, field: string, isArray: boolean) => {
-    if (isArray) {
-      return !(get(event, field, []).length === 0);
-    }
-
-    return !!(get(event, field, null));
-  };
-
-  // the only fields that aren't read only
-  const eventInfoToCheck = [
-    'data.eventName',
-    'data.startDate',
-    'data.endDate',
-    'data.trainingType',
-    'data.vision',
-  ];
-  const eventArraysToCheck = [
-    'collaboratorIds',
-    'data.reasons',
-    'data.targetPopulations',
-  ];
-  const istSessionInfoToCheck = [
-    'startDate',
-    'endDate',
-    'sessionName',
-    'duration',
-    'objective',
-    'objectiveTopics',
-    'objectiveTrainers',
-    (sessionData: SessionShape['data']) => {
-      if (sessionData.useIpdCourses) {
-        return !!(sessionData.courses?.length);
-      }
-
-      return true;
-    },
-    'ttaProvided',
-    'supportType',
-  ];
-  const pocSessionInfoToCheck = [
-    'deliveryMethod',
-    (sessionData : SessionShape['data']) => {
-      if (sessionData.isIstVisit === 'yes') {
-        return !!(sessionData.regionalOfficeTta)?.length;
-      }
-
-      if (sessionData.isIstVisit === 'no') {
-        return !!(sessionData.participants?.length);
-      }
-
-      return false;
-    },
-    'language',
-    (sessionData: SessionShape['data']) => {
-      const { nextSteps } = sessionData;
-      if (!nextSteps?.length) {
-        return false;
-      }
-
-      return nextSteps.every((step) => step.note && step.completeDate);
-    },
-  ];
-
   const today = moment().startOf('day');
 
   const ownerUserIdFilter = (event: EventShape, user: number | undefined) => {
@@ -567,7 +491,7 @@ export async function getTrainingReportAlerts(
       // if we are 20 days past the start date
       if (today.isAfter(nineteenDaysAfterStart)) {
         // or we are missing event data
-        if (eventInfoToCheck.some((field) => !(checkEventInfo(event, field, false))) || eventArraysToCheck.some((field) => !(checkEventInfo(event, field, true)))) {
+        if (!event.data.eventSubmitted) {
           alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
         }
       }
@@ -588,19 +512,20 @@ export async function getTrainingReportAlerts(
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, istSessionInfoToCheck, alerts);
+          checkSessionForCompletion(session, event, 'ownerComplete', alerts);
         }
       });
     }
 
     // the other event triggers for everyone
     const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+
     sessions.forEach((session) => {
       if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
       const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
       if (today.isAfter(nineteenDaysAfterStart)) {
         // eslint-disable-next-line no-restricted-syntax
-        checkSessionForCompletion(session, event, pocSessionInfoToCheck, alerts);
+        checkSessionForCompletion(session, event, 'pocComplete', alerts);
       }
     }); // for each session
   }); // for each event

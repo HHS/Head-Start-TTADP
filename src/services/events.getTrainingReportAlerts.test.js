@@ -12,7 +12,7 @@ import {
 import {
   getTrainingReportAlerts,
 } from './event';
-import * as transactionModule from '../lib/programmaticTransaction';
+// import * as transactionModule from '../lib/programmaticTransaction';
 
 jest.mock('bull');
 
@@ -37,6 +37,7 @@ async function createEvents({
       targetPopulations: ['Children & Families'],
       reasons: ['Coaching'],
       vision: 'Testing!',
+      eventSubmitted: false,
     },
   };
 
@@ -83,6 +84,7 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
+      eventSubmitted: true,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
     },
@@ -96,6 +98,7 @@ async function createEvents({
     ...baseEvent,
     data: {
       ...baseEvent.data,
+      eventSubmitted: true,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
     },
@@ -108,27 +111,6 @@ async function createEvents({
     },
   });
 
-  const d = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  const d1 = await SessionReportPilot.create({
-    eventId: d.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  testData.poc.missingSessionInfo.push(d1.id);
-  testData.ist.missingSessionInfo.push(d1.id);
-
   // complete event, 20 days past end date
   const e = await EventReportPilot.create({
     ...baseEvent,
@@ -136,6 +118,8 @@ async function createEvents({
       ...baseEvent.data,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 2)),
       endDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      eventSubmitted: true,
+      status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
     },
   });
 
@@ -152,10 +136,11 @@ async function createEvents({
       ...baseEvent.data,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
+      eventSubmitted: true,
     },
   });
 
-  // use Courses but no courses
+  // poc incomplete session
   const f1 = await SessionReportPilot.create({
     eventId: f.id,
     data: {
@@ -175,6 +160,8 @@ async function createEvents({
       isIstVisit: 'yes',
       regionalOfficeTta: 'TTAC',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      pocComplete: false,
+      ownerComplete: true,
     },
   });
 
@@ -186,10 +173,11 @@ async function createEvents({
       ...baseEvent.data,
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
+      eventSubmitted: true,
     },
   });
 
-  // use Courses but null courses
+  // owner incomplete session
   const g1 = await SessionReportPilot.create({
     eventId: g.id,
     data: {
@@ -208,49 +196,18 @@ async function createEvents({
       isIstVisit: 'yes',
       regionalOfficeTta: 'TTAC',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      pocComplete: true,
+      ownerComplete: false,
     },
   });
 
   testData.ist.missingSessionInfo.push(g1.id);
 
-  const h = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // use missing regional office tta (null)
-  const h1 = await SessionReportPilot.create({
-    eventId: h.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'yes',
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(h1.id);
-  testData.poc.missingSessionInfo.push(h1.id);
-
   // should not appear in alerts, as it is compete
   await SessionReportPilot.create({
-    eventId: h.id,
+    eventId: g.id,
     data: {
-      status: 'Complete',
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
       sessionName: faker.datatype.string(),
       startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
       endDate: new Date(),
@@ -265,268 +222,35 @@ async function createEvents({
       language: 'English',
       isIstVisit: 'yes',
       nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+      pocComplete: true,
+      ownerComplete: false,
     },
   });
-
-  const i = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // use missing regional office tta (empty)
-  const i1 = await SessionReportPilot.create({
-    eventId: i.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'yes',
-      regionalOfficeTta: [],
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(i1.id);
-  testData.poc.missingSessionInfo.push(i1.id);
-
-  const j = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // use missing participants (empty)
-  const j1 = await SessionReportPilot.create({
-    eventId: j.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      participants: [],
-      regionalOfficeTta: [],
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(j1.id);
-  testData.poc.missingSessionInfo.push(j1.id);
-
-  const k = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // use missing participants (null)
-  const k1 = await SessionReportPilot.create({
-    eventId: k.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      regionalOfficeTta: [],
-      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(k1.id);
-  testData.poc.missingSessionInfo.push(k1.id);
-
-  const l = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // next steps (null)
-  const l1 = await SessionReportPilot.create({
-    eventId: l.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      participants: [{}],
-      regionalOfficeTta: [],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(l1.id);
-  testData.poc.missingSessionInfo.push(l1.id);
-
-  const m = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // next steps (empty)
-  const m1 = await SessionReportPilot.create({
-    eventId: m.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      participants: [{}],
-      regionalOfficeTta: [],
-      nextSteps: [],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(m1.id);
-  testData.poc.missingSessionInfo.push(m1.id);
-
-  const n = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // next steps (missing date)
-  const n1 = await SessionReportPilot.create({
-    eventId: n.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      participants: [{}],
-      regionalOfficeTta: [],
-      nextSteps: [{ completeDate: null, note: 'Next step 1' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(n1.id);
-  testData.poc.missingSessionInfo.push(n1.id);
-
-  const o = await EventReportPilot.create({
-    ...baseEvent,
-    data: {
-      ...baseEvent.data,
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-    },
-  });
-
-  // next steps (missing note)
-  const o1 = await SessionReportPilot.create({
-    eventId: o.id,
-    data: {
-      sessionName: faker.datatype.string(),
-      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
-      endDate: new Date(),
-      duration: 'Series',
-      objective: 'This is an objective',
-      objectiveTopics: ['Coaching'],
-      objectiveTrainers: ['HBHS'],
-      ttaProvided: 'Test TTA',
-      supportType: 'Maintaining',
-      useIpdCourses: false,
-      deliveryMethod: 'In Person',
-      language: 'English',
-      isIstVisit: 'no',
-      participants: [{}],
-      regionalOfficeTta: [],
-      nextSteps: [{ completeDate: new Date(), note: '' }],
-    },
-  });
-
-  testData.ist.missingSessionInfo.push(o1.id);
-  testData.poc.missingSessionInfo.push(o1.id);
 
   return testData;
 }
 
 describe('getTrainingReportAlerts', () => {
-  let snapshot;
+  const ownerId = faker.datatype.number();
+  // let snapshot;
 
   beforeAll(async () => {
-    snapshot = await transactionModule.captureSnapshot();
+    // snapshot = await transactionModule.captureSnapshot();
   });
 
   afterAll(async () => {
-    await transactionModule.rollbackToSnapshot(snapshot);
+    // await transactionModule.rollbackToSnapshot(snapshot);
+    const events = await EventReportPilot.findAll({
+      where: {
+        ownerId,
+      },
+    });
+    await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
+    await EventReportPilot.destroy({ where: { ownerId } });
     await sequelize.close();
   });
 
   describe('event owner', () => {
-    const ownerId = faker.datatype.number();
     let testData;
     beforeAll(async () => {
       await User.create({
