@@ -583,7 +583,7 @@ export async function getTrainingReportAlerts(
         alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
 
-      const sessions = event.sessionReports;
+      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
@@ -594,7 +594,7 @@ export async function getTrainingReportAlerts(
     }
 
     // the other event triggers for everyone
-    const sessions = event.sessionReports;
+    const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
     sessions.forEach((session) => {
       if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
       const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
