@@ -437,7 +437,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 
   const toEmails = filterAndDeduplicateEmails([emailTo]);
 
-  if (toEmails.length === 0) {
+  if (!toEmails || toEmails.length === 0) {
     logger.info(`Did not send ${job.name} notification for ${job.data.report.displayId || job.data.report.id} preferences are not set or marked as "no-send"`);
     return null;
   }
