@@ -212,6 +212,22 @@ export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sess
   }
 };
 
+export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, options) => {
+  try {
+    if (instance.changed() && instance.changed().includes('data')) {
+      const { data } = instance;
+      const deStringifyData = JSON.parse(data.val);
+      if (deStringifyData.ownerComplete && deStringifyData.pocComplete) {
+        instance.set('data', sequelize.literal(`CAST('${JSON.stringify({ ...deStringifyData, status: TRAINING_REPORT_STATUSES.COMPLETE })}' AS jsonb)`));
+      } else {
+        instance.set('data', sequelize.literal(`CAST('${JSON.stringify({ ...deStringifyData, status: TRAINING_REPORT_STATUSES.IN_PROGRESS })}' AS jsonb)`));
+      }
+    }
+  } catch (err) {
+    auditLogger.error(`Error in checkIfBothIstAndPocAreComplete: ${err}`);
+  }
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
@@ -229,6 +245,7 @@ const beforeCreate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  await checkIfBothIstAndPocAreComplete(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
