@@ -1,9 +1,8 @@
-import React, {
-  useContext,
-} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
-import { LANGUAGES } from '@ttahub/common';
+
 import { useFormContext } from 'react-hook-form';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
@@ -19,11 +18,7 @@ import {
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ParticipantsNumberOfParticipants from '../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
-import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
-import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
-import UserContext from '../../../UserContext';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
-import ParticipantsReadOnly from '../components/ParticipantsReadOnly';
 
 const placeholderText = '- Select -';
 
@@ -52,10 +47,7 @@ const Participants = ({ formData }) => {
     setValue,
   } = useFormContext();
 
-  const { user } = useContext(UserContext);
-  const { isPoc } = useTrainingReportRole(formData.event, user.id);
-  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
-  const isHybrid = watch('deliveryMethod') === 'hybrid';
+  const deliveryMethod = watch('deliveryMethod');
   const isIstVisit = watch('isIstVisit') === 'yes';
   const isNotIstVisit = watch('isIstVisit') === 'no';
 
@@ -101,15 +93,6 @@ const Participants = ({ formData }) => {
       setValue('regionalOfficeTta', []);
     }
   }, [isIstVisit, isNotIstVisit, setValue]);
-
-  if (showReadOnlyView) {
-    return (
-      <ParticipantsReadOnly
-        formData={formData}
-        userId={user.id}
-      />
-    );
-  }
 
   return (
     <>
@@ -187,17 +170,9 @@ const Participants = ({ formData }) => {
       </div>
       )}
 
-      {(isIstVisit || isNotIstVisit) && (
-      <>
-        <ParticipantsNumberOfParticipants
-          isHybrid={isHybrid}
-          register={register}
-        />
-      </>
-      )}
       <div className="margin-top-2">
         <FormItem
-          label="How was the activity conducted?"
+          label="Delivery method"
           name="deliveryMethod"
           fieldSetWrapper
         >
@@ -228,6 +203,13 @@ const Participants = ({ formData }) => {
             inputRef={register({ required: 'Select one' })}
           />
         </FormItem>
+
+        <ParticipantsNumberOfParticipants
+          isHybrid={deliveryMethod === 'hybrid'}
+          register={register}
+          isDeliveryMethodSelected={['virtual', 'hybrid', 'in-person'].includes(deliveryMethod)}
+        />
+
         <div className="margin-top-2">
           <FormItem
             label="Language used"
@@ -303,13 +285,13 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     formData,
     _reportId,
     isAppLoading,
     onContinue,
     onSaveDraft,
-    onUpdatePage,
+    _onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
@@ -319,9 +301,12 @@ export default {
       <Participants formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
-        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        {
+          additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+      }
       </div>
     </div>
   ),

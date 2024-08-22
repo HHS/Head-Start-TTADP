@@ -7,6 +7,9 @@ import {
   getEventsByStatus,
   deleteEvent,
   getEventAlerts,
+  completeEvent,
+  suspendEvent,
+  resumeEvent,
 } from '../event';
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
 
@@ -124,5 +127,68 @@ describe('getEventAlerts', () => {
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/alerts');
     expect(alerts).toEqual({ alerts: [] });
+  });
+});
+
+describe('completeEvent', () => {
+  beforeEach(() => {
+    fetchMock.put('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+    });
+  });
+
+  afterEach(() => {
+    fetchMock.reset();
+  });
+
+  it('completes the event on the server with the given id', async () => {
+    const event = await completeEvent('1', { ownerId: 1, regionId: 1, data: {} });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
+    expect(event).toEqual({ id: 1, name: 'test event' });
+  });
+});
+
+describe('suspendEvent', () => {
+  beforeEach(() => {
+    fetchMock.put('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+    });
+  });
+
+  afterEach(() => {
+    fetchMock.reset();
+  });
+
+  it('completes the event on the server with the given id', async () => {
+    const event = await suspendEvent('1', { ownerId: 1, regionId: 1, data: {} });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
+    expect(event).toEqual({ id: 1, name: 'test event' });
+  });
+});
+
+describe('resumeEvent', () => {
+  beforeEach(() => {
+    fetchMock.put('/api/events/id/1', {
+      id: 1,
+      name: 'test event',
+    });
+  });
+
+  afterEach(() => {
+    fetchMock.reset();
+  });
+
+  it('completes the event on the server with the given id', async () => {
+    const event = await resumeEvent('1', { ownerId: 1, regionId: 1, data: {} });
+
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
+    expect(event).toEqual({ id: 1, name: 'test event' });
   });
 });
