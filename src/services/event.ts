@@ -482,6 +482,13 @@ export async function getTrainingReportAlerts(
     return false;
   };
 
+  const pocUserFilter = (event: EventShape, user: number | undefined) => {
+    if (!user || event.pocIds.includes(user)) {
+      return true;
+    }
+    return false;
+  };
+
   events.forEach((event: EventShape) => {
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
@@ -518,16 +525,18 @@ export async function getTrainingReportAlerts(
     }
 
     // the other event triggers for everyone
-    const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+    if (pocUserFilter(event, userId)) {
+      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
 
-    sessions.forEach((session) => {
-      if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-      const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-      if (today.isAfter(nineteenDaysAfterStart)) {
+      sessions.forEach((session) => {
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterStart)) {
         // eslint-disable-next-line no-restricted-syntax
-        checkSessionForCompletion(session, event, 'pocComplete', alerts);
-      }
-    }); // for each session
+          checkSessionForCompletion(session, event, 'pocComplete', alerts);
+        }
+      }); // for each session
+    }
   }); // for each event
 
   return alerts;
