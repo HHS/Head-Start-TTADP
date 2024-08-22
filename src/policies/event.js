@@ -140,7 +140,7 @@ export default class EventReport {
 
   // some handy & fun aliases
   canEditEvent() {
-    return this.isAdmin() || this.isAuthor() || this.isPoc();
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
   }
 
   canCreateSession() {
