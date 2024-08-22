@@ -160,7 +160,9 @@ export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, optio
   try {
     if (instance.changed() && instance.changed().includes('data')) {
       const { data } = instance;
-      const deStringifyData = JSON.parse(data.val);
+      // Replace any single quotes with &apos; to prevent breaking sql literal.
+      const cleanData = data.val.replace(/'/g, '&apos;');
+      const deStringifyData = JSON.parse(cleanData);
       if (deStringifyData.ownerComplete && deStringifyData.pocComplete) {
         instance.set('data', sequelize.literal(`CAST('${JSON.stringify({ ...deStringifyData, status: TRAINING_REPORT_STATUSES.COMPLETE })}' AS jsonb)`));
       } else {
