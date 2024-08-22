@@ -1,4 +1,6 @@
+/* eslint-disable max-len */
 import React from 'react';
+import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClock,
@@ -11,17 +13,65 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
-const InProgress = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faClock} />;
-const Closed = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.successDarker} icon={faCheckCircle} />;
-const NotStarted = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubOrange} icon={faMinusCircle} />;
-const NoStatus = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.baseLighter} icon={faExclamationCircle} />;
-const Draft = () => <i className="fa-regular fa-pen-circle margin-right-1 flex-align-self-center" style={{ fill: colors.baseDarkest }} />;
-const Ceased = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.errorDark} icon={faTimesCircle} />;
-const Pencil = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faPencil} />;
-const Trash = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubMediumBlue} icon={faTrash} />;
+const DEFAULT_ICON_SIZE = '1x';
 
-const PendingApprovalIcon = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.ttahubOrange} icon={faClock} />;
-const NeedsActionIcon = () => <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size="1x" color={colors.errorDark} icon={faExclamationCircle} />;
+const Icon = ({
+  size,
+  color,
+  icon,
+}) => (
+  <FontAwesomeIcon className="margin-right-1 flex-align-self-center" size={size} color={color} icon={icon} />
+);
+
+Icon.propTypes = {
+  size: PropTypes.string,
+  color: PropTypes.string,
+  // eslint-disable-next-line react/forbid-prop-types
+  icon: PropTypes.object,
+};
+
+Icon.defaultProps = {
+  size: DEFAULT_ICON_SIZE,
+  color: colors.ttahubMediumBlue,
+  icon: faClock,
+};
+
+const STATUS_ICON_PROP_TYPES = {
+  size: PropTypes.string,
+};
+
+const STATUS_ICON_PROP_TYPES_DEFAULTS = {
+  size: DEFAULT_ICON_SIZE,
+};
+
+const InProgress = ({ size }) => <Icon size={size} color={colors.ttahubMediumBlue} icon={faClock} />;
+InProgress.propTypes = STATUS_ICON_PROP_TYPES;
+InProgress.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const Closed = ({ size }) => <Icon size={size} color={colors.successDarker} icon={faCheckCircle} />;
+Closed.propTypes = STATUS_ICON_PROP_TYPES;
+Closed.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const NotStarted = ({ size }) => <Icon size={size} color={colors.ttahubOrange} icon={faMinusCircle} />;
+NotStarted.propTypes = STATUS_ICON_PROP_TYPES;
+NotStarted.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const NoStatus = ({ size }) => <Icon size={size} color={colors.baseLighter} icon={faExclamationCircle} />;
+NoStatus.propTypes = STATUS_ICON_PROP_TYPES;
+NoStatus.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const Draft = () => <i className="fa-regular fa-pen-circle margin-right-1 flex-align-self-center" style={{ fill: colors.baseDarkest }} />;
+const Ceased = ({ size }) => <Icon size={size} color={colors.errorDark} icon={faTimesCircle} />;
+Ceased.propTypes = STATUS_ICON_PROP_TYPES;
+Ceased.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const Pencil = ({ size }) => <Icon size={size} color={colors.ttahubMediumBlue} icon={faPencil} />;
+Pencil.propTypes = STATUS_ICON_PROP_TYPES;
+Pencil.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const Trash = ({ size }) => <Icon size={size} color={colors.ttahubMediumBlue} icon={faTrash} />;
+Trash.propTypes = STATUS_ICON_PROP_TYPES;
+Trash.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const PendingApprovalIcon = ({ size }) => <Icon size={size} color={colors.ttahubOrange} icon={faClock} />;
+PendingApprovalIcon.propTypes = STATUS_ICON_PROP_TYPES;
+PendingApprovalIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
+const NeedsActionIcon = ({ size }) => <Icon size={size} color={colors.errorDark} icon={faExclamationCircle} />;
+NeedsActionIcon.propTypes = STATUS_ICON_PROP_TYPES;
+NeedsActionIcon.defaultProps = STATUS_ICON_PROP_TYPES_DEFAULTS;
 
 export {
   InProgress,

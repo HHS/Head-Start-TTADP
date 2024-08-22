@@ -159,6 +159,41 @@ const mockEvent = (data = {}) => ({
     },
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
+  },
+  {
+    id: 10,
+    eventId: 1,
+    data: {
+      id: 10,
+      files: [],
+      context: 'Session 3 context',
+      endDate: '06/16/2024',
+      eventId: 33,
+      ownerId: null,
+      duration: 1000,
+      regionId: 3,
+      eventName: 'Health Webinar Series 3: Oral Health and Dental Care from a Regional and State Perspective',
+      objective: 'Session 3 objective',
+      pageState: { 1: 'Not started', 2: 'Not started', 3: 'Not started' },
+      startDate: '06/12/2024',
+      eventOwner: 355,
+      recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+      sessionName: 'Session Name # 3',
+      ttaProvided: 'Session 3 TTA provided',
+      participants: [],
+      deliveryMethod: '',
+      eventDisplayId: 'R03-PD-23-1037',
+      objectiveTopics: [],
+      objectiveTrainers: [],
+      objectiveResources: [],
+      recipientNextSteps: [],
+      specialistNextSteps: [],
+      numberOfParticipants: 3,
+      objectiveSupportType: null,
+      courses: [],
+    },
+    createdAt: '2023-06-27T13:48:31.490Z',
+    updatedAt: '2023-06-27T13:49:18.579Z',
   }],
   ...data,
 });
@@ -225,7 +260,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('Session 1 TTA provided')).toBeInTheDocument();
     expect(screen.getByText('Session 1 context')).toBeInTheDocument();
     expect(screen.getByText('1 hours')).toBeInTheDocument();
-    expect(screen.getByText(/Altenwerth LLC/i)).toBeInTheDocument();
+    const altenwerth = await screen.findAllByText(/Altenwerth LLC/i);
+    expect(altenwerth.length).toBe(2);
     expect(screen.getByText('Direct Service: Other')).toBeInTheDocument();
     expect(screen.getByText('In-person')).toBeInTheDocument();
     expect(screen.getByText('Behavioral / Mental Health / Trauma')).toBeInTheDocument();
@@ -262,6 +298,13 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/29/2027')).toBeInTheDocument();
     expect(screen.getByText(SUPPORT_TYPES[1])).toBeInTheDocument();
     expect(screen.getByText('course 3')).toBeInTheDocument();
+
+    // it renders the session status
+    const el = document.querySelectorAll('.ttahub-read-only-content-section--heading--section-row-status');
+    expect(el.length).toBe(3);
+    const statuses = Array.from(el).map((e) => e.textContent);
+    statuses.sort();
+    expect(statuses).toEqual(['Complete', 'In progress', 'Not started']);
   });
 
   it('renders the necessary buttons', async () => {
