@@ -246,6 +246,28 @@ async function createEvents({
   testData.ist.missingSessionInfo.push(h1.id);
   testData.poc.missingSessionInfo.push(h1.id);
 
+  // should not appear in alerts, as it is compete
+  await SessionReportPilot.create({
+    eventId: h.id,
+    data: {
+      status: 'Complete',
+      sessionName: faker.datatype.string(),
+      startDate: new Date(new Date().setMonth(new Date().getMonth() - 1)),
+      endDate: new Date(),
+      duration: 'Series',
+      objective: 'This is an objective',
+      objectiveTopics: ['Coaching'],
+      objectiveTrainers: ['HBHS'],
+      ttaProvided: 'Test TTA',
+      supportType: 'Maintaining',
+      useIpdCourses: false,
+      deliveryMethod: 'In Person',
+      language: 'English',
+      isIstVisit: 'yes',
+      nextSteps: [{ completeDate: new Date(), note: 'Next step 1' }],
+    },
+  });
+
   const i = await EventReportPilot.create({
     ...baseEvent,
     data: {
