@@ -10,7 +10,7 @@ export default function ApprovedReportSpecialButtons({
   user,
   showUnlockReports,
   showCompleteEvent,
-  completeEvent,
+  onCompleteEvent,
 }) {
   const [successfullyCopiedClipboard, setSuccessfullyCopiedClipboard] = useState(false);
   const [somethingWentWrongWithClipboard, setSomethingWentWrongWithClipboard] = useState(false);
@@ -61,8 +61,8 @@ export default function ApprovedReportSpecialButtons({
           id="approved-print"
           disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false}
         />
-        {(showCompleteEvent && completeEvent) ? (
-          <Button onClick={completeEvent} className="no-print">
+        {(showCompleteEvent && onCompleteEvent) ? (
+          <Button onClick={onCompleteEvent} className="no-print">
             Complete event
           </Button>
         ) : null}
@@ -85,7 +85,7 @@ ApprovedReportSpecialButtons.propTypes = {
     PropTypes.shape(),
   ]),
   showUnlockReports: PropTypes.bool,
-  completeEvent: PropTypes.func,
+  onCompleteEvent: PropTypes.func,
   showCompleteEvent: PropTypes.bool,
 };
 
@@ -94,6 +94,6 @@ ApprovedReportSpecialButtons.defaultProps = {
   modalRef: null,
   showUnlockReports: false,
   user: null,
-  completeEvent: null,
+  onCompleteEvent: null,
   showCompleteEvent: false,
 };
