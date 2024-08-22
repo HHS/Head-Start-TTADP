@@ -18,7 +18,7 @@ import {
   findEventsByRegionId,
   updateEvent,
   findEventsByStatus,
-  getTrainingReportAlerts,
+  getTrainingReportAlertsForUser,
 } from '../../services/event';
 import EventReport from '../../policies/event';
 
@@ -34,7 +34,7 @@ jest.mock('../../services/event', () => ({
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
-  getTrainingReportAlerts: jest.fn(),
+  getTrainingReportAlertsForUser: jest.fn(),
 }));
 
 const mockEvent = {
@@ -371,7 +371,7 @@ describe('event handlers', () => {
         },
         canSeeAlerts: () => true,
       }));
-      getTrainingReportAlerts.mockResolvedValue({});
+      getTrainingReportAlertsForUser.mockResolvedValue({});
       await getTrainingReportAlertsHandler(
         {
           session: { userId: 1 },
@@ -405,7 +405,7 @@ describe('event handlers', () => {
         },
         canSeeAlerts: () => true,
       }));
-      getTrainingReportAlerts.mockRejectedValue(new Error('error'));
+      getTrainingReportAlertsForUser.mockRejectedValue(new Error('error'));
       await getTrainingReportAlertsHandler(
         {
           session: { userId: 1 },

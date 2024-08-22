@@ -14,7 +14,7 @@ import {
   updateEvent,
   destroyEvent,
   findEventsByStatus,
-  getTrainingReportAlerts,
+  getTrainingReportAlertsForUser,
 } from '../../services/event';
 import { userById } from '../../services/users';
 import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
@@ -199,7 +199,7 @@ export const getTrainingReportAlertsHandler = async (req, res) => {
     const userId = auth.user.id;
 
     auditLogger.info(userId, auth.readableRegions);
-    const alerts = await getTrainingReportAlerts(userId, auth.readableRegions);
+    const alerts = await getTrainingReportAlertsForUser(userId, auth.readableRegions);
     return res.status(httpCodes.OK).send(alerts);
   } catch (error) {
     return handleErrors(req, res, error, logContext);
