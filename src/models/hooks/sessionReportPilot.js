@@ -27,37 +27,6 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   }
 };
 
-const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || null;
-      const current = JSON.parse(instance.data.val) || null;
-      if (!current || !previous) return;
-
-      if (
-        current.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        const { EventReportPilot } = sequelize.models;
-
-        const event = await EventReportPilot.findOne({
-          where: {
-            id: instance.eventId,
-          },
-          transaction: options.transaction,
-        });
-
-        if (event) {
-          const { trSessionCompleted } = require('../../lib/mailer');
-          await trSessionCompleted(event.dataValues);
-        }
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyPocIfSessionComplete: ${err}`);
-  }
-};
-
 const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
   try {
     const { EventReportPilot } = sequelize.models;
@@ -104,31 +73,6 @@ const notifySessionCreated = async (sequelize, instance, options) => {
     }
   } catch (err) {
     auditLogger.error(`Error in notifySessionCreated: ${err}`);
-  }
-};
-
-const participantsAndNextStepsComplete = async (sequelize, instance, options) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || {};
-      const current = JSON.parse(instance.data.val) || {};
-
-      if (
-        current.pocComplete && !previous.pocComplete) {
-        const event = await sequelize.models.EventReportPilot.findOne({
-          where: {
-            id: instance.eventId,
-          },
-          transaction: options.transaction,
-        });
-
-        const { trPocSessionComplete } = require('../../lib/mailer');
-        await trPocSessionComplete(event);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in participantsAndNextStepsComplete: ${err}`);
   }
 };
 
@@ -219,8 +163,6 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
-  await notifyPocIfSessionComplete(sequelize, instance, options);
-  await participantsAndNextStepsComplete(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
