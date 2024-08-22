@@ -243,28 +243,13 @@ describe('getTrainingReportAlerts', () => {
     await sequelize.close();
   });
 
-  describe('event owner', () => {
+  describe('getAllAlerts', () => {
     let testData;
     beforeAll(async () => {
-      await User.create({
-        id: ownerId,
-        homeRegionId: regionId,
-        hsesUsername: faker.datatype.string(),
-        hsesUserId: faker.datatype.string(),
-        email: faker.internet.email(),
-        lastLogin: new Date(),
-      });
       testData = await createEvents({ ownerId });
     });
 
-    afterAll(async () => {
-      const events = await EventReportPilot.findAll({ where: { ownerId } });
-      await SessionReportPilot.destroy({ where: { eventId: events.map(({ id }) => id) } });
-      await EventReportPilot.destroy({ where: { ownerId } });
-      await User.destroy({ where: { id: ownerId } });
-    });
-
-    it('fetches the correct alerts for owners', async () => {
+    it('fetches the correct alerts', async () => {
       const alerts = await getTrainingReportAlerts();
 
       expect(alerts.map((i) => i.id).sort()).toStrictEqual([
