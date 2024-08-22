@@ -227,6 +227,7 @@ export default function ViewTrainingReport({ match }) {
     <ReadOnlyContent
       key={session.id}
       title={`Session ${index + 1}`}
+      displayStatus={session.data.status || 'Not started'}
       sections={[{
         heading: 'Session Summary',
         striped: true,

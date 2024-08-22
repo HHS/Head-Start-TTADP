@@ -25,7 +25,7 @@ preshed==3.0.8
 psycopg2==2.9.7
 pydantic==2.4.0
 pydantic-core==2.10.0
-requests==2.32.0
+requests==2.32.3
 scikit-learn==1.5.0
 scipy==1.11.1
 smart-open==6.3.0
