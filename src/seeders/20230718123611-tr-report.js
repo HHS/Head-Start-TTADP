@@ -52,8 +52,7 @@ module.exports = {
       NOW(),
       NOW(),
         ARRAY
-        [3] -- Harry Potter POC.
-        ::INTEGER[]
+        [3]::INTEGER[] -- Harry Potter POC.
     );
   `);
   },
