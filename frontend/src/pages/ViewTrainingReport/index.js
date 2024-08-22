@@ -295,7 +295,7 @@ export default function ViewTrainingReport({ match }) {
       </BackLink>
       <ApprovedReportSpecialButtons
         showCompleteEvent={canCompleteEvent}
-        completeEvent={onCompleteEvent}
+        onCompleteEvent={onCompleteEvent}
       />
       <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
         { alertMessage.message && (

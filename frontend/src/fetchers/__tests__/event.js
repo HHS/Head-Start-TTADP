@@ -163,7 +163,7 @@ describe('suspendEvent', () => {
     fetchMock.reset();
   });
 
-  it('completes the event on the server with the given id', async () => {
+  it('suspends the event on the server with the given id', async () => {
     const event = await suspendEvent('1', { ownerId: 1, regionId: 1, data: {} });
 
     expect(fetchMock.called()).toBe(true);
@@ -184,8 +184,8 @@ describe('resumeEvent', () => {
     fetchMock.reset();
   });
 
-  it('completes the event on the server with the given id', async () => {
-    const event = await resumeEvent('1', { ownerId: 1, regionId: 1, data: {} });
+  it('resumes the event on the server with the given id and status', async () => {
+    const event = await resumeEvent('1', { ownerId: 1, regionId: 1, data: {} }, 'In progress');
 
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
