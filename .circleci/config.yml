@@ -643,7 +643,7 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install -U pip setuptools wheel
-            pip install -U -r requirements.txt
+            pip install -U --use-pep517 -r requirements.txt
       - run:
           name: Check python version compatibility  with buildpack
           command: |
@@ -903,6 +903,9 @@ jobs:
       - attach_workspace:
           at: .
       - run:
+          name: Clean previous reports
+          command: rm -rf reports/*
+      - run:
           name: Start up local server
           command: ./bin/prod-style-server
       - run:
@@ -917,8 +920,11 @@ jobs:
       - run:
           name: Run OWASP ZAP
           command: ./bin/run-owasp-scan
+      - run:
+          name: Run Node.js cleaning script
+          command: node src/tools/clean-zap-report.js reports/owasp_report_.html reports/owasp_report_cleaned.html
       - store_artifacts:
-          path: reports/owasp_report.html
+          path: reports/owasp_report_cleaned.html
     resource_class: large
   deploy:
     executor: docker-executor
