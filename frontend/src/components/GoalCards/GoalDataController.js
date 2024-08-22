@@ -11,9 +11,9 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { filtersToQueryString } from '../../utils';
-import GoalsTable from './GoalCards';
+import GoalCards from './GoalCards';
 import { GoalStatusChart } from '../../widgets/GoalStatusGraph';
 import { GOALS_PER_PAGE } from '../../Constants';
 import './GoalTable.scss';
@@ -86,7 +86,7 @@ function GoalDataController({
     }
   }, [isAppLoading, loading, logsLoaded, setIsAppLoading]);
 
-  const history = useHistory();
+  const location = useLocation();
 
   const defaultSort = useMemo(() => (showNewGoals
     ? {
@@ -110,8 +110,8 @@ function GoalDataController({
       setLoading(true);
       try {
         const mergedGoals = (() => {
-          if (history.location && history.location.state) {
-            return history.location.state.mergedGoals;
+          if (location && location.state) {
+            return location.state.mergedGoals;
           }
 
           return null;
@@ -166,7 +166,7 @@ function GoalDataController({
     showNewGoals,
     setSortConfig,
     goalsPerPage,
-    history.location,
+    location,
   ]);
 
   useEffect(() => {
@@ -225,8 +225,8 @@ function GoalDataController({
   const setGoals = (goals) => setData({ ...data, goalRows: goals });
 
   const dismissMergeSuccess = () => {
-    if (history.location.state && history.location.state.mergedGoals) {
-      history.location.state.mergedGoals = null;
+    if (location.state && location.state.mergedGoals) {
+      location.state.mergedGoals = null;
     }
 
     setSortConfig({
@@ -253,7 +253,7 @@ function GoalDataController({
         </Grid>
       </Grid>
       <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(recipientId) }}>
-        <GoalsTable
+        <GoalCards
           recipientId={recipientId}
           regionId={regionId}
           filters={filters}

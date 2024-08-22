@@ -13,6 +13,20 @@ describe('files service', () => {
     await db.sequelize.close();
   });
 
+  test('Dummy test to satisfy Jest', () => {
+    /*
+    * Jest 27 Introduction:
+    *   The update to Jest 27 introduced stricter rules to prevent situations where beforeAll
+    *   and afterAll hooks are used in describe blocks that do not contain any tests. This
+    *   prevents potential confusion and ensures that all setup and teardown logic is tied to
+    *   specific tests
+    *   (GitHub: https://github.com/jestjs/jest/issues/11485)
+    *   (Jest: https://jestjs.io/blog/2021/05/25/jest-27)
+    */
+
+    expect(true).toBe(true);
+  });
+
   describe('updateStatusByKey', () => {
     const key = 'file123';
     const fileStatus = 'processed';
@@ -114,42 +128,6 @@ describe('files service', () => {
       );
 
       expect(newFile.id).toEqual(existingFile.id);
-    });
-  });
-
-  describe('createObjectiveFileMetaData', () => {
-    let objective;
-
-    let filesForObjectiveFileMetaData;
-    beforeAll(async () => {
-      objective = await Objective.create({
-        title: 'A brand new test objective',
-        status: 'Not Started',
-      });
-
-      filesForObjectiveFileMetaData = await Promise.all([
-        File.create({
-          originalFileName: 'test.pdf',
-          key: faker.datatype.uuid(),
-          status: 'APPROVED',
-          fileSize: 12345,
-        }),
-      ]);
-    });
-
-    afterAll(async () => {
-      await Objective.destroy({
-        where: {
-          id: objective.id,
-        },
-        force: true,
-      });
-
-      await File.destroy({
-        where: {
-          id: filesForObjectiveFileMetaData.map((file) => file.id),
-        },
-      });
     });
   });
 });

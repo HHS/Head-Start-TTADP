@@ -1,7 +1,8 @@
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import ContextMenu from '../ContextMenu';
 import { getReportsDownloadURL } from '../../fetchers/helpers';
@@ -35,7 +36,7 @@ function ReportRow({
 
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
-  const history = useHistory();
+  const navigate = useNavigate();
   const recipients = activityRecipients && activityRecipients.map((ar) => (
     ar.name
   ));
@@ -50,7 +51,7 @@ function ReportRow({
   const menuItems = [
     {
       label: 'View',
-      onClick: () => { history.push(linkTarget); },
+      onClick: () => { navigate(linkTarget); },
     },
   ];
 

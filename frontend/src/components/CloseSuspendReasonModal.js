@@ -7,6 +7,8 @@ import {
 } from '@trussworks/react-uswds';
 import Modal from './Modal';
 
+const modalId = 'CloseSuspendReasonModal';
+
 const CloseSuspendReasonModal = ({
   modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
 }) => {
@@ -59,13 +61,14 @@ const CloseSuspendReasonModal = ({
       <Modal
         modalRef={modalRef}
         onOk={validateSubmit}
-        modalId="CloseSuspendReasonModal"
+        modalId={modalId}
         title={`Why are you ${reasonDisplayStatus} this goal?`}
         okButtonText="Submit"
         okButtonAriaLabel="Change goal status"
         okButtonCss="usa-button--primary"
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
+        describedBy={`${modalId}-heading`}
       >
         <Form
           key={`close-suspend-reason-form-goal-${key}`}

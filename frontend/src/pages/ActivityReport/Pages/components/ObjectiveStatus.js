@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Label, Dropdown } from '@trussworks/react-uswds';
+import { Label, Select } from '@trussworks/react-uswds';
 import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
 
 const statuses = [
@@ -22,7 +22,7 @@ export default function ObjectiveStatus({
     <>
       <Label>
         Objective status
-        <Dropdown
+        <Select
           name={inputName}
           onChange={onChangeStatus}
           value={status}
@@ -37,7 +37,7 @@ export default function ObjectiveStatus({
               {possibleStatus}
             </option>
           ))}
-        </Dropdown>
+        </Select>
       </Label>
       <ObjectiveStatusSuspendReason
         status={status}

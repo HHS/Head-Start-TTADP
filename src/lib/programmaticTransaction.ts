@@ -88,7 +88,6 @@ const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
       },
       { id: delta.data_id },
     );
-
     switch (change.dml_type) {
       case 'INSERT':
         // Use parameterized query to safely delete
@@ -147,6 +146,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
   try {
     const allChanges = await fetchAndAggregateChanges(maxIds);
+    auditLogger.log('info', JSON.stringify({ allChanges }));
     await revertChange(allChanges);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);

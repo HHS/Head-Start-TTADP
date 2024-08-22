@@ -1,21 +1,17 @@
 import React from 'react';
-import {
-  Admin, Resource,
-} from 'react-admin';
-import dp from './dataProvider';
-import RequestErrors, { RequestErrorShow } from './requestErrors';
+import { Routes, Route } from 'react-router-dom';
 import Container from '../../components/Container';
-import './diag.css';
+import RequestErrors from './components/RequestErrors';
+import RequestError from './components/RequestError';
 
 function Diag() {
   return (
-    <>
-      <Container paddingX={0} paddingY={0} className="smart-hub--overflow-auto">
-        <Admin dataProvider={dp}>
-          <Resource name="requestErrors" list={RequestErrors} edit={RequestErrorShow} />
-        </Admin>
-      </Container>
-    </>
+    <Container>
+      <Routes>
+        <Route path=":errorId" element={<RequestError />} />
+        <Route path="*" element={<RequestErrors />} />
+      </Routes>
+    </Container>
   );
 }
 export default Diag;

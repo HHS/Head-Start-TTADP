@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { Link, Button } from '@trussworks/react-uswds';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import SomethingWentWrongContext from '../SomethingWentWrongContext';
 import AppLoadingContext from '../AppLoadingContext';
@@ -13,7 +13,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
     setErrorResponseCode, errorResponseCode, setShowingNotFound, showingNotFound,
   } = useContext(SomethingWentWrongContext);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // Make sure if something was loading when an error occurred, we stop the loading spinner.
   if (isAppLoading) setIsAppLoading(false);
@@ -29,7 +29,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
   const onHomeClick = () => {
     setErrorResponseCode(null);
     setShowingNotFound(false);
-    history.push('/');
+    navigate('/');
   };
 
   const responseCodeMessages = [

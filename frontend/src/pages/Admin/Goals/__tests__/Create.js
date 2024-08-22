@@ -6,8 +6,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import Goals from '../Create';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
@@ -21,13 +20,12 @@ const promptsUrl = join('/', 'api', 'goal-templates', '1', 'prompts');
 const createGoalsUrl = join('/', 'api', 'admin', 'goals');
 
 describe('Create', () => {
-  const history = createMemoryHistory();
   const renderGoals = () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <Router history={history}>
+        <MemoryRouter>
           <Goals />
-        </Router>
+        </MemoryRouter>
       </AppLoadingContext.Provider>,
     );
   };

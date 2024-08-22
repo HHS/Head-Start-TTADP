@@ -8,8 +8,7 @@ import {
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router-dom';
 import RecipientReviewSection from '../RecipientReviewSection';
 import GoalFormContext from '../../../../../GoalFormContext';
 
@@ -110,7 +109,6 @@ const defaultGoalsAndObjectives = [{
 ];
 
 const RenderRecipientReviewSection = ({ goalsAndObjectives }) => {
-  const history = createMemoryHistory();
   const hookForm = useForm();
 
   hookForm.watch = () => ({
@@ -119,11 +117,11 @@ const RenderRecipientReviewSection = ({ goalsAndObjectives }) => {
   });
 
   return (
-    <Router history={history}>
+    <MemoryRouter>
       <FormProvider {...hookForm}>
         <RecipientReviewSection />
       </FormProvider>
-    </Router>
+    </MemoryRouter>
   );
 };
 

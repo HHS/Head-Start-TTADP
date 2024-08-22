@@ -55,7 +55,7 @@ test('can fill out and complete a training and session report', async ({ page })
 
   await page.locator('#ttaProvided').fill('TTA');
 
-  await page.getByTestId('dropdown').selectOption('Introducing');
+  await page.getByTestId('Select').selectOption('Introducing');
   await page.getByRole('button', { name: 'Save and continue' }).click();
 
   await page.waitForTimeout(5000);
@@ -107,14 +107,14 @@ test('can fill out and complete a training and session report', async ({ page })
   await page.getByRole('button', { name: 'Complete session Not Started' }).click();
 
   // complete session 
-  await page.getByTestId('dropdown').selectOption('Complete');
+  await page.getByTestId('Select').selectOption('Complete');
   await page.getByRole('button', { name: 'Submit session' }).click();
 
   // complete event
   await page.getByTestId('ellipsis-button').click();
   await page.getByRole('button', { name: 'Edit event' }).click();
   await page.getByText(/complete event/i).click();
-  await page.getByTestId('dropdown').selectOption('Complete');
+  await page.getByTestId('Select').selectOption('Complete');
   await page.getByRole('button', { name: 'Submit event' }).click();
 
   await page.waitForTimeout(2000); // waiting for navigation

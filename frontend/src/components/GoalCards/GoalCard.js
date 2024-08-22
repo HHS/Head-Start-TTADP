@@ -10,7 +10,7 @@ import PropTypes from 'prop-types';
 import { Checkbox, Tag } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import moment from 'moment';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import GoalStatusDropdown from './components/GoalStatusDropdown';
 import ContextMenu from '../ContextMenu';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
@@ -106,7 +106,7 @@ export default function GoalCard({
   const isMerged = createdVia === 'merge';
 
   const lastTTA = useMemo(() => objectives.reduce((prev, curr) => (new Date(prev) > new Date(curr.endDate) ? prev : curr.endDate), ''), [objectives]);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const goalNumbers = `${goal.goalNumbers.join(', ')}${isReopenedGoal ? '-R' : ''}`;
 
@@ -153,21 +153,21 @@ export default function GoalCard({
     menuItems.push({
       label: 'View',
       onClick: () => {
-        history.push(viewLink);
+        navigate(viewLink);
       },
     });
   } else if (hasEditButtonPermissions) {
     menuItems.push({
       label: 'Edit',
       onClick: () => {
-        history.push(editLink);
+        navigate(editLink);
       },
     });
   } else {
     menuItems.push({
       label: 'View',
       onClick: () => {
-        history.push(viewLink);
+        navigate(viewLink);
       },
     });
   }
@@ -188,7 +188,7 @@ export default function GoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { message: 'Goal deleted successfully' });
+          navigate(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, { state: { message: 'Goal deleted successfully' } });
         } catch (e) {
           setDeleteError(true);
         } finally {

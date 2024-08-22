@@ -3,8 +3,7 @@ import React from 'react';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router';
 import fetchMock from 'fetch-mock';
 import { act } from 'react-dom/test-utils';
 import { SCOPE_IDS } from '@ttahub/common';
@@ -13,8 +12,6 @@ import UserContext from '../../../../UserContext';
 import { filtersToQueryString } from '../../../../utils';
 import FilterContext from '../../../../FilterContext';
 import { GOALS_OBJECTIVES_FILTER_KEY } from '../constants';
-
-const memoryHistory = createMemoryHistory();
 
 const RECIPIENT_ID = '123456';
 const REGION_ID = '1';
@@ -84,20 +81,33 @@ describe('PrintGoals', () => {
   };
 
   const renderPrintGoals = (loc = {}) => {
-    const location = { ...baseLocation, ...loc };
-
+    const location = {
+      ...baseLocation,
+      pathname: `/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals`,
+      ...loc,
+    };
     render(
-      <Router history={memoryHistory}>
-        <FilterContext.Provider value={{ filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID) }}>
-          <UserContext.Provider value={{ user }}>
-            <PrintGoals
-              location={location}
-              recipientId={RECIPIENT_ID}
-              regionId={REGION_ID}
-            />
-          </UserContext.Provider>
-        </FilterContext.Provider>
-      </Router>,
+      <MemoryRouter initialEntries={[`/recipient/${RECIPIENT_ID}/region/${REGION_ID}/goals`]}>
+        <Routes location={location}>
+          <Route
+            path="/recipient/:recipientId/region/:regionId/goals"
+            element={(
+              <FilterContext.Provider value={{
+                filterKey: GOALS_OBJECTIVES_FILTER_KEY(RECIPIENT_ID),
+              }}
+              >
+                <UserContext.Provider value={{ user }}>
+                  <PrintGoals
+                    location={location}
+                    recipientId={RECIPIENT_ID}
+                    regionId={REGION_ID}
+                  />
+                </UserContext.Provider>
+              </FilterContext.Provider>
+)}
+          />
+        </Routes>
+      </MemoryRouter>,
     );
   };
 
@@ -145,8 +155,7 @@ describe('PrintGoals', () => {
   });
 
   it('builds a URL to query based on filters provided by window.location.search', async () => {
-    delete window.location;
-    window.location = {
+    const location = {
       search: filtersToQueryString(filters),
       state: {
         sortConfig: {
@@ -158,7 +167,9 @@ describe('PrintGoals', () => {
       },
     };
 
-    act(renderPrintGoals);
+    act(() => {
+      renderPrintGoals(location);
+    });
 
     // Expect that the mocked URL, which includes the filtered query was called.
     // This asserts that PrintGoals is respecting filters included in window.location.search.
@@ -167,6 +178,7 @@ describe('PrintGoals', () => {
 
   it('uses the sortConfig from the location prop if it exists', async () => {
     const loc = {
+      search: filtersToQueryString(filters),
       state: {
         sortConfig: {
           sortBy: 'goalStatus',

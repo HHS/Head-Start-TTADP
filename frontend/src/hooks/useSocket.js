@@ -78,7 +78,7 @@ export default function useSocket(user) {
       s.addEventListener('open', () => {
         clearStore();
 
-        if (user) {
+        if (user && socket.current && socket.current.readyState === socket.current.OPEN) {
           socket.current.send(JSON.stringify({
             user: user.name || 'Anonymous user',
             lastSaveTime: null,

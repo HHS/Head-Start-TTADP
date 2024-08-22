@@ -5,6 +5,8 @@
   width: 100%;  
 }
 
+
+
 /**
   Jump through hoops to preserve the spacing 
   when the details are open or closed
@@ -29,6 +31,11 @@ Active page styles
 .ttahub-site-nav--disclosure-group:has([aria-current="page"]) summary {
   border-color: white;
   font-weight: bold;
+}
+
+/* hide the border from the site-nav styles */
+.ttahub-site-nav--disclosure-group[open] a.active {
+  border-left: none;
 }
 
 

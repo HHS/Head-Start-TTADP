@@ -4,8 +4,7 @@ import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
 } from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter } from 'react-router';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
@@ -14,10 +13,8 @@ const { ADMIN } = SCOPE_IDS;
 
 describe('feature flag', () => {
   const renderFeatureFlag = (flag, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
-      <Router history={history}>
+      <MemoryRouter>
         <UserContext.Provider value={{ user }}>
           <SomethingWentWrongContext.Provider value={{
             errorResponseCode: null,
@@ -31,7 +28,7 @@ describe('feature flag', () => {
             </FeatureFlag>
           </SomethingWentWrongContext.Provider>
         </UserContext.Provider>
-      </Router>,
+      </MemoryRouter>,
     );
   };
 

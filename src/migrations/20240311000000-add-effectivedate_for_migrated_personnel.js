@@ -28,6 +28,7 @@ module.exports = {
         -- 1: Make sure the migration is valid
         -- (The logic is not guaranteed to work if the values that associate personnel
         -- with a role in a ProgramPersonnel record have been updated more than once.)
+        DROP TABLE IF EXISTS invalid_test;
         CREATE TEMP TABLE invalid_test
         AS
         WITH program_personnel_association_updates AS (
@@ -52,7 +53,7 @@ module.exports = {
           1/(LEAST(COUNT(*),1) - 1)
         FROM invalid_test
         ;
-        
+
         -- 2: Get unique role assignments
         WITH all_personnel_roles AS (
         SELECT DISTINCT
@@ -90,6 +91,8 @@ module.exports = {
         WHERE date_order = 1
           AND ppid = id
           AND pp."effectiveDate" IS NULL;
+
+        DROP TABLE IF EXISTS invalid_test;
         `,
         { transaction },
       );

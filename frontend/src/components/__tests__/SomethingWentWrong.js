@@ -1,26 +1,29 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router';
+import { Routes, Route, MemoryRouter } from 'react-router';
 import SomethingWentWrong from '../SomethingWentWrong';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
-
-const history = createMemoryHistory();
 
 const renderSomethingWentWrong = (
   responseCode = 500,
 ) => render(
-  <Router history={history}>
-    <SomethingWentWrongContext.Provider value={{
-      errorResponseCode: null,
-      setErrorResponseCode: jest.fn(),
-      setShowingNotFound: jest.fn(),
-      showingNotFoundL: false,
-    }}
-    >
-      <SomethingWentWrong passedErrorResponseCode={responseCode} />
-    </SomethingWentWrongContext.Provider>
-  </Router>,
+  <SomethingWentWrongContext.Provider value={{
+    errorResponseCode: null,
+    setErrorResponseCode: jest.fn(),
+    setShowingNotFound: jest.fn(),
+    showingNotFoundL: false,
+  }}
+  >
+    <MemoryRouter initialEntries={['/']}>
+      <Routes>
+        <Route
+          path="/"
+          element={<SomethingWentWrong passedErrorResponseCode={responseCode} />}
+        />
+      </Routes>
+    </MemoryRouter>
+  </SomethingWentWrongContext.Provider>,
+
 );
 
 describe('SomethingWentWrong component', () => {

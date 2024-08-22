@@ -3,7 +3,7 @@ import React, {
   useState, useContext, useEffect, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
-import { NavLink as Link, withRouter } from 'react-router-dom';
+import { NavLink as Link, useLocation } from 'react-router-dom';
 import SiteNavDisclosureGroup from './SiteNavDisclosureGroup';
 import './SiteNav.scss';
 import FeatureFlag from './FeatureFlag';
@@ -46,9 +46,9 @@ NavLink.defaultProps = {
 
 const SiteNav = ({
   authenticated,
-  location,
   hasAlerts,
 }) => {
+  const location = useLocation();
   const { user } = useContext(UserContext);
   const siteNavContent = useRef(null);
   const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
@@ -195,11 +195,10 @@ SiteNav.displayName = 'SiteNav';
 
 SiteNav.propTypes = {
   authenticated: PropTypes.bool,
-  location: PropTypes.shape({ pathname: PropTypes.string }).isRequired,
   hasAlerts: PropTypes.bool.isRequired,
 };
 
 SiteNav.defaultProps = {
   authenticated: false,
 };
-export default withRouter(SiteNav);
+export default SiteNav;

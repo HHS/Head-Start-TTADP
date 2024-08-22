@@ -5,10 +5,10 @@ import PropTypes from 'prop-types';
 import { useFormContext } from 'react-hook-form';
 import _ from 'lodash';
 import {
-  Dropdown, Form, Label, Fieldset, Button,
+  Select, Form, Label, Fieldset, Button,
 } from '@trussworks/react-uswds';
 import { Editor } from 'react-draft-wysiwyg';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import IncompletePages from '../IncompletePages';
 import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../../Constants';
 import { getEditorState } from '../../../../../utils';
@@ -37,12 +37,12 @@ const Review = ({
   const watchTextValue = watch('note');
   const textAreaClass = watchTextValue !== '' ? 'yes-print' : 'no-print';
   const { user } = useContext(UserContext);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const onReset = async () => {
     try {
       await onResetToDraft();
-      history.push('/activity-reports');
+      navigate('/activity-reports');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
@@ -120,7 +120,7 @@ const Review = ({
               label="Choose approval status"
               className="margin-bottom-3"
             >
-              <Dropdown
+              <Select
                 id="status"
                 name="status"
                 defaultValue={hasBeenReviewed
@@ -131,7 +131,7 @@ const Review = ({
                 {managerReportStatuses.map((status) => (
                   <option key={status} value={status}>{_.startCase(status)}</option>
                 ))}
-              </Dropdown>
+              </Select>
             </FormItem>
 
           </>

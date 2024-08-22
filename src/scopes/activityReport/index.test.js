@@ -43,6 +43,7 @@ import {
 } from '../../testUtils';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
+import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -193,15 +194,37 @@ describe('filtersToScopes', () => {
       },
     });
     const ids = reports.map((report) => report.id);
-    await ActivityReportApprover.destroy({ where: { activityReportId: ids }, force: true });
-    await ActivityReport.unscoped().destroy({ where: { id: ids } });
+    await ActivityReportApprover.destroy({
+      where: { activityReportId: ids },
+      force: true,
+      individualHooks: true,
+    });
+    await ActivityReport.unscoped().destroy({
+      where: { id: ids },
+      individualHooks: true,
+    });
     await User.destroy({
       where: {
         id: userIds,
       },
+      individualHooks: true,
     });
 
     await db.sequelize.close();
+  });
+
+  test('Dummy test to satisfy Jest', () => {
+    /*
+    * Jest 27 Introduction:
+    *   The update to Jest 27 introduced stricter rules to prevent situations where beforeAll
+    *   and afterAll hooks are used in describe blocks that do not contain any tests. This
+    *   prevents potential confusion and ensures that all setup and teardown logic is tied to
+    *   specific tests
+    *   (GitHub: https://github.com/jestjs/jest/issues/11485)
+    *   (Jest: https://jestjs.io/blog/2021/05/25/jest-27)
+    */
+
+    expect(true).toBe(true);
   });
 
   describe('groups', () => {
@@ -275,20 +298,25 @@ describe('filtersToScopes', () => {
             reportIncluded.id, reportExcluded.id,
           ],
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded.id, reportExcluded.id] },
+        individualHooks: true,
       });
       await GroupGrant.destroy({
         where: { groupId: [group.id, publicGroup.id] },
+        individualHooks: true,
       });
 
       await GroupCollaborator.destroy({
         where: { groupId: [group.id, publicGroup.id] },
+        individualHooks: true,
       });
 
       await Group.destroy({
         where: { id: [group.id, publicGroup.id] },
+        individualHooks: true,
       });
       await Grant.destroy({
         where: { id: grant.id },
@@ -366,6 +394,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [reportIncluded.id, reportIncludedLegacy.id, reportExcluded.id] },
+        individualHooks: true,
       });
     });
 
@@ -419,6 +448,7 @@ describe('filtersToScopes', () => {
           id: reportIds,
         },
         force: true,
+        individualHooks: true,
       });
     });
 
@@ -540,12 +570,15 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await OtherEntity.destroy({
           where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -634,9 +667,11 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await Grant.destroy({
           where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
@@ -644,6 +679,7 @@ describe('filtersToScopes', () => {
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -838,16 +874,24 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: reportIds,
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: reportIds },
+          individualHooks: true,
         });
         await Grant.destroy({
-          where: { id: grantIds },
+          where: {
+            [Op.or]: [
+              { id: grantIds },
+              { recipientId: recipientIds },
+            ],
+          },
           individualHooks: true,
         });
         await Recipient.destroy({
           where: { id: recipientIds },
+          individualHooks: true,
         });
       });
 
@@ -919,9 +963,11 @@ describe('filtersToScopes', () => {
           where: {
             activityReportId: [reportIncluded.id, reportExcluded.id],
           },
+          individualHooks: true,
         });
         await ActivityReport.destroy({
           where: { id: [reportIncluded.id, reportExcluded.id] },
+          individualHooks: true,
         });
         await Grant.destroy({
           where: { id: [grantIncluded.id, grantExcluded.id] },
@@ -929,6 +975,7 @@ describe('filtersToScopes', () => {
         });
         await Recipient.destroy({
           where: { id: [recipientIncluded.id, recipientExcluded.id] },
+          individualHooks: true,
         });
       });
 
@@ -969,6 +1016,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1041,6 +1089,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1111,6 +1160,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -1252,6 +1302,7 @@ describe('filtersToScopes', () => {
       // Delete aro's.
       await ActivityReportObjectiveTopic.destroy({
         where: { activityReportObjectiveId: [aro1.id, aro2.id] },
+        individualHooks: true,
       });
 
       // Delete Topics.
@@ -1264,10 +1315,12 @@ describe('filtersToScopes', () => {
       // Delete aro.
       await ActivityReportObjective.destroy({
         where: { id: aro1.id },
+        individualHooks: true,
       });
 
       await ActivityReportObjective.destroy({
         where: { id: aro2.id },
+        individualHooks: true,
       });
 
       // Delete objective.
@@ -1275,20 +1328,26 @@ describe('filtersToScopes', () => {
         where: {
           id: objective.id,
         },
+        individualHooks: true,
         force: true,
       });
 
       // Delete goal.
       await Goal.destroy({
         where: {
-          id: goal.id,
+          [Op.or]: [
+            { id: goal.id },
+            { grantId: grant.id },
+          ],
         },
+        individualHooks: true,
         force: true,
       });
 
       // Delete reports.
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
 
       // Delete grant.
@@ -1304,6 +1363,7 @@ describe('filtersToScopes', () => {
         where: {
           id: recipient.id,
         },
+        individualHooks: true,
       });
     });
 
@@ -1412,6 +1472,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
       await ActivityReportCollaborator.destroy({
         where: {
@@ -1421,6 +1482,7 @@ describe('filtersToScopes', () => {
             excludedActivityReportCollaborator.id,
           ],
         },
+        individualHooks: true,
       });
     });
 
@@ -1574,11 +1636,13 @@ describe('filtersToScopes', () => {
             activityReportGoalFieldResponse3.id,
           ],
         },
+        individualHooks: true,
       });
 
       // Destroy GoalFieldResponse.
       await GoalFieldResponse.destroy({
         where: { id: goalFieldResponse.id },
+        individualHooks: true,
       });
 
       // Destroy ActivityReportGoals.
@@ -1590,16 +1654,25 @@ describe('filtersToScopes', () => {
             excludedReport.id,
           ],
         },
+        individualHooks: true,
       });
 
       // Destroy Reports.
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
 
       // Destroy Goal.
       await Goal.destroy({
-        where: { id: [goal.id, goalTwo.id, goalThree.id] },
+        where: {
+          [Op.or]: [
+            { id: [goal.id, goalTwo.id, goalThree.id] },
+            { grantId: grant.id },
+          ],
+        },
+        individualHooks: true,
+        force: true,
       });
 
       // Destroy Grant.
@@ -1611,6 +1684,7 @@ describe('filtersToScopes', () => {
       // Destroy Recipient.
       await Recipient.destroy({
         where: { id: recipient.id },
+        individualHooks: true,
       });
     });
 
@@ -1684,6 +1758,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includeCollaboratorReport.id, includeCreatorReport.id, excludedReport.id] },
+        individualHooks: true,
       });
       await ActivityReportCollaborator.destroy({
         where: {
@@ -1693,6 +1768,7 @@ describe('filtersToScopes', () => {
             excludedActivityReportCollaborator.id,
           ],
         },
+        individualHooks: true,
       });
     });
 
@@ -1857,23 +1933,27 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
 
       await UserRole.destroy({
         where: {
           userId: possibleIds,
         },
+        individualHooks: true,
       });
 
       await User.destroy({
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
     it('finds reports based on author role', async () => {
@@ -1966,6 +2046,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 
@@ -2044,6 +2125,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 
@@ -2106,6 +2188,7 @@ describe('filtersToScopes', () => {
         where: {
           id: possibleIds,
         },
+        individualHooks: true,
       });
     });
 
@@ -2205,9 +2288,11 @@ describe('filtersToScopes', () => {
         where: {
           activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+        individualHooks: true,
       });
       await Grant.destroy({
         where: { id: [grantIncluded1.id, grantIncluded2.id, grantExcluded.id] },
@@ -2215,6 +2300,7 @@ describe('filtersToScopes', () => {
       });
       await Recipient.destroy({
         where: { id: [recipientIncluded1.id, recipientIncluded2.id, recipientExcluded.id] },
+        individualHooks: true,
       });
     });
 
@@ -2347,6 +2433,7 @@ describe('filtersToScopes', () => {
         where: {
           grantId: grantIds,
         },
+        individualHooks: true,
       });
 
       await destroyReport(reportOne);
@@ -2506,11 +2593,17 @@ describe('filtersToScopes', () => {
         where: {
           grantId: grantIds,
         },
+        individualHooks: true,
       });
 
-      await ActivityReportCollaborator.destroy({ where: { userId: mockUserTwo.id } });
+      await ActivityReportCollaborator.destroy({
+        where: { userId: mockUserTwo.id },
+        individualHooks: true,
+      });
       await ActivityReportApprover.destroy({
-        where: { activityReportId: reportThree.id }, force: true,
+        where: { activityReportId: reportThree.id },
+        force: true,
+        individualHooks: true,
       });
       await destroyReport(reportOne);
       await destroyReport(reportTwo);
@@ -2674,6 +2767,7 @@ describe('filtersToScopes', () => {
       // Delete reports.
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -2986,7 +3080,12 @@ describe('filtersToScopes', () => {
 
       if (goalCreated) {
         await Goal.destroy({
-          where: { id: goal.id },
+          where: {
+            [Op.or]: [
+              { id: goal.id },
+              { grantId: grant.id },
+            ],
+          },
           individualHooks: true,
           force: true,
         });
@@ -3141,6 +3240,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -3210,6 +3310,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [firstReport.id, secondReport.id, thirdReport.id, fourthReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -3258,31 +3359,6 @@ describe('filtersToScopes', () => {
     });
   });
 
-  describe('region id', () => {
-    let includedReport1;
-    let includedReport2;
-    let excludedReport;
-    let possibleIds;
-
-    beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      includedReport2 = await ActivityReport.create({ ...draftReport, regionId: 2 });
-      excludedReport = await ActivityReport.create({ ...draftReport, regionId: 3 });
-      possibleIds = [
-        includedReport1.id,
-        includedReport2.id,
-        excludedReport.id,
-        globallyExcludedReport.id,
-      ];
-    });
-
-    afterAll(async () => {
-      await ActivityReport.destroy({
-        where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
-      });
-    });
-  });
-
   describe('delivery method', () => {
     let includedReport1;
     let includedReport2;
@@ -3304,6 +3380,7 @@ describe('filtersToScopes', () => {
     afterAll(async () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
+        individualHooks: true,
       });
     });
 
@@ -3408,12 +3485,15 @@ describe('filtersToScopes', () => {
         where: {
           activityReportId: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id],
         },
+        individualHooks: true,
       });
       await ActivityReport.destroy({
         where: { id: [reportIncluded1.id, reportIncluded2.id, reportExcluded.id] },
+        individualHooks: true,
       });
       await OtherEntity.destroy({
         where: { id: [otherEntityIncluded1.id, otherEntityIncluded2.id, otherEntityExcluded.id] },
+        individualHooks: true,
       });
     });
 
@@ -3505,24 +3585,34 @@ describe('filtersToScopes', () => {
         where: {
           activityReportId: [includedReport.id, excludedReport.id],
         },
+        individualHooks: true,
       });
 
       // Delete reports.
       await ActivityReport.destroy({
         where: { id: [includedReport.id, excludedReport.id] },
+        individualHooks: true,
       });
 
       await Goal.destroy({
-        where: { id: [goalOne.id, goalTwo.id] },
+        where: {
+          [Op.or]: [
+            { id: [goalOne.id, goalTwo.id] },
+            { grantId: grant.id },
+          ],
+        },
+        individualHooks: true,
         force: true,
       });
 
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
 
       await Recipient.destroy({
         where: { id: recipient.id },
+        individualHooks: true,
       });
     });
 

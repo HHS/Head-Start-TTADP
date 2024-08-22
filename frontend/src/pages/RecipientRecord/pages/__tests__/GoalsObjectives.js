@@ -5,8 +5,7 @@ import {
 } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 import GoalsObjectives from '../GoalsObjectives';
@@ -16,7 +15,6 @@ import FilterContext from '../../../../FilterContext';
 import { mockWindowProperty } from '../../../../testHelpers';
 import AppLoadingContext from '../../../../AppLoadingContext';
 
-const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 const defaultStatuses = {
@@ -113,25 +111,37 @@ describe('Goals and Objectives', () => {
       ...user,
     };
 
+    const REGION_ID = '1';
+    const RECIPIENT_ID = '401';
+
+    const location = {
+      state: { ids }, hash: '', pathname: `/recipient/${RECIPIENT_ID}/region/${REGION_ID}/rttapa`, search: '',
+    };
+
     render(
-      <Router history={memoryHistory}>
-        <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
-          <UserContext.Provider value={{ user: userForContext }}>
-            <FilterContext.Provider value={{ filterKey: 'test' }}>
-              <GoalsObjectives
-                recipientId="401"
-                regionId="1"
-                recipient={recipient}
-                location={{
-                  state: { ids }, hash: '', pathname: '', search: '',
-                }}
-                recipientName="test"
-                canMergeGoals={canMergeGoals}
-              />
-            </FilterContext.Provider>
-          </UserContext.Provider>
-        </AppLoadingContext.Provider>
-      </Router>,
+      <AppLoadingContext.Provider value={{ setIsAppLoading: () => {}, isAppLoading: false }}>
+        <UserContext.Provider value={{ user: userForContext }}>
+          <FilterContext.Provider value={{ filterKey: 'test' }}>
+            <MemoryRouter>
+              <Routes location={location}>
+                <Route
+                  path="/recipient/:recipientId/region/:regionId/rttapa"
+                  element={(
+                    <GoalsObjectives
+                      recipientId="401"
+                      regionId="1"
+                      recipient={recipient}
+                      recipientName="test"
+                      canMergeGoals={canMergeGoals}
+                    />
+)}
+                />
+              </Routes>
+            </MemoryRouter>
+          </FilterContext.Provider>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+      ,
     );
   };
 

@@ -10,8 +10,12 @@ import {
   keyBy, mapValues, startCase,
 } from 'lodash';
 import { Helmet } from 'react-helmet';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { useHistory, Redirect } from 'react-router-dom';
+import {
+  Navigate,
+  useParams,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { Alert, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -162,11 +166,12 @@ export function cleanupLocalStorage(id, replacementKey) {
 const INTERVAL_DELAY = 10000; // TEN SECONDS
 
 function ActivityReport({
-  match, location, region,
+  region,
 }) {
-  const { params: { currentPage, activityReportId } } = match;
+  const { currentPage, activityReportId } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const history = useHistory();
   const [error, updateError] = useState();
   const [loading, updateLoading] = useState(true);
 
@@ -216,12 +221,6 @@ function ActivityReport({
   const showLastUpdatedTime = (
     location.state && location.state.showLastUpdatedTime && connectionActive
   ) || false;
-
-  useEffect(() => {
-    // Clear history state once mounted and activityReportId changes. This prevents someone from
-    // seeing a save message if they refresh the page after creating a new report.
-    history.replace();
-  }, [activityReportId, history]);
 
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
@@ -428,7 +427,7 @@ function ActivityReport({
   // If no region was able to be found, we will re-reroute user to the main page
   // FIXME: when re-routing user show a message explaining what happened
   if (formData && parseInt(formData.regionId, DECIMAL_BASE) === -1) {
-    return <Redirect to="/" />;
+    return <Navigate to="/" />;
   }
 
   // This error message is a catch all assuming that the network storage is working
@@ -442,19 +441,19 @@ function ActivityReport({
 
   if (connectionActive && !editable && currentPage !== 'review') {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+      <Navigate to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage && editable && isPendingApprover) {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/review`} />
+      <Navigate to={`/activity-reports/${activityReportId}/review`} />
     );
   }
 
   if (!currentPage) {
     return (
-      <Redirect to={`/activity-reports/${activityReportId}/activity-summary`} />
+      <Navigate to={`/activity-reports/${activityReportId}/activity-summary`} />
     );
   }
 
@@ -470,7 +469,7 @@ function ActivityReport({
 
     const page = pages.find((p) => p.position === position);
     const newPath = `/activity-reports/${reportId.current}/${page.path}`;
-    history.push(newPath, state);
+    navigate(newPath, { state });
   };
 
   const onSave = async (data, forceUpdate = false) => {
@@ -495,8 +494,7 @@ function ActivityReport({
         reportId.current = savedReport.id;
 
         cleanupLocalStorage('new', savedReport.id);
-
-        window.history.replaceState(null, null, `/activity-reports/${savedReport.id}/${currentPage}`);
+        navigate(`/activity-reports/${savedReport.id}/${currentPage}`, { replace: true });
 
         setConnectionActive(true);
         updateCreatorRoleWithName(savedReport.creatorNameWithRole);
@@ -648,8 +646,6 @@ function ActivityReport({
 }
 
 ActivityReport.propTypes = {
-  match: ReactRouterPropTypes.match.isRequired,
-  location: ReactRouterPropTypes.location.isRequired,
   region: PropTypes.number,
 };
 

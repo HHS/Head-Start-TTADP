@@ -1,10 +1,11 @@
 /* eslint-disable react/forbid-prop-types */
 /* eslint-disable jsx-a11y/anchor-is-valid */
+/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useState, useRef, useContext } from 'react';
 import PropTypes from 'prop-types';
 import { Tag, Table } from '@trussworks/react-uswds';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import moment from 'moment';
 import Modal from '../../components/Modal';
 import Container from '../../components/Container';
@@ -52,7 +53,7 @@ ProperIcon.defaultProps = {
 };
 
 export function ReportsRow({ reports, removeAlert, message }) {
-  const history = useHistory();
+  const navigate = useNavigate();
   const [idToDelete, updateIdToDelete] = useState(0);
   const modalRef = useRef();
   const { user } = useContext(UserContext);
@@ -143,7 +144,7 @@ export function ReportsRow({ reports, removeAlert, message }) {
     const menuItems = [
       {
         label: 'View',
-        onClick: () => { history.push(idLink); },
+        onClick: () => { navigate(idLink); },
       },
     ];
 

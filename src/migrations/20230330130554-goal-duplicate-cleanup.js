@@ -235,7 +235,7 @@ module.exports = {
             AND MD5(TRIM(g.name)) = doodgoa."goalHash"
             AND MD5(TRIM(o.title)) = doodgoa."objectiveHash"
             AND o.id != ANY(doodgoa."objectiveIds")
-            WHERE doodgoa."grantId" IS NULL 
+            WHERE doodgoa."grantId" IS NULL
             GROUP BY 2,3,4,5,6,7,8,9,10
             HAVING ARRAY_LENGTH(ARRAY_AGG(DISTINCT o.id), 1) > 1
             ORDER BY 11 DESC
@@ -496,8 +496,8 @@ module.exports = {
         )
         SELECT * FROM objectives_to_modify;
         -- SELECT * FROM "ObjectivesToModifyMetadata";
-        
-        --Check for Extra Objectives 
+
+        --Check for Extra Objectives
 
         -- SELECT "grantId", "goalHash", "objectiveHash", COUNT(*), array_to_json(array_agg(row_to_json(doodgoa)))
         -- FROM "DupObjectivesOnDupGoalsOnARs" doodgoa
@@ -540,7 +540,7 @@ module.exports = {
         -- ON o1."goalId" = o2."goalId"
         -- AND o1."title" ILIKE o2."title"
         -- AND o1."objectiveHash" != o2."objectiveHash";
-        
+
         -- Validate ObjectiveFiles objectiveId null value
 
         -- WITH otmm_recast AS (
@@ -555,7 +555,7 @@ module.exports = {
         -- LEFT JOIN "ObjectiveFiles" "of2"
         -- ON "of2"."objectiveId" = otmm."toUpdate"
         -- AND "of"."fileId" = "of2"."fileId";
-        
+
         -- Handle ObjectiveFiles
         DROP TABLE IF EXISTS "ObjectiveFilesToModify";
         CREATE TEMP TABLE "ObjectiveFilesToModify" AS (
@@ -593,7 +593,7 @@ module.exports = {
         SELECT set_config('audit.auditDescriptor', 'dup_goals_Insert_ObjectiveFiles', TRUE) as "auditDescriptor";
         DROP TABLE IF EXISTS "InsertObjectiveFiles";
         CREATE TEMP TABLE "InsertObjectiveFiles" AS
-            WITH objective_files AS ( 
+            WITH objective_files AS (
             INSERT INTO "ObjectiveFiles"
             (
             "objectiveId",
@@ -691,7 +691,7 @@ module.exports = {
         -- LEFT JOIN "ObjectiveResources" "or2"
         -- ON "or2"."objectiveId" = otmm."toUpdate"
         -- AND "or"."resourceId" = "or2"."resourceId";
-        
+
         -- Handle ObjectiveResources
 
         DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
@@ -731,7 +731,7 @@ module.exports = {
         -- FROM "ObjectiveResourcesToModify" ofmm
         -- GROUP BY "resourceId", "toRemove", "toUpdate"
         -- HAVING COUNT(*) > 1;
-        
+
         BEGIN;
         SELECT set_config('audit.auditDescriptor', 'dup_goals_Insert_ObjectiveResources', TRUE) as "auditDescriptor";
         DROP TABLE IF EXISTS "InsertObjectiveResources";
@@ -1020,7 +1020,7 @@ module.exports = {
         FROM "UpdateObjectives"
         WHERE aro."objectiveId" = "UpdateObjectives"."old_objective_id";
         END;
-        
+
         -- Handle ActivityReportObjectives
         DROP TABLE IF EXISTS "ActivityReportObjectivesToModify";
         CREATE TEMP TABLE "ActivityReportObjectivesToModify" AS (
@@ -1099,7 +1099,7 @@ module.exports = {
         END;
 
         -- Handle ActivityReportObjectives Metadata tables
-        
+
         DROP TABLE IF EXISTS "ActivityReportObjectivesToModifyMetadata";
         CREATE TEMP TABLE "ActivityReportObjectivesToModifyMetadata" AS (
             SELECT
@@ -1426,7 +1426,7 @@ module.exports = {
             "createdAt",
             "updatedAt"
             FROM "ActivityReportObjectiveTopicsToModify" arottm
-            WHERE arottm."toUpdate" IS NULL AND arottm."activityReportObjectiveId" IS NOT NULL 
+            WHERE arottm."toUpdate" IS NULL AND arottm."activityReportObjectiveId" IS NOT NULL
             RETURNING
             id "activityReportObjectiveTopicId",
             "activityReportObjectiveId"
@@ -1993,10 +1993,10 @@ module.exports = {
         -- ),
         -- -- Identify rows violating foreign key constraints in ActivityReportObjectiveFiles table
         -- violated_arof AS (
-        --     SELECT 'ActivityReportObjectiveFiles' as table_name, 
+        --     SELECT 'ActivityReportObjectiveFiles' as table_name,
         --         arof.id as primary_key,
-        --         arof."activityReportObjectiveId" as foreign_key, 
-        --         o.id as objective_id, 
+        --         arof."activityReportObjectiveId" as foreign_key,
+        --         o.id as objective_id,
         --         array_to_json(array_agg(row_to_json(om))) as raw_objective,
         --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal
         --     FROM "ActivityReportObjectiveFiles" arof
@@ -2011,11 +2011,11 @@ module.exports = {
 
         -- -- Identify rows violating foreign key constraints in ActivityReportObjectives table
         -- violated_aro AS (
-        --     SELECT 'ActivityReportObjectives' as table_name, 
-        --         aro.id as primary_key, 
-        --         aro."objectiveId" as foreign_key, 
-        --         to_remove as goal_id, 
-        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal, 
+        --     SELECT 'ActivityReportObjectives' as table_name,
+        --         aro.id as primary_key,
+        --         aro."objectiveId" as foreign_key,
+        --         to_remove as goal_id,
+        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal,
         --         array_to_json(array_agg(row_to_json(o))) as raw_objective
         --     FROM "ActivityReportObjectives" aro
         --     LEFT JOIN "Objectives" o ON aro."objectiveId" = o.id
@@ -2026,11 +2026,11 @@ module.exports = {
         -- ),
         -- -- Identify rows violating foreign key constraints in ObjectiveFiles table
         -- violated_of AS (
-        --     SELECT 'ObjectiveFiles' as table_name, 
-        --         of.id as primary_key, 
-        --         of."objectiveId" as foreign_key, 
-        --         to_remove as goal_id, 
-        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal, 
+        --     SELECT 'ObjectiveFiles' as table_name,
+        --         of.id as primary_key,
+        --         of."objectiveId" as foreign_key,
+        --         to_remove as goal_id,
+        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal,
         --         array_to_json(array_agg(row_to_json(o))) as raw_objective
         --     FROM "ObjectiveFiles" of
         --     LEFT JOIN "Objectives" o ON of."objectiveId" = o.id
@@ -2041,10 +2041,10 @@ module.exports = {
         -- ),
         -- -- Identify rows violating foreign key constraints in Objectives table
         -- violated_o AS (
-        --     SELECT 'Objectives' as table_name, 
+        --     SELECT 'Objectives' as table_name,
         --         o.id as primary_key,
-        --         o."goalId" as foreign_key, 
-        --         to_remove as goal_id, 
+        --         o."goalId" as foreign_key,
+        --         to_remove as goal_id,
         --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal,
         --         array_to_json(array_agg(row_to_json(o))) as raw_objective
         --     FROM "Objectives" o
@@ -2055,11 +2055,11 @@ module.exports = {
         -- ),
         -- -- Identify rows violating foreign key constraints in ActivityReportGoals table
         -- violated_arg AS (
-        --     SELECT 'ActivityReportGoals' as table_name, 
+        --     SELECT 'ActivityReportGoals' as table_name,
         --         arg.id as primary_key,
-        --         arg."goalId" as foreign_key, 
+        --         arg."goalId" as foreign_key,
         --         to_remove as goal_id,
-        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal, 
+        --         array_to_json(array_agg(row_to_json(ofmm))) as raw_goal,
         --         array_to_json(array_agg(row_to_json(o))) as raw_objective
         --     FROM "ActivityReportGoals" arg
         --     LEFT JOIN "Objectives" o ON o."goalId" = arg."goalId"
@@ -2150,7 +2150,7 @@ module.exports = {
             (SELECT COUNT(*) FROM "DeleteGoals") "Deletes",
             (SELECT COUNT(*) FROM "Goals" g) "post_count"
         );
-        
+
         DROP TABLE IF EXISTS "PostCountStatsByRegion";
         CREATE TEMP TABLE "PostCountStatsByRegion" AS (
             SELECT
@@ -2196,7 +2196,7 @@ module.exports = {
             SUM("ActivityReportObjectiveTopicsTotal")
         FROM "PostCountStatsByRegion";
         SELECT * FROM "PostCountStatsByRegion";
-        
+
         WITH "RegionDiffs" AS (
             SELECT
                 pre."regionId",
@@ -2211,12 +2211,12 @@ module.exports = {
                 pre."ActivityReportObjectiveFilesTotal" - post."ActivityReportObjectiveFilesTotal" AS "ActivityReportObjectiveFilesTotalDiff",
                 pre."ActivityReportObjectiveResourcesTotal" - post."ActivityReportObjectiveResourcesTotal" AS "ActivityReportObjectiveResourcesTotalDiff",
                 pre."ActivityReportObjectiveTopicsTotal" - post."ActivityReportObjectiveTopicsTotal" AS "ActivityReportObjectiveTopicsTotalDiff"
-                
+
             FROM "PreCountStatsByRegion" pre
             JOIN "PostCountStatsByRegion" post ON pre."regionId" = post."regionId"
         )
         SELECT * FROM "RegionDiffs";
-        
+
         WITH "CollectStats" AS (
             SELECT 1 id, *,
                 (SELECT SUM("GoalsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
@@ -2262,13 +2262,81 @@ module.exports = {
                 (SELECT SUM("ActivityReportObjectiveTopicsTotal") FROM "PreCountStatsByRegion" WHERE "regionId" = -1) AS pre_count
             FROM "ActivityReportObjectiveTopicStats"
         )
-        SELECT *, 
+        SELECT *,
             pre_count - post_count AS diff,
             post_count - (pre_count - "Deletes" + "Inserts") AS adjusted_diff
 
         FROM "CollectStats"
         ORDER BY id;
-        DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
+
+        DROP TABLE IF EXISTS "PreCountStatsByRegion";
+        DROP TABLE IF EXISTS "DupGoalsOnARs";
+        DROP TABLE IF EXISTS "GoalsToModify";
+        DROP TABLE IF EXISTS "DupObjectivesOnDupGoalsOnARs";
+        DROP TABLE IF EXISTS "DupObjectivesOnNonDupGoalsOnARs";
+        DROP TABLE IF EXISTS "DupObjectivesOnARs";
+        DROP TABLE IF EXISTS "ObjectivesToModify";
+        DROP TABLE IF EXISTS "DeduplicatedObjectivesToModify";
+        DROP TABLE IF EXISTS "UniqueObjectivesOnGoalsToBeRemoved";
+        DROP TABLE IF EXISTS "ShiftObjectives";
+        DROP TABLE IF EXISTS "InsertObjectives";
+        DROP TABLE IF EXISTS "DeduplicatedInsertObjectives";
+        DROP TABLE IF EXISTS "ObjectivesToModifyMetadata";
+        DROP TABLE IF EXISTS "ObjectiveFilesToModify";
+        DROP TABLE IF EXISTS "InsertObjectiveFiles";
+        DROP TABLE IF EXISTS "UpdateObjectiveFiles";
+        DROP TABLE IF EXISTS "DeleteObjectiveFiles";
+        DROP TABLE IF EXISTS "ObjectiveFileStats";
+        DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
+        DROP TABLE IF EXISTS "InsertObjectiveResources";
+        DROP TABLE IF EXISTS "UpdateObjectiveResources";
+        DROP TABLE IF EXISTS "DeleteObjectiveResources";
+        DROP TABLE IF EXISTS "ObjectiveResourceStats";
+        DROP TABLE IF EXISTS "ObjectiveTopicsToModify";
+        DROP TABLE IF EXISTS "InsertObjectiveTopics";
+        DROP TABLE IF EXISTS "UpdateObjectiveTopics";
+        DROP TABLE IF EXISTS "DeleteObjectiveTopics";
+        DROP TABLE IF EXISTS "ObjectiveTopicStats";
+        DROP TABLE IF EXISTS "UpdateObjectives";
+        DROP TABLE IF EXISTS "ActivityReportObjectivesToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportObjectives";
+        DROP TABLE IF EXISTS "ActivityReportObjectivesToModifyMetadata";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveFilesToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportObjectiveFiles";
+        DROP TABLE IF EXISTS "UpdateActivityReportObjectiveFiles";
+        DROP TABLE IF EXISTS "DeleteActivityReportObjectiveFiles";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveFileStats";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveResourcesToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportObjectiveResources";
+        DROP TABLE IF EXISTS "UpdateActivityReportObjectiveResources";
+        DROP TABLE IF EXISTS "DeleteActivityReportObjectiveResources";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveResourceStats";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveTopicsToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportObjectiveTopics";
+        DROP TABLE IF EXISTS "UpdateActivityReportObjectiveTopics";
+        DROP TABLE IF EXISTS "DeleteActivityReportObjectiveTopics";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveTopicStats";
+        DROP TABLE IF EXISTS "UpdateActivityReportObjectives";
+        DROP TABLE IF EXISTS "DeleteActivityReportObjectives";
+        DROP TABLE IF EXISTS "ActivityReportObjectiveStats";
+        DROP TABLE IF EXISTS "DeleteObjectives";
+        DROP TABLE IF EXISTS "ObjectiveStats";
+        DROP TABLE IF EXISTS "ActivityReportGoalsToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportGoals";
+        DROP TABLE IF EXISTS "ActivityReportGoalsToModifyMetadata";
+        DROP TABLE IF EXISTS "ActivityReportGoalResourcesToModify";
+        DROP TABLE IF EXISTS "InsertActivityReportGoalResources";
+        DROP TABLE IF EXISTS "UpdateActivityReportGoalResources";
+        DROP TABLE IF EXISTS "DeleteActivityReportGoalResources";
+        DROP TABLE IF EXISTS "ActivityReportGoalResourceStats";
+        DROP TABLE IF EXISTS "UpdateActivityReportGoals";
+        DROP TABLE IF EXISTS "DeleteActivityReportGoals";
+        DROP TABLE IF EXISTS "ActivityReportGoalStats";
+        DROP TABLE IF EXISTS "UpdateGoals";
+        DROP TABLE IF EXISTS "ViolatingDeleteGoals";
+        DROP TABLE IF EXISTS "DeleteGoals";
+        DROP TABLE IF EXISTS "GoalStats";
+        DROP TABLE IF EXISTS "PostCountStatsByRegion";
           `, { transaction });
       } catch (err) {
         console.error(err); // eslint-disable-line no-console

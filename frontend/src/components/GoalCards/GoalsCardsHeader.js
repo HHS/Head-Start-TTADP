@@ -2,11 +2,11 @@ import React, { useState, useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
-  Checkbox, Button, Dropdown, Alert,
+  Checkbox, Button, Select, Alert,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Link, useHistory } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import UserContext from '../../UserContext';
 import { canEditOrCreateGoals } from '../../permissions';
 import colors from '../../colors';
@@ -35,8 +35,6 @@ export default function GoalCardsHeader({
   pageSelectedGoalIds,
   perPageChange,
   pageGoalIds,
-  showRttapaValidation,
-  draftSelectedRttapa,
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
@@ -45,7 +43,8 @@ export default function GoalCardsHeader({
 }) {
   const [retrieveSimilarGoals, setRetrieveSimilarGoals] = useState(false);
   const [goalMergeGroups, setGoalMergeGroups] = useState([]);
-  const history = useHistory();
+  const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useContext(UserContext);
   const hasButtonPermissions = canEditOrCreateGoals(user, parseInt(regionId, DECIMAL_BASE));
 
@@ -90,8 +89,8 @@ export default function GoalCardsHeader({
       (bucket) => goalsToPrint.includes(bucket.id),
     ).map((bucket) => bucket.goalIds).flat();
 
-    history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
-      sortConfig, selectedGoalIds: goalsToPrint,
+    navigate(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/print${window.location.search}`, {
+      state: { sortConfig, selectedGoalIds: goalsToPrint },
     });
   };
 
@@ -120,8 +119,8 @@ export default function GoalCardsHeader({
   };
 
   const mergedGoals = (() => {
-    if (history.location && history.location.state) {
-      return history.location.state.mergedGoals;
+    if (location && location.state) {
+      return location.state.mergedGoals;
     }
 
     return null;
@@ -153,7 +152,7 @@ export default function GoalCardsHeader({
         <div className="desktop:display-flex flex-align-center">
           {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
-          <Dropdown
+          <Select
             onChange={setSortBy}
             value={`${sortConfig.sortBy}-${sortConfig.direction}`}
             className="margin-top-0"
@@ -165,7 +164,7 @@ export default function GoalCardsHeader({
             <option value="createdOn-asc">creation date (oldest to newest) </option>
             <option value="goalStatus-asc">goal status (drafts first)</option>
             <option value="goalStatus-desc">goal status (closed first) </option>
-          </Dropdown>
+          </Select>
         </div>
         {!hidePagination && (
         <div className="smart-hub--table-nav">
@@ -256,26 +255,8 @@ export default function GoalCardsHeader({
           )}
       </div>
       <div>
-        {showRttapaValidation && (
-          <Alert type="error" className="margin-top-3">
-            <div>
-              { draftSelectedRttapa.length ? (
-                <p className="usa-prose margin-top-0">
-                  <strong>{draftSelectedRttapa.map((g) => (`G-${g}`)).join(', ')}</strong>
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'is a' : 'are'}
-                  {' '}
-                  draft
-                  {' '}
-                  {draftSelectedRttapa.length === 1 ? 'goal' : 'goals'}
-                  , and draft goals can&apos;t be added to an RTTAPA. Deselect any draft goals.
-                </p>
-              ) : null}
-            </div>
-          </Alert>
-        )}
         {
-          !showRttapaValidation && allGoalsChecked
+          allGoalsChecked
             ? (
               <Alert className="margin-top-3" type="info" slim>
                 {showClearAllAlert
@@ -349,8 +330,6 @@ GoalCardsHeader.propTypes = {
   pageGoalIds: PropTypes.oneOfType(
     [PropTypes.arrayOf(PropTypes.number), PropTypes.number],
   ).isRequired,
-  showRttapaValidation: PropTypes.bool.isRequired,
-  draftSelectedRttapa: PropTypes.arrayOf(PropTypes.number).isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
   shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,

@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { v4 as uuid } from 'uuid';
 import PropTypes from 'prop-types';
 import {
-  Dropdown,
+  Select,
   FormGroup, Label,
 } from '@trussworks/react-uswds';
 import { GOAL_SOURCES } from '@ttahub/common';
@@ -41,7 +41,7 @@ export default function GoalSource({
           </>
         </Label>
         {error}
-        <Dropdown
+        <Select
           id={inputName}
           name={inputName}
           onChange={onChange}
@@ -56,7 +56,7 @@ export default function GoalSource({
           {GOAL_SOURCES.map((s) => (
             <option key={uuid()}>{s}</option>
           ))}
-        </Dropdown>
+        </Select>
 
       </FormGroup>
     </>

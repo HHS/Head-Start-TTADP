@@ -7,7 +7,7 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { MemoryRouter, Route } from 'react-router';
+import { MemoryRouter, Route, Routes } from 'react-router';
 import AccountManagement from '../..';
 import UserContext from '../../../../UserContext';
 import AppLoadingContext from '../../../../AppLoadingContext';
@@ -35,20 +35,28 @@ describe('AccountManagement', () => {
 
   const renderAM = (user, pth) => {
     render(
-      <MemoryRouter initialEntries={[pth]}>
-        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <Route path="/account/verify-email/:token" exact>
-            <UserContext.Provider value={{ user }}>
-              <AccountManagement updateUser={() => {}} />
-            </UserContext.Provider>
-          </Route>
-          <Route path="/account" exact>
-            <UserContext.Provider value={{ user }}>
-              <AccountManagement updateUser={() => {}} />
-            </UserContext.Provider>
-          </Route>
-        </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <MemoryRouter initialEntries={[pth]}>
+          <Routes>
+            <Route
+              path="/account/verify-email/:token"
+              element={(
+                <UserContext.Provider value={{ user }}>
+                  <AccountManagement updateUser={() => {}} />
+                </UserContext.Provider>
+)}
+            />
+            <Route
+              path="/account"
+              element={(
+                <UserContext.Provider value={{ user }}>
+                  <AccountManagement updateUser={() => {}} />
+                </UserContext.Provider>
+)}
+            />
+          </Routes>
+        </MemoryRouter>
+      </AppLoadingContext.Provider>,
     );
   };
 

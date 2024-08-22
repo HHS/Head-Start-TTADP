@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
-  Button, Dropdown, Alert,
+  Button, Select as UswdsSelect, Alert,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
@@ -108,7 +108,7 @@ const CompleteSession = ({
           name="status"
           required
         >
-          <Dropdown
+          <UswdsSelect
             label="Session status "
             name="status"
             id="status"
@@ -117,7 +117,7 @@ const CompleteSession = ({
             required
           >
             {options}
-          </Dropdown>
+          </UswdsSelect>
         </FormItem>
       </div>
 

@@ -4,9 +4,9 @@ import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-  Alert, Button, Table, Dropdown, ErrorMessage,
+  Alert, Button, Table, Select as UswdsSelect, ErrorMessage,
 } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -45,7 +45,7 @@ const CompleteEvent = ({
   const [showSubmissionError, setShowSubmissionError] = useState(false);
   const [showError, setShowError] = useState(false);
 
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // we store this in state and not the form data because we don't want to
   // automatically update the form object when the user changes the status dropdown
@@ -146,7 +146,7 @@ const CompleteEvent = ({
     const onSuspend = async () => {
       await onSaveForm(updatedStatus);
       const newPath = '/training-reports/suspended';
-      history.push(newPath);
+      navigate(newPath);
     };
 
     if (isOwner && updatedStatus === 'Suspended') {
@@ -227,7 +227,7 @@ const CompleteEvent = ({
           name="status"
           required
         >
-          <Dropdown
+          <UswdsSelect
             label="Event status"
             name="status"
             id="status"
@@ -238,7 +238,7 @@ const CompleteEvent = ({
             }}
           >
             {options}
-          </Dropdown>
+          </UswdsSelect>
         </FormItem>
       </div>
       )}
