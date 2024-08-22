@@ -40,6 +40,10 @@ export default function TrainingReports({ match }) {
   const [error, updateError] = useState();
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [displayEvents, setDisplayEvents] = useState([]);
+  const [cardsInternalMessage, setCardsInternalMessage] = useState();
+  const history = useHistory();
+  // eslint-disable-next-line max-len
+  const [msg, setMsg] = useState(history.location.state && history.location.state.message ? <>{history.location.state.message}</> : null);
 
   const {
     regions,
@@ -76,8 +80,6 @@ export default function TrainingReports({ match }) {
     fetchEvents();
   }, [status, user.homeRegionId, setAppLoadingText, setIsAppLoading, filters]);
 
-  const [showAlert, updateShowAlert] = useState(true);
-
   const regionLabel = () => {
     if (defaultRegion === 14) {
       return 'all regions';
@@ -87,19 +89,6 @@ export default function TrainingReports({ match }) {
     }
     return '';
   };
-
-  const history = useHistory();
-
-  let msg;
-  const message = history.location.state && history.location.state.message;
-
-  if (message) {
-    msg = (
-      <>
-        { message }
-      </>
-    );
-  }
 
   const filterConfig = TRAINING_REPORT_FILTER_CONFIG(hasMultipleRegions);
 
@@ -126,6 +115,14 @@ export default function TrainingReports({ match }) {
     }
   };
 
+  const removeEventFromDisplay = (id) => {
+    // update the UI, exclude the deleted event.
+    const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
+
+    // update the events state.
+    setDisplayEvents(events);
+  };
+
   /**
    *
    * eventId is the number from smartsheet (used in queries)
@@ -138,12 +135,7 @@ export default function TrainingReports({ match }) {
     try {
       // delete the event
       await deleteEvent(String(eventId));
-
-      // update the UI, exclude the deleted event.
-      const events = displayEvents.map((e) => ({ ...e })).filter((e) => e.id !== id);
-
-      // update the events state.
-      setDisplayEvents(events);
+      removeEventFromDisplay(id);
     } catch (e) {
       updateError('Unable to delete event');
       // eslint-disable-next-line no-console
@@ -175,18 +167,17 @@ export default function TrainingReports({ match }) {
             () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
-        {showAlert && message && (
+        {(msg) && (
           <Alert
             type="success"
             role="alert"
             className="margin-bottom-2"
-            noIcon
             cta={(
               <Button
                 role="button"
                 unstyled
                 aria-label="dismiss alert"
-                onClick={() => updateShowAlert(false)}
+                onClick={() => setMsg(null)}
               >
                 <span className="fa-sm margin-right-2">
                   <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
@@ -237,6 +228,15 @@ export default function TrainingReports({ match }) {
                 eventType={status}
                 onRemoveSession={onRemoveSession}
                 onDeleteEvent={onDeleteEvent}
+                removeEventFromDisplay={removeEventFromDisplay}
+                alerts={{
+                  message: cardsInternalMessage,
+                  setMessage: setCardsInternalMessage,
+                  setParentMessage: (updatedMessage) => {
+                    setCardsInternalMessage(null);
+                    setMsg(updatedMessage);
+                  },
+                }}
               />
             </WidgetContainer>
           </Grid>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { Grid, ModalToggleButton } from '@trussworks/react-uswds';
+import { Grid, ModalToggleButton, Button } from '@trussworks/react-uswds';
 import { canUnlockReports } from '../permissions';
 import PrintToPdf from './PrintToPDF';
 
@@ -9,6 +9,8 @@ export default function ApprovedReportSpecialButtons({
   modalRef,
   user,
   showUnlockReports,
+  showCompleteEvent,
+  completeEvent,
 }) {
   const [successfullyCopiedClipboard, setSuccessfullyCopiedClipboard] = useState(false);
   const [somethingWentWrongWithClipboard, setSomethingWentWrongWithClipboard] = useState(false);
@@ -53,12 +55,17 @@ export default function ApprovedReportSpecialButtons({
         : null}
       <Grid row>
         {navigator && navigator.clipboard
-          ? <button id="approved-url" type="button" className="usa-button no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
+          ? <button id="approved-url" type="button" className="usa-button usa-button--outline no-print" disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false} onClick={handleCopyUrl}>Copy URL Link</button>
           : null}
         <PrintToPdf
           id="approved-print"
           disabled={modalRef && modalRef.current ? modalRef.current.modalIsOpen : false}
         />
+        {(showCompleteEvent && completeEvent) ? (
+          <Button onClick={completeEvent} className="no-print">
+            Complete event
+          </Button>
+        ) : null}
         {showUnlockReports && user && user.permissions && canUnlockReports(user)
           ? <ModalToggleButton type="button" className="usa-button usa-button--outline no-print" modalRef={modalRef} opener>Unlock report</ModalToggleButton>
           : null}
@@ -78,6 +85,8 @@ ApprovedReportSpecialButtons.propTypes = {
     PropTypes.shape(),
   ]),
   showUnlockReports: PropTypes.bool,
+  completeEvent: PropTypes.func,
+  showCompleteEvent: PropTypes.bool,
 };
 
 ApprovedReportSpecialButtons.defaultProps = {
@@ -85,4 +94,6 @@ ApprovedReportSpecialButtons.defaultProps = {
   modalRef: null,
   showUnlockReports: false,
   user: null,
+  completeEvent: null,
+  showCompleteEvent: false,
 };

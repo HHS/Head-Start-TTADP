@@ -36,6 +36,7 @@ export const nextStepsFields = {
   specialistNextSteps: [{ note: '', completeDate: '' }],
   recipientNextSteps: [{ note: '', completeDate: '' }],
   pocComplete: false,
+  ownerComplete: false,
 };
 
 export const defaultFormValues = {
@@ -59,6 +60,22 @@ export const defaultValues = {
     4: NOT_STARTED,
   },
 };
+
+export const baseDefaultValues = {
+  id: 0,
+  ownerId: null,
+  eventId: '',
+  eventDisplayId: '',
+  eventName: '',
+  status: 'In progress',
+  pageState: {
+    1: NOT_STARTED,
+    2: NOT_STARTED,
+    3: NOT_STARTED,
+    4: NOT_STARTED,
+  },
+};
+
 export const pageComplete = (
   hookForm,
   fields,
@@ -71,3 +88,40 @@ export const pageComplete = (
 
   return !!(val);
 });
+
+export const istKeys = [
+  'sessionName',
+  'startDate',
+  'endDate',
+  'duration',
+  'context',
+  'objective',
+  'objectiveTopics',
+  'objectiveTrainers',
+  'useIpdCourses',
+  'courses',
+  'objectiveResources',
+  'addObjectiveFilesYes',
+  'files',
+  'ttaProvided',
+  'objectiveSupportType',
+  'pocComplete',
+  'ownerComplete',
+];
+
+export const pocKeys = [
+  'isIstVisit',
+  'regionalOfficeTta',
+  'recipients',
+  'participants',
+  'numberOfParticipants',
+  'numberOfParticipantsInPerson',
+  'numberOfParticipantsVirtually',
+  'deliveryMethod',
+  'language',
+  'supportingAttachments',
+  'recipientNextSteps',
+  'specialistNextSteps',
+  'pocComplete',
+  'ownerComplete',
+];
