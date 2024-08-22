@@ -166,7 +166,6 @@ async function createEvents({
     },
   });
 
-  testData.ist.missingSessionInfo.push(f1.id);
   testData.poc.missingSessionInfo.push(f1.id);
 
   const g = await EventReportPilot.create({
