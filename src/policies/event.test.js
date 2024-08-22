@@ -165,8 +165,18 @@ describe('Event Report policies', () => {
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+
       const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canEditEvent()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
       expect(policy.canEditEvent()).toBe(true);
     });
 
@@ -176,7 +186,7 @@ describe('Event Report policies', () => {
         pocIds: [authorRegion1Collaborator.id],
       });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
-      expect(policy.canEditEvent()).toBe(true);
+      expect(policy.canEditEvent()).toBe(false);
     });
 
     it('is false if the user is only a collab', () => {
