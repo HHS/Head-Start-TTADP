@@ -317,10 +317,7 @@ export default function SessionForm({ match }) {
         const updatedSession = await updateSession(sessionId, {
           data: {
             ...roleData,
-            status:
-            data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-              ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-              : data.status,
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
           },
           trainingReportId,
           eventId: trainingReportId || null,
@@ -382,9 +379,6 @@ export default function SessionForm({ match }) {
 
       // If both are complete mark the session as complete.
       roleData.status = data.status;
-      if (roleData.pocComplete && roleData.ownerComplete) {
-        roleData.status = TRAINING_REPORT_STATUSES.COMPLETE;
-      }
 
       // Remove complete property data based on current role.
       roleData = removeCompleteDataBaseOnRole(roleData);
@@ -393,10 +387,7 @@ export default function SessionForm({ match }) {
       await updateSession(sessionId, {
         data: {
           ...roleData,
-          status:
-          data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-            : roleData.status,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
         },
         trainingReportId,
         eventId: trainingReportId || null,
