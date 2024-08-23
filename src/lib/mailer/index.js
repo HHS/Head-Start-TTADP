@@ -1098,6 +1098,12 @@ export async function trainingReportTaskDueNotifications(freq) {
         userMap.set(userId, user);
       }
 
+      const emailTo = filterAndDeduplicateEmails([user.email]);
+
+      if (!emailTo || emailTo.length === 0) {
+        return null;
+      }
+
       const data = {
         displayId: mail.displayId,
         report: {
@@ -1105,7 +1111,7 @@ export async function trainingReportTaskDueNotifications(freq) {
         },
         prefix: mail.prefix,
         reportPath: mail.reportPath,
-        emailTo: [user.email],
+        emailTo,
         debugMessage: mail.debugMessage(user.email, mail.displayId),
         templatePath: mail.templatePath,
       };
