@@ -251,6 +251,7 @@ export default function TrainingReportForm({ match }) {
       const redirect = updatedEvent.data.status === TRAINING_REPORT_STATUSES.COMPLETE ? 'complete' : 'in-progress';
       history.push(`/training-reports/${redirect}`, { message: 'You successfully submitted the event.' });
     } catch (err) {
+      // Close the modal and show the error message.
       setError('There was an error saving the training report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -278,7 +279,7 @@ export default function TrainingReportForm({ match }) {
     <div className="smart-hub-training-report">
       { error
       && (
-      <Alert className="margin-bottom-3" type="warning">
+      <Alert className="margin-bottom-3" type="error">
         {error}
       </Alert>
       )}

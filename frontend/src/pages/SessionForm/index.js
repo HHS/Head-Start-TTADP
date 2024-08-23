@@ -395,6 +395,8 @@ export default function SessionForm({ match }) {
 
       history.push('/training-reports/in-progress', { message: 'You successfully submitted the session.' });
     } catch (err) {
+      // Close the modal if there is an error.
+      modalRef.current.toggleModal(false);
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -434,7 +436,7 @@ export default function SessionForm({ match }) {
     <div className="smart-hub-training-report--session">
       { error
         && (
-        <Alert type="warning">
+        <Alert type="error" className="margin-bottom-3">
           {error}
         </Alert>
         )}
