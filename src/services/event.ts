@@ -490,11 +490,19 @@ export async function getTrainingReportAlerts(
   };
 
   events.forEach((event: EventShape) => {
+    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+
+    // one alert triggers just for the owner
+    if (ownerUserIdFilter(event, userId)) {
+      // if we are 20 days past the end date, and the event is not completed
+      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+        alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
+      }
+    }
+
     // some alerts only trigger for the owner or the collaborators
     if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
-      const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
-      const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
-
       // if we are 20 days past the start date
       if (today.isAfter(nineteenDaysAfterStart)) {
         // or we are missing event data
@@ -507,11 +515,6 @@ export async function getTrainingReportAlerts(
       if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
         // and there are no sessions
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
-      }
-
-      // if we are 20 days past the end date, and the event is not completed
-      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
-        alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
       }
 
       const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
@@ -530,8 +533,8 @@ export async function getTrainingReportAlerts(
 
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterStart = moment(session.data.startDate).startOf('day').add(19, 'days');
-        if (today.isAfter(nineteenDaysAfterStart)) {
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterSessionStart)) {
         // eslint-disable-next-line no-restricted-syntax
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }

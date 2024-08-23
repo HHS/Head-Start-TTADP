@@ -312,7 +312,7 @@ describe('getTrainingReportAlertsForUser', () => {
         ...testData.ist.missingEventInfo,
         ...testData.ist.missingSessionInfo,
         ...testData.ist.noSessionsCreated,
-        ...testData.ist.eventNotCompleted,
+        // ...testData.ist.eventNotCompleted,
       ].sort());
     });
   });
