@@ -266,7 +266,7 @@ function cleanup_service_key() {
 # -----------------------------------------------------------------------------
 # Function to see if app already exists
 function check_app_exists {
-    local app_name=$1
+    local app_name="tta-automation"
 
     # Check if an application exists by querying it
     local output
@@ -287,7 +287,7 @@ function check_app_exists {
 
 # Function to check if an app is running
 function check_app_running {
-    local app_name=$1
+    local app_name="tta-automation"
 
     # Get the application information
     local output
@@ -310,16 +310,15 @@ function check_app_running {
 
 # Ensure the application is stopped
 function ensure_app_stopped() {
-    local app_name=$1
-    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
+    local timeout=${1:-300}  # Default timeout is 300 seconds (5 minutes)
 
     log "INFO" "Ensuring application '$app_name' is stopped..."
     local start_time=$(date +%s)
     local current_time
 
     while true; do
-        if ! check_app_running "$app_name"; then
+        if ! check_app_running; then
             log "INFO" "Application '$app_name' is already stopped."
             return 0  # App is stopped
         fi
@@ -337,7 +336,7 @@ function ensure_app_stopped() {
 
 # Unbind all services from the application
 function unbind_all_services() {
-    local app_name="$1"
+    local app_name="tta-automation"
     validate_parameters "$app_name"
 
     # Get the list of services bound to the application
@@ -363,42 +362,51 @@ function unbind_all_services() {
 function push_app {
     local original_dir=$(pwd)  # Save the original directory
     local directory=$1
-    local manifest_file=$2
+    local config=$2
+
     validate_parameters "$directory"
-    validate_parameters "$manifest_file"
+    validate_parameters "$config"
 
-    # Change to the specified directory
+    # Change to the specified directory and find the manifest file
     cd "$directory" || { log "ERROR" "Failed to change directory to $directory"; cd "$original_dir"; exit 1; }
+    local manifest_file=$(find . -type f -name "dynamic-manifest.yml" | head -n 1)
 
-    # Extract app name from the manifest file
-    local app_name
-    app_name=$(grep 'name:' "$manifest_file" | awk '{print $3}' | tr -d '"')
+    if [ -z "$manifest_file" ]; then
+        log "ERROR" "Manifest file dynamic-manifest.yml not found in directory $directory or its subdirectories"
+        cd "$original_dir"
+        exit 1
+    fi
 
-    # Unbind all services before pushing the app
-    unbind_all_services "$app_name"
+    # Load the environment from the config file relative to the manifest directory
+    local config_file="$(dirname "$manifest_file")/configs/${config}.env"
 
-    # Push the app without routing or starting it, capturing output
-    local push_output
-    if ! push_output=$(cf push -f "$manifest_file" --no-route --no-start 2>&1); then
-        log "ERROR" "Failed to push application with error: $push_output"
-        cd "$original_dir"  # Restore the original directory
+    if [ ! -f "$config_file" ]; then
+        log "ERROR" "Config file $config_file not found"
+        cd "$original_dir"
+        exit 1
+    fi
+
+    source "$config_file" || { log "ERROR" "Failed to load environment config: $config_file"; cd "$original_dir"; exit 1; }
+
+    # Unbind services and push the app
+    unbind_all_services "tta-automation"
+
+    # Push the app
+    if ! cf push -f "$manifest_file" --no-route --no-start 2>&1; then
+        log "ERROR" "Failed to push application"
+        cd "$original_dir"
         exit 1
     else
         log "INFO" "Application pushed successfully."
     fi
 
-    # Restore the original directory
+    # Restore original directory
     cd "$original_dir"
-
-    # Log and return the app name
-    log "INFO" "The app name is: $app_name"
-    echo "$app_name"  # Ensure only the app name is returned
 }
 
 # Function to start an app
 function start_app {
-    local app_name=$1
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
 
     log "INFO" "Starting application '$app_name'..."
     if ! cf start "$app_name"; then
@@ -411,8 +419,7 @@ function start_app {
 
 # Function to stop an app
 function stop_app {
-    local app_name=$1
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
 
     # Unbind all services after stopping the app
     unbind_all_services "$app_name"
@@ -428,8 +435,8 @@ function stop_app {
 
 # Function to manage the state of the application (start, restage, stop)
 function manage_app {
-    local app_name=$1
-    local action=$2  # Action can be 'start', 'stop', or 'restage'
+    local app_name="tta-automation"
+    local action=$1  # Action can be 'start', 'stop', or 'restage'
 
     # Validate the action parameter
     if [[ "$action" != "start" && "$action" != "stop" && "$action" != "restage" ]]; then
@@ -437,6 +444,7 @@ function manage_app {
         return 1  # Exit with an error status
     fi
 
+    log "INFO" "Telling application '$app_name' to $action..."
     # Perform the action on the application
     local output
     output=$(cf "$action" "$app_name" 2>&1)
@@ -453,12 +461,11 @@ function manage_app {
 
 # Function to run a task with arguments
 function run_task {
-    local app_name=$1
-    local task_name=$2
-    local command=$3
-    local args_json=$4
+    local app_name="tta-automation"
+    local task_name=$1
+    local command=$2
+    local args_json=$3
 
-    validate_parameters "$app_name"
     validate_parameters "$command"
     validate_parameters "$task_name"
     validate_parameters "$args_json"
@@ -479,10 +486,10 @@ function run_task {
 
 # Function to monitor task
 function monitor_task {
-    local app_name=$1
-    local task_name=$2
-    local timeout=${3:-300}  # Default timeout in seconds
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
+    local task_name=$1
+    local timeout=${2:-300}  # Default timeout in seconds
+
     validate_parameters "$task_name"
     local start_time
     local task_id
@@ -512,9 +519,8 @@ function monitor_task {
 
 # Check for active tasks in the application
 function check_active_tasks() {
-    local app_name=$1
-    local timeout=${2:-300}  # Default timeout is 300 seconds (5 minutes)
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
+    local timeout=${1:-300}  # Default timeout is 300 seconds (5 minutes)
 
     log "INFO" "Checking for active tasks in application '$app_name'..."
     local start_time=$(date +%s)
@@ -540,11 +546,10 @@ function check_active_tasks() {
     done
 }
 
-
 # Function to delete the app
 function delete_app {
-    local app_name=$1
-    validate_parameters "$app_name"
+    local app_name="tta-automation"
+
     # Attempt to delete the application with options to force deletion without confirmation
     # and to recursively delete associated routes and services.
     cf delete "$app_name" -f -r
@@ -568,47 +573,42 @@ main() {
   validate_json "$json_input"
 
   # Parse JSON and assign to variables
-  local automation_dir manifest task_name command args app_name timeout_active_tasks timeout_ensure_app_stopped
-  automation_dir=$(echo "$json_input" | jq -r '.automation_dir // "./automation"')
-  manifest=$(echo "$json_input" | jq -r '.manifest // "manifest.yml"')
+  local directory config task_name command args timeout_active_tasks timeout_ensure_app_stopped
+  directory=$(echo "$json_input" | jq -r '.directory // "./automation"')
+  config=$(echo "$json_input" | jq -r '.config // "error"')
   task_name=$(echo "$json_input" | jq -r '.task_name // "default-task-name"')
   command=$(echo "$json_input" | jq -r '.command // "bash /path/to/default-script.sh"')
   args=$(echo "$json_input" | jq -r '.args // "default-arg1 default-arg2"')
   timeout_active_tasks=$(echo "$json_input" | jq -r '.timeout_active_tasks // 300')
   timeout_ensure_app_stopped=$(echo "$json_input" | jq -r '.timeout_ensure_app_stopped // 300')
 
-  local service_credentials
-
-  app_name=$(grep 'name:' "${automation_dir}/${manifest}" | awk '{print $3}' | tr -d '"')
-
   # Check for active tasks and ensure the app is stopped before pushing
-  if check_app_exists "$app_name"; then
-      if ! check_active_tasks "$app_name" "$timeout_active_tasks"; then
+  if check_app_exists; then
+      if ! check_active_tasks "$timeout_active_tasks"; then
           log "ERROR" "Cannot proceed with pushing the app due to active tasks."
           exit 1
       fi
-      if ! ensure_app_stopped "$app_name" "$timeout_ensure_app_stopped"; then
+      if ! ensure_app_stopped "$timeout_ensure_app_stopped"; then
           log "ERROR" "Cannot proceed with pushing the app as it is still running."
           exit 1
       fi
   fi
 
-  app_name=$(push_app "$automation_dir" "$manifest")
-  start_app "$app_name"
+  push_app "$directory" "$config"
+  start_app
 
-  if run_task "$app_name" "$task_name" "$command" "$args" && monitor_task "$app_name" "$task_name" $timeout_active_tasks; then
+  if run_task "$task_name" "$command" "$args" && monitor_task "$task_name" $timeout_active_tasks; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
-      stop_app "$app_name"
+      stop_app "tta-automation"
       exit 1
   fi
 
   # Clean up
-  stop_app "$app_name"
+  stop_app
   # Currently only turning off to aid in speeding up cycle time
-  # delete_app "$app_name"
+  # delete_app "tta-automation"
 }
 
 main "$@"
-

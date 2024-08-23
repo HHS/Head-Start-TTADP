@@ -390,8 +390,8 @@ commands:
       task_args:
         description: "Arguments for the automation task"
         type: string
-      manifest:
-        description: "Manifest file for the automation task"
+      config:
+        description: "Config prefix for the automation task"
         type: string
       success_message:
         description: "Success message for Slack notification"
@@ -400,6 +400,10 @@ commands:
         description: "Max duration allowed for task"
         type: string
         default: "300"
+      directory:
+        description: 'directory to root to push'
+        type: string
+        default: "./automation"
     steps:
       - run:
           name: Install Dependencies
@@ -473,16 +477,16 @@ commands:
           command: |
             set -x
             json_data=$(jq -n \
-              --arg automation_dir "./automation" \
-              --arg manifest "<< parameters.manifest >>" \
+              --arg directory "<< parameters.directory >>" \
+              --arg config "<< parameters.config >>" \
               --arg task_name "<< parameters.task_name >>" \
               --arg command "<< parameters.task_command >>" \
               --arg timeout_active_tasks "<< parameters.timeout >>" \
               --arg timeout_ensure_app_stopped "<< parameters.timeout >>" \
               --argjson args '<< parameters.task_args >>' \
               '{
-                automation_dir: $automation_dir,
-                manifest: $manifest,
+                directory: $directory,
+                config: $config,
                 task_name: $task_name,
                 command: $command,
                 timeout_active_tasks: $timeout_active_tasks,
@@ -536,9 +540,9 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "backup"
-          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
+          task_command: "cd ./app/db-backup/scripts; bash ./db_backup.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          manifest: "manifest.yml"
+          config: "<< parameters.backup_prefix >>-backup"
           success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
   cf_restore:
     description: "Restore backup database from S3"
@@ -564,9 +568,9 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "restore"
-          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
+          task_command: "cd ./app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
-          manifest: "manifest-restore.yml"
+          config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
           timeout: "900"
   cf_process:
@@ -585,8 +589,10 @@ commands:
           task_name: "process"
           task_command: "yarn processData:local"
           task_args: '{}'
-          manifest: "manifest-process.yml"
+          config: "process"
           success_message: ':database: Restored data processed'
+          directory: "./"
+          timeout: "1200"
 parameters:
   cg_org:
     description: "Cloud Foundry cloud.gov organization name"
