@@ -53,7 +53,7 @@ describe('trainingReportTaskDueNotifications', () => {
         isSession: false,
         ownerId: 1,
         pocIds: [2],
-        collaboratorIds: [3],
+        collaboratorIds: [3, 4],
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         endDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         eventStatus: TRAINING_REPORT_STATUSES.IN_PROGRESS,
@@ -174,6 +174,19 @@ describe('trainingReportTaskDueNotifications', () => {
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
+      },
+      {
+        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
+        displayId: 'RO1-012-1234',
+        report: {
+          displayId: 'RO1-012-1234',
+        },
+        emailTo: [
+          'email@email.com',
+        ],
+        prefix: 'Reminder:',
+        reportPath: 'http://localhost:3000/training-reports/in-progress',
+        templatePath: 'tr_collaborator_reminder_no_sessions',
       },
       {
         debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
@@ -455,7 +468,7 @@ describe('trainingReportTaskDueNotifications', () => {
         sessionName: '',
         isSession: false,
         ownerId: 1,
-        pocIds: [2],
+        pocIds: [2, 4],
         collaboratorIds: [3],
         startDate: moment().subtract(20, 'days').format('MM/DD/YYYY'),
         endDate: today,
@@ -487,7 +500,7 @@ describe('trainingReportTaskDueNotifications', () => {
         sessionName: '',
         isSession: false,
         ownerId: 1,
-        pocIds: [2],
+        pocIds: [2, 4],
         collaboratorIds: [3],
         startDate: moment().subtract(30, 'days').format('MM/DD/YYYY'),
         endDate: today,
@@ -590,6 +603,19 @@ describe('trainingReportTaskDueNotifications', () => {
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/1234/session/1',
         templatePath: 'tr_collaborator_reminder_session',
+      },
+      {
+        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
+        displayId: 'RO1-012-1234',
+        report: {
+          displayId: 'RO1-012-1234',
+        },
+        emailTo: [
+          'email@email.com',
+        ],
+        prefix: 'Reminder:',
+        reportPath: 'http://localhost:3000/training-report/1234/session/1',
+        templatePath: 'tr_poc_reminder_session',
       },
       {
         debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',

@@ -1057,7 +1057,7 @@ export async function trainingReportTaskDueNotifications(freq) {
         const { users, templatePath, reportPath } = emailConfig;
 
         // flatten the array and remove any nulls
-        const userIds = [alert[users]].flatMap((v) => Number(v)).filter((id) => id);
+        const userIds = [alert[users]].flat().map((v) => Number(v)).filter((id) => id);
 
         userIds.forEach((id) => {
           const data = {
