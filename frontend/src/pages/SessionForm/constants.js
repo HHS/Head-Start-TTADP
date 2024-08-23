@@ -122,6 +122,7 @@ export const pocKeys = [
   'supportingAttachments',
   'recipientNextSteps',
   'specialistNextSteps',
+  'istSelectionComplete',
   'pocComplete',
   'ownerComplete',
 ];
