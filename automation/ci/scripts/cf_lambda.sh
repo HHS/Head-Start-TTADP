@@ -389,7 +389,7 @@ function push_app {
     source "$config_file" || { log "ERROR" "Failed to load environment config: $config_file"; cd "$original_dir"; exit 1; }
 
     # Unbind services and push the app
-    unbind_all_services "tta-automation"
+    unbind_all_services
 
     # Push the app
     if ! cf push -f "$manifest_file" --no-route --no-start 2>&1; then
@@ -422,7 +422,7 @@ function stop_app {
     local app_name="tta-automation"
 
     # Unbind all services after stopping the app
-    unbind_all_services "$app_name"
+    unbind_all_services
 
     log "INFO" "Stopping application '$app_name'..."
     if ! cf stop "$app_name"; then
