@@ -105,6 +105,7 @@ export const istKeys = [
   'files',
   'ttaProvided',
   'objectiveSupportType',
+  'status',
   'pocComplete',
   'ownerComplete',
 ];
@@ -123,6 +124,7 @@ export const pocKeys = [
   'recipientNextSteps',
   'specialistNextSteps',
   'istSelectionComplete',
+  'status',
   'pocComplete',
   'ownerComplete',
 ];
