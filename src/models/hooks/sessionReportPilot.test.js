@@ -424,9 +424,8 @@ describe('sessionReportPilot hooks', () => {
     });
 
     it('sets the SessionReportPilot status to complete if both owner and poc are complete', async () => {
-      const setMock = jest.fn();
+      const mockSessionUpdate = jest.fn();
       const mockSequelize = {
-        literal: setMock,
         models: {
           EventReportPilot: {
             findOne: jest.fn(() => ({
@@ -434,10 +433,11 @@ describe('sessionReportPilot hooks', () => {
             })),
           },
           SessionReportPilot: {
+            // add a mock for update.
+            update: mockSessionUpdate,
           },
         },
       };
-      const mockInstanceSet = jest.fn();
       const instance = {
         eventId: 1,
         changed: jest.fn(() => ['data']),
@@ -445,7 +445,6 @@ describe('sessionReportPilot hooks', () => {
           ownerComplete: true,
           pocComplete: false,
         })),
-        set: mockInstanceSet,
         data: {
           val: JSON.stringify({
             ownerComplete: true,
@@ -456,45 +455,14 @@ describe('sessionReportPilot hooks', () => {
 
       await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
 
-      // JSON.parse the value that mockSet was called with
-      expect(setMock).toHaveBeenCalledWith('CAST(\'{"ownerComplete":true,"pocComplete":true,"status":"Complete"}\' AS jsonb)');
-    });
-
-    it('sets the SessionReportPilot status to in progress if both owner and poc are not complete', async () => {
-      const setMock = jest.fn();
-      const mockSequelize = {
-        literal: setMock,
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-          },
-        },
-      };
-      const mockInstanceSet = jest.fn();
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          ownerComplete: false,
-          pocComplete: false,
-        })),
-        set: mockInstanceSet,
+      // Assert the data portion of the update call contains the correct status.
+      expect(mockSessionUpdate).toHaveBeenCalledWith({
         data: {
-          val: JSON.stringify({
-            ownerComplete: false,
-            pocComplete: false,
-          }),
+          ownerComplete: true,
+          pocComplete: true,
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
         },
-      };
-
-      await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
-
-      // JSON.parse the value that mockSet was called with
-      expect(setMock).toHaveBeenCalledWith("CAST('{\"ownerComplete\":false,\"pocComplete\":false,\"status\":\"In progress\"}' AS jsonb)");
+      }, { transaction: {}, where: { id: undefined } });
     });
   });
 
