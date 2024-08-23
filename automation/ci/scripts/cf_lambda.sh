@@ -395,7 +395,7 @@ function push_app {
 
     # Create a temporary manifest file with the substitutions applied inline
     temp_manifest_file=$(mktemp)
-    envsubst < "$manifest_file" > "$temp_manifest_file"
+    envsubst < "$manifest_file" >> "$temp_manifest_file"
 
     cat "$temp_manifest_file"
 
