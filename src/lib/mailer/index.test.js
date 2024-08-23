@@ -1230,7 +1230,7 @@ describe('mailer tests', () => {
     it('trCollaboratorAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded({
-        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
+        id: 1, data: { val: JSON.stringify(mockEvent.data) },
       }, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add)
