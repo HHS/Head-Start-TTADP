@@ -503,8 +503,9 @@ export const trPocSessionComplete = async (event) => {
 
 /**
  * @param {db.models.EventReportPilot.dataValues} event
+ * @param {number} sessionId
  */
-export const trSessionCreated = async (event) => {
+export const trSessionCreated = async (event, sessionId) => {
   if (process.env.CI) return;
   try {
     if (!event.pocIds && !event.pocIds.length) {
@@ -516,7 +517,7 @@ export const trSessionCreated = async (event) => {
 
       const { eventId } = event.data;
       const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
 
       const emailTo = filterAndDeduplicateEmails([user.email]);
 
