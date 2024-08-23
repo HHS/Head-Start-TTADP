@@ -456,10 +456,6 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
       },
     });
 
-    // eslint-disable-next-line no-console
-    console.log({ toEmails, data });
-    auditLogger.info(`Sending ${job.name} notification to ${toEmails} with data ${JSON.stringify(data)}`);
-
     return email.send({
       template: path.resolve(emailTemplatePath, templatePath),
       message: {
@@ -1094,6 +1090,11 @@ export async function trainingReportTaskDueNotifications(freq) {
       let user = userMap.get(userId);
       if (!user) {
         user = await userById(userId);
+
+        if (!user) {
+          return null;
+        }
+
         userMap.set(userId, user);
       }
 
