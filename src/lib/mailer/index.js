@@ -1116,6 +1116,8 @@ export async function trainingReportTaskDueNotifications(freq) {
         templatePath: mail.templatePath,
       };
 
+      logger.info(`Sending ${mail.templatePath} to ${emailTo.join(', ')} for TR ${mail.displayId}`);
+
       notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE, data);
 
       return data;
