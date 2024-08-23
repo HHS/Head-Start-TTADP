@@ -455,6 +455,10 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
         wordwrap: 120,
       },
     });
+
+    console.log({ toEmails, data });
+    auditLogger.info(`Sending ${job.name} notification to ${toEmails} with data ${JSON.stringify(data)}`);
+
     return email.send({
       template: path.resolve(emailTemplatePath, templatePath),
       message: {
