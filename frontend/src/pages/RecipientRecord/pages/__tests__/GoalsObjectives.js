@@ -202,7 +202,6 @@ describe('Goals and Objectives', () => {
     ];
 
     fetchMock.get('/api/goals/similar/region/1/recipient/401?cluster=true', similarityResponse);
-    fetchMock.get('/api/users/feature-flags', []);
   });
 
   afterEach(() => {
@@ -224,8 +223,12 @@ describe('Goals and Objectives', () => {
     // Default with 2 Rows.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl,
-      { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses }, { overwriteRoutes: true });
-
+      {
+        count: 2,
+        goalRows: noFilterGoals,
+        statuses: defaultStatuses,
+        allGoalIds: [],
+      }, { overwriteRoutes: true });
     act(() => renderGoalsAndObjectives());
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
@@ -248,6 +251,112 @@ describe('Goals and Objectives', () => {
     expect(notStartedStatuses.length).toBe(5);
   });
 
+  it('resets the page number when filters change', async () => {
+    // CLear all mocks.
+    fetchMock.restore();
+
+    // Default with 2 Rows.
+    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    fetchMock.get(goalsUrl,
+      {
+        count: 11,
+        allGoalIds: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+          { id: 7 },
+          { id: 8 },
+          { id: 9 },
+          { id: 10 },
+          { id: 11 }],
+        goalRows: [
+          { ...noFilterGoals[0], id: 1 },
+          { ...noFilterGoals[0], id: 2 },
+          { ...noFilterGoals[0], id: 3 },
+          { ...noFilterGoals[0], id: 4 },
+          { ...noFilterGoals[0], id: 5 },
+          { ...noFilterGoals[0], id: 6 },
+          { ...noFilterGoals[0], id: 7 },
+          { ...noFilterGoals[0], id: 8 },
+          { ...noFilterGoals[0], id: 9 },
+          { ...noFilterGoals[0], id: 10 },
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      },
+      { overwriteRoutes: true });
+
+    act(() => renderGoalsAndObjectives());
+
+    expect(await screen.findByText(/Showing 1-10 of 11 goals/i)).toBeVisible();
+
+    // Go to the next page.
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20started';
+    fetchMock.get(goalsUrl,
+      {
+        count: 11,
+        allGoalIds: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+          { id: 7 },
+          { id: 8 },
+          { id: 9 },
+          { id: 10 },
+          { id: 11 }],
+        goalRows: [
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      }, { overwriteRoutes: true });
+
+    const pageTwo = await screen.findByRole('link', { name: /go to page number 2/i });
+    userEvent.click(pageTwo);
+
+    expect(await screen.findByText(/Showing 11-11 of 11 goals/i)).toBeVisible();
+
+    // Change Filter and Apply.
+    userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'status');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
+
+    const statusSelect = await screen.findByLabelText(/select status to filter by/i);
+    await selectEvent.select(statusSelect, ['Draft']);
+
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Draft';
+    fetchMock.get(goalsUrl,
+      {
+        count: 1,
+        allGoalIds: [
+          { id: 1 },
+        ],
+        goalRows: [
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      }, { overwriteRoutes: true });
+
+    const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
+    userEvent.click(apply);
+
+    // Expect the goalsUrl to have been called.
+    expect(fetchMock.called(goalsUrl)).toBe(true);
+
+    // Expect 1 Row.
+    expect(await screen.findByText(/Showing 1-1 of 1 goals/i)).toBeVisible();
+    // Expect go to page number 1 to be visible.
+    expect(await screen.findByRole('link', { name: /go to page number 1/i })).toBeVisible();
+    // expect go to page number 2 to not be visible.
+    expect(screen.queryByRole('link', { name: /go to page number 2/i })).toBeNull();
+  });
+
   it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
@@ -261,8 +370,6 @@ describe('Goals and Objectives', () => {
 
   it('will update goals status', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
-
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
       { rows: [], count: 0, allGoalIds: [] },
@@ -295,7 +402,6 @@ describe('Goals and Objectives', () => {
 
     const statusMenuToggle = await screen.findByRole('button', { name: 'Change status for goal 4598' });
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
     expect(fetchMock.called()).toBe(false);
     fetchMock.put('/api/goals/changeStatus', [response[0]]);
 
@@ -314,7 +420,6 @@ describe('Goals and Objectives', () => {
     act(() => renderGoalsAndObjectives());
 
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
 
     fetchMock.get('/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=asc&offset=0&limit=10', { count: 1, goalRows: goals, statuses: defaultStatuses });
     const sortCreated = await screen.findByTestId('sortGoalsBy');
@@ -355,7 +460,6 @@ describe('Goals and Objectives', () => {
 
   it('handles a fetch error', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
     // Created New Goal.
 
     fetchMock.get(
@@ -368,10 +472,10 @@ describe('Goals and Objectives', () => {
 
     expect(await screen.findByText(/Unable to fetch goals/i)).toBeVisible();
   });
+  /// 2
 
   it('adjusts items per page', async () => {
     fetchMock.restore();
-    fetchMock.get('/api/users/feature-flags', []);
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
