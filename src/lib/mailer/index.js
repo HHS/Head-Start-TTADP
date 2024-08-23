@@ -22,6 +22,7 @@ import { userById } from '../../services/users';
 import logEmailNotification from './logNotifications';
 import transactionQueueWrapper from '../../workers/transactionWrapper';
 import referenceData from '../../workers/referenceData';
+import safeParse from '../../models/helpers/safeParse';
 
 export const notificationQueue = newQueue('notifications');
 
@@ -561,16 +562,23 @@ export const trCollaboratorAdded = async (
     }
 
     // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
     const eId = eventId.split('-').pop();
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
+
+    const emailTo = filterAndDeduplicateEmails([collaborator.email]);
+
+    if (!emailTo || emailTo.length === 0) {
+      logger.info(`Did not send tr collaborator added notification for ${eId} preferences are not set or marked as "no-send"`);
+      return;
+    }
 
     const data = {
       displayId: eventId,
       user: collaborator,
       reportPath,
-      emailTo: [collaborator.email],
+      emailTo,
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
       ...referenceData(),
