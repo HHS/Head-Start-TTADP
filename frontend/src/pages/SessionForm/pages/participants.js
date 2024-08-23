@@ -291,7 +291,7 @@ export default {
     isAppLoading,
     onContinue,
     onSaveDraft,
-    _onUpdatePage,
+    onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
@@ -306,6 +306,12 @@ export default {
           additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
             <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
           )
+      }
+        {
+              additionalData
+              && additionalData.isAdminUser && (
+              <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+              )
       }
       </div>
     </div>
