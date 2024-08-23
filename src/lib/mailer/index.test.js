@@ -1206,7 +1206,7 @@ describe('mailer tests', () => {
     });
     it('trSessionCreated success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trSessionCreated(mockEvent);
+      await trSessionCreated(mockEvent, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add)
         .toHaveBeenCalledWith(

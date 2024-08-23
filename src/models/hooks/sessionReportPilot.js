@@ -69,7 +69,7 @@ const notifySessionCreated = async (sequelize, instance, options) => {
 
     if (event) {
       const { trSessionCreated } = require('../../lib/mailer');
-      await trSessionCreated(event.dataValues);
+      await trSessionCreated(event.dataValues, instance.id);
     }
   } catch (err) {
     auditLogger.error(`Error in notifySessionCreated: ${err}`);
