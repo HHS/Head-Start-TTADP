@@ -47,6 +47,8 @@ const istAndPocFields = {
   specialistNextSteps: [],
   pocComplete: false,
   ownerComplete: false,
+  istSelectionComplete: false,
+  status: 'In progress',
 };
 
 const completeFormData = {

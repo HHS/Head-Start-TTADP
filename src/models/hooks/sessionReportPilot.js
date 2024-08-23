@@ -159,14 +159,28 @@ export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sess
 export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, options) => {
   try {
     if (instance.changed() && instance.changed().includes('data')) {
-      const { data } = instance;
-      // Replace any single quotes with &apos; to prevent breaking sql literal.
-      const cleanData = data.val.replace(/'/g, '&apos;');
-      const deStringifyData = JSON.parse(cleanData);
-      if (deStringifyData.ownerComplete && deStringifyData.pocComplete) {
-        instance.set('data', sequelize.literal(`CAST('${JSON.stringify({ ...deStringifyData, status: TRAINING_REPORT_STATUSES.COMPLETE })}' AS jsonb)`));
-      } else {
-        instance.set('data', sequelize.literal(`CAST('${JSON.stringify({ ...deStringifyData, status: TRAINING_REPORT_STATUSES.IN_PROGRESS })}' AS jsonb)`));
+      const previous = instance.previous('data') || null;
+      const current = JSON.parse(instance.data.val) || null;
+
+      // Get vars in case they are not present.
+      const currentOwnerComplete = current.ownerComplete || false;
+      const currentPocComplete = current.pocComplete || false;
+      const previousOwnerComplete = previous.ownerComplete || false;
+      const previousPocComplete = previous.pocComplete || false;
+
+      if ((currentOwnerComplete && currentPocComplete)
+        && (!previousOwnerComplete || !previousPocComplete)) {
+        sequelize.models.SessionReportPilot.update({
+          data: {
+            ...current,
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        }, {
+          where: {
+            id: instance.id,
+          },
+          transaction: options.transaction,
+        });
       }
     }
   } catch (err) {
@@ -181,6 +195,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
+  await checkIfBothIstAndPocAreComplete(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
@@ -189,7 +204,6 @@ const beforeCreate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
-  await checkIfBothIstAndPocAreComplete(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
