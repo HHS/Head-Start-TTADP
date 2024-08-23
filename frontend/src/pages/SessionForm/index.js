@@ -187,7 +187,7 @@ export default function SessionForm({ match }) {
   } else {
     applicationPages = [sessionSummary];
   }
-  const redirectPagePath = isPoc ? 'participants' : 'session-summary';
+  const redirectPagePath = isPoc && !isAdminUser ? 'participants' : 'session-summary';
 
   useEffect(() => {
     if (!trainingReportId || !sessionId || !currentPage) {
@@ -213,7 +213,7 @@ export default function SessionForm({ match }) {
 
       try {
         const session = await createSession(trainingReportId);
-        const isPocFromSession = session.event.pocIds.includes(user.id);
+        const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;
 
         // we don't want to refetch if we've extracted the session data
         setReportFetched(true);
@@ -241,7 +241,7 @@ export default function SessionForm({ match }) {
       }
       try {
         const session = await getSessionBySessionId(sessionId);
-        const isPocFromSession = (session.event.pocIds || []).includes(user.id);
+        const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
         reportId.current = session.id;
       } catch (e) {
@@ -268,7 +268,7 @@ export default function SessionForm({ match }) {
     history.push(newPath, state);
   };
 
-  if (!currentPage || (isPoc && currentPage === 'session-summary')) {
+  if (!currentPage || ((isPoc && !isAdminUser) && currentPage === 'session-summary')) {
     return (
       <Redirect to={`/training-report/${trainingReportId}/session/${reportId.current}/${redirectPagePath}`} />
     );

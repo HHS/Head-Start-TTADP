@@ -48,6 +48,7 @@ const istAndPocFields = {
   pocComplete: false,
   ownerComplete: false,
   istSelectionComplete: false,
+  status: 'In progress',
 };
 
 const completeFormData = {
