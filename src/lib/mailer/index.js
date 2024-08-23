@@ -456,6 +456,7 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
       },
     });
 
+    // eslint-disable-next-line no-console
     console.log({ toEmails, data });
     auditLogger.info(`Sending ${job.name} notification to ${toEmails} with data ${JSON.stringify(data)}`);
 
