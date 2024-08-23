@@ -13,7 +13,8 @@ test('Regional Dashboard', async ({ page }) => {
 
   // open the filter menu, change the region filter to state code
   await page.getByRole('button', { name: /open filters for this page/i }).click();
-  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
 
 
   await page.getByLabel('condition', { exact: true }).selectOption('contains');
