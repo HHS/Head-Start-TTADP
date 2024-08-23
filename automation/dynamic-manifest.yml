@@ -11,4 +11,4 @@ applications:
     - ${BUILDPACK}
   command: ${COMMAND}
   services:
-    ${SERVICES}
+    - ${SERVICES// /, }
