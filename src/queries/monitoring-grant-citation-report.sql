@@ -7,15 +7,15 @@
 * The query results are filterable by the following SSDI flags, which are passed as an array of values:
 * - ssdi.regionIds - integer[] - One or more values for 1 through 12
 * - ssdi.reportDeliveryDate - date[] - Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.reviewOutcomes - text[] - One or more review outcomes
-* - ssdi.reviewTypes - text[] - One or more review types
+* - ssdi.reviewOutcomes - string[] - One or more review outcomes
+* - ssdi.reviewTypes - string[] - One or more review types
 * - ssdi.findingReportedDate - date[] - Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.findingStatuses - text[] - One or more finding statuses
-* - ssdi.findingTypes - text[] - One or more finding types
-* - ssdi.citations - text[] - One or more citations
-* - ssdi.grantNumbers - text[] - One or more grant numbers
-* - ssdi.recipients - text[] - One or more recipient names
-* - ssdi.uei - text[] - One or more UEI values
+* - ssdi.findingStatuses - string[] - One or more finding statuses
+* - ssdi.findingTypes - string[] - One or more finding types
+* - ssdi.citations - string[] - One or more citations
+* - ssdi.grantNumbers - string[] - One or more grant numbers
+* - ssdi.recipients - string[] - One or more recipient names
+* - ssdi.uei - string[] - One or more UEI values
 *
 * Zero or more SSDI flags can be set within the same transaction as the query is executed.
 * The following is an example of how to set an SSDI flag:
