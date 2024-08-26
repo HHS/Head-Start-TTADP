@@ -540,7 +540,7 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "backup"
-          task_command: "cd ./app/db-backup/scripts; bash ./db_backup.sh"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_backup.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-backup"
           success_message: ':download::database: "<< parameters.backup_prefix >>" backup'
@@ -568,7 +568,7 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "restore"
-          task_command: "cd ./app/db-backup/scripts; bash ./db_restore.sh"
+          task_command: "cd /home/vcap/app/db-backup/scripts; bash ./db_restore.sh"
           task_args: '["<< parameters.backup_prefix >>", "<< parameters.rds_service_name >>", "<< parameters.s3_service_name >>"]'
           config: "<< parameters.backup_prefix >>-restore"
           success_message: ':database: "<< parameters.backup_prefix >>" Restored to "<< parameters.rds_service_name >>"'
