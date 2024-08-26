@@ -3,12 +3,11 @@ applications:
 - name: tta-automation
   stack: cflinuxfs4
   health-check-type: process
-  memory: ${MEMORY}
-  disk_quota: ${DISK_QUOTA}
-  instances: 1
+  memory: ((memory))
+  disk_quota: ((disk_quota))
+  instances: ((instances))
   no-route: true
   buildpacks:
-    - ${BUILDPACK}
-  command: ${COMMAND}
-  services:
-    ${BOUND_SERVICES}
+    - ((buildpack))
+  command: ((command))
+  services: ((bound_services))

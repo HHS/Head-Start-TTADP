@@ -386,21 +386,11 @@ function push_app {
         exit 1
     fi
 
-    cat $config_file
-    source "$config_file" || { log "ERROR" "Failed to load environment config: $config_file"; cd "$original_dir"; exit 1; }
-
     # Unbind services and push the app
     unbind_all_services
 
-
-    # Create a temporary manifest file with the substitutions applied inline
-    temp_manifest_file=$(mktemp)
-    envsubst < "$manifest_file" >> "$temp_manifest_file"
-
-    cat "$temp_manifest_file"
-
     # Push the app
-    if ! cf push -f "$temp_manifest_file" --no-route --no-start 2>&1; then
+    if ! cf push -f "$manifest_file" --vars-file "$config_file" --no-route --no-start 2>&1; then
         log "ERROR" "Failed to push application"
 
         # Clean up the temporary manifest file
