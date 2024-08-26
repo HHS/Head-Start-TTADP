@@ -193,12 +193,7 @@ export default function TrainingReportForm({ match }) {
       } = hookForm.getValues();
 
       const dataToPut = {
-        data: {
-          ...data,
-          status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-            : data.status,
-        },
+        data,
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
@@ -234,13 +229,7 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data: {
-          ...data,
-          eventSubmitted: true,
-          status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-            : data.status,
-        },
+        data,
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
