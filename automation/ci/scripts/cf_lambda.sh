@@ -378,7 +378,7 @@ function push_app {
     fi
 
     # Load the environment from the config file relative to the manifest directory
-    local config_file="$(dirname "$manifest_file")/configs/${config}.env"
+    local config_file="$(dirname "$manifest_file")/configs/${config}.yml"
 
     if [ ! -f "$config_file" ]; then
         log "ERROR" "Config file $config_file not found"
