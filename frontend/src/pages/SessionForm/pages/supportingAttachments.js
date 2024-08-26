@@ -85,7 +85,7 @@ SupportingAttachments.propTypes = {
 };
 
 const ReviewSection = () => <></>;
-export const isPageComplete = (hookForm) => (pageComplete(hookForm, fields));
+export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
