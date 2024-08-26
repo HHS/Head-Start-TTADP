@@ -237,7 +237,8 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
-      const redirect = updatedEvent.data.status === TRAINING_REPORT_STATUSES.COMPLETE ? 'complete' : 'in-progress';
+      // Redirect back based current status tab.
+      const redirect = updatedEvent.data.status.replace(' ', '-').toLowerCase();
       history.push(`/training-reports/${redirect}`, { message: 'You successfully submitted the event.' });
     } catch (err) {
       // Close the modal and show the error message.
