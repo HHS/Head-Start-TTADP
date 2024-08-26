@@ -2,7 +2,6 @@ import { Op } from 'sequelize';
 import { afterUpdate, afterCreate } from './eventReportPilot';
 import {
   trCollaboratorAdded,
-  trPocAdded,
 } from '../../lib/mailer';
 import { auditLogger } from '../../logger';
 import db from '..';
@@ -10,7 +9,6 @@ import { createUser } from '../../testUtils';
 
 jest.mock('../../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),
-  trPocAdded: jest.fn(),
   trPocEventComplete: jest.fn(),
   trVisionComplete: jest.fn(),
 }));
@@ -62,49 +60,6 @@ describe('eventReportPilot', () => {
         const instance = {};
         await afterUpdate(null, instance, mockOptions);
         expect(trCollaboratorAdded).not.toHaveBeenCalled();
-      });
-    });
-
-    describe('notifyNewPoc', () => {
-      it('notifies new poc', async () => {
-        const instance = {
-          eventId: 1,
-          ownerId: 5,
-          pocIds: [1, 2],
-          changed: jest.fn(() => ['pocIds']),
-          previous: jest.fn(() => [1]),
-        };
-        await afterUpdate(null, instance, mockOptions);
-        expect(trPocAdded).toHaveBeenCalled();
-      });
-
-      it('does not call if there are no new pocIds', async () => {
-        const instance = {
-          eventId: 1,
-          ownerId: 5,
-          pocIds: [1, 2],
-          changed: jest.fn(() => ['pocIds']),
-          previous: jest.fn(() => [1, 2]),
-        };
-        await afterUpdate(null, instance, mockOptions);
-        expect(trPocAdded).not.toHaveBeenCalled();
-      });
-
-      it('does not call if pocIds is not in changed', async () => {
-        const instance = {
-          eventId: 1,
-          ownerId: 5,
-          pocIds: [1, 5],
-          changed: jest.fn(() => []),
-          previous: jest.fn(() => [1]),
-        };
-        await afterUpdate(null, instance, mockOptions);
-        expect(trPocAdded).not.toHaveBeenCalled();
-      });
-      it('handles errors', async () => {
-        const instance = {};
-        await afterUpdate(null, instance, mockOptions);
-        expect(trPocAdded).not.toHaveBeenCalled();
       });
     });
   });

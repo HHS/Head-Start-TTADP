@@ -470,39 +470,6 @@ export const sendTrainingReportNotification = async (job, transport = defaultTra
 
 /**
  * @param {db.models.EventReportPilot.dataValues} event
- */
-export const trPocSessionComplete = async (event) => {
-  if (process.env.CI) return;
-  try {
-    const thoseWhoRequireNotifying = [
-      event.ownerId,
-      ...event.collaboratorIds,
-    ];
-
-    await Promise.all(thoseWhoRequireNotifying.map(async (id) => {
-      const user = await userById(id);
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
-        displayId: eventId,
-        reportPath,
-        emailTo: [user.email],
-        debugMessage: `MAILER: Notifying ${user.email} that a POC completed work on TR ${event.id}`,
-        templatePath: 'tr_poc_session_complete',
-        ...referenceData(),
-      };
-
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE, data);
-    }));
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- * @param {db.models.EventReportPilot.dataValues} event
  * @param {number} sessionId
  */
 export const trSessionCreated = async (event, sessionId) => {
@@ -512,13 +479,12 @@ export const trSessionCreated = async (event, sessionId) => {
       auditLogger.warn(`MAILER: No POCs found for TR ${event.id}`);
     }
 
+    const { eventId } = event.data;
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
+
     await Promise.all(event.pocIds.map(async (id) => {
       const user = await userById(id);
-
-      const { eventId } = event.data;
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}/session/${sessionId}`;
-
       const emailTo = filterAndDeduplicateEmails([user.email]);
 
       if (emailTo.length === 0) {
@@ -580,45 +546,15 @@ export const trCollaboratorAdded = async (
       user: collaborator,
       reportPath,
       emailTo,
+      report: {
+        displayId: eventId,
+      },
       templatePath: 'tr_collaborator_added',
       debugMessage: `MAILER: Notifying ${collaborator.email} that they were added as a collaborator to TR ${report.id}`,
       ...referenceData(),
     };
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
-  } catch (err) {
-    auditLogger.error(err);
-  }
-};
-
-/**
- *
- * @param {db.models.EventReportPilot.dataValues} report
- * @param {number} newCollaboratorId
- */
-export const trPocAdded = async (
-  report,
-  newPocId,
-) => {
-  if (process.env.CI) return;
-  try {
-    const poc = await userById(newPocId);
-
-    // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
-    const { eventId } = parsedData; // extract the pretty url
-    const eId = eventId.split('-').pop();
-    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-    const data = {
-      displayId: eventId,
-      reportPath,
-      emailTo: [poc.email],
-      debugMessage: `MAILER: Notifying ${poc.email} that they were added as a collaborator to TR ${report.id}`,
-      templatePath: 'tr_poc_added',
-      ...referenceData(),
-    };
-
-    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -638,13 +574,16 @@ export const trOwnerAdded = async (
     const owner = await userById(ownerId);
 
     // due to the way sequelize sends the JSON column :(
-    const parsedData = JSON.parse(report.dataValues.data.val); // parse the JSON string
+    const parsedData = safeParse(report); // parse the JSON string
     const { eventId } = parsedData; // extract the pretty url
     const eId = eventId.split('-').pop();
     const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
     const data = {
       displayId: eventId,
       reportPath,
+      report: {
+        displayId: eventId,
+      },
       emailTo: [owner.email],
       debugMessage: `MAILER: Notifying ${owner.email} that they were added as an owner to TR ${report.id}`,
       templatePath: 'tr_event_imported',
@@ -672,26 +611,37 @@ export const trEventComplete = async (
       ...event.pocIds,
     ]).filter((id) => id && id !== event.ownerId);
 
-    await Promise.all(userIds.map(async (id) => {
+    const parsedData = safeParse(event); // parse the JSON string
+    const { eventId } = parsedData; // extract the pretty url
+    const eId = eventId.split('-').pop();
+    const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/view/${eId}`;
+
+    const emails = await Promise.all(userIds.map(async (id) => {
       const user = await userById(id);
-      if (!user) return Promise.resolve();
-
-      const parsedData = JSON.parse(event.data.val); // parse the JSON string
-      const { eventId } = parsedData; // extract the pretty url
-      const eId = eventId.split('-').pop();
-      const reportPath = `${process.env.TTA_SMART_HUB_URI}/training-report/${eId}`;
-
-      const data = {
-        displayId: eventId,
-        emailTo: [user.email],
-        reportPath,
-        debugMessage: `MAILER: Notifying ${user.email} that TR ${event.id} is complete`,
-        templatePath: 'tr_event_complete',
-        ...referenceData(),
-      };
-
-      return notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
+      if (!user) return null;
+      return user.email;
     }));
+
+    const emailTo = filterAndDeduplicateEmails(emails.filter((email) => email));
+
+    if (!emailTo || emailTo.length === 0) {
+      logger.info(`Did not send tr event complete notification for ${eId} preferences are not set or marked as "no-send"`);
+      return;
+    }
+
+    const data = {
+      displayId: eventId,
+      emailTo,
+      reportPath,
+      report: {
+        displayId: eventId,
+      },
+      debugMessage: `MAILER: Notifying ${emailTo.join(', ')} that TR ${event.id} is complete`,
+      templatePath: 'tr_event_complete',
+      ...referenceData(),
+    };
+
+    notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
   } catch (err) {
     auditLogger.error(err);
   }
@@ -1291,26 +1241,10 @@ export const processNotificationQueue = () => {
   );
 
   notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-    ),
-  );
-
-  notificationQueue.process(
     EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
     transactionQueueWrapper(
       sendTrainingReportNotification,
       EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-    ),
-  );
-
-  notificationQueue.process(
-    EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-    transactionQueueWrapper(
-      sendTrainingReportNotification,
-      EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
     ),
   );
 

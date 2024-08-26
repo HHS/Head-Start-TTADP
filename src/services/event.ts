@@ -342,7 +342,7 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   if (status === TRS.COMPLETE && event.status !== status) {
     // enqueue completion notification
-    await trEventComplete(evt);
+    await trEventComplete(evt.toJSON());
   }
 
   await evt.update(
