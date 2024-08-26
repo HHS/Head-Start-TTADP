@@ -302,6 +302,7 @@ export default function SessionForm({ match }) {
 
         const keyArray = determineKeyArray(isAdminUser, isPoc);
         let roleData = reduceDataToMatchKeys(keyArray, data);
+
         // Remove complete property data based on current role.
         roleData = removeCompleteDataBaseOnRole(roleData);
 

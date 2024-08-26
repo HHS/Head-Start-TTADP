@@ -18,6 +18,8 @@ import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
+  id: 1,
+  regionId: null,
   sessionName: 'test session',
   startDate: '01/01/2024',
   endDate: '01/01/2024',
@@ -49,6 +51,16 @@ const istAndPocFields = {
   ownerComplete: false,
   istSelectionComplete: false,
   status: 'In progress',
+  ownerId: null,
+  eventId: '',
+  eventDisplayId: '',
+  eventName: '',
+  pageState: {
+    1: 'Not started',
+    2: 'Not started',
+    3: 'Not started',
+    4: 'Not started',
+  },
 };
 
 const completeFormData = {
