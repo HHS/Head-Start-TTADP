@@ -86,7 +86,20 @@ SupportingAttachments.propTypes = {
 };
 
 const ReviewSection = () => <></>;
-export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
+export const isPageComplete = (hookForm) => {
+  // If status is complete.
+  const status = hookForm.getValues('status');
+  if (status === TRAINING_REPORT_STATUSES.COMPLETE) {
+    return true;
+  }
+
+  // If there are any supporting attachments.
+  const supportingAttachments = hookForm.getValues('supportingAttachments');
+  if (supportingAttachments && supportingAttachments.length > 0) {
+    return true;
+  }
+  return pageComplete(hookForm, fields);
+};
 
 export default {
   position,
