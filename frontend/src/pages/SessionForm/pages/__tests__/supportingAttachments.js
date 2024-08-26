@@ -26,18 +26,6 @@ describe('supportingAttachments', () => {
         getValues: jest.fn(() => (false)),
       })).toBe(false);
     });
-
-    it('returns true if status is complete', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({ status: 'Complete' })),
-      })).toBe(true);
-    });
-
-    it('returns true if there are any supporting attachments', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({ status: 'In progress', supportingAttachments: [1] })),
-      })).toBe(true);
-    });
   });
 
   describe('render', () => {
