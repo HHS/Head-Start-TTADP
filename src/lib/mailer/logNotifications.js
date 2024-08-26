@@ -59,6 +59,7 @@ export default async function logEmailNotification(job, success, result) {
       case EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED:
       case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED:
       case EMAIL_ACTIONS.TRAINING_REPORT_TASK_DUE:
+      case EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED:
         emailTo = data.emailTo;
         template = path.resolve(emailTemplatePath, data.templatePath, 'subject.pug');
         break;
