@@ -143,6 +143,65 @@ describe('SessionCard', () => {
     expect(screen.queryByRole('button', { name: /delete session/i })).not.toBeInTheDocument();
   });
 
+  it('shows the edit session link when the user is an admin and creator and pocComplete and ownerComplete are true', () => {
+    const superUser = {
+      id: 1,
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      },
+      ],
+    };
+
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        ownerId: 1,
+        pocComplete: true,
+        ownerComplete: true,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
+  });
+
+  it('shows the edit session link when the user is an admin and poc and pocComplete and ownerComplete are true', () => {
+    const superUser = {
+      id: 1,
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.POC_TRAINING_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.ADMIN,
+      },
+      ],
+    };
+
+    renderSessionCard({
+      id: 1,
+      data: {
+        ...defaultSession.data,
+        ownerId: 3,
+        pocIds: [1],
+        pocComplete: true,
+        ownerComplete: true,
+      },
+    }, true, TRAINING_REPORT_STATUSES.IN_PROGRESS, superUser);
+    expect(screen.getByText('This is my session title')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /edit session/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /delete session/i })).toBeInTheDocument();
+  });
+
   it('shows the edit session links when the event is not complete for admin', () => {
     const adminUser = {
       id: 1,
