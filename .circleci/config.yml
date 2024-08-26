@@ -587,7 +587,7 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "process"
-          task_command: "yarn processData:local"
+          task_command: "node ./build/server/src/tools/processDataCLI.js"
           task_args: '{}'
           config: "process"
           success_message: ':database: Restored data processed'
