@@ -1151,7 +1151,7 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.NEEDS_ACTION,
     transactionQueueWrapper(
-      notifyApproverAssigned,
+      notifyChangesRequested,
       EMAIL_ACTIONS.NEEDS_ACTION,
     ),
   );
@@ -1167,7 +1167,7 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.APPROVED,
     transactionQueueWrapper(
-      notifyApproverAssigned,
+      notifyReportApproved,
       EMAIL_ACTIONS.APPROVED,
     ),
   );
@@ -1175,7 +1175,7 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.COLLABORATOR_ADDED,
     transactionQueueWrapper(
-      notifyApproverAssigned,
+      notifyCollaboratorAssigned,
       EMAIL_ACTIONS.COLLABORATOR_ADDED,
     ),
   );
@@ -1183,7 +1183,7 @@ export const processNotificationQueue = () => {
   notificationQueue.process(
     EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
     transactionQueueWrapper(
-      notifyApproverAssigned,
+      notifyRecipientReportApproved,
       EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED,
     ),
   );
