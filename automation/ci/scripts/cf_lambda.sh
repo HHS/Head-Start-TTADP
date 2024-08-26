@@ -393,17 +393,11 @@ function push_app {
     if ! cf push -f "$manifest_file" --vars-file "$config_file" --no-route --no-start 2>&1; then
         log "ERROR" "Failed to push application"
 
-        # Clean up the temporary manifest file
-        rm "$temp_manifest_file"
-
         cd "$original_dir"
         exit 1
     else
         log "INFO" "Application pushed successfully."
     fi
-
-    # Clean up the temporary manifest file
-    rm "$temp_manifest_file"
 
     # Restore original directory
     cd "$original_dir"
