@@ -11,9 +11,6 @@ import {
 } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import {
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
