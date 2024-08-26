@@ -36,32 +36,6 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
   }
 };
 
-const notifyNewPoc = async (_sequelize, instance) => {
-  try {
-    const changed = instance.changed();
-    if (changed.includes('pocIds')) {
-      const { pocIds } = instance;
-      const oldPocIds = instance.previous('pocIds');
-
-      const newPocIds = pocIds.filter((id) => (
-        !oldPocIds.includes(id)));
-
-      if (newPocIds.length === 0) {
-        return;
-      }
-
-      // imported inside function to prevent circular ref
-      const { trPocAdded } = require('../../lib/mailer');
-
-      await Promise.all(
-        newPocIds.map((id) => trPocAdded(instance, id)),
-      );
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyNewPoc: ${err}`);
-  }
-};
-
 const notifyNewOwner = async (_sequelize, instance) => {
   try {
     // imported inside function to prevent circular ref
@@ -162,7 +136,6 @@ const beforeCreate = async (_sequelize, instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
-  await notifyNewPoc(sequelize, instance, options);
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };
 

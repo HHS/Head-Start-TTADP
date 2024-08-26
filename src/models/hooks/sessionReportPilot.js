@@ -2,7 +2,7 @@
 /* eslint-disable global-require */
 const { Op } = require('sequelize');
 const httpContext = require('express-http-context');
-const { TRAINING_REPORT_STATUSES, GOAL_SOURCES } = require('@ttahub/common');
+const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
