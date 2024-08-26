@@ -1,0 +1,11 @@
+memory: 32M
+disk_quota: 64M
+
+buildpack: "binary_buildpack"
+command: "./cf/scripts/idol.sh"
+
+bound_services:
+  - ttahub-db-backups
+  - ttahub-dev
+  - ttahub-sandbox
+  - ttahub-staging
