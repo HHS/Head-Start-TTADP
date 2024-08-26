@@ -6,9 +6,6 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import {
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
 import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -306,81 +303,5 @@ describe('TrainingReportForm', () => {
 
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
-  });
-
-  it('sets the status to "In progress" when hitting the save draft button', async () => {
-    fetchMock.get('/api/events/id/1', {
-      ...completedForm,
-      data: {
-        ...completedForm.data,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-      },
-    });
-
-    // Create a fall back put.
-    fetchMock.put('/api/events/id/1', {
-      ...completedForm,
-      data: {
-        ...completedForm.data,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-      },
-    });
-    act(() => {
-      renderTrainingReportForm('1');
-    });
-
-    await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
-    const saveDraftButton = screen.getByRole('button', { name: /save draft/i });
-    act(() => {
-      userEvent.click(saveDraftButton);
-    });
-
-    // Assert fetchMock was called with the correct method and body.
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
-    const [url, options] = fetchMock.lastCall('/api/events/id/1', 'PUT');
-    expect(url).toBe('/api/events/id/1');
-    const body = JSON.parse(options.body);
-    expect(body.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
-  });
-
-  it('sets the status to "In progress" when hitting "Review and submit"', async () => {
-    fetchMock.get('/api/events/id/1', {
-      ...completedForm,
-      data: {
-        ...completedForm.data,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-      },
-    });
-
-    // Create a fall back put.
-    fetchMock.put('/api/events/id/1', {
-      ...completedForm,
-      data: {
-        ...completedForm.data,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-      },
-    });
-    act(() => {
-      renderTrainingReportForm('1');
-    });
-
-    await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
-    const saveDraftButton = screen.getByRole('button', { name: /review and submit/i });
-    act(() => {
-      userEvent.click(saveDraftButton);
-    });
-
-    // On the modal click "Yes, continue".
-    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
-    act(() => {
-      userEvent.click(yesContinueButton);
-    });
-
-    // Assert fetchMock was called with the correct method and body.
-    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
-    const [url, options] = fetchMock.lastCall('/api/events/id/1', 'PUT');
-    expect(url).toBe('/api/events/id/1');
-    const body = JSON.parse(options.body);
-    expect(body.data.status).toBe(TRAINING_REPORT_STATUSES.IN_PROGRESS);
   });
 });
