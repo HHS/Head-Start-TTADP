@@ -587,8 +587,8 @@ commands:
           cloudgov_password: << parameters.cloudgov_password >>
           cloudgov_space: << parameters.cloudgov_space >>
           task_name: "process"
-          task_command: "node ./build/server/src/tools/processDataCLI.js"
-          task_args: '{}'
+          task_command: "cd /home/vcap/app/nodejs/scripts; bash ./run.sh"
+          task_args: '["./build/server/src/tools/processDataCLI.js"]'
           config: "process"
           success_message: ':database: Restored data processed'
           directory: "./"
