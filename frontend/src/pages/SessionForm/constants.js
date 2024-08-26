@@ -63,6 +63,7 @@ export const defaultValues = {
 
 export const baseDefaultValues = {
   id: 0,
+  regionId: 0,
   ownerId: null,
   eventId: '',
   eventDisplayId: '',
@@ -89,7 +90,21 @@ export const pageComplete = (
   return !!(val);
 });
 
+export const defaultKeys = [
+  'id',
+  'regionId',
+  'ownerId',
+  'eventId',
+  'eventDisplayId',
+  'eventName',
+  'status',
+  'pageState',
+  'pocComplete',
+  'ownerComplete',
+];
+
 export const istKeys = [
+  ...defaultKeys,
   'sessionName',
   'startDate',
   'endDate',
@@ -105,12 +120,10 @@ export const istKeys = [
   'files',
   'ttaProvided',
   'objectiveSupportType',
-  'status',
-  'pocComplete',
-  'ownerComplete',
 ];
 
 export const pocKeys = [
+  ...defaultKeys,
   'isIstVisit',
   'regionalOfficeTta',
   'recipients',
@@ -124,7 +137,4 @@ export const pocKeys = [
   'recipientNextSteps',
   'specialistNextSteps',
   'istSelectionComplete',
-  'status',
-  'pocComplete',
-  'ownerComplete',
 ];
