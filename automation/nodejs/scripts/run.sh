@@ -7,9 +7,15 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+# Change to the application directory
+cd /home/vcap/app || exit
+
 JS_FILE_PATH=$1
 
 /tmp/lifecycle/shell <<EOF
 # Now you're inside the /tmp/lifecycle/shell environment
 node $JS_FILE_PATH
 EOF
+
+
+echo "Script completed." >&2
