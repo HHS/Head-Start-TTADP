@@ -2,7 +2,7 @@ import { S3 } from 'aws-sdk';
 import { auditLogger } from '../logger';
 
 const generateS3Config = () => {
-  // take configuration from cloud.gov if it is available. If not, use env variables.
+  // Take configuration from cloud.gov if it is available. If not, use env variables.
   if (process.env.VCAP_SERVICES) {
     const { credentials } = JSON.parse(process.env.VCAP_SERVICES).s3[0];
     return {
@@ -17,22 +17,37 @@ const generateS3Config = () => {
       },
     };
   }
+
+  // Check for the presence of S3-related environment variables
+  const { S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_ENDPOINT } = process.env;
+
+  if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
+    return {
+      bucketName: S3_BUCKET,
+      s3Config: {
+        accessKeyId: AWS_ACCESS_KEY_ID,
+        endpoint: S3_ENDPOINT,
+        secretAccessKey: AWS_SECRET_ACCESS_KEY,
+        signatureVersion: 'v4',
+        s3ForcePathStyle: true,
+      },
+    };
+  }
+
+  // Return null if S3 is not configured
   return {
-    bucketName: process.env.S3_BUCKET,
-    s3Config: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      endpoint: process.env.S3_ENDPOINT,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      signatureVersion: 'v4',
-      s3ForcePathStyle: true,
-    },
+    bucketName: null,
+    s3Config: null,
   };
 };
 
 const { bucketName, s3Config } = generateS3Config();
-const s3 = new S3(s3Config);
+const s3 = s3Config ? new S3(s3Config) : null;
 
 const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
+  if (!s3Client || !bucket) {
+    throw new Error('S3 is not configured.');
+  }
   const params = {
     Bucket: bucket,
     Key: key,
@@ -55,6 +70,9 @@ const deleteFileFromS3Job = async (job) => {
 };
 
 const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
+  if (!s3Client || !bucket) {
+    throw new Error('S3 is not configured.');
+  }
   const versioningConfiguration = {
     MFADelete: 'Disabled',
     Status: 'Enabled',
@@ -74,6 +92,9 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
 };
 
 const downloadFile = (key) => {
+  if (!s3 || !bucketName) {
+    throw new Error('S3 is not configured.');
+  }
   const params = {
     Bucket: bucketName,
     Key: key,
@@ -83,6 +104,10 @@ const downloadFile = (key) => {
 
 const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
   const url = { url: null, error: null };
+  if (!s3Client || !Bucket) {
+    url.error = new Error('S3 is not configured.');
+    return url;
+  }
   try {
     const params = {
       Bucket,
@@ -97,6 +122,9 @@ const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360)
 };
 
 const uploadFile = async (buffer, name, type, s3Client = s3) => {
+  if (!s3Client || !bucketName) {
+    throw new Error('S3 is not configured.');
+  }
   const params = {
     Body: buffer,
     Bucket: bucketName,
