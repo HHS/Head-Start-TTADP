@@ -43,15 +43,29 @@ const generateRedisConfig = (enableRateLimiter = false) => {
 
     return redisSettings;
   }
-  const { REDIS_HOST: host, REDIS_PASS: password } = process.env;
+
+  // Check for the presence of Redis-related environment variables
+  const { REDIS_HOST, REDIS_PASS, REDIS_PORT } = process.env;
+
+  if (REDIS_HOST && REDIS_PASS) {
+    return {
+      host: REDIS_HOST,
+      uri: `redis://:${REDIS_PASS}@${REDIS_HOST}:${REDIS_PORT || 6379}`,
+      port: REDIS_PORT || 6379,
+      tlsEnabled: false,
+      redisOpts: {
+        redis: { password: REDIS_PASS },
+      },
+    };
+  }
+
+  // Return a minimal configuration if Redis is not configured
   return {
-    host,
-    uri: `redis://:${password}@${host}:${process.env.REDIS_PORT || 6379}`,
-    port: (process.env.REDIS_PORT || 6379),
+    host: null,
+    uri: null,
+    port: null,
     tlsEnabled: false,
-    redisOpts: {
-      redis: { password },
-    },
+    redisOpts: {},
   };
 };
 
