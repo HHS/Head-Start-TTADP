@@ -4,22 +4,32 @@ import { auditLogger } from '../logger';
 const generateS3Config = () => {
   // Take configuration from cloud.gov if it is available. If not, use env variables.
   if (process.env.VCAP_SERVICES) {
-    const { credentials } = JSON.parse(process.env.VCAP_SERVICES).s3[0];
-    return {
-      bucketName: credentials.bucket,
-      s3Config: {
-        accessKeyId: credentials.access_key_id,
-        endpoint: credentials.fips_endpoint,
-        region: credentials.region,
-        secretAccessKey: credentials.secret_access_key,
-        signatureVersion: 'v4',
-        s3ForcePathStyle: true,
-      },
-    };
+    const services = JSON.parse(process.env.VCAP_SERVICES);
+
+    // Check if the s3 service is available in VCAP_SERVICES
+    if (services.s3 && services.s3.length > 0) {
+      const { credentials } = services.s3[0];
+      return {
+        bucketName: credentials.bucket,
+        s3Config: {
+          accessKeyId: credentials.access_key_id,
+          endpoint: credentials.fips_endpoint,
+          region: credentials.region,
+          secretAccessKey: credentials.secret_access_key,
+          signatureVersion: 'v4',
+          s3ForcePathStyle: true,
+        },
+      };
+    }
   }
 
   // Check for the presence of S3-related environment variables
-  const { S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, S3_ENDPOINT } = process.env;
+  const {
+    S3_BUCKET,
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    S3_ENDPOINT,
+  } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
