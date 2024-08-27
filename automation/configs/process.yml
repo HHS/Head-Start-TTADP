@@ -6,4 +6,5 @@ buildpack: "https://github.com/cloudfoundry/nodejs-buildpack"
 command: "./automation/cf/scripts/idol.sh"
 
 bound_services:
+  - ttahub-db-backups # only needed to have an s3 for shared libraries to run correctly
   - ttahub-process
