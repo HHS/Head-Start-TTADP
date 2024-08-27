@@ -1,0 +1,47 @@
+@media( min-width: 640px){
+    .smart-hub--qa-dashboard-overview  {
+        column-gap: 1rem;
+        row-gap:.5rem;
+    }
+}
+
+@media( min-width: 1024px ){
+    .smart-hub--qa-dashboard-overview  {
+        gap: 1em;
+    }
+    .smart-hub--qa-dashboard-overview-field {
+        margin: 0;
+    }
+}
+
+.smart-hub--qa-dashboard-overview-field-icon-background {
+    border-radius: 50%;
+    height: 5em;
+    width: 5em;
+}
+
+
+.smart-hub--qa-dashboard-overview-field .smart-hub--ellipsis {
+    max-width: 200px;
+}
+
+// Make sure tooltip label text wraps were we expect.
+.smart-hub--qa-dashboard-overview-field-label .usa-tooltip span {
+   width: 242px;
+   display: block;
+   word-wrap:break-word;
+   white-space: normal;
+}
+
+// Vertical align for the question mark and tool tip button.
+.smart-hub--qa-dashboard-overview-field-label .usa-tooltip {
+    vertical-align: middle;
+}
+
+// Horizontally align the question mark with the tool tip button.
+.smart-hub--qa-dashboard-overview-field-label .usa-tooltip svg {
+    margin-left: 0px;
+    // For accessibility must be 24px.
+    height: 24px;
+    width: 24px;
+}
