@@ -20,10 +20,21 @@ ls -al >&2
 # Inside the lifecycle environment
 
 # Print environment variables for debugging
+echo "Environment variables:" >&2
 printenv >&2
 
 # Ensure Node.js is in the PATH or specify the full path if needed
 export PATH="/home/vcap/app/.heroku/node/bin:$PATH"
+
+# Set the app directory environment variable (if required)
+export APP_DIR="/home/vcap/app"
+
+# Set the working directory explicitly
+cd /home/vcap/app
+
+# Check Node.js version
+echo "Node.js version:" >&2
+node -v >&2
 
 # Run the Node.js script
 node $1
