@@ -19,10 +19,10 @@ ls -al >&2
 export PATH=/home/vcap/deps/0/bin:/bin:/usr/bin:/home/vcap/app/bin:/home/vcap/app/node_modules/.bin
 
 # Extract the MEMORY_LIMIT environment variable and determine the unit
-if [[ $MEMORY_LIMIT == *G ]]; then
+if [[ $MEMORY_LIMIT == *GB ]]; then
   # Convert gigabytes to megabytes
   MEMORY_LIMIT_MB=$((${MEMORY_LIMIT%G} * 1024))
-elif [[ $MEMORY_LIMIT == *M ]]; then
+elif [[ $MEMORY_LIMIT == *MB ]]; then
   # Use megabytes as is
   MEMORY_LIMIT_MB=${MEMORY_LIMIT%M}
 else
@@ -37,7 +37,7 @@ MAX_OLD_SPACE_SIZE=$(echo "$MEMORY_LIMIT_MB * 0.8" | bc)
 MAX_OLD_SPACE_SIZE=${MAX_OLD_SPACE_SIZE%.*}
 
 # Run the Node.js script
-node --max-old-space-size=$MAX_OLD_SPACE_SIZE  $1
+node --max-old-space-size=$MAX_OLD_SPACE_SIZE --expose-gc $1
 
 # Capture the exit code of the Node.js command
 SHELL_EXIT_CODE=$?

@@ -419,8 +419,13 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
 
   // Hide users
   await hideUsers(userIds);
+
+  if (typeof global.gc === 'function') global.gc();
+
   // Hide recipients and grants
   await hideRecipientsGrants(recipientsGrants);
+
+  if (typeof global.gc === 'function') global.gc();
 
   const BATCH_SIZE = 100; // Define a reasonable batch size
   let offset = 0;
@@ -505,7 +510,9 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     }
 
     offset += BATCH_SIZE;
-    // Continue fetching batches until all reports are processed
+
+    // After processing each batch, trigger garbage collection
+    if (typeof global.gc === 'function') global.gc();
   } while (reports.length === BATCH_SIZE);
 
   for (const file of files) {
@@ -517,6 +524,8 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   }
 
   await bootstrapUsers();
+
+  if (typeof global.gc === 'function') global.gc();
 
   // Delete from RequestErrors
   await RequestErrors.destroy({
