@@ -10,12 +10,21 @@ fi
 # Change to the application directory
 cd /home/vcap/app || exit
 
-JS_FILE_PATH=$1
+echo "Current directory:" $(pwd) >&2
+echo "JS File Path:" $1 >&2
+echo "Contents of directory:" >&2
+ls -al >&2
 
+# Run the lifecycle shell and capture the exit code
 /tmp/lifecycle/shell <<EOF
 # Now you're inside the /tmp/lifecycle/shell environment
-node $JS_FILE_PATH
+node $1
 EOF
 
+# Capture the exit code of the shell command
+SHELL_EXIT_CODE=$?
 
-echo "Script completed." >&2
+echo "Shell exited with code $SHELL_EXIT_CODE" >&2
+
+# Exit the script with the same exit code
+exit $SHELL_EXIT_CODE
