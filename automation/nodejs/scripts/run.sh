@@ -17,7 +17,15 @@ ls -al >&2
 
 # Run the lifecycle shell and capture the exit code
 /tmp/lifecycle/shell <<EOF
-# Now you're inside the /tmp/lifecycle/shell environment
+# Inside the lifecycle environment
+
+# Print environment variables for debugging
+printenv >&2
+
+# Ensure Node.js is in the PATH or specify the full path if needed
+export PATH="/home/vcap/app/.heroku/node/bin:$PATH"
+
+# Run the Node.js script
 node $1
 EOF
 
