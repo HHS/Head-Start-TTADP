@@ -19,7 +19,7 @@ ls -al >&2
 export PATH=/home/vcap/deps/0/bin:/bin:/usr/bin:/home/vcap/app/bin:/home/vcap/app/node_modules/.bin
 
 # Run the Node.js script
-node $1
+node --max-old-space-size=400  $1
 
 # Capture the exit code of the Node.js command
 SHELL_EXIT_CODE=$?
