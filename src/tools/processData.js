@@ -413,12 +413,8 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
   const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
-  const reports = await ActivityReport.unscoped().findAll({
-    where,
-  });
 
   const files = await File.findAll();
-
   const promises = [];
 
   // Hide users
@@ -426,76 +422,91 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   // Hide recipients and grants
   await hideRecipientsGrants(recipientsGrants);
 
-  // loop through the found reports
-  for await (const report of reports) {
-    const { imported } = report;
+  const BATCH_SIZE = 100; // Define a reasonable batch size
+  let offset = 0;
+  let reports;
 
-    promises.push(
-      report.update({
-        managerNotes: await processHtml(report.managerNotes),
-        additionalNotes: await processHtml(report.additionalNotes),
-        context: await processHtml(report.context),
-      }, { individualHooks: true }),
-    );
-    if (imported) {
-      // TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
-      const newImported = {
-        additionalNotesForThisActivity: await processHtml(
-          imported.additionalNotesForThisActivity,
-        ),
-        cdiGranteeName: await processHtml(imported.cdiGranteeName),
-        contextForThisActivity: await processHtml(
-          imported.contextForThisActivity,
-        ),
-        created: imported.created,
-        createdBy: convertEmails(imported.createdBy),
-        duration: imported.duration,
-        endDate: imported.endDate,
-        format: imported.format,
-        goal1: imported.goal1,
-        goal2: imported.goal2,
-        granteeFollowUpTasksObjectives: await processHtml(
-          imported.granteeFollowUpTasksObjectives,
-        ),
-        granteeName: convertRecipientName(imported.granteeName),
-        granteeParticipants: imported.granteeParticipants,
-        granteesLearningLevelGoal1: imported.granteesLearningLevelGoal1,
-        granteesLearningLevelGoal2: imported.granteesLearningLevelGoal2,
-        manager: convertEmails(imported.manager),
-        modified: imported.modified,
-        modifiedBy: convertEmails(imported.modifiedBy),
-        multiGranteeActivities: imported.multiGranteeActivities,
-        nonGranteeActivity: imported.nonGranteeActivity,
-        nonGranteeParticipants: imported.nonGranteeParticipants,
-        nonOhsResources: imported.nonOhsResources,
-        numberOfParticipants: imported.numberOfParticipants,
-        objective11: imported.objective11,
-        objective11Status: imported.objective11Status,
-        objective12: imported.objective12,
-        objective12Status: imported.objective12Status,
-        objective21: imported.objective21,
-        objective21Status: imported.objective21Status,
-        objective22: imported.objective22,
-        objective22Status: imported.objective22Status,
-        otherSpecialists: convertEmails(imported.otherSpecialists),
-        otherTopics: imported.otherTopics,
-        programType: imported.programType,
-        reasons: imported.reasons,
-        reportId: imported.reportId,
-        resourcesUsed: imported.resourcesUsed,
-        sourceOfRequest: imported.sourceOfRequest,
-        specialistFollowUpTasksObjectives: await processHtml(
-          imported.specialistFollowUpTasksObjectives,
-        ),
-        startDate: imported.startDate,
-        tTa: imported.tTa,
-        targetPopulations: imported.targetPopulations,
-        topics: imported.topics,
-        ttaProvidedAndGranteeProgressMade: imported.ttaProvidedAndGranteeProgressMade,
-      };
-      promises.push(report.update({ imported: newImported }, { individualHooks: true }));
+  // Loop through the reports in batches
+  do {
+    reports = await ActivityReport.unscoped().findAll({
+      where,
+      limit: BATCH_SIZE,
+      offset,
+    });
+
+    for await (const report of reports) {
+      const { imported } = report;
+
+      promises.push(
+        report.update({
+          managerNotes: await processHtml(report.managerNotes),
+          additionalNotes: await processHtml(report.additionalNotes),
+          context: await processHtml(report.context),
+        }, { individualHooks: true }),
+      );
+
+      if (imported) {
+        const newImported = {
+          additionalNotesForThisActivity: await processHtml(
+            imported.additionalNotesForThisActivity,
+          ),
+          cdiGranteeName: await processHtml(imported.cdiGranteeName),
+          contextForThisActivity: await processHtml(
+            imported.contextForThisActivity,
+          ),
+          created: imported.created,
+          createdBy: convertEmails(imported.createdBy),
+          duration: imported.duration,
+          endDate: imported.endDate,
+          format: imported.format,
+          goal1: imported.goal1,
+          goal2: imported.goal2,
+          granteeFollowUpTasksObjectives: await processHtml(
+            imported.granteeFollowUpTasksObjectives,
+          ),
+          granteeName: convertRecipientName(imported.granteeName),
+          granteeParticipants: imported.granteeParticipants,
+          granteesLearningLevelGoal1: imported.granteesLearningLevelGoal1,
+          granteesLearningLevelGoal2: imported.granteesLearningLevelGoal2,
+          manager: convertEmails(imported.manager),
+          modified: imported.modified,
+          modifiedBy: convertEmails(imported.modifiedBy),
+          multiGranteeActivities: imported.multiGranteeActivities,
+          nonGranteeActivity: imported.nonGranteeActivity,
+          nonGranteeParticipants: imported.nonGranteeParticipants,
+          nonOhsResources: imported.nonOhsResources,
+          numberOfParticipants: imported.numberOfParticipants,
+          objective11: imported.objective11,
+          objective11Status: imported.objective11Status,
+          objective12: imported.objective12,
+          objective12Status: imported.objective12Status,
+          objective21: imported.objective21,
+          objective21Status: imported.objective21Status,
+          objective22: imported.objective22,
+          objective22Status: imported.objective22Status,
+          otherSpecialists: convertEmails(imported.otherSpecialists),
+          otherTopics: imported.otherTopics,
+          programType: imported.programType,
+          reasons: imported.reasons,
+          reportId: imported.reportId,
+          resourcesUsed: imported.resourcesUsed,
+          sourceOfRequest: imported.sourceOfRequest,
+          specialistFollowUpTasksObjectives: await processHtml(
+            imported.specialistFollowUpTasksObjectives,
+          ),
+          startDate: imported.startDate,
+          tTa: imported.tTa,
+          targetPopulations: imported.targetPopulations,
+          topics: imported.topics,
+          ttaProvidedAndGranteeProgressMade: imported.ttaProvidedAndGranteeProgressMade,
+        };
+        promises.push(report.update({ imported: newImported }, { individualHooks: true }));
+      }
     }
-  }
+
+    offset += BATCH_SIZE;
+    // Continue fetching batches until all reports are processed
+  } while (reports.length === BATCH_SIZE);
 
   for (const file of files) {
     promises.push(
@@ -512,6 +523,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     where: {},
     truncate: true,
   });
+
   await Promise.all(promises);
   return truncateAuditTables();
 });
