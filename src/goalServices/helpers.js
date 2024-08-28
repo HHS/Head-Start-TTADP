@@ -21,6 +21,7 @@ const findOrFailExistingGoal = (needle, haystack, translate = goalFieldTransate)
     g[translate.status] === needle.status
     && g[translate.name].trim() === needle.name.trim()
     && g[translate.source] === needle.source
+    && g.isFei === needle.dataValues.isFei
     && g[translate.responsesForComparison] === responsesForComparison(needle)
     && (
       // Check if both needle and haystack goal have no valid collaborators
