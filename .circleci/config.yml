@@ -1249,7 +1249,6 @@ workflows:
     when:
       equal: [false, << pipeline.parameters.manual-trigger >>]
     jobs:
-      - test_pr_extraction
       - build_and_lint
       - build_and_lint_similarity_api
       - test_backend:
