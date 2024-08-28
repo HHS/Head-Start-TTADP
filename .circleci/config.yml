@@ -575,28 +575,25 @@ jobs:
   test_pr_extraction:
     executor: docker-executor
     steps:
+      - checkout
       - run:
           name: Extract Last Merged PR Information
           command: |
             # Extract the last merged PR number from the commit message
             PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
 
-            # Extract the PR title from the commit message
             PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
 
-            # If PR_NUMBER or PR_TITLE is not found, handle it
             if [ -z "$PR_NUMBER" ] || [ -z "$PR_TITLE" ]; then
               echo "Unable to extract PR information. This may not be a merge commit."
               exit 1
             fi
 
-            # Construct the deployment message
             MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} (${PR_TITLE}) was successful!"
             if [ ! -z "${JIRA_URLS}" ]; then
                 MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
             fi
             
-            # Output the deployment message
             echo -e "${MESSAGE_TEXT}"
   build_and_lint:
     executor: docker-executor
