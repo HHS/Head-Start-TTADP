@@ -580,19 +580,16 @@ jobs:
           command: |
             # Extract the last merged PR number from the commit message
             PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-            
+
             # Extract the PR title from the commit message
             PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
-            
+
             # If PR_NUMBER or PR_TITLE is not found, handle it
             if [ -z "$PR_NUMBER" ] || [ -z "$PR_TITLE" ]; then
               echo "Unable to extract PR information. This may not be a merge commit."
               exit 1
             fi
-            
-            # Optionally, extract related JIRA URLs if they are part of the commit message
-            JIRA_URLS=$(git log -1 --pretty=%B | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-            
+
             # Construct the deployment message
             MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} (${PR_TITLE}) was successful!"
             if [ ! -z "${JIRA_URLS}" ]; then
