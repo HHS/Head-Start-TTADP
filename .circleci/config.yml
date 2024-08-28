@@ -579,7 +579,12 @@ jobs:
       - run:
           name: Extract Last Merged PR Information
           command: |
-            # Extract the last merged PR number from the commit message
+            set -x
+            if [ ! -d ".git" ]; then
+              echo "No .git directory found. Ensure the repository is properly checked out."
+              exit 1
+            fi
+            
             PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
 
             PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
