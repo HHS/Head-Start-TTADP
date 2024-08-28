@@ -12,19 +12,20 @@ cd /home/vcap/app || exit
 
 echo "Current directory:" $(pwd) >&2
 echo "JS File Path:" $1 >&2
-echo "Contents of directory:" >&2
-ls -al >&2
 
 # Set the PATH from the lifecycle environment
 export PATH=/home/vcap/deps/0/bin:/bin:/usr/bin:/home/vcap/app/bin:/home/vcap/app/node_modules/.bin
 
+# Trim any leading or trailing whitespace from MEMORY_LIMIT
+MEMORY_LIMIT=$(echo "$MEMORY_LIMIT" | xargs)
+
 # Extract the MEMORY_LIMIT environment variable and determine the unit
 if [[ $MEMORY_LIMIT == *GB ]]; then
   # Convert gigabytes to megabytes
-  MEMORY_LIMIT_MB=$((${MEMORY_LIMIT%G} * 1024))
+  MEMORY_LIMIT_MB=$((${MEMORY_LIMIT%GB} * 1024))
 elif [[ $MEMORY_LIMIT == *MB ]]; then
   # Use megabytes as is
-  MEMORY_LIMIT_MB=${MEMORY_LIMIT%M}
+  MEMORY_LIMIT_MB=${MEMORY_LIMIT%MB}
 else
   echo "Unsupported MEMORY_LIMIT format."
   exit 1
