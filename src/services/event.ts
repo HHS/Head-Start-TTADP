@@ -699,6 +699,10 @@ export async function csvImport(buffer: Buffer) {
       }
 
       const data = mapLineToData(cleanLine);
+
+      // right now the valid values in the CSV are 'Recipients' and 'Regional office/TTA', and the form expects
+      // the values to be 'recipients' and 'regional-office-tta', so this will transform the values to match
+      // so the form is correctly populated
       data.eventIntendedAudience = (data.eventIntendedAudience as string).replace(/ |\//g, '-').toLowerCase();
 
       // Reasons, remove duplicates and invalid values.
