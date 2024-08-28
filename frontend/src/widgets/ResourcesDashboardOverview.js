@@ -1,8 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faLink,
   faCube,
@@ -11,82 +9,15 @@ import {
   faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import './ResourcesDashboardOverview.css';
+import { OverviewWidgetField } from './OverviewWidgetField';
 
 import Loader from '../components/Loader';
-import Tooltip from '../components/Tooltip';
 import colors from '../colors';
 
-export function Field({
-  label1,
-  label2,
-  route,
-  data,
-  icon,
-  iconColor,
-  backgroundColor,
-  showTooltip,
-  tooltipText,
-}) {
-  return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--resources-dashboard-overview-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
-      <span className="smart-hub--resources-dashboard-overview-field-icon flex-1 display-flex flex-justify-center flex-align-center">
-        <span className="smart-hub--resources-dashboard-overview-field-icon-background display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
-          <FontAwesomeIcon color={iconColor} icon={icon} />
-        </span>
-      </span>
-      <span className="smart-hub--resources-dashboard-overview-field-label display-flex flex-2 flex-column flex-justify-center">
-        <span className="text-bold smart-hub--overview-font-size">{data}</span>
-        {showTooltip ? (
-          <Tooltip
-            displayText={label1}
-            screenReadDisplayText={false}
-            buttonLabel={`${tooltipText} click to visually reveal this information`}
-            tooltipText={tooltipText}
-          />
-        ) : (
-          <span className="margin-top-1">{label1}</span>
-        )}
-        {label2}
-        {route && (
-          <Link to={route.to} className="margin-top-1">
-            {route.label}
-          </Link>
-        )}
-      </span>
-    </Grid>
-  );
-}
-
-Field.propTypes = {
-  label1: PropTypes.string.isRequired,
-  label2: PropTypes.string,
-  data: PropTypes.string.isRequired,
-  icon: PropTypes.shape({
-    prefix: PropTypes.string,
-    iconName: PropTypes.string,
-    // eslint-disable-next-line react/forbid-prop-types
-    icon: PropTypes.array,
-  }).isRequired,
-  iconColor: PropTypes.string.isRequired,
-  backgroundColor: PropTypes.string.isRequired,
-  tooltipText: PropTypes.string,
-  showTooltip: PropTypes.bool,
-  route: PropTypes.shape({
-    to: PropTypes.string,
-    label: PropTypes.string,
-  }),
-};
-
-Field.defaultProps = {
-  tooltipText: '',
-  showTooltip: false,
-  label2: '',
-  route: null,
-};
 const DASHBOARD_FIELDS = {
   'Reports with resources': {
     render: (data, showTooltip) => (
-      <Field
+      <OverviewWidgetField
         key="report-resources"
         icon={faLink}
         showTooltip={showTooltip}
@@ -101,7 +32,7 @@ const DASHBOARD_FIELDS = {
   },
   'ECLKC Resources': {
     render: (data, showTooltip) => (
-      <Field
+      <OverviewWidgetField
         key="eclkc-resources"
         icon={faCube}
         showTooltip={showTooltip}
@@ -116,7 +47,7 @@ const DASHBOARD_FIELDS = {
   },
   'Recipients reached': {
     render: (data, showTooltip) => (
-      <Field
+      <OverviewWidgetField
         key="recipient-reached"
         icon={faUser}
         showTooltip={showTooltip}
@@ -130,7 +61,7 @@ const DASHBOARD_FIELDS = {
   },
   'Participants reached': {
     render: (data, showTooltip) => (
-      <Field
+      <OverviewWidgetField
         key="participants-reached"
         icon={faUserFriends}
         showTooltip={showTooltip}
@@ -144,7 +75,7 @@ const DASHBOARD_FIELDS = {
   },
   'Reports citing iPD courses': {
     render: (data) => (
-      <Field
+      <OverviewWidgetField
         key="reports-citing-ipd-courses"
         icon={faFolder}
         showTooltip={false}
