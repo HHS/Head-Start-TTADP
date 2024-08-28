@@ -84,7 +84,7 @@ MEMORY_LIMIT_BYTES=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
 MEMORY_LIMIT_MB=$(($MEMORY_LIMIT_BYTES / 1024 / 1024))
 
 # Calculate 80% of the MEMORY_LIMIT
-MAX_OLD_SPACE_SIZE=$(echo "$MEMORY_LIMIT_MB * 0.8" | bc)
+MAX_OLD_SPACE_SIZE=$((MEMORY_LIMIT_MB * 8 / 10))
 
 # Round to the nearest whole number
 MAX_OLD_SPACE_SIZE=${MAX_OLD_SPACE_SIZE%.*}
