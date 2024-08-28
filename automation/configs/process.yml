@@ -1,5 +1,5 @@
 instances: 1
-memory: 1024MB
+memory: 1GB
 disk_quota: 1GB
 
 buildpack: "https://github.com/cloudfoundry/nodejs-buildpack"
