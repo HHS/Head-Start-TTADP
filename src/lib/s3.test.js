@@ -1,4 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
+import { S3 } from 'aws-sdk';
 import {
   s3,
   verifyVersioning,
@@ -8,6 +9,17 @@ import {
   deleteFileFromS3,
   deleteFileFromS3Job,
 } from './s3';
+
+jest.mock('aws-sdk', () => {
+  const mS3 = {
+    getBucketVersioning: jest.fn(),
+    putBucketVersioning: jest.fn(),
+    upload: jest.fn(),
+    getSignedUrl: jest.fn(),
+    deleteObject: jest.fn(),
+  };
+  return { S3: jest.fn(() => mS3) };
+});
 
 const oldEnv = { ...process.env };
 const VCAP_SERVICES = {
@@ -105,12 +117,12 @@ describe('verifyVersioning', () => {
   let mockPut;
 
   beforeEach(() => {
-    if (s3) {
-      mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
-      mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => { res(params); }));
-      mockGet.mockClear();
-      mockPut.mockClear();
-    }
+    mockGet = S3().getBucketVersioning.mockImplementation(async () => mockVersioningData);
+    mockPut = S3().putBucketVersioning.mockImplementation(async (params) => new Promise((res) => {
+      res(params);
+    }));
+    mockGet.mockClear();
+    mockPut.mockClear();
   });
 
   afterEach(() => {
@@ -118,7 +130,7 @@ describe('verifyVersioning', () => {
   });
 
   it('throws an error if S3 is not configured', async () => {
-    await expect(verifyVersioning()).rejects.toThrow('S3 is not configured.');
+    await expect(verifyVersioning(VCAP_SERVICES.s3[0].binding_name, null)).rejects.toThrow('S3 is not configured.');
   });
 
   it('Doesn\'t change things if versioning is enabled', async () => {
@@ -129,9 +141,7 @@ describe('verifyVersioning', () => {
   });
 
   it('Enables versioning if it is disabled', async () => {
-    if (s3) {
-      mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementationOnce(async () => { });
-    }
+    mockGet.mockImplementationOnce(async () => { }); // Simulate disabled versioning
     const got = await verifyVersioning(process.env.S3_BUCKET);
     expect(mockGet.mock.calls.length).toBe(1);
     expect(mockPut.mock.calls.length).toBe(1);
@@ -159,12 +169,8 @@ describe('uploadFile', () => {
   let mockGet;
 
   beforeEach(() => {
-    if (s3) {
-      mockUpload = jest.spyOn(s3, 'upload').mockImplementation(() => promise);
-      mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
-      mockUpload.mockClear();
-      mockGet.mockClear();
-    }
+    mockUpload = s3.upload.mockImplementation(() => promise);
+    mockGet = s3.getBucketVersioning.mockImplementation(async () => mockVersioningData);
   });
 
   afterAll(() => {
@@ -172,8 +178,7 @@ describe('uploadFile', () => {
   });
 
   it('throws an error if S3 is not configured', async () => {
-    process.env.NODE_ENV = 'development';
-    await expect(uploadFile(buf, name, goodType)).rejects.toThrow('S3 is not configured.');
+    await expect(uploadFile(buf, name, goodType, null)).rejects.toThrow('S3 is not configured.');
   });
 
   it('Correctly Uploads the file and checks versioning', async () => {
@@ -191,10 +196,7 @@ describe('getPresignedURL', () => {
   let mockGetURL;
 
   beforeEach(() => {
-    if (s3) {
-      mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(() => 'https://example.com');
-      mockGetURL.mockClear();
-    }
+    mockGetURL = s3.getSignedUrl.mockImplementation(() => 'https://example.com');
   });
 
   it('returns an error if S3 is not configured', () => {
@@ -225,10 +227,7 @@ describe('s3Uploader.deleteFileFromS3', () => {
   let mockDeleteObject;
 
   beforeEach(() => {
-    if (s3) {
-      mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
-      mockDeleteObject.mockClear();
-    }
+    mockDeleteObject = s3.deleteObject.mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
   });
 
   it('throws an error if S3 is not configured', async () => {
@@ -258,14 +257,23 @@ describe('s3Uploader.deleteFileFromS3Job', () => {
   let mockDeleteObject;
 
   beforeEach(() => {
-    if (s3) {
-      mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
-      mockDeleteObject.mockClear();
-    }
+    mockDeleteObject = s3.deleteObject.mockImplementation(() => ({
+      promise: () => Promise.resolve({ status: 200, data: {} }),
+    }));
   });
 
-  it('throws an error if S3 is not configured', async () => {
-    await expect(deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } }, null)).rejects.toThrow('S3 is not configured.');
+  it('returns a 500 status with error data if S3 is not configured', async () => {
+    const expectedOutput = {
+      data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' },
+      res: undefined,
+      status: 500,
+    };
+
+    const job = { data: { fileId: 1, fileKey: 'fakeKey', bucket: 'fakeBucket' } };
+    // Pass null for s3Client to simulate S3 not being configured
+    const got = await deleteFileFromS3Job(job, null);
+
+    expect(got).toStrictEqual(expectedOutput);
   });
 
   it('calls deleteFileFromS3Job() with correct parameters', async () => {
