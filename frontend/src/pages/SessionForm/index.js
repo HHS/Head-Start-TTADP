@@ -178,10 +178,12 @@ export default function SessionForm({ match }) {
   // Set pages based on user role.
   let applicationPages = [];
   if (isAdminUser) {
-    applicationPages = [pages.sessionSummary,
+    applicationPages = [
+      pages.sessionSummary,
       pages.participants,
       pages.supportingAttachments,
-      pages.nextSteps];
+      pages.nextSteps,
+    ];
   } else if (isPoc) {
     applicationPages = [pages.participants, pages.supportingAttachments, pages.nextSteps];
   } else {
@@ -193,6 +195,11 @@ export default function SessionForm({ match }) {
     if (!trainingReportId || !sessionId || !currentPage) {
       return;
     }
+
+    if (!applicationPages.map((p) => p.path).includes(currentPage)) {
+      return;
+    }
+
     const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
   }, [sessionId, setSocketPath, trainingReportId, currentPage]);

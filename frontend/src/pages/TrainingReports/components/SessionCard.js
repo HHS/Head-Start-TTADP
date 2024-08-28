@@ -82,13 +82,13 @@ function SessionCard({
 
   const showSessionEdit = () => {
     // If they are a POC and POC work is complete, they should not be able to edit the session.
-    if (isPoc && pocComplete) {
+    if (isPoc && pocComplete && !isAdminUser) {
       return false;
     }
 
     // eslint-disable-next-line max-len
     // If they are the owner and owner work is complete, they should not be able to edit the session.
-    if ((isOwner || isCollaborator) && ownerComplete) {
+    if (((isOwner || isCollaborator) && !isAdminUser) && ownerComplete) {
       return false;
     }
 

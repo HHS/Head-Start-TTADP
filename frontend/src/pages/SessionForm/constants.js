@@ -90,6 +90,8 @@ export const pageComplete = (
   return !!(val);
 });
 
+export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments';
+
 export const defaultKeys = [
   'id',
   'regionId',
@@ -137,4 +139,5 @@ export const pocKeys = [
   'recipientNextSteps',
   'specialistNextSteps',
   'istSelectionComplete',
+  supportingAttachmentsVisitedField,
 ];

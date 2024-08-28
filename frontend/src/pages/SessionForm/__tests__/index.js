@@ -61,6 +61,7 @@ const istAndPocFields = {
     3: 'Not started',
     4: 'Not started',
   },
+  'pageVisited-supporting-attachments': false,
 };
 
 const completeFormData = {

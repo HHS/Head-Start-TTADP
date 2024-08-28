@@ -11,9 +11,6 @@ import {
 } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
-import {
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import {
   LOCAL_STORAGE_ADDITIONAL_DATA_KEY,
@@ -193,12 +190,7 @@ export default function TrainingReportForm({ match }) {
       } = hookForm.getValues();
 
       const dataToPut = {
-        data: {
-          ...data,
-          status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-            : data.status,
-        },
+        data,
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
@@ -234,13 +226,7 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data: {
-          ...data,
-          eventSubmitted: true,
-          status: data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
-            ? TRAINING_REPORT_STATUSES.IN_PROGRESS
-            : data.status,
-        },
+        data,
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
@@ -248,7 +234,8 @@ export default function TrainingReportForm({ match }) {
       });
       resetFormData(hookForm.reset, updatedEvent);
 
-      const redirect = updatedEvent.data.status === TRAINING_REPORT_STATUSES.COMPLETE ? 'complete' : 'in-progress';
+      // Redirect back based current status tab.
+      const redirect = updatedEvent.data.status.replace(' ', '-').toLowerCase();
       history.push(`/training-reports/${redirect}`, { message: 'You successfully submitted the event.' });
     } catch (err) {
       // Close the modal and show the error message.
