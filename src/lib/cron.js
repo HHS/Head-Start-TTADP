@@ -18,8 +18,7 @@ import { logger, auditLogger } from '../logger';
 // Run at 4 am ET
 const schedule = '0 4 * * *';
 // Run daily at 4 pm
-// const dailySched = '1 16 * * 1-5';
-const dailySched = '*/5 */1 * * 1-5';
+const dailySched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
 const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
@@ -40,11 +39,11 @@ const runDailyEmailJob = () => {
   (async () => {
     logger.info('Starting daily digests');
     try {
-      // await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      // await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      // await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      // await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
-      // await recipientApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await collaboratorDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await changesRequestedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await recipientApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
     } catch (error) {
       auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
