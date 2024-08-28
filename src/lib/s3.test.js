@@ -116,7 +116,7 @@ describe('verifyVersioning', () => {
   });
 
   it('throws an error if S3 is not configured', async () => {
-    expect(verifyVersioning()).rejects.toThrow('S3 is not configured.');
+    await expect(verifyVersioning()).rejects.toThrow('S3 is not configured.');
   });
 
   it('Doesn\'t change things if versioning is enabled', async () => {
@@ -167,7 +167,7 @@ describe('uploadFile', () => {
 
   it('throws an error if S3 is not configured', async () => {
     process.env.NODE_ENV = 'development';
-    expect(uploadFile(buf, name, goodType)).rejects.toThrow('S3 is not configured.');
+    await expect(uploadFile(buf, name, goodType)).rejects.toThrow('S3 is not configured.');
   });
 
   it('Correctly Uploads the file and checks versioning', async () => {
@@ -222,7 +222,7 @@ describe('s3Uploader.deleteFileFromS3', () => {
   });
 
   it('throws an error if S3 is not configured', async () => {
-    expect(deleteFileFromS3(Key, Bucket, null)).rejects.toThrow('S3 is not configured.');
+    await expect(deleteFileFromS3(Key, Bucket, null)).rejects.toThrow('S3 is not configured.');
   });
 
   it('calls deleteFileFromS3() with correct parameters', async () => {
@@ -253,7 +253,7 @@ describe('s3Uploader.deleteFileFromS3Job', () => {
   });
 
   it('throws an error if S3 is not configured', async () => {
-    expect(deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } }, null)).rejects.toThrow('S3 is not configured.');
+    await expect(deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } }, null)).rejects.toThrow('S3 is not configured.');
   });
 
   it('calls deleteFileFromS3Job() with correct parameters', async () => {
