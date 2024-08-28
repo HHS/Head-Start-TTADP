@@ -77,17 +77,11 @@ echo "env:" $(env) >&2
 # Set the PATH from the lifecycle environment
 export PATH=/home/vcap/deps/0/bin:/bin:/usr/bin:/home/vcap/app/bin:/home/vcap/app/node_modules/.bin
 
-# Extract the MEMORY_LIMIT environment variable and determine the unit
-if [[ $MEMORY_LIMIT == *GB ]]; then
-  # Convert gigabytes to megabytes
-  MEMORY_LIMIT_MB=$((${MEMORY_LIMIT%GB} * 1024))
-elif [[ $MEMORY_LIMIT == *MB ]]; then
-  # Use megabytes as is
-  MEMORY_LIMIT_MB=${MEMORY_LIMIT%MB}
-else
-  echo "Unsupported MEMORY_LIMIT format: '$MEMORY_LIMIT'"
-  exit 1
-fi
+# Get the total memory limit from cgroup in bytes
+MEMORY_LIMIT_BYTES=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
+
+# Convert bytes to megabytes
+MEMORY_LIMIT_MB=$(($MEMORY_LIMIT_BYTES / 1024 / 1024))
 
 # Calculate 80% of the MEMORY_LIMIT
 MAX_OLD_SPACE_SIZE=$(echo "$MEMORY_LIMIT_MB * 0.8" | bc)
