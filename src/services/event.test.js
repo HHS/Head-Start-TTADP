@@ -593,7 +593,7 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(created).toHaveProperty('regionId', regionId);
       expect(created.data.reasons).toEqual(['Complaint', 'Planning/Coordination']);
       expect(created.data.vision).toEqual(vision);
-      expect(created.data.eventIntendedAudience).toEqual(audience);
+      expect(created.data.eventIntendedAudience).toEqual(audience.toLowerCase());
       expect(created.data.targetPopulations).toEqual(['Program Staff', 'Affected by Disaster']);
       expect(created.data.eventOrganizer).toEqual(typeOfEvent);
       expect(created.data.creator).toEqual(email);
