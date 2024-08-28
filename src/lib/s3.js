@@ -65,13 +65,13 @@ const deleteFileFromS3 = async (key, bucket = bucketName, s3Client = s3) => {
   return s3Client.deleteObject(params).promise();
 };
 
-const deleteFileFromS3Job = async (job) => {
+const deleteFileFromS3Job = async (job, s3Client = s3) => {
   const {
     fileId, fileKey, bucket,
   } = job.data;
   let res;
   try {
-    res = await deleteFileFromS3(fileKey, bucket);
+    res = await deleteFileFromS3(fileKey, bucket, s3Client);
     return ({ status: 200, data: { fileId, fileKey, res } });
   } catch (error) {
     auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
@@ -101,15 +101,15 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   return data;
 };
 
-const downloadFile = (key) => {
-  if (!s3 || !bucketName) {
+const downloadFile = (key, s3Client = s3) => {
+  if (!s3Client || !bucketName) {
     throw new Error('S3 is not configured.');
   }
   const params = {
     Bucket: bucketName,
     Key: key,
   };
-  return s3.getObject(params).promise();
+  return s3Client.getObject(params).promise();
 };
 
 const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360) => {
