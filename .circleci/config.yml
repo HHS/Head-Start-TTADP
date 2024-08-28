@@ -578,7 +578,7 @@ jobs:
       - checkout
       - run:
           name: Extract Last Merged PR Information
-          command: |
+          command:
             set -x
             if [ ! -d ".git" ]; then
               echo "No .git directory found. Ensure the repository is properly checked out."
@@ -602,16 +602,31 @@ jobs:
                   MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
               fi
             else
-              echo "This is a regular commit, not a merge commit."
+              # This is not a merge commit, assume it's running in a PR context
+              if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+                echo "CIRCLE_PULL_REQUEST is set to: ${CIRCLE_PULL_REQUEST}"
 
-              COMMIT_HASH=$(git log -1 --pretty=%H)
-              COMMIT_AUTHOR=$(git log -1 --pretty=%an)
-              COMMIT_DATE=$(git log -1 --pretty=%cd)
-              echo "Commit Hash: $COMMIT_HASH"
-              echo "Author: $COMMIT_AUTHOR"
-              echo "Date: $COMMIT_DATE"
+                # Extract the PR number from the CIRCLE_PULL_REQUEST variable
+                PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
+                echo "PR_NUMBER: $PR_NUMBER"  # Debugging: Print the PR number
 
-              MESSAGE_TEXT=":rocket: Deployment of commit ${COMMIT_HASH} by ${COMMIT_AUTHOR} on ${COMMIT_DATE} was successful!"
+                # Extract the PR title using the PR URL
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | grep -oP '<bdi class="js-issue-title markdown-title">[^<]+</bdi>' | sed -re 's~<[^>]+>~~g')
+                echo "PR_TITLE: $PR_TITLE"  # Debugging: Print the PR title
+
+                # Optionally, extract related JIRA URLs if they are part of the PR description
+                JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+                echo "JIRA_URLS: $JIRA_URLS"  # Debugging: Print the JIRA URLs
+
+                # Construct the deployment message using PR information
+                MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) was successful!"
+                if [ -n "${JIRA_URLS}" ]; then
+                    MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                fi
+              else
+                echo "CIRCLE_PULL_REQUEST is not set. Exiting without extracting PR information."
+                exit 1  # Exit with an error because the script expects a PR context or merge commit
+              fi
             fi
             echo -e "${MESSAGE_TEXT}"
   build_and_lint:
