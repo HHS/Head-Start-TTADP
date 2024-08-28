@@ -29,11 +29,6 @@ export default function QADashboard() {
             recipientsWithOhsStandardClass: { pct: '14.26%', filterApplicable: false },
           }}
           loading={false}
-          fields={[
-            'Recipients with no TTA',
-            'Recipients with OHS standard FEI goal',
-            'Recipients with OHS standard CLASS goal',
-          ]}
         />
       </div>
     </>
