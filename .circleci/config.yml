@@ -180,6 +180,7 @@ commands:
         description: "Name of environment"
         type: string
     steps:
+      - checkout
       - run:
           name: Generate Message
           command: |
@@ -204,24 +205,32 @@ commands:
 
             env_name="<< parameters.environment_name >>"
 
-            if [ ! -z "${CIRCLE_PULL_REQUEST}" ]; then
+            if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
-                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | grep -oP '<bdi class="js-issue-title markdown-title">[^<]+</bdi>' | sed -re 's~<[^>]+>~~g')
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
 
                     MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
-                    if [ ! -z "${JIRA_URLS}" ]; then
+                    if [ -n "${JIRA_URLS}" ]; then
                         MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                     fi
                 else
                     MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
                 fi
             else
-                MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
-            fi
+                COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+                if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
+                  PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+                  MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} to <${ENV_URL}|${env_name}> was successful!"
+                  if [ ! -z "${JIRA_URLS}" ]; then
+                      MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+                  fi
+                else
+                    MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
+                fi
 
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
@@ -571,40 +580,6 @@ parameters:
     type: boolean
     default: false
 jobs:
-  test_pr_extraction:
-    executor: docker-executor
-    steps:
-      - checkout
-      - run:
-          name: Extract Last Merged PR Information
-          command: |
-            set -x
-            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
-              PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-              MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} was successful!"
-              if [ ! -z "${JIRA_URLS}" ]; then
-                  MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-              fi
-            else
-              if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
-                echo "CIRCLE_PULL_REQUEST is set to: ${CIRCLE_PULL_REQUEST}"
-                PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-                echo "PR_NUMBER: $PR_NUMBER"
-                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | grep -oP '<bdi class="js-issue-title markdown-title">[^<]+</bdi>' | sed -re 's~<[^>]+>~~g')
-                echo "PR_TITLE: $PR_TITLE"  # Debugging: Print the PR title
-                JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-                echo "JIRA_URLS: $JIRA_URLS"
-                MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) was successful!"
-                if [ -n "${JIRA_URLS}" ]; then
-                    MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                fi
-              else
-                echo "CIRCLE_PULL_REQUEST is not set. Exiting without extracting PR information."
-                exit 1
-              fi
-            fi
-            echo -e "${MESSAGE_TEXT}"
   build_and_lint:
     executor: docker-executor
     steps:
