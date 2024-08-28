@@ -576,30 +576,30 @@ jobs:
     executor: docker-executor
     steps:
       - run:
-          name: Check Pull Request Environment Variable
+          name: Extract Last Merged PR Information
           command: |
-            if [ -z "${CIRCLE_PULL_REQUEST}" ]; then
-              echo "CIRCLE_PULL_REQUEST is not set. This job is likely not running in a pull request context."
+            # Extract the last merged PR number from the commit message
+            PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+            
+            # Extract the PR title from the commit message
+            PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
+            
+            # If PR_NUMBER or PR_TITLE is not found, handle it
+            if [ -z "$PR_NUMBER" ] || [ -z "$PR_TITLE" ]; then
+              echo "Unable to extract PR information. This may not be a merge commit."
               exit 1
-            else
-              echo "CIRCLE_PULL_REQUEST is set to: ${CIRCLE_PULL_REQUEST}"
             fi
-
-            PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
-
-            PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
-
-            if [ ! -z "${PR_TITLE}" ]; then
-                JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-
-                MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) was successful!"
-                if [ ! -z "${JIRA_URLS}" ]; then
-                    MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-                fi
-            else
-                MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> was successful!"
+            
+            # Optionally, extract related JIRA URLs if they are part of the commit message
+            JIRA_URLS=$(git log -1 --pretty=%B | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
+            
+            # Construct the deployment message
+            MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} (${PR_TITLE}) was successful!"
+            if [ ! -z "${JIRA_URLS}" ]; then
+                MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
             fi
-
+            
+            # Output the deployment message
             echo -e "${MESSAGE_TEXT}"
   build_and_lint:
     executor: docker-executor
