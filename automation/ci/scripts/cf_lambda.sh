@@ -386,9 +386,9 @@ function push_app {
         exit 1
     fi
 
-    # Extract memory value from config file
+    # Extract memory value from config file using awk
     local memory
-    memory=$(yq eval '.memory' "$config_file")
+    memory=$(awk '/memory:/ {print $2}' "$config_file")
 
     if [ -z "$memory" ]; then
         log "ERROR" "Memory value not found in config file $config_file"
