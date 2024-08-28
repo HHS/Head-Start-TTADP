@@ -12,7 +12,7 @@ applications:
   command: ((command))
   services: ((bound_services))
   processes:
-    - type: worker
+    - type: web
       instances: ((instances))
       command: ((command))
       memory: ((memory))
