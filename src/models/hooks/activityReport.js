@@ -169,7 +169,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         )));
       // Add the corresponding template id to each of the goals.
       goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplates.filter((dt) => dt.name === goal.name).id;
+        const goalTemplateId = distinctTemplates.find((dt) => dt.name === goal.name).id;
         return { ...goal, goalTemplateId };
       });
       // Update all the goals with their template id.
@@ -221,7 +221,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       // Add the corresponding template id to each of the objectives.
       objectives = objectives.map((objective) => {
         const objectiveTemplateId = distinctTemplates
-          .filter((dt) => dt.title === objective.title).id;
+          .find((dt) => dt.title === objective.title).id;
         return { ...objective, objectiveTemplateId };
       });
       // Update all the objectives with their template id.
