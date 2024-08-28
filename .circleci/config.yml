@@ -579,19 +579,9 @@ jobs:
           name: Extract Last Merged PR Information
           command: |
             set -x
-            if [ ! -d ".git" ]; then
-              echo "No .git directory found. Ensure the repository is properly checked out."
-              exit 1
-            fi
             COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            echo $COMMIT_MESSAGE
             if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
               PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-              PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
-              if [ -z "$PR_NUMBER" ]; then
-                echo "Unable to extract PR information. This may not be a merge commit."
-                exit 1
-              fi
               MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} was successful!"
               if [ ! -z "${JIRA_URLS}" ]; then
                   MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
