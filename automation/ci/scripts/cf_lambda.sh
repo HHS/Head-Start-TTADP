@@ -386,6 +386,16 @@ function push_app {
         exit 1
     fi
 
+    # Extract memory value from config file
+    local memory
+    memory=$(yq eval '.memory' "$config_file")
+
+    if [ -z "$memory" ]; then
+        log "ERROR" "Memory value not found in config file $config_file"
+        cd "$original_dir"
+        exit 1
+    fi
+
     # Unbind services and push the app
     unbind_all_services
 
@@ -401,6 +411,9 @@ function push_app {
 
     # Restore original directory
     cd "$original_dir"
+
+    # Return the memory value to be used in the run_task function
+    echo "$memory"
 }
 
 # Function to start an app
@@ -464,18 +477,20 @@ function run_task {
     local task_name=$1
     local command=$2
     local args_json=$3
+    local memory=$4  # New parameter for memory
 
     validate_parameters "$command"
     validate_parameters "$task_name"
     validate_parameters "$args_json"
+    validate_parameters "$memory"
 
     # Convert JSON array to space-separated list of arguments
     local args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
 
 
-    log "INFO" "Running task: $task_name with args: $args"
+    log "INFO" "Running task: $task_name with args: $args and memory: $memory"
     local full_command="$command $args"
-    cf run-task "$app_name" --command "$full_command" --name "$task_name"
+    cf run-task "$app_name" --command "$full_command" --name "$task_name" --memory "$memory"
     local result=$?
     if [ $result -ne 0 ]; then
         log "ERROR" "Failed to start task $task_name with error code $result"
@@ -593,10 +608,11 @@ main() {
       fi
   fi
 
-  push_app "$directory" "$config"
+  # Get memory value from push_app
+  memory=$(push_app "$directory" "$config")
   start_app
 
-  if run_task "$task_name" "$command" "$args" && monitor_task "$task_name" $timeout_active_tasks; then
+  if run_task "$task_name" "$command" "$args" "$memory" && monitor_task "$task_name" $timeout_active_tasks; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
@@ -609,5 +625,6 @@ main() {
   # Currently only turning off to aid in speeding up cycle time
   # delete_app "tta-automation"
 }
+
 
 main "$@"
