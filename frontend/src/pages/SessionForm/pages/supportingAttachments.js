@@ -16,18 +16,17 @@ import { Helmet } from 'react-helmet';
 import { Controller, useFormContext } from 'react-hook-form';
 import ReportFileUploader from '../../../components/FileUploader/ReportFileUploader';
 import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
-import { pageComplete } from '../constants';
+import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 
 const path = 'supporting-attachments';
 const position = 3;
-const visitedField = `pageVisited-${path}`;
-const fields = [visitedField];
+const fields = [supportingAttachmentsVisitedField];
 
 const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
   const { watch, register, setValue } = useFormContext();
   const visitedRef = useRef(false);
-  const pageVisited = watch(visitedField);
+  const pageVisited = watch(supportingAttachmentsVisitedField);
 
   useEffect(() => {
     /*
@@ -36,7 +35,7 @@ const SupportingAttachments = ({ reportId }) => {
     */
     if (!pageVisited && !visitedRef.current) {
       visitedRef.current = true;
-      setValue(visitedField, true);
+      setValue(supportingAttachmentsVisitedField, true);
     }
   }, [pageVisited, setValue]);
 
@@ -45,7 +44,7 @@ const SupportingAttachments = ({ reportId }) => {
       <Helmet>
         <title>Supporting Attachments</title>
       </Helmet>
-      <input type="hidden" ref={register()} name={visitedField} />
+      <input type="hidden" ref={register()} name={supportingAttachmentsVisitedField} />
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
           <div id="attachments" />
