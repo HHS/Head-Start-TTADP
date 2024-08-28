@@ -41,6 +41,7 @@ const VCAP_SERVICES = {
 
 describe('Tests s3 client setup', () => {
   afterEach(() => { process.env = oldEnv; });
+
   it('returns proper config with process.env.VCAP_SERVICES set', () => {
     process.env.VCAP_SERVICES = JSON.stringify(VCAP_SERVICES);
     const { credentials } = VCAP_SERVICES.s3[0];
@@ -57,6 +58,7 @@ describe('Tests s3 client setup', () => {
     const got = generateS3Config();
     expect(got).toMatchObject(want);
   });
+
   it('returns proper config with process.env.VCAP_SERVICES not set', () => {
     process.env.S3_BUCKET = 'test-bucket';
     process.env.AWS_ACCESS_KEY_ID = 'superSecretAccessKeyId';
@@ -76,6 +78,21 @@ describe('Tests s3 client setup', () => {
     const got = generateS3Config();
     expect(got).toMatchObject(want);
   });
+
+  it('returns null config when no S3 environment variables or VCAP_SERVICES are set', () => {
+    delete process.env.VCAP_SERVICES;
+    delete process.env.S3_BUCKET;
+    delete process.env.AWS_ACCESS_KEY_ID;
+    delete process.env.AWS_SECRET_ACCESS_KEY;
+    delete process.env.S3_ENDPOINT;
+
+    const want = {
+      bucketName: null,
+      s3Config: null,
+    };
+    const got = generateS3Config();
+    expect(got).toMatchObject(want);
+  });
 });
 
 const mockVersioningData = {
@@ -84,18 +101,31 @@ const mockVersioningData = {
 };
 
 describe('verifyVersioning', () => {
-  let mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
-  const mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => { res(params); }));
+  let mockGet;
+  let mockPut;
+
   beforeEach(() => {
+    mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
+    mockPut = jest.spyOn(s3, 'putBucketVersioning').mockImplementation(async (params) => new Promise((res) => { res(params); }));
     mockGet.mockClear();
     mockPut.mockClear();
   });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('throws an error if S3 is not configured', async () => {
+    expect(verifyVersioning()).rejects.toThrow('S3 is not configured.');
+  });
+
   it('Doesn\'t change things if versioning is enabled', async () => {
     const got = await verifyVersioning();
     expect(mockGet.mock.calls.length).toBe(1);
     expect(mockPut.mock.calls.length).toBe(0);
     expect(got).toBe(mockVersioningData);
   });
+
   it('Enables versioning if it is disabled', async () => {
     mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementationOnce(async () => { });
     const got = await verifyVersioning(process.env.S3_BUCKET);
@@ -121,22 +151,25 @@ describe('uploadFile', () => {
   const promise = {
     promise: () => new Promise((resolve) => { resolve(response); }),
   };
-  const mockUpload = jest.spyOn(s3, 'upload').mockImplementation(() => promise);
-  const mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
+  let mockUpload;
+  let mockGet;
+
   beforeEach(() => {
+    mockUpload = jest.spyOn(s3, 'upload').mockImplementation(() => promise);
+    mockGet = jest.spyOn(s3, 'getBucketVersioning').mockImplementation(async () => mockVersioningData);
     mockUpload.mockClear();
     mockGet.mockClear();
   });
+
   afterAll(() => {
     process.env = oldEnv;
   });
 
-  it('Correctly Uploads the file', async () => {
+  it('throws an error if S3 is not configured', async () => {
     process.env.NODE_ENV = 'development';
-    const got = await uploadFile(buf, name, goodType);
-    expect(mockGet.mock.calls.length).toBe(0);
-    await expect(got).toBe(response);
+    expect(uploadFile(buf, name, goodType)).rejects.toThrow('S3 is not configured.');
   });
+
   it('Correctly Uploads the file and checks versioning', async () => {
     process.env.NODE_ENV = 'production';
     const got = await uploadFile(buf, name, goodType);
@@ -145,20 +178,29 @@ describe('uploadFile', () => {
   });
 });
 
-describe('getPresignedUrl', () => {
+describe('getPresignedURL', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const fakeError = new Error('fake error');
-  const mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(() => 'https://example.com');
+  let mockGetURL;
+
   beforeEach(() => {
+    mockGetURL = jest.spyOn(s3, 'getSignedUrl').mockImplementation(() => 'https://example.com');
     mockGetURL.mockClear();
   });
+
+  it('returns an error if S3 is not configured', () => {
+    const url = getPresignedURL(Key, Bucket, null);
+    expect(url).toMatchObject({ url: null, error: new Error('S3 is not configured.') });
+  });
+
   it('calls getSignedUrl() with correct parameters', () => {
     const url = getPresignedURL(Key, Bucket);
     expect(url).toMatchObject({ url: 'https://example.com', error: null });
     expect(mockGetURL).toHaveBeenCalled();
     expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
+
   it('calls getSignedUrl() with incorrect parameters', async () => {
     mockGetURL.mockImplementationOnce(() => { throw fakeError; });
     const url = getPresignedURL(Key, Bucket);
@@ -167,18 +209,30 @@ describe('getPresignedUrl', () => {
     expect(mockGetURL).toHaveBeenCalledWith('getObject', { Bucket, Key, Expires: 360 });
   });
 });
+
 describe('s3Uploader.deleteFileFromS3', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const anotherFakeError = Error('fake');
+  let mockDeleteObject;
+
+  beforeEach(() => {
+    mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
+    mockDeleteObject.mockClear();
+  });
+
+  it('throws an error if S3 is not configured', async () => {
+    expect(deleteFileFromS3(Key, Bucket, null)).rejects.toThrow('S3 is not configured.');
+  });
+
   it('calls deleteFileFromS3() with correct parameters', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
     const got = deleteFileFromS3(Key, Bucket);
     await expect(got).resolves.toBe('good');
     expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
   });
+
   it('throws an error if promise rejects', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
+    mockDeleteObject.mockImplementationOnce(
       () => ({ promise: () => Promise.reject(anotherFakeError) }),
     );
     const got = deleteFileFromS3(Key);
@@ -187,20 +241,31 @@ describe('s3Uploader.deleteFileFromS3', () => {
   });
 });
 
-describe('s3Uploader.deleteFileFromJobS3', () => {
+describe('s3Uploader.deleteFileFromS3Job', () => {
   const Bucket = 'fakeBucket';
   const Key = 'fakeKey';
   const anotherFakeError = Error({ statusCode: 500 });
+  let mockDeleteObject;
+
+  beforeEach(() => {
+    mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
+    mockDeleteObject.mockClear();
+  });
+
+  it('throws an error if S3 is not configured', async () => {
+    expect(deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } }, null)).rejects.toThrow('S3 is not configured.');
+  });
+
   it('calls deleteFileFromS3Job() with correct parameters', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementation(() => ({ promise: () => Promise.resolve({ status: 200, data: {} }) }));
     const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
     await expect(got).resolves.toStrictEqual({
       status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
     });
     expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
   });
+
   it('throws an error if promise rejects', async () => {
-    const mockDeleteObject = jest.spyOn(s3, 'deleteObject').mockImplementationOnce(
+    mockDeleteObject.mockImplementationOnce(
       () => ({ promise: () => Promise.reject(anotherFakeError) }),
     );
     const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
