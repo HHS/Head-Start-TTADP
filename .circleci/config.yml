@@ -578,14 +578,14 @@ jobs:
       - checkout
       - run:
           name: Extract Last Merged PR Information
-          command:
+          command: |
             set -x
             if [ ! -d ".git" ]; then
               echo "No .git directory found. Ensure the repository is properly checked out."
               exit 1
             fi
             COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            echo "Last commit message: $COMMIT_MESSAGE"
+            echo $COMMIT_MESSAGE
             if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
 
               PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
