@@ -25,11 +25,6 @@ const {
   EventReportPilotNationalCenterUser,
 } = db;
 
-type UserWhereOptions = {
-  name?: { [Op.iLike]: string };
-  email?: string;
-};
-
 type WhereOptions = {
   id?: number;
   ownerId?: number;
@@ -544,9 +539,13 @@ const mapLineToData = (line: Record<string, string>) => {
   return data;
 };
 
-const checkUserExists = async (userWhere: UserWhereOptions) => {
+const checkUserExists = async (key:'email' | 'name', value: string) => {
   const user = await db.User.findOne({
-    where: userWhere,
+    where: {
+      [key]: {
+        [Op.iLike]: value,
+      },
+    },
     include: [
       {
         model: db.Permission,
@@ -560,9 +559,7 @@ const checkUserExists = async (userWhere: UserWhereOptions) => {
   });
 
   if (!user) {
-    throw new Error(`User with ${
-      Object.keys(userWhere).map((key) => `${key}: ${userWhere[key]}`).join('AND ')
-    } does not exist`);
+    throw new Error(`User with ${key}: ${value} does not exist`);
   }
   return user;
 };
@@ -591,12 +588,9 @@ const checkUserExistsByNationalCenter = async (identifier: string) => {
   return user;
 };
 
-const checkUserExistsByName = async (name: string) => checkUserExists({
-  name: {
-    [Op.iLike]: name,
-  },
-});
-const checkUserExistsByEmail = async (email: string) => checkUserExists({ email });
+const checkUserExistsByName = async (name: string) => checkUserExists('name', name);
+
+const checkUserExistsByEmail = async (email: string) => checkUserExists('email', email);
 
 const checkEventExists = async (eventId: string) => {
   const event = await db.EventReportPilot.findOne({
@@ -705,6 +699,11 @@ export async function csvImport(buffer: Buffer) {
       }
 
       const data = mapLineToData(cleanLine);
+
+      // right now the valid values in the CSV are 'Recipients' and 'Regional office/TTA', and the form expects
+      // the values to be 'recipients' and 'regional-office-tta', so this will transform the values to match
+      // so the form is correctly populated
+      data.eventIntendedAudience = (data.eventIntendedAudience as string).replace(/ |\//g, '-').toLowerCase();
 
       // Reasons, remove duplicates and invalid values.
       data.reasons = [...new Set(data.reasons as string[])].filter((reason) => REASONS.includes(reason));
