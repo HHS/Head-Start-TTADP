@@ -5,7 +5,6 @@ import {
   faBus,
   faUser,
 } from '@fortawesome/free-solid-svg-icons';
-import './QualityAssuranceDashboardOverview.scss';
 import colors from '../colors';
 
 import { DashboardOverviewContainer } from './DashboardOverviewContainer';
