@@ -83,17 +83,25 @@ MEMORY_LIMIT_BYTES=$(cat /sys/fs/cgroup/memory/memory.limit_in_bytes)
 # Convert bytes to megabytes
 MEMORY_LIMIT_MB=$(($MEMORY_LIMIT_BYTES / 1024 / 1024))
 
-# Calculate 80% of the MEMORY_LIMIT
+# Calculate 80% of the MEMORY_LIMIT for max-old-space-size
 MAX_OLD_SPACE_SIZE=$((MEMORY_LIMIT_MB * 8 / 10))
 
 # Round to the nearest whole number
 MAX_OLD_SPACE_SIZE=${MAX_OLD_SPACE_SIZE%.*}
 
+# Calculate 1% of MEMORY_LIMIT for max-semi-space-size with a minimum of 16 MB
+# 1% of MEMORY_LIMIT or 16 MB, whichever is larger
+MAX_SEMI_SPACE_SIZE=$((MEMORY_LIMIT_MB / 100))
+if [ "$MAX_SEMI_SPACE_SIZE" -lt 16 ]; then
+  MAX_SEMI_SPACE_SIZE=16
+fi
+
 # Start memory monitoring in the background
 monitor_memory $$ &
 
 # Run the Node.js script
-node --max-old-space-size=$MAX_OLD_SPACE_SIZE --expose-gc $1
+echo "node --max-old-space-size=$MAX_OLD_SPACE_SIZE --max-semi-space-size=$MAX_SEMI_SPACE_SIZE --expose-gc $1" >&2
+node --max-old-space-size=$MAX_OLD_SPACE_SIZE --max-semi-space-size=$MAX_SEMI_SPACE_SIZE --expose-gc $1
 
 # Capture the exit code of the Node.js command
 SHELL_EXIT_CODE=$?
