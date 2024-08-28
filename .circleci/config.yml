@@ -418,7 +418,7 @@ commands:
             sudo apt-get update
             # Install uuid-runtime to have access to uuidgen
             # Install pv wget
-            sudo apt-get install -y pv uuid-runtime wget coreutils jq yq
+            sudo apt-get install -y pv uuid-runtime wget coreutils jq
 
             # Install Cloud Foundry CLI
             wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
