@@ -7,7 +7,6 @@ import {
   faUserFriends,
   faFolder,
 } from '@fortawesome/free-solid-svg-icons';
-import './ResourcesDashboardOverview.css';
 import { DashboardOverviewContainer } from './DashboardOverviewContainer';
 import colors from '../colors';
 

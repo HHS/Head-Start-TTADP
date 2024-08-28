@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
-import './QualityAssuranceDashboardOverview.scss';
 import Loader from '../components/Loader';
 import { OverviewWidgetField } from './OverviewWidgetField';
+import './DashboardOverviewContainer.scss';
 
 const renderDashboardField = (fieldData) => (
   <OverviewWidgetField
@@ -15,10 +15,10 @@ const renderDashboardField = (fieldData) => (
     iconColor={fieldData.iconColor}
     backgroundColor={fieldData.backgroundColor}
     data={fieldData.data}
-    route={{
+    route={fieldData.route ? {
       to: `/dashboards/${fieldData.route}`,
       label: 'Display details',
-    }}
+    } : null}
     filterApplicable={fieldData.filterApplicable}
     iconSize={fieldData.iconSize}
     tooltipText={fieldData.tooltipText}
