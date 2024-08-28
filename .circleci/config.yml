@@ -584,21 +584,35 @@ jobs:
               echo "No .git directory found. Ensure the repository is properly checked out."
               exit 1
             fi
-            
-            PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
+            COMMIT_MESSAGE=$(git log -1 --pretty=%B)
+            echo "Last commit message: $COMMIT_MESSAGE"
+            if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
 
-            PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
+              PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
 
-            if [ -z "$PR_NUMBER" ] || [ -z "$PR_TITLE" ]; then
-              echo "Unable to extract PR information. This may not be a merge commit."
-              exit 1
+              PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
+
+              if [ -z "$PR_NUMBER" ] || [ -z "$PR_TITLE" ]; then
+                echo "Unable to extract PR information. This may not be a merge commit."
+                exit 1
+              fi
+
+              MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} (${PR_TITLE}) was successful!"
+              if [ ! -z "${JIRA_URLS}" ]; then
+                  MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
+              fi
+            else
+              echo "This is a regular commit, not a merge commit."
+
+              COMMIT_HASH=$(git log -1 --pretty=%H)
+              COMMIT_AUTHOR=$(git log -1 --pretty=%an)
+              COMMIT_DATE=$(git log -1 --pretty=%cd)
+              echo "Commit Hash: $COMMIT_HASH"
+              echo "Author: $COMMIT_AUTHOR"
+              echo "Date: $COMMIT_DATE"
+
+              MESSAGE_TEXT=":rocket: Deployment of commit ${COMMIT_HASH} by ${COMMIT_AUTHOR} on ${COMMIT_DATE} was successful!"
             fi
-
-            MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} (${PR_TITLE}) was successful!"
-            if [ ! -z "${JIRA_URLS}" ]; then
-                MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
-            fi
-            
             echo -e "${MESSAGE_TEXT}"
   build_and_lint:
     executor: docker-executor
