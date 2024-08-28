@@ -324,7 +324,7 @@ const EventSummary = ({ additionalData, datePickerKey }) => {
               id="category-regionalOffice"
               name="eventIntendedAudience"
               label="Regional office/TTA"
-              value="regiona-office-tta"
+              value="regional-office-tta"
               className="smart-hub--report-checkbox"
               inputRef={register({ required: 'Select one' })}
             />
