@@ -302,14 +302,6 @@ export default function ResourcesDashboard() {
       <ResourcesDashboardOverview
         data={resourcesData.resourcesDashboardOverview}
         loading={isLoading}
-        fields={[
-          'Reports with resources',
-          'ECLKC Resources',
-          'Recipients reached',
-          'Participants reached',
-          'Reports citing iPD courses',
-        ]}
-        showTooltips
       />
       <ResourceUse
         data={resourcesData.resourcesUse}
