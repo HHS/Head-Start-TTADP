@@ -230,7 +230,6 @@ commands:
           slack_channel: << parameters.slack_channel >>
           message_text_file: "/tmp/message_file"
 
-
   cf_deploy:
     description: "Login to cloud foundry space with service account credentials
       and push application using deployment configuration file."
@@ -553,7 +552,7 @@ parameters:
     description: "Name of github branch that will deploy to dev"
     default: "TTAHUB-3097/transactions-for-workers-round-2"
     type: string
-  sandbox_git_branch:  # change to feature branch to test deployment
+  sandbox_git_branch: # change to feature branch to test deployment
     default: "mb/TTAHUB-3198/training-report-alerts"
     type: string
   prod_new_relic_app_id:
@@ -580,19 +579,9 @@ jobs:
           name: Extract Last Merged PR Information
           command: |
             set -x
-            if [ ! -d ".git" ]; then
-              echo "No .git directory found. Ensure the repository is properly checked out."
-              exit 1
-            fi
             COMMIT_MESSAGE=$(git log -1 --pretty=%B)
-            echo $COMMIT_MESSAGE
             if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
               PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-              PR_TITLE=$(git log -1 --pretty=%B | grep -oP '(?<=: ).*')
-              if [ -z "$PR_NUMBER" ]; then
-                echo "Unable to extract PR information. This may not be a merge commit."
-                exit 1
-              fi
               MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} was successful!"
               if [ ! -z "${JIRA_URLS}" ]; then
                   MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
@@ -656,9 +645,9 @@ jobs:
           command: |
             chmod +x ./bin/check_node_version_compatibility.sh
             ./bin/check_node_version_compatibility.sh
-      - store_artifacts:  # store backend lint reports
+      - store_artifacts: # store backend lint reports
           path: reports
-      - store_artifacts:  # store frontend lint reports
+      - store_artifacts: # store frontend lint reports
           path: frontend/reports
       - run:
           name: Remove similarity api data
@@ -697,9 +686,9 @@ jobs:
           paths:
             - similarity_api/src/venv
           key: v1-pip-deps-{{ checksum "combined-requirements.txt" }}
-      - store_artifacts:  # store backend lint reports
+      - store_artifacts: # store backend lint reports
           path: reports
-      - store_artifacts:  # store frontend lint reports
+      - store_artifacts: # store frontend lint reports
           path: similarity_api/reports
       - persist_to_workspace:
           root: .
@@ -709,7 +698,7 @@ jobs:
   test_backend:
     executor: docker-postgres-executor
     environment:
-        SFTP_EXPOSED_PORT: 2222
+      SFTP_EXPOSED_PORT: 2222
     steps:
       - attach_workspace:
           at: .
@@ -728,7 +717,7 @@ jobs:
           background: true
       - run:
           name: Test backend
-          command:  |
+          command: |
             chmod 744 ./bin/test-backend-ci
             ./bin/test-backend-ci
       - run:
@@ -754,7 +743,7 @@ jobs:
             SYFT_VERSION: v1.5.0
             IMAGE_NAME: ghcr.io/kcirtapfromspace/cloudfoundry_circleci:latest
             OUTPUT_FORMAT: json
-            OUTPUT_FILE:  reports/syft_sbom.json
+            OUTPUT_FILE: reports/syft_sbom.json
           command: |
             mkdir -p reports/
             curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b . "$SYFT_VERSION"
@@ -981,22 +970,38 @@ jobs:
       - when:
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.prod_git_url >>,
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.prod_git_branch >>,
+                  ]
           steps:
-          - run:
-              name: Create production robot
-              command: ./bin/robot-factory
+            - run:
+                name: Create production robot
+                command: ./bin/robot-factory
       - run:
           name: Install Cloud Foundry
           command: |
             curl -v -L -o cf-cli_amd64.deb 'https://packages.cloudfoundry.org/stable?release=debian64&version=v7&source=github'
             sudo dpkg -i cf-cli_amd64.deb
-      - when:  # sandbox: for short-term feature development, see README.md
+      - when: # sandbox: for short-term feature development, see README.md
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.sandbox_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.sandbox_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.sandbox_git_url >>,
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.sandbox_git_branch >>,
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -1051,11 +1056,19 @@ jobs:
                 slack_channel: "acf-head-start-github"
                 environment_name: "sandbox"
 
-      - when:  # dev
+      - when: # dev
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.dev_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.dev_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.dev_git_url >>,
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.dev_git_branch >>,
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -1110,11 +1123,19 @@ jobs:
                 slack_channel: "acf-head-start-github"
                 environment_name: "dev"
 
-      - when:  # staging
+      - when: # staging
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.staging_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.staging_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.staging_git_url >>,
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.staging_git_branch >>,
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -1167,11 +1188,19 @@ jobs:
                 slack_channel: "acf-head-start-github"
                 environment_name: "staging"
 
-      - when:  # prod
+      - when: # prod
           condition:
             and:
-              - equal: [<< pipeline.project.git_url >>, << pipeline.parameters.prod_git_url >>]
-              - equal: [<< pipeline.git.branch >>, << pipeline.parameters.prod_git_branch >>]
+              - equal:
+                  [
+                    << pipeline.project.git_url >>,
+                    << pipeline.parameters.prod_git_url >>,
+                  ]
+              - equal:
+                  [
+                    << pipeline.git.branch >>,
+                    << pipeline.parameters.prod_git_branch >>,
+                  ]
           steps:
             - run:
                 name: Build frontend assets
@@ -1229,10 +1258,10 @@ jobs:
     docker:
       - image: cimg/base:2024.05
     steps:
-    - sparse_checkout:
-          directories: 'automation'
+      - sparse_checkout:
+          directories: "automation"
           branch: << pipeline.git.branch >>
-    - cf_backup:
+      - cf_backup:
           auth_client_secret: PROD_AUTH_CLIENT_SECRET
           cloudgov_username: CLOUDGOV_PROD_USERNAME
           cloudgov_password: CLOUDGOV_PROD_PASSWORD
