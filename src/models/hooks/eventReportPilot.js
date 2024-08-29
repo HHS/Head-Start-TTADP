@@ -1,10 +1,7 @@
 /* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
-const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
-const { createGoalsForSessionRecipientsIfNecessary } = require('./sessionReportPilot');
-const safeParse = require('../helpers/safeParse');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
 const fieldsToEscape = ['eventName'];
@@ -39,68 +36,14 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
   }
 };
 
-const notifyNewPoc = async (_sequelize, instance) => {
+const notifyNewOwner = async (_sequelize, instance) => {
   try {
-    const changed = instance.changed();
-    if (changed.includes('pocIds')) {
-      const { pocIds } = instance;
-      const oldPocIds = instance.previous('pocIds');
+    // imported inside function to prevent circular ref
+    const { trOwnerAdded } = require('../../lib/mailer');
 
-      const newPocIds = pocIds.filter((id) => (
-        !oldPocIds.includes(id)));
-
-      if (newPocIds.length === 0) {
-        return;
-      }
-
-      // imported inside function to prevent circular ref
-      const { trPocAdded } = require('../../lib/mailer');
-
-      await Promise.all(
-        newPocIds.map((id) => trPocAdded(instance, id)),
-      );
-    }
+    await trOwnerAdded(instance, instance.ownerId);
   } catch (err) {
-    auditLogger.error(`Error in notifyNewPoc: ${err}`);
-  }
-};
-
-const notifyPocEventComplete = async (_sequelize, instance) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed().includes('data')) {
-      const previous = instance.previous('data');
-      const current = safeParse(instance);
-
-      if (
-        current.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        // imported inside function to prevent circular ref
-        const { trPocEventComplete } = require('../../lib/mailer');
-        await trPocEventComplete(instance.dataValues);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyPocEventComplete: ${err}`);
-  }
-};
-
-const notifyVisionComplete = async (_sequelize, instance) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed().includes('data')) {
-      const previous = instance.previous('data');
-      const current = safeParse(instance);
-
-      if (
-        current.pocComplete && !previous.pocComplete) {
-        // imported inside function to prevent circular ref
-        const { trVisionComplete } = require('../../lib/mailer');
-        await trVisionComplete(instance.dataValues);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyVisionComplete: ${err}`);
+    auditLogger.error(`Error in notifyNewOwner: ${err}`);
   }
 };
 
@@ -183,7 +126,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
   }
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {
+const beforeUpdate = async (_sequelize, instance) => {
   purifyDataFields(instance, fieldsToEscape);
 };
 
@@ -193,14 +136,12 @@ const beforeCreate = async (_sequelize, instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
-  await notifyPocEventComplete(sequelize, instance, options);
-  await notifyVisionComplete(sequelize, instance, options);
-  await notifyNewPoc(sequelize, instance, options);
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
+  await notifyNewOwner(sequelize, instance);
 };
 
 export {
