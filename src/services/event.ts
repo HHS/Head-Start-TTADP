@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
 import parse from 'csv-parse/lib/sync';
-import _ from 'lodash';
+import { get } from 'lodash';
 import {
   TRAINING_REPORT_STATUSES as TRS,
   REASONS,
@@ -9,14 +9,18 @@ import {
   EVENT_TARGET_POPULATIONS,
   EVENT_AUDIENCE,
 } from '@ttahub/common';
+import moment from 'moment';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
 import {
   EventShape,
   CreateEventRequest,
   UpdateEventRequest,
+  SessionShape,
+  TRAlertShape,
 } from './types/event';
 import EventReport from '../policies/event';
+import { trEventComplete } from '../lib/mailer';
 
 const {
   EventReportPilot,
@@ -302,6 +306,8 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     data,
   } = request;
 
+  const { status } = data;
+
   if (ownerId) {
     const newOwner = await User.findOne(
       {
@@ -327,7 +333,14 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
     }
   }
 
-  await EventReportPilot.update(
+  const evt = await EventReportPilot.findByPk(id);
+
+  if (status === TRS.COMPLETE && event.status !== status) {
+    // enqueue completion notification
+    await trEventComplete(evt.toJSON());
+  }
+
+  await evt.update(
     {
       ownerId,
       pocIds,
@@ -349,6 +362,207 @@ export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}])
     ],
   };
   return findEventHelper(where) as Promise<EventShape>;
+}
+
+const parseMinimalEventForAlert = (
+  event: {
+    id: number;
+    ownerId: number;
+    pocIds: number[];
+    collaboratorIds: number[];
+    data: {
+      eventId: string;
+      eventName: string;
+      startDate: string;
+      endDate: string;
+      status: string;
+    },
+  },
+  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted',
+  sessionName = '--',
+) : TRAlertShape => ({
+  id: event.id,
+  eventId: event.data.eventId,
+  eventName: event.data.eventName,
+  alertType,
+  sessionName,
+  isSession: sessionName !== '--',
+  sessionId: false,
+  ownerId: event.ownerId,
+  pocIds: event.pocIds,
+  collaboratorIds: event.collaboratorIds,
+  endDate: event.data.endDate,
+  startDate: event.data.startDate,
+  eventStatus: event.data.status,
+});
+
+// type for an array of either strings of functions that return a boolean
+type TChecker = 'ownerComplete' | 'pocComplete';
+
+const checkSessionForCompletion = (
+  session: SessionShape,
+  event: EventShape,
+  checker: TChecker,
+  missingSessionInfo: TRAlertShape[],
+) => {
+  const sessionValid = !!(session.data[checker]);
+
+  if (!sessionValid) {
+    missingSessionInfo.push({
+      id: session.id,
+      eventId: event.data.eventId,
+      isSession: true,
+      sessionName: session.data.sessionName,
+      eventName: event.data.eventName,
+      alertType: 'missingSessionInfo',
+      ownerId: event.ownerId,
+      pocIds: event.pocIds,
+      collaboratorIds: event.collaboratorIds,
+      endDate: session.data.startDate,
+      startDate: session.data.endDate,
+      sessionId: session.id,
+      eventStatus: event.data.status,
+    });
+  }
+};
+
+export async function getTrainingReportAlerts(
+  userId: number | undefined,
+  regions: number[] | undefined,
+  where: SequelizeWhereOptions[] = [],
+): Promise<TRAlertShape[]> {
+  // get all events that the user is a part of and that are not complete/suspended
+  const events = await findEventHelper({
+    [Op.and]: [
+      ...where,
+      {
+        ...(
+          // we do not check regions.length here
+          // because we want an empty array to apply
+          regions
+            ? { regionId: { [Op.in]: regions } }
+            : {}
+        ),
+        data: {
+          status: {
+            [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+          },
+        },
+      },
+    ],
+  }, true) as EventShape[];
+
+  const alerts = [];
+
+  // missingEventInfo: Missing event info (IST Creator or Collaborator) - 20 days past event start date
+  // missingSessionInfo: Missing session info (IST Creator or Collaborator or POC) - 20 days past session start date
+  // noSessionsCreated: No sessions created (IST Creator) - 20 days past event start date
+  // eventNotCompleted: Event not completed (IST Creator or Collaborator) - 20 days past event end date
+
+  const today = moment().startOf('day');
+
+  const ownerUserIdFilter = (event: EventShape, user: number | undefined) => {
+    if (!user || event.ownerId === user) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const collaboratorUserIdFilter = (event: EventShape, user: number | undefined) => {
+    if (!user || event.collaboratorIds.includes(user)) {
+      return true;
+    }
+
+    return false;
+  };
+
+  const pocUserFilter = (event: EventShape, user: number | undefined) => {
+    if (!user || event.pocIds.includes(user)) {
+      return true;
+    }
+    return false;
+  };
+
+  events.forEach((event: EventShape) => {
+    const nineteenDaysAfterStart = moment(event.data.startDate).startOf('day').add(19, 'days');
+    const nineteenDaysAfterEnd = moment(event.data.endDate).startOf('day').add(19, 'days');
+
+    // one alert triggers just for the owner
+    if (ownerUserIdFilter(event, userId)) {
+      // if we are 20 days past the end date, and the event is not completed
+      if (event.data.status !== TRS.COMPLETE && today.isAfter(nineteenDaysAfterEnd)) {
+        alerts.push(parseMinimalEventForAlert(event, 'eventNotCompleted'));
+      }
+    }
+
+    // some alerts only trigger for the owner or the collaborators
+    if (ownerUserIdFilter(event, userId) || collaboratorUserIdFilter(event, userId)) {
+      // if we are 20 days past the start date
+      if (today.isAfter(nineteenDaysAfterStart)) {
+        // or we are missing event data
+        if (!event.data.eventSubmitted) {
+          alerts.push(parseMinimalEventForAlert(event, 'missingEventInfo'));
+        }
+      }
+
+      // if we are 20 days past the end date
+      if (today.isAfter(nineteenDaysAfterStart) && event.sessionReports.length === 0) {
+        // and there are no sessions
+        alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
+      }
+
+      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+      sessions.forEach((session) => {
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+          checkSessionForCompletion(session, event, 'ownerComplete', alerts);
+        }
+      });
+    }
+
+    // the other event triggers for everyone
+    if (pocUserFilter(event, userId)) {
+      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+
+      sessions.forEach((session) => {
+        if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        if (today.isAfter(nineteenDaysAfterSessionStart)) {
+        // eslint-disable-next-line no-restricted-syntax
+          checkSessionForCompletion(session, event, 'pocComplete', alerts);
+        }
+      }); // for each session
+    }
+  }); // for each event
+
+  return alerts;
+}
+
+export async function getTrainingReportAlertsForUser(
+  userId: number,
+  regions: number[],
+): Promise<TRAlertShape[]> {
+  const where = {
+    [Op.or]: [
+      {
+        ownerId: userId,
+      },
+      {
+        collaboratorIds: {
+          [Op.contains]: [userId],
+        },
+      },
+      {
+        pocIds: {
+          [Op.contains]: [userId],
+        },
+      },
+    ],
+  } as SequelizeWhereOptions;
+
+  return getTrainingReportAlerts(userId, regions, [where]);
 }
 
 export async function findEventBySmartsheetIdSuffix(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
