@@ -1,5 +1,5 @@
 instances: 1
-memory: 32M
+memory: 256M
 disk_quota: 64M
 
 buildpack: "binary_buildpack"
