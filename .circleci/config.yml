@@ -208,17 +208,10 @@ commands:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
-                # Debugging output
-                echo "CIRCLE_PULL_REQUEST: ${CIRCLE_PULL_REQUEST}"
-                echo "Extracted PR_NUMBER: ${PR_NUMBER}"
-
                 PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
-
-                    # Debugging output
-                    echo "Extracted JIRA_URLS: ${JIRA_URLS}"
 
                     MESSAGE_TEXT=":rocket: Deployment of PR <${CIRCLE_PULL_REQUEST}|${PR_NUMBER}> (${PR_TITLE}) to <${ENV_URL}|${env_name}> was successful!"
                     if [ -n "${JIRA_URLS}" ]; then
@@ -238,7 +231,7 @@ commands:
                 else
                     MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
                 fi
-
+            fi
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
       - notify_slack:
@@ -569,7 +562,7 @@ parameters:
     default: "TTAHUB-3097/transactions-for-workers-round-2"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "mb/TTAHUB-3198/training-report-alerts"
+    default: "kw-test-deploy"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
