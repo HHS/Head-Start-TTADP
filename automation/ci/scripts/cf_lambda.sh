@@ -490,7 +490,7 @@ function run_task {
 
     log "INFO" "Running task: $task_name with args: $args and memory: $memory"
     local full_command="$command $args"
-    cf run-task "$app_name" --command "$full_command" --name "$task_name" --memory "$memory"
+    cf run-task "$app_name" --command "$full_command" --name "$task_name" -m "$memory"
     local result=$?
     if [ $result -ne 0 ]; then
         log "ERROR" "Failed to start task $task_name with error code $result"
