@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import parse from 'csv-parse/lib/browser';
 import PropTypes from 'prop-types';
 import {
@@ -12,6 +12,7 @@ import languageEncoding from 'detect-file-encoding-and-language';
 import {
   importCsv,
 } from '../../../fetchers/Admin';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 export default function CsvImport(
   {
@@ -22,6 +23,7 @@ export default function CsvImport(
     primaryIdColumn,
   },
 ) {
+  const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [error, setError] = useState();
   const [success, setSuccess] = useState();
   const [info, setInfo] = useState();
@@ -36,6 +38,8 @@ export default function CsvImport(
   const fileInputRef = useRef(null);
 
   const importCsvFile = async () => {
+    setAppLoadingText('Loading...');
+    setIsAppLoading(true);
     try {
       // If errors return.
       if (error) {
@@ -77,6 +81,7 @@ export default function CsvImport(
     } finally {
       // Clear file input.
       setInfo('');
+      setIsAppLoading(false);
     }
   };
 
