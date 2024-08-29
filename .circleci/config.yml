@@ -238,7 +238,7 @@ commands:
                 else
                     MESSAGE_TEXT=":rocket: Deployment to <${ENV_URL}|${env_name}> was successful!"
                 fi
-
+            fi
             echo -e "${MESSAGE_TEXT}" > /tmp/message_file
 
       - notify_slack:
