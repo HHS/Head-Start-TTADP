@@ -454,18 +454,28 @@ commands:
           name: Start Log Monitoring
           command: |
             #!/bin/bash
+
             CONTROL_FILE="/tmp/stop_tail"
             rm -f $CONTROL_FILE
 
-            # Start tailing logs
-            cf logs tta-automation &
+            # Function to start tailing logs
+            start_log_tailing() {
+                echo "Starting cf logs for tta-automation..."
+                cf logs tta-automation &
+                TAIL_PID=$!
+            }
 
-            # Get the PID of the cf logs command
-            TAIL_PID=$!
+            # Start tailing logs for the first time
+            start_log_tailing
 
-            # Wait for the control file to be created
+            # Monitor the cf logs process
             while [ ! -f $CONTROL_FILE ]; do
-              sleep 1
+                # Check if the cf logs process is still running
+                if ! kill -0 $TAIL_PID 2>/dev/null; then
+                    echo "cf logs command has stopped unexpectedly. Restarting..."
+                    start_log_tailing
+                fi
+                sleep 1
             done
 
             # Kill the cf logs command
