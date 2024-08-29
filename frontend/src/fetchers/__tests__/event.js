@@ -6,6 +6,7 @@ import {
   updateEvent,
   getEventsByStatus,
   deleteEvent,
+  getEventAlerts,
   completeEvent,
   suspendEvent,
   resumeEvent,
@@ -113,6 +114,19 @@ describe('deleteEvent', () => {
     expect(fetchMock.called()).toBe(true);
     expect(fetchMock.lastUrl()).toBe('/api/events/id/1');
     expect(fetchMock.called()).toBeTruthy();
+  });
+});
+
+describe('getEventAlerts', () => {
+  afterEach(() => {
+    fetchMock.reset();
+  });
+  it('fetches alerts from the server', async () => {
+    fetchMock.get('/api/events/alerts', { alerts: [] });
+    const alerts = await getEventAlerts();
+    expect(fetchMock.called()).toBe(true);
+    expect(fetchMock.lastUrl()).toBe('/api/events/alerts');
+    expect(alerts).toEqual({ alerts: [] });
   });
 });
 
