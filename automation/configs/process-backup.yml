@@ -3,7 +3,7 @@ memory: 32M
 disk_quota: 64M
 
 buildpack: "binary_buildpack"
-command: "./app/cf/scripts/idol.sh"
+command: "./cf/scripts/idol.sh"
 
 bound_services:
   - ttahub-process
