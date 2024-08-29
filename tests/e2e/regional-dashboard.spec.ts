@@ -13,11 +13,13 @@ test('Regional Dashboard', async ({ page }) => {
 
   // open the filter menu, change the region filter to state code
   await page.getByRole('button', { name: /open filters for this page/i }).click();
-  await page.getByLabel('Select a filter').selectOption('stateCode');
-  await page.getByLabel('Select a condition').selectOption('contains');
-  await page.getByLabel('Select a condition').focus();
-  await page.keyboard.press('Tab');
-  await page.keyboard.type('Rhode Island');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+
+
+  await page.getByLabel('condition', { exact: true }).selectOption('contains');
+  await page.locator('.ttahub-filter-select__input-container').click();
+  await page.getByText('Rhode Island (RI)', { exact: true }).click();
   await page.keyboard.press('Enter');
 
   await page.getByTestId('filters').click();

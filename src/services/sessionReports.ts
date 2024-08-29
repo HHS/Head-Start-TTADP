@@ -142,12 +142,16 @@ export async function updateSession(id, request) {
 
   const { eventId, data } = request;
 
+  // Combine existing session data with new data.
+  const existingData = session.data;
+  const newData = { ...existingData, ...data };
+
   const event = await findEventBySmartsheetIdSuffix(eventId);
 
   await SessionReportPilot.update(
     {
       eventId: event.id,
-      data: cast(JSON.stringify(data), 'jsonb'),
+      data: cast(JSON.stringify(newData), 'jsonb'),
     },
     {
       where: { id },

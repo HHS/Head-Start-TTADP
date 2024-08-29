@@ -279,7 +279,7 @@
     "jest-junit": "^12.0.0",
     "joi": "^17.9.1",
     "nodemon": "^2.0.4",
-    "playwright": "^1.28.0",
+    "playwright": "^1.46.0",
     "puppeteer": "^13.1.1",
     "puppeteer-select": "^1.0.3",
     "redoc-cli": "^0.13.2",
