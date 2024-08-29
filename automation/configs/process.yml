@@ -3,7 +3,7 @@ memory: 2GB
 disk_quota: 1GB
 
 buildpack: "https://github.com/cloudfoundry/nodejs-buildpack"
-command: "./app/automation/cf/scripts/idol.sh"
+command: "./automation/cf/scripts/idol.sh"
 
 bound_services:
   - ttahub-process
