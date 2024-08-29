@@ -387,16 +387,6 @@ function push_app {
         exit 1
     fi
 
-    # Extract memory value from config file using awk
-    local memory
-    memory=$(awk '/memory:/ {print $2}' "$config_file")
-
-    if [ -z "$memory" ]; then
-        log "ERROR" "Memory value not found in config file $config_file"
-        cd "$original_dir"
-        exit 1
-    fi
-
     # Unbind services and push the app
     unbind_all_services
 
@@ -434,9 +424,6 @@ function push_app {
 
     # Restore original directory
     cd "$original_dir"
-
-    # Return the memory value to be used in the run_task function
-    echo "$memory"
 }
 
 # Function to start an app
@@ -500,19 +487,35 @@ function run_task {
     local task_name=$1
     local command=$2
     local args_json=$3
-    local memory=$4  # New parameter for memory
+    local config=$4  # New parameter for config
 
     validate_parameters "$command"
     validate_parameters "$task_name"
     validate_parameters "$args_json"
-    validate_parameters "$memory"
+    validate_parameters "$config"
+
+    # Load the environment from the config file relative to the manifest directory
+    local config_file="./automation/configs/${config}.yml"
+
+    if [ ! -f "$config_file" ]; then
+        log "ERROR" "Config file $config_file not found"
+        exit 1
+    fi
+
+    # Extract memory value from config file using awk
+    local memory
+    memory=$(awk '/memory:/ {print $2}' "$config_file")
+
+    if [ -z "$memory" ]; then
+        log "ERROR" "Memory value not found in config file $config_file"
+        exit 1
+    fi
 
     # Convert memory from GB to G if necessary
     memory=$(echo "$memory" | sed 's/GB/G/')
 
     # Convert JSON array to space-separated list of arguments
     local args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
-
 
     log "INFO" "Running task: $task_name with args: $args and memory: $memory"
     local full_command="$command $args"
@@ -634,11 +637,12 @@ main() {
       fi
   fi
 
-  # Get memory value from push_app
-  memory=$(push_app "$directory" "$config")
+  # Push the app without returning memory
+  push_app "$directory" "$config"
   start_app
 
-  if run_task "$task_name" "$command" "$args" "$memory" && monitor_task "$task_name" $timeout_active_tasks; then
+  # Pass the config to run_task instead of memory
+  if run_task "$task_name" "$command" "$args" "$config" && monitor_task "$task_name" $timeout_active_tasks; then
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
