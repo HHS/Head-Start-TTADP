@@ -360,6 +360,7 @@ function unbind_all_services() {
 
 # Push the app using a manifest from a specific directory
 function push_app {
+    local app_name="tta-automation"
     local original_dir=$(pwd)  # Save the original directory
     local directory=$1
     local config=$2
@@ -398,6 +399,28 @@ function push_app {
 
     # Unbind services and push the app
     unbind_all_services
+
+    # Scale down all processes to zero
+    for process in $(cf app $app_name --guid | jq -r '.process_types[]'); do
+        if ! cf scale $app_name -i 0 -p "$process" 2>&1; then
+            log "ERROR" "Failed to scale down process: $process"
+            cd "$original_dir"
+            exit 1
+        else
+            log "INFO" "Scaled down process: $process."
+        fi
+    done
+
+    # Delete all processes
+    for process in $(cf app $app_name --guid | jq -r '.process_types[]'); do
+        if ! cf delete-process $app_name "$process" -f 2>&1; then
+            log "ERROR" "Failed to delete process: $process"
+            cd "$original_dir"
+            exit 1
+        else
+            log "INFO" "Deleted process: $process."
+        fi
+    done
 
     # Push the app
     if ! cf push -f "$manifest_file" --vars-file "$config_file" --no-route --no-start 2>&1; then
