@@ -484,6 +484,9 @@ function run_task {
     validate_parameters "$args_json"
     validate_parameters "$memory"
 
+    # Convert memory from GB to G if necessary
+    memory=$(echo "$memory" | sed 's/GB/G/')
+
     # Convert JSON array to space-separated list of arguments
     local args=$(echo "$args_json" | jq -r '.[]' | sed 's/\(.*\)/"\1"/' | tr '\n' ' ' | sed 's/ $/\n/')
 
