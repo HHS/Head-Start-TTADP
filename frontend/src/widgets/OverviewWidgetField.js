@@ -34,10 +34,10 @@ export function OverviewWidgetField({
       </span>
       <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-2 flex-column flex-justify-center">
         <div>
-          <span className="text-bold smart-hub--overview-font-size">{data}</span>
+          <span className="text-bold smart-hub--overview-widget-field-data-font-size">{data}</span>
           { !filterApplicable && (
             <>
-              <span className="smart-hub--overview-font-size margin-right-1"> - Filters not applied</span>
+              <span className="smart-hub--overview-widget-field-font-size margin-right-1"> - Filters not applied</span>
               <TrussWorksToolTip className="usa-button--unstyled smart-hub--overview-tool-tip" id="filter-not-applicable" label="One or more of the selected filters cannot be applied to this data.">
                 <FontAwesomeIcon icon={faQuestionCircle} className="margin-left-1" color={colors.ttahubMediumBlue} />
               </TrussWorksToolTip>

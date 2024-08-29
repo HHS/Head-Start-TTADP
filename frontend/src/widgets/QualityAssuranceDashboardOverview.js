@@ -20,7 +20,6 @@ const createOverviewFieldArray = (data) => ([
     data: data.recipientsWithNoTTA.pct,
     route: 'quality-assurance-details',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
-    iconSize: 'lg',
   },
   {
     icon: faBus,
@@ -31,7 +30,6 @@ const createOverviewFieldArray = (data) => ([
     data: data.recipientsWithOhsStandardFeiGoals.pct,
     route: 'quality-assurance-details',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
-    iconSize: 'lg',
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -43,7 +41,6 @@ const createOverviewFieldArray = (data) => ([
     data: data.recipientsWithOhsStandardClass.pct,
     route: 'quality-assurance-details',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
-    iconSize: 'lg',
   },
 ]);
 
