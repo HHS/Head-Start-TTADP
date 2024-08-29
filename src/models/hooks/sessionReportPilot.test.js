@@ -7,14 +7,13 @@ import {
   beforeUpdate,
   beforeDestroy,
   syncGoalCollaborators,
+  checkIfBothIstAndPocAreComplete,
 } from './sessionReportPilot';
-import { trSessionCreated, trSessionCompleted, trPocSessionComplete } from '../../lib/mailer';
+import { trSessionCreated } from '../../lib/mailer';
 import db from '..';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
-  trSessionCompleted: jest.fn(),
-  trPocSessionComplete: jest.fn(),
 }));
 
 jest.mock('express-http-context', () => {
@@ -134,7 +133,8 @@ describe('sessionReportPilot hooks', () => {
       }, { transaction: mockOptions.transaction });
     });
 
-    it('notifySessionComplete if completed', async () => {
+    it('sets the SessionReportPilot status to complete if both owner and poc are complete', async () => {
+      const mockSessionUpdate = jest.fn();
       const mockSequelize = {
         models: {
           EventReportPilot: {
@@ -143,283 +143,36 @@ describe('sessionReportPilot hooks', () => {
             })),
           },
           SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
+            // add a mock for update.
+            update: mockSessionUpdate,
           },
         },
       };
-
       const instance = {
         eventId: 1,
         changed: jest.fn(() => ['data']),
         previous: jest.fn(() => ({
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        })),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).toHaveBeenCalled();
-    });
-
-    it('dont notifySessionComplete if not completed', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        })),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
-    });
-
-    it('dont notifySessionComplete if already completed', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          status: TRAINING_REPORT_STATUSES.COMPLETE,
-        })),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
-    });
-
-    it('participantsAndNextStepsComplete', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
+          ownerComplete: true,
           pocComplete: false,
         })),
         data: {
           val: JSON.stringify({
+            ownerComplete: true,
             pocComplete: true,
           }),
         },
       };
 
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trPocSessionComplete).toHaveBeenCalled();
-    });
+      await checkIfBothIstAndPocAreComplete(mockSequelize, instance, mockOptions);
 
-    it('dont participantsAndNextStepsComplete', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          pocComplete: false,
-        })),
+      // Assert the data portion of the update call contains the correct status.
+      expect(mockSessionUpdate).toHaveBeenCalledWith({
         data: {
-          val: JSON.stringify({
-            pocComplete: false,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trPocSessionComplete).not.toHaveBeenCalled();
-    });
-
-    it('dont trSessionCompleted if already completed', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
+          ownerComplete: true,
+          pocComplete: true,
           status: TRAINING_REPORT_STATUSES.COMPLETE,
-        })),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          }),
         },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
-    });
-    it('bombs out notifySessionComplete if no previous', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
-    });
-    it('bombs out notifySessionComplete if no current', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => ({
-              update: mockUpdate,
-            })),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        })),
-        data: {
-          val: JSON.stringify({}),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
-    });
-    it('bombs out if no event', async () => {
-      const mockSequelize = {
-        models: {
-          EventReportPilot: {
-            findOne: jest.fn(() => null),
-          },
-          SessionReportPilot: {
-            findByPk: jest.fn(() => ({
-              data: { recipients: [] },
-            })),
-          },
-        },
-      };
-
-      const instance = {
-        eventId: 1,
-        changed: jest.fn(() => ['data']),
-        previous: jest.fn(() => ({
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        })),
-        data: {
-          val: JSON.stringify({
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
-          }),
-        },
-      };
-
-      await afterUpdate(mockSequelize, instance, mockOptions);
-      expect(trSessionCompleted).not.toHaveBeenCalled();
+      }, { transaction: {}, where: { id: undefined } });
     });
   });
 
