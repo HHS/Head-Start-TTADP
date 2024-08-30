@@ -6,6 +6,9 @@ export default (sequelize, DataTypes) => {
       GrantReplacements.belongsTo(models.GrantReplacementTypes, { foreignKey: 'grantReplacementTypeId' });
       GrantReplacements.belongsTo(models.Grant, { foreignKey: 'replacedGrantId' });
       GrantReplacements.belongsTo(models.Grant, { foreignKey: 'replacingGrantId' });
+
+      models.Grant.hasMany(GrantReplacements, { foreignKey: 'replacedGrantId', as: 'replacedGrantReplacements' });
+      models.Grant.hasMany(GrantReplacements, { foreignKey: 'replacingGrantId', as: 'replacingGrantReplacements' });
     }
   }
 

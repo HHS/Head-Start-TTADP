@@ -53,7 +53,7 @@ describe('GoalStatusChange hooks', () => {
     await User.destroy({ where: { id: user.id } });
     await Goal.destroy({ where: { id: goal.id }, force: true });
     await GrantNumberLink.destroy({ where: { grantId: grant.id }, force: true });
-    await Grant.destroy({ where: { id: grant.id } });
+    await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await sequelize.close();
   });

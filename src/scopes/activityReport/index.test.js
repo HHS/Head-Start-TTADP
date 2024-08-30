@@ -3519,6 +3519,7 @@ describe('filtersToScopes', () => {
 
       await Grant.destroy({
         where: { id: grant.id },
+        individualHooks: true,
       });
 
       await Recipient.destroy({
