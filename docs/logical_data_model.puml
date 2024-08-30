@@ -435,9 +435,27 @@ class GrantNumberLinks{
  deletedAt : timestamp with time zone
 }
 
+class GrantReplacementTypes{
+ * id : integer : <generated>
+!issue='column reference missing' mapsTo : integer : REFERENCES "GrantReplacementTypes".id
+!issue='column should not allow null' * createdAt : timestamp with time zone : now()
+!issue='column should not allow null' * name : text
+!issue='column should not allow null' * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
+}
+
+class GrantReplacements{
+ * id : integer : <generated>
+ grantReplacementTypeId : integer : REFERENCES "GrantReplacementTypes".id
+!issue='column should not allow null' * replacedGrantId : integer : REFERENCES "Grants".id
+!issue='column should not allow null' * replacingGrantId : integer : REFERENCES "Grants".id
+!issue='column should not allow null' * createdAt : timestamp with time zone : now()
+!issue='column should not allow null' * updatedAt : timestamp with time zone : now()
+!issue='column type does not match model: date != timestamp with time zone' replacementDate : <color:#d54309>date</color>
+}
+
 class Grants{
  * id : integer
- oldGrantId : integer : REFERENCES "Grants".id
  regionId : integer : REFERENCES "Regions".id
  * recipientId : integer : REFERENCES "Recipients".id
  * createdAt : timestamp with time zone : now()
@@ -450,8 +468,6 @@ class Grants{
  granteeName : varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)
- inactivationDate : timestamp with time zone
- inactivationReason : enum
  programSpecialistEmail : varchar(255)
  programSpecialistName : varchar(255)
  startDate : timestamp with time zone
@@ -1614,6 +1630,34 @@ class ZALGrantNumberLinks{
  session_sig : text
 }
 
+class ZALGrantReplacementTypes{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALGrantReplacements{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGrants{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2432,6 +2476,9 @@ class ZALZAFilter{
 
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
+!issue='associations need to be defined both directions'
+!issue='associations need to be camel case'
+Grants "1" --[#d54309,plain,thickness=2]-- "1" GrantReplacements : <color:#d54309>Grant</color>
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -2481,12 +2528,16 @@ Goals "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, goal
 Goals "1" --[#black,dashed,thickness=2]--{  "n" SimScoreGoalCaches : scoreOne, scoreTwo, goalOne, goalTwo
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringClassSummaries : monitoringClassSummaries, grantNumberLink
 GrantNumberLinks "1" --[#black,dashed,thickness=2]--{  "n" MonitoringReviewGrantees : monitoringReviewGrantees, grantNumberLink
+!issue='associations need to be camel case'
+!issue='associations need to be camel case'
+GrantReplacementTypes "1" --[#black,dashed,thickness=2]--{  "n" GrantReplacements : <color:#d54309>GrantReplacements</color>, <color:#d54309>GrantReplacementType</color>
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ActivityRecipients : grant, activityRecipients
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Goals : grant, goals
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Grants : oldGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
+Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles
@@ -2599,5 +2650,8 @@ Regions "n" }--[#black,dotted,thickness=2]--{ "n" Scopes : scopes, regions
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+GrantReplacementTypes o--[#yellow,bold,thickness=2]--o GrantReplacementTypes : <color:#2491FF>missing-from-model</color>
 
 @enduml
