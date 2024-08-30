@@ -163,13 +163,16 @@ list_all_backup_files() {
         printf "%-50s %-7s %-5s %-5s %-5s %-15s %-5s\n" "Name" "Format" "pwd" "md5" "sha256" "size" "age(days)"
         current_date=$(date +%s)
         echo "${backup_files}" | \
-        while read line; do \
+        while IFS= read -r line; do \
           echo "${line##*.} ${line}";\
         done |\
         sort -rk5 |\
         tr '\n' ' ' | \
         sed 's~ \(zip\|zenc\) ~\n& ~g' |\
-        while read line; do
+        sed -r 's/^[ \t]*//g' |\
+        sed -r 's/[ \t]+/ /g' |\
+        awk '{print $0 "\n"}' | \
+        while IFS= read -r line; do
           backup_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
           format=$(echo ${line} | awk '{print $1}')
           has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");
