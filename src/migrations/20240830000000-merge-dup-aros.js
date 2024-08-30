@@ -45,24 +45,35 @@ module.exports = {
 
         -- Create temporary table for dup_aro_sets
         CREATE TEMP TABLE temp_dup_aro_sets AS
+        WITH dupe_aro_pairs AS (
         SELECT
-          (zaro.new_row_data ->> 'activityReportId')::int "activityReportId",
-          (zaro.new_row_data ->> 'objectiveId')::int "objectiveId",
+          "activityReportId" arid,
+          "objectiveId" oid
+        FROM "ActivityReportObjectives"
+        GROUP BY 1,2
+        HAVING COUNT(id) > 1
+        ),
+        dupe_aros AS (
+        SELECT
+          arid,
+          oid,
+          id aroid
+        FROM "ActivityReportObjectives"
+        JOIN dupe_aro_pairs
+          ON "activityReportId" = arid
+          AND "objectiveId" = oid
+        )
+        SELECT
+          arid "activityReportId",
+          oid "objectiveId",
           min(zaro.dml_timestamp) "min_dml_timestamp",
           max(zaro.dml_timestamp) "max_dml_timestamp",
           COUNT(zaro.id) "count_id",
-          array_agg(zaro.data_id ORDER BY zaro.data_id ASC) "aroIds",
-          array_agg(DISTINCT zd.descriptor) "descriptors"
-        FROM "ZALActivityReportObjectives" zaro
-        JOIN "ZADescriptor" zd
-        ON zaro.descriptor_id = zd.id
-        LEFT JOIN "ZALActivityReportObjectives" zarod
-        ON zaro.data_id = zarod.data_id
-        AND zarod.dml_type = 'DELETE'
-            WHERE zaro.dml_type = 'INSERT'
-        AND zarod.id IS NULL
+          array_agg(zaro.data_id ORDER BY zaro.data_id ASC) "aroIds"
+        FROM dupe_aros
+        JOIN "ZALActivityReportObjectives" zaro
+          ON zaro.data_id = aroid
         GROUP BY 1,2
-        HAVING COUNT(zaro.id) > 1
         ORDER BY 3 DESC;
 
         -- Create temporary table for reduced_arot
