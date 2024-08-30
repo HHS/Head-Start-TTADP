@@ -1461,6 +1461,15 @@ workflows:
                 - << pipeline.parameters.prod_git_branch >>
     jobs:
       - backup_upload_production
+      - restore_production_for_processing:
+          requires:
+            - backup_upload_production
+      - process_production:
+          requires:
+            - restore_production_for_processing
+      - process_backup:
+          requires:
+            - process_production
   manual_backup_upload_production:
     when:
       equal: [true, << pipeline.parameters.manual-trigger >>]
