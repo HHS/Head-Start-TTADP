@@ -208,7 +208,7 @@ commands:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
-                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
@@ -562,7 +562,7 @@ parameters:
     default: "al-ttahub-3196-new-tr-views"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "kw-test-deploy"
+    default: "kw-escape-quotes-in-pr-title"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
