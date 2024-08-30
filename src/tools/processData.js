@@ -3,20 +3,11 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
-import { Op } from 'sequelize';
-import cheerio from 'cheerio';
 import faker from '@faker-js/faker';
 import {
-  ActivityReport,
   User,
-  Recipient,
-  Grant,
-  File,
   Permission,
   RequestErrors,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringClassSummary,
   sequelize,
 } from '../models';
 
@@ -36,15 +27,10 @@ const APPROVE_REPORTS = 5;
 
 let realUsers = [];
 let transformedUsers = [];
-let transformedRecipients = [];
-let realGrants = [];
-let transformedGrants = [];
+let realRecipients = [];
 const hsesUsers = [
   {
     name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
-  },
-  {
-    name: 'Angela Waner', hsesUsername: 'test.tta.angela', hsesUserId: '50599', email: 'angela.waner@adhocteam.us',
   },
   {
     name: 'Krys Wisnaskas', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
@@ -62,16 +48,10 @@ const hsesUsers = [
     name: 'Maria Puhl', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria.puhl@adhocteam.us',
   },
   {
-    name: 'Patrice Pascual', hsesUsername: 'test.tta.patrice', hsesUserId: '45594', email: 'patrice.pascual@acf.hhs.gov',
-  },
-  {
     name: 'Nathan Powell', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
   },
   {
     name: 'Garrett Hill', hsesUsername: 'test.tta.garrett', hsesUserId: '51548', email: 'garrett.hill@adhocteam.us',
-  },
-  {
-    name: 'Adam Roux', hsesUsername: 'test.tta.adamr', hsesUserId: '52047', email: 'adam.roux@adhocteam.us',
   },
   {
     name: 'C\'era Oliveira-Norris', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
@@ -83,9 +63,6 @@ const hsesUsers = [
     name: 'Jon Pyers', hsesUsername: 'test.tta.jon', hsesUserId: '52829', email: 'jon.pyers@adhocteam.us',
   },
   {
-    name: 'Abby Blue', hsesUsername: 'test.tta.abby', hsesUserId: '53043', email: 'abby.blue@adhocteam.us',
-  },
-  {
     name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
   },
   {
@@ -95,43 +72,90 @@ const hsesUsers = [
 
 const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 
-const processHtml = async (input) => {
-  if (!input) {
-    return input;
-  }
+// chr(92) represents the backslash (\) character in ASCII. This prevents JavaScript from
+// interfering with the escape sequences in your SQL regular expression when you pass the
+// query as a string in sequelize.query.
+const processHtmlCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "processHtml"(input TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+  DECLARE
+      result TEXT;
+      new_word TEXT;
+  BEGIN
+      IF input IS NULL OR input = '' THEN
+          RETURN input;
+      END IF;
 
-  const $ = cheerio.load(input);
+      -- Replace each word with a random word
+      result := regexp_replace(
+          input,
+          chr(92) || 'w+',
+          (
+              SELECT string_agg(word, ' ')
+              FROM (
+                  SELECT (ARRAY['Lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur'])[floor(random() * 6 + 1)::int] AS word
+                  FROM generate_series(1, regexp_count(input, chr(92) || 'w+'))
+              ) AS subquery
+          ),
+          'g'
+      );
 
-  const getTextNodes = (elem) => (elem.type === 'text' ? [] : elem.contents().toArray()
-    .filter((el) => el !== undefined)
-    .reduce((acc, el) => acc.concat(...el.type === 'text' ? [el] : getTextNodes($(el))), []));
+      RETURN result;
+  END $$;
+`);
 
-  getTextNodes($('html')).map((node) => $(node).replaceWith(
-    $.html(node).trim() === '' // empty
-      ? faker.random.words(0)
-      : faker.random.words($.html(node).split(' ').length),
-  ));
+const processHtmlDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "processHtml"(TEXT);
+`);
 
-  return cheerio.load($.html(), null, false).html(); // html minus the html, head and body tags
-};
+const convertEmailsCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "convertEmails"(emails TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+  DECLARE
+      emails_array TEXT[];
+      converted_emails TEXT[];
+      email TEXT;
+      converted_email TEXT;
+  BEGIN
+      IF emails IS NULL OR emails = '' THEN
+          RETURN emails;
+      END IF;
 
-export const convertEmails = (emails) => {
-  if (!emails) {
-    return emails;
-  }
-  const emailsArray = emails.split(', ');
-  const convertedEmails = emailsArray.map((email) => {
-    const foundUser = realUsers.find((user) => user.email === email);
-    const userId = foundUser ? foundUser.id : null;
-    if (userId) {
-      const foundTransformedUser = transformedUsers.find((user) => user.id === userId);
-      return foundTransformedUser ? foundTransformedUser.email : '';
-    }
-    return emails.includes('@') ? generateFakeEmail() : '';
-  });
+      -- Split the emails string into an array
+      emails_array := string_to_array(emails, ', ');
 
-  return convertedEmails.join(', ');
-};
+      -- Initialize the array for converted emails
+      converted_emails := ARRAY[]::TEXT[];
+
+      -- Iterate through each email
+      FOREACH email IN ARRAY emails_array LOOP
+          -- Perform the conversion using the provided SQL logic
+          SELECT zu.new_row_data ->> 'email'
+          INTO converted_email
+          FROM "ZALUsers" zu
+          WHERE zu.old_row_data ->> 'email' = email
+          AND zu.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+          AND zu.dml_txid = lpad(txid_current()::text, 32, '0')::uuid;
+
+          -- If the email was found and converted, add it to the array
+          IF converted_email IS NOT NULL AND converted_email <> '' THEN
+              converted_emails := array_append(converted_emails, converted_email);
+          ELSE
+              -- If the email wasn't converted, generate a fake email or leave it empty
+              IF email LIKE '%@%' THEN
+                  converted_emails := array_append(converted_emails, generate_fake_email());
+              ELSE
+                  converted_emails := array_append(converted_emails, '');
+              END IF;
+          END IF;
+      END LOOP;
+
+      -- Return the converted emails as a string
+      RETURN array_to_string(converted_emails, ', ');
+  END $$;
+`);
+
+const convertEmailsDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "convertEmails"(TEXT);
+`);
 
 export const convertName = (name, email) => {
   if (!name) {
@@ -159,105 +183,151 @@ export const convertName = (name, email) => {
   return foundTransformedUser;
 };
 
-export const convertFileName = (fileName) => {
-  if (fileName === null) {
-    return fileName;
-  }
-  const extension = fileName.slice(fileName.indexOf('.'));
-  return `${faker.system.fileName()}${extension}`;
-};
+const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "convertRecipientName"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+  DECLARE
+      recipient_grants_array TEXT[];
+      converted_recipients_grants TEXT[];
+      recipient_grant TEXT;
+      grant TEXT;
+      transformed_recipient_name TEXT;
+      transformed_grant_number TEXT;
+  BEGIN
+      IF recipients_grants IS NULL THEN
+          RETURN recipients_grants;
+      END IF;
 
-export const convertRecipientName = (recipientsGrants) => {
-  if (recipientsGrants === null) {
-    return recipientsGrants;
-  }
+      -- Split the recipientsGrants string into an array
+      recipient_grants_array := string_to_array(recipients_grants, chr(92) || 'n');
 
-  const recipientGrantsArray = recipientsGrants ? recipientsGrants.split('\n') : [];
+      -- Initialize the array for converted recipient-grant pairs
+      converted_recipients_grants := ARRAY[]::TEXT[];
 
-  const convertedRecipientsGrants = recipientGrantsArray.map((recipientGrant) => {
-    const recipientGrantArray = recipientGrant.split('|');
-    const grant = recipientGrantArray.length > 1 ? recipientGrantArray[1].trim() : 'Missing Grant';
+      -- Iterate through each recipient-grant pair
+      FOREACH recipient_grant IN ARRAY recipient_grants_array LOOP
+          -- Extract the grant number from the pair
+          grant := split_part(recipient_grant, '|', 2);
 
-    const foundGrant = realGrants.find((g) => g.number === grant);
-    // get ids of real grants and recipients;
-    const recipientId = foundGrant ? foundGrant.recipientId : null;
-    const grantId = foundGrant ? foundGrant.id : null;
-    // find corresponding transformed grants and recipients
-    const foundTransformedRecipient = transformedRecipients.find((g) => g.id === recipientId);
-    const foundTransformedGrant = transformedGrants.find((g) => g.id === grantId);
+          -- Remove leading and trailing whitespace
+          grant := trim(grant);
 
-    const transformedRecipientName = foundTransformedRecipient ? foundTransformedRecipient.name : 'Unknown Recipient';
-    const transformedGrantNumber = foundTransformedGrant ? foundTransformedGrant.number : 'UnknownGrant';
-    return `${transformedRecipientName} | ${transformedGrantNumber}`;
-  });
+          -- Perform the conversion using the provided SQL logic
+          SELECT zgr.new_row_data ->> 'number', r.name
+          INTO transformed_grant_number, transformed_recipient_name
+          FROM "ZALGrants" zgr
+          JOIN "Grants" gr ON zgr.data_id = gr.id
+          JOIN "Recipients" r ON gr."recipientId" = r.id
+          WHERE zgr.old_row_data ->> 'number' = grant
+          AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+          AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;  -- Use chr(48) for '0'
 
-  return convertedRecipientsGrants.join('\n');
-};
+          -- Handle cases where no match was found
+          IF transformed_grant_number IS NULL THEN
+              transformed_grant_number := 'UnknownGrant';
+          END IF;
+          IF transformed_recipient_name IS NULL THEN
+              transformed_recipient_name := 'Unknown Recipient';
+          END IF;
+
+          -- Construct the converted recipient-grant pair
+          converted_recipients_grants := array_append(
+              converted_recipients_grants,
+              transformed_recipient_name || ' | ' || transformed_grant_number
+          );
+      END LOOP;
+
+      -- Return the converted recipients-grants pairs as a string
+      RETURN array_to_string(converted_recipients_grants, chr(92) || 'n');
+  END $$;
+`);
+
+const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT);
+`);
 
 export const hideUsers = async (userIds) => {
   const ids = userIds || null;
-  const where = ids ? { id: ids } : {};
-  // save real users
-  realUsers = (await User.findAll({
-    attributes: ['id', 'email', 'name'],
-    where,
-  })).map((u) => u.dataValues);
+  const whereClause = ids ? `WHERE "id" IN (${ids.join(', ')})` : '';
 
-  const users = await User.findAll({
-    where,
-  });
-  const promises = [];
-  // loop through the found users
-  for (const user of users) {
-    promises.push(
-      user.update({
-        hsesUsername: faker.internet.email(),
-        email: generateFakeEmail(),
-        phoneNumber: faker.phone.phoneNumber(),
-        name: faker.name.findName(),
-      }, { individualHooks: true }),
-    );
-  }
+  // Save real users
+  [realUsers] = await sequelize.query(/* sql */`
+    SELECT "id", "email", "name"
+    FROM "Users"
+    ${whereClause};
+  `);
 
-  await Promise.all(promises);
+  // Generate fake data in JavaScript
+  const fakeData = realUsers.map((user) => ({
+    id: user.id,
+    hsesUsername: faker.internet.email(),
+    email: `no-send_${faker.internet.email()}`,
+    phoneNumber: faker.phone.phoneNumber(),
+    name: faker.name.findName(),
+  }));
+
+  // Convert fake data to JSON string for SQL
+  const fakeDataJSON = JSON.stringify(fakeData);
+
+  // Update users using a CTE
+  await sequelize.query(/* sql */`
+    WITH fake_data AS (
+      SELECT
+        jsonb_array_elements('${fakeDataJSON}'::jsonb) AS data
+    )
+    UPDATE "Users"
+    SET
+      "hsesUsername" = data->>'hsesUsername',
+      "email" = data->>'email',
+      "phoneNumber" = data->>'phoneNumber',
+      "name" = data->>'name'
+    FROM fake_data
+    WHERE "Users"."id" = (data->>'id')::int
+    ${whereClause};
+  `);
+
   // Retrieve transformed users
-  transformedUsers = (await User.findAll({
-    attributes: ['id', 'email', 'name'],
-  })).map((u) => u.dataValues);
+  [transformedUsers] = await sequelize.query(/* sql */`
+    SELECT "id", "email", "name"
+    FROM "Users"
+    ${whereClause};
+  `);
 };
 
 export const hideRecipientsGrants = async (recipientsGrants) => {
-  realGrants = (await Grant.findAll({
-    attributes: ['id', 'recipientId', 'number'],
-  })).map((g) => g.dataValues);
-
-  const recipientsArray = recipientsGrants ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim()) : null;
-  const grantsArray = (recipientsArray && recipientsArray.length > 1) ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim()) : null;
+  // Parse recipientsGrants input
+  const recipientsArray = recipientsGrants
+    ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim())
+    : null;
+  const grantsArray = (recipientsArray && recipientsArray.length > 1)
+    ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim())
+    : null;
   const recipientWhere = recipientsArray
-    ? { name: { [Op.like]: { [Op.any]: recipientsArray } } }
-    : {};
-  const grantWhere = grantsArray ? { number: { [Op.like]: { [Op.any]: grantsArray } } } : {};
-  const recipients = await Recipient.findAll({
-    where: recipientWhere,
-  });
+    ? `WHERE "name" ILIKE ANY(ARRAY[${recipientsArray.map((r) => `'${r}'`).join(', ')}])`
+    : '';
+  const grantWhere = grantsArray
+    ? `WHERE "number" ILIKE ANY(ARRAY[${grantsArray.map((g) => `'${g}'}`).join(', ')}])`
+    : '';
 
-  const promises = [];
-  const promisesMonitoring = [];
+  // Generate fake data for recipients
+  [realRecipients] = await sequelize.query(/* sql */`
+    SELECT "id", "name"
+    FROM "Recipients"
+    ${recipientWhere};
+  `);
 
-  // loop through the found reports
-  for (const recipient of recipients) {
-    promises.push(
-      recipient.update({
-        name: faker.company.companyName(),
-      }, { individualHooks: true }),
-    );
-  }
-  const grants = await Grant.findAll({
-    where: grantWhere,
-  });
+  const fakeRecipientData = realRecipients.map((recipient) => ({
+    id: recipient.id,
+    name: faker.company.companyName(),
+  }));
 
-  for (const grant of grants) {
-    // run this first
+  // Generate fake data for grants
+  const [grants] = await sequelize.query(/* sql */`
+    SELECT "id", "number", "programSpecialistName", "programSpecialistEmail", "grantSpecialistName", "grantSpecialistEmail"
+    FROM "Grants"
+    ${grantWhere};
+  `);
+
+  const fakeGrantData = grants.map((grant) => {
     const programSpecialist = convertName(
       grant.programSpecialistName,
       grant.programSpecialistEmail,
@@ -268,63 +338,80 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     );
     const trailingNumber = grant.id;
     const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
-
-    promises.push(
-      grant.update({
-        number: newGrantNumber,
-        programSpecialistName: programSpecialist.name,
-        programSpecialistEmail: programSpecialist.email,
-        grantSpecialistName: grantSpecialist.name,
-        grantSpecialistEmail: grantSpecialist.email,
-      }, { individualHooks: true }),
-    );
-  }
-  await Promise.all(promises);
-  const oldGrantNumbers = [];
-
-  for (const grant of grants) {
-    const newGrantNumber = grant.number;
-    const oldGrantNumber = await GrantNumberLink.findOne({
-      attributes: ['grantNumber'],
-      where: { grantId: grant.id, grantNumber: { [Op.ne]: grant.number } },
-    });
-    if (oldGrantNumber) {
-      oldGrantNumbers.push(oldGrantNumber.grantNumber);
-      // Update corresponding MonitoringReviewGrantee records
-      promisesMonitoring.push(
-        MonitoringReviewGrantee.update(
-          { grantNumber: newGrantNumber },
-          { where: { grantNumber: oldGrantNumber.grantNumber } },
-        ),
-      );
-      // Update corresponding MonitoringClassSummary records
-      promisesMonitoring.push(
-        MonitoringClassSummary.update(
-          { grantNumber: newGrantNumber },
-          { where: { grantNumber: oldGrantNumber.grantNumber } },
-        ),
-      );
-    }
-  }
-
-  await Promise.all(promisesMonitoring);
-
-  await GrantNumberLink.unscoped().destroy({
-    where: { grantNumber: { [Op.in]: oldGrantNumbers } },
-    force: true,
+    return {
+      id: grant.id,
+      number: newGrantNumber,
+      programSpecialistName: programSpecialist.name,
+      programSpecialistEmail: programSpecialist.email,
+      grantSpecialistName: grantSpecialist.name,
+      grantSpecialistEmail: grantSpecialist.email,
+    };
   });
 
-  // Retrieve transformed recipients
-  transformedRecipients = (await Recipient.findAll({
-    attributes: ['id', 'name'],
-    where: { id: recipients.map((g) => g.id) },
-  })).map((g) => g.dataValues);
+  // Convert fake data to JSON strings for SQL
+  const fakeRecipientDataJSON = JSON.stringify(fakeRecipientData);
+  const fakeGrantDataJSON = JSON.stringify(fakeGrantData);
 
-  // Retrieve transformed grants
-  transformedGrants = (await Grant.findAll({
-    attributes: ['id', 'number'],
-    where: { id: grants.map((g) => g.id) },
-  })).map((g) => g.dataValues);
+  // Update recipients using a CTE
+  await sequelize.query(/* sql */`
+    WITH fake_recipients AS (
+      SELECT
+        jsonb_array_elements('${fakeRecipientDataJSON}'::jsonb) AS data
+    )
+    UPDATE "Recipients"
+    SET
+      "name" = data->>'name'
+    FROM fake_recipients
+    WHERE "Recipients"."id" = (data->>'id')::int;
+  `);
+
+  // Update grants using a CTE
+  await sequelize.query(/* sql */`
+    WITH fake_grants AS (
+      SELECT
+        jsonb_array_elements('${fakeGrantDataJSON}'::jsonb) AS data
+    )
+    UPDATE "Grants"
+    SET
+      "number" = data->>'number',
+      "programSpecialistName" = data->>'programSpecialistName',
+      "programSpecialistEmail" = data->>'programSpecialistEmail',
+      "grantSpecialistName" = data->>'grantSpecialistName',
+      "grantSpecialistEmail" = data->>'grantSpecialistEmail'
+    FROM fake_grants
+    WHERE "Grants"."id" = (data->>'id')::int;
+  `);
+
+  // Bulk update MonitoringReviewGrantee, MonitoringClassSummary, and GrantNumberLink
+  await sequelize.query(/* sql */`
+    -- Update MonitoringReviewGrantee and MonitoringClassSummary using GrantNumberLink as a bridge:
+    -- This ensures that grant numbers in MonitoringReviewGrantee and MonitoringClassSummary
+    -- are updated based on the new grant numbers in the Grants table.
+
+    -- 1. Update MonitoringReviewGrantee
+    UPDATE "MonitoringReviewGrantee" mrg
+    SET "grantNumber" = gr.number
+    FROM "GrantNumberLink" gnl
+    JOIN "Grants" gr ON gnl."grantId" = gr.id
+    AND gnl."grantNumber" != gr.number
+    WHERE mrg."grantNumber" = gnl."grantNumber";
+
+    -- 2. Update MonitoringClassSummary
+    UPDATE "MonitoringClassSummary" mcs
+    SET "grantNumber" = gr.number
+    FROM "GrantNumberLink" gnl
+    JOIN "Grants" gr ON gnl."grantId" = gr.id
+    AND gnl."grantNumber" != gr.number
+    WHERE mcs."grantNumber" = gnl."grantNumber";
+
+    -- 3. Update GrantNumberLink to reflect the new grant numbers
+    -- This ensures that the foreign key relationships remain consistent.
+    UPDATE "GrantNumberLink" gnl
+    SET "grantNumber" = gr.number
+    FROM "Grants" gr
+    WHERE gnl."grantId" = gr.id
+    AND gnl."grantNumber" != gr.number;
+  `);
 };
 
 const givePermissions = (id) => {
@@ -407,125 +494,63 @@ export const truncateAuditTables = async () => {
   }
 };
 
+export const processFiles = async () => sequelize.query(/* sql */`
+  UPDATE "Files"
+  SET "originalFileName" =
+    CONCAT(
+      SUBSTRING(md5(random()::text), 1, 8), -- Random file name
+      SUBSTRING("originalFileName" FROM '\\..*$') -- Original extension
+    )
+  WHERE "originalFileName" IS NOT NULL;
+`);
+
+export const processActivityReports = async (where) => sequelize.query(/* sql */`
+  UPDATE "ActivityReport"
+  SET
+    "managerNotes" = processHtml("managerNotes"),
+    "additionalNotes" = processHtml("additionalNotes"),
+    "context" = processHtml("context"),
+    "imported" = CASE
+      WHEN "imported" IS NOT NULL THEN
+        jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb(processHtml("imported"->>'additionalNotesForThisActivity')), true)
+        || jsonb_set("imported", '{cdiGranteeName}', to_jsonb(processHtml("imported"->>'cdiGranteeName')), true)
+        || jsonb_set("imported", '{contextForThisActivity}', to_jsonb(processHtml("imported"->>'contextForThisActivity')), true)
+        || jsonb_set("imported", '{createdBy}', to_jsonb(convertEmails("imported"->>'createdBy')), true)
+        || jsonb_set("imported", '{granteeFollowUpTasksObjectives}', to_jsonb(processHtml("imported"->>'granteeFollowUpTasksObjectives')), true)
+        || jsonb_set("imported", '{granteeName}', to_jsonb(convertRecipientName("imported"->>'granteeName')), true)
+        || jsonb_set("imported", '{manager}', to_jsonb(convertEmails("imported"->>'manager')), true)
+        || jsonb_set("imported", '{modifiedBy}', to_jsonb(convertEmails("imported"->>'modifiedBy')), true)
+        || jsonb_set("imported", '{otherSpecialists}', to_jsonb(convertEmails("imported"->>'otherSpecialists')), true)
+        || jsonb_set("imported", '{specialistFollowUpTasksObjectives}', to_jsonb(processHtml("imported"->>'specialistFollowUpTasksObjectives')), true)
+      ELSE
+        "imported"
+    END
+  WHERE 1 = 1
+    ${where};
+`);
+
 const processData = async (mockReport) => sequelize.transaction(async () => {
   const activityReportId = mockReport ? mockReport.id : null;
-  const where = activityReportId ? { id: activityReportId } : {};
+  const where = activityReportId ? `AND id = ${activityReportId}` : '';
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
 
   const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
 
-  const files = await File.findAll();
-  const promises = [];
+  await processHtmlCreate();
+  await convertEmailsCreate();
+  await convertRecipientNameCreate();
 
   // Hide users
   await hideUsers(userIds);
 
-  if (typeof global.gc === 'function') global.gc();
-
   // Hide recipients and grants
   await hideRecipientsGrants(recipientsGrants);
 
-  if (typeof global.gc === 'function') global.gc();
+  await processActivityReports(where);
 
-  const BATCH_SIZE = 100; // Define a reasonable batch size
-  let offset = 0;
-  let reports;
-
-  // Loop through the reports in batches
-  do {
-    reports = await ActivityReport.unscoped().findAll({
-      where,
-      limit: BATCH_SIZE,
-      offset,
-    });
-
-    for await (const report of reports) {
-      const { imported } = report;
-
-      promises.push(
-        report.update({
-          managerNotes: await processHtml(report.managerNotes),
-          additionalNotes: await processHtml(report.additionalNotes),
-          context: await processHtml(report.context),
-        }, { individualHooks: true }),
-      );
-
-      if (imported) {
-        const newImported = {
-          additionalNotesForThisActivity: await processHtml(
-            imported.additionalNotesForThisActivity,
-          ),
-          cdiGranteeName: await processHtml(imported.cdiGranteeName),
-          contextForThisActivity: await processHtml(
-            imported.contextForThisActivity,
-          ),
-          created: imported.created,
-          createdBy: convertEmails(imported.createdBy),
-          duration: imported.duration,
-          endDate: imported.endDate,
-          format: imported.format,
-          goal1: imported.goal1,
-          goal2: imported.goal2,
-          granteeFollowUpTasksObjectives: await processHtml(
-            imported.granteeFollowUpTasksObjectives,
-          ),
-          granteeName: convertRecipientName(imported.granteeName),
-          granteeParticipants: imported.granteeParticipants,
-          granteesLearningLevelGoal1: imported.granteesLearningLevelGoal1,
-          granteesLearningLevelGoal2: imported.granteesLearningLevelGoal2,
-          manager: convertEmails(imported.manager),
-          modified: imported.modified,
-          modifiedBy: convertEmails(imported.modifiedBy),
-          multiGranteeActivities: imported.multiGranteeActivities,
-          nonGranteeActivity: imported.nonGranteeActivity,
-          nonGranteeParticipants: imported.nonGranteeParticipants,
-          nonOhsResources: imported.nonOhsResources,
-          numberOfParticipants: imported.numberOfParticipants,
-          objective11: imported.objective11,
-          objective11Status: imported.objective11Status,
-          objective12: imported.objective12,
-          objective12Status: imported.objective12Status,
-          objective21: imported.objective21,
-          objective21Status: imported.objective21Status,
-          objective22: imported.objective22,
-          objective22Status: imported.objective22Status,
-          otherSpecialists: convertEmails(imported.otherSpecialists),
-          otherTopics: imported.otherTopics,
-          programType: imported.programType,
-          reasons: imported.reasons,
-          reportId: imported.reportId,
-          resourcesUsed: imported.resourcesUsed,
-          sourceOfRequest: imported.sourceOfRequest,
-          specialistFollowUpTasksObjectives: await processHtml(
-            imported.specialistFollowUpTasksObjectives,
-          ),
-          startDate: imported.startDate,
-          tTa: imported.tTa,
-          targetPopulations: imported.targetPopulations,
-          topics: imported.topics,
-          ttaProvidedAndGranteeProgressMade: imported.ttaProvidedAndGranteeProgressMade,
-        };
-        promises.push(report.update({ imported: newImported }, { individualHooks: true }));
-      }
-    }
-
-    offset += BATCH_SIZE;
-
-    // After processing each batch, trigger garbage collection
-    if (typeof global.gc === 'function') global.gc();
-  } while (reports.length === BATCH_SIZE);
-
-  for (const file of files) {
-    promises.push(
-      file.update({
-        originalFileName: convertFileName(file.originalFileName),
-      }, { individualHooks: true }),
-    );
-  }
+  await processFiles();
 
   await bootstrapUsers();
-
-  if (typeof global.gc === 'function') global.gc();
 
   // Delete from RequestErrors
   await RequestErrors.destroy({
@@ -533,7 +558,9 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
     truncate: true,
   });
 
-  await Promise.all(promises);
+  await processHtmlDrop();
+  await convertEmailsDrop();
+  await convertRecipientNameDrop();
   return truncateAuditTables();
 });
 
