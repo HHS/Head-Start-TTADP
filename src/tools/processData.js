@@ -114,6 +114,7 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
       converted_emails TEXT[];
       email TEXT;
       converted_email TEXT;
+      domain TEXT;
   BEGIN
       IF emails IS NULL OR emails = '' THEN
           RETURN emails;
@@ -139,9 +140,24 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
           IF converted_email IS NOT NULL AND converted_email <> '' THEN
               converted_emails := array_append(converted_emails, converted_email);
           ELSE
-              -- If the email wasn't converted, generate a fake email or leave it empty
+              -- Generate a fake email if the email wasn't converted
               IF email LIKE '%@%' THEN
-                  converted_emails := array_append(converted_emails, generate_fake_email());
+                  -- Extract domain from the email
+                  domain := SPLIT_PART(email, '@', 2);
+
+                  -- Generate the fake email using md5 of the original username
+                  converted_email := 'no-send_' || md5(SPLIT_PART(email, '@', 1)) || '@' || (
+                      SELECT email_domain FROM (
+                          SELECT SPLIT_PART(e.email, '@', 2) AS email_domain
+                          FROM "Users" e
+                          WHERE NULLIF(TRIM(SPLIT_PART(e.email, '@', 2)), '') IS NOT NULL
+                          ORDER BY RANDOM()
+                          LIMIT 1
+                      ) AS random_domain
+                  );
+
+                  -- Add the fake email to the array
+                  converted_emails := array_append(converted_emails, converted_email);
               ELSE
                   converted_emails := array_append(converted_emails, '');
               END IF;
@@ -189,7 +205,7 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
       recipient_grants_array TEXT[];
       converted_recipients_grants TEXT[];
       recipient_grant TEXT;
-      grant TEXT;
+      grant_number TEXT;  -- Renamed from 'grant' to 'grant_number'
       transformed_recipient_name TEXT;
       transformed_grant_number TEXT;
   BEGIN
@@ -206,10 +222,10 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
       -- Iterate through each recipient-grant pair
       FOREACH recipient_grant IN ARRAY recipient_grants_array LOOP
           -- Extract the grant number from the pair
-          grant := split_part(recipient_grant, '|', 2);
+          grant_number := split_part(recipient_grant, '|', 2);
 
           -- Remove leading and trailing whitespace
-          grant := trim(grant);
+          grant_number := trim(grant_number);
 
           -- Perform the conversion using the provided SQL logic
           SELECT zgr.new_row_data ->> 'number', r.name
@@ -217,7 +233,7 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
           FROM "ZALGrants" zgr
           JOIN "Grants" gr ON zgr.data_id = gr.id
           JOIN "Recipients" r ON gr."recipientId" = r.id
-          WHERE zgr.old_row_data ->> 'number' = grant
+          WHERE zgr.old_row_data ->> 'number' = grant_number
           AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
           AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;  -- Use chr(48) for '0'
 
@@ -256,23 +272,42 @@ export const hideUsers = async (userIds) => {
     ${whereClause};
   `);
 
-  // Generate fake data in JavaScript
-  const fakeData = realUsers.map((user) => ({
-    id: user.id,
-    hsesUsername: faker.internet.email(),
-    email: `no-send_${faker.internet.email()}`,
-    phoneNumber: faker.phone.phoneNumber(),
-    name: faker.name.findName(),
-  }));
+  const usedHsesUsernames = new Set();
+  const usedEmails = new Set();
 
-  // Convert fake data to JSON string for SQL
-  const fakeDataJSON = JSON.stringify(fakeData);
+  const fakeData = realUsers.map((user) => {
+    let hsesUsername;
+    let email;
+
+    // Ensure hsesUsername is unique
+    do {
+      hsesUsername = faker.internet.email();
+    } while (usedHsesUsernames.has(hsesUsername));
+    usedHsesUsernames.add(hsesUsername);
+
+    // Ensure email is unique
+    do {
+      email = `no-send_${faker.internet.email()}`;
+    } while (usedEmails.has(email));
+    usedEmails.add(email);
+
+    return {
+      id: user.id,
+      hsesUsername,
+      email,
+      phoneNumber: faker.phone.phoneNumber(),
+      name: faker.name.findName().replace(/'/g, ''),
+    };
+  });
+
+  // // Convert fake data to JSON string for SQL
+  // const fakeDataJSON = JSON.stringify(fakeData);
 
   // Update users using a CTE
   await sequelize.query(/* sql */`
     WITH fake_data AS (
       SELECT
-        jsonb_array_elements('${fakeDataJSON}'::jsonb) AS data
+        jsonb_array_elements(:fakeDataJSON::jsonb) AS data
     )
     UPDATE "Users"
     SET
@@ -283,7 +318,9 @@ export const hideUsers = async (userIds) => {
     FROM fake_data
     WHERE "Users"."id" = (data->>'id')::int
     ${whereClause};
-  `);
+  `, {
+    replacements: { fakeDataJSON: JSON.stringify(fakeData) },
+  });
 
   // Retrieve transformed users
   [transformedUsers] = await sequelize.query(/* sql */`
@@ -317,7 +354,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   const fakeRecipientData = realRecipients.map((recipient) => ({
     id: recipient.id,
-    name: faker.company.companyName(),
+    name: faker.company.companyName().replace(/'/g, ''),
   }));
 
   // Generate fake data for grants
@@ -384,33 +421,44 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   // Bulk update MonitoringReviewGrantee, MonitoringClassSummary, and GrantNumberLink
   await sequelize.query(/* sql */`
-    -- Update MonitoringReviewGrantee and MonitoringClassSummary using GrantNumberLink as a bridge:
-    -- This ensures that grant numbers in MonitoringReviewGrantee and MonitoringClassSummary
-    -- are updated based on the new grant numbers in the Grants table.
+    -- 1. Disable the foreign key constraints
+    ALTER TABLE "MonitoringReviewGrantees" DROP CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
+    ALTER TABLE "MonitoringClassSummaries" DROP CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey";
 
-    -- 1. Update MonitoringReviewGrantee
-    UPDATE "MonitoringReviewGrantee" mrg
+    -- 2. Perform the data modifications
+    -- Update MonitoringReviewGrantee
+    UPDATE "MonitoringReviewGrantees" mrg
     SET "grantNumber" = gr.number
-    FROM "GrantNumberLink" gnl
+    FROM "GrantNumberLinks" gnl
     JOIN "Grants" gr ON gnl."grantId" = gr.id
     AND gnl."grantNumber" != gr.number
     WHERE mrg."grantNumber" = gnl."grantNumber";
 
-    -- 2. Update MonitoringClassSummary
-    UPDATE "MonitoringClassSummary" mcs
+    -- Update MonitoringClassSummary
+    UPDATE "MonitoringClassSummaries" mcs
     SET "grantNumber" = gr.number
-    FROM "GrantNumberLink" gnl
+    FROM "GrantNumberLinks" gnl
     JOIN "Grants" gr ON gnl."grantId" = gr.id
     AND gnl."grantNumber" != gr.number
     WHERE mcs."grantNumber" = gnl."grantNumber";
 
-    -- 3. Update GrantNumberLink to reflect the new grant numbers
-    -- This ensures that the foreign key relationships remain consistent.
-    UPDATE "GrantNumberLink" gnl
+    -- Update GrantNumberLink to reflect the new grant numbers
+    UPDATE "GrantNumberLinks" gnl
     SET "grantNumber" = gr.number
     FROM "Grants" gr
     WHERE gnl."grantId" = gr.id
     AND gnl."grantNumber" != gr.number;
+
+    -- 3. Re-add the foreign key constraints with NOT VALID
+    ALTER TABLE "MonitoringReviewGrantees" ADD CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey"
+    FOREIGN KEY ("grantNumber") REFERENCES "GrantNumberLinks"("grantNumber") NOT VALID;
+
+    ALTER TABLE "MonitoringClassSummaries" ADD CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey"
+    FOREIGN KEY ("grantNumber") REFERENCES "GrantNumberLinks"("grantNumber") NOT VALID;
+
+    -- 4. Revalidate the foreign key constraints
+    ALTER TABLE "MonitoringReviewGrantees" VALIDATE CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
+    ALTER TABLE "MonitoringClassSummaries" VALIDATE CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey";
   `);
 };
 
@@ -505,23 +553,23 @@ export const processFiles = async () => sequelize.query(/* sql */`
 `);
 
 export const processActivityReports = async (where) => sequelize.query(/* sql */`
-  UPDATE "ActivityReport"
+  UPDATE "ActivityReports"
   SET
-    "managerNotes" = processHtml("managerNotes"),
-    "additionalNotes" = processHtml("additionalNotes"),
-    "context" = processHtml("context"),
+    -- "managerNotes" = "processHtml"("managerNotes"),
+    "additionalNotes" = "processHtml"("additionalNotes"),
+    "context" = "processHtml"("context"),
     "imported" = CASE
       WHEN "imported" IS NOT NULL THEN
-        jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb(processHtml("imported"->>'additionalNotesForThisActivity')), true)
-        || jsonb_set("imported", '{cdiGranteeName}', to_jsonb(processHtml("imported"->>'cdiGranteeName')), true)
-        || jsonb_set("imported", '{contextForThisActivity}', to_jsonb(processHtml("imported"->>'contextForThisActivity')), true)
-        || jsonb_set("imported", '{createdBy}', to_jsonb(convertEmails("imported"->>'createdBy')), true)
-        || jsonb_set("imported", '{granteeFollowUpTasksObjectives}', to_jsonb(processHtml("imported"->>'granteeFollowUpTasksObjectives')), true)
-        || jsonb_set("imported", '{granteeName}', to_jsonb(convertRecipientName("imported"->>'granteeName')), true)
-        || jsonb_set("imported", '{manager}', to_jsonb(convertEmails("imported"->>'manager')), true)
-        || jsonb_set("imported", '{modifiedBy}', to_jsonb(convertEmails("imported"->>'modifiedBy')), true)
-        || jsonb_set("imported", '{otherSpecialists}', to_jsonb(convertEmails("imported"->>'otherSpecialists')), true)
-        || jsonb_set("imported", '{specialistFollowUpTasksObjectives}', to_jsonb(processHtml("imported"->>'specialistFollowUpTasksObjectives')), true)
+        jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb("processHtml"("imported"->>'additionalNotesForThisActivity')), true)
+        || jsonb_set("imported", '{cdiGranteeName}', to_jsonb("processHtml"("imported"->>'cdiGranteeName')), true)
+        || jsonb_set("imported", '{contextForThisActivity}', to_jsonb("processHtml"("imported"->>'contextForThisActivity')), true)
+        || jsonb_set("imported", '{createdBy}', to_jsonb("convertEmails"("imported"->>'createdBy')), true)
+        || jsonb_set("imported", '{granteeFollowUpTasksObjectives}', to_jsonb("processHtml"("imported"->>'granteeFollowUpTasksObjectives')), true)
+        || jsonb_set("imported", '{granteeName}', to_jsonb("convertRecipientName"("imported"->>'granteeName')), true)
+        || jsonb_set("imported", '{manager}', to_jsonb("convertEmails"("imported"->>'manager')), true)
+        || jsonb_set("imported", '{modifiedBy}', to_jsonb("convertEmails"("imported"->>'modifiedBy')), true)
+        || jsonb_set("imported", '{otherSpecialists}', to_jsonb("convertEmails"("imported"->>'otherSpecialists')), true)
+        || jsonb_set("imported", '{specialistFollowUpTasksObjectives}', to_jsonb("processHtml"("imported"->>'specialistFollowUpTasksObjectives')), true)
       ELSE
         "imported"
     END
