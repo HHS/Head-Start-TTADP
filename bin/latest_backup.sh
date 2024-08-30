@@ -173,23 +173,30 @@ list_all_backup_files() {
         sed -r 's/[ \t]+/ /g' |\
         awk '{print $0 "\n"}' | \
         while IFS= read -r line; do
-          backup_file=$(echo ${line} | awk '{split($5, a, "/"); print a[length(a)]}');
-          format=$(echo ${line} | awk '{print $1}')
-          has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "");
-          has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "");
-          has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "");
-          backup_size=$(numfmt --to=iec-i --suffix=B $(echo ${line} | awk '{print $4}'));
-
-          # Determine OS and use appropriate date command
-          if [[ "$OSTYPE" == "darwin"* ]]; then
-            backup_age=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+          backup_file=$(echo "${line}" | awk '{split($5, a, "/"); print a[length(a)]}')
+          format=$(echo "${line}" | awk '{print $1}')
+          has_pwd=$([[ $line == *" pwd "* ]] && echo "x" || echo "")
+          has_md5=$([[ $line == *" md5 "* ]] && echo "x" || echo "")
+          has_sha256=$([[ $line == *" sha256 "* ]] && echo "x" || echo "")
+          
+          # Extract the size and validate it's numeric before passing to numfmt
+          backup_size=$(echo "${line}" | awk '{print $4}')
+          if [[ "$backup_size" =~ ^[0-9]+$ ]]; then
+            backup_size=$(numfmt --to=iec-i --suffix=B "$backup_size")
           else
-            backup_age=$(( ( $(date +%s) - $(date -d "$(echo ${line} | awk '{print $2}')" +%s) ) / 86400 ))
+            backup_size="N/A"  # Handle cases where the size is not a number
           fi
 
-          printf "%-50s %-7s %-5s %-5s %-5s %-15s %-5s\n" "$backup_file" "$format" "$has_pwd" "$has_md5" "$has_sha256" "$backup_size" "$backup_age";
+          if [[ "$OSTYPE" == "darwin"* ]]; then
+            backup_age=$(( ( $(date +%s) - $(date -j -f "%Y-%m-%d" "$(echo "${line}" | awk '{print $2}')" +%s) ) / 86400 ))
+          else
+            backup_age=$(( ( $(date +%s) - $(date -d "$(echo "${line}" | awk '{print $2}')" +%s) ) / 86400 ))
+          fi
+
+          printf "%-50s %-7s %-5s %-5s %-5s %-15s %-5s\n" "$backup_file" "$format" "$has_pwd" "$has_md5" "$has_sha256" "$backup_size" "$backup_age"
         done |\
-        sort -k1
+        sort -k1 |\
+        grep -v "N/A"
     fi
 }
 
