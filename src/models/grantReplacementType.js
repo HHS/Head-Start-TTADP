@@ -3,7 +3,7 @@ const { Model } = require('sequelize');
 export default (sequelize, DataTypes) => {
   class GrantReplacementTypes extends Model {
     static associate(models) {
-      GrantReplacementTypes.hasMany(models.GrantReplacements, { foreignKey: 'grantReplacementTypeId' });
+      GrantReplacementTypes.hasMany(models.GrantReplacement, { foreignKey: 'grantReplacementTypeId' });
     }
   }
 

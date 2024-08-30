@@ -1,18 +1,18 @@
 const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
-  class GrantReplacements extends Model {
+  class GrantReplacement extends Model {
     static associate(models) {
-      GrantReplacements.belongsTo(models.GrantReplacementTypes, { foreignKey: 'grantReplacementTypeId' });
-      GrantReplacements.belongsTo(models.Grant, { foreignKey: 'replacedGrantId' });
-      GrantReplacements.belongsTo(models.Grant, { foreignKey: 'replacingGrantId' });
+      GrantReplacement.belongsTo(models.GrantReplacementTypes, { foreignKey: 'grantReplacementTypeId' });
+      GrantReplacement.belongsTo(models.Grant, { foreignKey: 'replacedGrantId' });
+      GrantReplacement.belongsTo(models.Grant, { foreignKey: 'replacingGrantId' });
 
-      models.Grant.hasMany(GrantReplacements, { foreignKey: 'replacedGrantId', as: 'replacedGrantReplacements' });
-      models.Grant.hasMany(GrantReplacements, { foreignKey: 'replacingGrantId', as: 'replacingGrantReplacements' });
+      models.Grant.hasMany(GrantReplacement, { foreignKey: 'replacedGrantId', as: 'replacedGrantReplacements' });
+      models.Grant.hasMany(GrantReplacement, { foreignKey: 'replacingGrantId', as: 'replacingGrantReplacements' });
     }
   }
 
-  GrantReplacements.init({
+  GrantReplacement.init({
     replacedGrantId: DataTypes.INTEGER,
     replacingGrantId: DataTypes.INTEGER,
     grantReplacementTypeId: DataTypes.INTEGER,
@@ -21,8 +21,8 @@ export default (sequelize, DataTypes) => {
     updatedAt: DataTypes.DATE,
   }, {
     sequelize,
-    modelName: 'GrantReplacements',
+    modelName: 'GrantReplacement',
   });
 
-  return GrantReplacements;
+  return GrantReplacement;
 };
