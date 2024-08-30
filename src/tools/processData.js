@@ -3,6 +3,7 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
+
 import faker from '@faker-js/faker';
 import {
   User,
@@ -11,6 +12,7 @@ import {
   sequelize,
 } from '../models';
 
+// Define constants representing different permission scopes that can be assigned to users
 const SITE_ACCESS = 1;
 const ADMIN = 2;
 const READ_WRITE_REPORTS = 3;
@@ -18,16 +20,16 @@ const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
 /**
- * processData script replaces user names, emails, recipient and grant information,
- * file names as well as certain html fields with generated data while preserving
- * existing relationships and non-PII data.
- *
- * Resulting anonymized database can then be restored in non-production environments.
+ * The processData script is responsible for anonymizing sensitive user data, including names, emails, recipient information, grant details, and certain HTML fields.
+ * This anonymization ensures that the resulting database, which can then be restored in non-production environments, preserves existing relationships and non-personally identifiable information (non-PII) data.
  */
 
+// Arrays to hold the original real user data and the transformed anonymized user data
 let realUsers = [];
 let transformedUsers = [];
 let realRecipients = [];
+
+// Predefined list of users from HSES (Head Start Enterprise System) with their details such as name, username, user ID, and email
 const hsesUsers = [
   {
     name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
@@ -70,11 +72,14 @@ const hsesUsers = [
   },
 ];
 
+// A helper function to generate a fake email address by prefixing 'no-send_' to a randomly generated email using the faker library
 const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 
 // chr(92) represents the backslash (\) character in ASCII. This prevents JavaScript from
 // interfering with the escape sequences in your SQL regular expression when you pass the
 // query as a string in sequelize.query.
+
+// Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by replacing words with randomly generated words
 const processHtmlCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "processHtml"(input TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -85,10 +90,10 @@ const processHtmlCreate = async () => sequelize.query(/* sql */`
           RETURN input;
       END IF;
 
-      -- Replace each word with a random word
+      -- Replace each word in the input with a random word from a predefined list
       result := regexp_replace(
           input,
-          chr(92) || 'w+',
+          chr(92) || 'w+',  -- Match words using a regular expression
           (
               SELECT string_agg(word, ' ')
               FROM (
@@ -96,17 +101,19 @@ const processHtmlCreate = async () => sequelize.query(/* sql */`
                   FROM generate_series(1, regexp_count(input, chr(92) || 'w+'))
               ) AS subquery
           ),
-          'g'
+          'g'  -- Global flag to replace all occurrences
       );
 
       RETURN result;
   END $$;
 `);
 
+// Function to drop the "processHtml" function from the PostgreSQL database if it exists
 const processHtmlDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "processHtml"(TEXT);
 `);
 
+// Function to create a PL/pgSQL function in the PostgreSQL database that converts email addresses by either finding a corresponding anonymized email or generating a fake one
 const convertEmailsCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertEmails"(emails TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -120,15 +127,15 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
           RETURN emails;
       END IF;
 
-      -- Split the emails string into an array
+      -- Split the input emails string into an array of individual email addresses
       emails_array := string_to_array(emails, ', ');
 
-      -- Initialize the array for converted emails
+      -- Initialize the array to store the converted (anonymized) emails
       converted_emails := ARRAY[]::TEXT[];
 
-      -- Iterate through each email
+      -- Iterate through each email in the array
       FOREACH email IN ARRAY emails_array LOOP
-          -- Perform the conversion using the provided SQL logic
+          -- Try to find a corresponding anonymized email from the ZALUsers table within the last 30 minutes and with the current transaction ID
           SELECT zu.new_row_data ->> 'email'
           INTO converted_email
           FROM "ZALUsers" zu
@@ -136,16 +143,16 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
           AND zu.dml_timestamp >= NOW() - INTERVAL '30 minutes'
           AND zu.dml_txid = lpad(txid_current()::text, 32, '0')::uuid;
 
-          -- If the email was found and converted, add it to the array
+          -- If a converted email is found, add it to the array
           IF converted_email IS NOT NULL AND converted_email <> '' THEN
               converted_emails := array_append(converted_emails, converted_email);
           ELSE
-              -- Generate a fake email if the email wasn't converted
+              -- If no converted email is found, generate a fake email address
               IF email LIKE '%@%' THEN
-                  -- Extract domain from the email
+                  -- Extract the domain from the email
                   domain := SPLIT_PART(email, '@', 2);
 
-                  -- Generate the fake email using md5 of the original username
+                  -- Generate the fake email using the md5 hash of the original username and a random domain from the Users table
                   converted_email := 'no-send_' || md5(SPLIT_PART(email, '@', 1)) || '@' || (
                       SELECT email_domain FROM (
                           SELECT SPLIT_PART(e.email, '@', 2) AS email_domain
@@ -156,49 +163,54 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
                       ) AS random_domain
                   );
 
-                  -- Add the fake email to the array
+                  -- Add the generated fake email to the array
                   converted_emails := array_append(converted_emails, converted_email);
               ELSE
+                  -- If the email is not valid, add an empty string to the array
                   converted_emails := array_append(converted_emails, '');
               END IF;
           END IF;
       END LOOP;
 
-      -- Return the converted emails as a string
+      -- Return the array of converted emails as a comma-separated string
       RETURN array_to_string(converted_emails, ', ');
   END $$;
 `);
 
+// Function to drop the "convertEmails" function from the PostgreSQL database if it exists
 const convertEmailsDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertEmails"(TEXT);
 `);
 
+// Function to convert a user's name and email to anonymized data, ensuring consistent anonymization across the dataset
 export const convertName = (name, email) => {
   if (!name) {
     return { name, email };
   }
-  const additionalId = 99999;
+  const additionalId = 99999;  // Arbitrary ID to use for users not found in the realUsers array
   let foundUser = realUsers.find((user) => user.email === email);
 
-  // Not all program specialists or grant specialist are in the Hub yet
-  // Add it to the realUsers
+  // If the user is not found and the email contains '@', add the user to the realUsers array
   if (!foundUser && email.includes('@')) {
     foundUser = { id: additionalId + 1, name, email };
     realUsers.push(foundUser);
   }
 
+  // Find the corresponding transformed (anonymized) user data
   let foundTransformedUser = transformedUsers.find((user) => user.id === foundUser.id);
   if (!foundTransformedUser) {
+    // If the transformed user is not found, create a new transformed user with a fake name and email
     foundTransformedUser = {
       id: foundUser.id,
-      name: faker.name.findName(),
-      email: generateFakeEmail(),
+      name: faker.name.findName(),  // Generate a fake name
+      email: generateFakeEmail(),   // Generate a fake email
     };
     transformedUsers.push(foundTransformedUser);
   }
   return foundTransformedUser;
 };
 
+// Function to create a PL/pgSQL function in the PostgreSQL database that converts recipient names and grant numbers to anonymized data
 const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertRecipientName"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -213,10 +225,10 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
           RETURN recipients_grants;
       END IF;
 
-      -- Split the recipientsGrants string into an array
+      -- Split the recipients_grants string into an array of recipient-grant pairs
       recipient_grants_array := string_to_array(recipients_grants, chr(92) || 'n');
 
-      -- Initialize the array for converted recipient-grant pairs
+      -- Initialize the array to store the converted recipient-grant pairs
       converted_recipients_grants := ARRAY[]::TEXT[];
 
       -- Iterate through each recipient-grant pair
@@ -224,7 +236,7 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
           -- Extract the grant number from the pair
           grant_number := split_part(recipient_grant, '|', 2);
 
-          -- Remove leading and trailing whitespace
+          -- Remove leading and trailing whitespace from the grant number
           grant_number := trim(grant_number);
 
           -- Perform the conversion using the provided SQL logic
@@ -237,7 +249,7 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
           AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
           AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;  -- Use chr(48) for '0'
 
-          -- Handle cases where no match was found
+          -- Handle cases where no match was found and assign default values
           IF transformed_grant_number IS NULL THEN
               transformed_grant_number := 'UnknownGrant';
           END IF;
@@ -245,27 +257,30 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
               transformed_recipient_name := 'Unknown Recipient';
           END IF;
 
-          -- Construct the converted recipient-grant pair
+          -- Construct the converted recipient-grant pair and add it to the array
           converted_recipients_grants := array_append(
               converted_recipients_grants,
               transformed_recipient_name || ' | ' || transformed_grant_number
           );
       END LOOP;
 
-      -- Return the converted recipients-grants pairs as a string
+      -- Return the converted recipient-grant pairs as a string
       RETURN array_to_string(converted_recipients_grants, chr(92) || 'n');
   END $$;
 `);
 
+// Function to drop the "convertRecipientName" function from the PostgreSQL database if it exists
 const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT);
 `);
 
+// Function to anonymize user data by replacing names, emails, and other details with generated fake data
 export const hideUsers = async (userIds) => {
+  // Prepare the WHERE clause for the query based on the provided user IDs, if any
   const ids = userIds || null;
   const whereClause = ids ? `WHERE "id" IN (${ids.join(', ')})` : '';
 
-  // Save real users
+  // Query the database to retrieve real user data based on the WHERE clause
   [realUsers] = await sequelize.query(/* sql */`
     SELECT "id", "email", "name"
     FROM "Users"
@@ -275,17 +290,18 @@ export const hideUsers = async (userIds) => {
   const usedHsesUsernames = new Set();
   const usedEmails = new Set();
 
+  // Generate anonymized data for each user
   const fakeData = realUsers.map((user) => {
     let hsesUsername;
     let email;
 
-    // Ensure hsesUsername is unique
+    // Ensure that the generated HSES username is unique
     do {
       hsesUsername = faker.internet.email();
     } while (usedHsesUsernames.has(hsesUsername));
     usedHsesUsernames.add(hsesUsername);
 
-    // Ensure email is unique
+    // Ensure that the generated email is unique
     do {
       email = `no-send_${faker.internet.email()}`;
     } while (usedEmails.has(email));
@@ -295,15 +311,12 @@ export const hideUsers = async (userIds) => {
       id: user.id,
       hsesUsername,
       email,
-      phoneNumber: faker.phone.phoneNumber(),
-      name: faker.name.findName().replace(/'/g, ''),
+      phoneNumber: faker.phone.phoneNumber(),  // Generate a fake phone number
+      name: faker.name.findName().replace(/'/g, ''),  // Generate a fake name and remove any single quotes
     };
   });
 
-  // // Convert fake data to JSON string for SQL
-  // const fakeDataJSON = JSON.stringify(fakeData);
-
-  // Update users using a CTE
+  // Update the Users table in the database with the anonymized data using a Common Table Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_data AS (
       SELECT
@@ -322,7 +335,7 @@ export const hideUsers = async (userIds) => {
     replacements: { fakeDataJSON: JSON.stringify(fakeData) },
   });
 
-  // Retrieve transformed users
+  // Retrieve the transformed (anonymized) user data from the Users table for further processing
   [transformedUsers] = await sequelize.query(/* sql */`
     SELECT "id", "email", "name"
     FROM "Users"
@@ -330,8 +343,9 @@ export const hideUsers = async (userIds) => {
   `);
 };
 
+// Function to anonymize recipient and grant data by replacing names and grant numbers with generated fake data
 export const hideRecipientsGrants = async (recipientsGrants) => {
-  // Parse recipientsGrants input
+  // Parse the recipientsGrants input string into arrays of recipients and grants
   const recipientsArray = recipientsGrants
     ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim())
     : null;
@@ -345,34 +359,39 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     ? `WHERE "number" ILIKE ANY(ARRAY[${grantsArray.map((g) => `'${g}'}`).join(', ')}])`
     : '';
 
-  // Generate fake data for recipients
+  // Query the database to retrieve real recipient data based on the WHERE clause
   [realRecipients] = await sequelize.query(/* sql */`
     SELECT "id", "name"
     FROM "Recipients"
     ${recipientWhere};
   `);
 
+  // Generate anonymized data for each recipient
   const fakeRecipientData = realRecipients.map((recipient) => ({
     id: recipient.id,
-    name: faker.company.companyName().replace(/'/g, ''),
+    name: faker.company.companyName().replace(/'/g, ''),  // Generate a fake company name and remove any single quotes
   }));
 
-  // Generate fake data for grants
+  // Query the database to retrieve real grant data based on the WHERE clause
   const [grants] = await sequelize.query(/* sql */`
     SELECT "id", "number", "programSpecialistName", "programSpecialistEmail", "grantSpecialistName", "grantSpecialistEmail"
     FROM "Grants"
     ${grantWhere};
   `);
 
+  // Generate anonymized data for each grant
   const fakeGrantData = grants.map((grant) => {
+    // Anonymize the program specialist's name and email
     const programSpecialist = convertName(
       grant.programSpecialistName,
       grant.programSpecialistEmail,
     );
+    // Anonymize the grant specialist's name and email
     const grantSpecialist = convertName(
       grant.grantSpecialistName,
       grant.grantSpecialistEmail,
     );
+    // Generate a new grant number with a random animal type and trailing ID
     const trailingNumber = grant.id;
     const newGrantNumber = `0${faker.datatype.number({ min: 1, max: 9 })}${faker.animal.type()}0${trailingNumber}`;
     return {
@@ -385,11 +404,11 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     };
   });
 
-  // Convert fake data to JSON strings for SQL
+  // Convert the anonymized recipient and grant data into JSON strings for SQL processing
   const fakeRecipientDataJSON = JSON.stringify(fakeRecipientData);
   const fakeGrantDataJSON = JSON.stringify(fakeGrantData);
 
-  // Update recipients using a CTE
+  // Update the Recipients table in the database with the anonymized recipient data using a Common Table Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_recipients AS (
       SELECT
@@ -402,7 +421,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     WHERE "Recipients"."id" = (data->>'id')::int;
   `);
 
-  // Update grants using a CTE
+  // Update the Grants table in the database with the anonymized grant data using a Common Table Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_grants AS (
       SELECT
@@ -419,14 +438,14 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     WHERE "Grants"."id" = (data->>'id')::int;
   `);
 
-  // Bulk update MonitoringReviewGrantee, MonitoringClassSummary, and GrantNumberLink
+  // Bulk update related tables MonitoringReviewGrantee, MonitoringClassSummary, and GrantNumberLink with the new anonymized grant numbers
   await sequelize.query(/* sql */`
-    -- 1. Disable the foreign key constraints
+    -- 1. Disable the foreign key constraints temporarily to allow data modification
     ALTER TABLE "MonitoringReviewGrantees" DROP CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
     ALTER TABLE "MonitoringClassSummaries" DROP CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey";
 
     -- 2. Perform the data modifications
-    -- Update MonitoringReviewGrantee
+    -- Update MonitoringReviewGrantee table with new grant numbers
     UPDATE "MonitoringReviewGrantees" mrg
     SET "grantNumber" = gr.number
     FROM "GrantNumberLinks" gnl
@@ -434,7 +453,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     AND gnl."grantNumber" != gr.number
     WHERE mrg."grantNumber" = gnl."grantNumber";
 
-    -- Update MonitoringClassSummary
+    -- Update MonitoringClassSummary table with new grant numbers
     UPDATE "MonitoringClassSummaries" mcs
     SET "grantNumber" = gr.number
     FROM "GrantNumberLinks" gnl
@@ -442,26 +461,27 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     AND gnl."grantNumber" != gr.number
     WHERE mcs."grantNumber" = gnl."grantNumber";
 
-    -- Update GrantNumberLink to reflect the new grant numbers
+    -- Update GrantNumberLink table to reflect the new grant numbers
     UPDATE "GrantNumberLinks" gnl
     SET "grantNumber" = gr.number
     FROM "Grants" gr
     WHERE gnl."grantId" = gr.id
     AND gnl."grantNumber" != gr.number;
 
-    -- 3. Re-add the foreign key constraints with NOT VALID
+    -- 3. Re-add the foreign key constraints with NOT VALID to allow revalidation later
     ALTER TABLE "MonitoringReviewGrantees" ADD CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey"
     FOREIGN KEY ("grantNumber") REFERENCES "GrantNumberLinks"("grantNumber") NOT VALID;
 
     ALTER TABLE "MonitoringClassSummaries" ADD CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey"
     FOREIGN KEY ("grantNumber") REFERENCES "GrantNumberLinks"("grantNumber") NOT VALID;
 
-    -- 4. Revalidate the foreign key constraints
+    -- 4. Revalidate the foreign key constraints to ensure data integrity
     ALTER TABLE "MonitoringReviewGrantees" VALIDATE CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
     ALTER TABLE "MonitoringClassSummaries" VALIDATE CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey";
   `);
 };
 
+// Function to generate a set of permissions for a user based on their user ID and predefined permission scopes
 const givePermissions = (id) => {
   const permissionsArray = [
     {
@@ -486,6 +506,7 @@ const givePermissions = (id) => {
     },
   ];
 
+  // Loop to generate READ_REPORTS permissions for regions 1 through 12
   for (let region = 1; region < 13; region++) {
     permissionsArray.push({
       userId: id,
@@ -496,6 +517,8 @@ const givePermissions = (id) => {
 
   return permissionsArray;
 };
+
+// Function to bootstrap HSES users into the system by either creating or updating them, and assigning appropriate permissions
 export const bootstrapUsers = async () => {
   const userPromises = [];
   for await (const hsesUser of hsesUsers) {
@@ -510,13 +533,17 @@ export const bootstrapUsers = async () => {
     };
     if (user) {
       id = user.id;
+      // If the user already exists, update their details
       userPromises.push(user.update(newUser, { individualHooks: true }));
+      // Assign permissions to the user
       for (const permission of givePermissions(id)) {
         userPromises.push(Permission.findOrCreate({ where: permission }));
       }
     } else {
+      // If the user does not exist, create a new user
       const createdUser = await User.create(newUser);
       if (createdUser) {
+        // Assign permissions to the newly created user
         for (const permission of givePermissions(createdUser.id)) {
           userPromises.push(Permission.findOrCreate({ where: permission }));
         }
@@ -527,7 +554,9 @@ export const bootstrapUsers = async () => {
   }
 };
 
+// Function to truncate (empty) audit tables in the database while disabling and re-enabling triggers
 export const truncateAuditTables = async () => {
+  // Query the database to find all audit tables (tables starting with 'ZAL') except for specific ones that should not be truncated
   const tablesToTruncate = await sequelize.query(`
     SELECT table_name FROM information_schema.tables
     WHERE
@@ -535,29 +564,35 @@ export const truncateAuditTables = async () => {
       table_name not in ('ZALDDL', 'ZALZADescriptor', 'ZALZAFilter')
   `, { raw: true });
 
+  // Iterate through each table and perform truncation
   for await (const table of tablesToTruncate) {
+    // Disable triggers before truncating the table
     await sequelize.query(`ALTER TABLE "${table}" DISABLE TRIGGER all`);
+    // Truncate the table and restart its identity sequence
     await sequelize.query(`TRUNCATE TABLE "${table}" RESTART IDENTITY`);
+    // Re-enable triggers after truncating the table
     await sequelize.query(`ALTER TABLE "${table}" ENABLE TRIGGER all`);
   }
 };
 
+// Function to anonymize file names by replacing them with randomly generated file names while preserving their original extensions
 export const processFiles = async () => sequelize.query(/* sql */`
   UPDATE "Files"
   SET "originalFileName" =
     CONCAT(
-      SUBSTRING(md5(random()::text), 1, 8), -- Random file name
-      SUBSTRING("originalFileName" FROM '\\..*$') -- Original extension
+      SUBSTRING(md5(random()::text), 1, 8), -- Generate a random file name using MD5 hash
+      SUBSTRING("originalFileName" FROM '\\..*$') -- Preserve the original file extension
     )
   WHERE "originalFileName" IS NOT NULL;
 `);
 
+// Function to process and anonymize sensitive data in Activity Reports by replacing specific fields with generated fake data
 export const processActivityReports = async (where) => sequelize.query(/* sql */`
   UPDATE "ActivityReports"
   SET
-    -- "managerNotes" = "processHtml"("managerNotes"),
-    "additionalNotes" = "processHtml"("additionalNotes"),
-    "context" = "processHtml"("context"),
+    -- "managerNotes" = "processHtml"("managerNotes"),  // Anonymize manager notes (commented out)
+    "additionalNotes" = "processHtml"("additionalNotes"),  // Anonymize additional notes
+    "context" = "processHtml"("context"),  // Anonymize context
     "imported" = CASE
       WHEN "imported" IS NOT NULL THEN
         jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb("processHtml"("imported"->>'additionalNotesForThisActivity')), true)
@@ -574,42 +609,51 @@ export const processActivityReports = async (where) => sequelize.query(/* sql */
         "imported"
     END
   WHERE 1 = 1
-    ${where};
+    ${where};  // Apply the WHERE clause if provided to limit the scope of the update
 `);
 
+// Main function to orchestrate the entire anonymization process, including creating and dropping database functions, hiding users, recipients, and grants, processing activity reports and files, and truncating audit tables
 const processData = async (mockReport) => sequelize.transaction(async () => {
+  // If a mockReport is provided, extract the activity report ID and relevant data
   const activityReportId = mockReport ? mockReport.id : null;
   const where = activityReportId ? `AND id = ${activityReportId}` : '';
   const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
-
   const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
 
+  // Create the necessary database functions for data processing
   await processHtmlCreate();
   await convertEmailsCreate();
   await convertRecipientNameCreate();
 
-  // Hide users
+  // Anonymize user data
   await hideUsers(userIds);
 
-  // Hide recipients and grants
+  // Anonymize recipient and grant data
   await hideRecipientsGrants(recipientsGrants);
 
+  // Anonymize activity reports
   await processActivityReports(where);
 
+  // Anonymize file names
   await processFiles();
 
+  // Bootstrap HSES users and assign permissions
   await bootstrapUsers();
 
-  // Delete from RequestErrors
+  // Delete all records from the RequestErrors table
   await RequestErrors.destroy({
     where: {},
     truncate: true,
   });
 
+  // Drop the database functions used for data processing
   await processHtmlDrop();
   await convertEmailsDrop();
   await convertRecipientNameDrop();
+
+  // Truncate audit tables
   return truncateAuditTables();
 });
 
+// Export the main processData function as the default export of the module
 export default processData;
