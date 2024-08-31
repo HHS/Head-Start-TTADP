@@ -20,8 +20,11 @@ const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
 /**
- * The processData script is responsible for anonymizing sensitive user data, including names, emails, recipient information, grant details, and certain HTML fields.
- * This anonymization ensures that the resulting database, which can then be restored in non-production environments, preserves existing relationships and non-personally identifiable information (non-PII) data.
+ * The processData script is responsible for anonymizing sensitive user data, including names, 
+ * emails, recipient information, grant details, and certain HTML fields.
+ * This anonymization ensures that the resulting database, which can then be restored in
+ * non-production environments, preserves existing relationships and non-personally identifiable
+ * information (non-PII) data.
  */
 
 // Arrays to hold the original real user data and the transformed anonymized user data
@@ -29,7 +32,8 @@ let realUsers = [];
 let transformedUsers = [];
 let realRecipients = [];
 
-// Predefined list of users from HSES (Head Start Enterprise System) with their details such as name, username, user ID, and email
+// Predefined list of users from HSES (Head Start Enterprise System) with their details such as
+// name, username, user ID, and email
 const hsesUsers = [
   {
     name: 'Adam Levin', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
@@ -72,14 +76,16 @@ const hsesUsers = [
   },
 ];
 
-// A helper function to generate a fake email address by prefixing 'no-send_' to a randomly generated email using the faker library
+// A helper function to generate a fake email address by prefixing 'no-send_' to a randomly
+// generated email using the faker library
 const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 
 // chr(92) represents the backslash (\) character in ASCII. This prevents JavaScript from
 // interfering with the escape sequences in your SQL regular expression when you pass the
 // query as a string in sequelize.query.
 
-// Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by replacing words with randomly generated words
+// Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by
+// replacing words with randomly generated words
 const processHtmlCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "processHtml"(input TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -113,7 +119,8 @@ const processHtmlDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "processHtml"(TEXT);
 `);
 
-// Function to create a PL/pgSQL function in the PostgreSQL database that converts email addresses by either finding a corresponding anonymized email or generating a fake one
+// Function to create a PL/pgSQL function in the PostgreSQL database that converts email addresses
+// by either finding a corresponding anonymized email or generating a fake one
 const convertEmailsCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertEmails"(emails TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -182,12 +189,13 @@ const convertEmailsDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertEmails"(TEXT);
 `);
 
-// Function to convert a user's name and email to anonymized data, ensuring consistent anonymization across the dataset
+// Function to convert a user's name and email to anonymized data, ensuring consistent
+// anonymization across the dataset
 export const convertName = (name, email) => {
   if (!name) {
     return { name, email };
   }
-  const additionalId = 99999;  // Arbitrary ID to use for users not found in the realUsers array
+  const additionalId = 99999; // Arbitrary ID to use for users not found in the realUsers array
   let foundUser = realUsers.find((user) => user.email === email);
 
   // If the user is not found and the email contains '@', add the user to the realUsers array
@@ -199,18 +207,20 @@ export const convertName = (name, email) => {
   // Find the corresponding transformed (anonymized) user data
   let foundTransformedUser = transformedUsers.find((user) => user.id === foundUser.id);
   if (!foundTransformedUser) {
-    // If the transformed user is not found, create a new transformed user with a fake name and email
+    // If the transformed user is not found, create a new transformed user with a fake name
+    // and email
     foundTransformedUser = {
       id: foundUser.id,
-      name: faker.name.findName(),  // Generate a fake name
-      email: generateFakeEmail(),   // Generate a fake email
+      name: faker.name.findName(), // Generate a fake name
+      email: generateFakeEmail(), // Generate a fake email
     };
     transformedUsers.push(foundTransformedUser);
   }
   return foundTransformedUser;
 };
 
-// Function to create a PL/pgSQL function in the PostgreSQL database that converts recipient names and grant numbers to anonymized data
+// Function to create a PL/pgSQL function in the PostgreSQL database that converts recipient names
+// and grant numbers to anonymized data
 const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
   CREATE OR REPLACE FUNCTION "convertRecipientName"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -274,7 +284,8 @@ const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT);
 `);
 
-// Function to anonymize user data by replacing names, emails, and other details with generated fake data
+// Function to anonymize user data by replacing names, emails, and other details with generated
+// fake data
 export const hideUsers = async (userIds) => {
   // Prepare the WHERE clause for the query based on the provided user IDs, if any
   const ids = userIds || null;
@@ -311,12 +322,15 @@ export const hideUsers = async (userIds) => {
       id: user.id,
       hsesUsername,
       email,
-      phoneNumber: faker.phone.phoneNumber(),  // Generate a fake phone number
-      name: faker.name.findName().replace(/'/g, ''),  // Generate a fake name and remove any single quotes
+      // Generate a fake phone number
+      phoneNumber: faker.phone.phoneNumber(),
+      // Generate a fake name and remove any single quotes
+      name: faker.name.findName().replace(/'/g, ''),
     };
   });
 
-  // Update the Users table in the database with the anonymized data using a Common Table Expression (CTE)
+  // Update the Users table in the database with the anonymized data using a Common Table
+  // Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_data AS (
       SELECT
@@ -343,7 +357,8 @@ export const hideUsers = async (userIds) => {
   `);
 };
 
-// Function to anonymize recipient and grant data by replacing names and grant numbers with generated fake data
+// Function to anonymize recipient and grant data by replacing names and grant numbers with
+// generated fake data
 export const hideRecipientsGrants = async (recipientsGrants) => {
   // Parse the recipientsGrants input string into arrays of recipients and grants
   const recipientsArray = recipientsGrants
@@ -369,7 +384,8 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   // Generate anonymized data for each recipient
   const fakeRecipientData = realRecipients.map((recipient) => ({
     id: recipient.id,
-    name: faker.company.companyName().replace(/'/g, ''),  // Generate a fake company name and remove any single quotes
+    // Generate a fake company name and remove any single quotes
+    name: faker.company.companyName().replace(/'/g, ''),
   }));
 
   // Query the database to retrieve real grant data based on the WHERE clause
@@ -408,7 +424,8 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   const fakeRecipientDataJSON = JSON.stringify(fakeRecipientData);
   const fakeGrantDataJSON = JSON.stringify(fakeGrantData);
 
-  // Update the Recipients table in the database with the anonymized recipient data using a Common Table Expression (CTE)
+  // Update the Recipients table in the database with the anonymized recipient data using a Common
+  // Table Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_recipients AS (
       SELECT
@@ -421,7 +438,8 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     WHERE "Recipients"."id" = (data->>'id')::int;
   `);
 
-  // Update the Grants table in the database with the anonymized grant data using a Common Table Expression (CTE)
+  // Update the Grants table in the database with the anonymized grant data using a Common Table
+  // Expression (CTE)
   await sequelize.query(/* sql */`
     WITH fake_grants AS (
       SELECT
@@ -438,7 +456,8 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     WHERE "Grants"."id" = (data->>'id')::int;
   `);
 
-  // Bulk update related tables MonitoringReviewGrantee, MonitoringClassSummary, and GrantNumberLink with the new anonymized grant numbers
+  // Bulk update related tables MonitoringReviewGrantee, MonitoringClassSummary, and
+  // GrantNumberLink with the new anonymized grant numbers
   await sequelize.query(/* sql */`
     -- 1. Disable the foreign key constraints temporarily to allow data modification
     ALTER TABLE "MonitoringReviewGrantees" DROP CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
@@ -481,7 +500,8 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   `);
 };
 
-// Function to generate a set of permissions for a user based on their user ID and predefined permission scopes
+// Function to generate a set of permissions for a user based on their user ID and predefined
+// permission scopes
 const givePermissions = (id) => {
   const permissionsArray = [
     {
@@ -518,7 +538,8 @@ const givePermissions = (id) => {
   return permissionsArray;
 };
 
-// Function to bootstrap HSES users into the system by either creating or updating them, and assigning appropriate permissions
+// Function to bootstrap HSES users into the system by either creating or updating them, and
+// assigning appropriate permissions
 export const bootstrapUsers = async () => {
   const userPromises = [];
   for await (const hsesUser of hsesUsers) {
@@ -554,9 +575,10 @@ export const bootstrapUsers = async () => {
   }
 };
 
-// Function to truncate (empty) audit tables in the database while disabling and re-enabling triggers
+// Function to truncate audit tables in the database while disabling and re-enabling triggers
 export const truncateAuditTables = async () => {
-  // Query the database to find all audit tables (tables starting with 'ZAL') except for specific ones that should not be truncated
+  // Query the database to find all audit tables (tables starting with 'ZAL') except for specific
+  // ones that should not be truncated
   const tablesToTruncate = await sequelize.query(`
     SELECT table_name FROM information_schema.tables
     WHERE
@@ -575,7 +597,8 @@ export const truncateAuditTables = async () => {
   }
 };
 
-// Function to anonymize file names by replacing them with randomly generated file names while preserving their original extensions
+// Function to anonymize file names by replacing them with randomly generated file names while
+// preserving their original extensions
 export const processFiles = async () => sequelize.query(/* sql */`
   UPDATE "Files"
   SET "originalFileName" =
@@ -586,13 +609,13 @@ export const processFiles = async () => sequelize.query(/* sql */`
   WHERE "originalFileName" IS NOT NULL;
 `);
 
-// Function to process and anonymize sensitive data in Activity Reports by replacing specific fields with generated fake data
+// Function to process and anonymize sensitive data in Activity Reports by replacing specific
+// fields with generated fake data
 export const processActivityReports = async (where) => sequelize.query(/* sql */`
   UPDATE "ActivityReports"
   SET
-    -- "managerNotes" = "processHtml"("managerNotes"),  // Anonymize manager notes (commented out)
-    "additionalNotes" = "processHtml"("additionalNotes"),  // Anonymize additional notes
-    "context" = "processHtml"("context"),  // Anonymize context
+    "additionalNotes" = "processHtml"("additionalNotes"),
+    "context" = "processHtml"("context"),
     "imported" = CASE
       WHEN "imported" IS NOT NULL THEN
         jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb("processHtml"("imported"->>'additionalNotesForThisActivity')), true)
@@ -609,10 +632,12 @@ export const processActivityReports = async (where) => sequelize.query(/* sql */
         "imported"
     END
   WHERE 1 = 1
-    ${where};  // Apply the WHERE clause if provided to limit the scope of the update
+    ${where};
 `);
-
-// Main function to orchestrate the entire anonymization process, including creating and dropping database functions, hiding users, recipients, and grants, processing activity reports and files, and truncating audit tables
+/* Main function to orchestrate the entire anonymization process, including creating and dropping
+* database functions, hiding users, recipients, and grants, processing activity reports and files,
+* and truncating audit tables
+*/
 const processData = async (mockReport) => sequelize.transaction(async () => {
   // If a mockReport is provided, extract the activity report ID and relevant data
   const activityReportId = mockReport ? mockReport.id : null;
