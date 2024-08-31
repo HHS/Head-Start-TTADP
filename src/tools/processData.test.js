@@ -26,10 +26,7 @@ import processData, {
   hideUsers,
   hideRecipientsGrants,
   bootstrapUsers,
-  convertEmails,
   convertName,
-  convertFileName,
-  convertRecipientName,
 } from './processData';
 
 jest.mock('../logger');
