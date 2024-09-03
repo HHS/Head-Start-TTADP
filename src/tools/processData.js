@@ -20,7 +20,7 @@ const READ_REPORTS = 4;
 const APPROVE_REPORTS = 5;
 
 /**
- * The processData script is responsible for anonymizing sensitive user data, including names, 
+ * The processData script is responsible for anonymizing sensitive user data, including names,
  * emails, recipient information, grant details, and certain HTML fields.
  * This anonymization ensures that the resulting database, which can then be restored in
  * non-production environments, preserves existing relationships and non-personally identifiable
