@@ -224,7 +224,8 @@ commands:
                 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
                 if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
                   PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                  MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} to <${ENV_URL}|${env_name}> was successful!"
+                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
                   if [ ! -z "${JIRA_URLS}" ]; then
                       MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                   fi
