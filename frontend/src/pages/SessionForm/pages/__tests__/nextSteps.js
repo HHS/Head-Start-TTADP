@@ -1,12 +1,12 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
-import moment from 'moment';
 import {
   render,
   screen,
   act,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { useForm, FormProvider } from 'react-hook-form';
 import nextSteps, { isPageComplete } from '../nextSteps';
 import { nextStepsFields } from '../../constants';
@@ -112,7 +112,6 @@ describe('nextSteps', () => {
   describe('render', () => {
     const onSaveDraft = jest.fn();
     const userId = 1;
-    const todaysDate = moment().format('YYYY-MM-DD');
 
     const defaultFormValues = {
       id: 1,
@@ -133,8 +132,11 @@ describe('nextSteps', () => {
     };
 
     const defaultUser = { user: { id: userId, roles: [{ name: 'GSM' }] } };
-    // eslint-disable-next-line react/prop-types
-    const RenderNextSteps = ({ formValues = defaultFormValues, user = defaultUser }) => {
+    const RenderNextSteps = ({
+      formValues = defaultFormValues,
+      user = defaultUser,
+      additionalData = null,
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -149,7 +151,7 @@ describe('nextSteps', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {nextSteps.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -181,21 +183,6 @@ describe('nextSteps', () => {
       expect(textAreas.length).toBe(2);
     });
 
-    it('shows checkbox for poc', async () => {
-      act(() => {
-        const updatedValues = {
-          ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
-        />);
-      });
-
-      expect(await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i)).toBeVisible();
-    });
-
     it('hides checkbox for poc if roles are invalid', async () => {
       act(() => {
         const updatedValues = {
@@ -212,73 +199,29 @@ describe('nextSteps', () => {
       expect(await screen.queryAllByText(/Email the event creator and collaborator to let them know my work is complete/i).length).toBe(0);
     });
 
-    it('allows selection of checkbox and sets alternate values', async () => {
+    it('hides the save draft button if the session is complete', async () => {
       act(() => {
-        const updatedValues = {
+        render(<RenderNextSteps formValues={{
           ...defaultFormValues,
-          event: { pocIds: [userId] },
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        }}
         />);
       });
 
-      const checkbox = await screen.findByLabelText(/Email the event creator and collaborator to let them know my work is complete/i);
-      expect(checkbox).not.toBeChecked();
-
-      act(() => {
-        userEvent.click(checkbox);
-      });
-
-      expect(checkbox).toBeChecked();
-
-      const hiddenInputs = document.querySelectorAll('input[type="hidden"]');
-      expect(hiddenInputs.length).toBe(2);
-
-      const hiddenInputValues = Array.from(hiddenInputs).map((input) => input.value);
-      expect(hiddenInputValues.includes(todaysDate)).toBe(true);
-      expect(hiddenInputValues.includes(userId.toString())).toBe(true);
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
 
-    it('shows read only for pocs when pocComplete', async () => {
+    it('shows the save draft button if the session is complete', async () => {
       act(() => {
-        const updatedValues = {
+        render(<RenderNextSteps formValues={{
           ...defaultFormValues,
-          event: { pocIds: [userId] },
-          pocComplete: true,
-          pocCompleteId: userId,
-          pocCompleteDate: todaysDate,
-          specialistNextSteps: [{
-            note: 'Very special note',
-            completeDate: '01/01/2022',
-          }],
-          recipientNextSteps: [{
-            note: 'Other note',
-            completeDate: '01/01/2021',
-          }],
-        };
-
-        render(<RenderNextSteps
-          formValues={updatedValues}
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        }}
         />);
       });
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
-      // confirm read-only
-      const checkbox = screen.queryByRole('checkbox');
-      expect(checkbox).not.toBeInTheDocument();
-      const textareas = document.querySelectorAll('textarea');
-      expect(textareas.length).toBe(0);
-
-      // confirm content
-      expect(await screen.findByText(/very special note/i)).toBeVisible();
-      expect(await screen.findByText('01/01/2022')).toBeVisible();
-      expect(await screen.findByText(/other note/i)).toBeVisible();
-      expect(await screen.findByText('01/01/2021')).toBeVisible();
+      expect(screen.queryByRole('button', { name: /review and submit/i })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
   });
 });

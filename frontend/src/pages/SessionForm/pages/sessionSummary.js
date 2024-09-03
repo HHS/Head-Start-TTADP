@@ -4,7 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
-import { SUPPORT_TYPES } from '@ttahub/common';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -24,11 +24,9 @@ import {
   ErrorMessage,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { Link } from 'react-router-dom';
 import { getTopics } from '../../../fetchers/topics';
 import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
 import selectOptionsReset from '../../../components/selectOptionsReset';
@@ -70,12 +68,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const data = getValues();
 
-  const {
-    eventDisplayId,
-    eventId,
-    eventName,
-    id,
-  } = data;
+  const { id } = data;
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -172,7 +165,7 @@ const SessionSummary = ({ datePickerKey }) => {
     name: 'courses',
     defaultValue: courses || [],
     rules: {
-      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+      validate: (value) => !objectiveUseIpdCourses || (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
     },
   });
 
@@ -241,15 +234,6 @@ const SessionSummary = ({ datePickerKey }) => {
         </title>
       </Helmet>
       <IndicatesRequiredField />
-
-      <ReadOnlyField label="Event ID">
-        <Link to={`/training-report/view/${eventId}`}>{eventDisplayId}</Link>
-        { /** todo - once the event "view" page is created, convert this to a link to that */}
-      </ReadOnlyField>
-
-      <ReadOnlyField label="Event name">
-        {eventName}
-      </ReadOnlyField>
 
       <div className="margin-top-2">
         <FormItem
@@ -670,7 +654,7 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     _reportId,
     isAppLoading,
@@ -679,15 +663,29 @@ export default {
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
-    _onFormSubmit,
+    onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+        {
+          !additionalData.isAdminUser
+            ? (
+              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+            )
+            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        }
+        {
+          // if status is 'Completed' then don't show the save draft button.
+          additionalData
+          && additionalData.status
+          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+
+        }
       </div>
     </div>
   ),
