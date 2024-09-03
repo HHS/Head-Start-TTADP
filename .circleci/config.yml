@@ -208,7 +208,7 @@ commands:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
-                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
@@ -224,7 +224,8 @@ commands:
                 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
                 if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
                   PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                  MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} to <${ENV_URL}|${env_name}> was successful!"
+                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
                   if [ ! -z "${JIRA_URLS}" ]; then
                       MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                   fi
@@ -562,7 +563,7 @@ parameters:
     default: "al-ttahub-3196-new-tr-views"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "kw-test-deploy"
+    default: "kw-escape-quotes-in-pr-title"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
