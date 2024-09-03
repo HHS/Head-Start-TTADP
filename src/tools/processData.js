@@ -289,12 +289,13 @@ const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
 export const hideUsers = async (userIds) => {
   // Prepare the WHERE clause for the query based on the provided user IDs, if any
   const ids = userIds || null;
-  const whereClause = ids ? `WHERE "id" IN (${ids.join(', ')})` : '';
+  const whereClause = ids ? `AND "id" IN (${ids.join(', ')})` : '';
 
   // Query the database to retrieve real user data based on the WHERE clause
   [realUsers] = await sequelize.query(/* sql */`
     SELECT "id", "email", "name"
     FROM "Users"
+    WHERE 1 = 1
     ${whereClause};
   `);
 
