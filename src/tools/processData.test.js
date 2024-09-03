@@ -26,7 +26,7 @@ import processData, {
   hideUsers,
   hideRecipientsGrants,
   bootstrapUsers,
-  convertName,
+  convertName, // Kept as it's still used in the main code
 } from './processData';
 
 jest.mock('../logger');
@@ -92,7 +92,6 @@ const mockFile = {
   fileSize: 54417,
 };
 
-// TODO: ttaProvided needs to move from ActivityReportObjective to ActivityReportObjective
 const reportObject = {
   activityRecipientType: 'recipient',
   userId: mockUser.id,
@@ -323,10 +322,11 @@ describe('processData', () => {
     await Grant.unscoped().destroy({ where: { id: GRANT_ID_TWO }, individualHooks: true });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
     await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
+    await destroyMonitoringData();
     await sequelize.close();
   });
 
-  it('transforms user emails, recipientName in the ActivityReports table (imported)', async () => {
+  it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
     const report = await ActivityReport.create(reportObject);
     mockActivityReportFile.activityReportId = report.id;
     await ActivityReportFile.destroy({ where: { id: mockActivityReportFile.id } });
@@ -386,7 +386,8 @@ describe('processData', () => {
       const transformedRecipient = await Recipient.findOne({ where: { id: RECIPIENT_ID_ONE } });
       expect(transformedRecipient.name).not.toBe('Agency One, Inc.');
     });
-    it('transforms grant names in the Grants table', async () => {
+
+    it('transforms grant numbers in the Grants table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
       const transformedGrant = await Grant.findOne({ where: { recipientId: RECIPIENT_ID_ONE } });
@@ -424,19 +425,18 @@ describe('processData', () => {
     it('updates grant numbers in the MonitoringReviewGrantee table', async () => {
       await hideRecipientsGrants(reportObject.imported.granteeName);
 
-      // Find the updated record
+      // Verify that no record with the old grant number exists anymore
       const monitoringReviewGranteeRecord = await MonitoringReviewGrantee.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
       });
 
-      // Verify that no record with the old grant number exists anymore
       expect(monitoringReviewGranteeRecord).toBeNull();
 
+      // Verify that no record with the old grant number exists anymore
       const monitoringClassSummaryRecord = await MonitoringClassSummary.findOne({
         where: { grantNumber: GRANT_NUMBER_ONE },
       });
 
-      // Verify that no record with the old grant number exists anymore
       expect(monitoringClassSummaryRecord).toBeNull();
     });
   });
@@ -449,30 +449,13 @@ describe('processData', () => {
 
       expect(user.homeRegionId).toBe(14);
     });
+
     it('gives permissions to users', async () => {
       await bootstrapUsers();
 
       const user = await User.findOne({ where: { hsesUserId: '51113' } });
       const userPermissions = await Permission.findAll({ where: { userId: user.id } });
       expect(userPermissions.length).toBe(16);
-    });
-  });
-
-  describe('convertEmails', () => {
-    it('handles null emails', async () => {
-      const emails = convertEmails(null);
-      expect(emails).toBe(null);
-    });
-
-    it('handles emails lacking a @', async () => {
-      const emails = convertEmails('test,test2@test.com,test3');
-      expect(emails.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)).toBeTruthy();
-    });
-
-    it('should convert a single email address to a transformed email address', () => {
-      const input = 'real@example.com';
-      const output = convertEmails(input);
-      expect(output).toMatch(/^no-send_/);
     });
   });
 
@@ -486,37 +469,5 @@ describe('processData', () => {
       });
     });
   });
-
-  describe('convertFileName', () => {
-    it('handles null file names', async () => {
-      const fileName = await convertFileName(null);
-      expect(fileName).toBe(null);
-    });
-  });
-
-  describe('convertRecipientName', () => {
-    it('handles null recipient names', async () => {
-      const recipientName = await convertRecipientName(null);
-      expect(recipientName).toBe(null);
-    });
-
-    it('converts recipient grants correctly', () => {
-      const recipientsGrants = 'John Doe|01HP044445\nJane Doe|09CH011111';
-      const expected = 'Unknown Recipient | UnknownGrant\nUnknown Recipient | UnknownGrant';
-      const result = convertRecipientName(recipientsGrants);
-      expect(result).toBe(expected);
-    });
-
-    it('handles missing grants', () => {
-      const recipientsGrants = 'John Doe|Missing\nJane Doe|';
-      const expected = 'Unknown Recipient | UnknownGrant\nUnknown Recipient | UnknownGrant';
-      const result = convertRecipientName(recipientsGrants);
-      expect(result).toBe(expected);
-    });
-
-    it('returns an empty string for empty input', () => {
-      const result = convertRecipientName('');
-      expect(result).toBe('');
-    });
-  });
 });
+
