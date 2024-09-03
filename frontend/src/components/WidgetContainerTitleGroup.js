@@ -8,6 +8,7 @@ const WidgetContainerTitleGroup = ({
   title,
   showHeaderBorder,
   subtitle,
+  subtitle2,
   className,
   pagination,
   enableCheckboxes,
@@ -39,7 +40,14 @@ const WidgetContainerTitleGroup = ({
       <div className="desktop:display-flex flex-align-center flex-gap-2">
         <div>
           <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">{title}</h2>
-          {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null }
+          {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null }
+          {
+        subtitle2 && (
+        <div>
+          <strong><p className="usa-prose margin-x-0 margin-top-1 margin-bottom-2">{subtitle2}</p></strong>
+        </div>
+        )
+        }
         </div>
         {children}
       </div>
@@ -69,6 +77,7 @@ WidgetContainerTitleGroup.propTypes = {
   children: PropTypes.node,
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  subtitle2: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   className: PropTypes.string,
   pagination: PropTypes.node,
@@ -83,6 +92,7 @@ WidgetContainerTitleGroup.defaultProps = {
   pagination: null,
   title: '',
   subtitle: '',
+  subtitle2: '',
   showHeaderBorder: false,
   className: 'padding-3 ',
   enableCheckboxes: false,

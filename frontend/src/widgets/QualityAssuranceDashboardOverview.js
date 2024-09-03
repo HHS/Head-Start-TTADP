@@ -18,7 +18,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
     data: data.recipientsWithNoTTA.pct,
-    route: 'quality-assurance-details',
+    route: 'recipients-with-no-tta',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
   },
   {
