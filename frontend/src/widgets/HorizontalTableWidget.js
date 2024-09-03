@@ -19,6 +19,7 @@ export default function HorizontalTableWidget(
     enableCheckboxes,
     checkboxes,
     setCheckboxes,
+    showTotalColumn,
   },
 ) {
   // State for select all check box.
@@ -69,11 +70,15 @@ export default function HorizontalTableWidget(
         {url.heading}
       </a>
       {' '}
-      <FontAwesomeIcon
-        color={colors.ttahubBlue}
-        icon={faArrowUpRightFromSquare}
-        size="xs"
-      />
+      {
+        !url.hideLinkIcon && (
+        <FontAwesomeIcon
+          color={colors.ttahubBlue}
+          icon={faArrowUpRightFromSquare}
+          size="xs"
+        />
+        )
+    }
     </>
   );
 
@@ -141,14 +146,16 @@ export default function HorizontalTableWidget(
               : <th key={h.replace(' ', '_')} scope="col" className="text-left data-header">{h}</th>))
             }
             {
-            enableSorting
-              ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
-              : (
-                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
-                  {lastHeading}
-                </th>
-              )
-}
+            showTotalColumn && (
+              enableSorting
+                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+                : (
+                  <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
+                    {lastHeading}
+                  </th>
+                )
+            )
+            }
           </tr>
         </thead>
         <tbody>
@@ -169,7 +176,7 @@ export default function HorizontalTableWidget(
                       : r.heading
                       }
                 </td>
-                {r.data.map((d, cellIndex) => (
+                {(r.data || []).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {d.value}
                   </td>
@@ -206,6 +213,7 @@ HorizontalTableWidget.propTypes = {
   enableCheckboxes: PropTypes.bool,
   checkboxes: PropTypes.shape({}),
   setCheckboxes: PropTypes.func,
+  showTotalColumn: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -222,4 +230,5 @@ HorizontalTableWidget.defaultProps = {
   enableCheckboxes: false,
   checkboxes: {},
   setCheckboxes: () => {},
+  showTotalColumn: true,
 };

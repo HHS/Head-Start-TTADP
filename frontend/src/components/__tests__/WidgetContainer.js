@@ -16,6 +16,7 @@ const renderWidgetContainer = (
   enableCheckboxes = false,
   exportRows = () => {},
   footNote = null,
+  subtitle2 = null,
 ) => {
   render(
     <>
@@ -35,6 +36,7 @@ const renderWidgetContainer = (
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
         footNote={footNote}
+        subtitle2={subtitle2}
       >
         This widget has been contained.
       </WidgetContainer>
@@ -110,5 +112,10 @@ describe('Widget Container', () => {
   it('renders foot note', async () => {
     renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
     expect(screen.getByText(/There are many footnotes but this one is mine./i)).toBeInTheDocument();
+  });
+
+  it('displays subtitle2', async () => {
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, () => {}, null, false, false, () => {}, null, 'Subtitle 2');
+    expect(screen.getByText(/Subtitle 2/i)).toBeInTheDocument();
   });
 });

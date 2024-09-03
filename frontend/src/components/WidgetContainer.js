@@ -11,6 +11,7 @@ export default function WidgetContainer(
   {
     title,
     subtitle,
+    subtitle2,
     children,
     showPagingBottom,
     showPagingTop,
@@ -38,6 +39,7 @@ export default function WidgetContainer(
         className="padding-x-3"
         title={title}
         subtitle={subtitle}
+        subtitle2={subtitle2}
         showHeaderBorder={showHeaderBorder}
         displayTable={displayTable}
         setDisplayTable={setDisplayTable}
@@ -91,6 +93,7 @@ export default function WidgetContainer(
 WidgetContainer.propTypes = {
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  subtitle2: PropTypes.string,
   children: PropTypes.node,
   showPagingBottom: PropTypes.bool,
   showPagingTop: PropTypes.bool,
@@ -116,6 +119,7 @@ WidgetContainer.defaultProps = {
   children: <></>,
   title: null,
   subtitle: null,
+  subtitle2: null,
   showPagingBottom: false,
   showPagingTop: false,
   totalCount: 0,
