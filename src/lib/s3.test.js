@@ -117,8 +117,10 @@ describe('verifyVersioning', () => {
   let mockPut;
 
   beforeEach(() => {
-    mockGet = S3().getBucketVersioning.mockImplementation(async () => mockVersioningData);
-    mockPut = S3().putBucketVersioning.mockImplementation(async (params) => new Promise((res) => {
+    s3.getBucketVersioning = jest.fn();
+    s3.putBucketVersioning = jest.fn();
+    mockGet = s3.getBucketVersioning.mockImplementation(async () => mockVersioningData);
+    mockPut = s3.putBucketVersioning.mockImplementation(async (params) => new Promise((res) => {
       res(params);
     }));
     mockGet.mockClear();
@@ -126,7 +128,7 @@ describe('verifyVersioning', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    jest.resetAllMocks();
   });
 
   it('throws an error if S3 is not configured', async () => {
@@ -169,6 +171,8 @@ describe('uploadFile', () => {
   let mockGet;
 
   beforeEach(() => {
+    s3.upload = jest.fn();
+    s3.getBucketVersioning = jest.fn();
     mockUpload = s3.upload.mockImplementation(() => promise);
     mockGet = s3.getBucketVersioning.mockImplementation(async () => mockVersioningData);
   });
@@ -196,6 +200,7 @@ describe('getPresignedURL', () => {
   let mockGetURL;
 
   beforeEach(() => {
+    s3.getSignedUrl = jest.fn();
     mockGetURL = s3.getSignedUrl.mockImplementation(() => 'https://example.com');
   });
 
@@ -227,6 +232,7 @@ describe('s3Uploader.deleteFileFromS3', () => {
   let mockDeleteObject;
 
   beforeEach(() => {
+    s3.deleteObject = jest.fn();
     mockDeleteObject = s3.deleteObject.mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
   });
 
@@ -257,6 +263,7 @@ describe('s3Uploader.deleteFileFromS3Job', () => {
   let mockDeleteObject;
 
   beforeEach(() => {
+    s3.deleteObject = jest.fn();
     mockDeleteObject = s3.deleteObject.mockImplementation(() => ({
       promise: () => Promise.resolve({ status: 200, data: {} }),
     }));
