@@ -226,7 +226,10 @@ export default function TrainingReportForm({ match }) {
 
       // PUT it to the backend
       const updatedEvent = await updateEvent(trainingReportId, {
-        data,
+        data: {
+          ...data,
+          eventSubmitted: true,
+        },
         ownerId: ownerId || null,
         pocIds: pocIds || null,
         collaboratorIds,
