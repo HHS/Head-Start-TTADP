@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import Loader from '../components/Loader';
 import { OverviewWidgetField } from './OverviewWidgetField';
-import './DashboardOverviewContainer.scss';
 
 const renderDashboardField = (fieldData) => (
   <OverviewWidgetField
@@ -29,7 +28,7 @@ export function DashboardOverviewContainer({
   fieldData, loading,
 }) {
   return (
-    <Grid row className="smart-hub--dashboard-overview-container margin-bottom-3 position-relative">
+    <Grid row className="smart-hub--dashboard-overview-container margin-bottom-3 position-relative flex-gap-2">
       <Loader loading={loading} loadingLabel="Resources Overview loading" />
       {
         fieldData.map(
