@@ -13,15 +13,26 @@ export default function useSubFilters(
     filters.filter((filter) => allowedFilters.includes(filter.topic)),
   );
 
-  // eslint-disable-next-line max-len
-  const filteredFilterConfig = useMemo(() => filterConfig.filter((filter) => allowedFilters.includes(filter.id)), [allowedFilters, filterConfig]);
+  const filteredFilterConfig = useMemo(() => {
+    if (!allowedFilters || allowedFilters.length === 0) {
+      return filterConfig;
+    }
+    return filterConfig.filter((filter) => allowedFilters.includes(filter.id));
+  }, [allowedFilters, filterConfig]);
 
   useEffect(() => {
+    // save our energy if there are no allowed filters
+    if (!allowedFilters || allowedFilters.length === 0) {
+      return;
+    }
     setSubFilters(filters.filter((filter) => allowedFilters.includes(filter.topic)));
   }, [allowedFilters, filters]);
 
   if (!allowedFilters || allowedFilters.length === 0) {
-    return { subFilters: filters, filteredFilterConfig: filterConfig };
+    return {
+      subFilters: filters,
+      filteredFilterConfig,
+    };
   }
 
   return {
