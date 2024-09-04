@@ -24,11 +24,11 @@ export function OverviewWidgetField({
   filterApplicable,
   iconSize,
 }) {
-  const smallIconClass = iconSize === 'sm' ? 'smart-hub--dashboard-overview-widget-field-icon-background-sm' : 'smart-hub--dashboard-overview-widget-field-icon-background-lg';
+  const smallIconClass = iconSize === 'sm' ? 'smart-hub--dashboard-overview-widget-field-icon__background-sm' : 'smart-hub--dashboard-overview-widget-field-icon__background-lg';
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
+    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-y-2 padding-x-1">
       <span className="smart-hub--dashboard-overview-widget-field-icon flex-1 display-flex flex-justify-center flex-align-center">
-        <span className={`${smallIconClass} display-flex flex-justify-center flex-align-center`} style={{ backgroundColor }}>
+        <span className={`${smallIconClass} smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center`} style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} size={iconSize} />
         </span>
       </span>
