@@ -28,7 +28,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
     data: data.recipientsWithOhsStandardFeiGoals.pct,
-    route: 'quality-assurance-details',
+    route: 'qaquality-assurance-details',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
   },
   {
