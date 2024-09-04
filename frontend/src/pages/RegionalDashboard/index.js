@@ -67,6 +67,7 @@ export default function RegionalDashboard({ match }) {
     regions,
     defaultRegion,
     allRegionsFilters,
+    userHasOnlyOneRegion,
 
     // filter functionality
     filters,
@@ -78,8 +79,6 @@ export default function RegionalDashboard({ match }) {
     filterKey,
     true,
   );
-
-  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
 
   const {
     h1Text,

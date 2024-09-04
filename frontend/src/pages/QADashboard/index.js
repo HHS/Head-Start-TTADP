@@ -9,9 +9,9 @@ import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
 import { regionFilter } from '../../components/filter/activityReportFilters';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
-import { DASHBOARD_FILTER_CONFIG } from '../RegionalDashboard/constants';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
+import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants';
 
 export default function QADashboard() {
   const { user } = useContext(UserContext);
@@ -19,6 +19,7 @@ export default function QADashboard() {
   const {
     // from useUserDefaultRegionFilters
     regions,
+    userHasOnlyOneRegion,
     // defaultRegion,
     // allRegionsFilters,
 
@@ -29,14 +30,12 @@ export default function QADashboard() {
     onRemoveFilter,
   } = useFilters(
     user,
-    'qa-dashboard',
+    QA_DASHBOARD_FILTER_KEY,
     true,
   );
 
-  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
-
   const filtersToUse = useMemo(() => {
-    const filterConfig = [...DASHBOARD_FILTER_CONFIG];
+    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
 
     if (!userHasOnlyOneRegion) {
       filterConfig.push(regionFilter);

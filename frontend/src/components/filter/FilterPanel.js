@@ -4,6 +4,7 @@ import { isArray } from 'lodash';
 import FilterMenu from './FilterMenu';
 import FilterPills from './FilterPills';
 import { filterConfigProp, filterProp } from './props';
+import useSubFilters from '../../hooks/useSubFilters';
 
 export default function FilterPanel({
   onRemoveFilter,
@@ -13,8 +14,10 @@ export default function FilterPanel({
   applyButtonAria,
   allUserRegions,
   manageRegions,
+  allowedSubfilters,
 }) {
   const [filtersToShow, setFiltersToShow] = useState([]);
+  const subFilters = useSubFilters(filtersToShow, allowedSubfilters);
 
   useEffect(() => {
     // Determine if filters contain all regions.
@@ -60,14 +63,14 @@ export default function FilterPanel({
   return (
     <>
       <FilterMenu
-        filters={filtersToShow}
+        filters={subFilters}
         onApplyFilters={onApply}
         applyButtonAria={applyButtonAria}
         filterConfig={filterConfig}
       />
       <FilterPills
         filterConfig={filterConfig}
-        filters={filtersToShow}
+        filters={subFilters}
         onRemoveFilter={onRemoveFilterPill}
       />
     </>
@@ -82,8 +85,10 @@ FilterPanel.propTypes = {
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
   allUserRegions: PropTypes.arrayOf(PropTypes.number).isRequired,
   manageRegions: PropTypes.bool,
+  allowedSubfilters: PropTypes.arrayOf(PropTypes.string),
 };
 
 FilterPanel.defaultProps = {
   manageRegions: true,
+  allowedSubfilters: [],
 };

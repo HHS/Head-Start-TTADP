@@ -1,7 +1,9 @@
 /* eslint-disable no-alert */
 /* eslint-disable no-console */
 import React, {
+  useContext,
   useState,
+  useMemo,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,10 +13,53 @@ import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
+import { regionFilter } from '../../../components/filter/activityReportFilters';
+import FilterPanel from '../../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
+import useFilters from '../../../hooks/useFilters';
 import './index.scss';
+import UserContext from '../../../UserContext';
+import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
+
+const ALLOWED_SUBFILTERS = [
+  'region',
+  'startDate',
+  'endDate',
+  'grantNumber',
+  'recipient',
+  'stateCode',
+];
 
 export default function RecipientsWithNoTta() {
   const [error] = useState();
+  const { user } = useContext(UserContext);
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+    userHasOnlyOneRegion,
+    // defaultRegion,
+    // allRegionsFilters,
+
+    // filter functionality
+    filters,
+    // setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
+    QA_DASHBOARD_FILTER_KEY,
+    true,
+  );
+
+  const filtersToUse = useMemo(() => {
+    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
+
+    if (!userHasOnlyOneRegion) {
+      filterConfig.push(regionFilter);
+    }
+
+    return filterConfig;
+  }, [userHasOnlyOneRegion]);
 
   return (
     <div className="ttahub-recipients-with-no-tta">
@@ -22,7 +67,7 @@ export default function RecipientsWithNoTta() {
         <title>Recipients with no TTA</title>
       </Helmet>
       <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="resources-dashboard">
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="qa-dashboard">
         Back to Quality Assurance Dashboard
       </Link>
       <h1 className="landing margin-top-0">
@@ -35,6 +80,17 @@ export default function RecipientsWithNoTta() {
         </Alert>
         )}
       </Grid>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for QA dashboard"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filtersToUse}
+          allUserRegions={regions}
+          allowedSubfilters={ALLOWED_SUBFILTERS}
+        />
+      </FilterPanelContainer>
       <RecipientsWithNoTtaWidget
         data={{
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
