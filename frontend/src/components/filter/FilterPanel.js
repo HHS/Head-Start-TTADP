@@ -17,7 +17,10 @@ export default function FilterPanel({
   allowedSubfilters,
 }) {
   const [filtersToShow, setFiltersToShow] = useState([]);
-  const subFilters = useSubFilters(filtersToShow, allowedSubfilters);
+  const {
+    subFilters,
+    filteredFilterConfig,
+  } = useSubFilters(filtersToShow, filterConfig, allowedSubfilters);
 
   useEffect(() => {
     // Determine if filters contain all regions.
@@ -66,10 +69,10 @@ export default function FilterPanel({
         filters={subFilters}
         onApplyFilters={onApply}
         applyButtonAria={applyButtonAria}
-        filterConfig={filterConfig}
+        filterConfig={filteredFilterConfig}
       />
       <FilterPills
-        filterConfig={filterConfig}
+        filterConfig={filteredFilterConfig}
         filters={subFilters}
         onRemoveFilter={onRemoveFilterPill}
       />
