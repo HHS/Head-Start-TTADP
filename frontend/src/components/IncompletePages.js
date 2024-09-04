@@ -5,13 +5,14 @@ import { Alert } from '@trussworks/react-uswds';
 import './IncompletePages.css';
 
 const IncompletePages = ({
+  type,
   incompletePages,
 }) => (
   <Alert className="smart-hub--incomplete-notice" validation noIcon slim type="error">
-    <b>Incomplete report</b>
+    <b>{`Incomplete ${type}`}</b>
     <br />
-    This report cannot be submitted until all sections are complete.
-    Please review the following sections:
+    {`This ${type} cannot be submitted until all sections are complete.
+    Please review the following sections:`}
     <ul>
       {incompletePages.map((page) => (
         <li key={page}>
@@ -23,7 +24,12 @@ const IncompletePages = ({
 );
 
 IncompletePages.propTypes = {
+  type: PropTypes.string,
   incompletePages: PropTypes.arrayOf(PropTypes.string).isRequired,
+};
+
+IncompletePages.defaultProps = {
+  type: 'report',
 };
 
 export default IncompletePages;
