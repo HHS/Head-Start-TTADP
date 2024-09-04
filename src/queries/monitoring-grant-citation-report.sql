@@ -1,25 +1,263 @@
 /**
-* @name: Monitoring Grant Citation Report
-* @description: Retrieves monitoring report data based on various filters for compliance and audit purposes.
-* @defaultOutputName: monitoring_grant_citation_report
-* @technicalDescription: This query extracts monitoring report details including region, grant number, report delivery date, finding type, and citations, filtered by several parameters such as report delivery date, review outcomes, review types, finding reported date, and others.
-*
-* The query results are filterable by the following SSDI flags, which are passed as an array of values:
-* - ssdi.regionIds - integer[] - One or more values for 1 through 12
-* - ssdi.reportDeliveryDate - date[] - Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.reviewOutcomes - string[] - One or more review outcomes
-* - ssdi.reviewTypes - string[] - One or more review types
-* - ssdi.findingReportedDate - date[] - Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.findingStatuses - string[] - One or more finding statuses
-* - ssdi.findingTypes - string[] - One or more finding types
-* - ssdi.citations - string[] - One or more citations
-* - ssdi.grantNumbers - string[] - One or more grant numbers
-* - ssdi.recipients - string[] - One or more recipient names
-* - ssdi.uei - string[] - One or more UEI values
-*
-* Zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set an SSDI flag:
-* SELECT SET_CONFIG('ssdi.reportDeliveryDate', '["2023-01-01", "2023-12-31"]', TRUE);
+JSON: {
+  name: "Monitoring Grant Citation Report",
+  description: {
+    standard: "Retrieves monitoring report data based on various filters for compliance and audit purposes.",
+    technical: "This query extracts monitoring report details including region, grant number, report delivery date, finding type, and citations, filtered by several parameters such as report delivery date, review outcomes, review types, finding reported date, and others."
+  },
+  output: {
+    defaultName: "monitoring_grant_citation_report",
+    schema: [
+      {
+        columnName: "regionId",
+        type: "integer",
+        nullable: false,
+        description: "The region ID associated with the grant."
+      },
+      {
+        columnName: "number",
+        type: "string",
+        nullable: false,
+        description: "The grant number."
+      },
+      {
+        columnName: "reportDeliveryDate",
+        type: "date",
+        nullable: true,
+        description: "The date when the review was delivered."
+      },
+      {
+        columnName: "reviewType",
+        type: "string",
+        nullable: true,
+        description: "The type of review."
+      },
+      {
+        columnName: "findingType",
+        type: "string",
+        nullable: true,
+        description: "The type of finding in the review."
+      },
+      {
+        columnName: "citation",
+        type: "string",
+        nullable: true,
+        description: "The specific citation related to the finding."
+      }
+    ]
+  },
+  filters: [
+    {
+      name: "regionIds",
+      type: "integer[]",
+      description: "One or more values for 1 through 12",
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT name::int name
+            FROM \"Regions\"
+            WHERE name ~ E'^\\d+$'
+            -- Filter for regionIds if ssdi.regionIds is defined
+            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+              OR name::int in (
+                  SELECT
+                      value::integer AS my_array
+                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+              ))
+            ORDER BY name;
+          ",
+          column: "outcome"
+        }
+      }
+    },
+    {
+      name: "reportDeliveryDate",
+      type: "date[]",
+      description: "Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      supportsExclusion: true
+    },
+    {
+      name: "reviewOutcomes",
+      type: "string[]",
+      description: "One or more review outcomes. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT outcome
+            FROM \"MonitoringReviews\"
+            WHERE outcome IS NOT NULL
+            AND \"reportDeliveryDate\" > '2023-01-01'
+            ORDER BY outcome;
+          ",
+          column: "outcome"
+        }
+      }
+    },
+    {
+      name: "reviewTypes",
+      type: "string[]",
+      description: "One or more review types. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT \"reviewType\"
+            FROM \"MonitoringReviews\"
+            WHERE \"reviewType\" IS NOT NULL
+            AND \"reportDeliveryDate\" > '2023-01-01'
+            ORDER BY \"reviewType\";
+          ",
+          column: "reviewType"
+        }
+      }
+    },
+    {
+      name: "findingReportedDate",
+      type: "date[]",
+      description: "Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      supportsExclusion: true
+    },
+    {
+      name: "findingStatuses",
+      type: "string[]",
+      description: "One or more finding statuses. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT name
+            FROM \"MonitoringFindingStatuses\"
+            ORDER BY name;
+          ",
+          column: "name"
+        }
+      }
+    },
+    {
+      name: "findingTypes",
+      type: "string[]",
+      description: "One or more finding types. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT \"findingType\"
+            FROM \"MonitoringFindings\"
+            WHERE \"findingType\" IS NOT NULL
+            ORDER BY \"findingType\";
+          ",
+          column: "findingType"
+        }
+      }
+    },
+    {
+      name: "citations",
+      type: "string[]",
+      description: "One or more citations. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      supportsFuzzyMatch: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT citation
+            FROM \"MonitoringStandards\"
+            WHERE citation IS NOT NULL
+            ORDER BY citation;
+          ",
+          column: "citation"
+        }
+      }
+    },
+    {
+      name: "grantNumbers",
+      type: "string[]",
+      description: "One or more grant numbers. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      supportsFuzzyMatch: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT number
+            FROM \"Grants\"
+            WHERE status = 'Active'
+            -- Filter for regionIds if ssdi.regionIds is defined
+            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+              OR \"regionId\" in (
+                  SELECT
+                      value::integer AS my_array
+                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+              ))
+            ORDER BY number;
+          ",
+          column: "number"
+        }
+      }
+    },
+    {
+      name: "recipients",
+      type: "string[]",
+      description: "One or more recipient names. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      supportsFuzzyMatch: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT r.name
+            FROM "Recipients" r
+            JOIN "Grants" gr
+            ON r.id = gr."recipientId"
+            WHERE gr.status = 'Active'
+            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+              OR gr."regionId"::int in (
+                  SELECT
+                      value::integer AS my_array
+                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+              ))
+            ORDER BY r.name;
+          ",
+          column: "name"
+        }
+      }
+    },
+    {
+      name: "uei",
+      type: "string[]",
+      description: "One or more UEI values. If no values are supplied, this filter is ignored.",
+      supportsExclusion: true,
+      supportsFuzzyMatch: true,
+      options: {
+        query: {
+          sqlQuery: "
+            SELECT DISTINCT r.uei
+            FROM "Recipients" r
+            JOIN "Grants" gr
+            ON r.id = gr."recipientId"
+            WHERE gr.status = 'Active'
+            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+              OR gr."regionId"::int in (
+                  SELECT
+                      value::integer AS my_array
+                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+              ))
+            ORDER BY r.uei;
+          ",
+          column: "uei"
+        }
+      }
+    }
+  ],
+  sorting: {
+    default: [
+      { level: 1, name: "regionId", order: "ASC" }
+      { level: 2, name: "number", order: "ASC" }
+      { level: 3, name: "reportDeliveryDate", order: "ASC" }
+    ]
+  },
+  customSortingSupported: false,
+  paginationSupported: false,
+  exampleUsage: `SELECT SET_CONFIG('ssdi.reportDeliveryDate', '["2023-01-01", "2023-12-31"]', TRUE);`
+}
 */
 SELECT DISTINCT
     gr."regionId",
@@ -49,8 +287,11 @@ JOIN "MonitoringFindingStatuses" mfs2
     ON mf."statusId" = mfs2."statusId"
 WHERE mrs.name = 'Complete'
 -- Filter for reportDeliveryDate dates between two values if ssdi.reportDeliveryDate is defined
-AND (NULLIF(current_setting('ssdi.reportDeliveryDate', true), '') IS NULL
-    OR mr."reportDeliveryDate"::date <@ (
+AND (
+  NULLIF(current_setting('ssdi.reportDeliveryDate', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.reportDeliveryDate.not', true) = 'true'
+      AND NOT mr."reportDeliveryDate"::date <@ (
         SELECT
             CONCAT(
                 '[',
@@ -59,25 +300,82 @@ AND (NULLIF(current_setting('ssdi.reportDeliveryDate', true), '') IS NULL
                 COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
                 ')'
             )::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.reportDeliveryDate', true), ''),'[]')::json) AS value
-    ))
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reportDeliveryDate', true), ''), '[]')::json
+        ) AS value
+      )
+    )
+    OR (current_setting('ssdi.reportDeliveryDate.not', true) != 'true'
+      AND mr."reportDeliveryDate"::date <@ (
+        SELECT
+            CONCAT(
+                '[',
+                MIN(value::timestamp),
+                ',',
+                COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
+                ')'
+            )::daterange AS my_array
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reportDeliveryDate', true), ''), '[]')::json
+        ) AS value
+      )
+    )
+  )
+)
 -- Filter for review outcome if ssdi.reviewOutcomes is defined
-AND (NULLIF(current_setting('ssdi.reviewOutcomes', true), '') IS NULL
-    OR mr."outcome" in (
+AND (
+  NULLIF(current_setting('ssdi.reviewOutcomes', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.reviewOutcomes.not', true) = 'true'
+      AND mr."outcome" NOT IN (
         SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.reviewOutcomes', true), ''),'[]')::json) AS value
-    ))
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reviewOutcomes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+    OR (current_setting('ssdi.reviewOutcomes.not', true) != 'true'
+      AND mr."outcome" IN (
+        SELECT
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reviewOutcomes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+  )
+)
 -- Filter for reviewType if ssdi.reviewTypes is defined
-AND (NULLIF(current_setting('ssdi.reviewTypes', true), '') IS NULL
-    OR mr."reviewType" in (
+AND (
+  NULLIF(current_setting('ssdi.reviewTypes', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.reviewTypes.not', true) = 'true'
+      AND mr."reviewType" NOT IN (
         SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.reviewTypes', true), ''),'[]')::json) AS value
-    ))
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reviewTypes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+    OR (current_setting('ssdi.reviewTypes.not', true) != 'true'
+      AND mr."reviewType" IN (
+        SELECT
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.reviewTypes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+  )
+)
 -- Filter for finding reportedDate dates between two values if ssdi.findingReportedDate is defined
-AND (NULLIF(current_setting('ssdi.findingReportedDate', true), '') IS NULL
-    OR mf."reportedDate"::date <@ (
+AND (
+  NULLIF(current_setting('ssdi.findingReportedDate', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.findingReportedDate.not', true) = 'true'
+      AND NOT mf."reportedDate"::date <@ (
         SELECT
             CONCAT(
                 '[',
@@ -86,55 +384,183 @@ AND (NULLIF(current_setting('ssdi.findingReportedDate', true), '') IS NULL
                 COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
                 ')'
             )::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.findingReportedDate', true), ''),'[]')::json) AS value
-    ))
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingReportedDate', true), ''), '[]')::json
+        ) AS value
+      )
+    )
+    OR (current_setting('ssdi.findingReportedDate.not', true) != 'true'
+      AND mf."reportedDate"::date <@ (
+        SELECT
+            CONCAT(
+                '[',
+                MIN(value::timestamp),
+                ',',
+                COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
+                ')'
+            )::daterange AS my_array
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingReportedDate', true), ''), '[]')::json
+        ) AS value
+      )
+    )
+  )
+)
 -- Filter for findingStatus if ssdi.findingStatuses is defined
-AND (NULLIF(current_setting('ssdi.findingStatuses', true), '') IS NULL
-    OR mfs2."name" in (
+AND (
+  NULLIF(current_setting('ssdi.findingStatuses', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.findingStatuses.not', true) = 'true'
+      AND mfs2."name" NOT IN (
         SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.findingStatuses', true), ''),'[]')::json) AS value
-    ))
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingStatuses', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+    OR (current_setting('ssdi.findingStatuses.not', true) != 'true'
+      AND mfs2."name" IN (
+        SELECT
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingStatuses', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+  )
+)
 -- Filter for findingType if ssdi.findingTypes is defined
-AND (NULLIF(current_setting('ssdi.findingTypes', true), '') IS NULL
-    OR mf."findingType" in (
+AND (
+  NULLIF(current_setting('ssdi.findingTypes', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.findingTypes.not', true) = 'true'
+      AND mf."findingType" NOT IN (
         SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.findingTypes', true), ''),'[]')::json) AS value
-    ))
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingTypes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+    OR (current_setting('ssdi.findingTypes.not', true) != 'true'
+      AND mf."findingType" IN (
+        SELECT
+          value::text
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.findingTypes', true), '[]')::json, '[]'::json)
+        )
+      )
+    )
+  )
+)
 -- Filter for citations if ssdi.citations is defined
-AND (NULLIF(current_setting('ssdi.citations', true), '') IS NULL
-    OR ms."citation" in (
-        SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.citations', true), ''),'[]')::json) AS value
-    ))
+AND (
+  NULLIF(current_setting('ssdi.citations', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.citations.not', true) = 'true'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.citations', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE ms."citation" ~* value::text
+      )
+    )
+    OR (current_setting('ssdi.citations.not', true) != 'true'
+      AND EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.citations', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE ms."citation" ~* value::text
+      )
+    )
+  )
+)
 -- Filter for regionIds if ssdi.regionIds is defined
-AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-    OR gr."regionId" in (
-        SELECT
-            value::integer AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-    ))
+AND (
+  NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+  OR (
+    gr."regionId" IN (
+      SELECT
+        value::integer
+      FROM json_array_elements_text(
+        COALESCE(NULLIF(current_setting('ssdi.regionIds', true), '[]')::json, '[]'::json)
+      )
+    )
+  )
+)
 -- Filter for grantNumbers if ssdi.grantNumbers is defined
-AND (NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
-    OR gr.number in (
-        SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
-    ))
+AND (
+  NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.grantNumbers.not', true) = 'true'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE gr.number ~* value::text
+      )
+    )
+    OR (current_setting('ssdi.grantNumbers.not', true) != 'true'
+      AND EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE gr.number ~* value::text
+      )
+    )
+  )
+)
 -- Filter for recipients if ssdi.recipients is defined
-AND (NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
-    OR r.name in (
-        SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
-    ))
+AND (
+  NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.recipients.not', true) = 'true'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.recipients', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE r.name ~* value::text
+      )
+    )
+    OR (current_setting('ssdi.recipients.not', true) != 'true'
+      AND EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.recipients', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE r.name ~* value::text
+      )
+    )
+  )
+)
 -- Filter for UEI if ssdi.uei is defined
-AND (NULLIF(current_setting('ssdi.uei', true), '') IS NULL
-    OR r.uei in (
-        SELECT
-            value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.uei', true), ''),'[]')::json) AS value
-    ))
+AND (
+  NULLIF(current_setting('ssdi.uei', true), '') IS NULL
+  OR (
+    (current_setting('ssdi.uei.not', true) = 'true'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.uei', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE r.uei ~* value::text
+      )
+    )
+    OR (current_setting('ssdi.uei.not', true) != 'true'
+      AND EXISTS (
+        SELECT 1
+        FROM json_array_elements_text(
+          COALESCE(NULLIF(current_setting('ssdi.uei', true), '[]')::json, '[]'::json)
+        ) AS value
+        WHERE r.uei ~* value::text
+      )
+    )
+  )
+)
 ORDER BY 1,2,3;
