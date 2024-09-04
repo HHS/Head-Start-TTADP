@@ -4,8 +4,8 @@ import React, {
   useState,
 } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
@@ -118,7 +118,7 @@ export default function RegionalDashboard({ match }) {
         {h1Text}
       </h1>
       {showFilters && (
-      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+      <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
           filters={filters}
@@ -127,7 +127,7 @@ export default function RegionalDashboard({ match }) {
           filterConfig={filtersToUse}
           allUserRegions={regions}
         />
-      </Grid>
+      </FilterPanelContainer>
       )}
       <Dashboard
         reportType={reportType}
