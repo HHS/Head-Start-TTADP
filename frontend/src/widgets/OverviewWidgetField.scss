@@ -7,23 +7,11 @@
 .smart-hub--dashboard-overview-widget-field-icon {
     border-radius: 50%;
   }
-  .smart-hub--dashboard-overview-widget-field-icon__background-lg {
-      height: 5em;
-      width: 5em;
-  }
+
   .smart-hub--dashboard-overview-widget-field-icon__background-sm {
       height: 3em;
       width: 3em;
 }
-
-.smart-hub--overview-widget-field-font-size {
-    font-size: 15px;
-}
-
-.smart-hub--overview-widget-field-data-font-size {
-    font-size: 19px;
-}
-
 
 .smart-hub--dashboard-overview-widget-field .smart-hub--ellipsis {
     max-width: 200px;
@@ -44,8 +32,6 @@
 
 // Horizontally align the question mark with the tool tip button.
 .smart-hub--dashboard-overview-widget-field-label .usa-tooltip svg {
-    margin-left: 0px;
-    // For accessibility must be 24px.
     height: 1.3em;
     width: 1.3em;
 }
