@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../AriaLiveContext';
@@ -56,9 +56,12 @@ export default function useFilters(
     }
   };
 
+  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
+
   return {
     // from useUserDefaultRegionFilters
     regions,
+    userHasOnlyOneRegion,
     defaultRegion,
     hasMultipleRegions,
     allRegionsFilters,

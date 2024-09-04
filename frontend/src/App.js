@@ -325,24 +325,6 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/qa-dashboard/recipients-with-no-tta"
-          render={() => (
-            <FeatureFlag
-              renderNotFound
-              flag="quality_assurance_dashboard"
-            >
-              <AppWrapper
-                authenticated
-                logout={logout}
-                hasAlerts={!!(alert)}
-              >
-                <QADashboard />
-              </AppWrapper>
-            </FeatureFlag>
-          )}
-        />
-        <Route
-          exact
           path="/dashboards/qa-dashboard"
           render={() => (
             <FeatureFlag
