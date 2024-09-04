@@ -2,7 +2,7 @@
 /* eslint-disable global-require */
 const { Op } = require('sequelize');
 const httpContext = require('express-http-context');
-const { TRAINING_REPORT_STATUSES, GOAL_SOURCES } = require('@ttahub/common');
+const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
@@ -24,37 +24,6 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
 
   if (event) {
     throw new Error('Cannot update session report on a completed event');
-  }
-};
-
-const notifyPocIfSessionComplete = async (sequelize, instance, options) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || null;
-      const current = JSON.parse(instance.data.val) || null;
-      if (!current || !previous) return;
-
-      if (
-        current.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        const { EventReportPilot } = sequelize.models;
-
-        const event = await EventReportPilot.findOne({
-          where: {
-            id: instance.eventId,
-          },
-          transaction: options.transaction,
-        });
-
-        if (event) {
-          const { trSessionCompleted } = require('../../lib/mailer');
-          await trSessionCompleted(event.dataValues);
-        }
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyPocIfSessionComplete: ${err}`);
   }
 };
 
@@ -100,35 +69,10 @@ const notifySessionCreated = async (sequelize, instance, options) => {
 
     if (event) {
       const { trSessionCreated } = require('../../lib/mailer');
-      await trSessionCreated(event.dataValues);
+      await trSessionCreated(event.dataValues, instance.id);
     }
   } catch (err) {
     auditLogger.error(`Error in notifySessionCreated: ${err}`);
-  }
-};
-
-const participantsAndNextStepsComplete = async (sequelize, instance, options) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed() && instance.changed().includes('data')) {
-      const previous = instance.previous('data') || {};
-      const current = JSON.parse(instance.data.val) || {};
-
-      if (
-        current.pocComplete && !previous.pocComplete) {
-        const event = await sequelize.models.EventReportPilot.findOne({
-          where: {
-            id: instance.eventId,
-          },
-          transaction: options.transaction,
-        });
-
-        const { trPocSessionComplete } = require('../../lib/mailer');
-        await trPocSessionComplete(event);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in participantsAndNextStepsComplete: ${err}`);
   }
 };
 
@@ -212,6 +156,38 @@ export const syncGoalCollaborators = async (sequelize, eventRecord, goalId, sess
   }
 };
 
+export const checkIfBothIstAndPocAreComplete = async (sequelize, instance, options) => {
+  try {
+    if (instance.changed() && instance.changed().includes('data')) {
+      const previous = instance.previous('data') || null;
+      const current = JSON.parse(instance.data.val) || null;
+
+      // Get vars in case they are not present.
+      const currentOwnerComplete = current.ownerComplete || false;
+      const currentPocComplete = current.pocComplete || false;
+      const previousOwnerComplete = previous.ownerComplete || false;
+      const previousPocComplete = previous.pocComplete || false;
+
+      if ((currentOwnerComplete && currentPocComplete)
+        && (!previousOwnerComplete || !previousPocComplete)) {
+        sequelize.models.SessionReportPilot.update({
+          data: {
+            ...current,
+            status: TRAINING_REPORT_STATUSES.COMPLETE,
+          },
+        }, {
+          where: {
+            id: instance.id,
+          },
+          transaction: options.transaction,
+        });
+      }
+    }
+  } catch (err) {
+    auditLogger.error(`Error in checkIfBothIstAndPocAreComplete: ${err}`);
+  }
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
   await notifySessionCreated(sequelize, instance, options);
@@ -219,8 +195,7 @@ const afterCreate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await setAssociatedEventToInProgress(sequelize, instance, options);
-  await notifyPocIfSessionComplete(sequelize, instance, options);
-  await participantsAndNextStepsComplete(sequelize, instance, options);
+  await checkIfBothIstAndPocAreComplete(sequelize, instance, options);
 };
 
 const beforeCreate = async (sequelize, instance, options) => {
