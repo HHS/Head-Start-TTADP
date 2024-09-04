@@ -5,6 +5,7 @@ import { userById } from '../../../services/users';
 import {
   FlagValues,
   listQueryFiles,
+  readFiltersFromFile,
   readFlagsAndQueryFromFile,
   validateFlagValues,
   setFlags,
@@ -24,8 +25,8 @@ const listQueries = async (req: Request, res: Response) => {
   }
 };
 
-// Reads the flags and query from the file and sends the flags to the UI
-const getFlags = async (req: Request, res: Response) => {
+// Reads the filters and query from the file and sends the flags to the UI
+const getFilters = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   if (!scriptPath) {
     res.status(400).send('Script path is required');
@@ -41,10 +42,10 @@ const getFlags = async (req: Request, res: Response) => {
   }
 
   try {
-    const { flags } = readFlagsAndQueryFromFile(`./${scriptPath}`);
-    res.json(flags);
+    const { filters } = await readFiltersFromFile(`./${scriptPath}`);
+    res.json(filters);
   } catch (error) {
-    res.status(500).send('Error reading flags');
+    res.status(500).send('Error reading filters');
   }
 };
 
@@ -54,6 +55,49 @@ const filterAttributes = <T extends object>(
 ): Partial<T> => Object.fromEntries(
     Object.entries(obj).filter(([key]) => !keysToRemove.includes(key as keyof T)),
   ) as Partial<T>;
+
+const suffixMapping = {
+  '.bef': '.not',
+  '.nin': '.not',
+  '.nctn': '.not',
+};
+
+const stripSuffixes = ['.aft', '.win', '.in', '.ctn'];
+
+const preprocessFilters = (input: Record<string, any>) => {
+  const result: Record<string, any> = {};
+
+  Object.keys(input).forEach((key) => {
+    // Check for suffix replacements
+    const suffix = Object.keys(suffixMapping).find((s) => key.endsWith(s));
+    let newKey = key;
+    let newValue = input[key];
+
+    if (suffix) {
+      newKey = key.replace(suffix, suffixMapping[suffix]);
+    } else {
+      // Check for stripping suffixes
+      const stripSuffix = stripSuffixes.find((s) => key.endsWith(s));
+      if (stripSuffix) {
+        newKey = key.replace(stripSuffix, '');
+
+        // Special case for .win and .in to split the value by '-' if not an array
+        if ((stripSuffix === '.win' || stripSuffix === '.in') && !Array.isArray(newValue)) {
+          newValue = newValue.split('-');
+        }
+      }
+    }
+
+    // Convert the value to an array if it isn't already
+    if (!Array.isArray(newValue)) {
+      newValue = [newValue];
+    }
+
+    result[newKey] = newValue;
+  });
+
+  return result;
+};
 
 // Reads the flags and runs the query after setting the flags
 const runQuery = async (req: Request, res: Response) => {
@@ -74,7 +118,7 @@ const runQuery = async (req: Request, res: Response) => {
 
   try {
     const { flags, query, defaultOutputName } = readFlagsAndQueryFromFile(scriptPath);
-    const flagValues: FlagValues = filterAttributes(
+    let filterValues: FlagValues = filterAttributes(
       {
         ...req.body,
         ...req.query,
@@ -90,23 +134,25 @@ const runQuery = async (req: Request, res: Response) => {
     // policy.getAllAccessibleRegions to define it. Before calling validateFlagValues,
     // regionIds must be defined and not be an empty set
 
-    if (flagValues.regionIds) {
-      flagValues.regionIds = flagValues.regionIds.map(Number).filter((num) => !Number.isNaN(num));
-      flagValues.regionIds = policy.filterRegions(flagValues.regionIds);
+    if (filterValues.regionIds) {
+      filterValues.regionIds = filterValues.regionIds
+        .map(Number)
+        .filter((num) => !Number.isNaN(num));
+      filterValues.regionIds = policy.filterRegions(filterValues.regionIds);
     } else {
-      flagValues.regionIds = policy.getAllAccessibleRegions();
+      filterValues.regionIds = policy.getAllAccessibleRegions();
     }
 
-    if (!flagValues.regionIds || flagValues.regionIds.length === 0) {
+    if (!filterValues.regionIds || filterValues.regionIds.length === 0) {
       res.sendStatus(401);
       return;
     }
-
-    validateFlagValues(flags, flagValues);
-    await setFlags(flags, flagValues);
+    filterValues = preprocessFilters(filterValues);
+    validateFlagValues(flags, filterValues);
+    await setFlags(flags, filterValues);
     const result = await executeQuery(query);
 
-    const sanitizedOutputName = sanitizeFilename(`${defaultOutputName}_${generateFlagString(flagValues)}`);
+    const sanitizedOutputName = sanitizeFilename(`${defaultOutputName}_${generateFlagString(filterValues)}`);
 
     if (outputFormat === 'csv') {
       res.setHeader('Content-Type', 'text/csv');
