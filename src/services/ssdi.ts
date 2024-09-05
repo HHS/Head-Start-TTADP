@@ -1,8 +1,50 @@
-import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
 import db from '../models';
 import { auditLogger } from '../logger';
+
+// Constants for readability
+const MAX_POSTGRES_RECORD_LIMIT = 2147483647; // Maximum PostgreSQL supports
+
+// Enum for filter types
+enum FilterType {
+  IntegerArray = 'integer[]',
+  DateArray = 'date[]',
+  StringArray = 'string[]',
+  BooleanArray = 'boolean[]',
+}
+
+const suffixMapping = {
+  '.bef': '.not',
+  '.nin': '.not',
+  '.nctn': '.not',
+  // Stripping suffixes mapped to empty string
+  '.aft': '',
+  '.win': '',
+  '.in': '',
+  '.ctn': '',
+};
+
+// Types
+interface HeaderFilter {
+  name: string;
+  type: string;
+  display: string;
+  description: string;
+  supportsExclusion?: boolean;
+  supportsFuzzyMatch?: boolean;
+  options?: {
+    query?: {
+      sqlQuery: string;
+      column: string;
+    };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    staticValues?: string[] | number[] | boolean[] | Record<string, any>[];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    defaultValues?: string[] | number[] | boolean[] | Record<string, any>[];
+  };
+}
 
 interface HeaderStructure {
   name: string;
@@ -12,6 +54,7 @@ interface HeaderStructure {
   };
   output: {
     defaultName: string;
+    // Always present to define common columns like data_set and records
     schema: Array<{
       columnName: string;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,37 +62,42 @@ interface HeaderStructure {
       nullable: boolean;
       description: string;
     }>;
-  };
-  filters: Array<{
-    name: string;
-    type: string;
-    description: string;
-    supportsExclusion?: boolean;
-    supportsFuzzyMatch?: boolean;
-    options?: {
-      query?: {
-        sqlQuery: string;
-        column: string;
-      };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      staticValues?: string[] | number[] | boolean[] | Record<string, any>[];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      defaultValues?: string[] | number[] | boolean[] | Record<string, any>[];
+    sorting?: {
+      default: Array<{
+        name: string;
+        order: 'ASC' | 'DESC';
+      }>;
+      supportsCustomSorting?: boolean;
     };
-  }>;
-  sorting: {
-    default: Array<{
+    supportsPagination?: boolean;
+    multipleDataSets?: Array<{
       name: string;
-      order: 'ASC' | 'DESC';
+      defaultName: string; // Default name for each dataset
+      description: string;
+      schema: Array<{
+        columnName: string;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: string | number | boolean | Record<string, any>;
+        nullable: boolean;
+        description: string;
+      }>;
+      sorting?: {
+        default: Array<{
+          name: string;
+          order: 'ASC' | 'DESC';
+        }>;
+        supportsCustomSorting?: boolean;
+      };
+      supportsPagination?: boolean;
     }>;
   };
-  supportsSorting?: boolean;
-  supportsPagination?: boolean;
+  filters: Array<HeaderFilter>;
 }
 
 interface CachedFile {
   jsonHeader: HeaderStructure;
   query: string;
+  modificationTime: Date;
 }
 
 interface QueryFile {
@@ -61,15 +109,15 @@ interface QueryFile {
 }
 
 interface Filter {
-  name: string;
+  id: string;
+  display?: string;
   type: string;
   description: string;
-  supportsExclusion: boolean;
-  supportsFuzzyMatch: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   options?: string[] | number[] | boolean[] | Record<string, any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   defaultValues?: string[] | number[] | boolean[] | Record<string, any>[];
+  conditions?: string[];
 }
 
 interface Filters {
@@ -87,246 +135,358 @@ interface CachedFilters {
   supportsPagination: boolean;
 }
 
-// Main cache for storing parsed JSON headers and queries (assumed to be defined globally)
+// Base directory for file operations
+const BASE_DIRECTORY = path.resolve(process.cwd(), 'allowed-directory');
+
+// Cache to store parsed JSON headers and queries
 const cache: Map<string, CachedFile> = new Map();
 
-// Function to extract and parse the JSON header and SQL query from the file
-const readJsonHeaderFromFile = (filePath: string): CachedFile | null => {
-  const fileName = path.basename(filePath, path.extname(filePath));
+// Sanitize the filename
+const sanitizeFilename = (filename: string): string => path.normalize(filename).replace(/[^a-zA-Z0-9-_]/g, '_');
 
-  // Check if the file is already in the cache
-  if (cache[fileName]) {
-    return cache[fileName]; // Return from cache if present
+// Safe file path resolution to prevent directory traversal attacks
+const safeResolvePath = (inputPath: string): string => {
+  const resolvedPath = path.resolve(BASE_DIRECTORY, inputPath);
+
+  if (!resolvedPath.startsWith(BASE_DIRECTORY)) {
+    throw new Error('Attempted to access a file outside the allowed directory.');
   }
 
-  const fileContents = fs.readFileSync(filePath, 'utf8');
+  return resolvedPath;
+};
 
-  // Extract the JSON block starting with "JSON:"
-  const jsonMatch = fileContents.match(/JSON:\s*({[\s\S]*})/);
-  // Extract the SQL query (assuming it starts after the JSON block)
-  const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
+// Basic JSON validation function
+// TODO: make this more verbose validation
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isValidJsonHeader = (json: any): boolean => (
+  json
+  && typeof json.name === 'string' && Array.isArray(json.filters)
+);
 
-  if (jsonMatch && jsonMatch[1] && queryMatch && queryMatch[1]) {
-    try {
-      // Parse the JSON string into a JavaScript object
+// Modify the readJsonHeaderFromFile function to update the cache structure
+const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | null> => {
+  const resolvedFilePath = safeResolvePath(filePath);
+
+  // Get the file stats for modification time
+  const fileStats = await fsPromises.stat(resolvedFilePath);
+  const fileModifiedTime = fileStats.mtime;
+
+  // Check cache: reload if modification time is newer than what's cached
+  const cachedFile = cache.get(resolvedFilePath);
+  if (cachedFile && cachedFile.modificationTime >= fileModifiedTime) {
+    return cachedFile;
+  }
+
+  try {
+    const fileContents = await fsPromises.readFile(resolvedFilePath, 'utf8');
+    const jsonMatch = fileContents.match(/JSON:\s*({[\s\S]*})/);
+    const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
+
+    if (jsonMatch && queryMatch) {
       const jsonHeader = JSON.parse(jsonMatch[1].trim());
 
-      // Extract the query portion after the JSON header
+      // Simple validation of the JSON header
+      // TODO: Perform a more complex and complete validation
+      if (!isValidJsonHeader(jsonHeader)) {
+        auditLogger.error('Invalid JSON structure');
+        return null;
+      }
+
       const query = queryMatch[1].trim();
+      const newCachedFile: CachedFile = {
+        jsonHeader,
+        query,
+        modificationTime: fileModifiedTime, // Add the modification time to the cache
+      };
 
-      // Cache both the parsed JSON header and the query
-      cache[fileName] = { jsonHeader, query };
-
-      return { jsonHeader, query };
-    } catch (error) {
-      auditLogger.error(`Error parsing JSON header in file ${filePath}:`, error);
-      return null;
+      // Update the cache with the new file data and modification time
+      cache.set(resolvedFilePath, newCachedFile);
+      return newCachedFile;
     }
-  } else {
+
     auditLogger.warn(`No valid JSON header or SQL query found in file ${filePath}.`);
+    return null;
+  } catch (error) {
+    auditLogger.error(`Error reading or parsing file ${filePath}: ${error.message}`);
     return null;
   }
 };
 
-// Helper function to create a QueryFile from a CachedFile
+// Helper function to create a QueryFile from CachedFile
 const createQueryFile = (filePath: string, cachedFile: CachedFile): QueryFile => ({
   name: cachedFile.jsonHeader.name,
-  description: cachedFile.jsonHeader.description.standard, // or .technical if preferred
+  description: cachedFile.jsonHeader.description.standard, // or technical
   technicalDescription: cachedFile.jsonHeader.description.technical,
   filePath,
   defaultOutputName: cachedFile.jsonHeader.output.defaultName,
 });
 
-// Helper function to list all query files with name and description
-const listQueryFiles = (directory: string): QueryFile[] => {
-  const files = fs.readdirSync(directory);
+// Function to list all query files in a directory asynchronously
+const listQueryFiles = async (directory: string): Promise<QueryFile[]> => {
+  try {
+    const safeDirectory = safeResolvePath(directory);
+    const files = await fsPromises.readdir(safeDirectory);
 
-  return files
-    .map((file) => {
-      const filePath = path.join(directory, file);
+    return await Promise.all(
+      files.map(async (file) => {
+        const filePath = path.join(safeDirectory, file);
+        const cachedFile = await readJsonHeaderFromFile(filePath);
 
-      // Check if the file is already in the cache
-      if (cache.has(filePath)) {
-        return createQueryFile(filePath, cache.get(filePath) as CachedFile);
-      }
-
-      // Read the JSON header and query from the file if not cached
-      const cachedFile = readJsonHeaderFromFile(filePath);
-
-      if (cachedFile) {
-        // Cache the parsed data and create the QueryFile object
-        cache.set(filePath, cachedFile);
-        return createQueryFile(filePath, cachedFile);
-      }
-
-      // Return null if the JSON header could not be read or parsed
-      return null;
-    })
-    .filter((queryFile): queryFile is QueryFile => queryFile !== null); // Filter out null values
+        if (cachedFile) {
+          return createQueryFile(filePath, cachedFile);
+        }
+        return null;
+      }),
+    ).then((results) => results.filter((queryFile): queryFile is QueryFile => queryFile !== null));
+  } catch (error) {
+    auditLogger.error(`Error reading files from directory ${directory}: ${error.message}`);
+    return [];
+  }
 };
 
-// Helper function to read filters from the file, with optional returnOptions
-const readFiltersFromFile = async (
-  filePath: string,
-  returnOptions = false,
-): Promise<CachedFilters> => {
-  // Check if the file is already in the main cache
-  if (!cache.has(filePath)) {
-    // Process the file into the cache if it's not already cached
-    const cachedFile = readJsonHeaderFromFile(filePath);
-    if (cachedFile) {
-      cache.set(filePath, cachedFile);
-    } else {
-      throw new Error(`Unable to read and parse the JSON header from file: ${filePath}`);
+/// Modularized filter options application
+const applyFilterOptions = async (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  filter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<string[] | number[] | boolean[] | Record<string, any>[]> => {
+  // If the filter has a query, run it and store the results in options
+  if (filter?.options?.query) {
+    const results = await db.sequelize.query(
+      filter.options.query.sqlQuery,
+      { type: QueryTypes.SELECT },
+    );
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return results.map((result: any) => result[filter.options.query.column]);
+  }
+
+  // If the filter has static values, store them in options
+  if (filter?.options?.staticValues) {
+    return filter.options.staticValues;
+  }
+
+  return null;
+};
+
+// generate conditions based on data type and supported flags
+const generateConditions = (filter: HeaderFilter): string[] => {
+  const { type, supportsFuzzyMatch, supportsExclusion } = filter;
+  const conditions: string[] = [];
+
+  if (type === 'string[]') {
+    conditions.push(supportsFuzzyMatch ? 'ctn' : 'in');
+    if (supportsExclusion) {
+      conditions.push(supportsFuzzyMatch ? 'nctn' : 'nin');
+    }
+  } else if (type === 'date[]') {
+    conditions.push('aft', 'win', 'in');
+    if (supportsExclusion) {
+      conditions.push('bef');
+    }
+  } else if (type === 'integer[]') {
+    conditions.push('in');
+    if (supportsExclusion) {
+      conditions.push('nin');
     }
   }
 
-  // Retrieve the cached file
-  const cachedFile = cache.get(filePath) as CachedFile;
+  return conditions;
+};
 
-  // Initialize the filters dictionary
+// Modularized filter processing
+const processFilters = async (cachedFile: CachedFile, returnOptions = false): Promise<Filters> => {
   const filters: Filters = {};
 
-  if (returnOptions) {
-    // Set transaction to READ ONLY, this will fail the transaction if any tables are modified
-    await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
-  }
-
-  // Iterate through the filters in the JSON header and convert them to a dictionary format
   await Promise.all(
     cachedFile.jsonHeader.filters.map(async (filter) => {
       const filterData: Filter = {
-        name: filter.name,
+        id: filter.name,
+        display: filter.display,
         type: filter.type,
         description: filter.description,
-        supportsExclusion: filter.supportsExclusion || false,
-        supportsFuzzyMatch: filter.supportsFuzzyMatch || false,
+        conditions: generateConditions(filter),
       };
 
-      if (returnOptions) {
-        // If the filter has a query, run it and store the results in options
-        if (filter.options?.query) {
-          const results = await db.sequelize.query(filter.options.query.sqlQuery, {
-            type: QueryTypes.SELECT,
-          });
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          filterData.options = results.map((result: any) => result[filter.options.query.column]);
-        } else if (filter.options?.staticValues) {
-          // If the filter has static values, store them in options
-          filterData.options = filter.options.staticValues;
-        }
+      // Add default values if present
+      if (filter.options?.defaultValues) {
+        filterData.defaultValues = filter.options.defaultValues;
+      }
 
-        // If the filter has default values, store them in defaultValues
-        if (filter.options?.defaultValues) {
-          filterData.defaultValues = filter.options.defaultValues;
+      // Apply filter options (query or static values)
+      if (returnOptions) {
+        const options = await applyFilterOptions(filter);
+        if (options) {
+          filterData.options = options;
         }
       }
 
-      // Add the filter to the dictionary
       filters[filter.name] = filterData;
     }),
   );
 
-  // Generate artificial filters for sorting if supportsSorting is true
-  if (cachedFile.jsonHeader.supportsSorting) {
-    const sortOrderColumnFilter: Filter = {
-      name: 'sortOrder.column',
-      type: 'string[]',
-      description: 'The column to sort by',
-      supportsExclusion: false,
-      supportsFuzzyMatch: false,
-      options: cachedFile.jsonHeader.output.schema.map((column) => column.columnName),
-      defaultValues: cachedFile.jsonHeader.sorting.default.map((sort) => sort.name),
-    };
+  return filters;
+};
 
-    const sortOrderDirectionFilter: Filter = {
-      name: 'sortOrder.direction',
-      type: 'string[]',
-      description: 'The direction to sort (ASC or DESC)',
-      supportsExclusion: false,
-      supportsFuzzyMatch: false,
-      options: ['ASC', 'DESC'],
-      defaultValues: cachedFile.jsonHeader.sorting.default.map((sort) => sort.order),
-    };
+// Helper function to generate artificial filters for sorting and pagination
+const generateArtificialFilters = (cachedFile: CachedFile): Filters => {
+  const artificialFilters: Filters = {};
 
-    filters['sortOrder.column'] = sortOrderColumnFilter;
-    filters['sortOrder.direction'] = sortOrderDirectionFilter;
+  // For single dataset output (normal case)
+  if (cachedFile.jsonHeader.output.schema && !cachedFile.jsonHeader.output.multipleDataSets) {
+    // Generate artificial filters for sorting if supportsSorting is true
+    if (cachedFile.jsonHeader.output.sorting) {
+      const sortOrderColumnFilter: Filter = {
+        id: 'sortOrder.column',
+        type: 'string[]',
+        description: 'The column to sort by',
+        options: cachedFile.jsonHeader.output.schema.map((column) => column.columnName),
+        defaultValues: cachedFile.jsonHeader.output.sorting.default.map((sort) => sort.name),
+      };
+
+      const sortOrderDirectionFilter: Filter = {
+        id: 'sortOrder.direction',
+        type: 'string[]',
+        description: 'The direction to sort (ASC or DESC)',
+        options: ['ASC', 'DESC'],
+        defaultValues: cachedFile.jsonHeader.output.sorting.default.map((sort) => sort.order),
+      };
+
+      artificialFilters['sortOrder.column'] = sortOrderColumnFilter;
+      artificialFilters['sortOrder.direction'] = sortOrderDirectionFilter;
+    }
+
+    // Generate artificial filters for pagination if supportsPagination is true
+    if (cachedFile.jsonHeader.output.supportsPagination) {
+      const paginationPageFilter: Filter = {
+        id: 'pagination.page',
+        type: 'number',
+        description: 'The page number to retrieve',
+        defaultValues: [0], // Default to the first page
+      };
+      const paginationSizeFilter: Filter = {
+        id: 'pagination.size',
+        type: 'number',
+        description: 'The number of records to retrieve per page',
+        defaultValues: [MAX_POSTGRES_RECORD_LIMIT], // Max number of records PostgreSQL supports
+      };
+
+      artificialFilters['pagination.page'] = paginationPageFilter;
+      artificialFilters['pagination.size'] = paginationSizeFilter;
+    }
   }
 
-  // Generate artificial filters for pagination if supportsPagination is true
-  if (cachedFile.jsonHeader.supportsPagination) {
-    const paginationPageFilter: Filter = {
-      name: 'pagination.page',
-      type: 'number',
-      description: 'The page number to retrieve',
-      supportsExclusion: false,
-      supportsFuzzyMatch: false,
-      defaultValues: [0], // Default to the first page
-    };
-    const paginationSizeFilter: Filter = {
-      name: 'pagination.size',
-      type: 'number',
-      description: 'The number of records to retrieve per page',
-      supportsExclusion: false,
-      supportsFuzzyMatch: false,
-      defaultValues: [2147483647], // Max number of records PostgreSQL supports
+  // For multi-dataset output
+  if (cachedFile.jsonHeader.output.multipleDataSets) {
+    cachedFile.jsonHeader.output.multipleDataSets.forEach((dataSet) => {
+      const prefix = dataSet.name;
+
+      // Generate artificial filters for sorting if supportsSorting is true
+      if (dataSet.sorting) {
+        const sortOrderColumnFilter: Filter = {
+          id: `${prefix}.sortOrder.column`,
+          type: 'string[]',
+          description: `The column to sort by for dataset ${prefix}`,
+          options: dataSet.schema.map((column) => column.columnName),
+          defaultValues: dataSet.sorting.default.map((sort) => sort.name),
+        };
+
+        const sortOrderDirectionFilter: Filter = {
+          id: `${prefix}.sortOrder.direction`,
+          type: 'string[]',
+          description: `The direction to sort (ASC or DESC) for dataset ${prefix}`,
+          options: ['ASC', 'DESC'],
+          defaultValues: dataSet.sorting.default.map((sort) => sort.order),
+        };
+
+        artificialFilters[`${prefix}.sortOrder.column`] = sortOrderColumnFilter;
+        artificialFilters[`${prefix}.sortOrder.direction`] = sortOrderDirectionFilter;
+      }
+
+      // Generate artificial filters for pagination if supportsPagination is true
+      if (dataSet.supportsPagination) {
+        const paginationPageFilter: Filter = {
+          id: `${prefix}.pagination.page`,
+          type: 'number',
+          description: `The page number to retrieve for dataset ${prefix}`,
+          defaultValues: [0], // Default to the first page
+        };
+
+        const paginationSizeFilter: Filter = {
+          id: `${prefix}.pagination.size`,
+          type: 'number',
+          description: `The number of records to retrieve per page for dataset ${prefix}`,
+          defaultValues: [MAX_POSTGRES_RECORD_LIMIT], // Max number of records PostgreSQL supports
+        };
+
+        artificialFilters[`${prefix}.pagination.page`] = paginationPageFilter;
+        artificialFilters[`${prefix}.pagination.size`] = paginationSizeFilter;
+      }
+    });
+
+    // Add a filter to allow returning only a subset of the multiple datasets
+    const dataSetFilter: Filter = {
+      id: 'dataSetSelection',
+      type: 'string[]',
+      description: 'Select which datasets to include in the result',
+      options: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
+      defaultValues: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
     };
 
-    filters['pagination.page'] = paginationPageFilter;
-    filters['pagination.size'] = paginationSizeFilter;
+    artificialFilters.dataSetSelection = dataSetFilter;
   }
 
-  return {
-    filters,
-    supportsSorting: cachedFile.jsonHeader.supportsSorting || false,
-    supportsPagination: cachedFile.jsonHeader.supportsPagination || false,
+  return artificialFilters;
+};
+
+// Optional chaining and modularizing parts of `readFiltersFromFile`
+const readFiltersFromFile = async (
+  filePath: string,
+  returnOptions = false,
+): Promise<Filters> => {
+  // Use the cached file or load it fresh via readJsonHeaderFromFile
+  const cachedFile = await readJsonHeaderFromFile(filePath);
+  if (!cachedFile) {
+    throw new Error(`Unable to read and parse the JSON header from file: ${filePath}`);
+  }
+
+  // Process and combine the actual filters and artificial filters
+  const filters = {
+    ...(await processFilters(cachedFile, returnOptions)),
+    ...generateArtificialFilters(cachedFile),
   };
+
+  return filters;
 };
 
-const suffixMapping = {
-  '.bef': '.not',
-  '.nin': '.not',
-  '.nctn': '.not',
-  // Stripping suffixes mapped to empty string
-  '.aft': '',
-  '.win': '',
-  '.in': '',
-  '.ctn': '',
-};
-
-// Function to validate the type of the filter values
-const validateType = (
-  expectedType: string,
-  value: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-): boolean => {
+// Validate type using the enum
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const validateType = (expectedType: FilterType, value: any): boolean => {
   switch (expectedType) {
-    case 'integer[]':
+    case FilterType.IntegerArray:
       return Array.isArray(value) && value.every((v) => Number.isInteger(v));
-    case 'date[]':
+    case FilterType.DateArray:
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
-    case 'string[]':
+    case FilterType.StringArray:
       return Array.isArray(value) && value.every((v) => typeof v === 'string');
-    case 'boolean[]':
+    case FilterType.BooleanArray:
       return Array.isArray(value) && value.every((v) => typeof v === 'boolean');
     default:
-      return false; // Invalid type
+      return false;
   }
 };
 
-// Function to preprocess and validate filters, returning the result and structured errors
+// Preprocess and validate filters
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const preprocessAndValidateFilters = (filters: Filters, input: Record<string, any>) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const result: Record<string, any> = {};
-
-  // Error structure
   const errors = {
-    invalidFilters: [] as string[], // Filters that don't exist
-    invalidTypes: [] as string[], // Filters with type mismatches
+    invalidFilters: [] as string[],
+    invalidTypes: [] as string[],
   };
 
   Object.keys(input).forEach((key) => {
-    // Check for suffix replacements or stripping
     const suffix = Object.keys(suffixMapping).find((s) => key.endsWith(s));
     let newKey = key;
     let newValue = input[key];
@@ -335,25 +495,21 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       const mappedSuffix = suffixMapping[suffix];
       newKey = key.replace(suffix, mappedSuffix ?? '');
 
-      // Special case for .win and .in to split the value by '-' only if the
-      // expected type is date[]
       if ((suffix === '.win' || suffix === '.in')
-        && filters[newKey]?.type === 'date[]'
+        && filters[newKey]?.type === FilterType.DateArray
         && !Array.isArray(newValue)) {
         newValue = newValue.split('-');
       }
     }
 
-    // Convert the value to an array if it isn't already
     if (!Array.isArray(newValue)) {
       newValue = [newValue];
     }
 
-    // Validate the filter and its values
     if (!filters[newKey]) {
       errors.invalidFilters.push(`Invalid filter: ${newKey}`);
     } else {
-      const expectedType = filters[newKey].type;
+      const expectedType = filters[newKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
         errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType}`);
       }
@@ -366,16 +522,13 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
 };
 
 // Helper function to set filters in the database
-const setFilters = async (
-  filterValues: FilterValues,
-): Promise<any[]> => Promise.all(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const setFilters = async (filterValues: FilterValues): Promise<any[]> => Promise.all(
   Object.entries(filterValues).map(async ([key, value]) => {
     if (key.endsWith('.not')) {
-      const baseKey = key.slice(0, -4); // Remove '.not' from the key
+      const baseKey = key.slice(0, -4);
 
-      // Run both calls in parallel
       return Promise.all([
-        // First call with the base key and the passed value
         db.sequelize.query(
           'SELECT set_config($1, $2, false)',
           {
@@ -383,7 +536,6 @@ const setFilters = async (
             type: db.sequelize.QueryTypes.SELECT,
           },
         ),
-        // Second call with the original key and 'true' as the value
         db.sequelize.query(
           'SELECT set_config($1, $2, false)',
           {
@@ -393,7 +545,6 @@ const setFilters = async (
         ),
       ]);
     }
-    // Single call for keys that don't end with '.not'
     return db.sequelize.query(
       'SELECT set_config($1, $2, false)',
       {
@@ -412,21 +563,21 @@ const generateFilterString = (filterValues: FilterValues): string => Object.entr
   })
   .join('_');
 
+// Execute query asynchronously and set read-only transaction
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const executeQuery = async (filePath: string): Promise<any> => {
-  // Check if the file is already in the main cache
-  if (!cache.has(filePath)) {
-    // Process the file into the cache if it's not already cached
-    const cachedFile = readJsonHeaderFromFile(filePath);
+  const resolvedFilePath = safeResolvePath(filePath);
+
+  if (!cache.has(resolvedFilePath)) {
+    const cachedFile = await readJsonHeaderFromFile(resolvedFilePath);
     if (cachedFile) {
-      cache.set(filePath, cachedFile);
+      cache.set(resolvedFilePath, cachedFile);
     } else {
-      throw new Error(`Unable to read and parse the JSON header from file: ${filePath}`);
+      throw new Error(`Unable to read and parse the JSON header from file: ${resolvedFilePath}`);
     }
   }
 
-  // Retrieve the query from the cached file
-  const cachedFile = cache.get(filePath) as CachedFile;
+  const cachedFile = cache.get(resolvedFilePath) as CachedFile;
   const { query } = cachedFile;
 
   if (typeof query !== 'string') {
@@ -434,9 +585,7 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 
   try {
-    // Set transaction to READ ONLY, this will fail the transaction if any tables are modified
     await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
-
     const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
     return result;
   } catch (error) {
@@ -444,26 +593,34 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 };
 
-// Helper function to sanitize filenames
-const sanitizeFilename = (filename: string): string => filename.replace(/[^a-zA-Z0-9-_]/g, '_');
-
 export {
+  MAX_POSTGRES_RECORD_LIMIT,
+  FilterType,
+  suffixMapping,
+  HeaderFilter,
   HeaderStructure,
+  CachedFile,
+  QueryFile,
   Filter,
   Filters,
   FilterValues,
   CachedFilters,
-  QueryFile,
-  CachedFile,
-  suffixMapping,
+  BASE_DIRECTORY,
+  cache,
+  sanitizeFilename,
+  safeResolvePath,
+  isValidJsonHeader,
   readJsonHeaderFromFile,
   createQueryFile,
   listQueryFiles,
+  applyFilterOptions,
+  generateConditions,
+  processFilters,
+  generateArtificialFilters,
   readFiltersFromFile,
-  preprocessAndValidateFilters,
   validateType,
+  preprocessAndValidateFilters,
   setFilters,
-  sanitizeFilename,
   generateFilterString,
   executeQuery,
 };
