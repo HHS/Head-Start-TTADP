@@ -9,10 +9,10 @@
 * The query results are filterable by the following SSDI flags, which are passed as an array of values:
 * - ssdi.regionIds - integer[] - One or more values for 1 through 12
 * - ssdi.startDate - date[] - Two dates defining a range for the startDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.standardGoal - text[] - One or more values for 'CLASS' and/or 'FEI' for filtering goalTemplateId. If this filter is empty or null, it defaults to 'CLASS'.
-* - ssdi.grantNumbers - text[] - One or more grant numbers
-* - ssdi.recipients - text[] - One or more recipient names
-* - ssdi.uei - text[] - One or more UEI values
+* - ssdi.standardGoal - string[] - One or more values for 'CLASS' and/or 'FEI' for filtering goalTemplateId. If this filter is empty or null, it defaults to 'CLASS'.
+* - ssdi.grantNumbers - string[] - One or more grant numbers
+* - ssdi.recipients - string[] - One or more recipient names
+* - ssdi.uei - string[] - One or more UEI values
 *
 * Zero or more SSDI flags can be set within the same transaction as the query is executed.
 * The following is an example of how to set a SSDI flag:
