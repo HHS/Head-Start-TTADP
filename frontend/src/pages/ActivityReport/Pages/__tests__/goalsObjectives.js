@@ -49,7 +49,6 @@ const RenderGoalsObjectives = ({
             value: 1, label: 'Turtle 1', programs: [], id: 1,
           },
         ],
-        sessionObjectives: [],
         objectives: [{
           id: 1,
           title: 'title',
@@ -373,7 +372,6 @@ describe('goals objectives', () => {
 
       it('is false if goalForEditing is true', () => {
         const goals = [{
-          sessionObjectives: [],
           name: 'Is goal',
           endDate: '2021-01-01',
           isRttapa: 'No',
@@ -431,7 +429,7 @@ describe('goals objectives', () => {
 
   describe('review page', () => {
     it('displays goals with no objectives', async () => {
-      render(<RenderReview goals={[{ id: 1, name: 'goal' }]} />);
+      render(<RenderReview goals={[{ id: 1, name: 'goal', objectives: [] }]} />);
       const goal = await screen.findByText('goal');
       expect(goal).toBeVisible();
     });
@@ -448,7 +446,7 @@ describe('goals objectives', () => {
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
-            files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+            files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
             supportType: SUPPORT_TYPES[1],
             courses: [],
           },
@@ -487,15 +485,17 @@ describe('goals objectives', () => {
           topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
-          files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
           courses: [],
         }],
       }]}
       />);
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
-      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
-      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
+      expect(await screen.findByText('Topic 1')).toBeVisible();
+      expect(await screen.findByText('Topic 2')).toBeVisible();
+      expect(await screen.findByText('Topic 3')).toBeVisible();
+      expect(await screen.findByRole('link', { name: /test1\.txt/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();

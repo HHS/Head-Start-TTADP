@@ -39,6 +39,7 @@ describe('Goals and Objectives', () => {
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
     collaborators: [],
+    ids: [4598],
   },
   ];
 
@@ -53,9 +54,11 @@ describe('Goals and Objectives', () => {
     reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
     objectives: [],
     collaborators: [],
+    ids: [4599],
   },
   {
     id: 4600,
+    ids: [4600],
     goalStatus: 'Not Started',
     createdOn: '2021-07-15',
     goalText: 'This is goal text 2.',
@@ -71,6 +74,7 @@ describe('Goals and Objectives', () => {
   const filterStatusGoals = [
     {
       id: 4601,
+      ids: [4601],
       goalStatus: 'Not Started',
       createdOn: '2021-07-15',
       goalText: 'This is goal text 2.',
@@ -141,17 +145,37 @@ describe('Goals and Objectives', () => {
     fetchMock.reset();
     // Default.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&createDate.win=${yearToDate}`;
-    fetchMock.get(goalsUrl, { count: 1, goalRows: goals, statuses: defaultStatuses });
+    fetchMock.get(goalsUrl, {
+      count: 1,
+      goalRows: goals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: goals[0].id, goalIds: goals[0].ids },
+      ],
+    });
 
     // Filters Status.
     const filterStatusUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
     fetchMock.get(filterStatusUrl, {
-      count: 1, goalRows: filterStatusGoals, statuses: defaultStatuses,
+      count: 1,
+      goalRows: filterStatusGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: filterStatusGoals[0].id, goalIds: filterStatusGoals[0].ids },
+      ],
     });
 
     // No Filters.
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: noFilterGoals,
+      statuses: defaultStatuses,
+      allGoalIds: [
+        { id: noFilterGoals[0].id, goalIds: noFilterGoals[0].ids },
+        { id: noFilterGoals[1].id, goalIds: noFilterGoals[1].ids },
+      ],
+    });
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
@@ -199,8 +223,12 @@ describe('Goals and Objectives', () => {
     // Default with 2 Rows.
     const goalsUrl = `/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5&createDate.win=${yearToDate}`;
     fetchMock.get(goalsUrl,
-      { count: 2, goalRows: noFilterGoals, statuses: defaultStatuses }, { overwriteRoutes: true });
-
+      {
+        count: 2,
+        goalRows: noFilterGoals,
+        statuses: defaultStatuses,
+        allGoalIds: [],
+      }, { overwriteRoutes: true });
     act(() => renderGoalsAndObjectives());
 
     expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
@@ -223,6 +251,112 @@ describe('Goals and Objectives', () => {
     expect(notStartedStatuses.length).toBe(5);
   });
 
+  it('resets the page number when filters change', async () => {
+    // CLear all mocks.
+    fetchMock.restore();
+
+    // Default with 2 Rows.
+    let goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started';
+    fetchMock.get(goalsUrl,
+      {
+        count: 11,
+        allGoalIds: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+          { id: 7 },
+          { id: 8 },
+          { id: 9 },
+          { id: 10 },
+          { id: 11 }],
+        goalRows: [
+          { ...noFilterGoals[0], id: 1 },
+          { ...noFilterGoals[0], id: 2 },
+          { ...noFilterGoals[0], id: 3 },
+          { ...noFilterGoals[0], id: 4 },
+          { ...noFilterGoals[0], id: 5 },
+          { ...noFilterGoals[0], id: 6 },
+          { ...noFilterGoals[0], id: 7 },
+          { ...noFilterGoals[0], id: 8 },
+          { ...noFilterGoals[0], id: 9 },
+          { ...noFilterGoals[0], id: 10 },
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      },
+      { overwriteRoutes: true });
+
+    act(() => renderGoalsAndObjectives());
+
+    expect(await screen.findByText(/Showing 1-10 of 11 goals/i)).toBeVisible();
+
+    // Go to the next page.
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=10&limit=10&status.in[]=Not%20started';
+    fetchMock.get(goalsUrl,
+      {
+        count: 11,
+        allGoalIds: [
+          { id: 1 },
+          { id: 2 },
+          { id: 3 },
+          { id: 4 },
+          { id: 5 },
+          { id: 6 },
+          { id: 7 },
+          { id: 8 },
+          { id: 9 },
+          { id: 10 },
+          { id: 11 }],
+        goalRows: [
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      }, { overwriteRoutes: true });
+
+    const pageTwo = await screen.findByRole('link', { name: /go to page number 2/i });
+    userEvent.click(pageTwo);
+
+    expect(await screen.findByText(/Showing 11-11 of 11 goals/i)).toBeVisible();
+
+    // Change Filter and Apply.
+    userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
+
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'status');
+    userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
+
+    const statusSelect = await screen.findByLabelText(/select status to filter by/i);
+    await selectEvent.select(statusSelect, ['Draft']);
+
+    goalsUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10&status.in[]=Not%20started&status.in[]=Draft';
+    fetchMock.get(goalsUrl,
+      {
+        count: 1,
+        allGoalIds: [
+          { id: 1 },
+        ],
+        goalRows: [
+          { ...noFilterGoals[0], id: 11 },
+        ],
+        statuses: defaultStatuses,
+      }, { overwriteRoutes: true });
+
+    const apply = await screen.findByRole('button', { name: /apply filters to goals/i });
+    userEvent.click(apply);
+
+    // Expect the goalsUrl to have been called.
+    expect(fetchMock.called(goalsUrl)).toBe(true);
+
+    // Expect 1 Row.
+    expect(await screen.findByText(/Showing 1-1 of 1 goals/i)).toBeVisible();
+    // Expect go to page number 1 to be visible.
+    expect(await screen.findByRole('link', { name: /go to page number 1/i })).toBeVisible();
+    // expect go to page number 2 to not be visible.
+    expect(screen.queryByRole('link', { name: /go to page number 2/i })).toBeNull();
+  });
+
   it('renders correctly when filter is removed', async () => {
     act(() => renderGoalsAndObjectives());
     const removeFilter = await screen.findByRole('button', { name: /this button removes the filter/i });
@@ -236,10 +370,9 @@ describe('Goals and Objectives', () => {
 
   it('will update goals status', async () => {
     fetchMock.restore();
-
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
 
     const response = [{
@@ -258,7 +391,12 @@ describe('Goals and Objectives', () => {
     ];
 
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
-    fetchMock.get(noFilterUrl, { count: 2, goalRows: response, statuses: defaultStatuses });
+    fetchMock.get(noFilterUrl, {
+      count: 2,
+      goalRows: response,
+      statuses: defaultStatuses,
+      allGoalIds: [{ id: 4598, goalIds: [4598] }],
+    });
 
     act(() => renderGoalsAndObjectives());
 
@@ -296,11 +434,24 @@ describe('Goals and Objectives', () => {
     fetchMock.get(newGoalsUrl, {
       count: 3,
       goalRows: [
-        { id: 1, ...goals[0] },
-        { id: 2, ...goals[0] },
-        { id: 3, ...goals[0] },
+        { ...goals[0], id: 1 },
+        { ...goals[0], id: 2 },
+        { ...goals[0], id: 3 },
       ],
       statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      ],
     });
     act(() => renderGoalsAndObjectives([1]));
     // If api request contains 3 we know it included the desired sort.
@@ -321,16 +472,18 @@ describe('Goals and Objectives', () => {
 
     expect(await screen.findByText(/Unable to fetch goals/i)).toBeVisible();
   });
+  /// 2
 
   it('adjusts items per page', async () => {
     fetchMock.restore();
 
     fetchMock.get(
       '/api/communication-logs/region/1/recipient/401?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient',
-      { rows: [], count: 0 },
+      { rows: [], count: 0, allGoalIds: [] },
     );
     const goalToUse = {
-      id: 0,
+      id: 1,
+      ids: [1, 2],
       goalStatus: 'Not Started',
       createdOn: '2021-06-15',
       goalText: '',
@@ -343,10 +496,12 @@ describe('Goals and Objectives', () => {
     };
     const goalCount = 60;
     const goalsToDisplay = [];
+    const allGoalIds = [];
     // eslint-disable-next-line no-plusplus
     for (let i = 1; i <= goalCount; i++) {
       const goalText = `This is goal text ${i}.`;
       goalsToDisplay.push({ ...goalToUse, id: i, goalText });
+      allGoalIds.push({ id: i, goalIds: [i] });
     }
     const noFilterUrl = '/api/recipient/401/region/1/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10';
     fetchMock.get(noFilterUrl,
@@ -354,6 +509,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 10),
         statuses: defaultStatuses,
+        allGoalIds,
       });
 
     // Render.
@@ -371,6 +527,7 @@ describe('Goals and Objectives', () => {
         count: goalCount,
         goalRows: goalsToDisplay.slice(0, 25),
         statuses: defaultStatuses,
+        allGoalIds,
       });
     const perPageDropDown = await screen.findByRole('combobox', { name: /select goals per page/i });
     userEvent.selectOptions(perPageDropDown, '25');
@@ -379,5 +536,147 @@ describe('Goals and Objectives', () => {
     expect(await screen.findByText(/1-25 of 60/i)).toBeVisible();
     goalsPerPage = screen.queryAllByTestId('goalCard');
     expect(goalsPerPage.length).toBe(25);
+  });
+
+  it('respects select all on a per page basis', async () => {
+    const goalUrl = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=0&limit=10';
+    fetchMock.get(goalUrl, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 1 },
+        { ...goals[0], id: 2 },
+        { ...goals[0], id: 3 },
+        { ...goals[0], id: 4 },
+        { ...goals[0], id: 5 },
+        { ...goals[0], id: 6 },
+        { ...goals[0], id: 7 },
+        { ...goals[0], id: 8 },
+        { ...goals[0], id: 9 },
+        { ...goals[0], id: 10 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 1,
+        goalIds: [1],
+      },
+      {
+        id: 2,
+        goalIds: [2],
+      },
+      {
+        id: 3,
+        goalIds: [3],
+      },
+      {
+        id: 4,
+        goalIds: [4],
+      },
+      {
+        id: 5,
+        goalIds: [5],
+      },
+      {
+        id: 6,
+        goalIds: [6],
+      },
+      {
+        id: 7,
+        goalIds: [7],
+      },
+      {
+        id: 8,
+        goalIds: [8],
+      },
+      {
+        id: 9,
+        goalIds: [9],
+      },
+      {
+        id: 10,
+        goalIds: [10],
+      },
+      ],
+    });
+    act(() => renderGoalsAndObjectives([1]));
+    expect(await screen.findByText(/1-10 of 12/i)).toBeVisible();
+
+    // Select All.
+    const selectAll = await screen.findByRole('checkbox', { name: /select all goals/i });
+    userEvent.click(selectAll);
+
+    // Assert all are selected.
+    const checkboxes = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxes.length).toBe(10);
+    checkboxes.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Change per page.
+    const goalUrlMore = '/api/recipient/401/region/1/goals?sortBy=createdOn&sortDir=desc&offset=10&limit=10';
+    fetchMock.get(goalUrlMore, {
+      count: 12,
+      goalRows: [
+        { ...goals[0], id: 11 },
+        { ...goals[0], id: 12 },
+      ],
+      statuses: defaultStatuses,
+      allGoalIds: [{
+        id: 11,
+        goalIds: [11],
+      },
+      {
+        id: 12,
+        goalIds: [12],
+      },
+      ],
+    });
+
+    // Click page 2.
+    const pageTwo = await screen.findByRole('link', { name: /go to page number 2/i });
+    userEvent.click(pageTwo);
+
+    expect(await screen.findByText(/11-12 of 12/i)).toBeVisible();
+
+    // Shows 10 selected.
+    expect(await screen.findByText(/10 selected/i)).toBeVisible();
+
+    // Assert all selected is NOT checked.
+    const selectAllNext = await screen.findByRole('checkbox', { name: /select all goals/i });
+    expect(selectAllNext).not.toBeChecked();
+
+    // Get all the checkboxes.
+    const checkboxesNext = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNext.length).toBe(2);
+
+    // Check the second one.
+    userEvent.click(checkboxesNext[1]);
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
+
+    // Select All.
+    userEvent.click(selectAllNext);
+
+    // Assert all are selected.
+    const checkboxesNextAll = screen.queryAllByRole('checkbox', { name: /select goal/i });
+    expect(checkboxesNextAll.length).toBe(2);
+    checkboxesNextAll.forEach((checkbox) => {
+      expect(checkbox).toBeChecked();
+    });
+
+    // Shows 12 selected.
+    expect(await screen.findByText(/12 selected/i)).toBeVisible();
+
+    // Uncheck the second checkbox.
+    userEvent.click(checkboxesNext[1]);
+
+    // Assert the select all check box is not checked.
+    expect(selectAllNext).not.toBeChecked();
+
+    // Shows 11 selected.
+    expect(await screen.findByText(/11 selected/i)).toBeVisible();
   });
 });

@@ -29,12 +29,11 @@ services:
       - "./scripts:/app/scripts"
     environment:
       - BACKEND_PROXY=http://test-backend:8080
-      - FONTAWESOME_NPM_AUTH_TOKEN
       - REACT_APP_WEBSOCKET_URL
     networks:
       - ttadp-test
   test-db:
-    image: postgres:12.4
+    image: postgres:15.6
     container_name: test-db
     env_file: .env
     ports:

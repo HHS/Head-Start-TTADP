@@ -1,4 +1,5 @@
 import faker from '@faker-js/faker';
+import { uniq } from 'lodash';
 import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
   Grant,
@@ -22,6 +23,7 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
 
   let goalOne;
   let goalTwo;
+  let goalThree;
   let recipient;
   let activeGrant;
 
@@ -54,6 +56,13 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       goalTemplateId: template.id,
     });
 
+    goalThree = await createGoal({
+      status: GOAL_STATUS.IN_PROGRESS,
+      name: goalTitle,
+      grantId: activeGrant.id,
+      goalTemplateId: template.id,
+    });
+
     const prompt = await GoalTemplateFieldPrompt.create({
       goalTemplateId: template.id,
       ordinal: 1,
@@ -72,57 +81,87 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
       onAR: false,
       onApprovedAR: false,
     });
+
+    await GoalFieldResponse.create({
+      goalTemplateFieldPromptId: prompt.id,
+      goalId: goalThree.id,
+      response: [],
+      onAR: false,
+      onApprovedAR: false,
+    });
   });
 
   afterAll(async () => {
     await GoalFieldResponse.destroy({
       where: {
-        goalId: goalOne.id,
+        goalId: [goalOne.id, goalTwo.id, goalThree.id],
       },
+      individualHooks: true,
     });
 
     await GoalTemplateFieldPrompt.destroy({
       where: {
         goalTemplateId: template.id,
       },
+      individualHooks: true,
     });
 
     await Goal.destroy({
       where: {
-        id: [goalOne.id, goalTwo.id],
+        id: [goalOne.id, goalTwo.id, goalThree.id],
       },
       force: true,
+      individualHooks: true,
     });
 
     await GoalTemplate.destroy({
       where: {
         id: template.id,
       },
+      individualHooks: true,
     });
 
     await Grant.destroy({
       where: {
         id: activeGrant.id,
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: recipient.id,
       },
+      individualHooks: true,
     });
 
     await sequelize.close();
   });
 
   it('fetches and filters', async () => {
-    const goals = await getGoalsMissingDataForActivityReportSubmission([goalOne.id, goalTwo.id]);
-    expect(goals).toHaveLength(1);
-    const [goal] = goals;
-    expect(goal.id).toBe(goalTwo.id);
-    expect(goal.recipientId).toBe(recipient.id);
-    expect(goal.recipientName).toBe(recipient.name);
-    expect(goal.grantNumber).toBe(activeGrant.number);
-    expect(goal.regionId).toBe(activeGrant.regionId);
+    const goals = await getGoalsMissingDataForActivityReportSubmission(
+      [goalOne.id, goalTwo.id, goalThree.id],
+    );
+    expect(goals).toHaveLength(2);
+
+    const goalIds = goals.map((g) => g.id);
+    expect(goalIds).toContain(goalTwo.id);
+    expect(goalIds).toContain(goalThree.id);
+
+    const recipientIds = uniq(goals.map((g) => g.recipientId));
+    expect(recipientIds).toHaveLength(1);
+    expect(recipientIds).toContain(recipient.id);
+
+    const recipientNames = uniq(goals.map((g) => g.recipientName));
+    expect(recipientNames).toHaveLength(1);
+    expect(recipientNames).toContain(recipient.name);
+
+    const grantNumbers = uniq(goals.map((g) => g.grantNumber));
+    expect(grantNumbers).toHaveLength(1);
+    expect(grantNumbers).toContain(activeGrant.number);
+
+    const regionIds = uniq(goals.map((g) => g.regionId));
+    expect(regionIds).toHaveLength(1);
+    expect(regionIds).toContain(activeGrant.regionId);
   });
 });

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import Select from 'react-select';
 import {
@@ -13,50 +13,39 @@ import Req from '../Req';
 export default function GrantSelect({
   error,
   selectedGrants,
-  isOnReport,
   setSelectedGrants,
   possibleGrants,
   validateGrantNumbers,
   inputName,
   label,
   isLoading,
-  goalStatus,
-  userCanEdit,
 }) {
-  const cannotEdit = useMemo(() => isOnReport || goalStatus === 'Closed' || possibleGrants.length === 1 || !userCanEdit, [goalStatus, isOnReport, possibleGrants.length, userCanEdit]);
-
   return (
     <FormGroup error={error.props.children}>
-      <Label htmlFor={inputName} className={cannotEdit ? 'text-bold' : ''}>
+      <Label htmlFor={inputName}>
         {label}
         {' '}
-        {!isOnReport ? <Req /> : null }
+        <Req />
       </Label>
-      {cannotEdit ? (
-        <p className="margin-top-0 usa-prose">{selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}</p>
-      ) : (
-        <>
-          {error}
-          <Select
-            placeholder=""
-            inputId={inputName}
-            onChange={setSelectedGrants}
-            options={possibleGrants}
-            styles={selectOptionsReset}
-            components={{
-              DropdownIndicator: null,
-            }}
-            className="usa-select"
-            closeMenuOnSelect={false}
-            value={selectedGrants}
-            isMulti
-            onBlur={() => validateGrantNumbers(SELECT_GRANTS_ERROR)}
-            isDisabled={isLoading}
-            getOptionLabel={(option) => option.numberWithProgramTypes}
-            getOptionValue={(option) => option.id}
-          />
-        </>
-      )}
+      {error}
+      <Select
+        placeholder=""
+        inputId={inputName}
+        onChange={setSelectedGrants}
+        options={possibleGrants}
+        styles={selectOptionsReset}
+        components={{
+          DropdownIndicator: null,
+        }}
+        className="usa-select"
+        closeMenuOnSelect={false}
+        value={selectedGrants}
+        isMulti
+        onBlur={() => validateGrantNumbers(SELECT_GRANTS_ERROR)}
+        isDisabled={isLoading}
+        getOptionLabel={(option) => option.numberWithProgramTypes}
+        getOptionValue={(option) => option.id}
+      />
     </FormGroup>
   );
 }
@@ -67,7 +56,6 @@ GrantSelect.propTypes = {
     label: PropTypes.string,
     value: PropTypes.number,
   })).isRequired,
-  isOnReport: PropTypes.bool.isRequired,
   setSelectedGrants: PropTypes.func.isRequired,
   possibleGrants: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
@@ -77,8 +65,6 @@ GrantSelect.propTypes = {
   inputName: PropTypes.string,
   label: PropTypes.string,
   isLoading: PropTypes.bool,
-  goalStatus: PropTypes.string.isRequired,
-  userCanEdit: PropTypes.bool.isRequired,
 };
 
 GrantSelect.defaultProps = {

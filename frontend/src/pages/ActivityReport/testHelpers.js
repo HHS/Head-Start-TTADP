@@ -11,6 +11,7 @@ import moment from 'moment';
 import ActivityReport from './index';
 import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export const history = createMemoryHistory();
 
@@ -66,33 +67,37 @@ export const ReportComponent = ({
   currentPage = 'activity-summary',
   showLastUpdatedTime = null,
   userId = 1,
+  setErrorResponseCode = jest.fn(),
 }) => (
   <Router history={history}>
-    <AppLoadingContext.Provider value={{
-      setIsAppLoading: jest.fn(),
-      setAppLoadingText: jest.fn(),
-    }}
-    >
-      <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
-        <ActivityReport
-          match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
-          location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
-          }}
-          region={1}
-        />
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>
+    <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+      <AppLoadingContext.Provider value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
+      >
+        <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
+          <ActivityReport
+            match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
+            location={{
+              state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            }}
+            region={1}
+          />
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    </SomethingWentWrongContext.Provider>
   </Router>
 );
 
-export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
+export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1, setErrorResponseCode = jest.fn()) => {
   render(
     <ReportComponent
       id={id}
       currentPage={currentPage}
       showLastUpdatedTime={showLastUpdatedTime}
       userId={userId}
+      setErrorResponseCode={setErrorResponseCode}
     />,
   );
 };
@@ -110,24 +115,12 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
     timeframe: null,
     isFromSmartsheetTtaPlan: null,
     endDate: '2022-12-06',
-    closeSuspendReason: null,
-    closeSuspendContext: null,
     grantId: 12539,
     goalTemplateId: null,
-    previousStatus: null,
     onApprovedAR: false,
     isRttapa: 'Yes',
-    firstNotStartedAt: null,
-    lastNotStartedAt: null,
-    firstInProgressAt: null,
-    lastInProgressAt: null,
-    firstCeasedSuspendedAt: null,
-    lastCeasedSuspendedAt: null,
-    firstClosedAt: null,
-    lastClosedAt: null,
-    firstCompletedAt: null,
-    lastCompletedAt: null,
     createdVia: 'activityReport',
+    statusChanges: [],
     createdAt: '2022-12-01T21:59:28.231Z',
     updatedAt: '2022-12-01T21:59:28.431Z',
     activityReportGoals: [

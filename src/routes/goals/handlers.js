@@ -6,7 +6,6 @@ import {
   createOrUpdateGoals,
   goalsByIdsAndActivityReport,
   goalByIdWithActivityReportsAndRegions,
-  goalByIdAndRecipient,
   destroyGoal,
   mergeGoals,
   getGoalIdsBySimilarity,
@@ -123,7 +122,11 @@ export async function reopenGoal(req, res) {
 export async function changeGoalStatus(req, res) {
   try {
     const {
-      goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus,
+      goalIds,
+      newStatus,
+      closeSuspendReason,
+      closeSuspendContext,
+      oldStatus,
     } = req.body;
 
     const userId = await currentUserId(req, res);
@@ -131,7 +134,7 @@ export async function changeGoalStatus(req, res) {
     const ids = goalIds.map((id) => parseInt(id, DECIMAL_BASE));
 
     let status = false;
-    const previousStatus = [];
+    let previousStatus = [];
 
     await Promise.all(ids.map(async (goalId) => {
       if (!status) {
@@ -147,8 +150,10 @@ export async function changeGoalStatus(req, res) {
           return status;
         }
 
-        if (goal.previousStatus && !previousStatus.includes(goal.previousStatus)) {
-          previousStatus.push(goal.previousStatus);
+        if (goal.statusChanges) {
+          goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
+            previousStatus = [...new Set([...previousStatus, o, n])];
+          });
         }
       }
 
@@ -195,14 +200,14 @@ export async function deleteGoal(req, res) {
     }));
 
     if (!permissions.every((permission) => permission)) {
-      res.sendStatus(401);
+      res.sendStatus(httpCodes.UNAUTHORIZED);
       return;
     }
 
     const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
-      res.sendStatus(404);
+      res.sendStatus(httpCodes.NOT_FOUND);
       return;
     }
 
@@ -245,37 +250,6 @@ export async function retrieveGoalsByIds(req, res) {
     res.json(retrievedGoal);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOALS_BY_IDS`);
-  }
-}
-
-export async function retrieveGoalByIdAndRecipient(req, res) {
-  try {
-    const { goalId, recipientId } = req.params;
-
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const goal = await goalByIdWithActivityReportsAndRegions(goalId);
-
-    const policy = new Goal(user, goal);
-
-    if (!policy.canView()) {
-      res.sendStatus(401);
-      return;
-    }
-
-    const gId = parseInt(goalId, 10);
-    const rId = parseInt(recipientId, 10);
-
-    const retrievedGoal = await goalByIdAndRecipient(gId, rId);
-
-    if (!retrievedGoal) {
-      res.sendStatus(404);
-      return;
-    }
-
-    res.json(retrievedGoal);
-  } catch (error) {
-    await handleErrors(req, res, error, `${logContext}:RETRIEVE_GOAL_BY_ID_AND_RECIPIENT`);
   }
 }
 

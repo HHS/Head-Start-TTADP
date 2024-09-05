@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS, GOAL_SOURCES } = require('@ttahub/common');
+const { GOAL_SOURCES } = require('@ttahub/common');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeValidate,
@@ -8,7 +8,7 @@ const {
   afterUpdate,
   afterDestroy,
 } = require('./hooks/goal');
-const { GOAL_CREATED_VIA } = require('../constants');
+const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
 
 export const RTTAPA_ENUM = ['Yes', 'No'];
 
@@ -79,12 +79,12 @@ export default (sequelize, DataTypes) => {
         return `G-${id}`;
       },
     },
-    closeSuspendReason: {
-      allowNull: true,
-      type: DataTypes.ENUM(Object.keys(CLOSE_SUSPEND_REASONS).map((k) => CLOSE_SUSPEND_REASONS[k])),
-    },
-    closeSuspendContext: {
-      type: DataTypes.TEXT,
+    isCurated: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        const { goalTemplate } = this;
+        return goalTemplate?.creationMethod === CREATION_METHOD.CURATED;
+      },
     },
     grantId: {
       type: DataTypes.INTEGER,
@@ -107,9 +107,6 @@ export default (sequelize, DataTypes) => {
         key: 'id',
       },
       onUpdate: 'CASCADE',
-    },
-    previousStatus: {
-      type: DataTypes.TEXT,
     },
     mapsToParentGoalId: {
       type: DataTypes.INTEGER,
@@ -134,46 +131,6 @@ export default (sequelize, DataTypes) => {
     },
     isRttapa: {
       type: DataTypes.ENUM(RTTAPA_ENUM),
-      allowNull: true,
-    },
-    firstNotStartedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastNotStartedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstInProgressAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastInProgressAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstCeasedSuspendedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastCeasedSuspendedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstClosedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastClosedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    firstCompletedAt: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    lastCompletedAt: {
-      type: DataTypes.DATE,
       allowNull: true,
     },
     createdVia: {

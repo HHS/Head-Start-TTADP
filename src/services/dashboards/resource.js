@@ -418,7 +418,23 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
       JOIN ${tblNames.createdResourcesTempTableName} arorr
         ON aror."resourceId" = arorr.id;
 
-      -- 7.) Create date headers.
+      -- 7.) Create flat reports with courses temp table.
+      DROP TABLE IF EXISTS ${tblNames.createdAroCoursesTempTableName};
+      SELECT
+      DISTINCT
+        ar.id AS "activityReportId",
+        c.id AS "courseId",
+        c.name
+      INTO TEMP ${tblNames.createdAroCoursesTempTableName}
+      FROM ${tblNames.createdArTempTableName} ar
+      JOIN "ActivityReportObjectives" aro
+        ON ar."id" = aro."activityReportId"
+      JOIN "ActivityReportObjectiveCourses" aroc
+        ON aro.id = aroc."activityReportObjectiveId"
+      JOIN "Courses" c
+        ON aroc."courseId" = c.id;
+
+      -- 8.) Create date headers.
       DROP TABLE IF EXISTS ${tblNames.createdFlatResourceHeadersTempTableName};
       SELECT
           generate_series(
@@ -591,7 +607,24 @@ function getOverview(tblNames, totalReportCount) {
     END AS "resourcesPct"
   FROM ${tblNames.createdAroResourcesTempTableName};
   `;
+
   const pctOfReportsWithResources = sequelize.query(pctOfResourcesSql, {
+    type: QueryTypes.SELECT,
+  });
+
+  const pctOfReportsWithCoursesSql = /* sql */`
+  SELECT
+    count(DISTINCT "activityReportId")::decimal AS "reportsWithCoursesCount",
+    ${totalReportCount}::decimal AS "totalReportsCount",
+    CASE WHEN ${totalReportCount} = 0 THEN
+      0
+    ELSE
+      (count(DISTINCT "activityReportId") / ${totalReportCount}::decimal * 100)::decimal(5,2)
+    END AS "coursesPct"
+  FROM ${tblNames.createdAroCoursesTempTableName};
+  `;
+
+  const pctOfReportsWithCourses = sequelize.query(pctOfReportsWithCoursesSql, {
     type: QueryTypes.SELECT,
   });
 
@@ -633,6 +666,7 @@ function getOverview(tblNames, totalReportCount) {
     numberOfParticipants,
     numberOfRecipients,
     pctOfReportsWithResources,
+    pctOfReportsWithCourses,
     pctOfECKLKCResources,
     dateHeaders,
   };
@@ -674,6 +708,7 @@ export async function resourceFlatData(scopes) {
   const uuid = uuidv4().replaceAll('-', '_');
   const createdArTempTableName = `Z_temp_resdb_ar__${uuid}`;
   const createdAroResourcesTempTableName = `Z_temp_resdb_aror__${uuid}`;
+  const createdAroCoursesTempTableName = `Z_temp_resdb_aroc__${uuid}`;
   const createdResourcesTempTableName = `Z_temp_resdb_res__${uuid}`;
   const createdAroTopicsTempTableName = `Z_temp_resdb_arot__${uuid}`;
   const createdTopicsTempTableName = `Z_temp_resdb_topics__${uuid}`;
@@ -683,6 +718,7 @@ export async function resourceFlatData(scopes) {
   const tempTableNames = {
     createdArTempTableName,
     createdAroResourcesTempTableName,
+    createdAroCoursesTempTableName,
     createdResourcesTempTableName,
     createdAroTopicsTempTableName,
     createdTopicsTempTableName,
@@ -706,6 +742,7 @@ export async function resourceFlatData(scopes) {
     numberOfParticipants,
     numberOfRecipients,
     pctOfReportsWithResources,
+    pctOfReportsWithCourses,
     pctOfECKLKCResources,
     dateHeaders,
   } = getOverview(tempTableNames, totalReportCount);
@@ -717,6 +754,7 @@ export async function resourceFlatData(scopes) {
     numberOfParticipants,
     numberOfRecipients,
     pctOfReportsWithResources,
+    pctOfReportsWithCourses,
     pctOfECKLKCResources,
     dateHeaders,
   ] = await Promise.all(
@@ -726,6 +764,7 @@ export async function resourceFlatData(scopes) {
       numberOfParticipants,
       numberOfRecipients,
       pctOfReportsWithResources,
+      pctOfReportsWithCourses,
       pctOfECKLKCResources,
       dateHeaders,
     ],
@@ -733,7 +772,7 @@ export async function resourceFlatData(scopes) {
 
   // 5.) Restructure Overview.
   const overView = {
-    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources,
+    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfECKLKCResources, pctOfReportsWithCourses,
   };
 
   // 6.) Return the data.
@@ -864,7 +903,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'report'
                   ))
               FROM UNNEST("resources->ActivityReportResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -958,7 +997,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'specialistNextStep'
                   ))
               FROM UNNEST("specialistNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1057,7 +1096,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'recipientNextStep'
                   ))
               FROM UNNEST("recipientNextSteps->resources->NextStepResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1157,7 +1196,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'objective'
                   ))
               FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -1166,7 +1205,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -1287,7 +1326,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                   'tableType', 'goals'
                   ))
               FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
               sequelize.literal('\'topics\''),
               sequelize.literal(`(
@@ -1296,7 +1335,7 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
-                GROUP BY TRUE
+                GROUP BY 1=1
               )`),
             ),
           ),
@@ -2101,6 +2140,9 @@ export function restructureOverview(data) {
       numEclkc: formatNumber(data.overView.pctOfECKLKCResources[0].eclkcCount),
       num: formatNumber(data.overView.pctOfECKLKCResources[0].allCount),
       percentEclkc: `${formatNumber(data.overView.pctOfECKLKCResources[0].eclkcPct, 2)}%`,
+    },
+    ipdCourses: {
+      percentReports: `${formatNumber(data.overView.pctOfReportsWithCourses[0].coursesPct, 2)}%`,
     },
   };
 }

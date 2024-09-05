@@ -11,6 +11,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import Objective from '../Objective';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
+import { mockRSSData } from '../../../../../testHelpers';
 
 const defaultObjective = {
   id: 1,
@@ -20,6 +21,7 @@ const defaultObjective = {
   ttaProvided: '<p><ul><li>What</li></ul></p>',
   status: 'Not started',
   ids: [1],
+  objectiveCreatedHere: true,
 };
 
 const mockData = (files) => ({
@@ -98,6 +100,7 @@ const RenderObjective = ({
                 title: '',
                 courses: [],
                 supportType: '',
+                objectiveCreatedHere: true,
               },
               {
                 courses: [],
@@ -109,6 +112,7 @@ const RenderObjective = ({
                 files: [],
                 status: 'Complete',
                 title: 'Existing objective',
+                objectiveCreatedHere: false,
               }]}
             index={1}
             remove={onRemove}
@@ -136,12 +140,8 @@ const RenderObjective = ({
 describe('Objective', () => {
   afterEach(() => fetchMock.restore());
   beforeEach(async () => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <title>Whats New</title>
-  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-  <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
-
+    fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/courses', [{ id: 1, name: 'Course 1' }, { id: 2, name: 'Course 2' }]);
   });
 
@@ -156,33 +156,33 @@ describe('Objective', () => {
   });
 
   it('uploads a file', async () => {
-    fetchMock.post('/api/files/objectives', [{ objectiveIds: [] }]);
+    fetchMock.post('/api/files', [{ objectiveIds: [] }]);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link\?/i);
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);
     const data = mockData([file('testFile', 1)]);
     const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
-    expect(fetchMock.called('/api/files/objectives')).toBe(false);
+    expect(fetchMock.called('/api/files')).toBe(false);
     dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, <RenderObjective />);
-    expect(fetchMock.called('/api/files/objectives')).toBe(true);
+    expect(fetchMock.called('/api/files')).toBe(true);
   });
 
   it('handles a file upload error', async () => {
-    fetchMock.post('/api/files/objectives', 500);
+    fetchMock.post('/api/files', 500);
     const { rerender } = render(<RenderObjective />);
-    const files = screen.getByText(/Did you use any TTA resources that aren't available as link?/i);
+    const files = screen.getByText(/Did you use any other TTA resources that aren't available as link?/i);
     const fieldset = files.parentElement;
     const yes = await within(fieldset).findByText('Yes');
     userEvent.click(yes);
     const data = mockData([file('testFile', 1)]);
     const dropzone = document.querySelector('.ttahub-objective-files-dropzone div');
-    expect(fetchMock.called('/api/files/objectives')).toBe(false);
+    expect(fetchMock.called('/api/files')).toBe(false);
     dispatchEvt(dropzone, 'drop', data);
     await flushPromises(rerender, <RenderObjective />);
-    expect(fetchMock.called('/api/files/objectives')).toBe(true);
+    expect(fetchMock.called('/api/files')).toBe(true);
     await screen.findByText(/error uploading your file/i);
   });
 
@@ -251,7 +251,7 @@ describe('Objective', () => {
     const context = await screen.findByLabelText(/Additional context/i);
     userEvent.type(context, 'This is the context');
 
-    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls="modal-suspend-objective--"]' }));
+    userEvent.click(await screen.findByText(/cancel/i, { selector: '[aria-controls^="modal-suspend-objective-"]' }));
 
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
     expect(await screen.findByText(/not started/i)).toBeVisible();

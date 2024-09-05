@@ -6,6 +6,7 @@ import {
   collaboratorDigest,
   submittedDigest,
   recipientApprovedDigest,
+  trainingReportTaskDueNotifications,
 } from './mailer';
 import { runMaintenanceCronJobs } from './maintenance';
 import {
@@ -17,11 +18,11 @@ import { logger, auditLogger } from '../logger';
 // Run at 4 am ET
 const schedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '0 16 * * 1-5';
+const dailySched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
-const weeklySched = '0 16 * * 5';
+const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '0 16 28-31 * *';
+const monthlySched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
 const runJob = () => {
@@ -43,6 +44,7 @@ const runDailyEmailJob = () => {
       await submittedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await approvedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.DAILY, DIGEST_SUBJECT_FREQ.DAILY);
+      await trainingReportTaskDueNotifications(EMAIL_DIGEST_FREQ.DAILY);
     } catch (error) {
       auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
       logger.error(`Daily Email Digest Error: ${error}`);

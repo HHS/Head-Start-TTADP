@@ -12,7 +12,6 @@ import { useFormContext } from 'react-hook-form';
 import Navigator, {
   getPrompts,
   getPromptErrors,
-  packageGoals,
   shouldUpdateFormData,
   formatEndDate,
 } from '../ActivityReportNavigator';
@@ -286,6 +285,7 @@ describe('Navigator', () => {
         },
         second: 'on',
       },
+      false,
     ));
   });
 
@@ -321,7 +321,7 @@ describe('Navigator', () => {
       ...initialData,
       pageState: { ...initialData.pageState, 2: IN_PROGRESS },
       second: 'on',
-    }));
+    }, false));
     await waitFor(() => expect(updatePage).toHaveBeenCalledWith(1));
   });
 
@@ -373,8 +373,8 @@ describe('Navigator', () => {
 });
 
 describe('shouldUpdateFormData', () => {
-  it('if isAutoSave is false, returns false', () => {
-    expect(shouldUpdateFormData(false)).toBe(false);
+  it('if isAutoSave is false, returns true', () => {
+    expect(shouldUpdateFormData(false)).toBe(true);
   });
 
   it('if we are focused on a rich editor, return false', async () => {
@@ -473,81 +473,5 @@ describe('getPromptErrors', () => {
     document.querySelector = jest.fn(() => null);
     const errors = {};
     expect(getPromptErrors(null, errors)).toBe(false);
-  });
-});
-
-describe('packageGoals', () => {
-  it('correctly formats goals with multiple recipients', () => {
-    const grantIds = [1, 2];
-    const packagedGoals = packageGoals(
-      [
-        {
-          name: 'goal name',
-          endDate: '09/01/2020',
-          prompts: [{ fieldName: 'prompt' }],
-        },
-      ],
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-      },
-      grantIds,
-      [{ fieldName: 'prompt2' }],
-    );
-
-    expect(packagedGoals).toEqual([
-      {
-        name: 'goal name',
-        endDate: '09/01/2020',
-        prompts: [],
-        grantIds,
-        isActivelyBeingEditing: false,
-      },
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-        grantIds,
-        prompts: [],
-      },
-    ]);
-  });
-
-  it('correctly formats goals for a single recipient', () => {
-    const grantIds = [1];
-    const packagedGoals = packageGoals(
-      [
-        {
-          name: 'goal name',
-          endDate: '09/01/2020',
-          prompts: [{ fieldName: 'prompt' }],
-        },
-      ],
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-      },
-      grantIds,
-      [{ fieldName: 'prompt2' }],
-    );
-
-    expect(packagedGoals).toEqual([
-      {
-        name: 'goal name',
-        endDate: '09/01/2020',
-        prompts: [{ fieldName: 'prompt' }],
-        grantIds,
-        isActivelyBeingEditing: false,
-      },
-      {
-        name: 'recipient',
-        endDate: '09/01/2020',
-        isActivelyBeingEditing: true,
-        grantIds,
-        prompts: [{ fieldName: 'prompt2' }],
-      },
-    ]);
   });
 });

@@ -13,16 +13,6 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
         required: false,
       },
       {
-        model: sequelize.models.ObjectiveFile,
-        as: 'objectiveFiles',
-        required: false,
-      },
-      {
-        model: sequelize.models.ObjectiveTemplateFile,
-        as: 'objectiveTemplateFiles',
-        required: false,
-      },
-      {
         model: sequelize.models.SessionReportPilotFile,
         as: 'sessionFiles',
         required: false,
@@ -42,8 +32,6 @@ const propagateDestroyToFile = async (sequelize, instance, options) => {
   });
   if (file.reportFiles.length === 0
     && file.reportObjectiveFiles.length === 0
-    && file.objectiveFiles.length === 0
-    && file.objectiveTemplateFiles.length === 0
     && file.sessionFiles.length === 0
     && file.communicationLogFiles.length === 0
     && file.importFile === null) {

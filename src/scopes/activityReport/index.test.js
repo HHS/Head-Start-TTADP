@@ -4,7 +4,7 @@ import {
   REPORT_STATUSES,
   APPROVER_STATUSES,
 } from '@ttahub/common';
-import { AWS_ELASTIC_SEARCH_INDEXES, GOAL_STATUS } from '../../constants';
+import { GOAL_STATUS } from '../../constants';
 import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 import db, {
@@ -41,9 +41,6 @@ import {
   createRecipient,
   createGoal,
 } from '../../testUtils';
-import {
-  deleteIndex,
-} from '../../lib/awsElasticSearch/index';
 import { findOrCreateResources, processActivityReportForResourcesById } from '../../services/resource';
 import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 
@@ -1260,6 +1257,8 @@ describe('filtersToScopes', () => {
       // Delete Topics.
       await Topic.destroy({
         where: { id: [topic1.id, topic2.id] },
+        individualHooks: true,
+        force: true,
       });
 
       // Delete aro.
@@ -1457,6 +1456,8 @@ describe('filtersToScopes', () => {
     let possibleReportIds;
 
     let goal;
+    let goalTwo;
+    let goalThree;
     let goalTemplateFieldPrompt;
     let goalFieldResponse;
     let activityReportGoalFieldResponse1;
@@ -1491,27 +1492,31 @@ describe('filtersToScopes', () => {
         createdVia: 'rtr',
       });
 
+      goalTwo = await Goal.create({
+        name: 'Goal Response Test Two',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
+      goalThree = await Goal.create({
+        name: 'Goal Response Test Three',
+        status: 'Draft',
+        endDate: null,
+        isFromSmartsheetTtaPlan: false,
+        onApprovedAR: false,
+        grantId: grant.id,
+        createdVia: 'rtr',
+      });
+
       // Reports.
       includedReport1 = await ActivityReport.create(draftReport);
       includedReport2 = await ActivityReport.create(draftReport);
       excludedReport = await ActivityReport.create(draftReport);
       possibleReportIds = [includedReport1.id, includedReport2.id, excludedReport.id];
-
-      // ActivityReportGoals.
-      const activityReportGoal1 = await ActivityReportGoal.create({
-        activityReportId: includedReport1.id,
-        goalId: goal.id,
-      });
-
-      const activityReportGoal2 = await ActivityReportGoal.create({
-        activityReportId: includedReport2.id,
-        goalId: goal.id,
-      });
-
-      const activityReportGoal3 = await ActivityReportGoal.create({
-        activityReportId: excludedReport.id,
-        goalId: goal.id,
-      });
 
       // Get GoalTemplateFieldPrompt with the title 'FEI root cause'.
       goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
@@ -1523,6 +1528,22 @@ describe('filtersToScopes', () => {
         goalId: goal.id,
         goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
         response: ['Community Partnerships'],
+      });
+
+      // ActivityReportGoals.
+      const activityReportGoal1 = await ActivityReportGoal.create({
+        activityReportId: includedReport1.id,
+        goalId: goal.id,
+      });
+
+      const activityReportGoal2 = await ActivityReportGoal.create({
+        activityReportId: includedReport2.id,
+        goalId: goalTwo.id,
+      });
+
+      const activityReportGoal3 = await ActivityReportGoal.create({
+        activityReportId: excludedReport.id,
+        goalId: goalThree.id,
       });
 
       // Create ActivityReportGoalFieldResponse.
@@ -1578,7 +1599,7 @@ describe('filtersToScopes', () => {
 
       // Destroy Goal.
       await Goal.destroy({
-        where: { id: goal.id },
+        where: { id: [goal.id, goalTwo.id, goalThree.id] },
       });
 
       // Destroy Grant.
@@ -2654,9 +2675,6 @@ describe('filtersToScopes', () => {
       await ActivityReport.destroy({
         where: { id: [includedReport1.id, includedReport2.id, excludedReport.id] },
       });
-
-      // Delete indexes.
-      await deleteIndex(AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS, client);
     });
 
     it('return correct report text filter search results', async () => {
@@ -2938,8 +2956,7 @@ describe('filtersToScopes', () => {
       await createActivityReportObjectiveFileMetaData(
         'test.pdf',
         'very-unique-file-key',
-        99_998,
-        99_998,
+        [aro.id],
         12_345,
       );
     });

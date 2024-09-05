@@ -14,6 +14,19 @@ const isAdmin = (user) => {
 };
 
 /**
+ * @param {object} user
+ * @returns {boolean} - True if the user has READ_WRITE_TRAINING_REPORTS or POC_TRAINING_REPORTS
+ */
+
+const hasTrainingReportWritePermissions = (user) => {
+  const permissions = _.get(user, 'permissions');
+  return permissions && permissions.find(
+    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
+      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS,
+  ) !== undefined;
+};
+
+/**
  * Return all regions that user has a minimum of read access to.
  * All permissions that qualify this criteria are:
  * Admin
@@ -198,6 +211,7 @@ const canEditOrCreateSessionReports = (user, region) => {
 const getUserRegions = (user) => allRegionsUserHasPermissionTo(user);
 
 const canChangeGoalStatus = (user, region) => canEditOrCreateGoals(user, region);
+const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, region);
 
 /**
  * can see behind feature flag
@@ -221,8 +235,10 @@ export {
   getUserRegions,
   canEditOrCreateGoals,
   canChangeGoalStatus,
+  canChangeObjectiveStatus,
   canEditOrCreateSessionReports,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
   canSeeBehindFeatureFlag,
+  hasTrainingReportWritePermissions,
 };

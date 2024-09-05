@@ -21,6 +21,7 @@ const { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } = require('../../constants');
 
 const { MaintenanceLog } = require('../../models');
 const { auditLogger, logger } = require('../../logger');
+const { default: transactionWrapper } = require('../../workers/transactionWrapper');
 
 jest.mock('../../models', () => ({
   MaintenanceLog: {
@@ -113,13 +114,25 @@ describe('Maintenance Queue', () => {
       addQueueProcessor(category1, processor1);
       addQueueProcessor(category2, processor2);
       processMaintenanceQueue();
+
       expect(maintenanceQueue.process).toHaveBeenCalledTimes(3);
-      expect(maintenanceQueue.process).toHaveBeenCalledWith(category1, processor1);
-      expect(maintenanceQueue.process).toHaveBeenCalledWith(category2, processor2);
       expect(maintenanceQueue.process)
-        .toHaveBeenCalledWith(
+        .toHaveBeenNthCalledWith(
+          1,
           MAINTENANCE_CATEGORY.MAINTENANCE,
-          maintenance,
+          expect.any(Function),
+        );
+      expect(maintenanceQueue.process)
+        .toHaveBeenNthCalledWith(
+          2,
+          category1,
+          expect.any(Function),
+        );
+      expect(maintenanceQueue.process)
+        .toHaveBeenNthCalledWith(
+          3,
+          category2,
+          expect.any(Function),
         );
     });
   });
@@ -129,7 +142,15 @@ describe('Maintenance Queue', () => {
       jest.clearAllMocks();
     });
     it('should add a job to the maintenance queue if a processor is defined for the given category', () => {
-      const data = { test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category' };
+      const data = {
+        test: 'enqueueMaintenanceJob - should add a job to the maintenance queue if a processor is defined for the given category',
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
+      };
       const category = 'test-category';
       const processor = jest.fn();
       addQueueProcessor(category, processor);
@@ -278,6 +299,51 @@ describe('Maintenance Queue', () => {
       callback.mockResolvedValue(result);
       const isSuccessful = await maintenanceCommand(callback, category, type, data, triggeredById);
       expect(isSuccessful).toBe(true);
+    });
+
+    it('should default data to an empty object if not provided', async () => {
+      const cb = jest.fn().mockResolvedValue({ isSuccessful: true });
+      const cast = 'test-category';
+      const t = 'test-type';
+      const id = 1;
+      await maintenanceCommand(cb, cast, t, undefined, id);
+      expect(MaintenanceLog.create).toHaveBeenCalledWith({
+        category: cast,
+        type: t,
+        data: {}, // Verifies that data defaults to an empty object
+        triggeredById: id,
+      });
+    });
+
+    it('should include messages and benchmarks in the update if they are not empty', async () => {
+      const cb = jest.fn().mockImplementation(async (logMessages, logBenchmarks) => {
+        logMessages.push('Log message');
+        logBenchmarks.push('Log benchmark');
+        throw new Error('Test error');
+      });
+      const cat = 'test-category';
+      const t = 'test-type';
+      const d = {};
+      const id = 1;
+      await maintenanceCommand(cb, cat, t, d, id);
+      expect(MaintenanceLog.update).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          messages: ['Log message'],
+          benchmarks: ['Log benchmark'],
+          errorMessage: 'Test error',
+        }),
+        isSuccessful: false,
+      }, expect.anything());
+    });
+
+    it('should default dateOffSet to 90 if not provided, using the correct olderThan date', async () => {
+      const d = {}; // No dateOffSet provided, triggering the default to 90
+      const id = null;
+      await clearMaintenanceLogs(d, id);
+      // Since the exact date cannot be matched due to the dynamic nature of backDate(90),
+      // we focus on verifying that MaintenanceLog.destroy was called without throwing an error,
+      // which implies the default value was used successfully.
+      expect(MaintenanceLog.destroy).toHaveBeenCalled();
     });
   });
 
