@@ -14,6 +14,19 @@ import {
 } from '../../../services/ssdi';
 import Generic from '../../../policies/generic';
 
+// Check if the user has access to a specific folder
+const checkFolderPermissions = async (user, scriptPath: string) => {
+  const policy = new Generic(user);
+
+  // Map specific paths to permissions
+  if (scriptPath.includes('dataRequests/ohs') || scriptPath.includes('dataRequests/internal')) {
+    // TODO: make migration to add ssdi_restricted to feature flags
+    return policy.hasFeatureFlag('ssdi_restricted');
+  }
+  // Default: Allow access to public folders (api and user)
+  return true;
+};
+
 // List all available query files with name and description
 const listQueries = async (req: Request, res: Response) => {
   try {
@@ -24,21 +37,26 @@ const listQueries = async (req: Request, res: Response) => {
   }
 };
 
+const validateScriptPath = async (scriptPath: string, req: Request, res: Response) => {
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+
+  if (!scriptPath) {
+    res.status(400).send('Script path is required');
+  } else if (scriptPath.includes('../')) {
+    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
+  } else if (!scriptPath.startsWith('src/queries/')) {
+    res.status(400).json({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+  } else if (!await checkFolderPermissions(user, scriptPath)) {
+    res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
+  }
+};
+
 // Reads the filters and query from the file and sends the filters to the UI
 const getFilters = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
-  if (!scriptPath) {
-    res.status(400).send('Script path is required');
-    return;
-  }
-  if (scriptPath.includes('../')) {
-    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
-    return;
-  }
-  if (!scriptPath.startsWith('src/queries/')) {
-    res.status(400).json({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
-    return;
-  }
+
+  await validateScriptPath(scriptPath, req, res);
 
   try {
     const filters = await readFiltersFromFile(`./${scriptPath}`);
@@ -60,18 +78,8 @@ const filterAttributes = <T extends object>(
 const runQuery = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   const outputFormat = (req.query.format as string) || 'json';
-  if (!scriptPath) {
-    res.status(400).send('Script path is required');
-    return;
-  }
-  if (scriptPath.includes('../')) {
-    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
-    return;
-  }
-  if (!scriptPath.startsWith('src/queries/')) {
-    res.status(400).json({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
-    return;
-  }
+
+  await validateScriptPath(scriptPath, req, res);
 
   try {
     const filters = await readFiltersFromFile(scriptPath, true);
