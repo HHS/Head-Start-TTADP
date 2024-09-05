@@ -133,7 +133,6 @@ const regionOneDraftReport = {
   calculatedStatus: REPORT_STATUSES.DRAFT,
 };
 
-let grant;
 let goal;
 let objective;
 let goalTwo;
@@ -151,7 +150,7 @@ describe('Resources dashboard', () => {
   beforeAll(async () => {
     await User.findOrCreate({ where: mockUser, individualHooks: true });
     await Recipient.findOrCreate({ where: mockRecipient, individualHooks: true });
-    [grant] = await Grant.findOrCreate({
+    await Grant.findOrCreate({
       where: mockGrant,
       validate: true,
       individualHooks: true,
@@ -502,7 +501,7 @@ describe('Resources dashboard', () => {
   it('resourceUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     let resourceUseResult;
-    db.sequelize.transaction(async () => {
+    await db.sequelize.transaction(async () => {
       ({ resourceUseResult } = await resourceFlatData(scopes));
 
       expect(resourceUseResult).toBeDefined();
@@ -540,7 +539,7 @@ describe('Resources dashboard', () => {
   it('resourceTopicUseFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     let topicUseResult;
-    db.sequelize.transaction(async () => {
+    await db.sequelize.transaction(async () => {
       ({ topicUseResult } = await resourceFlatData(scopes));
 
       expect(topicUseResult).toBeDefined();
@@ -574,7 +573,7 @@ describe('Resources dashboard', () => {
   it('overviewFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     let overView;
-    db.sequelize.transaction(async () => {
+    await db.sequelize.transaction(async () => {
       ({ overView } = await resourceFlatData(scopes));
 
       expect(overView).toBeDefined();
@@ -600,7 +599,7 @@ describe('Resources dashboard', () => {
         {
           reportsWithResourcesCount: '4',
           totalReportsCount: '5',
-          resourcesPct: '80.0000',
+          resourcesPct: '80.00',
         },
       ]);
 
@@ -609,7 +608,7 @@ describe('Resources dashboard', () => {
         {
           eclkcCount: '2',
           allCount: '3',
-          eclkcPct: '66.6667',
+          eclkcPct: '66.67',
         },
       ]);
     });
@@ -618,7 +617,7 @@ describe('Resources dashboard', () => {
   it('resourceDateHeadersFlat', async () => {
     const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
     let dateHeaders;
-    db.sequelize.transaction(async () => {
+    await db.sequelize.transaction(async () => {
       ({ dateHeaders } = await resourceFlatData(scopes));
       expect(dateHeaders).toBeDefined();
       expect(dateHeaders.length).toBe(1);
@@ -830,6 +829,7 @@ describe('Resources dashboard', () => {
         numberOfParticipants: [{ participants: '44' }],
         numberOfRecipients: [{ recipients: '1' }],
         pctOfECKLKCResources: [{ eclkcCount: '2', allCount: '3', eclkcPct: '66.6667' }],
+        pctOfReportsWithCourses: [{ coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' }],
       },
     };
 
@@ -851,6 +851,9 @@ describe('Resources dashboard', () => {
         numEclkc: '2',
         num: '3',
         percentEclkc: '66.67%',
+      },
+      ipdCourses: {
+        percentReports: '80.00%',
       },
     });
   });

@@ -52,21 +52,21 @@ describe('ClassReview', () => {
     describe('emotional support', () => {
       it('above all thresholds', () => testThreshold('ES', 6, 'Above all thresholds'));
       it('below quality', () => testThreshold('ES', 5.1, 'Below quality'));
-      it('below competetive', () => testThreshold('ES', 5.1, 'Below quality'));
+      it('below competitive', () => testThreshold('ES', 5.1, 'Below quality'));
     });
 
     describe('classroom organization', () => {
       it('above all thresholds', () => testThreshold('CO', 6, 'Above all thresholds'));
       it('below quality', () => testThreshold('CO', 5.1, 'Below quality'));
-      it('below competetive', () => testThreshold('CO', 4.9, 'Below competetive'));
+      it('below competitive', () => testThreshold('CO', 4.9, 'Below competitive'));
     });
 
     describe('instructional support', () => {
       it('above all thresholds', () => testThreshold('IS', 3.1, 'Above all thresholds'));
       it('below quality - after 2025-08-01', () => testThreshold('IS', 2.5, 'Below quality'));
       it('below quality - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.4, 'Below quality'));
-      it('below competetive - after 2025-08-01', () => testThreshold('IS', 2.4, 'Below competetive', '08/02/2025'));
-      it('below competetive - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.2, 'Below competetive'));
+      it('below competitive - after 2025-08-01', () => testThreshold('IS', 2.4, 'Below competitive', '08/02/2025'));
+      it('below competitive - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.2, 'Below competitive'));
     });
   });
 });

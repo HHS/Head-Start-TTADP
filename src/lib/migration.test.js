@@ -7,10 +7,8 @@ const {
   updateUsersFlagsEnum,
   dropAndRecreateEnum,
   updateSequence,
+  addValuesToEnumIfTheyDontExist,
 } = require('./migration');
-
-// Mocking the FEATURE_FLAGS constant
-const FEATURE_FLAGS = ['FLAG_1', 'FLAG_2', 'FLAG_3'];
 
 describe('migration', () => {
   const queryInterface = {
@@ -201,7 +199,7 @@ describe('migration', () => {
       jest.clearAllMocks();
     });
 
-    test('should update flags and recreate enum if valuesToRemove is provided', async () => {
+    it('should update flags and recreate enum if valuesToRemove is provided', async () => {
       const valuesToRemove = ['value1', 'value2'];
       queryInterface.sequelize.query.mockResolvedValue([[{ exists: true }]]);
       await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
@@ -223,8 +221,24 @@ describe('migration', () => {
         expect.any(String),
         { transaction },
       );
+    });
 
-      // Add more expectations to check for specific SQL commands if necessary
+    it('should use specificFlags for updating and recreating enum if provided', async () => {
+      const specificFlags = ['customFlag1', 'customFlag2'];
+      queryInterface.sequelize.query.mockResolvedValue([[{ exists: true }], [{ exists: true }]]);
+      await updateUsersFlagsEnum(queryInterface, transaction, ['customFlag1'], specificFlags);
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(4);
+    });
+
+    it('should handle cases where none of the values to remove exist', async () => {
+      const valuesToRemove = ['nonExistentFlag'];
+      queryInterface.sequelize.query.mockResolvedValue([[{ exists: false }]]);
+      await updateUsersFlagsEnum(queryInterface, transaction, valuesToRemove);
+      expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+        expect.any(String),
+        { transaction },
+      );
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(3); // Only the EXISTS check
     });
   });
 
@@ -308,6 +322,31 @@ describe('migration', () => {
       await expect(updateSequence(queryInterface, 'SequelizeMeta', transaction)).rejects.toThrow(
         'No sequences found for table SequelizeMeta',
       );
+    });
+  });
+
+  describe('addValuesToEnumIfTheyDontExist', () => {
+    const enumName = 'test_enum';
+    const enumValues = ['value1', 'value2'];
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should attempt to add each enum value if not exists', async () => {
+      await addValuesToEnumIfTheyDontExist(queryInterface, transaction, enumName, enumValues);
+
+      // Verify that the query was called with the correct SQL for each enum value,
+      // trimming for any unintentional whitespace
+      enumValues.forEach((enumValue) => {
+        expect(queryInterface.sequelize.query).toHaveBeenCalledWith(
+          expect.stringContaining(`ALTER TYPE "${enumName}" ADD VALUE IF NOT EXISTS '${enumValue}';`.trim()),
+          { transaction },
+        );
+      });
+
+      // Verify the query was called the correct number of times for the enumValues provided
+      expect(queryInterface.sequelize.query).toHaveBeenCalledTimes(enumValues.length);
     });
   });
 });

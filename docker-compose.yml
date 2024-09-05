@@ -9,7 +9,7 @@ services:
     environment:
       - SPEC_URL=swagger/index.yaml
   db:
-    image: postgres:12.4
+    image: postgres:15.6
     container_name: postgres_docker
     env_file: .env
     ports:
@@ -59,20 +59,6 @@ services:
     ports:
       - "1025:1025"
       - "1080:1080"
-  opensearch-node1:
-    image: opensearchproject/opensearch:1.3.2
-    env_file: .env
-    container_name: opensearch-node1
-    environment:
-      - cluster.name=opensearch-cluster
-      - node.name=opensearch-node1
-      - "DISABLE_SECURITY_PLUGIN=true" # disables security plugin entirely in OpenSearch by setting plugins.security.disabled: true in opensearch.yml
-      - "discovery.type=single-node" # disables bootstrap checks that are enabled when network.host is set to a non-loopback address
-    volumes:
-      - opensearch-data1:/usr/share/opensearch/data
-    ports:
-      - 9200:9200
-      - 9600:9600 # required for Performance Analyzer
   testingonly:
     build:
       context: .
@@ -97,4 +83,3 @@ services:
 volumes:
   dbdata: {}
   minio-data: {}
-  opensearch-data1: {}

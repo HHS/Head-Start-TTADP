@@ -97,32 +97,4 @@ describe('ObjectiveCourseSelect', () => {
     await selectEvent.clearAll(select);
     expect(onChange).toHaveBeenCalled();
   });
-
-  it('handles fetch error', async () => {
-    fetchMock.get('/api/courses', 404);
-    const onChange = jest.fn();
-    await act(() => waitFor(() => {
-      renderObjectiveCourseSelect(
-        onChange,
-        [{ id: 6, name: 'Ongoing Assessment (BTS-P)' }],
-      );
-    }));
-
-    const select = screen.queryByText(/iPD course name/i);
-    expect(select).toBeNull();
-  });
-
-  it('handles no options', async () => {
-    fetchMock.get('/api/courses', []);
-    const onChange = jest.fn();
-    await act(() => waitFor(() => {
-      renderObjectiveCourseSelect(
-        onChange,
-        [{ id: 6, name: 'Ongoing Assessment (BTS-P)' }],
-      );
-    }));
-
-    const select = screen.queryByText(/iPD course name/i);
-    expect(select).toBeNull();
-  });
 });

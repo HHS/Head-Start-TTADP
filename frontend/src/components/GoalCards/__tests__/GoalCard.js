@@ -28,20 +28,26 @@ describe('GoalCard', () => {
     source: 'The inferno',
     createdVia: 'rtr',
     onAR: true,
-    sessionObjectives: [{
-      title: 'Session objective 1',
-      trainingReportId: 'TR-1',
-      grantNumbers: ['G-1'],
-      endDate: '2021-12-31',
-      topics: ['Topic 1', 'Topic 2'],
-      sessionName: 'Session 1',
-      type: 'session',
-    }],
+    responses: [],
     objectives: [
       {
         id: 1,
+        ids: [1],
         endDate: '2022-01-01',
         title: 'Objective 1',
+        arNumber: 'AR-1',
+        ttaProvided: 'TTA 1',
+        reasons: ['Reason 1', 'Reason 2'],
+        status: 'Closed',
+        activityReports: [],
+        grantNumbers: ['G-1'],
+        topics: [],
+      },
+      {
+        id: 2,
+        ids: [2],
+        endDate: '2022-01-01',
+        title: 'Objective 2',
         arNumber: 'AR-1',
         ttaProvided: 'TTA 1',
         reasons: ['Reason 1', 'Reason 2'],
@@ -95,6 +101,7 @@ describe('GoalCard', () => {
               isChecked={false}
               marginX={3}
               marginY={2}
+              showReopenGoalModal={() => {}}
           // eslint-disable-next-line react/jsx-props-no-spreading
               {...props}
             />
@@ -108,7 +115,7 @@ describe('GoalCard', () => {
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 
-  it('properly sorts objectives', async () => {
+  it('properly shows objectives', async () => {
     renderGoalCard();
     const expandObjectives = await screen.findByRole('button', { name: /View objectives for goal/i });
     act(() => {
@@ -118,9 +125,6 @@ describe('GoalCard', () => {
     const objectives = document.querySelectorAll('.ttahub-goal-card__objective-list');
 
     expect(objectives.length).toBe(2);
-
-    // confirm that the second one is a session objective (that they are sorted)
-    expect(objectives[1].classList.contains('ttahub-goal-card__objective-list--session-objective')).toBe(true);
   });
 
   it('shows goal source', () => {
@@ -128,6 +132,13 @@ describe('GoalCard', () => {
 
     expect(screen.getByText(/goal source/i)).toBeInTheDocument();
     expect(screen.getByText(/The inferno/i)).toBeInTheDocument();
+  });
+
+  it('shows the fei root causes', () => {
+    renderGoalCard(DEFAULT_PROPS,
+      { ...goal, isFei: true, responses: [{ response: ['root cause 1', 'root cause 2', 'root cause 3'] }] });
+    expect(screen.getByText('Root cause:')).toBeInTheDocument();
+    expect(screen.getByText(/root cause 1, root cause 2, root cause 3/i)).toBeInTheDocument();
   });
 
   it('hides the checkbox when hideCheckbox is true', () => {
@@ -417,5 +428,105 @@ describe('GoalCard', () => {
     expect(tags.length).toBe(1);
     expect(tags[0].textContent).toBe('Merged');
     expect(tags[0]).toBeVisible();
+  });
+
+  it('prevents suspended status changes if objectives are open', async () => {
+    const goalWithMultipleObjectives = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: '2023-01-01',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [],
+          ids: [1],
+        },
+        {
+          ids: [2],
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: '2022-09-13',
+          reasons: ['Reason 3'],
+          status: 'Closed',
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [],
+        },
+      ],
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, goalWithMultipleObjectives);
+    const statusChange = await screen.findByRole('button', { name: /change status for goal/i });
+
+    act(() => {
+      userEvent.click(statusChange);
+    });
+
+    const closedButton = await screen.findByRole('button', { name: /suspended/i });
+
+    act(() => {
+      userEvent.click(closedButton);
+    });
+
+    const error = await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i);
+    expect(error).toBeVisible();
+  });
+
+  it('prevents closed status changes if objectives are open', async () => {
+    const goalWithMultipleObjectives = {
+      ...goal,
+      objectives: [
+        {
+          id: 1,
+          title: 'Objective 1',
+          arNumber: 'AR-1',
+          ttaProvided: 'TTA 1',
+          endDate: '2023-01-01',
+          reasons: ['Reason 1', 'Reason 2'],
+          status: 'In Progress',
+          activityReports: [],
+          grantNumbers: ['G-1'],
+          topics: [],
+          ids: [1],
+        },
+        {
+          ids: [2],
+          id: 2,
+          title: 'Objective 2',
+          arNumber: 'AR-2',
+          ttaProvided: 'TTA 2',
+          endDate: '2022-09-13',
+          reasons: ['Reason 3'],
+          status: 'Closed',
+          activityReports: [],
+          grantNumbers: ['G-2'],
+          topics: [],
+        },
+      ],
+    };
+
+    renderGoalCard({ ...DEFAULT_PROPS }, goalWithMultipleObjectives);
+    const statusChange = await screen.findByRole('button', { name: /change status for goal/i });
+
+    act(() => {
+      userEvent.click(statusChange);
+    });
+
+    const closedButton = await screen.findByRole('button', { name: /closed/i });
+
+    act(() => {
+      userEvent.click(closedButton);
+    });
+
+    const error = await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete or suspended./i);
+    expect(error).toBeVisible();
   });
 });

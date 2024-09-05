@@ -1,8 +1,12 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent,
+  render,
+  screen,
+  fireEvent,
+  act,
 } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import ResourceRepeater from '../ResourceRepeater';
 
 describe('ResourceRepeater', () => {
@@ -10,8 +14,8 @@ describe('ResourceRepeater', () => {
     render(<ResourceRepeater
       error={<></>}
       resources={[
-        { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-        { key: 1, value: 'http://www.resources2.com', onAnyReport: true },
+        { key: 1, value: 'http://www.resources.com' },
+        { key: 2, value: 'http://www.resources2.com' },
       ]}
       setResources={jest.fn()}
       validateResources={jest.fn()}
@@ -22,20 +26,19 @@ describe('ResourceRepeater', () => {
       userCanEdit
     />);
 
-    expect(await screen.findByText('Link to TTA resource')).toBeVisible();
+    expect(await screen.findByText(/Did you use any other TTA resources that are available as a link/i)).toBeVisible();
     const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
     expect(resources1).not.toBeNull();
-    const resources2 = await screen.findByText('http://www.resources2.com');
+    const resources2 = document.querySelector('input[value=\'http://www.resources2.com\']');
     expect(resources2).toBeVisible();
-    expect(resources2.tagName).toBe('A');
     expect(screen.queryAllByText('Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.').length).toBe(2);
   });
 
   it('calls validateResources() when a resource is removed', async () => {
     const validateResourcesMock = jest.fn();
     const resources = [
-      { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-      { key: 2, value: 'http://www.resources2.com', onAnyReport: true },
+      { key: 1, value: 'http://www.resources.com' },
+      { key: 2, value: 'http://www.resources2.com' },
     ];
 
     render(<ResourceRepeater
@@ -60,8 +63,8 @@ describe('ResourceRepeater', () => {
     render(<ResourceRepeater
       error={<></>}
       resources={[
-        { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-        { key: 1, value: 'http://www.resources2.com', onAnyReport: true },
+        { key: 1, value: 'http://www.resources.com' },
+        { key: 2, value: 'http://www.resources2.com' },
       ]}
       setResources={jest.fn()}
       validateResources={jest.fn()}
@@ -73,85 +76,58 @@ describe('ResourceRepeater', () => {
       toolTipText="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
     />);
 
-    expect(await screen.findByText('Link to TTA resource')).toBeVisible();
-    const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
-    expect(resources1).not.toBeNull();
-    const resources2 = await screen.findByText('http://www.resources2.com');
-    expect(resources2).toBeVisible();
-    expect(resources2.tagName).toBe('A');
+    expect(await screen.findByText(/Did you use any other TTA resources that are available as a link/i)).toBeVisible();
     expect(screen.queryAllByText("Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page.").length).toBe(2);
   });
 
-  it('shows the read only view for used resources', async () => {
+  it('cannot add a resource if the first is blank', async () => {
+    const setResources = jest.fn();
     render(<ResourceRepeater
       error={<></>}
       resources={[
-        { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-        { key: 1, value: 'http://www.resources2.com', onAnyReport: true },
+        { key: 1, value: '' },
       ]}
-      setResources={jest.fn()}
-      validateResources={jest.fn()}
-      status="In Progress"
-      isOnReport
-      isLoading={false}
-      goalStatus="Not Started"
-      userCanEdit
-    />);
-
-    expect(await screen.findByText('Resource links')).toBeVisible();
-    const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
-    expect(resources1).toBeNull();
-    const resources2 = await screen.findByText('http://www.resources2.com');
-    expect(resources2).toBeVisible();
-    expect(resources2.tagName).toBe('A');
-  });
-
-  it('shows the read only view when a user can\'t edit', async () => {
-    render(<ResourceRepeater
-      error={<></>}
-      resources={[
-        { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-        { key: 1, value: 'http://www.resources2.com', onAnyReport: true },
-      ]}
-      setResources={jest.fn()}
-      validateResources={jest.fn()}
-      status="In Progress"
-      isLoading={false}
-      goalStatus="Not Started"
-      userCanEdit={false}
-    />);
-
-    expect(await screen.findByText('Resource links')).toBeVisible();
-    const resources1 = document.querySelector('input[value=\'http://www.resources.com\']');
-    expect(resources1).toBeNull();
-    const resources2 = await screen.findByText('http://www.resources2.com');
-    expect(resources2).toBeVisible();
-    expect(resources2.tagName).toBe('A');
-  });
-
-  it('calls validateOnRemove() when a resource is removed', async () => {
-    const validateOnRemoveMock = jest.fn();
-    const resources = [
-      { key: 1, value: 'http://www.resources.com', onAnyReport: false },
-      { key: 2, value: 'http://www.resources2.com', onAnyReport: true },
-    ];
-
-    render(<ResourceRepeater
-      error={<></>}
-      resources={resources}
-      setResources={jest.fn()}
+      setResources={setResources}
       validateResources={jest.fn()}
       status="In Progress"
       isOnReport={false}
       isLoading={false}
       goalStatus="In Progress"
       userCanEdit
-      validateOnRemove={validateOnRemoveMock}
     />);
 
-    const removeButton = screen.getByRole('button', { name: /remove resource 1/i });
-    fireEvent.click(removeButton);
+    const addButton = screen.getByRole('button', { name: /add new resource/i });
+    act(() => {
+      userEvent.click(addButton);
+    });
 
-    expect(validateOnRemoveMock).toHaveBeenCalled();
+    expect(setResources).not.toHaveBeenCalled();
+    const urlInputs = document.querySelectorAll('input[type="url"]');
+    expect(urlInputs.length).toBe(1);
+  });
+  it('cannot add a resource if there is an error', async () => {
+    const setResources = jest.fn();
+    render(<ResourceRepeater
+      error={<span className="usa-error">This is an error</span>}
+      resources={[
+        { key: 1, value: 'garbelasdf' },
+      ]}
+      setResources={setResources}
+      validateResources={jest.fn()}
+      status="In Progress"
+      isOnReport={false}
+      isLoading={false}
+      goalStatus="In Progress"
+      userCanEdit
+    />);
+
+    const addButton = screen.getByRole('button', { name: /add new resource/i });
+    act(() => {
+      userEvent.click(addButton);
+    });
+
+    expect(setResources).not.toHaveBeenCalled();
+    const urlInputs = document.querySelectorAll('input[type="url"]');
+    expect(urlInputs.length).toBe(1);
   });
 });

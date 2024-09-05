@@ -9,6 +9,34 @@
   font-weight: bold;
 }
 
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
+}
+
+
+
 a {
   color: $text-link;
 }
@@ -410,4 +438,16 @@ fill: #1B1B1B;
 .smart-hub--vertical-text {
   writing-mode: vertical-lr;
   transform: rotate(180deg);
+}
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
 }

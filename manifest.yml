@@ -36,11 +36,12 @@ applications:
       NODE_MODULES_CACHE: false
       SUPPRESS_ERROR_LOGGING: ((SUPPRESS_ERROR_LOGGING))
       SIMILARITY_ENDPOINT: ((SIMILARITY_ENDPOINT))
+      SMARTSHEET_ENDPOINT: ((SMARTSHEET_ENDPOINT))
+      SMARTSHEET_ACCESS_TOKEN: ((SMARTSHEET_ACCESS_TOKEN))
     services:
       - ttahub-((env))
       - ttahub-redis-((env))
       - ttahub-document-upload-((env))
-      - ttahub-elasticsearch-((env))
     processes:
       - type: web
         instances: ((web_instances))

@@ -1,0 +1,34 @@
+
+ /* Base styles for the container */
+.ttahub-SS-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Styles for sheet list */
+.ttahub-sheet-list {
+  grid-column: 1;
+}
+
+/* Styles for sheet details */
+.ttahub-sheet-details {
+  grid-column: 2;
+  overflow-y: auto; 
+}
+
+@media (min-width: 768px) {
+  /* Adjust layout for screens with a minimum width of 768px (tablet and larger) */
+  .ttahub-SS-grid {
+    flex-direction: row; /* Place child elements side by side on larger screens */
+  }
+
+  .ttahub-sheet-list {
+    /* Adjust styles for sheet list on larger screens */
+    flex: 1; /* Allow sheet list to grow and take available space */
+    margin-right: 20px; /* Add spacing between sheet list and sheet details */
+  }
+
+  .ttahub-sheet-details {
+    flex: 2;
+  }
+}

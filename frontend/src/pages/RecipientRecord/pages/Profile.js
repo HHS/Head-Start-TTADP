@@ -15,7 +15,7 @@ export default function Profile({
   regionId,
   recipientId,
 }) {
-  const activeGrants = recipientSummary.grants.filter((grant) => grant.status === 'Active');
+  const activeGrants = (recipientSummary.grants || []).filter((grant) => grant.status === 'Active');
   const { hasMonitoringData, hasClassData } = useGrantData();
 
   return (

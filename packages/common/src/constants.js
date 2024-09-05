@@ -364,3 +364,20 @@ const REOPEN_REASONS = {
 };
 
 exports.REOPEN_REASONS = REOPEN_REASONS;
+
+const DISALLOWED_URLS = [{
+  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}, {
+  url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
+  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+}];
+
+exports.DISALLOWED_URLS = DISALLOWED_URLS;
+
+const VALID_URL_REGEX = /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._\+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[\/](?<path>[-a-zA-Z0-9'@:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_\+.~#&\/=()]*))*)/ig;
+exports.VALID_URL_REGEX = VALID_URL_REGEX;
+

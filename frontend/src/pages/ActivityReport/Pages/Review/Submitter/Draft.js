@@ -7,7 +7,7 @@ import {
   Form, Fieldset, Button, Alert, Dropdown,
 } from '@trussworks/react-uswds';
 import UserContext from '../../../../../UserContext';
-import IncompletePages from '../IncompletePages';
+import IncompletePages from '../../../../../components/IncompletePages';
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
 import FormItem from '../../../../../components/FormItem';
 import HookFormRichEditor from '../../../../../components/HookFormRichEditor';
@@ -167,6 +167,7 @@ const Draft = ({
           regionId={regionId}
           promptsMissingResponses={promptsMissingResponses}
           goalsMissingResponses={goalsMissingResponses}
+          onSaveDraft={onSaveForm}
         />
         )}
         <div className="margin-top-3">

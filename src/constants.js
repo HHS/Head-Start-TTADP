@@ -141,18 +141,10 @@ const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
-  TRAINING_REPORT_POC_SESSION_COMPLETE: 'trainingReportPocComplete',
-  TRAINING_REPORT_POC_VISION_GOAL_COMPLETE: 'trainingReportPocVisionGoalComplete',
-  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
-  TRAINING_REPORT_SESSION_COMPLETED: 'trainingReportSessionCompleted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
-};
-
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
 };
 
 const S3_ACTIONS = {
@@ -220,10 +212,6 @@ const RESOURCE_DOMAIN = {
   ECLKC: 'eclkc.ohs.acf.hhs.gov',
 };
 
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
-};
-
 const GRANT_INACTIVATION_REASONS = {
   REPLACED: 'Replaced',
   TERMINATED: 'Terminated',
@@ -248,6 +236,8 @@ const FEATURE_FLAGS = [
   'regional_goal_dashboard',
   'closed_goal_merge_override',
   'training_reports_dashboard',
+  'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -256,9 +246,9 @@ const MAINTENANCE_CATEGORY = {
   IMPORT: 'IMPORT',
 };
 
-const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin', 'tr'];
+const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
-const CURRENT_GOAL_SIMILARITY_VERSION = 3;
+const CURRENT_GOAL_SIMILARITY_VERSION = 4;
 
 module.exports = {
   CURRENT_GOAL_SIMILARITY_VERSION,
@@ -284,14 +274,12 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   EMAIL_ACTIONS,
-  AWS_ELASTICSEARCH_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
   PROMPT_FIELD_TYPE,
   SOURCE_FIELD,
   RESOURCE_DOMAIN,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,

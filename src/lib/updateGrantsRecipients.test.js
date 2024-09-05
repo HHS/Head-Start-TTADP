@@ -2,7 +2,7 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsRecipients, { processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
+import updateGrantsRecipients, { getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
 import db, {
   sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
@@ -16,7 +16,7 @@ jest.mock('./fileUtils', () => ({
 
 const SMALLEST_GRANT_ID = 1000;
 
-async function testStateCodeUpdate(grantId, incorrectStateCode, correctStateCode) {
+async function testStateCodeUpdate(grantId, incorrectStateCode) {
   await processFiles();
   const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
   await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });
@@ -1001,5 +1001,12 @@ describe('Update grants, program personnel, and recipients', () => {
       expect(updatedGrant2.recipientId).toEqual(11);
       expect(updatedGrant2.regionId).toEqual(2);
     });
+  });
+});
+
+describe('getPersonnelField', () => {
+  it('returns null when data is not an object', () => {
+    const out = getPersonnelField('role', 'field', 'program');
+    expect(out).toBeNull();
   });
 });

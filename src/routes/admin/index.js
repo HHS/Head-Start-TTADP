@@ -9,9 +9,11 @@ import redisRouter from './redis';
 import nationalCenterRouter from './nationalCenter';
 import groupRouter from './group';
 import goalRouter from './goal';
+import ssRouter from './ss';
 import trainingReportRouter from './trainingReport';
 import legacyReportRouter from './legacyReports';
 import courseRouter from './course';
+import ssdiRouter from './ssdi';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
 
@@ -33,5 +35,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);
 router.use('/courses', courseRouter);
+router.use('/ss', ssRouter);
+router.use('/ssdi', ssdiRouter);
 
 export default router;

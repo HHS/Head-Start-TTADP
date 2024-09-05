@@ -55,48 +55,48 @@ const mockResponse = {
   })),
 };
 
-beforeAll(async () => {
-  await User.bulkCreate(
-    [mockUser, mockManager, secondMockManager],
-    { validate: true, individualHooks: true },
-  );
-  await Permission.bulkCreate([{
-    userId: mockUser.id,
-    regionId: 1,
-    scopeId: SCOPES.READ_WRITE_REPORTS,
-  }, {
-    userId: mockManager.id,
-    regionId: 1,
-    scopeId: SCOPES.APPROVE_REPORTS,
-  }, {
-    userId: secondMockManager.id,
-    regionId: 1,
-    scopeId: SCOPES.APPROVE_REPORTS,
-  },
-  {
-    userId: mockUser.id,
-    regionId: 14,
-    scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
-  }], { validate: true, individualHooks: true });
-});
-
-afterAll(async () => {
-  const userIds = [mockUser.id, mockManager.id, secondMockManager.id];
-  await ActivityReportApprover.destroy({
-    where: { userId: [mockManager.id, secondMockManager.id] },
-    force: true,
-  });
-  await ActivityReport.destroy({ where: { userId: mockUser.id } });
-  await Permission.destroy({ where: { userId: userIds } });
-  await User.destroy({ where: { id: userIds } });
-  await db.sequelize.close();
-});
-
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
 describe('submitReport', () => {
+  beforeAll(async () => {
+    await User.bulkCreate(
+      [mockUser, mockManager, secondMockManager],
+      { validate: true, individualHooks: true },
+    );
+    await Permission.bulkCreate([{
+      userId: mockUser.id,
+      regionId: 1,
+      scopeId: SCOPES.READ_WRITE_REPORTS,
+    }, {
+      userId: mockManager.id,
+      regionId: 1,
+      scopeId: SCOPES.APPROVE_REPORTS,
+    }, {
+      userId: secondMockManager.id,
+      regionId: 1,
+      scopeId: SCOPES.APPROVE_REPORTS,
+    },
+    {
+      userId: mockUser.id,
+      regionId: 14,
+      scopeId: SCOPES.UNLOCK_APPROVED_REPORTS,
+    }], { validate: true, individualHooks: true });
+  });
+
+  afterAll(async () => {
+    const userIds = [mockUser.id, mockManager.id, secondMockManager.id];
+    await ActivityReportApprover.destroy({
+      where: { userId: [mockManager.id, secondMockManager.id] },
+      force: true,
+    });
+    await ActivityReport.destroy({ where: { userId: mockUser.id } });
+    await Permission.destroy({ where: { userId: userIds } });
+    await User.destroy({ where: { id: userIds } });
+    await db.sequelize.close();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('creates new approvers', async () => {
     const draftReport = await ActivityReport.create({ ...draftObject, userId: mockUser.id });
     const request = {

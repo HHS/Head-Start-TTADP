@@ -30,6 +30,29 @@ describe('purifyFields', () => {
     expect(instance.set).not.toHaveBeenCalled();
   });
 
+  test('returns if changed does not return an array', () => {
+    const instance = {
+      set: jest.fn(),
+      changed: jest.fn().mockReturnValue('not an array'),
+    };
+
+    purifyFields(instance, ['field1']);
+
+    expect(instance.set).not.toHaveBeenCalled();
+  });
+
+  test('returns if the field value is not a string', () => {
+    const instance = {
+      set: jest.fn(),
+      changed: jest.fn().mockReturnValue(['field1']),
+      field1: 123,
+    };
+
+    purifyFields(instance, ['field1']);
+
+    expect(instance.set).not.toHaveBeenCalled();
+  });
+
   test('returns if changed is not a function', () => {
     const instance = {
       set: jest.fn(),
@@ -181,7 +204,7 @@ describe('purifyFields', () => {
       });
     });
 
-    it('properly escaped fields', async () => {
+    test('properly escaped fields', async () => {
       expect(report.context).toBe(safe);
       expect(approver.note).toBe(safe);
       expect(event.data.eventName).toBe(safe);

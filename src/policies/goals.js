@@ -9,6 +9,12 @@ export default class Goal {
     this.regionId = regionId;
   }
 
+  isAdmin() {
+    return !isUndefined(
+      this.user.permissions.find((permission) => permission.scopeId === SCOPES.ADMIN),
+    );
+  }
+
   // this expects goal to have been found with associated data, specifically
   // goalByIdWithActivityReportsAndRegions in services/goals
   // you can see the structure expected in the conditions below
@@ -46,7 +52,11 @@ export default class Goal {
         )
         && permission.regionId === region),
     );
-    return !isUndefined(permissions);
+
+    // eslint-disable-next-line max-len
+    const isAdmin = find(this.user.permissions, (permission) => permission.scopeId === SCOPES.ADMIN);
+
+    return !isUndefined(isAdmin) || !isUndefined(permissions);
   }
 
   // refactored to take a region id rather than directly check
@@ -97,7 +107,11 @@ export default class Goal {
   }
 
   canView() {
+    if (!this.goal || !this.goal.grant) {
+      return false;
+    }
     const region = this.goal.grant.regionId;
+
     return this.canReadInRegion(region);
   }
 }

@@ -4,7 +4,6 @@ import { root, validateSchema } from './common';
 
 test('get /user', async ({ request }) => {
   const response = await request.get(`${root}/user`);
-  const body = await response.body();
 
   const schema = Joi.object({
     id: Joi.number().required(),
@@ -16,7 +15,8 @@ test('get /user', async ({ request }) => {
     phoneNumber: Joi.string().required(),
     homeRegionId: Joi.number().required(),
     lastLogin: Joi.date().iso().required(),
-    flags: Joi.array().items(Joi.any()).required(),
+    // This can sometimes be "{}" (a string).
+    flags: Joi.alternatives().try(Joi.array().items(Joi.any()), Joi.string()).required(),
     createdAt: Joi.date().iso().required(),
     permissions: Joi.array().items(
       Joi.object({

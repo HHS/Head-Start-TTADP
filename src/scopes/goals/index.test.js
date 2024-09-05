@@ -9,7 +9,6 @@ import db, {
   Objective,
   ActivityReportObjective,
   Recipient,
-  ObjectiveTopic,
   Topic,
   Grant,
   Group,
@@ -19,6 +18,7 @@ import db, {
   ActivityReportGoal,
   ActivityReportGoalResource,
   ActivityReportObjectiveResource,
+  ActivityReportObjectiveTopic,
   ActivityReportResource,
   NextStep,
   NextStepResource,
@@ -189,13 +189,21 @@ describe('goal filtersToScopes', () => {
       },
     });
 
-    ots.push(await ObjectiveTopic.create({
-      objectiveId: objectives[0].id,
+    // goal for topics
+    const aroWithTopics = await ActivityReportObjective.create({
+      objectiveId: objectives[1].id,
+      activityReportId: reportWithTopics.id,
+      ttaProvided: 'asdfadf',
+      status: objectives[1].status,
+    });
+
+    ots.push(await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aroWithTopics.id,
       topicId: topicOne.id,
     }));
 
-    ots.push(await ObjectiveTopic.create({
-      objectiveId: objectives[1].id,
+    ots.push(await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aroWithTopics.id,
       topicId: topicTwo.id,
     }));
 
@@ -207,13 +215,6 @@ describe('goal filtersToScopes', () => {
           activityReportId: reportWithReasons.id,
           ttaProvided: 'asdfadf',
           status: objectives[0].status,
-        }),
-        // goal for topics
-        await ActivityReportObjective.create({
-          objectiveId: objectives[1].id,
-          activityReportId: reportWithTopics.id,
-          ttaProvided: 'asdfadf',
-          status: objectives[1].status,
         }),
         // goal for status
         await ActivityReportObjective.create({
@@ -248,7 +249,7 @@ describe('goal filtersToScopes', () => {
       individualHooks: true,
     });
 
-    await ObjectiveTopic.destroy({
+    await ActivityReportObjectiveTopic.destroy({
       where: {
         id: ots.map((ot) => ot.id),
       },

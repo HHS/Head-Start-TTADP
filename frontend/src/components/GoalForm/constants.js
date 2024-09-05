@@ -1,22 +1,12 @@
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, DISALLOWED_URLS, isValidResourceUrl } from '@ttahub/common';
 import { uniq } from 'lodash';
 
-// regex to match a valid url, it must start with http:// or https://, have at least one dot, and not end with a dot or a space
-const VALID_URL_REGEX = /^https?:\/\/.*\.[^ |^.]/;
-
-export const isValidResourceUrl = (attempted) => {
-  try {
-    const httpOccurences = (attempted.match(/http/gi) || []).length;
-    if (httpOccurences !== 1 || !VALID_URL_REGEX.test(attempted)) {
-      return false;
-    }
-    const u = new URL(attempted);
-    return (u !== '');
-  } catch (e) {
-    return false;
-  }
+export const noDisallowedUrls = (value) => {
+  const urls = value.map((v) => v.value);
+  const disallowedUrl = DISALLOWED_URLS.find((disallowed) => urls.includes(disallowed.url));
+  return disallowedUrl ? disallowedUrl.error : true;
 };
 
 export const objectivesWithValidResourcesOnly = (objectives) => {
@@ -181,7 +171,7 @@ export const grantsToGoals = ({
     endDate: endDate && endDate !== 'Invalid date' ? endDate : null,
     regionId: parseInt(regionId, DECIMAL_BASE),
     recipientId: recipient.id,
-    objectives: objectivesWithValidResourcesOnly(objectives),
+    objectives,
     ids,
     prompts: goalPrompts,
   };

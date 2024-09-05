@@ -5,13 +5,10 @@ import db, {
   Grant,
   Recipient,
   Objective,
-  ObjectiveResource,
   ActivityReport,
   Resource,
-  ObjectiveFile,
   File,
 } from '../models';
-import { processObjectiveForResourcesById } from '../services/resource';
 import { auditLogger } from '../logger';
 import { FILE_STATUSES } from '../constants';
 
@@ -21,7 +18,6 @@ describe('destroyGoal handler', () => {
   let goal;
   let goalTwo;
   let recipient;
-  let objective;
   let file;
 
   let grant = {
@@ -48,13 +44,11 @@ describe('destroyGoal handler', () => {
       grantId: grant.id,
     });
 
-    objective = await Objective.create({
+    await Objective.create({
       goalId: goal.id,
       status: 'Not Started',
       title: 'Make everything ok',
     });
-
-    await processObjectiveForResourcesById(objective.id, ['http://website.com']);
 
     file = await File.create({
       originalFileName: 'obj-file-cleanup.xlsx',
@@ -62,29 +56,9 @@ describe('destroyGoal handler', () => {
       status: FILE_STATUSES.UPLOADED,
       fileSize: 123445,
     });
-
-    await ObjectiveFile.create({
-      objectiveId: objective.id,
-      fileId: file.id,
-      sourceFields: ['file'],
-    });
   });
 
   afterAll(async () => {
-    await ObjectiveResource.destroy({
-      where: {
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-
-    await ObjectiveFile.destroy({
-      where: {
-        objectiveId: objective.id,
-      },
-      individualHooks: true,
-    });
-
     await Resource.destroy({
       where: {
         url: 'http://website.com',
@@ -147,41 +121,12 @@ describe('destroyGoal handler', () => {
       },
     });
 
-    let foundObjectiveResource = await ObjectiveResource.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-        where: { url: 'http://website.com' },
-      }],
-    });
-
-    let foundObjectiveFile = await ObjectiveFile.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      include: [{
-        attributes: ['originalFileName'],
-        model: File,
-        as: 'file',
-        where: { id: file.id },
-      }],
-    });
-
     expect(foundGoal.length).toBe(1);
-    // expect(foundGrantGoal.length).toBe(1);
     expect(foundObjective.length).toBe(1);
-    expect(foundObjectiveResource.length).toBe(1);
-    expect(foundObjectiveFile.length).toBe(1);
 
     const result = await destroyGoal(goal.id);
     expect(result.objectivesDestroyed).toBe(1);
-    expect(result.objectiveResourcesDestroyed).toBe(1);
     expect(result.goalsDestroyed).toBe(1);
-    expect(result.objectiveFilesDestroyed).toBe(1);
 
     foundGoal = await Goal.findAll({
       where: {
@@ -195,34 +140,8 @@ describe('destroyGoal handler', () => {
       },
     });
 
-    foundObjectiveResource = await ObjectiveResource.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      include: [{
-        attributes: ['url'],
-        model: Resource,
-        as: 'resource',
-        where: { url: 'http://website.com' },
-      }],
-    });
-
-    foundObjectiveFile = await ObjectiveFile.findAll({
-      where: {
-        objectiveId: objective.id,
-      },
-      include: [{
-        attributes: ['originalFileName'],
-        model: File,
-        as: 'file',
-        where: { id: file.id },
-      }],
-    });
-
     expect(foundGoal.length).toBe(0);
     expect(foundObjective.length).toBe(0);
-    expect(foundObjectiveResource.length).toBe(0);
-    expect(foundObjectiveFile.length).toBe(0);
   });
 
   it('wont delete a goal if its on an AR', async () => {
@@ -234,7 +153,7 @@ describe('destroyGoal handler', () => {
     expect(foundGoal).toBeTruthy();
 
     expect(result).toBe(0);
-    expect(spy).toBeCalledWith(
+    expect(spy).toHaveBeenCalledWith(
       'SERVICE:GOALS - Sequelize error - unable to delete from db - Error: Goal is on an activity report and can\'t be deleted',
     );
     ActivityReport.findAll = oldFindAll;

@@ -101,6 +101,7 @@ describe('Objectives', () => {
       topics: [],
       status: 'Not Started',
       id: 3,
+      objectiveCreatedHere: false,
     },
     {
       id: 4,
@@ -113,6 +114,7 @@ describe('Objectives', () => {
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
@@ -143,6 +145,7 @@ describe('Objectives', () => {
       topics: [],
       status: 'In Progress',
       id: 3,
+      objectiveCreatedHere: false,
     },
     {
       id: 4,
@@ -155,6 +158,7 @@ describe('Objectives', () => {
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
@@ -192,6 +196,7 @@ describe('Objectives', () => {
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: true,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -211,6 +216,7 @@ describe('Objectives', () => {
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -234,29 +240,6 @@ describe('Objectives', () => {
     expect(screen.queryByRole('button', { name: /Add new objective/i })).toBeNull();
   });
 
-  it('is on approved reports hides options', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      onAR: true,
-      onApprovedAR: true,
-      resources: [],
-      topics: [],
-      status: 'Not Started',
-    }];
-    render(<RenderObjectives objectiveOptions={objectiveOptions} />);
-    const select = await screen.findByLabelText(/Select TTA objective/i);
-    expect(screen.queryByText(/objective status/i)).toBeNull();
-    await selectEvent.select(select, ['Test objective']);
-    const role = await screen.findByText(/Test objective/i, { ignore: 'div' });
-    expect(role.tagName).toBe('P');
-
-    // TTA provided remains editable.
-    expect(await screen.findByRole('textbox', { name: /tta provided for objective, required/i })).toBeVisible();
-  });
-
   it('handles a "new" goal', async () => {
     const objectiveOptions = [{
       value: 3,
@@ -268,6 +251,7 @@ describe('Objectives', () => {
       resources: [],
       topics: [],
       status: 'Not Started',
+      objectiveCreatedHere: false,
     }];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
 

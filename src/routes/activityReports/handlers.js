@@ -135,6 +135,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'TTA type',
         },
         {
+          key: 'language',
+          header: 'Language',
+        },
+        {
           key: 'deliveryMethod',
           header: 'Delivery method',
         },
@@ -173,8 +177,16 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
+          key: 'specialistNextStepsCompleteDate',
+          header: 'Specialist next steps anticipated completion date',
+        },
+        {
           key: 'recipientNextSteps',
           header: 'Recipient next steps',
+        },
+        {
+          key: 'recipientNextStepsCompleteDate',
+          header: 'Recipient next steps anticipated completion date',
         },
         {
           key: 'createdAt',
@@ -707,6 +719,24 @@ export async function getActivityRecipients(req, res) {
   const { region } = req.query;
   const targetRegion = parseInt(region, DECIMAL_BASE);
   const activityRecipients = await possibleRecipients(targetRegion);
+  res.json(activityRecipients);
+}
+
+export async function getActivityRecipientsForExistingReport(req, res) {
+  const { activityReportId } = req.params;
+
+  const [report] = await activityReportAndRecipientsById(activityReportId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const authorization = new ActivityReport(user, report);
+
+  if (!authorization.canGet()) {
+    res.sendStatus(403);
+    return;
+  }
+
+  const targetRegion = parseInt(report.regionId, DECIMAL_BASE);
+  const activityRecipients = await possibleRecipients(targetRegion, activityReportId);
   res.json(activityRecipients);
 }
 
