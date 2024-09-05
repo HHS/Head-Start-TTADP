@@ -4,10 +4,11 @@ import React, {
   useState,
 } from 'react';
 import { capitalize } from 'lodash';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert } from '@trussworks/react-uswds';
-import { eventById } from '../../fetchers/event';
+import { eventById, completeEvent } from '../../fetchers/event';
 import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
@@ -15,9 +16,14 @@ import Container from '../../components/Container';
 import ReadOnlyContent from '../../components/ReadOnlyContent';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
 import './index.css';
+import UserContext from '../../UserContext';
 
 export const formatOwnerName = (event) => {
   try {
+    if (event && event.owner && event.owner.nameWithNationalCenters) {
+      return event.owner.nameWithNationalCenters;
+    }
+
     if (event && event.data && event.data.owner) {
       if (event.eventReportPilotNationalCenterUsers) {
         const user = event.eventReportPilotNationalCenterUsers
@@ -57,9 +63,14 @@ const FORBIDDEN = 403;
 
 export default function ViewTrainingReport({ match }) {
   const [event, setEvent] = useState(null);
-  const [error, setError] = useState(null);
+  const [alertMessage, setAlertMessage] = useState({
+    type: 'error',
+    message: '',
+  });
   const [eventCollaborators, setEventCollaborators] = useState([]);
   const [eventPoc, setEventPoc] = useState([]);
+
+  const { user } = useContext(UserContext);
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
@@ -77,7 +88,10 @@ export default function ViewTrainingReport({ match }) {
           message = 'You do not have permission to view this page';
         }
 
-        setError(message);
+        setAlertMessage({
+          type: 'error',
+          message,
+        });
       } finally {
         setIsAppLoading(false);
       }
@@ -126,6 +140,64 @@ export default function ViewTrainingReport({ match }) {
 
   const pageTitle = event && event.data && event.data.eventId ? `Training event report ${event.data.eventId}` : 'Training event report';
   const ownerName = formatOwnerName(event);
+
+  const canCompleteEvent = (() => {
+    if (!event || !event.data) {
+      return false;
+    }
+    const isOwner = event && event.ownerId === user.id;
+    const isCompleteOrSuspended = [
+      TRAINING_REPORT_STATUSES.COMPLETE,
+      TRAINING_REPORT_STATUSES.SUSPENDED,
+    ].includes(event.data.status || '');
+
+    const eventSubmitted = event && event.data && event.data.eventSubmitted;
+    const sessionReports = event && event.sessionReports ? event.sessionReports : [];
+
+    if (!isOwner) {
+      return false;
+    }
+
+    if (isCompleteOrSuspended) {
+      return false;
+    }
+
+    // eslint-disable-next-line max-len
+    if (sessionReports.length === 0 || !sessionReports.every((session) => session.data.status === TRAINING_REPORT_STATUSES.COMPLETE)) {
+      return false;
+    }
+
+    if (!eventSubmitted) {
+      return false;
+    }
+
+    return true;
+  })();
+
+  const onCompleteEvent = async () => {
+    try {
+      setAlertMessage({
+        type: '',
+        message: '',
+      });
+
+      setIsAppLoading(true);
+      const { sessionReports: sessions, ...eventReport } = event;
+      await completeEvent(match.params.trainingReportId, eventReport);
+      setEvent(null);
+      setAlertMessage({
+        type: 'success',
+        message: 'Event completed successfully',
+      });
+    } catch (err) {
+      setAlertMessage({
+        type: 'error',
+        message: 'Sorry, something went wrong',
+      });
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
 
   const eventSummary = event && event.data ? [{
     heading: 'Event Summary',
@@ -215,17 +287,20 @@ export default function ViewTrainingReport({ match }) {
         <title>
           Training Event Report
           {' '}
-          {(event && event.data) ? event.data.eventId : ''}
+          {(event && event.data) ? String(event.data.eventId) : ''}
         </title>
       </Helmet>
       <BackLink to={backLinkUrl}>
         Back to Training Reports
       </BackLink>
-      <ApprovedReportSpecialButtons />
+      <ApprovedReportSpecialButtons
+        showCompleteEvent={canCompleteEvent}
+        onCompleteEvent={onCompleteEvent}
+      />
       <Container className="margin-top-2 maxw-tablet-lg ttahub-completed-training-report-container">
-        { error && (
-        <Alert type="error">
-          {error}
+        { alertMessage.message && (
+        <Alert type={alertMessage.type}>
+          {alertMessage.message}
         </Alert>
         )}
         <h1 className="landing">{pageTitle}</h1>
