@@ -8,6 +8,7 @@ interface Permission {
 interface User {
   permissions: Permission[];
   roles?: { name: string }[];
+  flags?: string[];
 }
 
 export default class Generic {
@@ -44,5 +45,19 @@ export default class Generic {
       }
     });
     return Array.from(accessibleRegions);
+  }
+
+  hasFeatureFlag(flag: string): boolean {
+    // Check if the user has ADMIN permissions which grants all flags
+    const hasAdminPermission = this.user.permissions.some(
+      (permission) => permission.scopeId === SCOPES.ADMIN,
+    );
+
+    if (hasAdminPermission) {
+      return true;
+    }
+
+    // Check if the user has the specific feature flag
+    return this.user.flags?.includes(flag) || false;
   }
 }
