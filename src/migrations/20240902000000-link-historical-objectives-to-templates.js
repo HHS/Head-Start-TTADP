@@ -75,6 +75,7 @@ module.exports = {
         FROM titlematch
         JOIN stat_progression
           ON most_advanced_ar = statord
+        WHERE region IS NOT NULL
         ;
 
         DROP TABLE IF EXISTS created_templates;
@@ -195,6 +196,7 @@ module.exports = {
         FROM titlematch
         JOIN stat_progression
           ON most_advanced_ar = statord
+        WHERE region IS NOT NULL
         ;
 
         WITH befores AS (
