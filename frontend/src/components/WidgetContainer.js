@@ -31,6 +31,10 @@ export default function WidgetContainer(
     footNote,
     displayTable,
     setDisplayTable,
+    titleDrawerText,
+    titleDrawerRef,
+    subtitleDrawerLinkText,
+    subtitleDrawerLinkRef,
   },
 ) {
   return (
@@ -55,6 +59,10 @@ export default function WidgetContainer(
         ) : null}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
+        titleDrawerText={titleDrawerText}
+        titleDrawerRef={titleDrawerRef}
+        subtitleDrawerLinkText={subtitleDrawerLinkText}
+        subtitleDrawerLinkRef={subtitleDrawerLinkRef}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -113,6 +121,10 @@ WidgetContainer.propTypes = {
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
+  titleDrawerText: PropTypes.string,
+  titleDrawerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  subtitleDrawerLinkText: PropTypes.string,
+  subtitleDrawerLinkRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
 };
 
 WidgetContainer.defaultProps = {
@@ -137,4 +149,8 @@ WidgetContainer.defaultProps = {
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
+  titleDrawerText: '',
+  titleDrawerRef: null,
+  subtitleDrawerLinkText: '',
+  subtitleDrawerLinkRef: null,
 };
