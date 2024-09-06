@@ -60,4 +60,21 @@ export default class Generic {
     // Check if the user has the specific feature flag
     return this.user.flags?.includes(flag) || false;
   }
+
+  checkPermissions(
+    targetString: string,
+    matchStrings: string[],
+    featureFlag: string,
+  ): boolean {
+    // Check if any of the matchStrings are included in the targetString
+    const hasMatch = matchStrings.some((matchString) => targetString.includes(matchString));
+
+    // If there's a match, check the feature flag
+    if (hasMatch) {
+      return this.hasFeatureFlag(featureFlag);
+    }
+
+    // Default: Allow access if no match
+    return true;
+  }
 }
