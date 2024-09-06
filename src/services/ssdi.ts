@@ -2,6 +2,7 @@ import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
 import db from '../models';
+import Generic from '../policies/generic';
 import { auditLogger } from '../logger';
 
 // Constants for readability
@@ -136,13 +137,23 @@ interface CachedFilters {
 }
 
 // Base directory for file operations
-const BASE_DIRECTORY = path.resolve(process.cwd(), 'allowed-directory');
+const BASE_DIRECTORY = path.resolve(process.cwd(), '/src/queries/');
 
 // Cache to store parsed JSON headers and queries
 const cache: Map<string, CachedFile> = new Map();
 
 // Sanitize the filename
 const sanitizeFilename = (filename: string): string => path.normalize(filename).replace(/[^a-zA-Z0-9-_]/g, '_');
+
+// Check if the user has access to a specific folders
+const checkFolderPermissions = async (
+  user,
+  scriptPath: string,
+) => (new Generic(user)).checkPermissions(
+  scriptPath,
+  ['dataRequests/ohs', 'dataRequests/internal'],
+  'ssdi_restricted',
+);
 
 // Safe file path resolution to prevent directory traversal attacks
 const safeResolvePath = (inputPath: string): string => {
@@ -221,23 +232,46 @@ const createQueryFile = (filePath: string, cachedFile: CachedFile): QueryFile =>
   defaultOutputName: cachedFile.jsonHeader.output.defaultName,
 });
 
-// Function to list all query files in a directory asynchronously
+// Helper function to recursively read all files from a directory
+const readFilesRecursively = async (directory: string): Promise<string[]> => {
+  const list = await fsPromises.readdir(directory, { withFileTypes: true });
+
+  // Use map to recursively process directories and files
+  const files = await Promise.all(
+    list.map((dirent) => {
+      const fullPath = path.join(directory, dirent.name);
+
+      if (dirent.isDirectory()) {
+        // Recursively read files from subdirectories, return promise directly
+        return readFilesRecursively(fullPath);
+      }
+      return fullPath;
+    }),
+  );
+
+  // Flatten the array of results (since subdirectories return arrays)
+  return files.flat();
+};
+
+// Function to list all query files in a directory
 const listQueryFiles = async (directory: string): Promise<QueryFile[]> => {
   try {
     const safeDirectory = safeResolvePath(directory);
-    const files = await fsPromises.readdir(safeDirectory);
+    const files = await readFilesRecursively(safeDirectory); // Use recursive lookup
 
-    return await Promise.all(
+    const queryFiles = await Promise.all(
       files.map(async (file) => {
-        const filePath = path.join(safeDirectory, file);
-        const cachedFile = await readJsonHeaderFromFile(filePath);
+        const cachedFile = await readJsonHeaderFromFile(file);
 
         if (cachedFile) {
-          return createQueryFile(filePath, cachedFile);
+          return createQueryFile(file, cachedFile);
         }
         return null;
       }),
-    ).then((results) => results.filter((queryFile): queryFile is QueryFile => queryFile !== null));
+    );
+
+    // Filter out null results
+    return queryFiles.filter((queryFile): queryFile is QueryFile => queryFile !== null);
   } catch (error) {
     auditLogger.error(`Error reading files from directory ${directory}: ${error.message}`);
     return [];
@@ -437,6 +471,7 @@ const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number
 // Optional chaining and modularizing parts of `readFiltersFromFile`
 const readFiltersFromFile = async (
   filePath: string,
+  currentUserId: number,
   returnOptions = false,
 ): Promise<Filters> => {
   // Use the cached file or load it fresh via readJsonHeaderFromFile
@@ -448,7 +483,7 @@ const readFiltersFromFile = async (
   // Process and combine the actual filters and artificial filters
   const filters = {
     ...(await processFilters(cachedFile, returnOptions)),
-    ...generateArtificialFilters(cachedFile),
+    ...generateArtificialFilters(cachedFile, currentUserId),
   };
 
   return filters;
@@ -606,6 +641,7 @@ export {
   BASE_DIRECTORY,
   cache,
   sanitizeFilename,
+  checkFolderPermissions,
   safeResolvePath,
   isValidJsonHeader,
   readJsonHeaderFromFile,
