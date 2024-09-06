@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import {
   Textarea, Fieldset, Label, FormGroup, Button, Radio, ModalToggleButton,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
 
@@ -46,11 +47,13 @@ export default function ObjectiveSuspendModal({
       modalRef={modalRef}
     >
       <Fieldset>
-        <FormGroup error={error.props.children}>
+        <FormGroup error={!!(error)}>
           <Label className="usa-sr-only" htmlFor={`suspend-objective-${objectiveId}-reason`}>
             Reason for suspension
           </Label>
-          { error }
+          <ErrorMessage>
+            { error ? error.message : ''}
+          </ErrorMessage>
           { SUSPEND_REASONS.map((r) => (
             <Radio
               id={`suspend-objective-${objectiveId}-reason-${r.trim().replace(' ', '-').toLowerCase()}`}
