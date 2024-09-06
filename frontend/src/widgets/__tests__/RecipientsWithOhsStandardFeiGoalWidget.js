@@ -1,35 +1,27 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
-import RecipientsWithNoTta from '../index';
+import RecipientsWithOhsStandardFeiGoalWidget from '../RecipientsWithOhsStandardFeiGoalWidget';
 
-const history = createMemoryHistory();
-
-const renderRecipientsWithNoTta = (data) => {
-  render(
-    <Router history={history}>
-      <RecipientsWithNoTta
-        data={data}
-        loading={false}
-        resetPagination={false}
-        setResetPagination={() => {}}
-        perPageNumber={10}
-      />
-    </Router>,
-  );
+const renderRecipientsWithOhsStandardFeiGoalWidget = (data) => {
+  render(<RecipientsWithOhsStandardFeiGoalWidget
+    data={data}
+    loading={false}
+    resetPagination={false}
+    setResetPagination={() => {}}
+    perPageNumber={10}
+  />);
 };
 
-describe('Recipients With Ohs Standard Fei Goal', () => {
+describe('Recipients with ohs standard fei goal widget', () => {
   it('renders correctly without data', async () => {
     const emptyData = {
       headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],
       RecipientsWithNoTta: [],
     };
-    renderRecipientsWithNoTta(emptyData);
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    renderRecipientsWithOhsStandardFeiGoalWidget(emptyData);
+    expect(screen.getByText(/recipients with ohs standard fei goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -110,20 +102,28 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
           }],
         }],
     };
-    renderRecipientsWithNoTta(data);
-    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
-    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+    renderRecipientsWithOhsStandardFeiGoalWidget(data);
 
-    expect(screen.getByText(/test recipient 1/i)).toBeInTheDocument();
-    expect(screen.getByText(/test recipient 2/i)).toBeInTheDocument();
-
-    expect(screen.getByText(/date of last tta/i)).toBeInTheDocument();
-    expect(screen.getByText(/days since last tta/i)).toBeInTheDocument();
+    expect(screen.getByText(/recipients with ohs standard fei goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipient 3/i)).toBeInTheDocument();
 
     expect(screen.getByText(/2021-09-01/i)).toBeInTheDocument();
     expect(screen.getByText(/2021-09-02/i)).toBeInTheDocument();
+    expect(screen.getByText(/2021-09-03/i)).toBeInTheDocument();
 
-    expect(screen.getByRole('cell', { name: /90/i })).toBeInTheDocument();
-    expect(screen.getByRole('cell', { name: /91/i })).toBeInTheDocument();
+    expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
+    expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
+    expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+    expect(screen.getByText(/Not started/i)).toBeInTheDocument();
+    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
+    expect(screen.getByText(/Testing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
   });
 });

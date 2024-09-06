@@ -42,7 +42,7 @@ describe('Training report Dashboard page', () => {
     expect(fetchMock.calls(hoursOfTrainingUrl)).toHaveLength(1);
     expect(fetchMock.calls(sessionsByTopicUrl)).toHaveLength(1);
 
-    expect(document.querySelector('.smart-hub--dashboard-overview')).toBeTruthy();
+    expect(document.querySelector('.smart-hub--dashboard-overview-container')).toBeTruthy();
 
     expect(screen.getByText('Reasons in Training Reports')).toBeInTheDocument();
     expect(screen.getByText('Hours of training by National Center')).toBeInTheDocument();

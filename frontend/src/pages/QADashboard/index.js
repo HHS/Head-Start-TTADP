@@ -43,6 +43,7 @@ export default function QADashboard() {
 
     return filterConfig;
   }, [userHasOnlyOneRegion]);
+  const [isLoading] = useState(false);
 
   return (
     <>
@@ -76,7 +77,7 @@ export default function QADashboard() {
             recipientsWithOhsStandardFeiGoals: { pct: '73.25%', filterApplicable: false },
             recipientsWithOhsStandardClass: { pct: '14.26%', filterApplicable: false },
           }}
-          loading={false}
+          loading={isLoading}
         />
       </div>
     </>

@@ -5,7 +5,7 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 
-function RecipientsWithNoTtaWidget({
+function RecipientsWithOhsStandardFeiGoalWidget({
   data,
   loading,
   resetPagination,
@@ -33,7 +33,7 @@ function RecipientsWithNoTtaWidget({
     sortConfig,
   } = useWidgetPaging(
     data.headers,
-    'recipientsWithNoTta',
+    'recipientsWithOhsStandardFeiGoal',
     defaultSortConfig,
     perPageNumber,
     recipientsToUse,
@@ -42,17 +42,17 @@ function RecipientsWithNoTtaWidget({
     setResetPagination,
     loading,
     checkBoxes,
-    'RecipientsWithNoTta',
+    'RecipientsWithOhsStandardFeiGoal',
     setRecipientsPerPage,
-    ['Recipient'],
-    ['Date_of_Last_TTA'],
+    ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
+    ['Goal_created_on'],
   );
 
   useEffect(() => {
     try {
       // Set local data.
       setLocalLoading(true);
-      const recipientToUse = data.RecipientsWithNoTta || [];
+      const recipientToUse = data.RecipientsWithOhsStandardFeiGoal || [];
       setRecipientsToUse(recipientToUse);
       setRecipientCount(recipientToUse.length);
     } finally {
@@ -60,18 +60,19 @@ function RecipientsWithNoTtaWidget({
     }
   }, [data]);
 
+  const numberOfGrants = 70;
   const getSubtitleWithPct = () => {
     const totalRecipients = 159;
-    return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients`;
+    return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients (${numberOfGrants} grants)`;
   };
 
   return (
     <WidgetContainer
-      title="Recipients with no TTA"
-      subtitle="Recipients without Activity Reports or Training Reports for more than 90 days."
+      title="Recipients with OHS standard FEI goal"
+      subtitle="Root cause were identified through self-reported data."
       subtitle2={getSubtitleWithPct()}
       loading={loading || localLoading}
-      loadingLabel="Recipients with no TTA loading"
+      loadingLabel="Recipients with OHS standard FEI goal loading"
       showPagingBottom
       currentPage={activePage}
       totalCount={recipientCount}
@@ -97,15 +98,17 @@ function RecipientsWithNoTtaWidget({
   );
 }
 
-RecipientsWithNoTtaWidget.propTypes = {
+RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.shape({
       headers: PropTypes.arrayOf(PropTypes.string),
-      RecipientsWithNoTta: PropTypes.arrayOf(
+      RecipientsWithOhsStandardFeiGoal: PropTypes.arrayOf(
         PropTypes.shape({
           recipient: PropTypes.string,
-          dateOfLastTta: PropTypes.date,
-          daysSinceLastTta: PropTypes.number,
+          goalCreatedOn: PropTypes.date,
+          goalNumber: PropTypes.string,
+          goalStatus: PropTypes.string,
+          rootCause: PropTypes.string,
         }),
       ),
     }),
@@ -117,11 +120,11 @@ RecipientsWithNoTtaWidget.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-RecipientsWithNoTtaWidget.defaultProps = {
-  data: { headers: [], RecipientsWithNoTta: [] },
+RecipientsWithOhsStandardFeiGoalWidget.defaultProps = {
+  data: { headers: [], RecipientsWithOhsStandardFeiGoal: [] },
   resetPagination: false,
   setResetPagination: () => {},
   perPageNumber: RECIPIENTS_WITH_NO_TTA_PER_PAGE,
 };
 
-export default RecipientsWithNoTtaWidget;
+export default RecipientsWithOhsStandardFeiGoalWidget;

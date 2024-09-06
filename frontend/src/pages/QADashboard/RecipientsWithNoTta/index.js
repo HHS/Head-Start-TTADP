@@ -103,11 +103,11 @@ export default function RecipientsWithNoTta() {
               hideLinkIcon: true,
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
-                title: 'Date of Last TTA',
+                title: 'Date_of_Last_TTA',
                 value: '2021-09-01',
               },
               {
-                title: 'Days Since Last TTA',
+                title: 'Days_Since_Last_TTA',
                 value: '90',
               }],
             },
@@ -119,11 +119,11 @@ export default function RecipientsWithNoTta() {
               hideLinkIcon: true,
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
-                title: 'Date of Last TTA',
+                title: 'Date_of_Last_TTA',
                 value: '2021-09-02',
               },
               {
-                title: 'Days Since Last TTA',
+                title: 'Days_Since_Last_TTA',
                 value: '91',
               }],
             },
@@ -135,11 +135,11 @@ export default function RecipientsWithNoTta() {
               hideLinkIcon: true,
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
-                title: 'Date of Last TTA',
+                title: 'Date_of_Last_TTA',
                 value: '2021-09-03',
               },
               {
-                title: 'Days Since Last TTA',
+                title: 'Days_Since_Last_TTA',
                 value: '92',
               }],
             }],

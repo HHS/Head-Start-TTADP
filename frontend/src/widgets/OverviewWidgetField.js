@@ -24,22 +24,21 @@ export function OverviewWidgetField({
   filterApplicable,
   iconSize,
 }) {
-  const smallIconClass = iconSize === 'sm' ? 'smart-hub--dashboard-overview-widget-field-icon-background-sm' : 'smart-hub--dashboard-overview-widget-field-icon-background-lg';
   return (
-    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field margin-bottom-1 display-flex bg-white shadow-2 padding-y-2 padding-x-1">
+    <Grid gap={4} desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-y-2 padding-x-1">
       <span className="smart-hub--dashboard-overview-widget-field-icon flex-1 display-flex flex-justify-center flex-align-center">
-        <span className={`${smallIconClass} display-flex flex-justify-center flex-align-center`} style={{ backgroundColor }}>
+        <span className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center" style={{ backgroundColor }}>
           <FontAwesomeIcon color={iconColor} icon={icon} size={iconSize} />
         </span>
       </span>
       <span className="smart-hub--dashboard-overview-widget-field-label display-flex flex-2 flex-column flex-justify-center">
         <div>
-          <span className="text-bold smart-hub--overview-widget-field-data-font-size">{data}</span>
+          <span className="text-bold font-sans-xs">{data}</span>
           { !filterApplicable && (
             <>
-              <span className="smart-hub--overview-widget-field-font-size margin-right-1"> - Filters not applied</span>
+              <span className="font-sans-xs margin-right-1"> - Filters not applied</span>
               <TrussWorksToolTip className="usa-button--unstyled smart-hub--overview-tool-tip" id="filter-not-applicable" label="One or more of the selected filters cannot be applied to this data.">
-                <FontAwesomeIcon icon={faQuestionCircle} className="margin-left-1" color={colors.ttahubMediumBlue} />
+                <FontAwesomeIcon icon={faQuestionCircle} color={colors.ttahubMediumBlue} />
               </TrussWorksToolTip>
             </>
           )}
