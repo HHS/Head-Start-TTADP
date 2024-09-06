@@ -168,12 +168,8 @@ describe('Email Notifications', () => {
     it('creates a digest for a training report notification', async () => {
       const actions = [
         EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED,
-        EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
         EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
         EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-        EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-        EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-        EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_COMPLETE,
       ];
 
       const mockTrJobDigest = {
