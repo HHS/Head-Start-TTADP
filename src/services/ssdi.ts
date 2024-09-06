@@ -252,6 +252,7 @@ const applyFilterOptions = async (
 ): Promise<string[] | number[] | boolean[] | Record<string, any>[]> => {
   // If the filter has a query, run it and store the results in options
   if (filter?.options?.query) {
+    await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
     const results = await db.sequelize.query(
       filter.options.query.sqlQuery,
       { type: QueryTypes.SELECT },
@@ -329,50 +330,52 @@ const processFilters = async (cachedFile: CachedFile, returnOptions = false): Pr
 };
 
 // Helper function to generate artificial filters for sorting and pagination
-const generateArtificialFilters = (cachedFile: CachedFile): Filters => {
+const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number): Filters => {
   const artificialFilters: Filters = {};
+
+  // eslint-disable-next-line @typescript-eslint/dot-notation
+  artificialFilters['currentUserId'] = {
+    id: 'currentUserId',
+    type: FilterType.IntegerArray,
+    description: 'A static filter to allow restriction to the current user.',
+    options: [currentUserId],
+    defaultValues: [currentUserId],
+  };
 
   // For single dataset output (normal case)
   if (cachedFile.jsonHeader.output.schema && !cachedFile.jsonHeader.output.multipleDataSets) {
     // Generate artificial filters for sorting if supportsSorting is true
     if (cachedFile.jsonHeader.output.sorting) {
-      const sortOrderColumnFilter: Filter = {
+      artificialFilters['sortOrder.column'] = {
         id: 'sortOrder.column',
-        type: 'string[]',
+        type: FilterType.StringArray,
         description: 'The column to sort by',
         options: cachedFile.jsonHeader.output.schema.map((column) => column.columnName),
         defaultValues: cachedFile.jsonHeader.output.sorting.default.map((sort) => sort.name),
       };
-
-      const sortOrderDirectionFilter: Filter = {
+      artificialFilters['sortOrder.direction'] = {
         id: 'sortOrder.direction',
-        type: 'string[]',
+        type: FilterType.StringArray,
         description: 'The direction to sort (ASC or DESC)',
         options: ['ASC', 'DESC'],
         defaultValues: cachedFile.jsonHeader.output.sorting.default.map((sort) => sort.order),
       };
-
-      artificialFilters['sortOrder.column'] = sortOrderColumnFilter;
-      artificialFilters['sortOrder.direction'] = sortOrderDirectionFilter;
     }
 
     // Generate artificial filters for pagination if supportsPagination is true
     if (cachedFile.jsonHeader.output.supportsPagination) {
-      const paginationPageFilter: Filter = {
+      artificialFilters['pagination.page'] = {
         id: 'pagination.page',
-        type: 'number',
+        type: FilterType.IntegerArray,
         description: 'The page number to retrieve',
         defaultValues: [0], // Default to the first page
       };
-      const paginationSizeFilter: Filter = {
+      artificialFilters['pagination.size'] = {
         id: 'pagination.size',
-        type: 'number',
+        type: FilterType.IntegerArray,
         description: 'The number of records to retrieve per page',
         defaultValues: [MAX_POSTGRES_RECORD_LIMIT], // Max number of records PostgreSQL supports
       };
-
-      artificialFilters['pagination.page'] = paginationPageFilter;
-      artificialFilters['pagination.size'] = paginationSizeFilter;
     }
   }
 
@@ -383,57 +386,49 @@ const generateArtificialFilters = (cachedFile: CachedFile): Filters => {
 
       // Generate artificial filters for sorting if supportsSorting is true
       if (dataSet.sorting) {
-        const sortOrderColumnFilter: Filter = {
+        artificialFilters[`${prefix}.sortOrder.column`] = {
           id: `${prefix}.sortOrder.column`,
-          type: 'string[]',
+          type: FilterType.StringArray,
           description: `The column to sort by for dataset ${prefix}`,
           options: dataSet.schema.map((column) => column.columnName),
           defaultValues: dataSet.sorting.default.map((sort) => sort.name),
         };
 
-        const sortOrderDirectionFilter: Filter = {
+        artificialFilters[`${prefix}.sortOrder.direction`] = {
           id: `${prefix}.sortOrder.direction`,
-          type: 'string[]',
+          type: FilterType.StringArray,
           description: `The direction to sort (ASC or DESC) for dataset ${prefix}`,
           options: ['ASC', 'DESC'],
           defaultValues: dataSet.sorting.default.map((sort) => sort.order),
         };
-
-        artificialFilters[`${prefix}.sortOrder.column`] = sortOrderColumnFilter;
-        artificialFilters[`${prefix}.sortOrder.direction`] = sortOrderDirectionFilter;
       }
 
       // Generate artificial filters for pagination if supportsPagination is true
       if (dataSet.supportsPagination) {
-        const paginationPageFilter: Filter = {
+        artificialFilters[`${prefix}.pagination.page`] = {
           id: `${prefix}.pagination.page`,
-          type: 'number',
+          type: FilterType.IntegerArray,
           description: `The page number to retrieve for dataset ${prefix}`,
           defaultValues: [0], // Default to the first page
         };
 
-        const paginationSizeFilter: Filter = {
+        artificialFilters[`${prefix}.pagination.size`] = {
           id: `${prefix}.pagination.size`,
-          type: 'number',
+          type: FilterType.IntegerArray,
           description: `The number of records to retrieve per page for dataset ${prefix}`,
           defaultValues: [MAX_POSTGRES_RECORD_LIMIT], // Max number of records PostgreSQL supports
         };
-
-        artificialFilters[`${prefix}.pagination.page`] = paginationPageFilter;
-        artificialFilters[`${prefix}.pagination.size`] = paginationSizeFilter;
       }
     });
 
     // Add a filter to allow returning only a subset of the multiple datasets
-    const dataSetFilter: Filter = {
+    artificialFilters.dataSetSelection = {
       id: 'dataSetSelection',
-      type: 'string[]',
+      type: FilterType.StringArray,
       description: 'Select which datasets to include in the result',
       options: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
       defaultValues: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
     };
-
-    artificialFilters.dataSetSelection = dataSetFilter;
   }
 
   return artificialFilters;
@@ -523,37 +518,40 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
 
 // Helper function to set filters in the database
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const setFilters = async (filterValues: FilterValues): Promise<any[]> => Promise.all(
-  Object.entries(filterValues).map(async ([key, value]) => {
-    if (key.endsWith('.not')) {
-      const baseKey = key.slice(0, -4);
+const setFilters = async (filterValues: FilterValues): Promise<any[]> => {
+  await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
+  return Promise.all(
+    Object.entries(filterValues).map(async ([key, value]) => {
+      if (key.endsWith('.not')) {
+        const baseKey = key.slice(0, -4);
 
-      return Promise.all([
-        db.sequelize.query(
-          'SELECT set_config($1, $2, false)',
-          {
-            bind: [`ssdi.${baseKey}`, JSON.stringify(value)],
-            type: db.sequelize.QueryTypes.SELECT,
-          },
-        ),
-        db.sequelize.query(
-          'SELECT set_config($1, $2, false)',
-          {
-            bind: [`ssdi.${key}`, JSON.stringify(true)],
-            type: db.sequelize.QueryTypes.SELECT,
-          },
-        ),
-      ]);
-    }
-    return db.sequelize.query(
-      'SELECT set_config($1, $2, false)',
-      {
-        bind: [`ssdi.${key}`, JSON.stringify(value)],
-        type: db.sequelize.QueryTypes.SELECT,
-      },
-    );
-  }),
-);
+        return Promise.all([
+          db.sequelize.query(
+            'SELECT set_config($1, $2, false)',
+            {
+              bind: [`ssdi.${baseKey}`, JSON.stringify(value)],
+              type: db.sequelize.QueryTypes.SELECT,
+            },
+          ),
+          db.sequelize.query(
+            'SELECT set_config($1, $2, false)',
+            {
+              bind: [`ssdi.${key}`, JSON.stringify(true)],
+              type: db.sequelize.QueryTypes.SELECT,
+            },
+          ),
+        ]);
+      }
+      return db.sequelize.query(
+        'SELECT set_config($1, $2, false)',
+        {
+          bind: [`ssdi.${key}`, JSON.stringify(value)],
+          type: db.sequelize.QueryTypes.SELECT,
+        },
+      );
+    }),
+  );
+};
 
 // Helper function to generate a string representation of the filter values
 const generateFilterString = (filterValues: FilterValues): string => Object.entries(filterValues)
