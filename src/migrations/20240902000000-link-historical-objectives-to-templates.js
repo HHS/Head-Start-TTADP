@@ -92,6 +92,7 @@ module.exports = {
         JOIN "Objectives" o
           ON o.id = uo.oid
         WHERE uo.otid IS NULL
+          AND uo.most_advanced_ar > 3
         GROUP BY 1,2,3,4,5,6,8
         RETURNING
           id new_otid,
@@ -105,7 +106,8 @@ module.exports = {
         FROM "Objectives"
         JOIN created_templates
           ON new_template_title = title
-        WHERE oid = id;
+        WHERE oid = id
+        ;
 
 
         DROP TABLE IF EXISTS updated_objectives;
@@ -180,26 +182,27 @@ module.exports = {
         SELECT
           is_rtr,
           statname,
-          template_missing,
+          COUNT(*) FILTER (WHERE template_missing) no_templ,
           COUNT(*) cnt,
           'before' beforeafter
         FROM unconnected_objectives
-        GROUP BY 1,2,3,5
+        GROUP BY 1,2,5
         ),
         afters AS (
         SELECT
           is_rtr,
           statname,
-          template_missing,
+          COUNT(*) FILTER (WHERE otid IS NULL) no_templ,
           COUNT(*) cnt,
           'after' beforeafter
         FROM unconnected_objectives_after
-        GROUP BY 1,2,3,5
+        GROUP BY 1,2,5
         )
         SELECT
           b.is_rtr,
-          b.statname,
-          b.template_missing,
+          b.statname most_advanced_ar_status,
+          b.no_templ no_templ_before,
+          COALESCE(a.no_templ,0) no_templ_after,
           b.cnt "before",
           COALESCE(a.cnt,0) "after"
         FROM befores b
@@ -212,8 +215,7 @@ module.exports = {
               (b.is_rtr IS NULL AND a.is_rtr IS NULL)
               OR b.is_rtr = a.is_rtr
             )
-          AND b.template_missing = a.template_missing
-        ORDER BY 3,1,2
+        ORDER BY 2,1
         ;
 
         
