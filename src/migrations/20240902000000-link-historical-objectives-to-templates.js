@@ -7,10 +7,16 @@ module.exports = {
 
       await queryInterface.sequelize.query(/* sql */`
         -- This finds all objectives that have titles long enough to be meaningful but
-        -- are not linked to a matching template
-        -- and marks whether they're created on an RTR and what the most advanced status
-        -- of a connected AR is. Then every Objective that is on at least one AR that
-        -- has reached submitted status is linked to its
+        -- are not linked to a matching template and marks whether they're created on an
+        -- RTR and what the most advanced status of a connected AR is. Then every
+        -- Objective that is on at least one AR that has reached 'submitted' status
+        -- is:
+        --   - Converted to a template and inserted if there is no matching template
+        --   - Updated to point to the new or existing template
+        -- A query at the end shows the movement. Note that some "unmatched" numbers will
+        -- grow slightly because the template to which they *would* match has been interted
+        -- but the objective wasn't associated with any ARs with sufficiently advanced status
+
         DROP TABLE IF EXISTS unconnected_objectives;
         CREATE TEMP TABLE unconnected_objectives
         AS
@@ -28,15 +34,21 @@ module.exports = {
         SELECT
           o.id oid,
           ot.id otid,
-          gr."regionId" region,
+          COALESCE(gr."regionId",u."homeRegionId") region,
           o."createdVia" = 'rtr' is_rtr,
           MAX(statord) most_advanced_ar,
           MAX(aro."createdAt") last_used
         FROM "Objectives" o
-        JOIN "Goals" g
+        LEFT JOIN "Goals" g
           ON o."goalId" = g.id
-        JOIN "Grants" gr
+        LEFT JOIN "Grants" gr
           ON g."grantId" = gr.id
+        LEFT JOIN "ZALObjectives" zo
+          ON o."goalId" IS NULL
+          AND o.id = zo.data_id
+          AND zo.dml_type = 'INSERT'
+        LEFT JOIN "Users" u
+          ON zo.dml_as = u.id
         LEFT JOIN "ObjectiveTemplates" ot
           ON TRIM(o.title) = TRIM(ot."templateTitle")
           AND gr."regionId" = ot."regionId"
@@ -49,7 +61,7 @@ module.exports = {
           OR ar."calculatedStatus" = statname
         WHERE o."objectiveTemplateId" IS NULL
           AND LENGTH(o.title) > 9
-        GROUP BY 1,2,3
+        GROUP BY 1,2,3,4
         )
         SELECT
           oid,
@@ -119,6 +131,7 @@ module.exports = {
         FROM unconnected_objectives
         WHERE o.id = oid
           AND most_advanced_ar > 3
+          AND "objectiveTemplateId" IS NULL
         RETURNING oid
         )
         SELECT * FROM UPDATER
@@ -141,15 +154,21 @@ module.exports = {
         SELECT
           o.id oid,
           ot.id otid,
-          gr."regionId" region,
+          COALESCE(gr."regionId",u."homeRegionId") region,
           o."createdVia" = 'rtr' is_rtr,
           MAX(statord) most_advanced_ar,
           MAX(aro."createdAt") last_used
         FROM "Objectives" o
-        JOIN "Goals" g
+        LEFT JOIN "Goals" g
           ON o."goalId" = g.id
-        JOIN "Grants" gr
+        LEFT JOIN "Grants" gr
           ON g."grantId" = gr.id
+        LEFT JOIN "ZALObjectives" zo
+          ON o."goalId" IS NULL
+          AND o.id = zo.data_id
+          AND zo.dml_type = 'INSERT'
+        LEFT JOIN "Users" u
+          ON zo.dml_as = u.id
         LEFT JOIN "ObjectiveTemplates" ot
           ON TRIM(o.title) = TRIM(ot."templateTitle")
           AND gr."regionId" = ot."regionId"
@@ -162,7 +181,7 @@ module.exports = {
           OR ar."calculatedStatus" = statname
         WHERE o."objectiveTemplateId" IS NULL
           AND LENGTH(o.title) > 9
-        GROUP BY 1,2,3
+        GROUP BY 1,2,3,4
         )
         SELECT
           oid,
