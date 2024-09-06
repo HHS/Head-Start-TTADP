@@ -52,5 +52,10 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
     expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
+
+    // Assert test data.
+    expect(await screen.findByText('2.52%')).toBeVisible();
+    expect(await screen.findByText('73.25%')).toBeVisible();
+    expect(await screen.findByText('14.26%')).toBeVisible();
   });
 });
