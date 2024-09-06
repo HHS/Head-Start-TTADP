@@ -3,6 +3,8 @@ import { Request, Response } from 'express';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import {
+  BASE_DIRECTORY,
+  checkFolderPermissions,
   FilterValues,
   listQueryFiles,
   readFiltersFromFile,
@@ -14,19 +16,6 @@ import {
 } from '../../services/ssdi';
 import Generic from '../../policies/generic';
 
-// Check if the user has access to a specific folder
-const checkFolderPermissions = async (user, scriptPath: string) => {
-  const policy = new Generic(user);
-
-  // Map specific paths to permissions
-  if (scriptPath.includes('dataRequests/ohs') || scriptPath.includes('dataRequests/internal')) {
-    // TODO: make migration to add ssdi_restricted to feature flags
-    return policy.hasFeatureFlag('ssdi_restricted');
-  }
-  // Default: Allow access to public folders (api and dataRequests/user)
-  return true;
-};
-
 const validateScriptPath = async (
   scriptPath: string,
   userId: number,
@@ -34,17 +23,32 @@ const validateScriptPath = async (
 ) => {
   const user = await userById(userId);
 
+  // Ensure the scriptPath is provided by the user
   if (!scriptPath) {
     res.status(400).send('Script path is required');
-  } else if (scriptPath.includes('../')) {
-    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
-  } else if (!scriptPath.startsWith('src/queries/')) {
-    res.status(400).json({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
-  } else if (!await checkFolderPermissions(user, scriptPath)) {
-    res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
+    return true;
   }
 
-  return res.headersSent;
+  // Protect against path traversal attacks
+  if (scriptPath.includes('../') || scriptPath.includes('/..')) {
+    res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
+    return true;
+  }
+
+  // Ensure the scriptPath starts with either "dataRequests" or "api"
+  if (!(scriptPath.startsWith('dataRequests') || scriptPath.startsWith('api'))) {
+    res.status(400).json({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+    return true;
+  }
+
+  // Check folder permissions based on the internal path and user
+  const hasAccess = await checkFolderPermissions(user, scriptPath);
+  if (!hasAccess) {
+    res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
+    return true;
+  }
+
+  return res.headersSent; // Return whether headers have been sent to prevent further processing
 };
 
 // Filters out certain attributes from an object
@@ -57,7 +61,9 @@ const filterAttributes = <T extends object>(
 
 // List all available query files with name and description
 const listQueries = async (req: Request, res: Response) => {
-  const scriptPath = req.query.path as string;
+  // Trim the scriptPath and default to 'dataRequests' if it's not set or an empty string
+  const scriptPath = (req.query.path as string || '').trim() || 'dataRequests';
+
   const userId = await currentUserId(req, res);
 
   // Check if the response has been sent (status or headers set) and return early
@@ -66,7 +72,8 @@ const listQueries = async (req: Request, res: Response) => {
   }
 
   try {
-    const queryFiles = await listQueryFiles('./src/queries/');
+    // Use the validated internal scriptPath for listing queries
+    const queryFiles = await listQueryFiles(scriptPath);
     res.json(queryFiles);
   } catch (error) {
     res.status(500).send('Error listing query files');
