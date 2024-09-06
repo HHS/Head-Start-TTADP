@@ -23,22 +23,15 @@ const checkFolderPermissions = async (user, scriptPath: string) => {
     // TODO: make migration to add ssdi_restricted to feature flags
     return policy.hasFeatureFlag('ssdi_restricted');
   }
-  // Default: Allow access to public folders (api and user)
+  // Default: Allow access to public folders (api and dataRequests/user)
   return true;
 };
 
-// List all available query files with name and description
-const listQueries = async (req: Request, res: Response) => {
-  try {
-    const queryFiles = await listQueryFiles('./src/queries/');
-    res.json(queryFiles);
-  } catch (error) {
-    res.status(500).send('Error listing query files');
-  }
-};
-
-const validateScriptPath = async (scriptPath: string, req: Request, res: Response) => {
-  const userId = await currentUserId(req, res);
+const validateScriptPath = async (
+  scriptPath: string,
+  userId: number,
+  res: Response,
+) => {
   const user = await userById(userId);
 
   if (!scriptPath) {
@@ -50,20 +43,8 @@ const validateScriptPath = async (scriptPath: string, req: Request, res: Respons
   } else if (!await checkFolderPermissions(user, scriptPath)) {
     res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
   }
-};
 
-// Reads the filters and query from the file and sends the filters to the UI
-const getFilters = async (req: Request, res: Response) => {
-  const scriptPath = req.query.path as string;
-
-  await validateScriptPath(scriptPath, req, res);
-
-  try {
-    const filters = await readFiltersFromFile(`./${scriptPath}`);
-    res.json(filters);
-  } catch (error) {
-    res.status(500).send('Error reading filters');
-  }
+  return res.headersSent;
 };
 
 // Filters out certain attributes from an object
@@ -74,15 +55,75 @@ const filterAttributes = <T extends object>(
     Object.entries(obj).filter(([key]) => !keysToRemove.includes(key as keyof T)),
   ) as Partial<T>;
 
+// List all available query files with name and description
+const listQueries = async (req: Request, res: Response) => {
+  const scriptPath = req.query.path as string;
+  const userId = await currentUserId(req, res);
+
+  // Check if the response has been sent (status or headers set) and return early
+  if (await validateScriptPath(scriptPath, userId, res)) {
+    return;
+  }
+
+  try {
+    const queryFiles = await listQueryFiles('./src/queries/');
+    res.json(queryFiles);
+  } catch (error) {
+    res.status(500).send('Error listing query files');
+  }
+};
+
+// Thin wrapper for listQueries that converts req.params[0] to req.query.path
+const listQueriesWithWildcard = (req: Request, res: Response) => {
+  // Convert req.params[0] (from wildcard path) to req.query.path
+  // eslint-disable-next-line prefer-destructuring
+  req.query.path = req.params[0];
+
+  // Call the original listQueries implementation
+  return listQueries(req, res);
+};
+
+// Reads the filters and query from the file and sends the filters to the UI
+const getFilters = async (req: Request, res: Response) => {
+  const scriptPath = req.query.path as string;
+  const userId = await currentUserId(req, res);
+
+  // Check if the response has been sent (status or headers set) and return early
+  if (await validateScriptPath(scriptPath, userId, res)) {
+    return;
+  }
+
+  try {
+    const filters = await readFiltersFromFile(`./${scriptPath}`, userId);
+    res.json(filters);
+  } catch (error) {
+    res.status(500).send('Error reading filters');
+  }
+};
+
+// Thin wrapper for getFilters that converts req.params[0] to req.query.path
+const getFiltersWithWildcard = (req: Request, res: Response) => {
+  // Convert req.params[0] (from wildcard path) to req.query.path
+  // eslint-disable-next-line prefer-destructuring
+  req.query.path = req.params[0];
+
+  // Call the original getFilters implementation
+  return getFilters(req, res);
+};
+
 // Runs the query after setting the filters
 const runQuery = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   const outputFormat = (req.query.format as string) || 'json';
+  const userId = await currentUserId(req, res);
 
-  await validateScriptPath(scriptPath, req, res);
+  // Check if the response has been sent (status or headers set) and return early
+  if (await validateScriptPath(scriptPath, userId, res)) {
+    return;
+  }
 
   try {
-    const filters = await readFiltersFromFile(scriptPath, true);
+    const filters = await readFiltersFromFile(scriptPath, userId, true);
     const filterValues: FilterValues = filterAttributes(
       {
         ...req.body,
@@ -91,7 +132,6 @@ const runQuery = async (req: Request, res: Response) => {
       ['path', 'format'],
     );
 
-    const userId = await currentUserId(req, res);
     const user = await userById(userId);
     const policy = new Generic(user);
 
@@ -135,8 +175,24 @@ const runQuery = async (req: Request, res: Response) => {
   }
 };
 
+// Thin wrapper for runQuery that converts req.params[0] to req.query.path
+const runQueryWithWildcard = (req: Request, res: Response) => {
+  // Convert req.params[0] (from wildcard path) to req.query.path
+  // eslint-disable-next-line prefer-destructuring
+  req.query.path = req.params[0];
+
+  // Call the original runQuery implementation
+  return runQuery(req, res);
+};
+
 export {
+  checkFolderPermissions,
+  validateScriptPath,
+  filterAttributes,
   listQueries,
+  listQueriesWithWildcard,
   getFilters,
+  getFiltersWithWildcard,
   runQuery,
+  runQueryWithWildcard,
 };
