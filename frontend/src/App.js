@@ -22,6 +22,7 @@ import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import CourseDashboard from './pages/CourseDashboard';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
+import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
@@ -284,6 +285,15 @@ function App() {
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <RecipientsWithNoTta />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/recipients-with-ohs-standard-fei-goal"
+          render={() => (
+            <AppWrapper authenticated logout={logout}>
+              <RecipientsWithOhsStandardFeiGoal />
             </AppWrapper>
           )}
         />
