@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
+import Drawer from '../components/Drawer';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
@@ -12,6 +14,9 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   setResetPagination,
   perPageNumber,
 }) {
+  const titleDrawerRef = useRef(null);
+  const subtitleDrawerLinkRef = useRef(null);
+
   const defaultSortConfig = {
     sortBy: '1',
     direction: 'desc',
@@ -67,34 +72,56 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   };
 
   return (
-    <WidgetContainer
-      title="Recipients with OHS standard FEI goal"
-      subtitle="Root cause were identified through self-reported data."
-      subtitle2={getSubtitleWithPct()}
-      loading={loading || localLoading}
-      loadingLabel="Recipients with OHS standard FEI goal loading"
-      showPagingBottom
-      currentPage={activePage}
-      totalCount={recipientCount}
-      offset={offset}
-      perPage={perPageNumber}
-      handlePageChange={handlePageChange}
-      enableCheckboxes
-      exportRows={exportRows}
-    >
-      <HorizontalTableWidget
-        headers={data.headers || []}
-        data={recipientsPerPage || []}
-        firstHeading="Recipient"
-        enableSorting
-        sortConfig={sortConfig}
-        requestSort={requestSort}
+    <>
+      <Drawer
+        triggerRef={titleDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="OHS standard FEI goal"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
+      <Drawer
+        triggerRef={subtitleDrawerLinkRef}
+        stickyHeader
+        stickyFooter
+        title="FEI root cause"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
+      <WidgetContainer
+        title="Recipients with"
+        subtitle="Root cause were identified through self-reported data."
+        subtitle2={getSubtitleWithPct()}
+        loading={loading || localLoading}
+        loadingLabel="Recipients with OHS standard FEI goal loading"
+        showPagingBottom
+        currentPage={activePage}
+        totalCount={recipientCount}
+        offset={offset}
+        perPage={perPageNumber}
+        handlePageChange={handlePageChange}
         enableCheckboxes
-        checkboxes={checkBoxes}
-        setCheckboxes={setCheckBoxes}
-        showTotalColumn={false}
-      />
-    </WidgetContainer>
+        exportRows={exportRows}
+        titleDrawerText="OHS standard FEI goal"
+        titleDrawerRef={titleDrawerRef}
+        subtitleDrawerLinkText="Learn about root causes"
+        subtitleDrawerLinkRef={subtitleDrawerLinkRef}
+      >
+        <HorizontalTableWidget
+          headers={data.headers || []}
+          data={recipientsPerPage || []}
+          firstHeading="Recipient"
+          enableSorting
+          sortConfig={sortConfig}
+          requestSort={requestSort}
+          enableCheckboxes
+          checkboxes={checkBoxes}
+          setCheckboxes={setCheckBoxes}
+          showTotalColumn={false}
+        />
+      </WidgetContainer>
+    </>
   );
 }
 

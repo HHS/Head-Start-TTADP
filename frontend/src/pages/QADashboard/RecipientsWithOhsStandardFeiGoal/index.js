@@ -2,6 +2,7 @@
 /* eslint-disable no-console */
 import React, {
   useState,
+  useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,18 +12,30 @@ import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import './index.scss';
 
 export default function RecipientsWithOhsStandardFeiGoal() {
+  const pageDrawerRef = useRef(null);
   const [error] = useState();
 
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
+      <Drawer
+        triggerRef={pageDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="QA dashboard filters"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
       <Helmet>
         <title>Recipients with OHS standard FEI goal</title>
       </Helmet>
       <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="resources-dashboard">
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="qa-dashboard">
         Back to Quality Assurance Dashboard
       </Link>
       <h1 className="landing margin-top-0">
@@ -35,6 +48,9 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           </Alert>
         )}
       </Grid>
+      <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
+        Learn how filters impact the data displayed
+      </DrawerTriggerButton>
       <RecipientsWithOhsStandardFeiGoalWidget
         data={{
           headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
