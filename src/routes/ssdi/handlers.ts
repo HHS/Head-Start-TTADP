@@ -1,7 +1,7 @@
 import stringify from 'csv-stringify/lib/sync';
 import { Request, Response } from 'express';
-import { currentUserId } from '../../../services/currentUser';
-import { userById } from '../../../services/users';
+import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
 import {
   FilterValues,
   listQueryFiles,
@@ -11,8 +11,8 @@ import {
   sanitizeFilename,
   generateFilterString,
   executeQuery,
-} from '../../../services/ssdi';
-import Generic from '../../../policies/generic';
+} from '../../services/ssdi';
+import Generic from '../../policies/generic';
 
 // Check if the user has access to a specific folder
 const checkFolderPermissions = async (user, scriptPath: string) => {
