@@ -254,15 +254,23 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
 };
 
 // Function to list all query files in a directory
-const listQueryFiles = async (directory: string): Promise<QueryFile[]> => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]> => {
   try {
     const safeDirectory = safeResolvePath(directory);
     const files = await readFilesRecursively(safeDirectory); // Use recursive lookup
 
     const queryFiles = await Promise.all(
       files.map(async (file) => {
-        const cachedFile = await readJsonHeaderFromFile(file);
+        // Check if the user has access to the file
+        const relativePath = path.relative('src/queries', file); // Use relative path for permission checks
+        const hasAccess = await checkFolderPermissions(user, relativePath);
 
+        if (!hasAccess) {
+          return null; // Skip file if the user doesn't have permission
+        }
+
+        const cachedFile = await readJsonHeaderFromFile(file);
         if (cachedFile) {
           return createQueryFile(file, cachedFile);
         }
