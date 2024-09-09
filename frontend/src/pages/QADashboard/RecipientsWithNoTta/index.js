@@ -4,6 +4,7 @@ import React, {
   useContext,
   useState,
   useMemo,
+  useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,6 +18,9 @@ import { regionFilter } from '../../../components/filter/activityReportFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
 import useFilters from '../../../hooks/useFilters';
+import Drawer from '../../../components/Drawer';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import './index.scss';
 import UserContext from '../../../UserContext';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
@@ -31,6 +35,7 @@ const ALLOWED_SUBFILTERS = [
 ];
 
 export default function RecipientsWithNoTta() {
+  const pageDrawerRef = useRef(null);
   const [error] = useState();
   const { user } = useContext(UserContext);
   const {
@@ -63,6 +68,14 @@ export default function RecipientsWithNoTta() {
 
   return (
     <div className="ttahub-recipients-with-no-tta">
+      <Drawer
+        triggerRef={pageDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="QA dashboard filters"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
       <Helmet>
         <title>Recipients with no TTA</title>
       </Helmet>
@@ -91,6 +104,9 @@ export default function RecipientsWithNoTta() {
           allowedSubfilters={ALLOWED_SUBFILTERS}
         />
       </FilterPanelContainer>
+      <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
+        Learn how filters impact the data displayed
+      </DrawerTriggerButton>
       <RecipientsWithNoTtaWidget
         data={{
           headers: ['Date of Last TTA', 'Days Since Last TTA'],

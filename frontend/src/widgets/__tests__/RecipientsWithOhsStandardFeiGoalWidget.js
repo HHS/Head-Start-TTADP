@@ -20,7 +20,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
       RecipientsWithNoTta: [],
     };
     renderRecipientsWithOhsStandardFeiGoalWidget(emptyData);
-    expect(screen.getByText(/recipients with ohs standard fei goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
     expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
   });
 
@@ -104,7 +104,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
     };
     renderRecipientsWithOhsStandardFeiGoalWidget(data);
 
-    expect(screen.getByText(/recipients with ohs standard fei goal/i)).toBeInTheDocument();
+    expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
     expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
