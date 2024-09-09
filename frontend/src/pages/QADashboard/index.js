@@ -4,7 +4,6 @@ import React, {
   useMemo,
 } from 'react';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
 import { regionFilter } from '../../components/filter/activityReportFilters';
 import useFilters from '../../hooks/useFilters';
@@ -15,7 +14,6 @@ import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants
 
 export default function QADashboard() {
   const { user } = useContext(UserContext);
-  const [error] = useState(null);
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -64,13 +62,6 @@ export default function QADashboard() {
             allUserRegions={regions}
           />
         </FilterPanelContainer>
-        <Grid row>
-          {error && (
-          <Alert className="margin-bottom-2" type="error" role="alert">
-            {error}
-          </Alert>
-          )}
-        </Grid>
         <QAOverview
           data={{
             recipientsWithNoTTA: { pct: '2.52%', filterApplicable: true },
