@@ -13,6 +13,8 @@ module.exports = {
         -- times as long as that update, then the update is sorted lower. Though this
         -- case is not seen in the data upon last inspection , this prevents default
         -- updates from outranking real updates if that case crops up before deployment.
+
+        -- We're not adding a unique constraint right now because it causes test failures.
         
         -- Drop temporary tables if they exist
         DROP TABLE IF EXISTS temp_dup_aro_sets;
@@ -571,21 +573,12 @@ module.exports = {
         DROP TABLE IF EXISTS temp_inserted_objectives;
         DROP TABLE IF EXISTS temp_deleted_objectives;
       `, { transaction });
-
-      await queryInterface.sequelize.query(`
-        DROP INDEX IF EXISTS "activity_report_objectives_activity_report_id_objective_id";
-        CREATE UNIQUE INDEX  "activity_report_objectives_activity_report_id_objective_id_unique" ON "ActivityReportObjectives" ("activityReportId","objectiveId");
-    `, { transaction });
     },
   ),
 
   down: async (queryInterface) => queryInterface.sequelize.transaction(
     async (transaction) => {
       await prepMigration(queryInterface, transaction, __filename);
-      await queryInterface.sequelize.query(`
-        DROP INDEX IF EXISTS "activity_report_objectives_activity_report_id_objective_id_unique";
-        CREATE INDEX "activity_report_objectives_activity_report_id_objective_id" ON "ActivityReportObjectives" ("activityReportId","objectiveId");
-    `, { transaction });
     },
   ),
 };
