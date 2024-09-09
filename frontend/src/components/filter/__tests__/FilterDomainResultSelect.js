@@ -24,7 +24,7 @@ describe('FilterDomainResultSelect', () => {
     renderSelect(onApply);
 
     const select = await findByText(/Select domain threshold to filter by/i);
-    await selectEvent.select(select, [/ecs/i]);
+    await selectEvent.select(select, [/Below quality/i]);
     expect(onApply).toHaveBeenCalled();
   });
 });
