@@ -20,6 +20,7 @@ export default function HorizontalTableWidget(
     checkboxes,
     setCheckboxes,
     showTotalColumn,
+    hideFirstColumnBorder,
   },
 ) {
   // State for select all check box.
@@ -169,7 +170,7 @@ export default function HorizontalTableWidget(
                     </td>
                   )
                 }
-                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'} ${!hideFirstColumnBorder ? 'smarthub-horizontal-table-first-column-border' : ''}`}>
                   {
                     r.isUrl
                       ? handleUrl(r)
@@ -214,6 +215,7 @@ HorizontalTableWidget.propTypes = {
   checkboxes: PropTypes.shape({}),
   setCheckboxes: PropTypes.func,
   showTotalColumn: PropTypes.bool,
+  hideFirstColumnBorder: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -231,4 +233,5 @@ HorizontalTableWidget.defaultProps = {
   checkboxes: {},
   setCheckboxes: () => {},
   showTotalColumn: true,
+  hideFirstColumnBorder: false,
 };

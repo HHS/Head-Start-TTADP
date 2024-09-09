@@ -119,6 +119,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
           checkboxes={checkBoxes}
           setCheckboxes={setCheckBoxes}
           showTotalColumn={false}
+          hideFirstColumnBorder
         />
       </WidgetContainer>
     </>

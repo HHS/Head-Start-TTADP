@@ -136,7 +136,23 @@ describe('useWidgetPaging', () => {
         activePage: 1,
       },
       1,
-      [],
+      [{
+        heading: 'test',
+        data: [
+          {
+            title: 'number_header',
+            value: '1',
+          },
+          {
+            title: 'string_header',
+            value: 'test',
+          },
+          {
+            title: 'number_header',
+            value: '2020-01-01',
+          },
+        ],
+      }],
       jest.fn(),
       false,
       jest.fn(),
@@ -159,7 +175,7 @@ describe('useWidgetPaging', () => {
 
   it('should request sort with date column', () => {
     const { result } = renderHook(() => useWidgetPaging(
-      ['string_header', 'data_header', 'number_header'],
+      ['string_header', 'date_header', 'number_header'],
       'testPaging',
       {
         sortBy: '1',
@@ -167,7 +183,23 @@ describe('useWidgetPaging', () => {
         activePage: 1,
       },
       1,
-      [],
+      [{
+        heading: 'test',
+        data: [
+          {
+            title: 'string_header',
+            value: 'this is a string value',
+          },
+          {
+            title: 'date_header',
+            value: '2020-01-01',
+          },
+          {
+            title: 'number_header',
+            value: '2',
+          },
+        ],
+      }],
       jest.fn(),
       false,
       jest.fn(),
@@ -176,13 +208,13 @@ describe('useWidgetPaging', () => {
       'RecipientsWithNoTta',
       jest.fn(),
       ['string_header'],
-      ['data_header'],
+      ['date_header'],
     ));
 
-    result.current.requestSort('data_header');
+    result.current.requestSort('date_header');
 
     expect(result.current.sortConfig).toEqual({
-      sortBy: 'data_header',
+      sortBy: 'date_header',
       direction: 'asc',
       activePage: 1,
     });
@@ -198,7 +230,23 @@ describe('useWidgetPaging', () => {
         activePage: 1,
       },
       1,
-      [],
+      [{
+        heading: 'test',
+        data: [
+          {
+            title: 'string_header',
+            value: 'this is a string value',
+          },
+          {
+            title: 'date_header',
+            value: '2020-01-01',
+          },
+          {
+            title: 'number_header',
+            value: '2',
+          },
+        ],
+      }],
       jest.fn(),
       false,
       jest.fn(),
