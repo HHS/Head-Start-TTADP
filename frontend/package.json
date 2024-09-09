@@ -207,7 +207,9 @@
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
       "<rootDir>/src/pages/makecolors.js",
       "<rootDir>/src/NetworkContext.js",
-      "<rootDir>/src/hooks/helpers.js"
+      "<rootDir>/src/hooks/helpers.js",
+      "<rootDir>/src/testHelpers.js",
+      "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
     "coverageThreshold": {
       "global": {
