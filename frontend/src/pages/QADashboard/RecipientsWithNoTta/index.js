@@ -21,9 +21,9 @@ import useFilters from '../../../hooks/useFilters';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
-import './index.scss';
 import UserContext from '../../../UserContext';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
+import './index.scss';
 
 const ALLOWED_SUBFILTERS = [
   'region',
