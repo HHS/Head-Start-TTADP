@@ -3,6 +3,8 @@
 import React, {
   useState,
   useRef,
+  useContext,
+  useMemo,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,25 +14,62 @@ import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
+import { regionFilter } from '../../../components/filter/activityReportFilters';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
+import FilterPanel from '../../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
+import useFilters from '../../../hooks/useFilters';
+import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
 import './index.scss';
+import UserContext from '../../../UserContext';
 
+const ALLOWED_SUBFILTERS = [
+  'region',
+  'startDate',
+  'endDate',
+  'grantNumber',
+  'recipient',
+  'stateCode',
+];
 export default function RecipientsWithOhsStandardFeiGoal() {
   const pageDrawerRef = useRef(null);
   const [error] = useState();
 
+  const { user } = useContext(UserContext);
+
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+    userHasOnlyOneRegion,
+    // defaultRegion,
+    // allRegionsFilters,
+
+    // filter functionality
+    filters,
+    // setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+  } = useFilters(
+    user,
+    QA_DASHBOARD_FILTER_KEY,
+    true,
+  );
+
+  const filtersToUse = useMemo(() => {
+    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
+
+    if (!userHasOnlyOneRegion) {
+      filterConfig.push(regionFilter);
+    }
+
+    return filterConfig;
+  }, [userHasOnlyOneRegion]);
+
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
-      </Drawer>
+
       <Helmet>
         <title>Recipients with OHS standard FEI goal</title>
       </Helmet>
@@ -48,9 +87,28 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           </Alert>
         )}
       </Grid>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for QA dashboard"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filtersToUse}
+          allUserRegions={regions}
+          allowedSubfilters={ALLOWED_SUBFILTERS}
+        />
+      </FilterPanelContainer>
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
+      <Drawer
+        triggerRef={pageDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="QA dashboard filters"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
       <RecipientsWithOhsStandardFeiGoalWidget
         data={{
           headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
