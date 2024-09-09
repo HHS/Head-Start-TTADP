@@ -4,20 +4,23 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
 import RecipientsWithNoTta from '../index';
+import UserContext from '../../../../UserContext';
 
 const history = createMemoryHistory();
 
 const renderRecipientsWithNoTta = (data) => {
   render(
-    <Router history={history}>
-      <RecipientsWithNoTta
-        data={data}
-        loading={false}
-        resetPagination={false}
-        setResetPagination={() => {}}
-        perPageNumber={10}
-      />
-    </Router>,
+    <UserContext.Provider value={{ user: {} }}>
+      <Router history={history}>
+        <RecipientsWithNoTta
+          data={data}
+          loading={false}
+          resetPagination={false}
+          setResetPagination={() => {}}
+          perPageNumber={10}
+        />
+      </Router>
+    </UserContext.Provider>,
   );
 };
 

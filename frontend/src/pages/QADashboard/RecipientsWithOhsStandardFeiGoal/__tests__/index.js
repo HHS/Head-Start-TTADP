@@ -4,19 +4,22 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import { render, screen } from '@testing-library/react';
 import RecipientsWithOhsStandardFeiGoal from '../index';
+import UserContext from '../../../../UserContext';
 
 const history = createMemoryHistory();
 
 const renderRecipientsWithOhsStandardFeiGoal = (data) => {
   render(
     <Router history={history}>
-      <RecipientsWithOhsStandardFeiGoal
-        data={data}
-        loading={false}
-        resetPagination={false}
-        setResetPagination={() => {}}
-        perPageNumber={10}
-      />
+      <UserContext.Provider value={{ user: {} }}>
+        <RecipientsWithOhsStandardFeiGoal
+          data={data}
+          loading={false}
+          resetPagination={false}
+          setResetPagination={() => {}}
+          perPageNumber={10}
+        />
+      </UserContext.Provider>
     </Router>,
   );
 };
