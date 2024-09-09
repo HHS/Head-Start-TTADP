@@ -560,7 +560,7 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-3196-new-tr-views"
+    default: "al-ttahub-3316-3317-overview-widgets"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
     default: "kw-escape-quotes-in-pr-title"
