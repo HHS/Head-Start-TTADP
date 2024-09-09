@@ -266,4 +266,51 @@ describe('useWidgetPaging', () => {
       activePage: 1,
     });
   });
+
+  it('should request sort with value column', () => {
+    const { result } = renderHook(() => useWidgetPaging(
+      ['string_header', 'date_header', 'value_header'],
+      'testPaging',
+      {
+        sortBy: '1',
+        direction: 'asc',
+        activePage: 1,
+      },
+      1,
+      [{
+        heading: 'test',
+        data: [
+          {
+            title: 'string_header',
+            value: 'this is a string value',
+          },
+          {
+            title: 'date_header',
+            value: '2020-01-01',
+          },
+          {
+            title: 'value_header',
+            value: 'some value',
+          },
+        ],
+      }],
+      jest.fn(),
+      false,
+      jest.fn(),
+      false,
+      [],
+      'RecipientsWithNoTta',
+      jest.fn(),
+      ['string_header'],
+      ['date_header'],
+    ));
+
+    result.current.requestSort('value_header');
+
+    expect(result.current.sortConfig).toEqual({
+      sortBy: 'value_header',
+      direction: 'asc',
+      activePage: 1,
+    });
+  });
 });
