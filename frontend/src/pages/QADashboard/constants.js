@@ -15,6 +15,9 @@ import {
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
+  domainClassroomOrganizationFilter,
+  domainEmotionalSupportFilter,
+  domainInstructionalSupportFilter,
 } from '../../components/filter/activityReportFilters';
 import {
   createDateFilter,
@@ -43,6 +46,9 @@ const QA_DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
+  domainClassroomOrganizationFilter,
+  domainEmotionalSupportFilter,
+  domainInstructionalSupportFilter,
 ];
 
 QA_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));

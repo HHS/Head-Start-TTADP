@@ -12,6 +12,14 @@ import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants';
 
+const DISALLOWED_FILTERS = [
+  'domainClassroomOrganization',
+  'domainEmotionalSupport',
+  'domainInstructionalSupport',
+];
+const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
+  .filter((id) => !DISALLOWED_FILTERS.includes(id));
+
 export default function QADashboard() {
   const { user } = useContext(UserContext);
   const {
@@ -60,6 +68,7 @@ export default function QADashboard() {
             onRemoveFilter={onRemoveFilter}
             filterConfig={filtersToUse}
             allUserRegions={regions}
+            allowedSubfilters={ALLOWED_SUBFILTERS}
           />
         </FilterPanelContainer>
         <QAOverview
