@@ -18,7 +18,6 @@ import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
 import useFilters from '../../../hooks/useFilters';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
-import './index.scss';
 import UserContext from '../../../UserContext';
 
 const ALLOWED_SUBFILTERS = [
@@ -54,12 +53,11 @@ export default function RecipientsWithOhsStandardFeiGoal() {
 
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
-
       <Helmet>
         <title>Recipients with OHS standard FEI goal</title>
       </Helmet>
       <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="qa-dashboard">
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
         Back to Quality Assurance Dashboard
       </Link>
       <h1 className="landing margin-top-0">

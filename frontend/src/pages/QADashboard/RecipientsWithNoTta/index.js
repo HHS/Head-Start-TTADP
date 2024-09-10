@@ -19,7 +19,6 @@ import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import UserContext from '../../../UserContext';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
-import './index.scss';
 
 const ALLOWED_SUBFILTERS = [
   'region',
@@ -53,19 +52,11 @@ export default function RecipientsWithNoTta() {
 
   return (
     <div className="ttahub-recipients-with-no-tta">
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
-      </Drawer>
       <Helmet>
         <title>Recipients with no TTA</title>
       </Helmet>
       <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="qa-dashboard">
+      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
         Back to Quality Assurance Dashboard
       </Link>
       <h1 className="landing margin-top-0">
@@ -92,6 +83,14 @@ export default function RecipientsWithNoTta() {
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
+      <Drawer
+        triggerRef={pageDrawerRef}
+        stickyHeader
+        stickyFooter
+        title="QA dashboard filters"
+      >
+        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+      </Drawer>
       <RecipientsWithNoTtaWidget
         data={{
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
