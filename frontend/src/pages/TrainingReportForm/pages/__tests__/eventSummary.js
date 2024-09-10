@@ -91,7 +91,7 @@ describe('eventSummary', () => {
                 weAreAutoSaving={false}
                 datePickerKey="key"
                 Alert={() => <></>}
-                showSubmitModal={false}
+                showSubmitModal={jest.fn()}
               />
             </NetworkContext.Provider>
           </UserContext.Provider>
@@ -156,6 +156,7 @@ describe('eventSummary', () => {
       // Event creator.
       const creator = await screen.findByLabelText(/Event creator/i);
       expect(creator).toBeInTheDocument();
+
       await selectEvent.select(creator, ['IST 2']);
 
       // Event Organizer.
