@@ -24,7 +24,7 @@ const testData = {
           value: '19',
         },
         {
-          title: 'total',
+          title: 'Total',
           value: '20',
         },
       ],
@@ -71,7 +71,7 @@ const testData = {
           value: '19',
         },
         {
-          title: 'total',
+          title: 'Total',
           value: '20',
         },
       ],
@@ -116,7 +116,7 @@ const testData = {
           value: '27',
         },
         {
-          title: 'total',
+          title: 'Total',
           value: '28',
         },
       ],

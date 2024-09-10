@@ -19,6 +19,11 @@ const renderRecipientsWithOhsStandardFeiGoalWidget = (data) => {
 };
 
 describe('Recipients with ohs standard fei goal widget', () => {
+  it('renders correctly with null data', async () => {
+    renderRecipientsWithOhsStandardFeiGoalWidget({});
+    expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
+    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
+  });
   it('renders correctly without data', async () => {
     const emptyData = {
       headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],
