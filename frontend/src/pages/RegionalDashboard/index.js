@@ -11,7 +11,7 @@ import UserContext from '../../UserContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import { regionFilter, specialistNameFilter } from '../../components/filter/activityReportFilters';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import FeatureFlag from '../../components/FeatureFlag';
 import useFilters from '../../hooks/useFilters';
 import './index.css';
@@ -74,10 +74,13 @@ export default function RegionalDashboard({ match }) {
     setFilters,
     onApplyFilters,
     onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     filterKey,
     true,
+    [],
+    DASHBOARD_FILTER_CONFIG,
   );
 
   const {
@@ -87,19 +90,15 @@ export default function RegionalDashboard({ match }) {
   } = pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] || pageConfig(userHasOnlyOneRegion, defaultRegion).default;
 
   const filtersToUse = useMemo(() => {
-    const filterConfig = [...DASHBOARD_FILTER_CONFIG];
-
-    if (!userHasOnlyOneRegion) {
-      filterConfig.push(regionFilter);
-    }
+    const config = [...filterConfig];
 
     // If user has approve activity report permission add 'Specialist name' filter.
     if (hasApproveActivityReport(user)) {
-      filterConfig.push(specialistNameFilter);
-      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+      config.push(specialistNameFilter);
+      config.sort((a, b) => a.display.localeCompare(b.display));
     }
-    return filterConfig;
-  }, [user, userHasOnlyOneRegion]);
+    return config;
+  }, [filterConfig, user]);
 
   return (
     <div className="ttahub-dashboard">

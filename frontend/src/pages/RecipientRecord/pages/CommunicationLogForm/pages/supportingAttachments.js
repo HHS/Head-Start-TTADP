@@ -71,14 +71,12 @@ SupportingAttachments.propTypes = {
   reportId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
 };
 
-const ReviewSection = () => <></>;
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
   label: 'Supporting attachments',
   path,
-  reviewSection: () => <ReviewSection />,
   review: false,
   render: (
     _additionalData,

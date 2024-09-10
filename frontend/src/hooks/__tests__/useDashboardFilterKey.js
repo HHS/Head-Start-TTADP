@@ -6,4 +6,8 @@ describe('useDashboardFilterKey', () => {
     const { result } = renderHook(() => useDashboardFilterKey('dashboardName', 'reportType'));
     expect(result.current).toBe('dashboardName-filters-reportType');
   });
+  it('handles null report type', () => {
+    const { result } = renderHook(() => useDashboardFilterKey('dashboardName'));
+    expect(result.current).toBe('dashboardName-filters-');
+  });
 });

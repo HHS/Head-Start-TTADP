@@ -1,11 +1,8 @@
 import React, {
   useContext,
-  useState,
-  useMemo,
 } from 'react';
 import { Helmet } from 'react-helmet';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
-import { regionFilter } from '../../components/filter/activityReportFilters';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
 import FilterPanel from '../../components/filter/FilterPanel';
@@ -25,31 +22,19 @@ export default function QADashboard() {
   const {
     // from useUserDefaultRegionFilters
     regions,
-    userHasOnlyOneRegion,
-    // defaultRegion,
-    // allRegionsFilters,
 
     // filter functionality
     filters,
-    // setFilters,
+    filterConfig,
     onApplyFilters,
     onRemoveFilter,
   } = useFilters(
     user,
     QA_DASHBOARD_FILTER_KEY,
     true,
+    [],
+    QA_DASHBOARD_FILTER_CONFIG,
   );
-
-  const filtersToUse = useMemo(() => {
-    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
-
-    if (!userHasOnlyOneRegion) {
-      filterConfig.push(regionFilter);
-    }
-
-    return filterConfig;
-  }, [userHasOnlyOneRegion]);
-  const [isLoading] = useState(false);
 
   return (
     <>
@@ -66,7 +51,7 @@ export default function QADashboard() {
             filters={filters}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
-            filterConfig={filtersToUse}
+            filterConfig={filterConfig}
             allUserRegions={regions}
             allowedSubfilters={ALLOWED_SUBFILTERS}
           />
@@ -77,7 +62,7 @@ export default function QADashboard() {
             recipientsWithOhsStandardFeiGoals: { pct: '73.25%', filterApplicable: false },
             recipientsWithOhsStandardClass: { pct: '14.26%', filterApplicable: false },
           }}
-          loading={isLoading}
+          loading={false}
         />
       </div>
     </>

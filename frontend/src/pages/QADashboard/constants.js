@@ -18,6 +18,7 @@ import {
   domainClassroomOrganizationFilter,
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
+  regionFilter,
 } from '../../components/filter/activityReportFilters';
 import {
   createDateFilter,
@@ -38,7 +39,7 @@ const QA_DASHBOARD_FILTER_CONFIG = [
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
-  // region filter is inserted dynamically based on user's regions
+  regionFilter,
   reportIdFilter,
   reportTextFilter,
   specialistRoleFilter,
