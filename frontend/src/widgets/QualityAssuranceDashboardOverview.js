@@ -18,7 +18,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
     data: data.recipientsWithNoTTA.pct,
-    route: 'recipients-with-no-tta',
+    route: 'qa-dashboard/recipients-with-no-tta',
     filterApplicable: data.recipientsWithNoTTA.filterApplicable,
   },
   {
@@ -28,7 +28,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
     data: data.recipientsWithOhsStandardFeiGoals.pct,
-    route: 'recipients-with-ohs-standard-fei-goal',
+    route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
     filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
   },
   {
@@ -39,7 +39,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
     data: data.recipientsWithOhsStandardClass.pct,
-    route: 'quality-assurance-details',
+    route: 'qa-dashboard/quality-assurance-details',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
   },
 ]);

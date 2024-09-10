@@ -59,7 +59,7 @@
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2",
-    "micromatch": "^4.0.7"
+    "micromatch": "^4.0.8"
   },
   "engines": {
     "node": "18.20.3"
