@@ -1,5 +1,5 @@
 import React, {
-  useState,
+  // useState,
   useRef,
   useContext,
 } from 'react';
@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
 import Drawer from '../../../components/Drawer';
@@ -31,7 +31,7 @@ const ALLOWED_SUBFILTERS = [
 ];
 export default function RecipientsWithOhsStandardFeiGoal() {
   const pageDrawerRef = useRef(null);
-  const [error] = useState();
+  // const [error] = useState();
 
   const { user } = useContext(UserContext);
 
@@ -66,11 +66,11 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         Recipients with OHS standard FEI goal
       </h1>
       <Grid row>
-        {error && (
+        {/* {error && (
           <Alert className="margin-bottom-2" type="error" role="alert">
             {error}
           </Alert>
-        )}
+        )} */}
       </Grid>
       <FilterPanelContainer>
         <FilterPanel

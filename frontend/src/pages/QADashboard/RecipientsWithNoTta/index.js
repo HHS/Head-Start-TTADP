@@ -1,6 +1,6 @@
 import React, {
   useContext,
-  useState,
+  // useState,
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,7 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+// import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
 import FilterPanel from '../../../components/filter/FilterPanel';
@@ -32,7 +32,7 @@ const ALLOWED_SUBFILTERS = [
 
 export default function RecipientsWithNoTta() {
   const pageDrawerRef = useRef(null);
-  const [error] = useState();
+  // const [error] = useState();
   const { user } = useContext(UserContext);
   const {
     // from useUserDefaultRegionFilters
@@ -71,13 +71,13 @@ export default function RecipientsWithNoTta() {
       <h1 className="landing margin-top-0">
         Recipients with no TTA
       </h1>
-      <Grid row>
+      {/* <Grid row>
         {error && (
         <Alert className="margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
         )}
-      </Grid>
+      </Grid> */}
       <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for QA dashboard"
