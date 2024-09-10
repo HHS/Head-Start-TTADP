@@ -179,3 +179,9 @@ export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_
 export const REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY = 'regional-resources-dashboard-filters';
 
 export const SUPPORT_LINK = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
+export const mustBeQuarterHalfOrWhole = (value) => {
+  if (value % 0.25 !== 0) {
+    return 'Duration must be rounded to the nearest quarter hour';
+  }
+  return true;
+};
