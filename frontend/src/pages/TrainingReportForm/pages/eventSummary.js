@@ -89,6 +89,7 @@ const EventSummary = ({
     eventName,
     owner,
     status,
+    ownerId,
   } = data;
 
   const { user } = useContext(UserContext);
@@ -180,76 +181,40 @@ const EventSummary = ({
                 Event creator
                 <Req />
               </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value: id }) => (
-                  <Select
-                    value={(creators || []).find((option) => option.id === id)}
-                    inputId="ownerId"
-                    name="ownerId"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.id);
-                    }}
-                    inputRef={register({ required: 'Select an event creator' })}
-                    options={creators || []}
-                    getOptionLabel={(option) => option.nameWithNationalCenters}
-                    getOptionValue={(option) => option.id}
-                    required
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'Select an event creator';
-                    }
-                    return true;
-                  },
-                }}
-                name="ownerId"
-                defaultValue=""
-              />
+              <Dropdown required id="ownerId" name="ownerId" inputRef={register({ required: 'Select an event creator' })}>
+                {(creators || []).map((creator) => (
+                  <option
+                    key={creator.id}
+                    value={creator.id}
+                    selected={String(creator.id) === ownerId}
+                  >
+                    {creator.nameWithNationalCenters}
+                  </option>
+                ))}
+              </Dropdown>
             </div>
+
             <div className="margin-top-2">
               <Label htmlFor="eventOrganizer">
                 Event organizer
                 <Req />
               </Label>
-              <Controller
-                render={({ onChange: controllerOnChange, value }) => (
-                  <Select
-                    value={eventOrganizerOptions.find((option) => option.value === value)}
-                    inputId="eventOrganizer"
-                    name="eventOrganizer"
-                    className="usa-select"
-                    styles={selectOptionsReset}
-                    components={{
-                      DropdownIndicator: null,
-                    }}
-                    onChange={(s) => {
-                      controllerOnChange(s.value);
-                    }}
-                    inputRef={register({ required: 'Select an event organizer' })}
-                    options={eventOrganizerOptions}
-                    required
-                  />
-                )}
-                control={control}
-                rules={{
-                  validate: (value) => {
-                    if (!value || value.length === 0) {
-                      return 'Select an event organizer';
-                    }
-                    return true;
-                  },
-                }}
+              <Dropdown
+                required
+                id="eventOrganizer"
                 name="eventOrganizer"
-                defaultValue=""
-              />
+                inputRef={register({ required: 'Select an event organizer' })}
+              >
+                {eventOrganizerOptions.map((option) => (
+                  <option
+                    key={option.value}
+                    value={option.value}
+                    selected={option.value === data.eventOrganizer}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </Dropdown>
             </div>
           </>
         )
