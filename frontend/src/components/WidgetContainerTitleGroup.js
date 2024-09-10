@@ -43,7 +43,7 @@ const WidgetContainerTitleGroup = ({
   ] : [];
 
   return (
-    <div className={`${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
+    <div className={`smart-hub--table-widget-container ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
         <div>
           <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">
