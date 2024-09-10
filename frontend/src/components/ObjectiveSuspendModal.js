@@ -24,7 +24,9 @@ export default function ObjectiveSuspendModal({
 }) {
   const onClick = () => {
     if (!objectiveSuspendReason) {
-      setError(true);
+      setError({
+        message: 'Reason for suspension is required',
+      });
       return;
     }
 
