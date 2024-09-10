@@ -281,7 +281,7 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/recipients-with-no-tta"
+          path="/dashboards/qa-dashboard/recipients-with-no-tta"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <RecipientsWithNoTta />
@@ -290,7 +290,7 @@ function App() {
         />
         <Route
           exact
-          path="/dashboards/recipients-with-ohs-standard-fei-goal"
+          path="/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <RecipientsWithOhsStandardFeiGoal />

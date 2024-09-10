@@ -10,7 +10,6 @@ function RecipientsWithNoTtaWidget({
   loading,
   resetPagination,
   setResetPagination,
-  perPageNumber,
 }) {
   const defaultSortConfig = {
     sortBy: '1',
@@ -18,7 +17,7 @@ function RecipientsWithNoTtaWidget({
     activePage: 1,
   };
 
-  const [recipientsToUse, setRecipientsToUse] = useState([]);
+  const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
@@ -35,9 +34,9 @@ function RecipientsWithNoTtaWidget({
     data.headers,
     'recipientsWithNoTta',
     defaultSortConfig,
-    perPageNumber,
-    recipientsToUse,
-    setRecipientsToUse,
+    RECIPIENTS_WITH_NO_TTA_PER_PAGE,
+    numberOfRecipientsPerPage,
+    setNumberOfRecipientsPerPage,
     resetPagination,
     setResetPagination,
     loading,
@@ -46,6 +45,7 @@ function RecipientsWithNoTtaWidget({
     setRecipientsPerPage,
     ['Recipient'],
     ['Date_of_Last_TTA'],
+    'recipientsWithNoTta.csv',
   );
 
   useEffect(() => {
@@ -53,7 +53,7 @@ function RecipientsWithNoTtaWidget({
       // Set local data.
       setLocalLoading(true);
       const recipientToUse = data.RecipientsWithNoTta || [];
-      setRecipientsToUse(recipientToUse);
+      setNumberOfRecipientsPerPage(recipientToUse);
       setRecipientCount(recipientToUse.length);
     } finally {
       setLocalLoading(false);
@@ -76,7 +76,7 @@ function RecipientsWithNoTtaWidget({
       currentPage={activePage}
       totalCount={recipientCount}
       offset={offset}
-      perPage={perPageNumber}
+      perPage={RECIPIENTS_WITH_NO_TTA_PER_PAGE}
       handlePageChange={handlePageChange}
       enableCheckboxes
       exportRows={exportRows}
@@ -114,7 +114,6 @@ RecipientsWithNoTtaWidget.propTypes = {
   ]),
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
-  perPageNumber: PropTypes.number,
   loading: PropTypes.bool.isRequired,
 };
 
@@ -122,7 +121,6 @@ RecipientsWithNoTtaWidget.defaultProps = {
   data: { headers: [], RecipientsWithNoTta: [] },
   resetPagination: false,
   setResetPagination: () => {},
-  perPageNumber: RECIPIENTS_WITH_NO_TTA_PER_PAGE,
 };
 
 export default RecipientsWithNoTtaWidget;
