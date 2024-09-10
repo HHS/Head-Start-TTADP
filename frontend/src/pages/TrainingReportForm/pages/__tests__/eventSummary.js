@@ -49,6 +49,8 @@ describe('eventSummary', () => {
         defaultValues: defaultFormValues,
       });
 
+      console.log({ user });
+
       const additionalData = {
         users: {
           pointOfContact: [{
