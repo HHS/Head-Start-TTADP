@@ -2,7 +2,6 @@ import React, {
   useState,
   useRef,
   useContext,
-  useMemo,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,7 +11,6 @@ import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
-import { regionFilter } from '../../../components/filter/activityReportFilters';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
@@ -40,30 +38,19 @@ export default function RecipientsWithOhsStandardFeiGoal() {
   const {
     // from useUserDefaultRegionFilters
     regions,
-    userHasOnlyOneRegion,
-    // defaultRegion,
-    // allRegionsFilters,
 
     // filter functionality
     filters,
-    // setFilters,
     onApplyFilters,
     onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     QA_DASHBOARD_FILTER_KEY,
     true,
+    [],
+    QA_DASHBOARD_FILTER_CONFIG,
   );
-
-  const filtersToUse = useMemo(() => {
-    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
-
-    if (!userHasOnlyOneRegion) {
-      filterConfig.push(regionFilter);
-    }
-
-    return filterConfig;
-  }, [userHasOnlyOneRegion]);
 
   return (
     <div className="ttahub-recipients-with-ohs-standard-fei-goal">
@@ -91,7 +78,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
-          filterConfig={filtersToUse}
+          filterConfig={filterConfig}
           allUserRegions={regions}
           allowedSubfilters={ALLOWED_SUBFILTERS}
         />

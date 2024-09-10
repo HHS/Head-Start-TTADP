@@ -172,14 +172,12 @@ Log.propTypes = {
 const path = 'log';
 const position = 1;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
   label: 'Communication log',
   path,
-  reviewSection: () => <ReviewSection />,
   review: false,
   fields,
   render: (

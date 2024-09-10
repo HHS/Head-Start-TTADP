@@ -1,7 +1,6 @@
 import React, {
   useContext,
   useState,
-  useMemo,
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
@@ -12,7 +11,6 @@ import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
-import { regionFilter } from '../../../components/filter/activityReportFilters';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
 import useFilters from '../../../hooks/useFilters';
@@ -39,30 +37,19 @@ export default function RecipientsWithNoTta() {
   const {
     // from useUserDefaultRegionFilters
     regions,
-    userHasOnlyOneRegion,
-    // defaultRegion,
-    // allRegionsFilters,
 
     // filter functionality
     filters,
-    // setFilters,
     onApplyFilters,
     onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     QA_DASHBOARD_FILTER_KEY,
     true,
+    [],
+    QA_DASHBOARD_FILTER_CONFIG,
   );
-
-  const filtersToUse = useMemo(() => {
-    const filterConfig = [...QA_DASHBOARD_FILTER_CONFIG];
-
-    if (!userHasOnlyOneRegion) {
-      filterConfig.push(regionFilter);
-    }
-
-    return filterConfig;
-  }, [userHasOnlyOneRegion]);
 
   return (
     <div className="ttahub-recipients-with-no-tta">
@@ -97,7 +84,7 @@ export default function RecipientsWithNoTta() {
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
-          filterConfig={filtersToUse}
+          filterConfig={filterConfig}
           allUserRegions={regions}
           allowedSubfilters={ALLOWED_SUBFILTERS}
         />
