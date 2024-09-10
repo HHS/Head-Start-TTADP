@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import React, { useContext } from 'react';
 import { Link, Button } from '@trussworks/react-uswds';
 import { useHistory } from 'react-router-dom';
@@ -6,9 +5,9 @@ import PropTypes from 'prop-types';
 import SomethingWentWrongContext from '../SomethingWentWrongContext';
 import AppLoadingContext from '../AppLoadingContext';
 import './SomethingWentWrong.scss';
+import { SUPPORT_LINK } from '../Constants';
 
-const supportLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
-
+/* eslint-disable max-len */
 function SomethingWentWrong({ passedErrorResponseCode }) {
   const {
     setErrorResponseCode, errorResponseCode, setShowingNotFound, showingNotFound,
@@ -21,6 +20,10 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
 
   // Make sure if we are showing not found we hide the NAV.
   if (!errorResponseCode && (!showingNotFound && passedErrorResponseCode === 404)) setShowingNotFound(true);
+
+  const getSupportLink = () => (
+    <Link key="support-link" className="usa-nav__link" href={SUPPORT_LINK} target="_blank" rel="noopener noreferrer">support</Link>
+  );
 
   const onHomeClick = () => {
     setErrorResponseCode(null);
@@ -44,7 +47,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
               <div>
                 Contact
                 {' '}
-                <Link key="support-link" className="usa-nav__link" href={supportLink} target="_blank" rel="noopener noreferrer">support</Link>
+                {getSupportLink()}
                 {' '}
                 and ask them to check your permissions.
               </div>
@@ -62,7 +65,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
           </ul>
           If you believe this is an error or need further assistance, get in touch with
           {' '}
-          <Link key="support-link" className="usa-nav__link" href={supportLink} target="_blank" rel="noopener noreferrer">support</Link>
+          {getSupportLink()}
           .
         </p>
       ),
@@ -83,7 +86,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
             <li>
               Contact
               {' '}
-              <Link key="support-link" className="usa-nav__link" href={supportLink} target="_blank" rel="noopener noreferrer">support</Link>
+              {getSupportLink()}
               {' '}
               for help
             </li>
@@ -108,7 +111,7 @@ function SomethingWentWrong({ passedErrorResponseCode }) {
             <li>
               Contact
               {' '}
-              <Link key="support-link" className="usa-nav__link" href={supportLink} target="_blank" rel="noopener noreferrer">support</Link>
+              {getSupportLink()}
               {' '}
               for help
             </li>
