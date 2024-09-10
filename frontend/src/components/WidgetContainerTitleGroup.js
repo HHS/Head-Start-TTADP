@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from './ContextMenu';
 
 import DisplayTableToggle from './DisplayTableToggleButton';
 import DrawerTriggerButton from './DrawerTriggerButton';
+import Drawer from './Drawer';
+import ContentFromFeedByTag from './ContentFromFeedByTag';
 import './WidgetContainerTitleGroup.scss';
 
 const WidgetContainerTitleGroup = ({
@@ -19,10 +21,14 @@ const WidgetContainerTitleGroup = ({
   displayTable,
   setDisplayTable,
   titleDrawerText,
-  titleDrawerRef,
+  titleDrawerTitle,
+  titleDrawerCssClass,
   subtitleDrawerLinkText,
-  subtitleDrawerLinkRef,
+  subtitleDrawerTitle,
+  subtitleDrawerCssClass,
 }) => {
+  const titleDrawerRef = useRef(null);
+  const subtitleDrawerLinkRef = useRef(null);
   if (!title) {
     return null;
   }
@@ -50,9 +56,19 @@ const WidgetContainerTitleGroup = ({
             {title}
             {
                 titleDrawerText && (
-                <DrawerTriggerButton customClass="font-sans-lg" drawerTriggerRef={titleDrawerRef}>
-                  {titleDrawerText}
-                </DrawerTriggerButton>
+                <>
+                  <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
+                    {titleDrawerText}
+                  </DrawerTriggerButton>
+                  <Drawer
+                    triggerRef={titleDrawerRef}
+                    stickyHeader
+                    stickyFooter
+                    title={titleDrawerTitle}
+                  >
+                    <ContentFromFeedByTag tagName={titleDrawerCssClass} contentSelector="table" />
+                  </Drawer>
+                </>
                 )
               }
           </h2>
@@ -67,6 +83,14 @@ const WidgetContainerTitleGroup = ({
               <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
                 {subtitleDrawerLinkText}
               </DrawerTriggerButton>
+              <Drawer
+                triggerRef={subtitleDrawerLinkRef}
+                stickyHeader
+                stickyFooter
+                title={subtitleDrawerTitle}
+              >
+                <ContentFromFeedByTag tagName={subtitleDrawerCssClass} contentSelector="table" />
+              </Drawer>
             </div>
           )}
         </div>
@@ -105,9 +129,11 @@ WidgetContainerTitleGroup.propTypes = {
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
-  titleDrawerRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  titleDrawerTitle: PropTypes.string,
+  titleDrawerCssClass: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerLinkRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  subtitleDrawerTitle: PropTypes.string,
+  subtitleDrawerCssClass: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -123,9 +149,11 @@ WidgetContainerTitleGroup.defaultProps = {
   displayTable: false,
   setDisplayTable: null,
   titleDrawerText: '',
-  titleDrawerRef: null,
+  titleDrawerTitle: '',
+  titleDrawerCssClass: '',
   subtitleDrawerLinkText: '',
-  subtitleDrawerLinkRef: null,
+  subtitleDrawerTitle: null,
+  subtitleDrawerCssClass: '',
 };
 
 export default WidgetContainerTitleGroup;

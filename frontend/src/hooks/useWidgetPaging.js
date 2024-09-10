@@ -26,6 +26,7 @@ export default function useWidgetPaging(
   setDataPerPage,
   stringColumns = [],
   dateColumns = [],
+  exportName,
 ) {
   const [sortConfig, setSortConfig] = useSessionSort(defaultSortConfig, localStorageKey);
   const { activePage } = sortConfig;
@@ -154,7 +155,7 @@ export default function useWidgetPaging(
       const a = document.createElement('a');
       a.setAttribute('hidden', '');
       a.setAttribute('href', url);
-      a.setAttribute('download', 'recipientsWithNoTta.csv');
+      a.setAttribute('download', exportName);
       document.body.appendChild(a);
       a.click();
     } catch (error) {

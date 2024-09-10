@@ -1,29 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { RECIPIENTS_WITH_NO_TTA_PER_PAGE } from '../Constants';
+import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
   loading,
   resetPagination,
   setResetPagination,
-  perPageNumber,
 }) {
-  const titleDrawerRef = useRef(null);
-  const subtitleDrawerLinkRef = useRef(null);
-
   const defaultSortConfig = {
     sortBy: '1',
     direction: 'desc',
     activePage: 1,
   };
 
-  const [recipientsToUse, setRecipientsToUse] = useState([]);
+  const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
@@ -40,9 +34,9 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     data.headers,
     'recipientsWithOhsStandardFeiGoal',
     defaultSortConfig,
-    perPageNumber,
-    recipientsToUse,
-    setRecipientsToUse,
+    RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE,
+    numberOfRecipientsPerPage,
+    setNumberOfRecipientsPerPage,
     resetPagination,
     setResetPagination,
     loading,
@@ -51,6 +45,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     setRecipientsPerPage,
     ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
     ['Goal_created_on'],
+    'recipientsWithOhsStandardFeiGoal.csv',
   );
 
   useEffect(() => {
@@ -58,7 +53,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
       // Set local data.
       setLocalLoading(true);
       const recipientToUse = data.RecipientsWithOhsStandardFeiGoal || [];
-      setRecipientsToUse(recipientToUse);
+      setNumberOfRecipientsPerPage(recipientToUse);
       setRecipientCount(recipientToUse.length);
     } finally {
       setLocalLoading(false);
@@ -73,22 +68,6 @@ function RecipientsWithOhsStandardFeiGoalWidget({
 
   return (
     <>
-      <Drawer
-        triggerRef={titleDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="OHS standard FEI goal"
-      >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
-      </Drawer>
-      <Drawer
-        triggerRef={subtitleDrawerLinkRef}
-        stickyHeader
-        stickyFooter
-        title="FEI root cause"
-      >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
-      </Drawer>
       <WidgetContainer
         title="Recipients with"
         subtitle="Root cause were identified through self-reported data."
@@ -99,14 +78,16 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         currentPage={activePage}
         totalCount={recipientCount}
         offset={offset}
-        perPage={perPageNumber}
+        perPage={RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE}
         handlePageChange={handlePageChange}
         enableCheckboxes
         exportRows={exportRows}
         titleDrawerText="OHS standard FEI goal"
-        titleDrawerRef={titleDrawerRef}
+        titleDrawerTitle="OHS standard FEI goal"
+        titleDrawerCssClass="ttahub-fei-root-causes"
         subtitleDrawerLinkText="Learn about root causes"
-        subtitleDrawerLinkRef={subtitleDrawerLinkRef}
+        subtitleDrawerTitle="FEI root cause"
+        subtitleDrawerCssClass="ttahub-fei-root-causes"
       >
         <HorizontalTableWidget
           headers={data.headers || []}
@@ -144,7 +125,6 @@ RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
   ]),
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
-  perPageNumber: PropTypes.number,
   loading: PropTypes.bool.isRequired,
 };
 
@@ -152,7 +132,6 @@ RecipientsWithOhsStandardFeiGoalWidget.defaultProps = {
   data: { headers: [], RecipientsWithOhsStandardFeiGoal: [] },
   resetPagination: false,
   setResetPagination: () => {},
-  perPageNumber: RECIPIENTS_WITH_NO_TTA_PER_PAGE,
 };
 
 export default RecipientsWithOhsStandardFeiGoalWidget;
