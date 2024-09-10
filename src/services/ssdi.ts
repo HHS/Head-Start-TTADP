@@ -1,6 +1,8 @@
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
+import { z } from 'zod';
+import { zodToSchema } from 'ts-to-zod';
 import db from '../models';
 import Generic from '../policies/generic';
 import { auditLogger } from '../logger';
@@ -136,6 +138,11 @@ interface CachedFilters {
   supportsPagination: boolean;
 }
 
+
+// Generate Zod schemas
+const HeaderFilterSchema = zodToSchema<HeaderFilter>();
+const HeaderStructureSchema = zodToSchema<HeaderStructure>();
+
 // Base directory for file operations
 const BASE_DIRECTORY = path.resolve(process.cwd(), '/src/queries/');
 
@@ -169,10 +176,15 @@ const safeResolvePath = (inputPath: string): string => {
 // Basic JSON validation function
 // TODO: make this more verbose validation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const isValidJsonHeader = (json: any): boolean => (
-  json
-  && typeof json.name === 'string' && Array.isArray(json.filters)
-);
+const isValidJsonHeader = (json: unknown): boolean => {
+  try {
+    HeaderStructureSchema.parse(json); // Validate JSON
+    return true;
+  } catch (e) {
+    auditLogger.error(e.errors); // Handle validation errors
+    return false;
+  }
+};
 
 // Modify the readJsonHeaderFromFile function to update the cache structure
 const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | null> => {
