@@ -185,3 +185,11 @@ export const mustBeQuarterHalfOrWhole = (value) => {
   }
   return true;
 };
+
+export const parseCheckboxEvent = (event) => {
+  const { target: { checked = null, value = null } = {} } = event;
+  return {
+    checked,
+    value,
+  };
+};
