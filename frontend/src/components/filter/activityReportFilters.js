@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import React from 'react';
 import moment from 'moment';
 import { formatDateRange } from '../../utils';
