@@ -5,7 +5,7 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 
-function RecipientsWithOhsStandardFeiGoalWidget({
+function RecipientsWithClassScoresAndGoalsWidget({
   data,
   loading,
   resetPagination,
@@ -69,8 +69,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   return (
     <>
       <WidgetContainer
-        title="Recipients with"
-        subtitle="Root cause were identified through self-reported data."
+        title="Recipients CLASS&#174;"
         subtitle2={getSubtitleWithPct()}
         loading={loading || localLoading}
         loadingLabel="Recipients with OHS standard FEI goal loading"
@@ -82,12 +81,12 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         handlePageChange={handlePageChange}
         enableCheckboxes
         exportRows={exportRows}
-        titleDrawerText="OHS standard FEI goal"
+        titleDrawerText="OHS standard CLASS&#174; goals"
         titleDrawerTitle="OHS standard FEI goal"
         titleDrawerCssClass="ttahub-fei-root-causes"
-        subtitle2DrawerLinkText="Learn about root causes"
-        subtitle2DrawerTitle="FEI root cause"
-        subtitle2DrawerCssClass="ttahub-fei-root-causes"
+        subtitleDrawerLinkText="How are thresholds met?"
+        subtitleDrawerTitle="CLASS&#174; review thresholds"
+        subtitleDrawerCssClass="ttahub-fei-root-causes"
       >
         <HorizontalTableWidget
           headers={data.headers || []}
@@ -107,7 +106,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   );
 }
 
-RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
+RecipientsWithClassScoresAndGoalsWidget.propTypes = {
   data: PropTypes.oneOfType([
     PropTypes.shape({
       headers: PropTypes.arrayOf(PropTypes.string),
@@ -128,10 +127,10 @@ RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-RecipientsWithOhsStandardFeiGoalWidget.defaultProps = {
+RecipientsWithClassScoresAndGoalsWidget.defaultProps = {
   data: { headers: [], RecipientsWithOhsStandardFeiGoal: [] },
   resetPagination: false,
   setResetPagination: () => {},
 };
 
-export default RecipientsWithOhsStandardFeiGoalWidget;
+export default RecipientsWithClassScoresAndGoalsWidget;

@@ -35,8 +35,11 @@ export default function WidgetContainer(
     titleDrawerTitle,
     titleDrawerCssClass,
     subtitleDrawerLinkText,
-    subtitleDrawerLinkTitle,
+    subtitleDrawerTitle,
     subtitleDrawerCssClass,
+    subtitle2DrawerLinkText,
+    subtitle2DrawerLinkTitle,
+    subtitle2DrawerCssClass,
   },
 ) {
   return (
@@ -65,8 +68,11 @@ export default function WidgetContainer(
         titleDrawerTitle={titleDrawerTitle}
         titleDrawerCssClass={titleDrawerCssClass}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
-        subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
+        subtitleDrawerTitle={subtitleDrawerTitle}
         subtitleDrawerCssClass={subtitleDrawerCssClass}
+        subtitle2DrawerLinkText={subtitle2DrawerLinkText}
+        subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
+        subtitle2DrawerCssClass={subtitle2DrawerCssClass}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -129,8 +135,11 @@ WidgetContainer.propTypes = {
   titleDrawerTitle: PropTypes.string,
   titleDrawerCssClass: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerLinkTitle: PropTypes.string,
+  subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerCssClass: PropTypes.string,
+  subtitle2DrawerLinkText: PropTypes.string,
+  subtitle2DrawerLinkTitle: PropTypes.string,
+  subtitle2DrawerCssClass: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -159,6 +168,9 @@ WidgetContainer.defaultProps = {
   titleDrawerTitle: '',
   titleDrawerCssClass: '',
   subtitleDrawerLinkText: '',
-  subtitleDrawerLinkTitle: '',
+  subtitleDrawerTitle: '',
   subtitleDrawerCssClass: '',
+  subtitle2DrawerLinkText: '',
+  subtitle2DrawerLinkTitle: '',
+  subtitle2DrawerCssClass: '',
 };
