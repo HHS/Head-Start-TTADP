@@ -2,18 +2,28 @@ import '@testing-library/jest-dom';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import RecipientsWithOhsStandardFeiGoalWidget from '../RecipientsWithOhsStandardFeiGoalWidget';
+import UserContext from '../../UserContext';
 
 const renderRecipientsWithOhsStandardFeiGoalWidget = (data) => {
-  render(<RecipientsWithOhsStandardFeiGoalWidget
-    data={data}
-    loading={false}
-    resetPagination={false}
-    setResetPagination={() => {}}
-    perPageNumber={10}
-  />);
+  render(
+    <UserContext.Provider value={{ user: {} }}>
+      <RecipientsWithOhsStandardFeiGoalWidget
+        data={data}
+        loading={false}
+        resetPagination={false}
+        setResetPagination={() => {}}
+        perPageNumber={10}
+      />
+    </UserContext.Provider>,
+  );
 };
 
 describe('Recipients with ohs standard fei goal widget', () => {
+  it('renders correctly with null data', async () => {
+    renderRecipientsWithOhsStandardFeiGoalWidget({});
+    expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
+    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
+  });
   it('renders correctly without data', async () => {
     const emptyData = {
       headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],
