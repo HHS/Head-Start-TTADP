@@ -59,7 +59,7 @@
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2",
-    "micromatch": "^4.0.7"
+    "micromatch": "^4.0.8"
   },
   "engines": {
     "node": "18.20.3"
@@ -101,7 +101,8 @@
     "yaml": "^2.2.2",
     "semver": "^7.5.3",
     "es5-ext": "^0.10.63",
-    "braces": "^3.0.3"
+    "braces": "^3.0.3",
+    "path-to-regexp": "^1.9.0"
   },
   "eslintConfig": {
     "root": true,
