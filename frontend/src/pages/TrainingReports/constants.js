@@ -9,21 +9,14 @@ import {
 } from '../../components/filter/trainingReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
 
-const TRAINING_REPORT_FILTER_CONFIG = (withRegions = false) => {
-  const TRAINING_REPORT_BASE_FILTER_CONFIG = [
-    startDateFilter,
-    creatorFilter,
-    collaboratorsFilter,
-    eventIdFilter,
-    goalNameFilter,
-  ];
-
-  if (withRegions) {
-    TRAINING_REPORT_BASE_FILTER_CONFIG.push(regionFilter);
-  }
-
-  return TRAINING_REPORT_BASE_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
-};
+const TRAINING_REPORT_FILTER_CONFIG = [
+  startDateFilter,
+  creatorFilter,
+  collaboratorsFilter,
+  eventIdFilter,
+  goalNameFilter,
+  regionFilter,
+];
 
 export { TRAINING_REPORT_FILTER_CONFIG };
 

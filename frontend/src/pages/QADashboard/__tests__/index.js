@@ -7,9 +7,10 @@ import { createMemoryHistory } from 'history';
 import {
   render,
   screen,
+  act,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-
+import userEvent from '@testing-library/user-event';
 import QADashboard from '../index';
 import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
@@ -30,7 +31,7 @@ const defaultUser = {
 
 describe('Resource Dashboard page', () => {
   afterEach(() => fetchMock.restore());
-  const renderQADashboard = (user) => {
+  const renderQADashboard = (user = defaultUser) => {
     render(
       <UserContext.Provider value={{ user }}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
@@ -43,7 +44,7 @@ describe('Resource Dashboard page', () => {
   };
 
   it('renders correctly', async () => {
-    renderQADashboard(defaultUser);
+    renderQADashboard();
 
     // Header
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
@@ -57,5 +58,30 @@ describe('Resource Dashboard page', () => {
     expect(await screen.findByText('2.52%')).toBeVisible();
     expect(await screen.findByText('73.25%')).toBeVisible();
     expect(await screen.findByText('14.26%')).toBeVisible();
+  });
+  it('removes region filter when user has only one region', async () => {
+    const u = {
+      homeRegionId: 14,
+      permissions: [{
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+    renderQADashboard(u);
+
+    // Header
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+
+    const filters = await screen.findByRole('button', { name: /filters/i });
+
+    act(() => {
+      userEvent.click(filters);
+    });
+
+    const select = await screen.findByLabelText(/select a filter/i);
+
+    // expect select not to have "region" as an option
+    const option = select.querySelector('option[value="region"]');
+    expect(option).toBeNull();
   });
 });
