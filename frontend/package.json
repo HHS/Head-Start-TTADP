@@ -79,10 +79,9 @@
     "ansi-regex": "^5.0.1",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
-    "body-parser": "^1.20.3",
     "cross-fetch": "^3.1.5",
     "ejs": "^3.1.10",
-    "express": "^4.20.0",
+    "express": "^4.19.2",
     "follow-redirects": "^1.15.6",
     "json5": "^1.0.2",
     "glob-parent": "^6.0.2",
@@ -96,8 +95,6 @@
     "minimatch": "^3.0.5",
     "postcss": "^8.4.31",
     "decode-uri-component": "^0.2.1",
-    "serve-static": "^1.16.0",
-    "send": "^0.19.0",
     "tough-cookie": "^4.0.0",
     "ua-parser-js": "^0.7.33",
     "webpack": "^5.76.1",
@@ -105,7 +102,7 @@
     "semver": "^7.5.3",
     "es5-ext": "^0.10.63",
     "braces": "^3.0.3",
-    "path-to-regexp": "^0.1.10"
+    "path-to-regexp": "^1.9.0"
   },
   "eslintConfig": {
     "root": true,
