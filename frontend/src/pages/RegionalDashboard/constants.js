@@ -39,6 +39,7 @@ const DASHBOARD_FILTER_CONFIG = [
   reasonsFilter,
   recipientFilter,
   reportIdFilter,
+  regionFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
