@@ -402,7 +402,7 @@ export async function processFiles(hashSumHex) {
 
       // Deduplicate based on 'id'
       const uniqueProgramsForDb = Array.from(
-        new Map(programsForDb.map((item) => [item.id, item])).values()
+        new Map(programsForDb.map((item) => [item.id, item])).values(),
       );
 
       await Program.bulkCreate(
