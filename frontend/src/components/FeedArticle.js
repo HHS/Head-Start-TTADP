@@ -3,6 +3,12 @@ import PropTypes from 'prop-types';
 import parse from 'html-react-parser';
 import './FeedArticle.scss';
 
+const TAG_CLASSES = {
+  P: 'usa-prose',
+  TABLE: 'usa-table',
+  UL: 'usa-list',
+};
+
 const FeedArticle = ({
   title,
   content,
@@ -15,22 +21,17 @@ const FeedArticle = ({
    * paragraphs in the article content
    */
   useLayoutEffect(() => {
-    const paragraphs = document.querySelectorAll('.ttahub-feed-article-content p');
-    const paragraphsArray = Array.from(paragraphs);
-    paragraphsArray.forEach((p) => {
-      p.classList.add('usa-prose');
-    });
+    const tags = document.querySelectorAll(`
+        .ttahub-feed-article-content p,
+        .ttahub-feed-article-content table,
+        .ttahub-feed-article-content ul
+    `);
 
-    const tables = document.querySelectorAll('.ttahub-feed-article-content table');
-    const tablesArray = Array.from(tables);
-    tablesArray.forEach((table) => {
-      table.classList.add('usa-table');
-    });
-
-    const lists = document.querySelectorAll('.ttahub-feed-article-content ul');
-    const listsArray = Array.from(lists);
-    listsArray.forEach((list) => {
-      list.classList.add('usa-list');
+    Array.from(tags).forEach((tag) => {
+      const tagClass = TAG_CLASSES[tag.tagName];
+      if (tagClass) {
+        tag.classList.add(tagClass);
+      }
     });
   });
 
