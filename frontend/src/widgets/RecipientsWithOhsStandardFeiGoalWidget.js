@@ -84,10 +84,10 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         exportRows={exportRows}
         titleDrawerText="OHS standard FEI goal"
         titleDrawerTitle="OHS standard FEI goal"
-        titleDrawerCssClass="ttahub-fei-root-causes"
+        titleDrawerTag="ttahub-fei-root-causes"
         subtitleDrawerLinkText="Learn about root causes"
         subtitleDrawerTitle="FEI root cause"
-        subtitleDrawerCssClass="ttahub-fei-root-causes"
+        subtitleDrawerTag="ttahub-fei-root-causes"
       >
         <HorizontalTableWidget
           headers={data.headers || []}
