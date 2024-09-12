@@ -1,0 +1,100 @@
+@use '../../../colors' as *;
+
+$min-width-title-column: 200px;
+$min-width-id-column: 107px;
+$min-width-organizer-column: 150px;
+$min-width-reason-column: 160px;
+$min-width-date-column: 115px;
+
+
+.ttahub-recipient-card {
+  container: ttahub-recipient-card / inline-size;
+}
+
+// reset font sizes
+.ttahub-recipient-card {
+  font-size: 1.06rem;
+}
+
+// when window is its smallest put margin below cb.
+.ttahub-recipient-card__recipient-column__cb {
+  align-content: baseline;
+  margin-bottom: 40px;
+}
+
+.ttahub-recipient-card__recipient-column:not(:nth-last-child(1)) {
+  margin-bottom: 16px;
+}
+
+.ttahub-recipient-card__recipient-column__break {
+  display: none;
+}
+
+@container ttahub-recipient-card (min-width: 710px) {
+  .ttahub-recipient-card__row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .ttahub-recipient-card__recipient-column__break {
+    display: block;
+    flex-basis: 100%;
+    height: 0;
+  }
+
+  .ttahub-recipient-card__recipient-column:not(:nth-child(n+1):nth-child(-n+3)) {
+    margin-bottom: 0px;
+  }
+
+  // All children except the last one.
+  .ttahub-recipient-card__recipient-column:not(:last-child) {
+    margin-bottom: 16px;
+  }
+
+  // Recipient Title and Recipient Number.
+  .ttahub-recipient-card__recipient-column__title,
+  .ttahub-recipient-card__recipient-column__number {
+    width: 40%;
+  }
+
+  // Recipient Date.
+  .ttahub-recipient-card__recipient-column__date {
+    width: 27%;
+  }
+
+  // Recipient CB.
+  .ttahub-recipient-card__recipient-column__cb {
+    width: 4%;
+  }
+}
+
+@container ttahub-recipient-card (min-width: 980px) {
+  .ttahub-recipient-card__recipient-column:not(:last-child) {
+    margin-bottom: 0px;
+  }
+
+  // Recipient Title.
+  .ttahub-recipient-card__recipient-column__title {
+    flex-basis: clamp($min-width-title-column, 24%, 100%);
+  }
+
+  // recipient number value.
+  .ttahub-recipient-card__recipient-column__number {
+    flex-basis: clamp($min-width-reason-column, 14%, 100%);
+  }
+
+  // recipient Date.
+  .ttahub-recipient-card__recipient-column__date {
+    flex-basis: clamp($min-width-date-column, 15%, 100%);
+  }
+
+  // recipient CB.
+  .ttahub-recipient-card__recipient-column__cb {
+    flex-basis: clamp(20px, 4%, 100%);
+  }
+
+  .ttahub-recipient-card__recipient-column__break {
+    display: none;
+  }
+  
+}

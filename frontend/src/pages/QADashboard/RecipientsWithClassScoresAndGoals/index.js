@@ -4,17 +4,44 @@ import React, {
   useState,
   useRef,
 } from 'react';
+import PropTypes from 'prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
-import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/RecipientsWithClassScoresAndGoals';
+import RecipientCard from '../Components/RecipientCard';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
+
+const recipients = [
+  {
+    name: 'Action for Boston Community Development, Inc.',
+    lastArStartDate: '01/01/2021',
+    lastArEndDate: '01/01/2022',
+    emotionalSupport: 6.0430,
+    classroomOrganization: 5.0430,
+    instructionalSupport: 4.0430,
+    reportReceivedDate: '01/01/2022',
+    goals: [
+      {
+        goalNumber: 'G-45641',
+        status: 'In progress',
+        creator: 'John Doe',
+        collaborator: 'Jane Doe',
+      },
+      {
+        goalNumber: 'G-25858',
+        status: 'In progress',
+        creator: 'John Doe',
+        collaborator: 'Jane Doe',
+      },
+    ],
+  },
+];
 
 export default function RecipientsWithClassScoresAndGoals() {
   const pageDrawerRef = useRef(null);
@@ -50,7 +77,15 @@ export default function RecipientsWithClassScoresAndGoals() {
       >
         <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
       </Drawer>
-      <RecipientsWithClassScoresAndGoalsWidget />
+      <div className="padding-y-2">
+        {recipients.map((goal, index) => (
+          <RecipientCard
+            key={uuidv4()}
+            recipient={goal}
+            zIndex={recipients.length - index}
+          />
+        ))}
+      </div>
     </div>
   );
 }
