@@ -20,6 +20,18 @@ const FeedArticle = ({
     paragraphsArray.forEach((p) => {
       p.classList.add('usa-prose');
     });
+
+    const tables = document.querySelectorAll('.ttahub-feed-article-content table');
+    const tablesArray = Array.from(tables);
+    tablesArray.forEach((table) => {
+      table.classList.add('usa-table');
+    });
+
+    const lists = document.querySelectorAll('.ttahub-feed-article-content ul');
+    const listsArray = Array.from(lists);
+    listsArray.forEach((list) => {
+      list.classList.add('usa-list');
+    });
   });
 
   const className = `ttahub-feed-article ${partial ? 'ttahub-feed-article--partial' : ''}`;
