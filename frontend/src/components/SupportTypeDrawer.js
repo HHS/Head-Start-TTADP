@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Drawer from './Drawer';
 import ContentFromFeedByTag from './ContentFromFeedByTag';
-import './SupportTypeDrawer.scss';
 
 export default function SupportTypeDrawer({
   drawerTriggerRef,
