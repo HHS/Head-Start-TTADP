@@ -400,8 +400,13 @@ export async function processFiles(hashSumHex) {
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
 
+      // Deduplicate based on 'id'
+      const uniqueProgramsForDb = Array.from(
+        new Map(programsForDb.map((item) => [item.id, item])).values(),
+      );
+
       await Program.bulkCreate(
-        programsForDb,
+        uniqueProgramsForDb,
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
           transaction,
