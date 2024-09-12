@@ -40,6 +40,23 @@ describe('token service', () => {
       expect(pair).toBeTruthy();
       expect(pair.dataValues.validatedAt).toBeNull();
     });
+
+    it('updates a token where a token already exists', async () => {
+      const token = await createAndStoreVerificationToken(1000, 'email');
+      const token2 = await createAndStoreVerificationToken(1000, 'email');
+      expect(token).toEqual(token2);
+
+      const pair = await UserValidationStatus.findOne({
+        where: {
+          userId: 1000,
+          type: 'email',
+          token: token2,
+        },
+      });
+
+      expect(pair).toBeTruthy();
+      expect(pair.dataValues.validatedAt).toBeNull();
+    });
   });
 
   describe('validateVerificationToken', () => {
@@ -59,6 +76,33 @@ describe('token service', () => {
 
       expect(pair).toBeTruthy();
       expect(pair.dataValues.validatedAt).not.toBeNull();
+    });
+
+    it('throws an error if the token is invalid', async () => {
+      const token = await createAndStoreVerificationToken(1000, 'email');
+      const badToken = `${token}bad`;
+      await expect(validateVerificationToken(1000, badToken, 'email')).rejects.toThrow();
+    });
+
+    it('throws an error if the userId is invalid', async () => {
+      const token = await createAndStoreVerificationToken(1000, 'email');
+      await expect(validateVerificationToken(1001, token, 'email')).rejects.toThrow();
+    });
+
+    it('throws an error if the type is invalid', async () => {
+      const token = await createAndStoreVerificationToken(1000, 'email');
+      await expect(validateVerificationToken(1000, token, 'phone')).rejects.toThrow();
+    });
+
+    it('returns early if validateAt is not null', async () => {
+      const token = await createAndStoreVerificationToken(1000, 'email');
+      await validateVerificationToken(1000, token, 'email');
+      await expect(validateVerificationToken(1000, token, 'email')).resolves.toEqual({
+        userId: 1000,
+        type: 'email',
+        exp: expect.any(Number),
+        iat: expect.any(Number),
+      });
     });
   });
 

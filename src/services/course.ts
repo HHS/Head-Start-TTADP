@@ -18,9 +18,17 @@ interface DecodedCSV {
 export async function getAllCourses(where: WhereOptions = {}) {
   return Course.findAll({
     where,
-    order: [['name', 'ASC']],
+    order: [['persistsOnUpload', 'ASC'], ['name', 'ASC']],
     attributes: ['name', 'id'],
   });
+}
+
+export async function getCourseById(id: number) {
+  return Course.findByPk(id);
+}
+
+export async function createCourseByName(name: string) {
+  return Course.create({ name, persistsOnUpload: true });
 }
 
 export async function csvImport(buffer: Buffer | string) {
@@ -66,7 +74,10 @@ export async function csvImport(buffer: Buffer | string) {
               Sequelize.fn('lower', Sequelize.fn('regexp_replace', Sequelize.col('name'), '[^a-zA-Z0-9]', '', 'g')),
               { [Op.like]: cleanCourseName },
             ),
-            { deletedAt: null },
+            {
+              deletedAt: null,
+              persistsOnUpload: false, // We don't want to delete courses that persist on import.
+            },
           ],
         },
       });
@@ -131,6 +142,7 @@ export async function csvImport(buffer: Buffer | string) {
           [Op.notIn]: importedCourseIds,
         },
         deletedAt: null,
+        persistsOnUpload: false,
       },
       returning: true,
     });

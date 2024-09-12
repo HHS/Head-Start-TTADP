@@ -13,7 +13,14 @@ import AppLoadingContext from '../../../../../AppLoadingContext';
 import UserContext from '../../../../../UserContext';
 
 describe('GoalForm', () => {
-  const Form = ({ id, customGoal }) => {
+  const DEFAULT_USER = {
+    id: 1,
+    permissions: [],
+    name: 'Ted User',
+    flags: [],
+  };
+
+  const Form = ({ id, customGoal, user = DEFAULT_USER }) => {
     const goal = customGoal || {
       id,
       isNew: id === 'new',
@@ -37,9 +44,7 @@ describe('GoalForm', () => {
       }}
       >
         <UserContext.Provider value={{
-          user: {
-            id: 1, permissions: [], name: 'Ted User', flags: [],
-          },
+          user,
         }}
         >
           <FormProvider {...hookForm}>
@@ -86,14 +91,21 @@ describe('GoalForm', () => {
         }),
       })),
     }),
+    user: PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      permissions: PropTypes.arrayOf(PropTypes.shape({
+        scopeId: PropTypes.number,
+      })),
+    }).isRequired,
   };
 
   Form.defaultProps = {
     customGoal: undefined,
   };
 
-  const renderGoalForm = (id, customGoal = undefined) => {
-    render(<Form id={id} customGoal={customGoal} />);
+  const renderGoalForm = (id, customGoal = undefined, user) => {
+    render(<Form id={id} customGoal={customGoal} user={user} />);
   };
 
   beforeEach(async () => fetchMock.restore());

@@ -114,7 +114,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({ where: { id: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
-    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] } });
+    await Grant.destroy({ where: { id: [GRANT_ID_ONE, GRANT_ID_TWO] }, individualHooks: true });
     await Recipient.destroy({ where: { id: [RECIPIENT_ID] } });
     await Region.destroy({ where: { id: [133, 177, 188] } });
     await db.sequelize.close();

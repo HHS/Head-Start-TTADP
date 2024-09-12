@@ -10,7 +10,9 @@ const countAndLastUpdated = async (tableName) => {
   const updatedAtQuery = `SELECT "updatedAt" FROM "${tableName}" ORDER BY "updatedAt" DESC LIMIT 1`;
   const [results] = await runSelectQuery(updatedAtQuery);
   let updatedAt = '';
-  if (results) { updatedAt = results.updatedAt; }
+  if (results) {
+    updatedAt = results.updatedAt;
+  }
   const countQuery = `SELECT count(*) FROM "${tableName}"`;
   const [{ count }] = await runSelectQuery(countQuery);
   return {

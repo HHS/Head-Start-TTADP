@@ -1,4 +1,5 @@
 import React from 'react';
+import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExclamationCircle, faCheck, faMinus } from '@fortawesome/free-solid-svg-icons';
@@ -29,7 +30,7 @@ const ApproverStatusList = ({
   approverStatus,
 }) => {
   const displayApproverStatusList = () => approverStatus.map((s) => (
-    <li className="margin-bottom-205" key={s.user.fullName}>
+    <li className="margin-bottom-205" key={uniqueId('approver-status-list-')}>
       {getStatusIcon(s.status)}
       <b>{getDisplayStatus(s.status)}</b>
       {s.status === 'approved' ? ' by ' : ' from '}

@@ -15,6 +15,7 @@ import {
   findEventsByRegionId,
   findEventsByStatus,
   csvImport,
+  validateFields,
 } from './event';
 
 describe('event service', () => {
@@ -444,34 +445,48 @@ describe('event service', () => {
   });
 
   describe('tr import', () => {
-    let user;
     let data;
     let buffer;
     let created;
 
     const userId = faker.datatype.number();
+    const pocId = faker.datatype.number();
+    let poc;
+    const collaboratorId = faker.datatype.number();
+    let collaborator;
 
-    const eventId = 'R01-TR-02-3333';
+    let ncOne;
+    let ncTwo;
+
+    const eventId = 'R01-TR-3333';
     const regionId = 1;
-    const editTitle = 'Hogwarts Academy';
-    const istName = 'Harry Potter';
+    const eventTitle = 'Hogwarts Academy';
     const email = 'smartsheetevents@ss.com';
     const audience = 'Recipients';
     const vision = 'To learn';
-    const nationalCenters = `"ABC
-    DEF
-    GHI"`;
-    const duration = 'Series';
-    const targetPopulation = `"Dogs
-    Cats
-    Mice"`;
-    const reasons = `"Reason 1
-    Reason 2"`;
-    const organizer = 'Dumbledore';
+    const trainingType = 'Series';
+    const targetPopulation = `"Program Staff
+    Affected by Disaster"`;
+    const reasons = `"Complaint
+    Planning/Coordination"`;
+    const typeOfEvent = 'IST TTA/Visit';
 
-    const headings = ['Sheet Name', 'Event ID', 'Edit Title', 'IST Name:', 'Creator', 'Event Organizer - Type of Event', 'National Center(s) Requested', 'Event Duration/# NC Days of Support', 'Reason for Activity', 'Target Population(s)', 'Audience', 'Overall Vision/Goal for the PD Event'];
+    const headings = [
+      'IST/Creator',
+      'Event ID',
+      'Event Title',
+      'Event Organizer - Type of Event',
+      'National Centers',
+      'Event Duration',
+      'Reason(s) for PD',
+      'Vision/Goal/Outcomes for the PD Event',
+      'Target Population(s)',
+      'Audience',
+      'Designated Region POC for Event/Request',
+    ];
 
     beforeAll(async () => {
+      // owner
       await db.User.create({
         id: userId,
         homeRegionId: regionId,
@@ -479,55 +494,114 @@ describe('event service', () => {
         hsesUserId: faker.datatype.string(),
         email,
         lastLogin: new Date(),
+        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
       });
+
       await db.Permission.create({
         userId,
         regionId: 1,
         scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
       });
-      user = await db.User.findOne({ where: { id: userId } });
+
+      // collaborator
+      collaborator = await db.User.create({
+        id: collaboratorId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: faker.internet.email(),
+        lastLogin: new Date(),
+        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      });
+
+      await db.Permission.create({
+        userId: collaboratorId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      // poc
+      poc = await db.User.create({
+        id: pocId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: faker.internet.email(),
+        lastLogin: new Date(),
+        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+      });
+
+      await db.Permission.create({
+        userId: pocId,
+        regionId: 1,
+        scopeId: SCOPES.POC_TRAINING_REPORTS,
+      });
+
+      // national centers
+      ncOne = await db.NationalCenter.create({
+        name: faker.hacker.abbreviation(),
+      });
+
+      // owner for national center 1
+      await db.NationalCenterUser.create({
+        userId,
+        nationalCenterId: ncOne.id,
+      });
+
+      ncTwo = await db.NationalCenter.create({
+        name: faker.hacker.abbreviation(),
+      });
+
+      // collab is national center user 2
+      await db.NationalCenterUser.create({
+        userId: collaboratorId,
+        nationalCenterId: ncTwo.id,
+      });
+
       data = `${headings.join(',')}
-      ,${eventId},${editTitle},${istName},${email},${organizer},${nationalCenters},${duration},${reasons},${targetPopulation},${audience},${vision}
-      ,bad_id,bad_title,bad_istname,bad_email,bad_organizer,bad_nc,bad_duration,bad_reasons,bad_target,bad_audience,bad_vision`;
+${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
 
       buffer = Buffer.from(data);
     });
 
     afterAll(async () => {
-      await db.User.destroy({ where: { id: userId } });
-      await db.EventReportPilot.destroy({ where: { id: created.id } });
-      await db.Permission.destroy({ where: { userId } });
+      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.NationalCenterUser.destroy({
+        where: { userId: [userId, collaboratorId] },
+      });
+      await db.NationalCenter.destroy({ where: { id: [ncOne.id, ncTwo.id] } });
+      await db.Permission.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+      await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
     });
 
     it('imports good data correctly', async () => {
       const result = await csvImport(buffer);
+
+      expect(result.errors).toEqual([]);
+      expect(result.count).toEqual(1);
 
       // eventId is now a field in the jsonb body of the "data" column on
       // db.EventReportPilot.
       // Let's make sure it exists.
       created = await db.EventReportPilot.findOne({
         where: { 'data.eventId': eventId },
-        raw: true,
       });
+
+      expect(created).not.toBeNull();
 
       expect(created).toHaveProperty('ownerId', userId);
       expect(created).toHaveProperty('regionId', regionId);
-      expect(created.data.reasons).toEqual(['Reason 1', 'Reason 2']);
+      expect(created.data.reasons).toEqual(['Complaint', 'Planning/Coordination']);
       expect(created.data.vision).toEqual(vision);
-      expect(created.data.audience).toEqual(audience);
-      expect(created.data.targetPopulations).toEqual(['Dogs', 'Cats', 'Mice']);
-      expect(created.data.eventOrganizer).toEqual(organizer);
+      expect(created.data.eventIntendedAudience).toEqual(audience.toLowerCase());
+      expect(created.data.targetPopulations).toEqual(['Program Staff', 'Affected by Disaster']);
+      expect(created.data.eventOrganizer).toEqual(typeOfEvent);
       expect(created.data.creator).toEqual(email);
-      expect(created.data.istName).toEqual(istName);
-      expect(created.data.eventName).toEqual(editTitle);
-      expect(created.data.nationalCenters).toEqual(['ABC', 'DEF', 'GHI']);
-      expect(created.data.eventDuration).toEqual(duration);
-
-      expect(result.count).toEqual(1);
-      expect(result.errors).toEqual(['User bad_email does not exist']);
+      expect(created.data.eventName).toEqual(eventTitle);
+      expect(created.data.trainingType).toEqual(trainingType);
 
       const secondImport = `${headings.join(',')}
-      ,${eventId},bad_title,bad_istname,${email},bad_organizer,bad_nc,bad_duration,bad_reasons,bad_target,bad_audience,bad_vision`;
+${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
 
       // Subsequent import with event ID that already exists in the database
       // should skip importing this TR.
@@ -538,14 +612,142 @@ describe('event service', () => {
 
     it('gives an error if the user can\'t write in the region', async () => {
       await db.Permission.destroy({ where: { userId } });
-      const result = await csvImport(buffer);
+      const d = `${headings.join(',')}
+${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
       expect(result.count).toEqual(0);
-      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`, 'User bad_email does not exist']);
+      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`]);
       await db.Permission.create({
         userId,
         regionId: 1,
         scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
       });
+    });
+
+    it('errors if the POC user lacks permissions', async () => {
+      await db.Permission.destroy({ where: { userId: pocId } });
+      const d = `${headings.join(',')}
+${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.errors).toEqual([`User ${poc.name} does not have POC permission in region ${regionId}`]);
+      await db.Permission.create({
+        userId: pocId,
+        regionId: 1,
+        scopeId: SCOPES.POC_TRAINING_REPORTS,
+      });
+    });
+
+    it('errors if the IST Collaborator user lacks permissions', async () => {
+      await db.Permission.destroy({ where: { userId: collaboratorId } });
+      const d = `${headings.join(',')}
+${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.errors).toEqual([`User ${collaborator.name} does not have permission to write in region ${regionId}`]);
+      await db.Permission.create({
+        userId: collaboratorId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+    });
+
+    it('skips rows that don\'t start with the correct prefix', async () => {
+      const dataToTest = `${headings.join(',')}
+${email},01-TR-4256,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
+
+      const bufferWithSkips = Buffer.from(dataToTest);
+
+      const result = await csvImport(bufferWithSkips);
+      expect(result.skipped.length).toEqual(1);
+      expect(result.skipped).toEqual(
+        ['Invalid "Event ID" format expected R##-TR-#### received 01-TR-4256'],
+      );
+    });
+
+    it('only imports valid columns ignores others', async () => {
+      const mixedColumns = `${headings.join(',')},Extra Column`;
+      const reportId = 'R01-TR-3478';
+      const d = `${mixedColumns}
+${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name},JIBBER-JABBER`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+
+      // Assert data does not contain the extra column.
+      expect(importedEvent.data).not.toHaveProperty('Extra Column');
+    });
+
+    it('only imports valid reasons ignores others', async () => {
+      const mixedColumns = `${headings.join(',')},Extra Column`;
+      const reportId = 'R01-TR-9528';
+      const reasonsToTest = `"New Director or Management
+      Complaint
+      Planning/Coordination
+      Invalid Reason"`;
+      const d = `${mixedColumns}
+${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasonsToTest},${vision},${targetPopulation},${audience},${poc.name},JIBBER-JABBER`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+      expect(importedEvent.data.reasons).toEqual(['New Director or Management', 'Complaint', 'Planning/Coordination']);
+    });
+
+    it('only imports valid target populations ignores others', async () => {
+      const mixedColumns = `${headings.join(',')},Extra Column`;
+      const reportId = 'R01-TR-6578';
+      const tgtPopToTest = `"Program Staff
+          Pregnant Women / Pregnant Persons
+          Invalid Pop"`;
+
+      const d = `${mixedColumns}
+${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${tgtPopToTest},${audience},${poc.name},JIBBER-JABBER`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(1);
+      expect(result.skipped.length).toEqual(0);
+      expect(result.errors.length).toEqual(0);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': reportId },
+      });
+      expect(importedEvent).not.toBeNull();
+      expect(importedEvent.data.targetPopulations).toEqual(['Program Staff', 'Pregnant Women / Pregnant Persons']);
+    });
+
+    it('skips rows that have an invalid audience', async () => {
+      const reportId = 'R01-TR-5725';
+      const mixedColumns = `${headings.join(',')},Extra Column`;
+      const d = `${mixedColumns}
+${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},Invalid Audience,${poc.name},JIBBER-JABBER`;
+      const b = Buffer.from(d);
+      const result = await csvImport(b);
+      expect(result.count).toEqual(0);
+      expect(result.skipped.length).toEqual(1);
+      expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
+    });
+  });
+
+  describe('validateFields', () => {
+    it('throws an error when fields are invalid', async () => {
+      expect(() => validateFields({ pig: 1 }, ['man'])).toThrow();
     });
   });
 });

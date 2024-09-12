@@ -7,6 +7,7 @@ import {
   User,
   Recipient,
   Grant,
+  sequelize,
 } from '../models';
 import {
   activityReportsForCleanup,
@@ -94,11 +95,6 @@ const approvedReport = {
 };
 
 describe('Activity report cleanup service', () => {
-  afterAll(async () => {
-    // https://stackoverflow.com/questions/47970050/node-js-mocha-sequelize-error-connectionmanager-getconnection-was-called-after-t
-    // await db.sequelize.close();
-  });
-
   beforeAll(async () => {
     await Promise.all([
       User.bulkCreate([
@@ -150,34 +146,33 @@ describe('Activity report cleanup service', () => {
   });
 
   afterAll(async () => {
-    try {
-      await ActivityReportApprover.destroy({
-        where: {
-          userId: mockApprover.id,
-        },
-      });
-      await ActivityReportCollaborator.destroy({
-        where: {
-          userId: mockCollaborator.id,
-        },
-      });
-      const reportsToDestroy = await ActivityReport.findAll({
-        where: {
-          userId: [mockAuthor.id, mockPhantomUser.id],
-        },
-      });
-      await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
-      await Grant.destroy({ where: { id: RECIPIENT_ID } });
-      await Recipient.destroy({ where: { id: RECIPIENT_ID } });
-      await User.destroy({
-        where: {
-          id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
-        },
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(`Error destroying test data: ${e}`);
-    }
+    await ActivityReportApprover.destroy({
+      where: {
+        userId: mockApprover.id,
+      },
+      force: true,
+      individualHooks: true,
+    });
+    await ActivityReportCollaborator.destroy({
+      where: {
+        userId: mockCollaborator.id,
+      },
+      individualHooks: true,
+    });
+    const reportsToDestroy = await ActivityReport.findAll({
+      where: {
+        userId: [mockAuthor.id, mockPhantomUser.id],
+      },
+    });
+    await Promise.all(reportsToDestroy.map((r) => destroyReport(r)));
+    await Grant.destroy({ where: { id: RECIPIENT_ID }, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID } });
+    await User.destroy({
+      where: {
+        id: [mockAuthor.id, mockApprover.id, mockCollaborator.id, mockPhantomUser.id],
+      },
+    });
+    await sequelize.close();
   });
 
   it('returns reports by author', async () => {

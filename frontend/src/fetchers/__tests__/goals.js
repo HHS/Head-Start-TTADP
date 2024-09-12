@@ -1,5 +1,11 @@
 import fetchMock from 'fetch-mock';
-import { updateGoalStatus, mergeGoals, similarity } from '../goals';
+import {
+  updateGoalStatus,
+  mergeGoals,
+  similarity,
+  similiarGoalsByText,
+  missingDataForActivityReport,
+} from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
@@ -31,5 +37,32 @@ describe('goals fetcher', () => {
     fetchMock.get('/api/goals/similar/region/123/recipient/123?cluster=true', { res: 'ok' });
     await similarity(123, 123);
     expect(fetchMock.called()).toBeTruthy();
+  });
+
+  it('fetches similar goals by text', async () => {
+    const url = '/api/goals/recipient/123/region/123/nudge?name=goal&grantNumbers=123&grantNumbers=456';
+    fetchMock.get(
+      url,
+      { res: 'ok' },
+    );
+    await similiarGoalsByText(
+      123,
+      123,
+      'goal',
+      ['123', '456'],
+    );
+
+    expect(fetchMock.called(url)).toBeTruthy();
+  });
+
+  it('gets missing data', async () => {
+    const url = '/api/goals/region/123/incomplete?goalIds=1&goalIds=2';
+    fetchMock.get(
+      url,
+      { res: 'ok' },
+    );
+
+    await missingDataForActivityReport(123, [1, 2]);
+    expect(fetchMock.called(url)).toBeTruthy();
   });
 });

@@ -1,16 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-} from 'react';
+import React from 'react';
+import PropTypes from 'prop-types';
+import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
 import { Helmet } from 'react-helmet';
+
 import { useFormContext } from 'react-hook-form';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import {
   Button,
   Radio,
-  TextInput,
 } from '@trussworks/react-uswds';
-import { capitalize } from 'lodash';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
 import {
@@ -18,83 +16,83 @@ import {
   pageComplete,
 } from '../constants';
 import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
+import ParticipantsNumberOfParticipants from '../components/ParticipantsNumberOfParticipants';
 import FormItem from '../../../components/FormItem';
-import { getPossibleSessionParticipants } from '../../../fetchers/session';
-import useTrainingReportRole from '../../../hooks/useTrainingReportRole';
-import useTrainingReportTemplateDeterminator from '../../../hooks/useTrainingReportTemplateDeterminator';
-import UserContext from '../../../UserContext';
-import PocCompleteView from '../../../components/PocCompleteView';
-import ReadOnlyField from '../../../components/ReadOnlyField';
+import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
 
 const placeholderText = '- Select -';
+
+const ROLE_OPTIONS = [
+  'Admin. Assistant',
+  'COR',
+  'Early Childhood Manager',
+  'Early Childhood Specialist',
+  'Family Engagement Specialist',
+  'Grantee Specialist',
+  'Grantee Specialist Manager',
+  'Grants Management Specialist',
+  'Health Specialist',
+  'Program Specialist',
+  'Region Program Manager',
+  'Supervisory Program Specialist',
+  'System Specialist',
+  'TTAC',
+];
 
 const Participants = ({ formData }) => {
   const {
     control,
     register,
     watch,
+    setValue,
   } = useFormContext();
 
-  const { user } = useContext(UserContext);
-  const { isPoc } = useTrainingReportRole(formData.event, user.id);
-  const showReadOnlyView = useTrainingReportTemplateDeterminator(formData, isPoc);
+  const deliveryMethod = watch('deliveryMethod');
+  const isIstVisit = watch('isIstVisit') === 'yes';
+  const isNotIstVisit = watch('isIstVisit') === 'no';
 
   const regionId = watch('regionId');
+  const eventRegionId = formData.event ? formData.event.regionId : null;
 
-  const [recipientOptions, setRecipientOptions] = useState();
-  useEffect(() => {
-    async function fetchRecipients() {
-      if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId);
-        setRecipientOptions(data);
-      }
+  // handle existing sessions
+  useDeepCompareEffect(() => {
+    const {
+      istSelectionComplete,
+      recipients,
+      participants,
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+      numberOfParticipants,
+    } = formData;
+
+    const formStarted = (
+      recipients && recipients.length
+    ) || (
+      participants && participants.length
+    ) || numberOfParticipantsInPerson
+    || numberOfParticipantsVirtually
+    || numberOfParticipants;
+
+    if (!istSelectionComplete && formStarted) {
+      setValue('isIstVisit', 'no');
     }
 
-    fetchRecipients();
-  }, [recipientOptions, regionId]);
+    if (!istSelectionComplete) {
+      setValue('istSelectionComplete', true);
+    }
+  }, [formData, setValue]);
 
-  const options = (recipientOptions || []).map((recipient) => ({
-    label: recipient.name,
-    options: recipient.grants.map((grant) => ({
-      value: grant.id,
-      label: grant.name,
-    })),
-  }));
+  // clear values between toggles
+  useDeepCompareEffect(() => {
+    if (isIstVisit) {
+      setValue('recipients', []);
+      setValue('participants', []);
+    }
 
-  const isHybrid = watch('deliveryMethod') === 'hybrid';
-
-  if (showReadOnlyView) {
-    return (
-      <PocCompleteView formData={formData} userId={user.id}>
-        <Helmet>
-          <title>Session Participants</title>
-        </Helmet>
-        <ReadOnlyField label="Recipients">
-          {formData.recipients.map((r) => r.label).join('\n')}
-        </ReadOnlyField>
-        <ReadOnlyField label="Recipient participants">
-          {formData.participants.join('\n')}
-        </ReadOnlyField>
-        <ReadOnlyField label="Delivery method">
-          {capitalize(formData.deliveryMethod)}
-        </ReadOnlyField>
-        {isHybrid ? (
-          <>
-            <ReadOnlyField label="Number of participants attending in person">
-              {formData.numberOfParticipantsInPerson}
-            </ReadOnlyField>
-            <ReadOnlyField label="Number of participants attending virtually">
-              {formData.numberOfParticipantsVirtually}
-            </ReadOnlyField>
-          </>
-        ) : (
-          <ReadOnlyField label="Number of participants">
-            {formData.numberOfParticipants}
-          </ReadOnlyField>
-        )}
-      </PocCompleteView>
-    );
-  }
+    if (isNotIstVisit) {
+      setValue('regionalOfficeTta', []);
+    }
+  }, [isIstVisit, isNotIstVisit, setValue]);
 
   return (
     <>
@@ -102,43 +100,79 @@ const Participants = ({ formData }) => {
         <title>Session Participants</title>
       </Helmet>
       <IndicatesRequiredField />
-      <div className="margin-top-2">
-        <FormItem
-          label="Recipients "
-          name="recipients"
-        >
-          <MultiSelect
-            name="recipients"
-            control={control}
-            simple={false}
-            required="Select at least one recipient"
-            options={options}
-            placeholderText={placeholderText}
-          />
-        </FormItem>
-      </div>
+      <FormItem
+        label="Is this an IST visit?"
+        name="isIstVisit"
+        fieldSetWrapper
+      >
+        <Radio
+          id="is-ist-visit-yes"
+          name="isIstVisit"
+          label="Yes"
+          value="yes"
+          className="smart-hub--report-checkbox"
+          inputRef={register({ required: 'Select one' })}
+        />
 
+        <Radio
+          id="is-ist-visit-no"
+          name="isIstVisit"
+          label="No"
+          value="no"
+          className="smart-hub--report-checkbox"
+          inputRef={register({ required: 'Select one' })}
+        />
+        <input type="hidden" name="istSelectionComplete" ref={register} />
+      </FormItem>
+
+      {isNotIstVisit && (
+        <>
+          <RecipientsWithGroups
+            regionId={regionId || eventRegionId}
+          />
+          <div className="margin-top-2">
+            <FormItem
+              label="Recipient participants"
+              name="participants"
+            >
+              <MultiSelect
+                name="participants"
+                control={control}
+                placeholderText={placeholderText}
+                options={
+              recipientParticipants
+                .map((participant) => ({ value: participant, label: participant }))
+                }
+                required="Select at least one participant"
+              />
+            </FormItem>
+          </div>
+        </>
+      )}
+
+      {isIstVisit && (
       <div className="margin-top-2">
         <FormItem
-          label="Recipient participants "
-          name="participants"
+          label="Regional Office/TTA "
+          name="regionalOfficeTta"
         >
           <MultiSelect
-            name="participants"
+            name="regionalOfficeTta"
             control={control}
             placeholderText={placeholderText}
             options={
-              recipientParticipants
-                .map((participant) => ({ value: participant, label: participant }))
+              ROLE_OPTIONS
+                .map((role) => ({ value: role, label: role }))
             }
-            required="Select at least one participant"
+            required="Select at least one"
           />
         </FormItem>
       </div>
+      )}
 
       <div className="margin-top-2">
         <FormItem
-          label="How was the activity conducted?"
+          label="Delivery method"
           name="deliveryMethod"
           fieldSetWrapper
         >
@@ -169,92 +203,29 @@ const Participants = ({ formData }) => {
             inputRef={register({ required: 'Select one' })}
           />
         </FormItem>
-        <div aria-live="polite">
-          {isHybrid ? (
-            <>
-              <div>
-                <FormItem
-                  label="Number of participants attending in person "
-                  name="numberOfParticipantsInPerson"
-                  required
-                >
-                  <div className="maxw-card-lg">
-                    <TextInput
-                      id="numberOfParticipantsInPerson"
-                      name="numberOfParticipantsInPerson"
-                      type="number"
-                      min={1}
-                      required
-                      inputRef={
-                        register({
-                          required: 'Enter number of participants attending in person',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </FormItem>
-              </div>
-              <div>
-                <FormItem
-                  label="Number of participants attending virtually "
-                  name="numberOfParticipantsVirtually"
-                  required
-                >
-                  <div className="maxw-card-lg">
-                    <TextInput
-                      required
-                      id="numberOfParticipantsVirtually"
-                      name="numberOfParticipantsVirtually"
-                      type="number"
-                      min={1}
-                      inputRef={
-                        register({
-                          required: 'Enter number of participants attending virtually',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
-                    />
-                  </div>
-                </FormItem>
-              </div>
-            </>
-          ) : (
-            <div>
-              <FormItem
-                label="Number of participants "
-                name="numberOfParticipants"
-              >
-                <div className="maxw-card-lg">
-                  <TextInput
-                    required
-                    id="numberOfParticipants"
-                    name="numberOfParticipants"
-                    type="number"
-                    min={1}
-                    inputRef={
-                      register({
-                        required: 'Enter number of participants',
-                        valueAsNumber: true,
-                        min: {
-                          value: 1,
-                          message: 'Number of participants can not be zero or negative',
-                        },
-                      })
-                    }
-                  />
-                </div>
-              </FormItem>
-            </div>
-          )}
+
+        <ParticipantsNumberOfParticipants
+          isHybrid={deliveryMethod === 'hybrid'}
+          register={register}
+          isDeliveryMethodSelected={['virtual', 'hybrid', 'in-person'].includes(deliveryMethod)}
+        />
+
+        <div className="margin-top-2">
+          <FormItem
+            label="Language used"
+            name="language"
+          >
+            <MultiSelect
+              name="language"
+              control={control}
+              placeholderText={placeholderText}
+              options={
+              LANGUAGES
+                .map((language) => ({ value: language, label: language }))
+            }
+              required="Select at least one language"
+            />
+          </FormItem>
         </div>
       </div>
     </>
@@ -262,7 +233,29 @@ const Participants = ({ formData }) => {
 };
 
 Participants.propTypes = {
-  formData: participantsFields.isRequired,
+  formData: PropTypes.shape({
+    recipients: PropTypes.arrayOf(PropTypes.shape({
+      label: PropTypes.string,
+    })),
+    regionId: PropTypes.number,
+    istSelectionComplete: PropTypes.bool,
+    event: PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      displayId: PropTypes.string,
+      status: PropTypes.string,
+      pageState: PropTypes.objectOf(PropTypes.string),
+      regionId: PropTypes.number,
+    }),
+    numberOfParticipants: PropTypes.number,
+    numberOfParticipantsInPerson: PropTypes.number,
+    numberOfParticipantsVirtually: PropTypes.number,
+    participants: PropTypes.arrayOf(PropTypes.string),
+    deliveryMethod: PropTypes.string,
+    language: PropTypes.arrayOf(PropTypes.string),
+    isIstVisit: PropTypes.string,
+    regionalOfficeTta: PropTypes.arrayOf(PropTypes.string),
+  }).isRequired,
 };
 
 const fields = Object.keys(participantsFields);
@@ -271,9 +264,14 @@ const position = 2;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const { recipients, participants } = hookForm.getValues();
-  if (!recipients || !recipients.length || !participants || !participants.length) {
-    return false;
+  const { isIstVisit } = hookForm.getValues();
+
+  if (isIstVisit === 'yes') {
+    return pageComplete(hookForm, [...fields, 'regionalOfficeTta'], true);
+  }
+
+  if (isIstVisit === 'no') {
+    return pageComplete(hookForm, [...fields, 'recipients', 'participants']);
   }
 
   return pageComplete(hookForm, fields);
@@ -287,7 +285,7 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     formData,
     _reportId,
     isAppLoading,
@@ -303,9 +301,18 @@ export default {
       <Participants formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
-        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        {
+          additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+      }
+        {
+              additionalData
+              && additionalData.isAdminUser && (
+              <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+              )
+      }
       </div>
     </div>
   ),

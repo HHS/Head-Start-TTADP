@@ -1,5 +1,5 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS, GOAL_COLLABORATORS } = require('../../constants');
+const { GOAL_STATUS, GOAL_COLLABORATORS, OBJECTIVE_STATUS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
@@ -78,76 +78,6 @@ const invalidateSimilarityScores = async (sequelize, instance, options) => {
   }
 };
 
-const autoPopulateStatusChangeDates = (_sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('status')) {
-    const now = new Date();
-    const { status } = instance;
-    switch (status) {
-      case undefined:
-      case null:
-      case '':
-      case GOAL_STATUS.DRAFT:
-        break;
-      case GOAL_STATUS.NOT_STARTED:
-        if (instance.firstNotStartedAt === null
-          || instance.firstNotStartedAt === undefined) {
-          instance.set('firstNotStartedAt', now);
-          if (!options.fields.includes('firstNotStartedAt')) {
-            options.fields.push('firstNotStartedAt');
-          }
-        }
-        instance.set('lastNotStartedAt', now);
-        if (!options.fields.includes('lastNotStartedAt')) {
-          options.fields.push('lastNotStartedAt');
-        }
-        break;
-      case GOAL_STATUS.IN_PROGRESS:
-        if (instance.firstInProgressAt === null
-          || instance.firstInProgressAt === undefined) {
-          instance.set('firstInProgressAt', now);
-          if (!options.fields.includes('firstInProgressAt')) {
-            options.fields.push('firstInProgressAt');
-          }
-        }
-        instance.set('lastInProgressAt', now);
-        if (!options.fields.includes('lastInProgressAt')) {
-          options.fields.push('lastInProgressAt');
-        }
-        break;
-      case GOAL_STATUS.SUSPENDED:
-        if (instance.firstCeasedSuspendedAt === null
-          || instance.firstCeasedSuspendedAt === undefined) {
-          instance.set('firstCeasedSuspendedAt', now);
-          if (!options.fields.includes('firstCeasedSuspendedAt')) {
-            options.fields.push('firstCeasedSuspendedAt');
-          }
-        }
-        instance.set('lastCeasedSuspendedAt', now);
-        if (!options.fields.includes('lastCeasedSuspendedAt')) {
-          options.fields.push('lastCeasedSuspendedAt');
-        }
-        break;
-      case GOAL_STATUS.CLOSED:
-        if (instance.firstClosedAt === null
-          || instance.firstClosedAt === undefined) {
-          instance.set('firstClosedAt', now);
-          if (!options.fields.includes('firstClosedAt')) {
-            options.fields.push('firstClosedAt');
-          }
-        }
-        instance.set('lastClosedAt', now);
-        if (!options.fields.includes('lastClosedAt')) {
-          options.fields.push('lastClosedAt');
-        }
-        break;
-      default:
-        throw new Error(`Goal status changed to invalid value of "${status}".`);
-    }
-  }
-};
-
 const propagateName = async (sequelize, instance, options) => {
   const changed = instance.changed();
   if (Array.isArray(changed)
@@ -202,7 +132,7 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
 
     if (!goalId) return;
 
-    const similarityGroup = await sequelize.models.GoalSimilarityGroup.findOne({
+    const similarityGroups = await sequelize.models.GoalSimilarityGroup.findAll({
       attributes: ['recipientId', 'id'],
       include: [
         {
@@ -218,18 +148,20 @@ const invalidateGoalSimilarityGroupsOnUpdate = async (sequelize, instance, optio
       transaction: options.transaction,
     });
 
-    if (!similarityGroup) return;
+    if (similarityGroups.length === 0) return;
+
+    const groupIds = similarityGroups.map((group) => group.id);
 
     await sequelize.models.GoalSimilarityGroupGoal.destroy({
       where: {
-        goalSimilarityGroupId: similarityGroup.id,
+        goalSimilarityGroupId: groupIds,
       },
       transaction: options.transaction,
     });
 
     await sequelize.models.GoalSimilarityGroup.destroy({
       where: {
-        recipientId: similarityGroup.recipientId,
+        id: groupIds,
         userHasInvalidated: false,
         finalGoalId: null,
       },
@@ -289,6 +221,75 @@ const invalidateSimilarityGroupsOnCreationOrDestruction = async (sequelize, inst
   });
 };
 
+/**
+ * This is really similar to propagateName, but for EventReportPilot.
+ */
+const updateTrainingReportGoalText = async (sequelize, instance, options) => {
+  const changed = instance.changed();
+  if (Array.isArray(changed)
+    && changed.includes('name')) {
+    const { id: goalId } = instance;
+
+    const events = await sequelize.models.EventReportPilot.findAll({
+      where: {
+        [Op.and]: [
+          {
+            data: {
+              [Op.contains]: { goals: [{ goalId: instance.id }] },
+            },
+          },
+          {
+            data: {
+              status: {
+                [Op.or]: ['In progress', 'Not started'],
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    // For each Event, update the `goal` property on the jsonb data blob.
+    await Promise.all(events.map(async (event) => {
+      const ev = event;
+
+      const { data } = ev;
+      const { goals } = data;
+      const goalIndex = goals.findIndex((g) => g.goalId === goalId);
+
+      if (goalIndex !== -1) {
+        ev.data.goal = instance.name;
+      }
+
+      await sequelize.models.EventReportPilot.update(
+        { data },
+        { where: { id: ev.id } },
+      );
+    }));
+  }
+};
+
+const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
+  const changed = instance.changed();
+  const NO_GOOD_STATUSES = [GOAL_STATUS.CLOSED, GOAL_STATUS.SUSPENDED];
+  if (Array.isArray(changed)
+    && changed.includes('status')
+    && NO_GOOD_STATUSES.includes(instance.status)) {
+    const objectives = await sequelize.models.Objective.findAll({
+      where: {
+        goalId: instance.id,
+        status: {
+          [Op.not]: [OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED],
+        },
+      },
+    });
+
+    if (objectives.length > 0) {
+      throw new Error('Cannot close a goal with open objectives.');
+    }
+  }
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -296,12 +297,11 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  autoPopulateStatusChangeDates(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  autoPopulateStatusChangeDates(sequelize, instance, options);
+  await preventCloseIfObjectivesOpen(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -320,6 +320,7 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 const afterDestroy = async (sequelize, instance, options) => {
   await invalidateSimilarityGroupsOnCreationOrDestruction(sequelize, instance, options);
+  await updateTrainingReportGoalText(sequelize, instance, options);
 };
 
 export {
@@ -327,7 +328,7 @@ export {
   findOrCreateGoalTemplate,
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
-  autoPopulateStatusChangeDates,
+  preventCloseIfObjectivesOpen,
   propagateName,
   beforeValidate,
   beforeUpdate,

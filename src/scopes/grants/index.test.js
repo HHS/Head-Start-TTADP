@@ -1,4 +1,3 @@
-import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
@@ -12,6 +11,7 @@ import {
   GroupGrant,
   ActivityRecipient,
   sequelize,
+  GroupCollaborator,
 } from '../../models';
 
 const draftReport = {
@@ -20,12 +20,12 @@ const draftReport = {
   version: 1,
 };
 
-const recipientOneName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
-const recipientTwoName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
-const recipientThreeName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
-const recipientFourName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+const recipientOneName = 'Gibson, Hammes and Schuster - White-Beaked Dolphin - 98464';
+const recipientTwoName = 'Flatley, Kling and Olson - Longman\'s Beaked Whale - 6796';
+const recipientThreeName = 'Kris, Hoeger and Ward - Southern Bottlenose Whale - 9393';
+const recipientFourName = 'Grant LLC - Irrawaddy Dolphin - 39678';
 
-const seed = faker.datatype.number({ min: 28000 });
+const seed = 45997;
 const recipients = [
   {
     id: seed,
@@ -59,10 +59,10 @@ describe('grant filtersToScopes', () => {
   let mockUser;
   let mockUserTwo;
   let group;
-  const groupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
+  const groupName = 'Hickle - Graham - Southern Bottlenose Whale - 96089';
   let publicGroup;
-  const publicGroupName = `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`;
-  const specialGrantNumber = String(faker.datatype.number({ min: 2800 }));
+  const publicGroupName = 'Gulgowski and Sons - Australian Snubfin Dolphin - 9916';
+  const specialGrantNumber = '29971';
   let grantGroupOne;
   let grantGroupTwo;
   let grants;
@@ -72,18 +72,18 @@ describe('grant filtersToScopes', () => {
 
   beforeAll(async () => {
     mockUser = await User.create({
-      id: faker.datatype.number(),
+      id: seed + 6,
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: '|2$t)rb5=83',
+      hsesUserId: 'U;!?-X>FzF4',
       lastLogin: new Date(),
     });
 
     mockUserTwo = await User.create({
-      id: faker.datatype.number(),
+      id: seed + 7,
       homeRegionId: 1,
-      hsesUsername: faker.datatype.string(),
-      hsesUserId: faker.datatype.string(),
+      hsesUsername: 'Qk$B!O0VxW6',
+      hsesUserId: '%d)""y`lRU8',
       lastLogin: new Date(),
     });
 
@@ -91,7 +91,7 @@ describe('grant filtersToScopes', () => {
     grants = await Promise.all([
       Grant.create({
         id: recipients[3].id,
-        number: String(faker.datatype.number({ min: 2800 })),
+        number: `${seed + 8}`,
         regionId: 4,
         recipientId: recipients[3].id,
         status: 'Active',
@@ -113,7 +113,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[1].id,
-        number: String(faker.datatype.number({ min: 2800 })),
+        number: `${seed + 9}`,
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
@@ -124,7 +124,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[2].id,
-        number: String(faker.datatype.number({ min: 2800 })),
+        number: `${seed + 10}`,
         regionId: 3,
         recipientId: recipients[2].id,
         status: 'Active',
@@ -135,7 +135,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[4].id,
-        number: String(faker.datatype.number({ min: 2800 })),
+        number: `${seed + 11}`,
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Inactive',
@@ -147,7 +147,7 @@ describe('grant filtersToScopes', () => {
       }),
       Grant.create({
         id: recipients[5].id,
-        number: String(faker.datatype.number({ min: 2800 })),
+        number: `${seed + 12}`,
         regionId: 3,
         recipientId: recipients[2].id,
         status: 'Inactive',
@@ -159,9 +159,9 @@ describe('grant filtersToScopes', () => {
       }),
       // Use same recipient as above (both should be excluded).
       Grant.create({
-        // Set id to a faker value to ensure it is not used.
-        id: faker.datatype.number(),
-        number: String(faker.datatype.number({ min: 2800 })),
+        // Set id to a known value to ensure it is not used.
+        id: seed + 13,
+        number: `${seed + 14}`,
         regionId: 1,
         recipientId: recipients[1].id,
         status: 'Active',
@@ -257,8 +257,8 @@ describe('grant filtersToScopes', () => {
       }),
     ]);
 
-    programs = await Program.bulkCreate([
-      {
+    programs = await Promise.all([
+      Program.create({
         id: recipients[0].id,
         grantId: recipients[0].id,
         startYear: 'no',
@@ -269,8 +269,8 @@ describe('grant filtersToScopes', () => {
         name: 'no',
         createdAt: new Date(),
         updatedAt: new Date(),
-      },
-      {
+      }),
+      Program.create({
         id: recipients[1].id,
         grantId: recipients[1].id,
         startYear: 'no',
@@ -281,8 +281,8 @@ describe('grant filtersToScopes', () => {
         name: 'no',
         createdAt: new Date(),
         updatedAt: new Date(),
-      },
-      {
+      }),
+      Program.create({
         id: recipients[2].id,
         grantId: recipients[2].id,
         startYear: 'no',
@@ -293,19 +293,29 @@ describe('grant filtersToScopes', () => {
         name: 'no',
         createdAt: new Date(),
         updatedAt: new Date(),
-      },
-    ], { validate: true, individualHooks: true });
+      }),
+    ]);
 
     group = await Group.create({
       name: groupName,
-      userId: mockUser.id,
       isPublic: false,
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUser.id,
+      groupId: group.id,
+      collaboratorTypeId: 1,
     });
 
     publicGroup = await Group.create({
       name: publicGroupName,
-      userId: mockUserTwo.id,
       isPublic: true,
+    });
+
+    await GroupCollaborator.create({
+      userId: mockUserTwo.id,
+      groupId: publicGroup.id,
+      collaboratorTypeId: 1,
     });
 
     grantGroupOne = await GroupGrant.create({
@@ -330,6 +340,63 @@ describe('grant filtersToScopes', () => {
   });
 
   afterAll(async () => {
+    await GroupGrant.destroy({
+      where: {
+        [Op.or]: [
+          {
+            groupId: group.id,
+            grantId: grants[0].id,
+          },
+          {
+            groupId: group.id,
+            grantId: grants[1].id,
+          },
+          {
+            groupId: publicGroup.id,
+            grantId: grants[0].id,
+          },
+          {
+            groupId: publicGroup.id,
+            grantId: grants[1].id,
+          },
+        ],
+      },
+    });
+    await GroupCollaborator.destroy({
+      where: {
+        [Op.or]: [
+          {
+            userId: mockUserTwo.id,
+            groupId: publicGroup.id,
+            collaboratorTypeId: 1,
+          },
+          {
+            userId: mockUser.id,
+            groupId: group.id,
+            collaboratorTypeId: 1,
+          },
+        ],
+      },
+    });
+    await Group.destroy({
+      where: {
+        [Op.or]: [
+          {
+            name: groupName,
+            isPublic: false,
+          },
+          {
+            name: publicGroupName,
+            isPublic: true,
+          },
+        ],
+      },
+    });
+    await Program.destroy({
+      where: {
+        id: programs.map((p) => p.id),
+      },
+    });
     await ActivityRecipient.destroy({
       where: {
         id: activityRecipients.map((ar) => ar.id),
@@ -342,39 +409,22 @@ describe('grant filtersToScopes', () => {
       },
     });
 
-    await GroupGrant.destroy({
-      where: {
-        groupId: [group.id, publicGroup.id],
-      },
-    });
-
-    await Group.destroy({
-      where: {
-        userId: [mockUser.id, mockUserTwo.id],
-      },
-    });
-
-    await User.destroy({
-      where: {
-        id: mockUser.id,
-      },
-    });
-
-    await Program.destroy({
-      where: {
-        id: programs.map((p) => p.id),
-      },
-    });
-
     await Grant.destroy({
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
       where: {
         id: possibleIds,
+      },
+    });
+
+    await User.destroy({
+      where: {
+        id: [mockUser.id, mockUserTwo.id],
       },
     });
 

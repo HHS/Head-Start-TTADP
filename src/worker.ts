@@ -1,17 +1,19 @@
 /* eslint-disable import/first */
-require('newrelic');
+if (process.env.NODE_ENV === 'production') {
+  // eslint-disable-next-line global-require
+  require('newrelic');
+}
 
 import {} from 'dotenv/config';
+import httpContext from 'express-http-context';
 import throng from 'throng';
+import { registerEventListener } from './processHandler';
 import {
   processScanQueue,
 } from './services/scanQueue';
 import {
   processResourceQueue,
 } from './services/resourceQueue';
-import {
-  processAWSElasticsearchQueue,
-} from './lib/awsElasticSearch/queueManager';
 import {
   processS3Queue,
 } from './services/s3Queue';
@@ -25,25 +27,27 @@ import {
 // Number of workers to spawn
 const workers = process.env.WORKER_CONCURRENCY || 2;
 
-// Pull jobs off the redis queue and process them.
-async function start() {
-  // File Scanning Queue
-  processScanQueue();
+// Wrap your process functions to use httpContext
+async function start(context: { id: number }) {
+  registerEventListener();
 
-  // AWS Elasticsearch Queue
-  processAWSElasticsearchQueue();
+  httpContext.ns.run(() => {
+    httpContext.set('workerId', context.id);
 
-  // S3 Queue.
-  processS3Queue();
+    // File Scanning Queue
+    processScanQueue();
 
-  // Resource Queue.
-  processResourceQueue();
+    // S3 Queue.
+    processS3Queue();
 
-  // Notifications Queue
-  processNotificationQueue();
+    // Resource Queue.
+    processResourceQueue();
+    // Notifications Queue
+    processNotificationQueue();
 
-  // Maintenance Queue
-  processMaintenanceQueue();
+    // Maintenance Queue
+    processMaintenanceQueue();
+  });
 }
 
 // spawn workers and start them

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { Table } from '@trussworks/react-uswds';
 import Container from '../components/Container';
 import './TableWidget.css';
+import WidgetH2 from '../components/WidgetH2';
 
 export default function TableWidget(
   {
@@ -22,7 +23,9 @@ export default function TableWidget(
         <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">
             <div className="display-flex flex-wrap flex-align-center">
-              <h2 className="smart-hub--table-widget-heading ttahub--dashboard-widget-heading margin-0">{title}</h2>
+              <WidgetH2>
+                {title}
+              </WidgetH2>
             </div>
           </caption>
           <thead>

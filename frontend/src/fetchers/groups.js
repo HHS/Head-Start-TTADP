@@ -14,7 +14,8 @@ export const fetchGroups = async () => {
 };
 
 export const fetchGroup = async (groupId) => {
-  const response = await get(join(groupsUrl, String(groupId)));
+  const getGroup = join(groupsUrl, String(groupId));
+  const response = await get(getGroup);
   return response.json();
 };
 
@@ -31,4 +32,16 @@ export const updateGroup = async (group) => {
 export const deleteGroup = async (groupId) => {
   const response = await destroy(join(groupsUrl, String(groupId)));
   return response.json();
+};
+
+export const getGroupUsers = async (groupId) => {
+  const userGroupUrl = join(groupsUrl, String(groupId), 'eligibleUsers');
+  const users = await get(userGroupUrl);
+  return users.json();
+};
+
+export const getGroupGrants = async (groupId) => {
+  const userGroupUrl = join(groupsUrl, String(groupId), 'grants');
+  const grants = await get(userGroupUrl);
+  return grants.json();
 };

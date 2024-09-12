@@ -31,10 +31,11 @@
 // print styles
 
 @media print{
-  .ttahub-read-only-content-section {
-    padding: 0;
-    margin-bottom: 2rem;
-    page-break-inside: avoid;
+  .ttahub-read-only-content-section,
+  .ttahub-read-only-content-section h3 {
+    padding: 0 !important;
+    margin-bottom: 2rem !important;
+    page-break-inside: avoid !important;
   }
 }
 

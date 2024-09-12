@@ -135,6 +135,10 @@ async function sendActivityReportCSV(reports, res) {
           header: 'TTA type',
         },
         {
+          key: 'language',
+          header: 'Language',
+        },
+        {
           key: 'deliveryMethod',
           header: 'Delivery method',
         },
@@ -173,8 +177,16 @@ async function sendActivityReportCSV(reports, res) {
           header: 'Specialist next steps',
         },
         {
+          key: 'specialistNextStepsCompleteDate',
+          header: 'Specialist next steps anticipated completion date',
+        },
+        {
           key: 'recipientNextSteps',
           header: 'Recipient next steps',
+        },
+        {
+          key: 'recipientNextStepsCompleteDate',
+          header: 'Recipient next steps anticipated completion date',
         },
         {
           key: 'createdAt',
@@ -522,9 +534,20 @@ export async function resetToDraft(req, res) {
     const [report] = await activityReportAndRecipientsById(activityReportId);
     const authorization = new ActivityReport(user, report);
 
-    if (!authorization.canReset()) {
+    const canReset = authorization.canReset();
+    const isApproverAndCreator = authorization.isApproverAndCreator();
+
+    if (!isApproverAndCreator && !canReset) {
       res.sendStatus(403);
       return;
+    }
+
+    if (isApproverAndCreator) {
+      // Reset all Approving Managers to null status.
+      await ActivityReportApprover.update({ status: null }, {
+        where: { activityReportId },
+        individualHooks: true,
+      });
     }
 
     const [
@@ -699,6 +722,24 @@ export async function getActivityRecipients(req, res) {
   res.json(activityRecipients);
 }
 
+export async function getActivityRecipientsForExistingReport(req, res) {
+  const { activityReportId } = req.params;
+
+  const [report] = await activityReportAndRecipientsById(activityReportId);
+  const userId = await currentUserId(req, res);
+  const user = await userById(userId);
+  const authorization = new ActivityReport(user, report);
+
+  if (!authorization.canGet()) {
+    res.sendStatus(403);
+    return;
+  }
+
+  const targetRegion = parseInt(report.regionId, DECIMAL_BASE);
+  const activityRecipients = await possibleRecipients(targetRegion, activityReportId);
+  res.json(activityRecipients);
+}
+
 /**
  * Retrieve an activity report
  *
@@ -758,11 +799,18 @@ export async function getReportsByManyIds(req, res) {
   try {
     const userId = await currentUserId(req, res);
 
-    const { reportIds } = req.body;
+    const {
+      reportIds, offset, sortBy, sortDir, limit,
+    } = req.body;
 
     // this will return a query with region parameters based
     // on the req user's permissions
-    const query = await setReadRegions({}, userId);
+    const query = await setReadRegions({
+      offset,
+      sortBy,
+      sortDir,
+      limit,
+    }, userId);
 
     const reportsWithCount = await activityReports(query, false, userId, reportIds);
     if (!reportsWithCount) {

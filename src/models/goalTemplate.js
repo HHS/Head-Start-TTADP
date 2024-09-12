@@ -22,12 +22,6 @@ export default (sequelize, DataTypes) => {
         models.GoalTemplateObjectiveTemplate,
         { foreignKey: 'goalTemplateId', as: 'goalTemplateObjectiveTemplates' },
       );
-      GoalTemplate.belongsToMany(models.ObjectiveTemplate, {
-        through: models.GoalTemplateObjectiveTemplate,
-        foreignKey: 'goalTemplateId',
-        otherKey: 'objectiveTemplateId',
-        as: 'goalTemplates',
-      });
       GoalTemplate.hasMany(models.GoalTemplateFieldPrompt, { foreignKey: 'goalTemplateId', as: 'prompts' });
       GoalTemplate.hasMany(models.GoalTemplateResource, { foreignKey: 'goalTemplateId', as: 'goalTemplateResources' });
       GoalTemplate.belongsToMany(models.Resource, {
@@ -68,6 +62,10 @@ export default (sequelize, DataTypes) => {
     templateNameModifiedAt: {
       allowNull: false,
       type: DataTypes.DATE,
+    },
+    source: {
+      allowNull: true,
+      type: DataTypes.STRING,
     },
   }, {
     sequelize,

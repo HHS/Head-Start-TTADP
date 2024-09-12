@@ -2,7 +2,7 @@
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
-import updateGrantsRecipients, { processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
+import updateGrantsRecipients, { getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
 import db, {
   sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
 } from '../models';
@@ -15,6 +15,18 @@ jest.mock('./fileUtils', () => ({
 }));
 
 const SMALLEST_GRANT_ID = 1000;
+
+async function testStateCodeUpdate(grantId, incorrectStateCode) {
+  await processFiles();
+  const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+  await grantBefore.update({ stateCode: incorrectStateCode }, { individualHooks: true });
+  const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+
+  await processFiles();
+  const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: { id: grantId } });
+
+  return { grantWithIncorrectStateCode, grantWithCorrectStateCode };
+}
 
 describe('Update HSES data', () => {
   beforeEach(() => {
@@ -73,7 +85,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterEach(async () => {
@@ -83,7 +98,10 @@ describe('Update grants, program personnel, and recipients', () => {
     await ProgramPersonnel.unscoped().destroy({
       where: { grantId: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    await Grant.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
+    await Grant.unscoped().destroy({
+      where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
+      individualHooks: true,
+    });
     await Recipient.unscoped().destroy({ where: { id: { [Op.gt]: SMALLEST_GRANT_ID } } });
   });
   afterAll(async () => {
@@ -170,7 +188,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const totalGrants = await Grant.unscoped().findAll({
       where: { id: { [Op.gt]: SMALLEST_GRANT_ID } },
     });
-    expect(totalGrants.length).toBe(17);
+    expect(totalGrants.length).toBe(19);
   });
 
   it('should import or update program personnel', async () => {
@@ -816,16 +834,21 @@ describe('Update grants, program personnel, and recipients', () => {
   });
 
   it('should set correct state code for grant 12128', async () => {
-    const id = 12128;
-    await processFiles();
-    const grantBefore = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
-    // simulate updating an existing grant with incorrect state code
-    await grantBefore.update({ stateCode: 'PA' }, { individualHooks: true });
-    const grantWithIncorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(12128, 'PA', 'OH');
     expect(grantWithIncorrectStateCode.stateCode).toEqual('PA');
-    await processFiles();
-    const grantWithCorrectStateCode = await Grant.findOne({ attributes: ['id', 'stateCode'], where: id });
     expect(grantWithCorrectStateCode.stateCode).toEqual('OH');
+  });
+
+  it('should set correct state code for grant 10291', async () => {
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(10291, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
+  });
+
+  it('should set correct state code for grant 14869', async () => {
+    const { grantWithIncorrectStateCode, grantWithCorrectStateCode } = await testStateCodeUpdate(14869, 'FC', 'PW');
+    expect(grantWithIncorrectStateCode.stateCode).toEqual('FC');
+    expect(grantWithCorrectStateCode.stateCode).toEqual('PW');
   });
 
   it('should set correct state code for grants', async () => {
@@ -943,7 +966,10 @@ describe('Update grants, program personnel, and recipients', () => {
 
   describe('updateCDIGrantsWithOldGrantData', () => {
     afterAll(async () => {
-      await Grant.destroy({ where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } } });
+      await Grant.destroy({
+        where: { id: { [Op.in]: [3001, 3002, 3003, 3004] } },
+        individualHooks: true,
+      });
       await db.sequelize.close();
     });
 
@@ -975,5 +1001,12 @@ describe('Update grants, program personnel, and recipients', () => {
       expect(updatedGrant2.recipientId).toEqual(11);
       expect(updatedGrant2.regionId).toEqual(2);
     });
+  });
+});
+
+describe('getPersonnelField', () => {
+  it('returns null when data is not an object', () => {
+    const out = getPersonnelField('role', 'field', 'program');
+    expect(out).toBeNull();
   });
 });

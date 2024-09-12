@@ -26,7 +26,7 @@ describe('similarity service tests', () => {
 
   it('works', async () => {
     const result = await similarGoalsForRecipient(1, true);
-    await expect(result).toEqual(MOCK_DATA);
+    expect(result).toEqual(MOCK_DATA);
     expect(fetch).toHaveBeenCalledWith(
       process.env.SIMILARITY_ENDPOINT,
       {

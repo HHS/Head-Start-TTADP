@@ -1,4 +1,4 @@
-import { getWidget } from './handlers';
+import { getWidget, keysDisallowCache } from './handlers';
 import { setReadRegions } from '../../services/accessValidation';
 import widgets from '../../widgets';
 
@@ -57,6 +57,20 @@ describe('Widget handlers', () => {
     it('returns 404 when unknown widget', async () => {
       await getWidget({ ...request, params: { widgetId: 'nonexistent' } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('onlyAllowedKeys', () => {
+    it('returns true if disallowed filter', async () => {
+      const queryToCheck = { 'region.in': ['1'], 'myReports.in': ['Creator'] };
+      const skipCache = keysDisallowCache(queryToCheck);
+      expect(skipCache).toBe(true);
+    });
+
+    it('returns false if disallowed filter', async () => {
+      const queryToCheck = { 'region.in': ['1'], 'activityReportGoalResponse.in.in': ['Facilities'] };
+      const skipCache = keysDisallowCache(queryToCheck);
+      expect(skipCache).toBe(false);
     });
   });
 });

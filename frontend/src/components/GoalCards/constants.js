@@ -22,4 +22,5 @@ export const goalPropTypes = PropTypes.shape({
   goalNumbers: PropTypes.arrayOf(PropTypes.string.isRequired),
   objectives: PropTypes.arrayOf(objectivePropTypes),
   previousStatus: PropTypes.string,
+  onAR: PropTypes.bool,
 });

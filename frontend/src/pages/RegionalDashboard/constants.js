@@ -1,6 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  regionFilter,
   startDateFilter,
   endDateFilter,
   grantNumberFilter,
@@ -21,7 +20,7 @@ import {
   deliveryMethodFilter,
   activityReportGoalResponseFilter,
 } from '../../components/filter/activityReportFilters';
-
+import { goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter } from '../../components/filter/grantFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
@@ -31,13 +30,13 @@ const DASHBOARD_FILTER_CONFIG = [
   deliveryMethodFilter,
   grantNumberFilter,
   groupsFilter,
+  goalNameFilter,
   myReportsFilter,
   participantsFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
-  regionFilter,
   reportIdFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,

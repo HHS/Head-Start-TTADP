@@ -1,8 +1,8 @@
+const httpContext = require('express-http-context');
 const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
   OBJECTIVE_STATUS,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GOAL_COLLABORATORS,
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
@@ -11,16 +11,13 @@ const { findOrCreateGoalTemplate } = require('./goal');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
-  scheduleUpdateIndexDocumentJob,
-  scheduleDeleteIndexDocumentJob,
-} = require('../../lib/awsElasticSearch/queueManager');
-const { collectModelData } = require('../../lib/awsElasticSearch/datacollector');
-const { formatModelForAwsElasticsearch } = require('../../lib/awsElasticSearch/modelMapper');
-const { addIndexDocument, deleteIndexDocument } = require('../../lib/awsElasticSearch/index');
-const {
   findOrCreateCollaborator,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
+const { destroyLinkedSimilarityGroups } = require('./activityReportGoal');
+const { purifyFields } = require('../helpers/purifyFields');
+
+const AR_FIELDS_TO_ESCAPE = ['additionalNotes', 'context'];
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -49,6 +46,8 @@ const copyStatus = (instance) => {
 };
 
 const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('submissionStatus')
@@ -75,20 +74,17 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
       });
 
       const goalIds = goals.map((goal) => goal.id);
-      await sequelize.models.Goal.update(
-        { status: 'Not Started' },
-        {
-          where: {
-            id: {
-              [Op.in]: goalIds,
-            },
-          },
-          transaction: options.transaction,
-          individualHooks: true,
-        },
-      );
+      const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+      await Promise.all(goalIds.map((goalId) => changeGoalStatus({
+        goalId,
+        userId,
+        newStatus: GOAL_STATUS.NOT_STARTED,
+        reason: 'Activity Report submission',
+        context: null,
+        transaction: options.transaction,
+      })));
     } catch (error) {
-      auditLogger.error(JSON.stringify({ error }));
+      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
     }
   }
 };
@@ -107,7 +103,7 @@ const setSubmittedDate = (sequelize, instance, options) => {
       instance.set('submittedDate', null);
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`setSubmittedDate error: ${e}`);
   }
 };
 
@@ -130,7 +126,7 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
       instance.set('additionalNotes', '');
     }
   } catch (e) {
-    auditLogger.error(JSON.stringify({ e }));
+    auditLogger.error(`clearAdditionalNotes: ${e}`);
   }
 };
 
@@ -173,7 +169,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         )));
       // Add the corresponding template id to each of the goals.
       goals = goals.map((goal) => {
-        const goalTemplateId = distinctTemplates.filter((dt) => dt.name === goal.name).id;
+        const goalTemplateId = distinctTemplates.find((dt) => dt.name === goal.name).id;
         return { ...goal, goalTemplateId };
       });
       // Update all the goals with their template id.
@@ -186,7 +182,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating goal: ${e}}`);
     }
 
     let objectives;
@@ -225,7 +221,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       // Add the corresponding template id to each of the objectives.
       objectives = objectives.map((objective) => {
         const objectiveTemplateId = distinctTemplates
-          .filter((dt) => dt.title === objective.title).id;
+          .find((dt) => dt.title === objective.title).id;
         return { ...objective, objectiveTemplateId };
       });
       // Update all the objectives with their template id.
@@ -237,7 +233,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         },
       )));
     } catch (e) {
-      auditLogger.error(JSON.stringify({ e }));
+      auditLogger.error(`propagateSubmissionStatus > updating objective: ${e}`);
     }
   }
 };
@@ -437,91 +433,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               individualHooks: true,
             },
           ),
-          // update the onApprovedAR for files that will no longer be referenced on an approved AR
-          sequelize.query(`
-          WITH
-            "FilesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arof."fileId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveFiles" arof
-              ON aro.id = arof."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveFiles" arof2
-              ON aro2.id = arof2."activityReportObjectiveId"
-              AND arof."fileId" = arof2."fileId"
-              WHERE arof2."id" IS NULL
-            )
-            UPDATE "ObjectiveFiles" f
-            SET "onApprovedAR" = false
-            FROM "FilesOnReport" fr
-            WHERE f."onApprovedAR" = true
-            AND f."objectiveId" = fr."objectiveId"
-            AND f."fileId" = fr."fileId";
-          `, { transaction: options.transaction }),
-          // update the onApprovedAR for resources that will no longer be referenced on an
-          // approved AR
-          sequelize.query(`
-          WITH
-            "ResourcesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                aror."resourceId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveResources" aror
-              ON aro.id = aror."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveResources" aror2
-              ON aro2.id = aror2."activityReportObjectiveId"
-              AND aror."resourceId" = aror2."resourceId"
-              WHERE aror2."id" IS NULL
-            )
-            UPDATE "ObjectiveResources" r
-            SET "onApprovedAR" = false
-            FROM "ResourcesOnReport" rr
-            WHERE r."onApprovedAR" = true
-            AND r."objectiveId" = rr."objectiveId"
-            AND r."resourceId" = rr."resourceId";
-          `, { transaction: options.transaction }),
-          // update the onApprovedAR for topics that will no longer be referenced on an approved AR
-          sequelize.query(`
-          WITH
-            "TopicsOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arot."topicId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveTopics" arot
-              ON aro.id = arot."activityReportObjectiveId"
-              AND aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              JOIN "ActivityReportObjectives" aro2
-              ON aro.id != aro2.id
-              AND aro."activityReportId" != aro2."activityReportId"
-              AND aro2."objectiveId" IN (${objectives.map((o) => o.id).join(',')})
-              LEFT JOIN "ActivityReportObjectiveTopics" arot2
-              ON aro2.id = arot2."activityReportObjectiveId"
-              AND arot."topicId" = arot2."topicId"
-              WHERE arot2."id" IS NULL
-            )
-            UPDATE "ObjectiveTopics" t
-            SET "onApprovedAR" = false
-            FROM "TopicsOnReport" tr
-            WHERE t."onApprovedAR" = true
-            AND t."objectiveId" = tr."objectiveId"
-            AND t."topicId" = tr."topicId";
-          `, { transaction: options.transaction }),
         ]);
       }
 
@@ -638,63 +549,6 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               individualHooks: true,
             },
           ),
-          sequelize.query(`
-          WITH
-            "FilesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arof."fileId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveFiles" arof
-              ON aro.id = arof."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveFiles" f
-            SET "onApprovedAR" = true
-            FROM "FilesOnReport" fr
-            WHERE f."onApprovedAR" = false
-            AND f."objectiveId" = fr."objectiveId"
-            AND f."fileId" = fr."fileId";
-          `, { transaction: options.transaction }),
-          sequelize.query(`
-          WITH
-            "ResourcesOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                aror."resourceId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveResources" aror
-              ON aro.id = aror."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveResources" r
-            SET "onApprovedAR" = true
-            FROM "ResourcesOnReport" rr
-            WHERE r."onApprovedAR" = false
-            AND r."objectiveId" = rr."objectiveId"
-            AND r."resourceId" = rr."resourceId";
-          `, { transaction: options.transaction }),
-          sequelize.query(`
-          WITH
-            "TopicsOnReport" AS (
-              SELECT DISTINCT
-                aro."objectiveId",
-                arot."topicId"
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveTopics" arot
-              ON aro.id = arot."activityReportObjectiveId"
-              WHERE aro."activityReportId" = ${instance.id}
-              AND aro."objectiveId" IN (${objectiveIds.join(',')})
-            )
-            UPDATE "ObjectiveTopics" t
-            SET "onApprovedAR" = true
-            FROM "TopicsOnReport" tr
-            WHERE t."onApprovedAR" = false
-            AND t."objectiveId" = tr."objectiveId"
-            AND t."topicId" = tr."topicId";
-          `, { transaction: options.transaction }),
         ]);
       }
       /*  Determine Objective Statuses (Other > Approved) */
@@ -729,6 +583,8 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
 };
 
 const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, options) => {
+  // eslint-disable-next-line global-require
+  const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
   const changed = instance.changed();
   if (Array.isArray(changed)
     && changed.includes('calculatedStatus')
@@ -759,19 +615,20 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
       },
     );
 
-    return Promise.all((goals.map((goal) => {
+    return Promise.all((goals.map(async (goal) => {
       const status = GOAL_STATUS.IN_PROGRESS;
 
       // if the goal should be in a different state, we will update it
       if (goal.status !== status) {
-        goal.set('previousStatus', goal.status);
-        goal.set('status', status);
-        if (instance.endDate) {
-          if (!goal.firstInProgressAt) {
-            goal.set('firstInProgressAt', instance.endDate);
-          }
-          goal.set('lastInProgressAt', instance.endDate);
-        }
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: status,
+          reason: 'Activity Report approved',
+          context: null,
+        });
       }
       // removing hooks because we don't want to trigger the automatic status change
       // (i.e. last in progress at will be overwritten)
@@ -814,70 +671,8 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
 };
 
 const beforeCreate = async (instance) => {
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   copyStatus(instance);
-};
-
-const getActivityReportDocument = async (sequelize, instance) => {
-  const data = await collectModelData(
-    [instance.id],
-    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-    sequelize,
-  );
-  return formatModelForAwsElasticsearch(
-    AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-    { ...data, ar: { ...instance.dataValues } },
-  );
-};
-
-const updateAwsElasticsearchIndexes = async (sequelize, instance) => {
-  // AWS Elasticsearch: Determine if we queue delete or update index document.
-  const changed = instance.changed();
-  if (Array.isArray(changed) && changed.includes('calculatedStatus')) {
-    if (instance.previous('calculatedStatus') !== REPORT_STATUSES.DELETED
-        && instance.calculatedStatus === REPORT_STATUSES.DELETED) {
-      // Delete Index Document for AWS Elasticsearch.
-      if (!process.env.CI) {
-        await scheduleDeleteIndexDocumentJob(
-          instance.id,
-          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-        );
-      } else {
-        // Create a job to run without worker.
-        const job = {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: instance.id,
-            preventRethrow: true,
-          },
-        };
-        await deleteIndexDocument(job);
-      }
-    } else if ((instance.previous('calculatedStatus') !== REPORT_STATUSES.SUBMITTED
-      && instance.calculatedStatus === REPORT_STATUSES.SUBMITTED)
-      || (instance.previous('calculatedStatus') !== REPORT_STATUSES.APPROVED
-      && instance.calculatedStatus === REPORT_STATUSES.APPROVED)) {
-      // Index for AWS Elasticsearch.
-      const document = await getActivityReportDocument(sequelize, instance);
-      if (!process.env.CI) {
-        await scheduleUpdateIndexDocumentJob(
-          instance.id,
-          AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-          document,
-        );
-      } else {
-        // Create a job to run without worker.
-        const job = {
-          data: {
-            indexName: AWS_ELASTIC_SEARCH_INDEXES.ACTIVITY_REPORTS,
-            id: instance.id,
-            document,
-            preventRethrow: true,
-          },
-        };
-        await addIndexDocument(job);
-      }
-    }
-  }
 };
 
 /**
@@ -937,36 +732,37 @@ const autoPopulateUtilizer = async (sequelize, instance, options) => {
       ...collaborators, // Spread the elements of the 'collaborators' array into a new array
       { userId: instance.userId }, // Add an object with a 'userId' property to the new array
     ].filter(({ userId }) => userId);
-    await Promise.all([
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => goals
-          // Use map to iterate over each element in the 'goals' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ goalId }) => findOrCreateCollaborator(
-            'goal',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            goalId, // The 'goalId' from the current iteration of the 'goals' array
-            userId, // The 'userId' from the current iteration of the new array
-            GOAL_COLLABORATORS.UTILIZER, // The 'GOAL_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
-      ...users
-      // Use flatMap to iterate over each element in the new array asynchronously
-        .flatMap(async ({ userId }) => objectives
-          // Use map to iterate over each element in the 'objectives' array asynchronously
-          // Call the 'findOrCreateCollaborator' function with the following arguments
-          .map(async ({ objectiveId }) => findOrCreateCollaborator(
-            'objective',
-            sequelize, // The 'sequelize' variable
-            options.transaction, // The 'options' variable
-            objectiveId, // The 'objectiveId' from the current iteration of the 'objectives' array
-            userId, // The 'userId' from the current iteration of the new array
-            OBJECTIVE_COLLABORATORS.UTILIZER, // The 'OBJECTIVE_COLLABORATORS.UTILIZER' constant
-            { activityReportIds: [instance.id] },
-          ))),
+
+    const findOrCreateCollaboratorOptions = users.flatMap((user) => [
+      ...goals.map((goal) => ({
+        type: 'goal',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: goal.goalId,
+        userId: user.userId,
+        collaboratorType: GOAL_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
+      ...objectives.map((objective) => ({
+        type: 'objective',
+        sequelize,
+        transaction: options.transaction,
+        associatedId: objective.objectiveId,
+        userId: user.userId,
+        collaboratorType: OBJECTIVE_COLLABORATORS.UTILIZER,
+        metadata: { activityReportIds: [instance.id] },
+      })),
     ]);
+
+    await Promise.all(findOrCreateCollaboratorOptions.map((option) => findOrCreateCollaborator(
+      option.type,
+      option.sequelize,
+      option.transaction,
+      option.associatedId,
+      option.userId,
+      option.collaboratorType,
+      option.metadata,
+    )));
   }
 };
 
@@ -1033,8 +829,37 @@ const beforeValidate = async (sequelize, instance, options) => {
 
 const beforeUpdate = async (sequelize, instance, options) => {
   copyStatus(instance);
+  purifyFields(instance, AR_FIELDS_TO_ESCAPE);
   setSubmittedDate(sequelize, instance, options);
   clearAdditionalNotes(sequelize, instance, options);
+};
+
+const afterDestroy = async (sequelize, instance, options) => {
+  try {
+    if (instance.calculatedStatus !== REPORT_STATUSES.DELETED) {
+      return;
+    }
+    auditLogger.info(`Destroying linked similarity groups for AR-${instance.id}`);
+    const { id: activityReportId, calculatedStatus } = instance;
+
+    const arGoals = await sequelize.models.ActivityReportGoal.findAll({
+      attributes: ['goalId'],
+      where: { activityReportId },
+      transaction: options.transaction,
+    });
+
+    await Promise.all((arGoals.map(async (arGoal) => {
+      const i = {
+        calculatedStatus,
+        goalId: arGoal.goalId,
+      };
+      // regen similarity groups
+      return destroyLinkedSimilarityGroups(sequelize, i, options);
+    })));
+  } catch (e) {
+    // we do not want to surface these errors to the UI
+    auditLogger.error(`Failed to destroy linked similarity groups ${e}`);
+  }
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -1050,7 +875,7 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoCleanupUtilizer(sequelize, instance, options);
   await moveDraftGoalsToNotStartedOnSubmission(sequelize, instance, options);
   await processForEmbeddedResources(sequelize, instance, options);
-  await updateAwsElasticsearchIndexes(sequelize, instance);
+  await afterDestroy(sequelize, instance, options);
 };
 
 export {
@@ -1066,4 +891,5 @@ export {
   afterUpdate,
   moveDraftGoalsToNotStartedOnSubmission,
   setSubmittedDate,
+  afterDestroy,
 };

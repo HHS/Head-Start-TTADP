@@ -55,6 +55,10 @@ export default (sequelize, DataTypes) => {
         },
       },
     },
+    version: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
   }, {
     sequelize,
     modelName: 'GoalSimilarityGroup',

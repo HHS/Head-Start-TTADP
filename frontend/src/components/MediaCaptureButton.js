@@ -4,7 +4,7 @@ import html2canvas from 'html2canvas';
 import { Button } from '@trussworks/react-uswds';
 
 export default function MediaCaptureButton({
-  reference, className, buttonText, id,
+  reference, className, buttonText, id, title,
 }) {
   const capture = async () => {
     try {
@@ -24,7 +24,7 @@ export default function MediaCaptureButton({
       const base64image = canvas.toDataURL('image/png');
       const a = document.createElement('a');
       a.href = base64image;
-      a.setAttribute('download', '');
+      a.setAttribute('download', `${title}.png`);
       a.click();
     } catch (e) {
       // eslint-disable-next-line no-console
@@ -50,6 +50,7 @@ MediaCaptureButton.propTypes = {
   className: PropTypes.string,
   buttonText: PropTypes.string,
   id: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
 };
 
 MediaCaptureButton.defaultProps = {

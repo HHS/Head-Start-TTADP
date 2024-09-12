@@ -7,7 +7,7 @@ import join from 'url-join';
 import { Router, MemoryRouter } from 'react-router';
 import { createMemoryHistory } from 'history';
 import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
 import TrainingReports from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -73,7 +73,7 @@ const inProgressEvents = [{
       startDate: '01/02/2021',
       endDate: '01/03/2021',
       objective: 'This is my session objective',
-      objectiveSupportType: 'Implementing',
+      objectiveSupportType: SUPPORT_TYPES[2],
       objectiveTopics: ['Topic 1', 'Topic 2'],
       objectiveTrainers: ['Trainer 1', 'Trainer 2'],
       status: 'In progress',

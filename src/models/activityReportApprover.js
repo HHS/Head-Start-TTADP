@@ -5,7 +5,8 @@ const {
   afterDestroy,
   afterRestore,
   afterUpdate,
-  afterUpsert,
+  beforeCreate,
+  beforeUpdate,
 } = require('./hooks/activityReportApprover');
 
 export default (sequelize, DataTypes) => {
@@ -40,11 +41,12 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     hooks: {
+      beforeCreate: async (instance) => beforeCreate(sequelize, instance),
+      beforeUpdate: async (instance) => beforeUpdate(sequelize, instance),
       afterCreate: async (instance) => afterCreate(sequelize, instance),
       afterDestroy: async (instance) => afterDestroy(sequelize, instance),
       afterRestore: async (instance) => afterRestore(sequelize, instance),
       afterUpdate: async (instance) => afterUpdate(sequelize, instance),
-      afterUpsert: async (instance) => afterUpsert(sequelize, instance),
     },
     indexes: [{
       unique: true,

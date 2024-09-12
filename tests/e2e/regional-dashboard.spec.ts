@@ -1,29 +1,31 @@
 import { test, expect } from '@playwright/test';
-import moment from 'moment';
-
-const lastThirtyDays = `${moment().subtract(30, 'days').format('MM/DD/YYYY')}-${moment().format('MM/DD/YYYY')}`;
 
 test('Regional Dashboard', async ({ page }) => {
   //navigate to the dashboard
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Regional Dashboard' }).click();
 
-  // remove one of the filters
-  await page.getByRole('button', { name: `This button removes the filter: Date started is within ${lastThirtyDays}` }).click();
+  // get page URL
+  const url = page.url();
+  const params = new URL(url).searchParams;
+
+  expect(params.get('region.in[]')).toBeTruthy();
 
   // open the filter menu, change the region filter to state code
-  await page.getByRole('button', { name: 'open filters for this page , 1 currently applied' }).click();
-  await page.getByLabel('Select a filter').selectOption('stateCode');
-  await page.getByLabel('Select a condition').selectOption('contains');
-  await page.getByLabel('Select a condition').focus();
-  await page.keyboard.press('Tab');
-  await page.keyboard.type('Rhode Island');
+  await page.getByRole('button', { name: /open filters for this page/i }).click();
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+  await page.getByLabel('topic', { exact: true }).selectOption('stateCode');
+
+
+  await page.getByLabel('condition', { exact: true }).selectOption('contains');
+  await page.locator('.ttahub-filter-select__input-container').click();
+  await page.getByText('Rhode Island (RI)', { exact: true }).click();
   await page.keyboard.press('Enter');
 
   await page.getByTestId('filters').click();
   await page.getByRole('button', { name: 'apply filters for regional dashboard' }).click();
 
-  // remove the remaining filter
+  // remove the filter
   await page.getByRole('button', { name: 'This button removes the filter: State or territory contains RI' }).click();
 
   // switch the total training graph's display type back and forth
@@ -48,7 +50,7 @@ test('Regional Dashboard', async ({ page }) => {
   ]);
 
   // view the topics as a table
-  await page.getByRole('button', { name: 'display number of activity reports by topic data as table' }).click();
+  await page.getByRole('button', { name: /display Number of Activity Reports by Topic as table/i }).click();
 
   // change the topics graph order
   await page.getByRole('button', { name: 'toggle Change topic graph order menu' }).click();

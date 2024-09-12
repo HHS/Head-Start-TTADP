@@ -54,6 +54,17 @@ describe('authMiddleware', () => {
     User.destroy({ where: { id: user.id } })
   );
 
+  afterAll(async () => {
+    await User.destroy({
+      where: {
+        id: [mockUser.id, unAuthdUser.id],
+      },
+      individualHooks: true,
+    });
+
+    await db.sequelize.close();
+  });
+
   it('should allow access if user data is present', async () => {
     await setupUser(mockUser);
     process.env.CURRENT_USER_ID = 66349;

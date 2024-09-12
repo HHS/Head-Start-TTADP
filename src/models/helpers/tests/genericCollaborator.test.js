@@ -3,7 +3,6 @@ const {
   getCollaboratorRecord,
   findOrCreateCollaborator,
   getIdForCollaboratorType,
-  currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../genericCollaborator');
 
@@ -133,7 +132,7 @@ describe('GenericCollaborator', () => {
         {
           where: { id: expect.anything() },
           transaction,
-          independentHooks: true,
+          individualHooks: true,
           returning: true,
         },
       );
@@ -213,7 +212,7 @@ describe('GenericCollaborator', () => {
         where: {
           id: [goalId],
         },
-        independentHooks: true,
+        individualHooks: true,
         transaction,
       });
     });

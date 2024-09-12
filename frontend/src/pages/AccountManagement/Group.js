@@ -4,15 +4,15 @@ import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import { Alert } from '@trussworks/react-uswds';
 import colors from '../../colors';
 import { fetchGroup } from '../../fetchers/groups';
 import AppLoadingContext from '../../AppLoadingContext';
 import WidgetCard from '../../components/WidgetCard';
+import ReadOnlyField from '../../components/ReadOnlyField';
+import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export default function Group({ match }) {
   const { groupId } = match.params;
-  const [error, setError] = useState(null);
 
   const [group, setGroup] = useState({
     name: '',
@@ -20,6 +20,7 @@ export default function Group({ match }) {
   });
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
+  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   useEffect(() => {
     async function getGroup() {
@@ -28,7 +29,7 @@ export default function Group({ match }) {
         const existingGroupData = await fetchGroup(groupId);
         setGroup(existingGroupData);
       } catch (err) {
-        setError('There was an error fetching your group');
+        setErrorResponseCode(err.status);
       } finally {
         setIsAppLoading(false);
       }
@@ -38,11 +39,34 @@ export default function Group({ match }) {
     if (groupId) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading]);
+  }, [groupId, setIsAppLoading, setErrorResponseCode]);
 
   if (!group) {
     return null;
   }
+
+  const getGrantList = () => {
+    // Sort group.grants by grant.recipient.name
+    group.grants.sort((a, b) => a.recipient.name.localeCompare(b.recipient.name));
+
+    // Loop all grants and return a <li> for each grant
+    return group.grants.map((grant) => (
+      <li key={grant.id}>
+        {grant.recipientNameWithPrograms}
+      </li>
+    ));
+  };
+
+  const mapUsers = (usersToMap) => {
+    if (!usersToMap || !usersToMap.length) {
+      return null;
+    }
+    return usersToMap.map((user) => (
+      <li key={user.id}>
+        {user.name}
+      </li>
+    ));
+  };
 
   return (
     <>
@@ -61,19 +85,24 @@ export default function Group({ match }) {
       <WidgetCard
         header={<h1 className="margin-top-2 margin-bottom-4 font-serif-xl">{group.name}</h1>}
       >
-        {error ? (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-        ) : null}
-
-        <ul className="usa-list usa-list--unstyled">
-          {group.grants.map((grant) => (
-            <li key={grant.id}>
-              {grant.name}
-            </li>
-          ))}
-        </ul>
+        <ReadOnlyField label="Group owner">
+          {group && group.creator ? group.creator.name : ''}
+        </ReadOnlyField>
+        <ReadOnlyField label="Recipients">
+          <ul className="usa-list usa-list--unstyled">
+            {getGrantList()}
+          </ul>
+        </ReadOnlyField>
+        <ReadOnlyField label="Co-owners">
+          <ul className="usa-list usa-list--unstyled">
+            {mapUsers(group.coOwners)}
+          </ul>
+        </ReadOnlyField>
+        <ReadOnlyField label="Shared with">
+          <ul className="usa-list usa-list--unstyled">
+            {mapUsers(group.individuals)}
+          </ul>
+        </ReadOnlyField>
       </WidgetCard>
     </>
   );

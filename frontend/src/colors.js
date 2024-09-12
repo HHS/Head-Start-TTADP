@@ -29,6 +29,7 @@ const colors = {
   success: '#00a91c',
   successLighter: '#ecf3ec',
   successDarker: '#00a91c',
+  successDarkest: '#008817',
   error: '#d54309',
   errorLighter: '#f4e3db',
 
@@ -40,6 +41,7 @@ const colors = {
   textInk: '#1b1b1b',
   textLink: '#46789B',
   textVisited: '#8C39DB',
+  responseCode: '#71767A',
 };
 
 module.exports = colors;

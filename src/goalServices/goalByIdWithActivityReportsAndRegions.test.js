@@ -98,6 +98,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
       where: {
         id: [firstGrant.id],
       },
+      individualHooks: true,
     });
 
     await Recipient.destroy({
@@ -114,6 +115,8 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
     expect(goal.name).toBe('Goal on one grant');
     expect(goal.objectives.length).toBe(0);
     expect(goal.grant.regionId).toBe(firstGrant.regionId);
+    // It includes GoalStatusChanges as 'statusChanges'.
+    expect(goal.statusChanges).toBeDefined();
   });
 
   it('retrieves a goal with associated data', async () => {

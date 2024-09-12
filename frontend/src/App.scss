@@ -1,11 +1,41 @@
 @use 'colors.scss' as *;
 @use './Grid.scss';
 
+@use './widgets/widgets.scss';
+
 @font-face {
   font-family: 'FontAwesome';
   src: url('./assets/fa-solid-900.ttf') format('truetype'), url('./assets/fa-solid-900.woff2') format('woff2');
   font-weight: bold;
 }
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Regular.ttf') format('truetype');
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Bold.ttf') format('truetype');
+  font-weight: bold;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-Italic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: normal;
+}
+
+@font-face {
+  font-family: 'Merriweather';
+  src: url('./assets/Merriweather-BoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: bold;
+}
+
+
 
 a {
   color: $text-link;
@@ -14,6 +44,12 @@ a {
 a:visited {
   color: $text-visited
 }
+
+summary {
+  cursor: pointer;
+}
+
+/*|||||| Table resets |||||||*/
 
 .usa-table thead th a {
   color: $text-ink;
@@ -96,6 +132,9 @@ body {
   border-color: $error-dark;
 }
 
+.smart-hub-maxw-form-field {
+  max-width: 30rem;
+}
 
 .smart-hub-maxw-placard {
   max-width: 34.25rem;
@@ -394,4 +433,21 @@ fill: #1B1B1B;
   .desktop\:maxw-6 {
     max-width: 3rem;
   }
+}
+
+.smart-hub--vertical-text {
+  writing-mode: vertical-lr;
+  transform: rotate(180deg);
+}
+
+.text-overflow-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
 }

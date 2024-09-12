@@ -92,7 +92,10 @@ describe('Grant DB service', () => {
   });
 
   afterAll(async () => {
-    await Grant.unscoped().destroy({ where: { id: grants.map((g) => g.id) } });
+    await Grant.unscoped().destroy({
+      where: { id: grants.map((g) => g.id) },
+      individualHooks: true,
+    });
     await Region.destroy({
       where: {
         id: [129129, 129130],

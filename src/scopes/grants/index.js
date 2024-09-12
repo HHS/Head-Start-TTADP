@@ -9,6 +9,7 @@ import { withStateCode } from './stateCode';
 import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
 import { noActivityWithin } from './recipientsWithoutTTA';
+import { withGoalName, withoutGoalName } from './goalName';
 
 export const topicToQuery = {
   recipient: {
@@ -47,6 +48,10 @@ export const topicToQuery = {
   group: {
     in: (query, _options, userId) => withGroup(query, userId),
     nin: (query, _options, userId) => withoutGroup(query, userId),
+  },
+  goalName: {
+    ctn: (query) => withGoalName(query),
+    nctn: (query) => withoutGoalName(query),
   },
 };
 

@@ -10,8 +10,10 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
+import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import AppLoadingContext from '../../../AppLoadingContext';
+import { GrantDataProvider } from '../pages/GrantDataContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
@@ -88,7 +90,7 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
+  function renderRecipientRecord(history = memoryHistory, regionId = '45', setErrorResponseCode = jest.fn()) {
     const match = {
       path: '',
       url: '',
@@ -100,18 +102,22 @@ describe('recipient record page', () => {
 
     render(
       <Router history={history}>
-        <UserContext.Provider value={{ user }}>
-          <AppLoadingContext.Provider value={
-          {
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+          <UserContext.Provider value={{ user }}>
+            <GrantDataProvider>
+              <AppLoadingContext.Provider value={
+            {
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }
           }
-        }
-          >
-            <RecipientRecord match={match} />
-          </AppLoadingContext.Provider>
-        </UserContext.Provider>
+              >
+                <RecipientRecord match={match} />
+              </AppLoadingContext.Provider>
+            </GrantDataProvider>
+          </UserContext.Provider>
+        </SomethingWentWrongContext.Provider>
       </Router>,
     );
   }
@@ -145,6 +151,10 @@ describe('recipient record page', () => {
     fetchMock.get('/api/widgets/goalStatusGraph?region.in[]=45&recipientId.ctn[]=1', 200);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=5', []);
     fetchMock.get('/api/recipient/1/region/45/goals?sortBy=goalStatus&sortDir=asc&offset=0&limit=10', []);
+    fetchMock.get('/api/monitoring/class/1/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/1/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/undefined/region/45/grant/RECIPIENT_NUMBER', {});
+    fetchMock.get('/api/monitoring/class/undefined/region/45/grant/RECIPIENT_NUMBER', {});
   });
   afterEach(() => {
     fetchMock.restore();
@@ -185,17 +195,21 @@ describe('recipient record page', () => {
   it('handles recipient not found', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('Recipient record not found');
-    expect(error).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    await act(async () => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    await waitFor(() => {
+      expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+    });
   });
 
   it('handles fetch error', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 500);
-    act(() => renderRecipientRecord());
-    const error = await screen.findByText('There was an error fetching recipient data');
-    expect(error).toBeInTheDocument();
+    const setErrorResponseCode = jest.fn();
+    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    await waitFor(() => {
+      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+    });
   });
 
   it('navigates to the profile page', async () => {
@@ -241,7 +255,7 @@ describe('recipient record page', () => {
     fetchMock.get('/api/goals/12389/recipient/45', mockGoal);
     fetchMock.get('/api/topic', []);
     memoryHistory.push('/recipient-tta-records/45/region/1/goals/12389');
-    act(() => renderRecipientRecord());
+    await act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
     await screen.findByText(/TTA Goals for the Mighty Recipient/i);
   });
@@ -261,9 +275,10 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/1/log/1', 404);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication/1/view');
-    act(() => renderRecipientRecord());
+    const setErrorResponseCode = jest.fn();
+    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/There was an error fetching the communication log/i);
+    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(404));
   });
 
   it('navigates to the communication log form', async () => {

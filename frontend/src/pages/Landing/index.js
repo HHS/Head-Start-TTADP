@@ -32,7 +32,7 @@ import './TouchPoints.css';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
 import FilterPanel from '../../components/filter/FilterPanel';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { LANDING_BASE_FILTER_CONFIG, LANDING_FILTER_CONFIG_WITH_REGIONS } from './constants';
+import { LANDING_FILTER_CONFIG } from './constants';
 import FilterContext from '../../FilterContext';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
@@ -202,13 +202,10 @@ function Landing() {
   }
 
   const regionLabel = () => {
-    if (defaultRegion === 14) {
-      return 'all regions';
+    if (defaultRegion === 14 || hasMultipleRegions) {
+      return 'your regions';
     }
-    if (defaultRegion > 0) {
-      return `region ${defaultRegion.toString()}`;
-    }
-    return '';
+    return 'your region';
   };
 
   // Apply filters.
@@ -244,8 +241,7 @@ function Landing() {
   };
 
   const filtersToUse = useMemo(() => {
-    const filterConfig = hasMultipleRegions
-      ? [...LANDING_FILTER_CONFIG_WITH_REGIONS] : [...LANDING_BASE_FILTER_CONFIG];
+    const filterConfig = LANDING_FILTER_CONFIG(hasMultipleRegions);
 
     // If user has approve activity report permission add 'Specialist name' filter.
     if (hasApproveActivityReport(user)) {
@@ -291,15 +287,15 @@ function Landing() {
           </Alert>
         )}
         <Grid row gap>
-          <Grid>
-            <h1 className="landing margin-top-0 margin-bottom-3">{`Activity reports - ${regionLabel()}`}</h1>
-          </Grid>
-          <Grid className="grid-col-2 flex-align-self-center">
-            {reportAlerts
+          <Grid col={12} className="display-flex flex-wrap">
+            <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Activity reports - ${regionLabel()}`}</h1>
+            <div className="margin-bottom-2">
+              {reportAlerts
               && reportAlerts.length > 0
               && hasReadWrite(user)
               && appliedRegionNumber !== 14
               && <NewReport />}
+            </div>
           </Grid>
           <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
             <FilterPanel

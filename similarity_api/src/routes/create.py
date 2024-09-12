@@ -26,11 +26,12 @@ def create_routes(app: Flask):
 
       alpha = data["alpha"] if "alpha" in data else 0.9
       cluster = data["cluster"] if "cluster" in data else False
+      include_curated_templates = data["include_curated_templates"] if "include_curated_templates" in data else False
 
       if "text" in data and "recipient_id" in data:
           recipient_id = data["recipient_id"]
           text = data["text"]
-          return find_similar_goals(recipient_id, text, alpha)
+          return find_similar_goals(recipient_id, text, alpha, include_curated_templates)
       elif "text_1" in data and "text_2" in data:
           text_1 = data["text_1"]
           text_2 = data["text_2"]

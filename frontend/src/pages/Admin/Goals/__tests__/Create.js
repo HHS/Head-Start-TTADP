@@ -270,28 +270,6 @@ describe('Create', () => {
 
     await waitFor(() => expect(fetchMock.called(createGoalsUrl)).toBe(true));
     expect(await screen.findByText(/Goal name already exists for grants 2/i)).toBeInTheDocument();
-
-    fetchMock.restore();
-    const createGoalsForMissingGrants = await screen.findByRole('button', { name: 'Create goals for missing grants' });
-
-    fetchMock.post(createGoalsUrl, {
-      activityReport: {
-        id: 1,
-        displayId: 'R01-123-01',
-      },
-      goals: [{ id: 1 }],
-      isError: false,
-      message: '',
-    });
-
-    act(() => {
-      userEvent.click(createGoalsForMissingGrants);
-    });
-
-    expect(fetchMock.called(createGoalsUrl)).toBe(true);
-    const { body } = fetchMock.lastOptions();
-    const { selectedGrants } = JSON.parse(body);
-    expect(JSON.parse(selectedGrants)).toEqual([{ id: 4 }]);
   });
   it('displays generic error message when an unknown error occurs', async () => {
     fetchMock.get(templatesUrl, []);
@@ -393,7 +371,7 @@ describe('Create', () => {
       },
       goals: [{ id: 1 }],
       isError: false,
-      message: '',
+      message: 'A message of confirmation',
     });
 
     const submitButton = await screen.findByRole('button', { name: /Submit/i });
@@ -404,5 +382,6 @@ describe('Create', () => {
     await waitFor(() => expect(fetchMock.called(createGoalsUrl)).toBe(true));
     expect(await screen.findByText(/successfully created 1 goals/i)).toBeInTheDocument();
     expect(await screen.findByText(/R01-123-01/i)).toBeInTheDocument();
+    expect(await screen.findByText(/A message of confirmation/i)).toBeInTheDocument();
   });
 });

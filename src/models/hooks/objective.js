@@ -1,5 +1,7 @@
+import httpContext from 'express-http-context';
 import { Op } from 'sequelize';
-import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS } from '../../constants';
+import { REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS, OBJECTIVE_COLLABORATORS, GOAL_STATUS } from '../../constants';
 import { validateChangedOrSetEnums } from '../helpers/enum';
 import { skipIf } from '../helpers/flowControl';
 import {
@@ -200,12 +202,15 @@ const propogateStatusToParentGoal = async (sequelize, instance, options) => {
 
       // and if so, we update it (storing the previous status so we can revert if needed)
       if (atLeastOneInProgress) {
-        await goal.update({
-          status: 'In Progress',
-          previousStatus: 'Not Started',
-        }, {
-          transaction: options.transaction,
-          individualHooks: true,
+        // eslint-disable-next-line global-require
+        const changeGoalStatus = require('../../goalServices/changeGoalStatus').default;
+        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+        await changeGoalStatus({
+          goalId: goal.id,
+          userId,
+          newStatus: 'In Progress',
+          reason: 'Objective moved to In Progress',
+          context: null,
         });
       }
     }
@@ -228,48 +233,6 @@ const propagateTitle = async (sequelize, instance, options) => {
         individualHooks: true,
       },
     );
-  }
-};
-
-const propagateMetadataToTemplate = async (sequelize, instance, options) => {
-  const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('objectiveTemplateId')) {
-    const files = await sequelize.models.ObjectiveFile.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(files.map(async (file) => sequelize.models.ObjectiveTemplateFile
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          fileid: file.fileId,
-        },
-      })));
-
-    const resources = await sequelize.models.ObjectiveResource.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(resources.map(async (resource) => sequelize.models.ObjectiveTemplateResource
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          resourceId: resource.resourceId,
-        },
-      })));
-
-    const topics = await sequelize.models.ObjectiveTopics.findAll({
-      where: { objectiveId: instance.id },
-      transaction: options.transaction,
-    });
-    await Promise.all(topics.map(async (topic) => sequelize.models.ObjectiveTemplateTopics
-      .findOrCreate({
-        where: {
-          objectiveTemplateId: instance.objectiveTemplateId,
-          topicId: topic.topicId,
-        },
-      })));
   }
 };
 
@@ -302,6 +265,44 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
   return Promise.resolve();
 };
 
+const propagateSupportTypeToActivityReportObjective = async (sequelize, instance, options) => {
+  const { id: objectiveId, supportType } = instance;
+  // no support type? get outta here
+  if (!supportType) return;
+
+  // find all activity report objectives that are not the same support type
+  // and are not on an approved or deleted activity report
+  const activityReportObjectives = await sequelize.models.ActivityReportObjective.findAll({
+    where: {
+      objectiveId,
+      supportType: {
+        [Op.not]: supportType,
+      },
+    },
+    include: [
+      {
+        model: sequelize.models.ActivityReport,
+        as: 'activityReport',
+        where: {
+          calculatedStatus: {
+            [Op.notIn]: [
+              REPORT_STATUSES.APPROVED,
+              REPORT_STATUSES.DELETED,
+            ],
+          },
+        },
+        required: true,
+      },
+    ],
+    transaction: options.transaction,
+  });
+  await Promise.all(activityReportObjectives.map(async (aro) => aro.update({
+    supportType,
+  }, {
+    transaction: options.transaction,
+  })));
+};
+
 const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
@@ -321,10 +322,10 @@ const beforeUpdate = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await propagateTitle(sequelize, instance, options);
-  await propagateMetadataToTemplate(sequelize, instance, options);
   await linkObjectiveGoalTemplates(sequelize, instance, options);
   await propogateStatusToParentGoal(sequelize, instance, options);
   await autoPopulateEditor(sequelize, instance, options);
+  await propagateSupportTypeToActivityReportObjective(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {

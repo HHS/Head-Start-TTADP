@@ -2,11 +2,22 @@
 /* eslint-disable quotes */
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import { Op } from 'sequelize';
 import cheerio from 'cheerio';
 import faker from '@faker-js/faker';
 import {
-  ActivityReport, User, Recipient, Grant, File, Permission, RequestErrors, sequelize,
+  ActivityReport,
+  User,
+  Recipient,
+  Grant,
+  File,
+  Permission,
+  RequestErrors,
+  GrantNumberLink,
+  MonitoringReviewGrantee,
+  MonitoringClassSummary,
+  sequelize,
 } from '../models';
 
 const SITE_ACCESS = 1;
@@ -76,6 +87,9 @@ const hsesUsers = [
   },
   {
     name: 'Patrick Deutsch', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'patrick.deutsch@adhocteam.us',
+  },
+  {
+    name: 'Does Notexist', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
   },
 ];
 
@@ -228,6 +242,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   });
 
   const promises = [];
+  const promisesMonitoring = [];
 
   // loop through the found reports
   for (const recipient of recipients) {
@@ -265,6 +280,39 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     );
   }
   await Promise.all(promises);
+  const oldGrantNumbers = [];
+
+  for (const grant of grants) {
+    const newGrantNumber = grant.number;
+    const oldGrantNumber = await GrantNumberLink.findOne({
+      attributes: ['grantNumber'],
+      where: { grantId: grant.id, grantNumber: { [Op.ne]: grant.number } },
+    });
+    if (oldGrantNumber) {
+      oldGrantNumbers.push(oldGrantNumber.grantNumber);
+      // Update corresponding MonitoringReviewGrantee records
+      promisesMonitoring.push(
+        MonitoringReviewGrantee.update(
+          { grantNumber: newGrantNumber },
+          { where: { grantNumber: oldGrantNumber.grantNumber } },
+        ),
+      );
+      // Update corresponding MonitoringClassSummary records
+      promisesMonitoring.push(
+        MonitoringClassSummary.update(
+          { grantNumber: newGrantNumber },
+          { where: { grantNumber: oldGrantNumber.grantNumber } },
+        ),
+      );
+    }
+  }
+
+  await Promise.all(promisesMonitoring);
+
+  await GrantNumberLink.unscoped().destroy({
+    where: { grantNumber: { [Op.in]: oldGrantNumbers } },
+    force: true,
+  });
 
   // Retrieve transformed recipients
   transformedRecipients = (await Recipient.findAll({

@@ -32,32 +32,7 @@ export default (sequelize, DataTypes) => {
       });
       Objective.belongsTo(models.OtherEntity, { foreignKey: 'otherEntityId', as: 'otherEntity' });
       Objective.belongsTo(models.Goal, { foreignKey: 'goalId', as: 'goal' });
-
-      Objective.hasMany(models.ObjectiveCourse, { foreignKey: 'objectiveId', as: 'objectiveCourses' });
-
-      Objective.hasMany(models.ObjectiveResource, { foreignKey: 'objectiveId', as: 'objectiveResources' });
-      Objective.belongsToMany(models.Resource, {
-        through: models.ObjectiveResource,
-        foreignKey: 'objectiveId',
-        otherKey: 'resourceId',
-        as: 'resources',
-      });
-      Objective.hasMany(models.ObjectiveTopic, { foreignKey: 'objectiveId', as: 'objectiveTopics' });
-      Objective.belongsToMany(models.Topic, {
-        through: models.ObjectiveTopic,
-        foreignKey: 'objectiveId',
-        otherKey: 'topicId',
-        as: 'topics',
-      });
       Objective.belongsTo(models.ObjectiveTemplate, { foreignKey: 'objectiveTemplateId', as: 'objectiveTemplate', onDelete: 'cascade' });
-      Objective.hasMany(models.ObjectiveFile, { foreignKey: 'objectiveId', as: 'objectiveFiles' });
-      Objective.belongsToMany(models.File, {
-        through: models.ObjectiveFile,
-        foreignKey: 'objectiveId',
-        otherKey: 'fileId',
-        as: 'files',
-      });
-
       Objective.belongsTo(models.Objective, {
         foreignKey: 'mapsToParentObjectiveId',
         as: 'parentObjective',

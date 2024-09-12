@@ -4,9 +4,29 @@ import {
   render, screen, within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import ReadOnlyGoal from '../ReadOnlyGoal';
+import ReadOnlyGoal, { parseObjectValuesOrString } from '../ReadOnlyGoal';
 
 describe('ReadOnlyGoal', () => {
+  describe('parseObjectValuesOrString', () => {
+    it('is invincible', () => {
+      const obj = {
+        a: 'a',
+        b: 'b',
+      };
+      expect(parseObjectValuesOrString(obj)).toBe('a, b');
+      expect(parseObjectValuesOrString('a')).toBe('a');
+      expect(parseObjectValuesOrString(1)).toBe('');
+      expect(parseObjectValuesOrString(null)).toBe('');
+      expect(parseObjectValuesOrString(undefined)).toBe('');
+      expect(parseObjectValuesOrString()).toBe('');
+
+      expect(parseObjectValuesOrString({})).toBe('');
+      expect(parseObjectValuesOrString(['a', 'b'])).toBe('a, b');
+      expect(parseObjectValuesOrString([])).toBe('');
+      expect(parseObjectValuesOrString(() => {})).toBe('');
+    });
+  });
+
   const createdGoal = {
     name: 'Sample goal',
     grant: {},

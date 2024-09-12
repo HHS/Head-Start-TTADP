@@ -117,15 +117,15 @@ main() {
       check_exit "$?"
 
       # then list through the folders and run the tests
-      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices") 
+      targets=("lib" "middleware" "models" "policies" "routes" "scopes" "services" "tools" "widgets" "goalServices")
 
-       for target in "${targets[@]}"; do        
+       for target in "${targets[@]}"; do
 
-        # jest command to 
+        # jest command to
         # - run tests in the target folder
         # - collect coverage from the target folder
         # - output coverage relative to the target folder
-        # - some other useful flags        
+        # - some other useful flags
         command="node_modules/.bin/cross-env \
           JEST_JUNIT_OUTPUT_DIR=reports \
           JEST_JUNIT_OUTPUT_NAME=unit.xml \
@@ -147,15 +147,15 @@ main() {
           --logHeapUsage \
           --coverageDirectory=\$(pwd)/coverage/src/$target \
           --collectCoverageFrom=src/$target/**/*.js \
-          --forceExit"    
-          
+          --forceExit"
+
           if [[ $docker == "true" ]]; then
             docker exec test-backend bash -c "$command"
           else
             $command
           fi
           check_exit "$?"
-      done 
+      done
     fi
 
     if [[ "$opt" == "frontend" || -z "$opt" ]]; then

@@ -12,6 +12,7 @@ import fetchMock from 'fetch-mock';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import participants, { isPageComplete } from '../participants';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -20,7 +21,7 @@ import AppLoadingContext from '../../../../AppLoadingContext';
 
 const sessionsUrl = join('/', 'api', 'session-reports');
 const participantsUrl = join(sessionsUrl, 'participants', '1');
-
+const groupsUrl = join(sessionsUrl, 'groups', '?region=1');
 function mockRecipients(howMany) {
   const mock = [];
   // eslint-disable-next-line no-plusplus
@@ -34,8 +35,12 @@ function mockRecipients(howMany) {
           name: `R${i} G${i}`,
         },
         {
-          id: i,
+          id: i + 1,
           name: `R${i} G${i + 1}`,
+        },
+        {
+          id: i + 2,
+          name: `R${i} G${i + 2}`,
         },
       ],
     });
@@ -48,7 +53,7 @@ describe('participants', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
       expect(isPageComplete({
-        getValues: jest.fn(() => ({ recipients: [1], participants: [1] })),
+        getValues: jest.fn(() => ({ recipients: [1], participants: [1], language: ['Mermish'] })),
       })).toBe(true);
     });
 
@@ -78,6 +83,8 @@ describe('participants', () => {
       eventName: 'Event name',
       regionId: 1,
       status: 'In progress',
+      isIstVisit: 'no',
+      recipients: [],
       pageState: {
         1: NOT_STARTED,
         2: NOT_STARTED,
@@ -85,7 +92,7 @@ describe('participants', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderParticipants = ({ formValues = defaultFormValues }) => {
+    const RenderParticipants = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -100,7 +107,7 @@ describe('participants', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -120,7 +127,11 @@ describe('participants', () => {
     };
 
     beforeEach(async () => {
+      // Mock recipients.
       fetchMock.get(participantsUrl, mockRecipients(3));
+      // Mock groups.
+      const mockGroups = [{ id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] }, { id: 2, name: 'group 2', grants: [{ id: 2 }, { id: 3 }] }];
+      fetchMock.get(groupsUrl, mockGroups);
     });
 
     afterEach(async () => {
@@ -133,8 +144,6 @@ describe('participants', () => {
       });
       await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
       await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
-      await selectEvent.select(screen.getByLabelText(/Recipient participants/i), 'Home Visitor');
-
       act(() => {
         userEvent.click(
           screen.getByLabelText(/in person/i),
@@ -168,38 +177,22 @@ describe('participants', () => {
         );
       });
     });
-    it('shows read only mode', async () => {
-      const readOnlyFormValues = {
-        ...defaultFormValues,
-        pocComplete: true,
-        pocCompleteId: userId,
-        pocCompleteDate: todaysDate,
-        event: {
-          pocIds: [userId],
-        },
-        recipients: [
-          {
-            id: 1,
-            label: 'R1 R1 G1',
-          },
-        ],
-        deliveryMethod: 'in-person',
-        numberOfParticipants: 1,
-        participants: ['Home Visitor'],
-      };
 
+    it('toggles IST questions conditionally', async () => {
       act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
+        render(<RenderParticipants />);
       });
       await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
 
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
+      act(() => {
+        userEvent.click(
+          screen.getByLabelText(/yes/i),
+        );
+      });
 
-      // confirm in-person is capitalized
-      const inPerson = await screen.findByText('In-person');
-      expect(inPerson).toBeVisible();
+      expect(screen.getByLabelText(/yes/i)).toBeChecked();
+      await selectEvent.select(screen.getByLabelText(/Regional Office\/TTA/i), 'TTAC');
     });
 
     it('shows read only mode correctly for hybrid', async () => {
@@ -222,16 +215,14 @@ describe('participants', () => {
         numberOfParticipantsInPerson: 1,
         numberOfParticipantsVirtually: 1,
         participants: ['Home Visitor'],
+        language: ['English'],
+        isIstVisit: 'no',
       };
 
       act(() => {
         render(<RenderParticipants formValues={readOnlyFormValues} />);
       });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
 
       // confirm hybrid is capitalized
       const inPerson = await screen.findByText('Hybrid');
@@ -242,6 +233,113 @@ describe('participants', () => {
       expect(inPersonLabel).toBeVisible();
       const virtuallyLabel = await screen.findByText(/Number of participants attending virtually/i);
       expect(virtuallyLabel).toBeVisible();
+    });
+
+    it('only shows the continue button when the session status is complete', async () => {
+      const readOnlyFormValues = {
+        ...defaultFormValues,
+        pocComplete: true,
+        pocCompleteId: userId,
+        pocCompleteDate: todaysDate,
+        event: {
+          pocIds: [userId],
+        },
+        recipients: [
+          {
+            id: 1,
+            label: 'R1 R1 G1',
+          },
+        ],
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: 2,
+        numberOfParticipantsInPerson: 1,
+        numberOfParticipantsVirtually: 1,
+        participants: ['Home Visitor'],
+        language: ['English'],
+        isIstVisit: 'no',
+      };
+
+      act(() => {
+        render(<RenderParticipants
+          formValues={readOnlyFormValues}
+          additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
+        />);
+      });
+      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).toBeInTheDocument();
+    });
+
+    describe('groups', () => {
+      it('correctly shows and hides all group options', async () => {
+        render(<RenderParticipants />);
+
+        // Click the use group checkbox.
+        let useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+
+        act(() => {
+          userEvent.click(useGroupCheckbox);
+        });
+
+        // Correctly shows the group drop down.
+        const groupOption = screen.getByRole('combobox', { name: /group name required/i });
+        expect(groupOption).toBeInTheDocument();
+
+        // Uncheck the use group checkbox.
+        useGroupCheckbox = screen.getByRole('checkbox', { name: /use group/i });
+        act(() => {
+          userEvent.click(useGroupCheckbox);
+        });
+
+        // Assert that the group drop down is no longer visible.
+        expect(groupOption).not.toBeInTheDocument();
+      });
+
+      it('hides the use group check box if we dont have any groups', async () => {
+        fetchMock.get(groupsUrl, [], { overwriteRoutes: true });
+        render(<RenderParticipants />);
+        expect(screen.queryAllByRole('checkbox', { name: /use group/i }).length).toBe(0);
+      });
+
+      it('correctly shows message if group recipients are changed', async () => {
+        act(() => {
+          render(<RenderParticipants />);
+        });
+        await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+        await waitFor(() => expect(fetchMock.called(groupsUrl)).toBeTruthy());
+
+        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G0');
+        expect(screen.getByText(/R0 G0/i)).toBeVisible();
+
+        // Click the use group checkbox.
+        const useGroupCheckbox = await screen.findByRole('checkbox', { name: /use group/i });
+        act(() => {
+          userEvent.click(useGroupCheckbox);
+        });
+
+        // Correctly shows the group drop down.
+        const groupOption = screen.getByRole('combobox', { name: /group name required/i });
+        expect(groupOption).toBeInTheDocument();
+
+        await act(async () => {
+          const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+          userEvent.selectOptions(groupSelectBox, 'group 1');
+          await waitFor(() => {
+          // expect Group 2 to be visible.
+            expect(screen.getByText('group 1')).toBeVisible();
+          });
+        });
+
+        await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G2');
+        expect(screen.getByText(/you've successfully modified the group/i)).toBeInTheDocument();
+
+        // Make sure reset works.
+        const resetButton = screen.getByRole('button', { name: /reset or select a different group\./i });
+        userEvent.click(resetButton);
+
+        // Assert use group check box is checked.
+        expect(useGroupCheckbox).toBeChecked();
+      });
     });
   });
 });

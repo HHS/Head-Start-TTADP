@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
@@ -75,6 +76,7 @@ const renderReview = (
     displayId: 'R01-AR-23424',
     id: 1,
     creatorRole,
+    regionId: 1,
   };
 
   if (hasIncompleteGoalPrompts) {
@@ -84,6 +86,7 @@ const renderReview = (
         allGoalsHavePromptResponse: false,
         title: 'FEI Goal',
       }],
+      goalIds: [1, 2],
     }];
   }
 
@@ -136,6 +139,15 @@ describe('Submitter review page', () => {
     });
 
     it('shows an error if goals are missing prompts', async () => {
+      fetchMock.get('/api/goals/region/1/incomplete?goalIds=1&goalIds=2', [
+        {
+          id: 2, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+        },
+        {
+          id: 3, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+        },
+      ]);
+
       renderReview(
         REPORT_STATUSES.DRAFT,
         jest.fn(),

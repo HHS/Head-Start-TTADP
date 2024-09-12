@@ -20,6 +20,11 @@ export const EMPTY_MULTI_SELECT = {
   'is not': [],
 };
 
+export const EMPTY_TEXT_INPUT = {
+  contains: '',
+  'does not contain': '',
+};
+
 export const SPECIALIST_NAME_CONDITIONS = [IS_COLLABORATOR, IS_CREATOR, IS_BOTH];
 export const SELECT_CONDITIONS = [CONTAINS, NOT_CONTAINS];
 export const FILTER_CONDITIONS = [IS, IS_NOT];
@@ -154,6 +159,7 @@ export const GOVERNMENT_HOSTNAME_EXTENSION = '.ohs.acf.hhs.gov';
 export const ESCAPE_KEY_CODE = 27;
 export const GOALS_PER_PAGE = 10;
 export const TOPICS_PER_PAGE = 10;
+export const COURSES_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
@@ -164,8 +170,9 @@ export const DATE_DISPLAY_FORMAT = 'MM/DD/YYYY';
 export const DATEPICKER_VALUE_FORMAT = 'YYYY-MM-DD';
 export const EARLIEST_INC_FILTER_DATE = moment('2020-08-31');
 
-const LOCAL_STORAGE_CACHE_NUMBER = '0.3';
+const LOCAL_STORAGE_CACHE_NUMBER = '0.4';
 export const LOCAL_STORAGE_DATA_KEY = (id) => `ar-form-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_STORAGE_CACHE_NUMBER}`;
+export const REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY = 'regional-resources-dashboard-filters';
