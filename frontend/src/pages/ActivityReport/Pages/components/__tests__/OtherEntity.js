@@ -3,14 +3,15 @@ import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import PropTypes from 'prop-types';
 import fetchMock from 'fetch-mock';
 import { FormProvider, useForm } from 'react-hook-form';
 import OtherEntity from '../OtherEntity';
+import UserContext from '../../../../../UserContext';
 
 let setError;
 
-// eslint-disable-next-line react/prop-types
-const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
+const RenderOtherEntity = ({ objectivesWithoutGoals, recipientIds }) => {
   const hookForm = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -21,10 +22,18 @@ const RenderOtherEntity = ({ objectivesWithoutGoals }) => {
   setError = hookForm.setError;
 
   return (
-    <FormProvider {...hookForm}>
-      <OtherEntity recipientIds={[]} onSaveDraft={jest.fn()} reportId="123" />
-    </FormProvider>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <FormProvider {...hookForm}>
+        <OtherEntity recipientIds={recipientIds} onSaveDraft={jest.fn()} reportId="123" />
+      </FormProvider>
+    </UserContext.Provider>
   );
+};
+
+RenderOtherEntity.propTypes = {
+  // eslint-disable-next-line react/forbid-prop-types
+  objectivesWithoutGoals: PropTypes.arrayOf(PropTypes.object).isRequired,
+  recipientIds: PropTypes.arrayOf(PropTypes.number).isRequired,
 };
 
 const objectives = [
@@ -34,6 +43,7 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
+    objectiveCreatedHere: true,
   },
   {
     title: 'title two',
@@ -41,6 +51,7 @@ const objectives = [
     status: 'In Progress',
     topics: [],
     resources: [],
+    objectiveCreatedHere: true,
   },
 ];
 
@@ -55,20 +66,20 @@ describe('OtherEntity', () => {
     <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
   });
   it('renders created objectives', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} recipientIds={[1]} />);
 
     const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
   });
 
   it('renders without roles', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={objectives} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={objectives} recipientIds={[1]} />);
     const title = await screen.findByText('title', { selector: 'textarea' });
     expect(title).toBeVisible();
   });
 
   it('the button adds a new objective', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} recipientIds={[1]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
     userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
@@ -77,7 +88,7 @@ describe('OtherEntity', () => {
   });
 
   it('displays errors', async () => {
-    render(<RenderOtherEntity objectivesWithoutGoals={[]} />);
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} recipientIds={[1]} />);
     const button = await screen.findByRole('button', { name: /Add new objective/i });
     userEvent.click(button);
     expect(screen.queryAllByText(/objective status/i).length).toBe(1);
@@ -86,5 +97,11 @@ describe('OtherEntity', () => {
 
     setError('objectivesWithoutGoals[0].title', { type: 'required', message: 'ENTER A TITLE' });
     await waitFor(() => expect(screen.queryByText(/ENTER A TITLE/i)).toBeVisible());
+  });
+
+  it('hides plus button when there are no recipients selected errors', async () => {
+    render(<RenderOtherEntity objectivesWithoutGoals={[]} recipientIds={[]} />);
+    const button = screen.queryByRole('button', { name: /Add new objective/i });
+    expect(button).toBeNull();
   });
 });

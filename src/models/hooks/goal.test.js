@@ -1,10 +1,10 @@
 /* eslint-disable global-require */
 const {
-  autoPopulateStatusChangeDates,
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
+  preventCloseIfObjectivesOpen,
 } = require('./goal');
-const { GOAL_STATUS } = require('../../constants');
+const { GOAL_STATUS, OBJECTIVE_STATUS } = require('../../constants');
 const { createRecipient, createGrant, createGoal } = require('../../testUtils');
 const {
   sequelize: db,
@@ -18,6 +18,63 @@ const {
 jest.mock('../../services/resource');
 
 describe('goal hooks', () => {
+  describe('preventCloseIfObjectivesOpen', () => {
+    it('does nothing if instance.changed is not an array', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue({}),
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+
+    it('does nothing is instance.changed does not include status', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(false),
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+    it('does nothing if status is not CLOSED', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(true),
+        status: GOAL_STATUS.IN_PROGRESS,
+      };
+      await expect(preventCloseIfObjectivesOpen({}, instance)).resolves.not.toThrow();
+    });
+
+    it('throws an error if status is SUSPENDED and objectives are not closed', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(['status']),
+        status: GOAL_STATUS.SUSPENDED,
+      };
+      const sequelize = {
+        models: {
+          Objective: {
+            findAll: jest.fn().mockResolvedValue([
+              { status: OBJECTIVE_STATUS.IN_PROGRESS },
+            ]),
+          },
+        },
+      };
+      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow();
+    });
+
+    it('throws an error if status is CLOSED and objectives are not closed', async () => {
+      const instance = {
+        changed: jest.fn().mockReturnValue(['status']),
+        status: GOAL_STATUS.CLOSED,
+      };
+      const sequelize = {
+        models: {
+          Objective: {
+            findAll: jest.fn().mockResolvedValue([
+              { status: OBJECTIVE_STATUS.IN_PROGRESS },
+            ]),
+          },
+        },
+      };
+      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow();
+    });
+  });
+
   describe('GoalSimilarityGroup hooks', () => {
     let recipient;
     let grant;
@@ -75,6 +132,49 @@ describe('goal hooks', () => {
       expect(result.length).toEqual(0);
     });
 
+    it('should invalidate similarity groups on a goal name update', async () => {
+      // Create a single goal
+      const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
+
+      // Create two similarity groups
+      const group1 = await GoalSimilarityGroupModel.create({
+        recipientId: recipient.id,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      });
+
+      const group2 = await GoalSimilarityGroupModel.create({
+        recipientId: recipient.id,
+        userHasInvalidated: false,
+        finalGoalId: null,
+      });
+
+      // Associate the single goal with both groups
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group1.id,
+        goalId: goal.id,
+      });
+
+      await GoalSimilarityGroupGoalModel.create({
+        goalSimilarityGroupId: group2.id,
+        goalId: goal.id,
+      });
+
+      // Update the name of the goal
+      await goal.update({ name: 'New Name' }, { individualHooks: true });
+
+      // Check the results to ensure both groups are invalidated
+      const result = await GoalSimilarityGroupModel.findAll({
+        where: {
+          recipientId: recipient.id,
+          userHasInvalidated: false,
+          finalGoalId: null,
+        },
+      });
+
+      expect(result.length).toEqual(0);
+    });
+
     it('should invalidate similarity groups on goal destroy', async () => {
       const goal = await createGoal({ grantId: grant.id, status: GOAL_STATUS.IN_PROGRESS });
 
@@ -121,12 +221,15 @@ describe('goal hooks', () => {
           grantId: grant.id,
         },
         force: true,
+        paranoid: true,
+        individualHooks: true,
       });
 
       await GrantModel.destroy({
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       await GoalSimilarityGroupModel.destroy({
@@ -141,79 +244,6 @@ describe('goal hooks', () => {
         },
       });
       await db.close();
-    });
-  });
-
-  describe('autoPopulateStatusChangeDates', () => {
-    const sequelize = {};
-    const instance = {
-      changed: jest.fn(),
-      set: jest.fn(),
-    };
-    const options = {
-      fields: [],
-    };
-
-    afterEach(() => jest.clearAllMocks());
-
-    it('does not update fields if status is undefined, null, or empty string', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = undefined;
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).not.toHaveBeenCalled();
-      expect(options.fields).toEqual([]);
-    });
-
-    it('updates fields for NOT_STARTED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.NOT_STARTED;
-      const now = new Date();
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstNotStartedAt', now);
-      expect(options.fields).toContain('firstNotStartedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastNotStartedAt', now);
-      expect(options.fields).toContain('lastNotStartedAt');
-    });
-
-    it('updates fields for IN_PROGRESS status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.IN_PROGRESS;
-      const now = new Date();
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstInProgressAt', now);
-      expect(options.fields).toContain('firstInProgressAt');
-      expect(instance.set).toHaveBeenCalledWith('lastInProgressAt', now);
-      expect(options.fields).toContain('lastInProgressAt');
-    });
-
-    it('updates fields for SUSPENDED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.SUSPENDED;
-      const now = new Date();
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstCeasedSuspendedAt', now);
-      expect(options.fields).toContain('firstCeasedSuspendedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastCeasedSuspendedAt', now);
-      expect(options.fields).toContain('lastCeasedSuspendedAt');
-    });
-
-    it('updates fields for CLOSED status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = GOAL_STATUS.CLOSED;
-      const now = new Date();
-      autoPopulateStatusChangeDates(sequelize, instance, options);
-      expect(instance.set).toHaveBeenCalledWith('firstClosedAt', now);
-      expect(options.fields).toContain('firstClosedAt');
-      expect(instance.set).toHaveBeenCalledWith('lastClosedAt', now);
-      expect(options.fields).toContain('lastClosedAt');
-    });
-
-    it('throws an error for invalid status', () => {
-      instance.changed.mockReturnValueOnce(['status']);
-      instance.status = 'invalid_status';
-      expect(() => {
-        autoPopulateStatusChangeDates(sequelize, instance, options);
-      }).toThrowError('Goal status changed to invalid value of "invalid_status".');
     });
   });
 

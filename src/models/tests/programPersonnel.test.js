@@ -11,8 +11,24 @@ describe('ProgramPersonnel', () => {
   let grant;
   let recipient;
   let program;
+  let ehsProgram;
+  let weirdProgram;
   let baseProgramPersonnel;
   let programPersonnel;
+
+  const BASE_PERSONNEL = {
+    role: GRANT_PERSONNEL_ROLES[0],
+    active: false,
+    prefix: 'Mr.',
+    firstName: 'John',
+    lastName: 'Doe',
+    suffix: 'Jr.',
+    title: 'Director',
+    email: 'john.doe@test.gov',
+    effectiveDate: '2023-01-01',
+    mapsTo: null,
+  };
+
   beforeAll(async () => {
     // Recipient.
     recipient = await Recipient.create({
@@ -44,20 +60,33 @@ describe('ProgramPersonnel', () => {
       endDate: '2025',
     });
 
+    ehsProgram = await Program.create({
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      grantId: grant.id,
+      name: 'Sample Program Personnel ehs',
+      programType: 'EHS',
+      startYear: '2023',
+      status: 'active',
+      startDate: '2023',
+      endDate: '2025',
+    });
+
+    weirdProgram = await Program.create({
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      grantId: grant.id,
+      name: 'Sample Program Personnel weird',
+      programType: 'something-weird',
+      startYear: '2023',
+      status: 'active',
+      startDate: '2023',
+      endDate: '2025',
+    });
+
     // Grant Personnel.
     baseProgramPersonnel = await ProgramPersonnel.create({
+      ...BASE_PERSONNEL,
       grantId: grant.id,
       programId: program.id,
-      role: GRANT_PERSONNEL_ROLES[0],
-      active: false,
-      prefix: 'Mr.',
-      firstName: 'John',
-      lastName: 'Doe',
-      suffix: 'Jr.',
-      title: 'Director',
-      email: 'john.doe@test.gov',
-      effectiveDate: '2023-01-01',
-      mapsTo: null,
     });
 
     // Grant Personnel.
@@ -83,16 +112,11 @@ describe('ProgramPersonnel', () => {
         grantId: grant.id,
       },
     });
-    await ProgramPersonnel.destroy({
-      where: {
-        grantId: grant.id,
-      },
-    });
 
     // Delete Program.
     await Program.destroy({
       where: {
-        id: program.id,
+        id: [program.id, ehsProgram.id, weirdProgram.id],
       },
     });
 
@@ -101,6 +125,7 @@ describe('ProgramPersonnel', () => {
       where: {
         id: grant.id,
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.
@@ -206,5 +231,47 @@ describe('ProgramPersonnel', () => {
 
     // Assert there are two program personnel.
     expect(grant.programPersonnel.length).toBe(2);
+  });
+
+  it('returns the correct data for CFO', async () => {
+    await ProgramPersonnel.bulkCreate([
+      {
+        ...BASE_PERSONNEL,
+        role: 'cfo',
+        programId: program.id,
+        grantId: grant.id,
+      }, {
+        ...BASE_PERSONNEL,
+        role: 'cfo',
+        programId: ehsProgram.id,
+        grantId: grant.id,
+      },
+      {
+        ...BASE_PERSONNEL,
+        role: 'cfo',
+        programId: weirdProgram.id,
+        grantId: grant.id,
+      }]);
+
+    const personnel = await ProgramPersonnel.findAll({
+      where: {
+        role: 'cfo',
+        grantId: grant.id,
+      },
+      include: [
+        {
+          model: Program,
+          as: 'program',
+        },
+      ],
+    });
+
+    expect(personnel.length).toBe(3);
+
+    const fullRoles = personnel.map((p) => p.fullRole);
+
+    expect(fullRoles).toContain('Chief Financial Officer for Head Start');
+    expect(fullRoles).toContain('Chief Financial Officer for Early Head Start');
+    expect(fullRoles).toContain('Chief Financial Officer');
   });
 });

@@ -83,3 +83,47 @@ export async function similarity(regionId, recipientId) {
   const response = await get(url);
   return response.json();
 }
+
+export async function similiarGoalsByText(
+  regionId,
+  recipientId,
+  name,
+  grantNumbers,
+) {
+  const parameterizedGrantNumbers = grantNumbers.map((grantNumber) => `grantNumbers=${encodeURIComponent(grantNumber)}`).join('&');
+  const parameterizedGoalName = `name=${encodeURIComponent(name)}`;
+
+  const url = join(
+    goalsUrl,
+    'recipient',
+    String(recipientId),
+    'region',
+    String(regionId),
+    'nudge',
+    `?${parameterizedGoalName}&${parameterizedGrantNumbers}`,
+  );
+
+  const response = await get(url);
+  return response.json();
+}
+
+export async function missingDataForActivityReport(regionId, goalIds) {
+  const parameterizedGoalIds = goalIds.map((goalId) => `goalIds=${encodeURIComponent(goalId)}`).join('&');
+
+  const url = join(
+    goalsUrl,
+    'region',
+    String(regionId),
+    'incomplete',
+    `?${parameterizedGoalIds}`,
+  );
+
+  const response = await get(url);
+  return response.json();
+}
+
+export async function reopenGoal(goalId, reason, context) {
+  const url = join(goalsUrl, 'reopen');
+  const response = await put(url, { goalId, reason, context });
+  return response.json();
+}

@@ -9,14 +9,14 @@ interface CacheOptions {
 /**
  *
  * @param {string} key the key to use for the cache
- * @param {function} reponseCallback will be called if the cache is empty (must return a string)
+ * @param {function} responseCallback will be called if the cache is empty (must return a string)
  * @param {function} outputCallback will be called to format the output, defaults to a passthrough
  * @param options see the interface above, defaults to 10 minutes
  * @returns Promise<string | null>, the cached response or null if there was an error
  */
 export default async function getCachedResponse(
   key: string,
-  reponseCallback: () => Promise<string>,
+  responseCallback: () => Promise<string>,
   outputCallback: ((foo: string) => string) | JSON['parse'] = (foo: string) => foo,
   options: CacheOptions = {
     EX: 600,
@@ -65,7 +65,7 @@ export default async function getCachedResponse(
 
   // if we do not have a response, we need to call the callback
   if (!response) {
-    response = await reponseCallback();
+    response = await responseCallback();
     // and then, if we have a response and we are connected to redis, we need to set the cache
     if (response && clientConnected) {
       try {

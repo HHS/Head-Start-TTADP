@@ -6,6 +6,7 @@ const {
   beforeDestroy,
   afterDestroy,
   afterUpdate,
+  beforeValidate,
 } = require('./hooks/activityReportGoal');
 
 export default (sequelize, DataTypes) => {
@@ -83,6 +84,7 @@ export default (sequelize, DataTypes) => {
     sequelize,
     modelName: 'ActivityReportGoal',
     hooks: {
+      beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       beforeDestroy: async (instance, options) => beforeDestroy(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),

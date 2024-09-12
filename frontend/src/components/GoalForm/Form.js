@@ -1,15 +1,14 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { uniq } from 'lodash';
 import {
   Alert,
 } from '@trussworks/react-uswds';
 import ObjectiveForm from './ObjectiveForm';
 import PlusButton from './PlusButton';
 import GrantSelect from './GrantSelect';
-import GoalText from './GoalText';
 import GoalDate from './GoalDate';
-import FeatureFlag from '../FeatureFlag';
 import {
   OBJECTIVE_DEFAULTS,
   OBJECTIVE_DEFAULT_ERRORS,
@@ -17,12 +16,17 @@ import {
 } from './constants';
 import AppLoadingContext from '../../AppLoadingContext';
 import './Form.scss';
-import ConditionalFields from '../ConditionalFields';
-import GoalSource from './GoalSource';
+import GoalName from './GoalName';
+import RTRGoalSource from './RTRGoalSource';
+import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
+import RTRGoalPrompts from './RTRGoalPrompts';
+import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
+import GoalFormTitle from './GoalFormTitle';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
+  onSelectNudgedGoal,
   possibleGrants,
   validatePrompts,
   selectedGrants,
@@ -41,23 +45,26 @@ export default function Form({
   objectives,
   setObjectives,
   setObjectiveError,
-  topicOptions,
   isOnApprovedReport,
   isOnReport,
+  isCurated,
+  isNew,
   status,
   datePickerKey,
   fetchError,
   goalNumbers,
   clearEmptyObjectiveError,
-  onUploadFiles,
   userCanEdit,
   source,
   setSource,
   validateGoalSource,
+  collaborators,
+  recipient,
+  regionId,
+  goalTemplateId,
+  isReopenedGoal,
 }) {
   const { isAppLoading } = useContext(AppLoadingContext);
-
-  const onUpdateText = (e) => setGoalName(e.target.value);
 
   const onAddNewObjectiveClick = () => {
     // first we validate the goal text and the recipients
@@ -92,18 +99,16 @@ export default function Form({
   };
 
   const objectiveErrors = errors[FORM_FIELD_INDEXES.OBJECTIVES];
-
-  const formTitle = goalNumbers && goalNumbers.length ? `Goal ${goalNumbers.join(', ')}` : 'Recipient TTA goal';
-
   const showAlert = isOnReport && status !== 'Closed';
-
   const notClosedWithEditPermission = (() => (status !== 'Closed' && userCanEdit))();
-
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
       <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
-        <h2 className="margin-0">{formTitle}</h2>
+        <GoalFormTitle
+          goalNumbers={goalNumbers}
+          isReopenedGoal={isReopenedGoal}
+        />
         { status.toLowerCase() === 'draft'
         && (
           <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
@@ -126,39 +131,69 @@ export default function Form({
 
       <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
-      <GrantSelect
-        selectedGrants={selectedGrants}
-        isOnReport={isOnReport}
-        setSelectedGrants={setSelectedGrants}
-        possibleGrants={possibleGrants}
-        validateGrantNumbers={validateGrantNumbers}
-        error={errors[FORM_FIELD_INDEXES.GRANTS]}
-        isLoading={isAppLoading}
-        goalStatus={status}
-        userCanEdit={userCanEdit}
+      <ReadOnlyGoalCollaborators
+        collaborators={collaborators}
       />
 
-      <GoalText
-        error={errors[FORM_FIELD_INDEXES.NAME]}
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          status !== 'Closed',
+          userCanEdit,
+          possibleGrants.length > 1,
+          !isOnReport,
+        ]}
+        label="Recipient grant numbers"
+        value={selectedGrants.map((grant) => grant.numberWithProgramTypes).join(', ')}
+      >
+        <GrantSelect
+          selectedGrants={selectedGrants}
+          setSelectedGrants={setSelectedGrants}
+          possibleGrants={possibleGrants}
+          validateGrantNumbers={validateGrantNumbers}
+          error={errors[FORM_FIELD_INDEXES.GRANTS]}
+          isLoading={isAppLoading}
+        />
+      </FormFieldThatIsSometimesReadOnly>
+
+      <GoalName
         goalName={goalName}
-        isOnReport={isOnReport}
+        goalNameError={errors[FORM_FIELD_INDEXES.NAME]}
+        setGoalName={setGoalName}
         validateGoalName={validateGoalName}
-        onUpdateText={onUpdateText}
-        isLoading={isAppLoading}
-        goalStatus={status}
+        isAppLoading={isAppLoading}
+        recipient={recipient}
+        regionId={regionId}
+        selectedGrants={selectedGrants || []}
+        onSelectNudgedGoal={onSelectNudgedGoal}
+        status={status}
+        isOnReport={isOnReport}
+        isNew={isNew}
         userCanEdit={userCanEdit}
+        isCurated={isCurated}
       />
 
-      <ConditionalFields
-        prompts={prompts}
-        setPrompts={setPrompts}
-        validatePrompts={validatePrompts}
+      <RTRGoalPrompts
+        isCurated={isCurated || false}
+        value={prompts}
+        onChange={setPrompts}
+        validate={validatePrompts}
         errors={errors[FORM_FIELD_INDEXES.GOAL_PROMPTS]}
         userCanEdit={notClosedWithEditPermission}
+        selectedGrants={selectedGrants || []}
+        goalTemplateId={goalTemplateId}
       />
 
-      <FeatureFlag flag="goal_source">
-        <GoalSource
+      <FormFieldThatIsSometimesReadOnly
+        permissions={[
+          !isCurated,
+          status !== 'Closed',
+          userCanEdit,
+          !isOnApprovedReport,
+        ]}
+        label="Goal source"
+        value={uniq(Object.values(source || {})).join(', ') || ''}
+      >
+        <RTRGoalSource
           source={source}
           onChangeGoalSource={setSource}
           error={errors[FORM_FIELD_INDEXES.GOAL_SOURCES]}
@@ -166,8 +201,10 @@ export default function Form({
           goalStatus={status}
           userCanEdit={userCanEdit}
           validateGoalSource={validateGoalSource}
+          isCurated={isCurated}
+          selectedGrants={selectedGrants}
         />
-      </FeatureFlag>
+      </FormFieldThatIsSometimesReadOnly>
 
       <GoalDate
         error={errors[FORM_FIELD_INDEXES.END_DATE]}
@@ -193,8 +230,6 @@ export default function Form({
           // that way we don't get the white screen of death
           errors={objectiveErrors[i] || OBJECTIVE_DEFAULT_ERRORS}
           setObjective={(data) => setObjective(data, i)}
-          topicOptions={topicOptions}
-          onUploadFiles={onUploadFiles}
           goalStatus={status}
           userCanEdit={userCanEdit}
         />
@@ -211,8 +246,14 @@ export default function Form({
 }
 
 Form.propTypes = {
+  onSelectNudgedGoal: PropTypes.func.isRequired,
+  regionId: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]).isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
+  isCurated: PropTypes.bool,
   errors: PropTypes.arrayOf(
     PropTypes.oneOfType([
       PropTypes.shape({}),
@@ -251,10 +292,6 @@ Form.propTypes = {
   endDate: PropTypes.string,
   setEndDate: PropTypes.func.isRequired,
   setObjectives: PropTypes.func.isRequired,
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
   objectives: PropTypes.arrayOf(PropTypes.shape({
     objective: PropTypes.string,
     topics: PropTypes.arrayOf(PropTypes.shape({
@@ -270,23 +307,41 @@ Form.propTypes = {
   status: PropTypes.string.isRequired,
   datePickerKey: PropTypes.string.isRequired,
   fetchError: PropTypes.string.isRequired,
-  goalNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
+  goalNumbers: PropTypes.oneOfType(
+    [PropTypes.string, PropTypes.arrayOf(PropTypes.string)],
+  ).isRequired,
   clearEmptyObjectiveError: PropTypes.func.isRequired,
-  onUploadFiles: PropTypes.func.isRequired,
   validateGoalNameAndRecipients: PropTypes.func.isRequired,
   userCanEdit: PropTypes.bool,
-  prompts: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    response: PropTypes.arrayOf(PropTypes.string).isRequired,
-  })).isRequired,
+  prompts: PropTypes.shape({
+    [PropTypes.string]: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string.isRequired,
+        response: PropTypes.arrayOf(PropTypes.string).isRequired,
+      }),
+    ),
+  }).isRequired,
   setPrompts: PropTypes.func.isRequired,
   validatePrompts: PropTypes.func.isRequired,
-  source: PropTypes.arrayOf(PropTypes.string).isRequired,
+  source: PropTypes.shape({
+    [PropTypes.string]: PropTypes.string,
+  }).isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
+  collaborators: PropTypes.arrayOf(PropTypes.shape({
+    goalNumber: PropTypes.string,
+    goalCreator: PropTypes.shape({}),
+    goalCreatorName: PropTypes.string,
+    goalCreatorRoles: PropTypes.string,
+  })).isRequired,
+  isNew: PropTypes.bool.isRequired,
+  goalTemplateId: PropTypes.number,
+  isReopenedGoal: PropTypes.bool.isRequired,
 };
 
 Form.defaultProps = {
   endDate: null,
   userCanEdit: false,
+  isCurated: false,
+  goalTemplateId: null,
 };

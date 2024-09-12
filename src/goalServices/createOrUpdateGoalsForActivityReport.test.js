@@ -98,6 +98,12 @@ describe('createOrUpdateGoalsForActivityReport', () => {
         userId: user.id,
         lastUpdatedById: user.id,
         activityRecipients: { activityRecipientId: recipient.id },
+        pageState: {
+          1: 'In progress',
+          2: 'Not started',
+          3: 'Not started',
+          4: 'Not started',
+        },
       },
     );
 
@@ -172,6 +178,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       where: {
         id: grants.map((g) => g.id),
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.
@@ -424,5 +431,13 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     expect(createdGoals[0].objectives[1].closeSuspendReason).toBe('Recipient request');
     expect(createdGoals[0].objectives[1].closeSuspendContext).toBe('Test suspend context');
     expect(createdGoals[0].objectives[1].arOrder).toBe(2);
+
+    const updatedReport = await ActivityReport.findByPk(activityReport.id);
+    expect(updatedReport.pageState).toStrictEqual({
+      1: 'In progress',
+      2: 'In progress',
+      3: 'Not started',
+      4: 'Not started',
+    });
   });
 });

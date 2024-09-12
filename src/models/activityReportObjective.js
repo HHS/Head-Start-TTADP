@@ -1,5 +1,5 @@
 const { Model } = require('sequelize');
-const { CLOSE_SUSPEND_REASONS } = require('@ttahub/common');
+const { CLOSE_SUSPEND_REASONS, SUPPORT_TYPES } = require('@ttahub/common');
 const {
   afterCreate,
   beforeValidate,
@@ -71,6 +71,14 @@ export default (sequelize, DataTypes) => {
     title: DataTypes.TEXT,
     status: DataTypes.STRING,
     ttaProvided: DataTypes.TEXT,
+    supportType: {
+      type: DataTypes.ENUM(SUPPORT_TYPES),
+      allowNull: true,
+    },
+    objectiveCreatedHere: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
     originalObjectiveId: {
       type: DataTypes.INTEGER,
       allowNull: true,

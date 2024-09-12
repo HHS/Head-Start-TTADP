@@ -216,28 +216,24 @@ describe('statisticsByUser', () => {
       name: 'Statistics Goal 1',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
     });
 
     goal1b = await Goal.create({
       name: 'Statistics Goal 1b',
       status: 'In Progress',
       grantId: grantOne.id,
-      previousStatus: 'Not Started',
     });
 
     goal2 = await Goal.create({
       name: 'Statistics Goal 2',
       status: 'In Progress',
       grantId: grantTwo.id,
-      previousStatus: 'Not Started',
     });
 
     goal3 = await Goal.create({
       name: 'Statistics Goal 2',
       status: 'In Progress',
       grantId: grantThree.id,
-      previousStatus: 'Not Started',
     });
 
     // Objectives.
@@ -643,6 +639,7 @@ describe('statisticsByUser', () => {
       where: {
         id: [grantOne.id, grantTwo.id, grantThree.id, grantFour.id, grantOutsideRegion.id],
       },
+      individualHooks: true,
     });
 
     // Delete Recipient.

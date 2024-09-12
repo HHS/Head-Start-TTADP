@@ -89,6 +89,7 @@ test.describe('get /recipient', () => {
       deleted: Joi.boolean().allow(null),
       inactivationDate: Joi.any().allow(null),
       inactivationReason: Joi.any().allow(null),
+      recipientNameWithPrograms: Joi.string(),
       recipient: Joi.object({
         id: Joi.number().integer().positive(),
         uei: Joi.any().allow(null),
@@ -110,7 +111,7 @@ test.describe('get /recipient', () => {
       deleted: Joi.boolean().allow(null),
       grants: Joi.array().items(grantSchema),
     });
-    
+
     const schema = Joi.array().items(recipientSchema).min(1);
 
     await validateSchema(response, schema, expect);
@@ -184,25 +185,24 @@ test.describe('get /recipient', () => {
       Joi.object({
         id: Joi.number(),
         isCurated: Joi.boolean(),
-        prompts: Joi.array().items(
-          Joi.object({
+        prompts: Joi.object(),
+        promptsForReview: Joi.array().items(Joi.object({
+          key: Joi.string(),
+          recipients: Joi.array().items(Joi.object({
             id: Joi.number(),
-            title: Joi.string(),
-            response: Joi.array().items(
-              Joi.string()
-            ),
-            prompt: Joi.string(),     
-           }),
-          ),                  
+            name: Joi.string(),
+          })),
+          responses: Joi.array().items(Joi.string()),
+        })),
         name: Joi.string(),
-        source: Joi.string().allow(null),
+        source: Joi.object(),
         goalTemplateId: Joi.number().allow(null),
         status: Joi.string(),
         regionId: Joi.number(),
         recipientId: Joi.number(),
         createdVia: Joi.any().allow(null),
         isRttapa: Joi.any().allow(null),
-        onAnyReport: Joi.boolean(),
+        onAR: Joi.boolean(),
         onApprovedAR: Joi.boolean(),
         rtrOrder: Joi.number(),
         objectives: Joi.array().items(),
@@ -213,7 +213,8 @@ test.describe('get /recipient', () => {
           regionId: Joi.number(),
           recipientId: Joi.number(),
           recipient: Joi.object({
-            id: Joi.number()
+            id: Joi.number(),
+            name: Joi.string(),
           }),
           programs: Joi.array().items(
             Joi.object({
@@ -221,8 +222,10 @@ test.describe('get /recipient', () => {
             })
           )
         }),
+        goalNumber: Joi.string(),
         goalNumbers: Joi.array().items(Joi.string()),
         goalIds: Joi.array().items(Joi.number()),
+        grantId: Joi.number(),
         grants: Joi.array().items(
           Joi.object({
             id: Joi.number(),
@@ -230,7 +233,8 @@ test.describe('get /recipient', () => {
             regionId: Joi.number(),
             recipientId: Joi.number(),
             recipient: Joi.object({
-              id: Joi.number()
+              id: Joi.number(),
+              name: Joi.string(),
             }),
             programs: Joi.array().items(
               Joi.object({
@@ -245,6 +249,13 @@ test.describe('get /recipient', () => {
         grantIds: Joi.array().items(Joi.number()),
         isNew: Joi.boolean(),
         endDate: Joi.string().allow(null).allow(''),
+        goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+        collaborators: Joi.array().items(Joi.any().allow(null)),
+        statusChanges: Joi.array().items(Joi.object({
+          oldStatus: Joi.string(),
+          newStatus: Joi.string(),
+        })),
+        isReopenedGoal: Joi.boolean(),
       })
     ).min(1);
 

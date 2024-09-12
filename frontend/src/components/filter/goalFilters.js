@@ -6,13 +6,17 @@ import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
   EMPTY_MULTI_SELECT,
+  EMPTY_TEXT_INPUT,
+  SELECT_CONDITIONS,
 } from '../../Constants';
 import FilterDateRange from './FilterDateRange';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterTopicSelect from './FilterTopicSelect';
 import FilterStatus from './FilterStatus';
 import FilterSelect from './FilterSelect';
+import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
+import FilterRoles from './FilterRoles';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -77,7 +81,7 @@ export const statusFilter = {
 
 export const topicsFilter = {
   id: 'topic',
-  display: 'Goal topics',
+  display: 'Topics',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
@@ -86,6 +90,37 @@ export const topicsFilter = {
       inputId={`topic-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
+    />
+  ),
+};
+
+export const userRolesFilter = {
+  id: 'enteredByRole',
+  display: 'Entered by role',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterRoles
+      inputId={`user-role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const goalNameFilter = {
+  id: 'goalName',
+  display: 'Goal text',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: (q) => q,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`reportText-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Goal text"
     />
   ),
 };
@@ -114,7 +149,7 @@ export const grantNumberFilter = (possibleGrants) => ({
       labelText="Select grant numbers to filter by"
       options={possibleGrants.map((g) => ({
         value: g.number,
-        label: g.numberWithProgramTypes,
+        label: `${g.numberWithProgramTypes} - ${g.status}`,
       }))}
       selectedValues={query}
       mapByValue

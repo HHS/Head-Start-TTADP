@@ -5,6 +5,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -13,6 +14,7 @@ import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import goalsObjectives from '../goalsObjectives';
 import NetworkContext from '../../../../NetworkContext';
+import UserContext from '../../../../UserContext';
 import GoalFormContext from '../../../../GoalFormContext';
 
 const goalUrl = join('api', 'activity-reports', 'goals');
@@ -65,27 +67,29 @@ const RenderGoalsObjectives = ({
   hookForm.setValue = spy;
 
   return (
-    <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
-      <Router history={history}>
-        <FormProvider {...hookForm}>
-          {goalsObjectives.render(
-            null,
-            {
-              activityRecipientType,
-            },
-            1,
-            null,
-            jest.fn(),
-            jest.fn(),
-            jest.fn(),
-            false,
-            '',
-            jest.fn(),
-            () => <></>,
-          )}
-        </FormProvider>
-      </Router>
-    </NetworkContext.Provider>
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <NetworkContext.Provider value={{ connectionActive, localStorageAvailable: true }}>
+        <Router history={history}>
+          <FormProvider {...hookForm}>
+            {goalsObjectives.render(
+              null,
+              {
+                activityRecipientType,
+              },
+              1,
+              null,
+              jest.fn(),
+              jest.fn(),
+              jest.fn(),
+              false,
+              '',
+              jest.fn(),
+              () => <></>,
+            )}
+          </FormProvider>
+        </Router>
+      </NetworkContext.Provider>
+    </UserContext.Provider>
   );
 };
 
@@ -102,13 +106,15 @@ const renderGoals = (
 
   fetchMock.get(join(goalUrl, `?${query}`), fetchResponse);
   render(
-    <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
-      <RenderGoalsObjectives
-        grantIds={grantIds}
-        activityRecipientType={activityRecipientType}
-        connectionActive={!throwFetchError}
-      />
-    </GoalFormContext.Provider>,
+    <UserContext.Provider value={{ user: { flags: [] } }}>
+      <GoalFormContext.Provider value={{ isGoalFormClosed, toggleGoalForm }}>
+        <RenderGoalsObjectives
+          grantIds={grantIds}
+          activityRecipientType={activityRecipientType}
+          connectionActive={!throwFetchError}
+        />
+      </GoalFormContext.Provider>
+    </UserContext.Provider>,
   );
 };
 
@@ -330,6 +336,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           },
         ];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'other-entity', objectivesWithoutGoals: objectives });
@@ -356,6 +363,7 @@ describe('goals objectives', () => {
             topics: ['Hello'],
             resources: [],
             roles: ['Chief Inspector'],
+            supportType: SUPPORT_TYPES[3],
           }],
         }];
         const complete = goalsObjectives.isPageComplete({ activityRecipientType: 'recipient', goals });
@@ -392,6 +400,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
           courses: [],
         },
         {
@@ -402,6 +411,7 @@ describe('goals objectives', () => {
           topics: ['Hello'],
           resources: [],
           roles: ['Chief Inspector'],
+          supportType: SUPPORT_TYPES[1],
           courses: [],
         },
       ];
@@ -419,7 +429,7 @@ describe('goals objectives', () => {
 
   describe('review page', () => {
     it('displays goals with no objectives', async () => {
-      render(<RenderReview goals={[{ id: 1, name: 'goal' }]} />);
+      render(<RenderReview goals={[{ id: 1, name: 'goal', objectives: [] }]} />);
       const goal = await screen.findByText('goal');
       expect(goal).toBeVisible();
     });
@@ -436,7 +446,8 @@ describe('goals objectives', () => {
             topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
             resources: [{ url: 'http://test1.gov' }, { url: 'http://test2.gov' }, { url: 'http://test3.gov' }],
             roles: ['Chief Inspector'],
-            files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+            files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
+            supportType: SUPPORT_TYPES[1],
             courses: [],
           },
           {
@@ -448,6 +459,7 @@ describe('goals objectives', () => {
             resources: [],
             roles: ['Chief Inspector'],
             files: [],
+            supportType: SUPPORT_TYPES[1],
             courses: [],
           },
         ]}
@@ -473,15 +485,17 @@ describe('goals objectives', () => {
           topics: [{ name: 'Topic 1' }, { name: 'Topic 2' }, { name: 'Topic 3' }],
           resources: [{ value: 'http://test1.gov' }, { value: 'http://test2.gov' }, { value: 'http://test3.gov' }],
           roles: ['Chief Inspector'],
-          files: [{ originalFileName: 'test1.txt', url: { url: 'test1.txt' } }],
+          files: [{ originalFileName: 'test1.txt', url: { url: 'http://s3/test1.txt' } }],
           courses: [],
         }],
       }]}
       />);
       const objective = await screen.findByText('title');
       expect(objective).toBeVisible();
-      expect(await screen.findByText(/topic 1, topic 2, topic 3/i)).toBeVisible();
-      expect(await screen.findByRole('link', { name: /test1\.txt \(opens in new tab\)/i })).toBeVisible();
+      expect(await screen.findByText('Topic 1')).toBeVisible();
+      expect(await screen.findByText('Topic 2')).toBeVisible();
+      expect(await screen.findByText('Topic 3')).toBeVisible();
+      expect(await screen.findByRole('link', { name: /test1\.txt/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test1\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test2\.gov/i })).toBeVisible();
       expect(await screen.findByRole('link', { name: /http:\/\/test3\.gov/i })).toBeVisible();

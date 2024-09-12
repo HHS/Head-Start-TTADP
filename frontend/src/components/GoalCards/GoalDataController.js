@@ -72,6 +72,7 @@ function GoalDataController({
   const [logs, setLogs] = useState([]);
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
 
   useEffect(() => {
     let isLoaded = false;
@@ -132,7 +133,9 @@ function GoalDataController({
           query,
           mergedGoals || [],
         );
-        setData(response);
+        const rolledUpGoalIds = response.allGoalIds.map((goal) => goal.id);
+        const goalBuckets = response.allGoalIds;
+        setData({ ...response, allGoalIds: rolledUpGoalIds, goalBuckets });
         setError('');
         // display success message if we have merged goals
         setShouldDisplayMergedSuccess((mergedGoals && mergedGoals.length > 0));
@@ -143,6 +146,17 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
+
+    // If filters is different from currentFilters, then reset the activePage and Offset.
+    if (filterQuery !== currentFilters) {
+      setSortConfig({
+        ...sortConfig,
+        activePage: 1,
+        offset: 0,
+      });
+      setCurrentFilters(filterQuery);
+    }
+
     fetchGoals(filterQuery);
   }, [
     sortConfig,
@@ -259,6 +273,7 @@ function GoalDataController({
           canMergeGoals={canMergeGoals}
           shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
           dismissMergeSuccess={dismissMergeSuccess}
+          goalBuckets={data.goalBuckets}
         />
       </FilterContext.Provider>
     </div>

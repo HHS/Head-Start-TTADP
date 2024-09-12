@@ -8,6 +8,7 @@ import AccessibleWidgetData from './AccessibleWidgetData';
 import ButtonSelect from '../components/ButtonSelect';
 import colors from '../colors';
 import MediaCaptureButton from '../components/MediaCaptureButton';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -15,48 +16,29 @@ export const SORT_ORDER = {
 };
 
 export function sortData(data, order, tabular = false) {
+  // if order === SORT_ORDER.ALPHA, sort alphabetically
   if (order === SORT_ORDER.ALPHA) {
     data.sort((a, b) => a.topic.localeCompare(b.topic));
   } else {
-    data.sort((a, b) => b.count - a.count);
+    // sort by count and then alphabetically
+    data.sort((a, b) => {
+      if (a.count === b.count) {
+        return a.topic.localeCompare(b.topic);
+      }
+      return b.count - a.count;
+    });
   }
 
+  // the orientation is reversed visually in the table
   if (!tabular) {
     data.reverse();
   }
 }
 
-/**
- *
- * Takes a string, a reason (or topic, if you prefer)
- * provided for an activity report and intersperses it with line breaks
- * depending on the length
- *
- * @param {string} topic
- * @returns string with line breaks
- */
-export function topicsWithLineBreaks(reason) {
-  const arrayOfTopics = reason.split(' ');
-
-  return arrayOfTopics.reduce((accumulator, currentValue) => {
-    const lineBreaks = accumulator.match(/<br \/>/g);
-    const allowedLength = lineBreaks ? lineBreaks.length * 6 : 6;
-
-    // we don't want slashes on their own lines
-    if (currentValue === '/') {
-      return `${accumulator} ${currentValue}`;
-    }
-
-    if (accumulator.length > allowedLength) {
-      return `${accumulator}<br />${currentValue}`;
-    }
-
-    return `${accumulator} ${currentValue}`;
-  }, '');
-}
-
 export function TopicFrequencyGraphWidget({
-  data, loading,
+  data,
+  loading,
+  title,
 }) {
   // whether to show the data as accessible widget data or not
   const [showAccessibleData, setShowAccessibleData] = useState(false);
@@ -169,16 +151,11 @@ export function TopicFrequencyGraphWidget({
     setOrder(selected.value);
   };
 
-  // toggle the data table
-  function toggleType() {
-    setShowAccessibleData(!showAccessibleData);
-  }
-
   return (
     <Container className="ttahub--topic-frequency-graph width-full" loading={loading} loadingLabel="Topic frequency loading">
       <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
-          <h2 className="ttahub--dashboard-widget-heading margin-0">Number of Activity Reports by Topic</h2>
+          <h2 className="ttahub--dashboard-widget-heading margin-0">{title}</h2>
         </Grid>
         <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2">
           <ButtonSelect
@@ -214,25 +191,21 @@ export function TopicFrequencyGraphWidget({
                 buttonText="Save screenshot"
                 id="rd-save-screenshot-topic-frequency"
                 className="margin-x-2"
+                title={title}
               />
             )
             : null}
-          <button
-            type="button"
-            className="usa-button--unstyled margin-top-2"
-            aria-label={showAccessibleData ? 'display number of activity reports by topic data as graph' : 'display number of activity reports by topic data as table'}
-            onClick={toggleType}
-            data-html2canvas-ignore
-            id="rd-display-table-topic-frequency"
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={title}
+            displayTable={showAccessibleData}
+            setDisplayTable={setShowAccessibleData}
+          />
         </Grid>
 
       </Grid>
 
       { showAccessibleData
-        ? <AccessibleWidgetData caption="Number of Activity Reports by Topic Table" columnHeadings={columnHeadings} rows={tableRows} />
+        ? <AccessibleWidgetData caption={`${title} table`} columnHeadings={columnHeadings} rows={tableRows} />
         : (
           <div className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
         ) }
@@ -251,10 +224,11 @@ TopicFrequencyGraphWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
+  title: PropTypes.string,
 };
 
 TopicFrequencyGraphWidget.defaultProps = {
-
+  title: 'Number of Activity Reports by Topic',
   data: [],
 };
 

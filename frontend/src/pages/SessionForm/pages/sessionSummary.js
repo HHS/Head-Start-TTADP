@@ -4,6 +4,7 @@ import React, {
   useContext,
   useRef,
 } from 'react';
+import { SUPPORT_TYPES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import {
@@ -23,11 +24,9 @@ import {
   ErrorMessage,
 } from '@trussworks/react-uswds';
 import Select from 'react-select';
-import { Link } from 'react-router-dom';
 import { getTopics } from '../../../fetchers/topics';
 import { getNationalCenters } from '../../../fetchers/nationalCenters';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
-import ReadOnlyField from '../../../components/ReadOnlyField';
 import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import Req from '../../../components/Req';
 import selectOptionsReset from '../../../components/selectOptionsReset';
@@ -36,6 +35,7 @@ import {
   sessionSummaryFields,
   pageComplete,
   NO_ERROR,
+  sessionSummaryRequiredFields,
 } from '../constants';
 import FormItem from '../../../components/FormItem';
 import FileTable from '../../../components/FileUploader/FileTable';
@@ -45,8 +45,8 @@ import AppLoadingContext from '../../../AppLoadingContext';
 import { uploadSessionObjectiveFiles, deleteSessionObjectiveFile } from '../../../fetchers/session';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import Drawer from '../../../components/Drawer';
+import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import '../../../components/GoalForm/ObjectiveSupportType.scss';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 
 const DEFAULT_RESOURCE = {
@@ -68,12 +68,7 @@ const SessionSummary = ({ datePickerKey }) => {
 
   const data = getValues();
 
-  const {
-    eventDisplayId,
-    eventId,
-    eventName,
-    id,
-  } = data;
+  const { id } = data;
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -170,7 +165,7 @@ const SessionSummary = ({ datePickerKey }) => {
     name: 'courses',
     defaultValue: courses || [],
     rules: {
-      validate: (value) => (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
+      validate: (value) => !objectiveUseIpdCourses || (objectiveUseIpdCourses && value.length > 0) || 'Select at least one course',
     },
   });
 
@@ -239,15 +234,6 @@ const SessionSummary = ({ datePickerKey }) => {
         </title>
       </Helmet>
       <IndicatesRequiredField />
-
-      <ReadOnlyField label="Event ID">
-        <Link to={`/training-report/view/${eventId}`}>{eventDisplayId}</Link>
-        { /** todo - once the event "view" page is created, convert this to a link to that */}
-      </ReadOnlyField>
-
-      <ReadOnlyField label="Event name">
-        {eventName}
-      </ReadOnlyField>
 
       <div className="margin-top-2">
         <FormItem
@@ -493,14 +479,25 @@ const SessionSummary = ({ datePickerKey }) => {
           />
         </FormItem>
       </div>
-
-      <div>
-        <p className="usa-prose margin-bottom-0">
-          Link to TTA resources used
+      <IpdCourseSelect
+        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
+        inputName={objectiveIpdCoursesInputName}
+        onChange={onChangeIpdCourses}
+        onBlur={onBlurIpdCourses}
+        value={objectiveIpdCourses}
+        onChangeUseIpdCourses={onChangeUseIpdCourses}
+        onBlurUseIpdCourses={onBlurUseIpdCourses}
+        useIpdCourse={objectiveUseIpdCourses}
+        useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-y-3"
+      />
+      <Fieldset>
+        <legend>
+          Did you use any other TTA resources that are available as a link?
           <QuestionTooltip
             text="Copy & paste web address of TTA resource you'll use for this objective. Usually an ECLKC page."
           />
-        </p>
+        </legend>
         <div className="ttahub-resource-repeater">
           {resources.map((r, i) => {
             const fieldErrors = errors.objectiveResources ? errors.objectiveResources[i] : null;
@@ -519,24 +516,14 @@ const SessionSummary = ({ datePickerKey }) => {
           })}
         </div>
 
-        <div className="ttahub-resource-repeater--add-new margin-top-1 margin-bottom-3">
+        <div className="ttahub-resource-repeater--add-new margin-top-1">
           <PlusButton text="Add new resource" onClick={() => appendResource(DEFAULT_RESOURCE)} />
         </div>
-      </div>
-      <IpdCourseSelect
-        error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
-        inputName={objectiveIpdCoursesInputName}
-        onChange={onChangeIpdCourses}
-        onBlur={onBlurIpdCourses}
-        value={objectiveIpdCourses}
-        onChangeUseIpdCourses={onChangeUseIpdCourses}
-        onBlurUseIpdCourses={onBlurUseIpdCourses}
-        useIpdCourse={objectiveUseIpdCourses}
-        useCoursesInputName={objectiveUseIpdCoursesInputName}
-      />
+      </Fieldset>
+
       <Fieldset className="ttahub-objective-files margin-top-3">
         <legend>
-          Did you use any TTA resources that aren&apos;t available as a link?
+          Did you use any other TTA resources that aren&apos;t available as a link?
           {' '}
           <QuestionTooltip
             text={(
@@ -604,14 +591,9 @@ const SessionSummary = ({ datePickerKey }) => {
       </FormItem>
 
       <div className="margin-top-2">
-        <Drawer
-          triggerRef={supportTypeDrawerTriggerRef}
-          stickyHeader
-          stickyFooter
-          title="Support type guidance"
-        >
-          <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
-        </Drawer>
+        <SupportTypeDrawer
+          drawerTriggerRef={supportTypeDrawerTriggerRef}
+        />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
             <>
@@ -636,12 +618,7 @@ const SessionSummary = ({ datePickerKey }) => {
           required
         >
           <option disabled hidden value="">Select one</option>
-          {[
-            'Introducing',
-            'Planning',
-            'Implementing',
-            'Maintaining',
-          ].map((option) => (<option key={option}>{option}</option>))}
+          {SUPPORT_TYPES.map((option) => (<option key={option}>{option}</option>))}
         </Dropdown>
       </div>
 
@@ -654,22 +631,19 @@ SessionSummary.propTypes = {
 };
 
 const fields = [...Object.keys(sessionSummaryFields), 'endDate', 'startDate'];
+const requiredFields = [...Object.keys(sessionSummaryRequiredFields), 'endDate', 'startDate'];
 const path = 'session-summary';
 const position = 1;
 
 const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => {
-  const {
-    objectiveTrainers, objectiveTopics, courses, useIpdCourses,
-  } = hookForm.getValues();
+  const { useIpdCourses } = hookForm.getValues();
 
-  if (!objectiveTrainers || !objectiveTrainers.length
-    || !objectiveTopics || !objectiveTopics.length
-    || (useIpdCourses && !courses.length)) {
-    return false;
+  if (useIpdCourses) {
+    return pageComplete(hookForm, [...requiredFields, 'courses']);
   }
 
-  return pageComplete(hookForm, fields);
+  return pageComplete(hookForm, requiredFields);
 };
 
 export default {
@@ -680,7 +654,7 @@ export default {
   review: false,
   fields,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     _reportId,
     isAppLoading,
@@ -689,15 +663,29 @@ export default {
     _onUpdatePage,
     _weAreAutoSaving,
     datePickerKey,
-    _onFormSubmit,
+    onFormSubmit,
     Alert,
   ) => (
     <div className="padding-x-1">
       <SessionSummary datePickerKey={datePickerKey} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
-        <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+        {
+          !additionalData.isAdminUser
+            ? (
+              <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onFormSubmit}>Review and submit</Button>
+            )
+            : <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        }
+        {
+          // if status is 'Completed' then don't show the save draft button.
+          additionalData
+          && additionalData.status
+          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+
+        }
       </div>
     </div>
   ),

@@ -25,6 +25,11 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
+    enableCheckboxes,
+    exportRows,
+    footNote,
+    displayTable,
+    setDisplayTable,
   },
 ) {
   return (
@@ -34,6 +39,8 @@ export default function WidgetContainer(
         title={title}
         subtitle={subtitle}
         showHeaderBorder={showHeaderBorder}
+        displayTable={displayTable}
+        setDisplayTable={setDisplayTable}
         pagination={showPagingTop ? (
           <PaginationCard
             currentPage={currentPage}
@@ -44,34 +51,39 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        enableCheckboxes={enableCheckboxes}
+        exportRows={exportRows}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
+      {error && (
       <Grid row>
-        {error && (
         <Alert className="width-full margin-x-3 margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
-        )}
       </Grid>
+      )}
       <div className="margin-top-0">
         {children}
       </div>
-      <div className="smart-hub-widget-container-footer">
-        {
-          showPagingBottom
-            ? (
-              <PaginationCard
-                currentPage={currentPage}
-                totalCount={totalCount}
-                offset={offset}
-                perPage={perPage}
-                handlePageChange={handlePageChange}
-              />
-            )
-            : null
-        }
-      </div>
+      {showPagingBottom || footNote ? (
+        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+          {footNote && (
+          <p className="usa-prose font-sans-3xs margin-top-0">
+            {footNote}
+          </p>
+          )}
+          {showPagingBottom && (
+            <PaginationCard
+              currentPage={currentPage}
+              totalCount={totalCount}
+              offset={offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+            />
+          )}
+        </div>
+      ) : null}
     </Container>
   );
 }
@@ -93,6 +105,11 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
+  footNote: PropTypes.string,
+  displayTable: PropTypes.bool,
+  setDisplayTable: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -105,10 +122,15 @@ WidgetContainer.defaultProps = {
   currentPage: 0,
   offset: 0,
   perPage: 10,
-  handlePageChange: () => { },
+  handlePageChange: null,
   showHeaderBorder: true,
   error: null,
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
+  enableCheckboxes: false,
+  exportRows: null,
+  footNote: null,
+  displayTable: false,
+  setDisplayTable: null,
 };

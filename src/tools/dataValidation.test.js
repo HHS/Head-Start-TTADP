@@ -1,6 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import dataValidation, { countAndLastUpdated, runSelectQuery } from './dataValidation';
-import { sequelize } from '../models';
+import { sequelize, SiteAlert } from '../models';
 import { auditLogger } from '../logger';
 
 jest.mock('../logger');
@@ -8,6 +8,23 @@ jest.mock('../logger');
 describe('dataValidation', () => {
   afterAll(async () => {
     await sequelize.close();
+  });
+
+  describe('countAndLastUpdated', () => {
+    it('should return the count and last updated value for the given table', async () => {
+      const tableName = 'Grants';
+      const { updatedAt, count } = await countAndLastUpdated(tableName);
+      expect(updatedAt).toBeInstanceOf(Date);
+      expect(Number.isNaN(parseInt(count, DECIMAL_BASE))).toBe(false);
+    });
+    it('handles no results', async () => {
+      // I hope this never bites us
+      await SiteAlert.destroy({ where: {} });
+      const tableName = 'SiteAlerts';
+      const { updatedAt, count } = await countAndLastUpdated(tableName);
+      expect(updatedAt).toEqual('');
+      expect(Number.isNaN(parseInt(count, DECIMAL_BASE))).toBe(false);
+    });
   });
 
   describe('run basic query', () => {
@@ -45,8 +62,43 @@ describe('dataValidation', () => {
     });
   });
 
-  it('should log results to the auditLogger', async () => {
+  it('should log specific messages to the auditLogger', async () => {
     await dataValidation();
-    expect(auditLogger.info).toHaveBeenCalledTimes(10);
+
+    const complexPatterns = [
+      /Grants data counts: \[\s*(.|\s)*\s*\]/m,
+      /ActivityReports data counts: \[\s*(.|\s)*\s*\]/m,
+    ];
+
+    const simplePatterns = [
+      /Goals has \d+ records, last updated at: .+/,
+      /Recipients has \d+ records, last updated at: .+/,
+      /Grants has \d+ records, last updated at: .+/,
+      /ActivityReports has \d+ records, last updated at: .+/,
+      /Users has \d+ records, last updated at: .+/,
+      /Files has \d+ records, last updated at: .+/,
+      /Objectives has \d+ records, last updated at: .+/,
+      /NextSteps has \d+ records, last updated at: .+/,
+    ];
+
+    const allPatterns = [...simplePatterns, ...complexPatterns];
+
+    const loggedMessages = auditLogger.info.mock.calls.map((call) => call[0]);
+    const unmatchedMessages = [];
+
+    loggedMessages.forEach((message, index) => {
+      const matchedPattern = allPatterns.find((pattern) => pattern.test(message));
+      if (!matchedPattern) {
+        unmatchedMessages.push({ index: index + 1, message });
+      }
+    });
+
+    expect(unmatchedMessages).toStrictEqual([]);
+
+    // Check if all expected patterns were matched
+    allPatterns.forEach((pattern) => {
+      const matched = loggedMessages.some((message) => pattern.test(message));
+      expect(matched).toBeTruthy();
+    });
   });
 });

@@ -16,7 +16,7 @@ import { saveGoalsForReport, saveObjectivesForReport } from '../../fetchers/acti
 import GoalFormContext from '../../GoalFormContext';
 import { validateObjectives } from '../../pages/ActivityReport/Pages/components/objectiveValidator';
 import AppLoadingContext from '../../AppLoadingContext';
-import { convertGoalsToFormData } from '../../pages/ActivityReport/formDataHelpers';
+import { convertGoalsToFormData, packageGoals } from '../../pages/ActivityReport/formDataHelpers';
 import { objectivesWithValidResourcesOnly, validateListOfResources } from '../GoalForm/constants';
 import Navigator from '.';
 
@@ -66,21 +66,6 @@ export function getPromptErrors(promptTitles, errors) {
 
 export const formatEndDate = (formEndDate) => ((formEndDate && formEndDate.toLowerCase() !== 'invalid date') ? formEndDate : '');
 
-export const packageGoals = (goals, goal, grantIds, prompts) => [
-  // we make sure to mark all the read only goals as "ActivelyEdited: false"
-  ...goals.map((g) => ({
-    ...g,
-    grantIds,
-    isActivelyBeingEditing: false,
-    prompts: grantIds.length < 2 ? g.prompts : [],
-  })),
-  {
-    ...goal,
-    grantIds,
-    prompts: grantIds.length < 2 ? prompts : [],
-  },
-];
-
 /**
  * @summary checks to see if the tta provided field contains the cursor
  * if it does, we don't want to update the form data
@@ -90,7 +75,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => [
  */
 export const shouldUpdateFormData = (isAutoSave) => {
   if (!isAutoSave) {
-    return false;
+    return true;
   }
 
   const richTextEditors = document.querySelectorAll('.rdw-editor-main');
@@ -207,9 +192,10 @@ const ActivityReportNavigator = ({
     } else {
       newPageState[page.position] = isDirty ? IN_PROGRESS : currentPageState;
     }
+
     return newPageState;
   };
-  const onSaveForm = async (isAutoSave = false) => {
+  const onSaveForm = async (isAutoSave = false, forceUpdate = false) => {
     setSavingLoadScreen(isAutoSave);
     if (!editable) {
       setIsAppLoading(false);
@@ -221,7 +207,7 @@ const ActivityReportNavigator = ({
     try {
       // Always clear the previous error message before a save.
       updateErrorMessage();
-      await onSave(data);
+      await onSave(data, forceUpdate);
       updateLastSaveTime(moment());
     } catch (error) {
       updateErrorMessage('A network error has prevented us from saving your activity report to our database. Your work is safely saved to your web browser in the meantime.');
@@ -248,7 +234,7 @@ const ActivityReportNavigator = ({
     const objectives = getValues(objectivesFieldArrayName);
     const name = getValues('goalName');
     const formEndDate = getValues('goalEndDate');
-
+    const source = getValues('goalSource');
     const promptTitles = getValues('goalPrompts');
     let prompts = [];
     const promptErrors = getPromptErrors(promptTitles, errors);
@@ -265,6 +251,7 @@ const ActivityReportNavigator = ({
       ...goalForEditing,
       isActivelyBeingEditing: true,
       name,
+      source,
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
@@ -306,6 +293,7 @@ const ActivityReportNavigator = ({
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
     const promptErrors = getPromptErrors(promptTitles, errors);
+    const source = getValues('goalSource');
 
     if (promptErrors) {
       return;
@@ -348,6 +336,7 @@ const ActivityReportNavigator = ({
       endDate,
       objectives: objectivesWithValidResourcesOnly(objectives),
       regionId: formData.regionId,
+      source,
     };
 
     let allGoals = packageGoals(
@@ -360,15 +349,14 @@ const ActivityReportNavigator = ({
     // save goal to api, come back with new ids for goal and objectives
     try {
       // we only need save goal if we have a goal name
-      if (name) {
-        allGoals = await saveGoalsForReport(
-          {
-            goals: allGoals,
-            activityReportId: reportId,
-            regionId: formData.regionId,
-          },
-        );
-      }
+
+      allGoals = await saveGoalsForReport(
+        {
+          goals: allGoals,
+          activityReportId: reportId,
+          regionId: formData.regionId,
+        },
+      );
 
       /**
          * If we are autosaving, and we are currently editing a rich text editor component, do not
@@ -401,7 +389,7 @@ const ActivityReportNavigator = ({
       };
 
       if (allowUpdateFormData) {
-        updateFormData(data, true);
+        updateFormData(data, false);
       }
 
       updateErrorMessage('');
@@ -499,6 +487,7 @@ const ActivityReportNavigator = ({
       // update form data
       const { status, ...values } = getValues();
       const data = { ...formData, ...values, pageState: newNavigatorState() };
+
       if (allowUpdateFormData) {
         updateFormData(data);
       }
@@ -534,12 +523,14 @@ const ActivityReportNavigator = ({
     const endDate = getValues('goalEndDate');
     const promptTitles = getValues('goalPrompts');
     const prompts = getPrompts(promptTitles, getValues);
+    const source = getValues('goalSource');
 
     const goal = {
       ...goalForEditing,
       isActivelyBeingEditing: false,
       name,
       endDate,
+      source,
       objectives,
       regionId: formData.regionId,
     };
@@ -576,6 +567,7 @@ const ActivityReportNavigator = ({
       setValue('goalEndDate', '');
       setValue('goalForEditing.objectives', []);
       setValue('goalPrompts', []);
+      setValue('goalSource', '');
 
       // set goals to form data as appropriate
       setValue('goals', packageGoals(

@@ -4,15 +4,13 @@ import AxeBuilder from '@axe-core/playwright';
 const axeUrls = [
   'http://localhost:3000/',
   'http://localhost:3000/activity-reports/new/activity-summary',
-  'http://localhost:3000/activity-reports/new/activity-summary',
   'http://localhost:3000/activity-reports/new/supporting-attachments',
   'http://localhost:3000/activity-reports/new/goals-objectives',
   'http://localhost:3000/activity-reports/new/next-steps',
   'http://localhost:3000/activity-reports/new/review',
-  // 'http://localhost:3000/admin', this page is not accessible to the test user
   'http://localhost:3000/activity-reports/view/9999',
-  'http://localhost:3000/regional-dashboard',
-  'http://localhost:3000/training-reports',
+  'http://localhost:3000/dashboards/regional-dashboard/activity-reports',
+  'http://localhost:3000/training-reports/not-started',
   'http://localhost:3000/recipient-tta-records',
   'http://localhost:3000/recipient-tta-records/9/region/1/profile',
   'http://localhost:3000/recipient-tta-records/9/region/1/tta-history',
@@ -30,8 +28,8 @@ const testForAxeViolations = async (page: Page, url: string) => {
   expect(results.violations).toEqual([]);
 };  
 
-test('run axe tests in playwright', async ({ page }) => {
-  for (const url of axeUrls) {
+for (const url of axeUrls) {
+  test(`testing with ${url}`, async ({ page }) => {
     await testForAxeViolations(page, url);
-  }
-});
+  });
+}

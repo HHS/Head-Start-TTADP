@@ -10,7 +10,8 @@ import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
 import GoalCard from './GoalCard';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
-import { updateGoalStatus } from '../../fetchers/goals';
+import { reopenGoal, updateGoalStatus } from '../../fetchers/goals';
+import ReopenReasonModal from '../ReopenReasonModal';
 
 function GoalCards({
   recipientId,
@@ -30,6 +31,7 @@ function GoalCards({
   canMergeGoals,
   shouldDisplayMergeSuccess,
   dismissMergeSuccess,
+  goalBuckets,
 }) {
   const history = useHistory();
   const [rttapaValidation, setRttapaValidation] = useState(false);
@@ -37,7 +39,6 @@ function GoalCards({
   // Goal select check boxes.
   const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
   const [allGoalsChecked, setAllGoalsChecked] = useState(false);
-  const [printAllGoals, setPrintAllGoals] = useState(false);
 
   // Close/Suspend Reason Modal.
   const [closeSuspendGoalIds, setCloseSuspendGoalIds] = useState([]);
@@ -46,12 +47,38 @@ function GoalCards({
   const [resetModalValues, setResetModalValues] = useState(false);
   const closeSuspendModalRef = useRef();
 
+  // Reopen reason modal.
+  const [reopenGoalId, setReopenGoalId] = useState(null);
+  const [resetReopenModalValues, setResetReopenModalValues] = useState(false);
+  const reopenModalRef = useRef();
+
   const showCloseSuspendGoalModal = (status, goalIds, oldGoalStatus) => {
     setCloseSuspendGoalIds(goalIds);
     setCloseSuspendStatus(status);
     setCloseSuspendOldStatus(oldGoalStatus);
     setResetModalValues(!resetModalValues); // Always flip to trigger form reset useEffect.
     closeSuspendModalRef.current.toggleModal(true);
+  };
+
+  const showReopenGoalModal = (goalId) => {
+    setReopenGoalId(goalId);
+    setResetReopenModalValues(!resetReopenModalValues);
+    reopenModalRef.current.toggleModal(true);
+  };
+
+  const onSubmitReopenGoal = async (goalId, reopenReason, reopenContext) => {
+    const updatedGoal = await reopenGoal(goalId, reopenReason, reopenContext);
+
+    const newGoals = goals.map((g) => (g.id === updatedGoal.id ? {
+      ...g,
+      goalStatus: 'In Progress',
+      previousStatus: 'Closed',
+      isReopenedGoal: true,
+    } : g));
+
+    setGoals(newGoals);
+
+    reopenModalRef.current.toggleModal(false);
   };
 
   const performGoalStatusUpdate = async (
@@ -89,29 +116,35 @@ function GoalCards({
     goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
   );
 
-  useEffect(() => {
-    const checkValues = Object.values(selectedGoalCheckBoxes);
-    if (checkValues.length
-      && (checkValues.length === goals.length || checkValues.length === goalsCount)
-      && checkValues.every((v) => v === true)) {
-      setAllGoalsChecked(true);
-    } else if (printAllGoals === true) {
-      setPrintAllGoals(false);
-    }
-  }, [selectedGoalCheckBoxes, allGoalsChecked, printAllGoals, goalsCount, goals.length]);
-
   const selectAllGoalCheckboxSelect = (event) => {
     const { target: { checked = null } = {} } = event;
 
+    // Preserve checked goals on other pages.
+    const thisPagesGoalIds = goals.map((g) => g.id);
+    const preservedCheckboxes = Object.keys(selectedGoalCheckBoxes).reduce((obj, key) => {
+      if (!thisPagesGoalIds.includes(parseInt(key, DECIMAL_BASE))) {
+        return { ...obj, [key]: selectedGoalCheckBoxes[key] };
+      }
+      return { ...obj };
+    }, {});
+
     if (checked === true) {
-      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, true));
-      setAllGoalsChecked(true);
+      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, true), ...preservedCheckboxes });
     } else {
-      setSelectedGoalCheckBoxes(makeGoalCheckboxes(goals, false));
-      setAllGoalsChecked(false);
-      setPrintAllGoals(false);
+      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, false), ...preservedCheckboxes });
     }
   };
+
+  // Check if all goals on the page are checked.
+  useEffect(() => {
+    const goalIds = goals.map((g) => g.id);
+    const countOfCheckedOnThisPage = goalIds.filter((id) => selectedGoalCheckBoxes[id]).length;
+    if (goals.length === countOfCheckedOnThisPage) {
+      setAllGoalsChecked(true);
+    } else {
+      setAllGoalsChecked(false);
+    }
+  }, [goals, selectedGoalCheckBoxes]);
 
   const handleGoalCheckboxSelect = (event) => {
     const { target: { checked = null, value = null } = {} } = event;
@@ -122,10 +155,9 @@ function GoalCards({
     }
   };
 
-  const checkAllGoals = () => {
-    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: true }), {});
+  const checkAllGoals = (isClear) => {
+    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: !isClear }), {});
     setSelectedGoalCheckBoxes(allIdCheckBoxes);
-    setPrintAllGoals(true);
   };
 
   const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
@@ -137,14 +169,14 @@ function GoalCards({
   const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
   const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
 
-  const allSelectedGoalIds = (() => {
+  const allSelectedPageGoalIds = (() => {
     const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
-    return selection.map((g) => g.ids).flat();
+    return selection.map((g) => g.id);
   })();
 
   const rttapaLink = (() => {
     if (selectedCheckBoxes && selectedCheckBoxes.length) {
-      const selectedGoalIdsQuery = allSelectedGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
+      const selectedGoalIdsQuery = allSelectedPageGoalIds.map((id) => `goalId[]=${encodeURIComponent(id)}`).join('&');
       return `/recipient-tta-records/${recipientId}/region/${regionId}/rttapa/new?${selectedGoalIdsQuery}`;
     }
 
@@ -182,6 +214,13 @@ function GoalCards({
           resetValues={resetModalValues}
           oldGoalStatus={closeSuspendOldStatus}
         />
+        <ReopenReasonModal
+          id="reopen-reason-modal"
+          modalRef={reopenModalRef}
+          goalId={reopenGoalId}
+          resetValues={resetReopenModalValues}
+          onSubmit={onSubmitReopenGoal}
+        />
         <GoalsCardsHeader
           title="TTA goals and objectives"
           count={goalsCount || 0}
@@ -198,7 +237,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
-          selectedGoalIds={allSelectedGoalIds}
+          pageSelectedGoalIds={allSelectedPageGoalIds}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
           showRttapaValidation={showRttapaValidation}
@@ -207,6 +246,8 @@ function GoalCards({
           canMergeGoals={canMergeGoals}
           shouldDisplayMergeSuccess={shouldDisplayMergeSuccess}
           dismissMergeSuccess={dismissMergeSuccess}
+          goalBuckets={goalBuckets}
+          allSelectedGoalIds={selectedGoalCheckBoxes}
         />
         <div className="padding-x-3 padding-y-2">
           {goals.map((goal, index) => (
@@ -219,6 +260,7 @@ function GoalCards({
               recipientId={recipientId}
               regionId={regionId}
               showCloseSuspendGoalModal={showCloseSuspendGoalModal}
+              showReopenGoalModal={showReopenGoalModal}
               performGoalStatusUpdate={performGoalStatusUpdate}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
               isChecked={selectedGoalCheckBoxes[goal.id] || false}
@@ -238,7 +280,7 @@ GoalCards.propTypes = {
   goals: PropTypes.arrayOf(PropTypes.shape({
     id: PropTypes.number,
   })).isRequired,
-  error: PropTypes.string.isRequired,
+  error: PropTypes.string,
   goalsCount: PropTypes.number.isRequired,
   handlePageChange: PropTypes.func.isRequired,
   requestSort: PropTypes.func.isRequired,
@@ -254,12 +296,18 @@ GoalCards.propTypes = {
   perPage: PropTypes.number,
   perPageChange: PropTypes.func.isRequired,
   canMergeGoals: PropTypes.bool.isRequired,
-  shouldDisplayMergeSuccess: PropTypes.bool.isRequired,
+  shouldDisplayMergeSuccess: PropTypes.bool,
   dismissMergeSuccess: PropTypes.func.isRequired,
+  goalBuckets: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
+  })).isRequired,
 };
 
 GoalCards.defaultProps = {
   allGoalIds: [],
+  shouldDisplayMergeSuccess: false,
   perPage: 10,
+  error: '',
 };
 export default GoalCards;

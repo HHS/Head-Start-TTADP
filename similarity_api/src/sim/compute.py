@@ -40,9 +40,10 @@ def compute_goal_similarities(recipient_id: int, alpha: float, cluster: bool):
       AND NULLIF(TRIM(g."name"), '') IS NOT NULL
     -- -------------------------------------------
     -- Only needed to prevent goals created from non-approved reports from being merged
-      AND ((ar."approvedAt" IS NOT NULL
-        AND g."createdVia"::text = 'activityReport')
-        OR (g."createdVia"::text != 'activityReport')
+    -- Prevent goals created via TR.
+      AND (
+        (ar."approvedAt" IS NOT NULL AND g."createdVia"::text = 'activityReport')
+        OR (g."createdVia"::text NOT IN ( 'activityReport'))
       )
     -- -------------------------------------------
     ;
@@ -182,24 +183,43 @@ def calculate_goal_similarity(goals_list: List[str], goal_ids_list: List[int], g
 
     return matched_goals
 
-def find_similar_goals(recipient_id, goal_name, alpha):
+def find_similar_goals(recipient_id, goal_name, alpha, include_curated_templates = False):
     # Fetch goals for the given recipient_id
     recipients = query_many(
         """
-        SELECT g."id", g."name", gr."id" AS "grantId"
+        SELECT g."id", g."name", gr."id" AS "grantId", FALSE as is_template
         FROM "Goals" g
         JOIN "Grants" gr
           ON g."grantId" = gr."id"
         JOIN "Recipients" r
           ON gr."recipientId" = r."id"
         WHERE r."id" = :recipient_id
-          AND NULLIF(TRIM(g."name"), '') IS NOT NULL;
+          AND NULLIF(TRIM(g."name"), '') IS NOT NULL
         """,
         {'recipient_id': recipient_id}
     )
 
     if recipients is None:
         return {"error": "recipient_id not found"}
+
+    if include_curated_templates:
+        curated_templates = query_many(
+            """
+            SELECT
+              g."id",
+              g."templateName" as name,
+              NULL AS "grantId",
+              TRUE as is_template,
+              COALESCE(g."source", '') as source,
+              '' as "endDate"
+            FROM "GoalTemplates" g
+            WHERE g."creationMethod" = 'Curated';
+            """,
+            {}
+        )
+
+        if curated_templates is not None:
+            recipients.extend(curated_templates)
 
     # Fetch the embeddings for all the goals including the given goal_name
     goal_embeddings = [nlp(goal['name']).vector for goal in recipients]
@@ -217,6 +237,7 @@ def find_similar_goals(recipient_id, goal_name, alpha):
                 "id": recipients[i]['id'],
                 "name": recipients[i]['name'],
                 "grantId": recipients[i]['grantId'],
+                "isTemplate": recipients[i]['is_template']
             },
             "similarity": sim_scores[i]
         }

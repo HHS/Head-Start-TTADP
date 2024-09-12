@@ -13,10 +13,11 @@ import {
   GoalTemplate,
   ActivityReportObjective,
   Objective,
-  ObjectiveTopic,
   Topic,
+  EventReportPilot,
+  SessionReportPilot,
+  ActivityReportObjectiveTopic,
 } from '../models';
-
 import { getGoalsByActivityRecipient } from '../services/recipient';
 import { OBJECTIVE_STATUS, CREATION_METHOD } from '../constants';
 
@@ -243,6 +244,7 @@ describe('Goals by Recipient Test', () => {
   let objectiveIds = [];
   let goalIds = [];
   let curatedGoalTemplate;
+  let event;
 
   beforeAll(async () => {
     // Create User.
@@ -390,6 +392,7 @@ describe('Goals by Recipient Test', () => {
           grantId: 300,
           createdAt: '2021-01-10T19:16:15.842Z',
           onApprovedAR: true,
+          onAR: true,
         }),
         // 8
         Goal.create({
@@ -546,16 +549,23 @@ describe('Goals by Recipient Test', () => {
           status: OBJECTIVE_STATUS.NOT_STARTED,
           onApprovedAR: true,
         }),
-
       ],
     );
 
-    const objective1 = objectives[0];
     topic = await Topic.create({
       name: 'Arcane Mastery',
     });
-    await ObjectiveTopic.create({
-      objectiveId: objective1.id,
+
+    // AR 1 Obj 1.
+    const aro = await ActivityReportObjective.create({
+      objectiveId: objectives[0].id,
+      activityReportId: savedGoalReport1.id,
+      ttaProvided: 'Objective for Goal 1',
+      status: objectives[0].status,
+    });
+
+    await ActivityReportObjectiveTopic.create({
+      activityReportObjectiveId: aro.id,
       topicId: topic.id,
     });
 
@@ -565,13 +575,6 @@ describe('Goals by Recipient Test', () => {
     // AR Objectives.
     await Promise.all(
       [
-        // AR 1 Obj 1.
-        ActivityReportObjective.create({
-          objectiveId: objectives[0].id,
-          activityReportId: savedGoalReport1.id,
-          ttaProvided: 'Objective for Goal 1',
-          status: objectives[0].status,
-        }),
         // AR 1 Obj 2.
         ActivityReportObjective.create({
           objectiveId: objectives[1].id,
@@ -637,12 +640,24 @@ describe('Goals by Recipient Test', () => {
         }),
       ],
     );
+
+    event = await EventReportPilot.create({
+      ownerId: 1,
+      regionId: 1,
+      collaboratorIds: [1],
+      data: {},
+      imported: {},
+      pocIds: [],
+    });
   });
 
   afterAll(async () => {
     // Get Report Ids.
     const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
+
+    await SessionReportPilot.destroy({ where: { eventId: event.id } });
+    await EventReportPilot.destroy({ where: { ownerId: 1 } });
 
     // Delete AR Objectives.
     await ActivityReportObjective.destroy({
@@ -651,16 +666,12 @@ describe('Goals by Recipient Test', () => {
       },
     });
 
-    await ObjectiveTopic.destroy({
-      where: {
-        objectiveId: objectiveIds,
-      },
-    });
-
     await Topic.destroy({
       where: {
         id: topic.id,
       },
+      individualHooks: true,
+      force: true,
     });
 
     // Delete Objectives.
@@ -699,6 +710,8 @@ describe('Goals by Recipient Test', () => {
           grant4.id,
         ],
       },
+      force: true,
+      individualHooks: true,
     });
     await Recipient.destroy({ where: { id: [recipient.id, recipient2.id, recipient3.id] } });
     await User.destroy({ where: { id: mockGoalUser.id } });
@@ -742,7 +755,14 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalTopics).toEqual(['Child Screening and Assessment', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
+      const expectedTopics = ['Buttering', 'Breading'];
+      expectedTopics.sort();
+
+      const expectedTopics2 = ['Buttering', 'Breading'];
+      expectedTopics2.sort();
+
       // Goal 3.
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
       expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
       expect(goalRowsx[1].goalText).toBe('Goal 3');
       expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
@@ -754,18 +774,18 @@ describe('Goals by Recipient Test', () => {
 
       // Get objective 4.
       expect(goalRowsx[1].objectives.length).toBe(2);
-      const objecitve4 = goalRowsx[1].objectives.find((o) => o.title === 'objective 4');
-      expect(objecitve4.title).toBe('objective 4');
-      expect(objecitve4.endDate).toBe('09/01/2020');
-      expect(objecitve4.reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(objecitve4.status).toEqual(OBJECTIVE_STATUS.COMPLETE);
+      const objective4 = goalRowsx[1].objectives.find((o) => o.title === 'objective 4');
+      expect(objective4.title).toBe('objective 4');
+      expect(objective4.endDate).toBe('09/01/2020');
+      expect(objective4.reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(objective4.status).toEqual(OBJECTIVE_STATUS.COMPLETE);
 
       // Get objective 3.
-      const objecitve3 = goalRowsx[1].objectives.find((o) => o.title === 'objective 3');
-      expect(objecitve3.title).toBe('objective 3');
-      expect(objecitve3.endDate).toBe('09/01/2020');
-      expect(objecitve3.reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(objecitve3.status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
+      const objective3 = goalRowsx[1].objectives.find((o) => o.title === 'objective 3');
+      expect(objective3.title).toBe('objective 3');
+      expect(objective3.endDate).toBe('09/01/2020');
+      expect(objective3.reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(objective3.status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
 
       // Goal 2.
       expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
@@ -784,6 +804,11 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(goalRowsx[3].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
+
+      goalRowsx.forEach((g) => {
+        expect(g.onAR).toBeDefined();
+        expect(g.onAR).not.toBeNull();
+      });
     });
 
     it('Retrieves All Goals by Recipient', async () => {

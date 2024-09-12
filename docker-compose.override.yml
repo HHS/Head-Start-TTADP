@@ -14,7 +14,6 @@ services:
       - POSTGRES_HOST=postgres_docker
       - REDIS_HOST=redis
       - SMTP_HOST=mailcatcher
-      - FONTAWESOME_NPM_AUTH_TOKEN
       # On an M1 mac, puppeteer install fails with the message:
       # "The chromium binary is not available for arm64"
       #
@@ -43,7 +42,6 @@ services:
       - "./packages:/packages:ro"
     environment:
       - BACKEND_PROXY=http://backend:8080
-      - FONTAWESOME_NPM_AUTH_TOKEN
       - REACT_APP_WEBSOCKET_URL
   worker:
     build:
@@ -60,17 +58,17 @@ services:
     volumes:
       - ".:/app:rw"
   owasp_zap_backend:
-    image: owasp/zap2docker-stable:latest
+    image: softwaresecurityproject/zap-stable:latest
     platform: linux/arm64
     user: zap
-    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
+    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report_.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw
     depends_on:
       - backend
   owasp_zap_similarity:
-    image: owasp/zap2docker-stable:latest
+    image: softwaresecurityproject/zap-stable:latest
     platform: linux/arm64
     user: zap
     command: zap-api-scan.py -t http://similarity:8080/openapi.json -f openapi -I -i -r owasp_api_report.html

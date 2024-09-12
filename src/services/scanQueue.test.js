@@ -3,16 +3,45 @@ import addToScanQueue, { scanQueue } from './scanQueue';
 
 jest.mock('bull');
 
-describe('queue tests', () => {
+describe('addToScanQueue', () => {
+  const mockPassword = 'SUPERSECUREPASSWORD';
+  const originalEnv = process.env;
+
   beforeAll(() => {
+    process.env.REDIS_PASS = mockPassword;
   });
+
   afterAll(() => {
+    process.env = originalEnv;
   });
-  // beforeEach(() => Queue.add.mockClear());
+
+  beforeEach(() => {
+    scanQueue.add = jest.fn();
+    Queue.mockImplementation(() => scanQueue);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
 
   it('calls scanQueue.add', async () => {
-    await addToScanQueue('test.txt');
-    expect(Queue).toHaveBeenCalledWith('scan', 'redis://undefined:6379', { redis: { password: undefined } });
-    expect(scanQueue.add).toHaveBeenCalled();
+    await addToScanQueue({ key: 'test.txt' });
+    expect(scanQueue.add).toHaveBeenCalledWith(
+      {
+        key: 'test.txt',
+        referenceData: {
+          impersonationId: '',
+          sessionSig: '',
+          transactionId: '',
+          userId: '',
+        },
+      },
+      expect.objectContaining({
+        attempts: expect.any(Number),
+        backoff: expect.any(Object),
+        removeOnComplete: true,
+        removeOnFail: true,
+      }),
+    );
   });
 });

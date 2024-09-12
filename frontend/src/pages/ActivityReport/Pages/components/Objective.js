@@ -1,12 +1,11 @@
 import React, {
-  useState, useMemo, useContext, useRef,
+  useState, useContext, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
   useController, useFormContext,
 } from 'react-hook-form';
-import { REPORT_STATUSES } from '@ttahub/common';
 import ObjectiveTitle from './ObjectiveTitle';
 import ObjectiveTopics from '../../../../components/GoalForm/ObjectiveTopics';
 import ResourceRepeater from '../../../../components/GoalForm/ResourceRepeater';
@@ -14,19 +13,20 @@ import ObjectiveFiles from '../../../../components/GoalForm/ObjectiveFiles';
 import ObjectiveTta from './ObjectiveTta';
 import ObjectiveStatus from './ObjectiveStatus';
 import ObjectiveSelect from './ObjectiveSelect';
+import ObjectiveSupportType from '../../../../components/ObjectiveSupportType';
 import { OBJECTIVE_PROP, NO_ERROR, ERROR_FORMAT } from './constants';
 import { uploadObjectivesFile } from '../../../../fetchers/File';
 import {
   OBJECTIVE_TITLE,
-  OBJECTIVE_RESOURCES,
   OBJECTIVE_TTA,
   OBJECTIVE_TOPICS,
 } from './goalValidator';
-import { validateListOfResources } from '../../../../components/GoalForm/constants';
+import { validateListOfResources, noDisallowedUrls } from '../../../../components/GoalForm/constants';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import './Objective.scss';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
+import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 
 export default function Objective({
   objective,
@@ -55,6 +55,8 @@ export default function Objective({
   const [statusForCalculations, setStatusForCalculations] = useState(initialObjectiveStatus);
   const { getValues, setError, clearErrors } = useFormContext();
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
+  const { objectiveCreatedHere } = initialObjective;
+  const [onApprovedAR, setOnApprovedAR] = useState(initialObjective.onApprovedAR);
 
   /**
    * add controllers for all the controlled fields
@@ -109,7 +111,8 @@ export default function Objective({
     name: `${fieldArrayName}[${index}].resources`,
     rules: {
       validate: {
-        allResourcesAreValid: (value) => validateListOfResources(value) || OBJECTIVE_RESOURCES,
+        noDisallowedUrls,
+        allResourcesAreValid: (value) => validateListOfResources(value) || 'Enter one resource per field. Valid resource links must start with http:// or https://',
       },
     },
     defaultValue: objective.resources,
@@ -173,6 +176,21 @@ export default function Objective({
 
   const {
     field: {
+      onChange: onChangeSupportType,
+      onBlur: onBlurSupportType,
+      value: supportType,
+      name: supportTypeInputName,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].supportType`,
+    rules: {
+      required: 'Please select a support type',
+    },
+    defaultValue: objective.supportType || '',
+  });
+
+  const {
+    field: {
       onChange: onChangeStatus,
       onBlur: onBlurStatus,
       value: objectiveStatus,
@@ -210,14 +228,17 @@ export default function Objective({
     defaultValue: objective.closeSuspendContext || '',
   });
 
-  const isOnApprovedReport = useMemo(() => objective.activityReports
-    && objective.activityReports.some(
-      (report) => report.status === REPORT_STATUSES.APPROVED,
-    ), [objective.activityReports]);
+  const {
+    field: {
+      value: createdHere,
+      onChange: onChangeCreatedHere,
+    },
+  } = useController({
+    name: `${fieldArrayName}[${index}].createdHere`,
+    defaultValue: objectiveCreatedHere || null,
+  });
 
-  const isOnReport = useMemo(() => (
-    objective.activityReports && objective.activityReports.length
-  ), [objective.activityReports]);
+  const isOnReport = objective.onAR;
 
   const onChangeObjective = (newObjective) => {
     setSelectedObjective(newObjective);
@@ -231,6 +252,7 @@ export default function Objective({
     }
 
     onChangeStatus(newObjective.status);
+    onChangeSupportType(newObjective.supportType);
     onChangeTopics(newObjective.topics);
     onChangeFiles(newObjective.files || []);
     onObjectiveChange(newObjective, index); // Call parent on objective change.
@@ -242,6 +264,12 @@ export default function Objective({
     // ipd course
     onChangeUseIpdCourses(newObjective.courses && newObjective.courses.length);
     onChangeIpdCourses(newObjective.courses);
+
+    // was objective created on this report?
+    onChangeCreatedHere(newObjective.objectiveCreatedHere);
+
+    // keep track of whether the objective is on an approved report
+    setOnApprovedAR(newObjective.onApprovedAR);
   };
 
   const onUploadFile = async (files, _objective, setUploadError) => {
@@ -259,6 +287,7 @@ export default function Objective({
       setIsAppLoading(true);
       setAppLoadingText('Uploading');
       const data = new FormData();
+      data.append('reportId', JSON.stringify(reportId));
       data.append('objectiveIds', JSON.stringify(!objectiveToAttach.ids ? [0] : objectiveToAttach.ids));
       files.forEach((file) => {
         data.append('file', file);
@@ -273,14 +302,6 @@ export default function Objective({
       setIsAppLoading(false);
     }
   };
-
-  let savedTopics = [];
-  let savedResources = [];
-
-  if (isOnApprovedReport) {
-    savedTopics = objective.topics;
-    savedResources = objective.resources;
-  }
 
   const resourcesForRepeater = objectiveResources && objectiveResources.length ? objectiveResources : [{ key: uuidv4(), value: '' }];
   const onRemove = () => remove(index);
@@ -317,48 +338,37 @@ export default function Objective({
         options={options}
         onRemove={onRemove}
       />
-      <ObjectiveTitle
-        error={errors.title
-          ? ERROR_FORMAT(errors.title.message)
-          : NO_ERROR}
-        isOnApprovedReport={isOnApprovedReport || false}
-        title={objectiveTitle}
-        onChangeTitle={onChangeTitle}
-        validateObjectiveTitle={onBlurTitle}
-        inputName={objectiveTitleInputName}
-        parentGoal={parentGoal}
-        initialObjectiveStatus={statusForCalculations}
-      />
+      <FormFieldThatIsSometimesReadOnly
+        label="TTA Objective"
+        value={objectiveTitle}
+        permissions={[
+          createdHere,
+          statusForCalculations !== 'Complete' && statusForCalculations !== 'Suspended',
+          !onApprovedAR,
+        ]}
+      >
+        <ObjectiveTitle
+          error={errors.title
+            ? ERROR_FORMAT(errors.title.message)
+            : NO_ERROR}
+          title={objectiveTitle}
+          onChangeTitle={onChangeTitle}
+          validateObjectiveTitle={onBlurTitle}
+          inputName={objectiveTitleInputName}
+          initialObjectiveStatus={statusForCalculations}
+        />
+      </FormFieldThatIsSometimesReadOnly>
       <ObjectiveTopics
         error={errors.topics
           ? ERROR_FORMAT(errors.topics.message)
           : NO_ERROR}
-        savedTopics={savedTopics}
         topicOptions={topicOptions}
         validateObjectiveTopics={onBlurTopics}
-        topics={isOnApprovedReport ? [] : objectiveTopics}
-        isOnReport={isOnReport || false}
-        isOnApprovedReport={isOnApprovedReport || false}
+        topics={objectiveTopics}
         onChangeTopics={onChangeTopics}
         inputName={objectiveTopicsInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
       />
-      <ResourceRepeater
-        resources={isOnApprovedReport ? [] : resourcesForRepeater}
-        isOnReport={isOnReport || false}
-        setResources={onChangeResources}
-        error={errors.resources
-          ? ERROR_FORMAT(errors.resources.message)
-          : NO_ERROR}
-        validateResources={onBlurResources}
-        savedResources={savedResources}
-        inputName={objectiveResourcesInputName}
-        goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        userCanEdit
-        editingFromActivityReport
-      />
+
       <IpdCourseSelect
         error={errors.courses
           ? ERROR_FORMAT(errors.courses.message)
@@ -371,7 +381,21 @@ export default function Objective({
         onBlurUseIpdCourses={onBlurUseIpdCourses}
         useIpdCourse={objectiveUseIpdCourses}
         useCoursesInputName={objectiveUseIpdCoursesInputName}
+        className="margin-top-3"
       />
+
+      <ResourceRepeater
+        resources={resourcesForRepeater}
+        isOnReport={isOnReport || false}
+        setResources={onChangeResources}
+        error={errors.resources
+          ? ERROR_FORMAT(errors.resources.message)
+          : NO_ERROR}
+        validateResources={onBlurResources}
+        inputName={objectiveResourcesInputName}
+        userCanEdit
+      />
+
       <ObjectiveFiles
         objective={objective}
         files={objectiveFiles}
@@ -383,7 +407,7 @@ export default function Objective({
         inputName={objectiveFilesInputName}
         reportId={reportId}
         goalStatus={parentGoal ? parentGoal.status : 'Not Started'}
-        label="Did you use any TTA resources that aren't available as link?"
+        label="Did you use any other TTA resources that aren't available as link?"
         selectedObjectiveId={selectedObjective.id}
         userCanEdit
         editingFromActivityReport
@@ -393,11 +417,20 @@ export default function Objective({
         onChangeTTA={onChangeTta}
         inputName={objectiveTtaInputName}
         status={objectiveStatus}
-        isOnApprovedReport={isOnApprovedReport || false}
+        isOnApprovedReport={false}
         error={errors.ttaProvided
           ? ERROR_FORMAT(errors.ttaProvided.message)
           : NO_ERROR}
         validateTta={onBlurTta}
+      />
+      <ObjectiveSupportType
+        onBlurSupportType={onBlurSupportType}
+        supportType={supportType}
+        onChangeSupportType={onChangeSupportType}
+        inputName={supportTypeInputName}
+        error={errors.supportType
+          ? ERROR_FORMAT(errors.supportType.message)
+          : NO_ERROR}
       />
 
       <ObjectiveSuspendModal
@@ -411,9 +444,7 @@ export default function Objective({
         onChangeSuspendContext={onChangeSuspendContext}
         onChangeStatus={onChangeStatus}
         setError={setStatusReasonError}
-        error={errors.closeSuspendReason
-          ? ERROR_FORMAT(errors.closeSuspendReason.message)
-          : NO_ERROR}
+        error={errors.closeSuspendReason}
       />
 
       <ObjectiveStatus
@@ -433,6 +464,9 @@ Objective.propTypes = {
   index: PropTypes.number.isRequired,
   objective: OBJECTIVE_PROP.isRequired,
   errors: PropTypes.shape({
+    supportType: PropTypes.shape({
+      message: PropTypes.string,
+    }),
     ttaProvided: PropTypes.shape({
       message: PropTypes.string,
     }),

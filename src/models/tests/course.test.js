@@ -9,7 +9,6 @@ import db, {
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  ObjectiveCourse,
   ActivityReportObjectiveCourse,
 } from '..';
 
@@ -87,7 +86,6 @@ describe('course', () => {
   let objective;
   let activityReportGoal;
   let activityReportObjective;
-  let objectiveCourses;
   let activityReportObjectiveCourse;
 
   beforeAll(async () => {
@@ -158,12 +156,6 @@ describe('course', () => {
       nameLookUp: 'testipdcourse2',
     });
 
-    // Create ObjectiveCourse.
-    objectiveCourses = await ObjectiveCourse.create({
-      objectiveId: objective.id,
-      courseId: course.id,
-    });
-
     // Create ActivityReportObjectiveCourse.
     activityReportObjectiveCourse = await ActivityReportObjectiveCourse.create({
       activityReportObjectiveId: activityReportObjective.id,
@@ -176,13 +168,6 @@ describe('course', () => {
     await ActivityReportObjectiveCourse.destroy({
       where: {
         id: activityReportObjectiveCourse.id,
-      },
-    });
-
-    // Delete ObjectiveCourse.
-    await ObjectiveCourse.destroy({
-      where: {
-        id: objectiveCourses.id,
       },
     });
 
@@ -237,6 +222,7 @@ describe('course', () => {
         id: grant.id,
       },
       force: true,
+      individualHooks: true,
     });
 
     // Delete recipient.
@@ -268,27 +254,6 @@ describe('course', () => {
     });
     course = await Course.findByPk(course.id);
     expect(course.name).toBe(newCourseName);
-  });
-
-  it('Objective course', async () => {
-    const objectiveCourse = await ObjectiveCourse.findOne({
-      where: {
-        objectiveId: objective.id,
-      },
-    });
-    expect(objectiveCourse.courseId).toBe(course.id);
-
-    // Update objective course.
-    objectiveCourse.courseId = updateCourse.id;
-    await ObjectiveCourse.update({
-      courseId: updateCourse.id,
-    }, {
-      where: {
-        id: objectiveCourse.id,
-      },
-    });
-    const updatedObjectiveCourse = await ObjectiveCourse.findByPk(objectiveCourse.id);
-    expect(updatedObjectiveCourse.courseId).toBe(updateCourse.id);
   });
 
   it('ActivityReportObjective course', async () => {

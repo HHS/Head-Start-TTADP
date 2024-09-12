@@ -81,6 +81,12 @@ describe('EventCards', () => {
             eventType={eventType}
             onRemoveSession={jest.fn()}
             onDeleteEvent={onDeleteEvent}
+            removeEventFromDisplay={jest.fn()}
+            alerts={{
+              message: null,
+              setMessage: jest.fn(),
+              setParentMessage: jest.fn(),
+            }}
           />
         </UserContext.Provider>
       </MemoryRouter>));
@@ -259,7 +265,7 @@ describe('EventCards', () => {
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     button.click(button);
   });
@@ -308,7 +314,7 @@ describe('EventCards', () => {
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
-    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     button.click(button);
   });

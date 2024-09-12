@@ -1,6 +1,5 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
-import { expect } from '@playwright/test';
 import { determineMergeGoalStatus } from '@ttahub/common';
 import db, {
   Recipient,
@@ -14,10 +13,9 @@ import db, {
   User,
 } from '../models';
 import {
-  reduceObjectives,
-  reduceObjectivesForActivityReport,
   createMultiRecipientGoalsFromAdmin,
 } from './goals';
+import { reduceObjectives, reduceObjectivesForActivityReport } from './reduceGoals';
 import {
   OBJECTIVE_STATUS,
   AUTOMATIC_CREATION,
@@ -61,6 +59,7 @@ describe('Goals DB service', () => {
     let user;
     let recipient;
     let grant;
+    let secondGrant;
     let template;
 
     const existingGoalName = faker.datatype.string(100);
@@ -89,6 +88,15 @@ describe('Goals DB service', () => {
 
       // Grant.
       grant = await Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: recipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+      });
+
+      secondGrant = await Grant.create({
         id: faker.datatype.number(),
         number: faker.datatype.string(),
         recipientId: recipient.id,
@@ -136,7 +144,7 @@ describe('Goals DB service', () => {
     afterAll(async () => {
       const goals = await Goal.findAll({
         where: {
-          grantId: grant.id,
+          grantId: [grant.id, secondGrant.id],
         },
       });
 
@@ -150,7 +158,7 @@ describe('Goals DB service', () => {
 
       await ActivityRecipient.destroy({
         where: {
-          grantId: grant.id,
+          grantId: [grant.id, secondGrant.id],
         },
       });
 
@@ -158,12 +166,14 @@ describe('Goals DB service', () => {
         where: {
           userId: user.id,
         },
+        force: true,
       });
 
       await Goal.destroy({
         where: {
           id: goalIds,
         },
+        force: true,
       });
 
       await GoalTemplate.destroy({
@@ -174,8 +184,9 @@ describe('Goals DB service', () => {
 
       await Grant.destroy({
         where: {
-          id: grant.id,
+          id: [grant.id, secondGrant.id],
         },
+        individualHooks: true,
       });
 
       await Recipient.destroy({
@@ -198,9 +209,30 @@ describe('Goals DB service', () => {
       });
       expect(response).toEqual({
         isError: true,
-        message: `Goal name already exists for grants ${grant.id}`,
+        message: `A goal with that name already exists for grants ${grant.number}`,
         grantsForWhomGoalAlreadyExists: [grant.id],
       });
+    });
+
+    it('will skip creating but continue if a goal with that name already exists', async () => {
+      const response = await createMultiRecipientGoalsFromAdmin({
+        ...mockRequestData,
+        selectedGrants: JSON.stringify([{ id: grant.id }, { id: secondGrant.id }]),
+        goalText: existingGoalName,
+        createMissingGoals: true,
+      });
+      const {
+        grantsForWhomGoalAlreadyExists,
+        isError,
+        message,
+        goals,
+      } = response;
+      expect(grantsForWhomGoalAlreadyExists.length).toBe(1);
+      expect(isError).toBe(false);
+      expect(message).toBe(`A goal with that name already exists for grants ${grant.number}`);
+      expect(goals).toHaveLength(1);
+      expect(goals[0].name).toBe(existingGoalName);
+      expect(goals[0].grantId).toBe(secondGrant.id);
     });
 
     it('requires a goal name to proceed', async () => {
@@ -405,6 +437,7 @@ describe('Goals DB service', () => {
         where: {
           id: grant.id,
         },
+        individualHooks: true,
       });
 
       // Recipient.
@@ -416,8 +449,9 @@ describe('Goals DB service', () => {
     });
 
     it('objective reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = await reduceObjectives(
-        [objectiveOne,
+      const reducedObjectives = reduceObjectives(
+        [
+          objectiveOne,
           objectiveTwo,
           objectiveThree,
           objectiveFour,
@@ -429,7 +463,7 @@ describe('Goals DB service', () => {
     });
 
     it('ar reduce returns the correct number of objectives with spaces', async () => {
-      const reducedObjectives = await reduceObjectivesForActivityReport(
+      const reducedObjectives = reduceObjectivesForActivityReport(
         [objectiveOne,
           objectiveTwo,
           objectiveThree,

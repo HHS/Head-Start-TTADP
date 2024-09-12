@@ -9,16 +9,20 @@
     "@fortawesome/free-solid-svg-icons": "^6.4.2",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@hookform/error-message": "^0.0.5",
+    "@react-hook/resize-observer": "^1.2.6",
+    "@silevis/reactgrid": "3.1",
     "@trussworks/react-uswds": "4.1.1",
-    "@ttahub/common": "2.0.5",
+    "@ttahub/common": "^2.1.5",
     "@use-it/interval": "^1.0.0",
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
+    "csv-parse": "^4.14.1",
+    "detect-file-encoding-and-language": "^2.4.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "ejs": "^3.1.7",
-    "follow-redirects": "^1.15.4",
     "html-react-parser": "^5.1.1",
+    "follow-redirects": "^1.15.6",
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
     "http-proxy-middleware": "^2.0.1",
@@ -27,8 +31,8 @@
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.35",
     "nth-check": "^2.0.1",
-    "plotly.js": "^2.25.2",
-    "plotly.js-basic-dist": "^2.2.1",
+    "plotly.js": "^2.34.0",
+    "plotly.js-basic-dist": "^2.34.0",
     "prop-types": "^15.7.2",
     "query-string": "^7.0.0",
     "react": "^17.0.1",
@@ -55,10 +59,11 @@
     "sass": "^1.51.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "micromatch": "^4.0.8"
   },
   "engines": {
-    "node": "18.18.2"
+    "node": "18.20.3"
   },
   "scripts": {
     "start": "cross-env DISABLE_ESLINT_PLUGIN=true react-scripts start",
@@ -76,8 +81,9 @@
     "async": "^3.2.3",
     "browserslist": "^4.16.5",
     "cross-fetch": "^3.1.5",
-    "ejs": "^3.1.7",
-    "follow-redirects": "^1.15.4",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "follow-redirects": "^1.15.6",
     "json5": "^1.0.2",
     "glob-parent": "^6.0.2",
     "minimist": "^1.2.6",
@@ -85,7 +91,7 @@
     "nanoid": "^3.2.0",
     "node-fetch": "^2.6.7",
     "nth-check": "^2.0.1",
-    "tar": "^4.4.18",
+    "tar": "^6.2.1",
     "d3-color": "^3.1.0",
     "minimatch": "^3.0.5",
     "postcss": "^8.4.31",
@@ -94,7 +100,10 @@
     "ua-parser-js": "^0.7.33",
     "webpack": "^5.76.1",
     "yaml": "^2.2.2",
-    "semver": "^7.5.3"
+    "semver": "^7.5.3",
+    "es5-ext": "^0.10.63",
+    "braces": "^3.0.3",
+    "path-to-regexp": "^1.9.0"
   },
   "eslintConfig": {
     "root": true,
@@ -109,7 +118,8 @@
     ],
     "ignorePatterns": [
       "build/*",
-      "node_modules/*"
+      "node_modules/*",
+      "public/*"
     ],
     "rules": {
       "react/jsx-filename-extension": [
@@ -180,8 +190,12 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
+    "postcss": "^8.4.39",
     "react-scripts": "^5.0.1",
     "react-select-event": "^5.1.0"
+  },
+  "peerDependencies": {
+    "postcss": "^8.4.33"
   },
   "jest": {
     "coveragePathIgnorePatterns": [

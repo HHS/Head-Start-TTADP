@@ -1,3 +1,4 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
 import EventReport from './event';
 
@@ -6,12 +7,13 @@ const createEvent = ({
   pocIds = [1],
   collaboratorIds = [],
   regionId = 1,
+  data = {},
 }) => ({
   ownerId,
   pocIds,
   collaboratorIds,
   regionId,
-  data: {},
+  data,
 });
 
 let nextUserId = 0;
@@ -20,6 +22,7 @@ const createUser = ({
   write = false,
   read = false,
   admin = false,
+  poc = false,
   regionId = 1,
 }) => {
   const permissions = [];
@@ -38,12 +41,17 @@ const createUser = ({
     permissions.push({ scopeId: SCOPES.ADMIN, regionId });
   }
 
+  if (poc) {
+    permissions.push({ scopeId: SCOPES.POC_TRAINING_REPORTS, regionId });
+  }
+
   return { id: nextUserId, permissions };
 };
 
 const authorRegion1 = createUser({ write: true, regionId: 1 });
 const authorRegion2 = createUser({ write: true, regionId: 2 });
 const authorRegion1Collaborator = createUser({ write: true, regionId: 1 });
+const pocRegion1 = createUser({ poc: true, regionId: 1 });
 const admin = createUser({ admin: true });
 
 describe('Event Report policies', () => {
@@ -61,21 +69,89 @@ describe('Event Report policies', () => {
     });
   });
 
+  describe('canGetGroupsForEditingSession', () => {
+    it('is true if the user has write permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
+
+    it('is true if the user has poc permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(pocRegion1, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
+
+    it('is false if the user does not have write permissions in the region', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(authorRegion2, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(false);
+    });
+
+    it('is true if the user is admin', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const policy = new EventReport(admin, eventRegion1);
+      expect(policy.canGetGroupsForEditingSession()).toBe(true);
+    });
+  });
+
   describe('canDelete', () => {
     it('is true if the user is an admin', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
       const policy = new EventReport(admin, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(true);
+    });
+
+    it('is false if the event is in progress', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(false);
+    });
+
+    it('is false if the event is complete', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+      });
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canDelete()).toBe(false);
+    });
+
+    it('is true if the event is suspended', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.SUSPENDED },
+      });
       const policy = new EventReport(authorRegion1, eventRegion1);
       expect(policy.canDelete()).toBe(true);
     });
 
     it('is false if the user is not an admin or the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        regionId: 1,
+        data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED },
+      });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canDelete()).toBe(false);
     });
@@ -89,8 +165,18 @@ describe('Event Report policies', () => {
     });
 
     it('is true if the user is the author', () => {
-      const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+
       const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.canEditEvent()).toBe(true);
+    });
+
+    it('is true if the user is a collaborator', () => {
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1,
+        collaboratorIds: [authorRegion1Collaborator.id],
+      });
+      const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
       expect(policy.canEditEvent()).toBe(true);
     });
 
@@ -100,7 +186,7 @@ describe('Event Report policies', () => {
         pocIds: [authorRegion1Collaborator.id],
       });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
-      expect(policy.canEditEvent()).toBe(true);
+      expect(policy.canEditEvent()).toBe(false);
     });
 
     it('is false if the user is only a collab', () => {
@@ -355,6 +441,29 @@ describe('Event Report policies', () => {
       const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canReadInRegion()).toBe(false);
+    });
+  });
+
+  describe('canSeeAlerts', () => {
+    it('is true if the user is an admin', () => {
+      const policy = new EventReport(admin, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is true if the user has read_write_training reports in any region', () => {
+      const policy = new EventReport(authorRegion1, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is true if the user has poc_training reports in any region', () => {
+      const policy = new EventReport(pocRegion1, {});
+      expect(policy.canSeeAlerts()).toBe(true);
+    });
+
+    it('is false otherwise', () => {
+      const user = createUser({ read: true, regionId: 1 });
+      const policy = new EventReport(user, {});
+      expect(policy.canSeeAlerts()).toBe(false);
     });
   });
 });

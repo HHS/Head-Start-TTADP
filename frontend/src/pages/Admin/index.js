@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch, Route } from 'react-router';
 import { NavLink } from 'react-router-dom';
-
 import User from './users';
 import Cdi from './cdi';
 import Diag from './diag';
@@ -9,10 +8,11 @@ import Flags from './Flags';
 import SiteAlerts from './SiteAlerts';
 import Redis from './Redis';
 import NationalCenters from './NationalCenters';
-import Email from './Email';
 import Goals from './Goals';
+import SS from './SS';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
+import CourseEdit from './CourseEdit';
 
 function Admin() {
   return (
@@ -47,12 +47,12 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
           Users
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
+          SS
+        </NavLink>
       </div>
       <h2>Engineer only</h2>
       <div className="margin-bottom-2">
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/email">
-          Email
-        </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
         </NavLink>
@@ -65,6 +65,10 @@ function Admin() {
         <Route
           path="/admin/users/:userId?"
           render={({ match }) => <User match={match} />}
+        />
+        <Route
+          path="/admin/ss/"
+          render={({ match }) => <SS match={match} />}
         />
         <Route
           path="/admin/diag/"
@@ -87,10 +91,6 @@ function Admin() {
           render={({ match }) => <NationalCenters match={match} />}
         />
         <Route
-          path="/admin/email/"
-          render={({ match }) => <Email match={match} />}
-        />
-        <Route
           path="/admin/goals/"
           render={() => <Goals />}
         />
@@ -101,6 +101,10 @@ function Admin() {
         <Route
           path="/admin/courses/"
           render={({ match }) => <Courses match={match} />}
+        />
+        <Route
+          path="/admin/course/:courseId"
+          render={({ match }) => <CourseEdit match={match} />}
         />
       </Switch>
     </>

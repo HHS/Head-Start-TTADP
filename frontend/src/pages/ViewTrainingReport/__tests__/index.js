@@ -1,9 +1,62 @@
 import React from 'react';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router-dom';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import AppLoadingContext from '../../../AppLoadingContext';
-import ViewTrainingReport from '..';
+import ViewTrainingReport, { formatOwnerName } from '..';
+import UserContext from '../../../UserContext';
+
+const oneCompleteSession = [{
+  id: 7,
+  eventId: 1,
+  data: {
+    id: 7,
+    files: [{
+      id: 25643,
+      key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
+      url: {
+        url: 'http://file-url',
+        error: null,
+      },
+      status: 'UPLOADING',
+      fileSize: 954060,
+      createdAt: '2023-06-27T13:48:54.745Z',
+      updatedAt: '2023-06-27T13:48:54.745Z',
+      originalFileName: 'test-file.pdf',
+    }],
+    status: 'Complete',
+    context: 'Session 1 context',
+    endDate: '06/16/2023',
+    eventId: 33,
+    ownerId: null,
+    duration: 1,
+    regionId: 3,
+    eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+    objective: 'Session 1 objective',
+    pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+    startDate: '06/12/2023',
+    eventOwner: 355,
+    recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+    sessionName: 'Session Name # 1',
+    ttaProvided: 'Session 1 TTA provided',
+    participants: ['Direct Service: Other'],
+    deliveryMethod: 'in-person',
+    eventDisplayId: 'R03-PD-23-1037',
+    objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
+    objectiveTrainers: ['HBHS', 'PFCE'],
+    objectiveResources: [{ value: 'http://random-resource-url' }],
+    recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
+    specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
+    numberOfParticipants: 3,
+    objectiveSupportType: SUPPORT_TYPES[2],
+    courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
+  },
+  createdAt: '2023-06-27T13:48:31.490Z',
+  updatedAt: '2023-06-27T13:49:18.579Z',
+}];
 
 const mockEvent = (data = {}) => ({
   id: 1,
@@ -18,7 +71,6 @@ const mockEvent = (data = {}) => ({
     reasons: ['Ongoing Quality Improvement'],
     audience: 'Recipients',
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-    'Sheet Name': 'PD23-24 b. Region 01 PD Plan WITH NCs',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['None'],
@@ -67,7 +119,7 @@ const mockEvent = (data = {}) => ({
       recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
       specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
       numberOfParticipants: 3,
-      objectiveSupportType: 'Implementing',
+      objectiveSupportType: SUPPORT_TYPES[2],
       courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
     },
     createdAt: '2023-06-27T13:48:31.490Z',
@@ -81,7 +133,7 @@ const mockEvent = (data = {}) => ({
       status: 'In progress',
       context: 'Session 2 context',
       endDate: '06/23/2023',
-      eventId: 1,
+      eventId: '1',
       ownerId: null,
       duration: 0.5,
       regionId: 3,
@@ -102,24 +154,61 @@ const mockEvent = (data = {}) => ({
       recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
       specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
       numberOfParticipants: 3,
-      objectiveSupportType: 'Planning',
+      objectiveSupportType: SUPPORT_TYPES[1],
       courses: [{ id: 3, name: 'course 3' }],
     },
     createdAt: '2023-06-27T13:49:23.985Z',
     updatedAt: '2023-06-27T13:49:59.039Z',
+  },
+  {
+    id: 10,
+    eventId: 1,
+    data: {
+      id: 10,
+      files: [],
+      context: 'Session 3 context',
+      endDate: '06/16/2024',
+      eventId: 33,
+      ownerId: null,
+      duration: 1000,
+      regionId: 3,
+      eventName: 'Health Webinar Series 3: Oral Health and Dental Care from a Regional and State Perspective',
+      objective: 'Session 3 objective',
+      pageState: { 1: 'Not started', 2: 'Not started', 3: 'Not started' },
+      startDate: '06/12/2024',
+      eventOwner: 355,
+      recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+      sessionName: 'Session Name # 3',
+      ttaProvided: 'Session 3 TTA provided',
+      participants: [],
+      deliveryMethod: '',
+      eventDisplayId: 'R03-PD-23-1037',
+      objectiveTopics: [],
+      objectiveTrainers: [],
+      objectiveResources: [],
+      recipientNextSteps: [],
+      specialistNextSteps: [],
+      numberOfParticipants: 3,
+      objectiveSupportType: null,
+      courses: [],
+    },
+    createdAt: '2023-06-27T13:48:31.490Z',
+    updatedAt: '2023-06-27T13:49:18.579Z',
   }],
   ...data,
 });
 
 describe('ViewTrainingReport', () => {
-  const renderTrainingReport = () => {
+  const renderTrainingReport = (userId = 999) => {
     act(() => {
       render(
-        <MemoryRouter>
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-            <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
-          </AppLoadingContext.Provider>
-        </MemoryRouter>,
+        <UserContext.Provider value={{ user: { id: userId } }}>
+          <MemoryRouter>
+            <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+              <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
+            </AppLoadingContext.Provider>
+          </MemoryRouter>
+        </UserContext.Provider>,
       );
     });
   };
@@ -171,7 +260,8 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('Session 1 TTA provided')).toBeInTheDocument();
     expect(screen.getByText('Session 1 context')).toBeInTheDocument();
     expect(screen.getByText('1 hours')).toBeInTheDocument();
-    expect(screen.getByText(/Altenwerth LLC/i)).toBeInTheDocument();
+    const altenwerth = await screen.findAllByText(/Altenwerth LLC/i);
+    expect(altenwerth.length).toBe(2);
     expect(screen.getByText('Direct Service: Other')).toBeInTheDocument();
     expect(screen.getByText('In-person')).toBeInTheDocument();
     expect(screen.getByText('Behavioral / Mental Health / Trauma')).toBeInTheDocument();
@@ -206,8 +296,15 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('06/30/2026')).toBeInTheDocument();
     expect(screen.getByText('s1s2')).toBeInTheDocument();
     expect(screen.getByText('06/29/2027')).toBeInTheDocument();
-    expect(screen.getByText('Planning')).toBeInTheDocument();
+    expect(screen.getByText(SUPPORT_TYPES[1])).toBeInTheDocument();
     expect(screen.getByText('course 3')).toBeInTheDocument();
+
+    // it renders the session status
+    const el = document.querySelectorAll('.ttahub-read-only-content-section--heading--section-row-status');
+    expect(el.length).toBe(3);
+    const statuses = Array.from(el).map((e) => e.textContent);
+    statuses.sort();
+    expect(statuses).toEqual(['Complete', 'In progress', 'Not started']);
   });
 
   it('renders the necessary buttons', async () => {
@@ -225,6 +322,131 @@ describe('ViewTrainingReport', () => {
 
     expect(await screen.findByRole('button', { name: 'Copy URL Link' })).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Print to PDF' })).toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event is already complete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event has no sessions', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      sessionReports: [],
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event has sessions which are not complete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('does not show complete event if the event is owner-incomplete', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: false,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = screen.queryByText(/complete event/i);
+    expect(completeEvent).not.toBeInTheDocument();
+  });
+
+  it('shows and can complete event', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = await screen.findByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+
+    fetchMock.putOnce('/api/events/id/1', 200);
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
+  });
+
+  it('handles an error completing event', async () => {
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
+      data: {
+        eventSubmitted: true,
+      },
+      sessionReports: oneCompleteSession,
+    }));
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    const completeEvent = await screen.findByText(/complete event/i);
+    expect(completeEvent).toBeInTheDocument();
+
+    fetchMock.putOnce('/api/events/id/1', 500);
+    act(() => {
+      userEvent.click(completeEvent);
+    });
+
+    expect(fetchMock.called('/api/events/id/1')).toBe(true);
+    expect(await screen.findByText('Sorry, something went wrong')).toBeInTheDocument();
   });
 
   it('handles an error fetching event', async () => {
@@ -325,5 +547,143 @@ describe('ViewTrainingReport', () => {
 
     expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
+  });
+
+  it('will not fetch if there are eventReportPilotNationalCenterUsers in the response that match the IDs', async () => {
+    const e = mockEvent();
+    e.eventReportPilotNationalCenterUsers = [{ userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=2')).toBe(false);
+
+    expect(await screen.findByText('USER 2, NC 1')).toBeInTheDocument();
+  });
+
+  it('will fetch if there are eventReportPilotNationalCenterUsers in the response that do not match the IDs', async () => {
+    const e = mockEvent();
+    e.eventReportPilotNationalCenterUsers = [{ userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    renderTrainingReport();
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
+    expect(fetchMock.called('/api/users/names?ids=2')).toBe(true);
+
+    expect(await screen.findByText('USER 2')).toBeInTheDocument();
+  });
+
+  describe('formatOwnerName', () => {
+    test('handles an error', () => {
+      const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });
+      expect(result).toBe('');
+    });
+
+    test('Returns the DB name if it is returned correctly as a virtual field', () => {
+      const event = {
+        owner: {
+          id: 1,
+          name: 'John Doe',
+          nameWithNationalCenters: 'John Doe, Center A',
+        },
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe, Center A');
+    });
+
+    test('Returns the formatted owner name if owner is missing from eventReportPilotNationalCenterUsers', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe');
+    });
+    test('Returns the formatted owner name if event and owner data are provided', () => {
+      const event = {
+        data: {
+          owner: {
+            id: 1,
+            name: 'John Doe',
+          },
+        },
+        eventReportPilotNationalCenterUsers: [
+          {
+            userId: 1,
+            userName: 'John',
+            nationalCenterName: 'Center A',
+          },
+          {
+            userId: 2,
+            userName: 'Jane',
+            nationalCenterName: 'Center B',
+          },
+        ],
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John, Center A');
+    });
+
+    test('Returns the owner name if event and owner name are provided', () => {
+      const event = {
+        data: {
+          owner: {
+            name: 'John Doe',
+          },
+        },
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('John Doe');
+    });
+
+    test('Returns an empty string if event or owner data are missing', () => {
+      const event = {
+        data: {},
+      };
+
+      const result = formatOwnerName(event);
+
+      expect(result).toBe('');
+    });
   });
 });

@@ -14,6 +14,19 @@ const isAdmin = (user) => {
 };
 
 /**
+ * @param {object} user
+ * @returns {boolean} - True if the user has READ_WRITE_TRAINING_REPORTS or POC_TRAINING_REPORTS
+ */
+
+const hasTrainingReportWritePermissions = (user) => {
+  const permissions = _.get(user, 'permissions');
+  return permissions && permissions.find(
+    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
+      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS,
+  ) !== undefined;
+};
+
+/**
  * Return all regions that user has a minimum of read access to.
  * All permissions that qualify this criteria are:
  * Admin
@@ -141,6 +154,19 @@ const hasApproveActivityReport = (user) => {
 };
 
 /**
+ * Search the user's permissions for a approve report permission regardless of region
+ * @param {*} user - user object
+ * @returns {boolean} - True if the user has approve activity report, false otherwise
+ */
+const hasApproveActivityReportInRegion = (user, regionId) => {
+  const { permissions } = user;
+  return permissions && permissions.find(
+    (p) => p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
+      && p.regionId === regionId,
+  ) !== undefined;
+};
+
+/**
  * Search the user's permissions for a read/write permisions for a region
  * @param {*} user - user object
  * @param {number} region - region id
@@ -185,6 +211,22 @@ const canEditOrCreateSessionReports = (user, region) => {
 const getUserRegions = (user) => allRegionsUserHasPermissionTo(user);
 
 const canChangeGoalStatus = (user, region) => canEditOrCreateGoals(user, region);
+const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, region);
+
+/**
+ * can see behind feature flag
+ * @param {object} user
+ * @param {string} flag
+ */
+
+const canSeeBehindFeatureFlag = (user, flag) => {
+  if (!user || !user.flags) {
+    return false;
+  }
+
+  const { flags } = user;
+  return flags.includes(flag) || isAdmin(user);
+};
 
 export {
   isAdmin as default,
@@ -193,6 +235,10 @@ export {
   getUserRegions,
   canEditOrCreateGoals,
   canChangeGoalStatus,
+  canChangeObjectiveStatus,
   canEditOrCreateSessionReports,
   hasApproveActivityReport,
+  hasApproveActivityReportInRegion,
+  canSeeBehindFeatureFlag,
+  hasTrainingReportWritePermissions,
 };

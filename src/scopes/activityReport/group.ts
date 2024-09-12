@@ -5,14 +5,16 @@ import { idClause } from '../utils';
 const constructLiteral = (query: string[], userId: number): string => {
   const where = idClause(query);
   return sequelize.literal(`(
-      SELECT DISTINCT "activityReportId" 
+      SELECT DISTINCT "activityReportId"
       FROM "ActivityRecipients" ar
       JOIN "GroupGrants" gg
-      ON ar."grantId" = gg."grantId"
+        ON ar."grantId" = gg."grantId"
       JOIN "Groups" g
-      ON gg."groupId" = g.id
-      WHERE g."id" IN (${where}) 
-      AND (g."userId" = ${userId} OR g."isPublic" = true)    
+        ON gg."groupId" = g.id
+      JOIN "GroupCollaborators" gc
+        ON g."id" = gc."groupId"
+      WHERE g."id" IN (${where})
+      AND (gc."userId" = ${userId} OR g."isPublic" = true)
   )`);
 };
 

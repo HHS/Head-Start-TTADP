@@ -10,6 +10,24 @@ const FILE_STATUSES = {
   REJECTED: 'REJECTED',
 };
 
+const IMPORT_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  COLLECTING: 'COLLECTING',
+  COLLECTED: 'COLLECTED',
+  COLLECTION_FAILED: 'COLLECTION_FAILED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+};
+
+const IMPORT_DATA_STATUSES = {
+  IDENTIFIED: 'IDENTIFIED',
+  PROCESSING: 'PROCESSING',
+  PROCESSED: 'PROCESSED',
+  PROCESSING_FAILED: 'PROCESSING_FAILED',
+  WILL_NOT_PROCESS: 'WILL_NOT_PROCESS',
+};
+
 const DATE_FORMAT = 'MM/DD/YYYY';
 
 const REPORTS_PER_PAGE = 10;
@@ -76,6 +94,13 @@ const RESOURCE_ACTIONS = {
   GET_METADATA: 'getMetaData',
 };
 
+const GROUP_COLLABORATORS = {
+  CREATOR: 'Creator',
+  CO_OWNER: 'Co-Owner',
+  SHARED_WITH: 'SharedWith',
+  EDITOR: 'Editor',
+};
+
 /**
  * Stored in `UserSettings` table, e.g.:
  * userId: 111, key: 'reportSubmittedForReview', value: 'immediately',
@@ -116,18 +141,10 @@ const EMAIL_ACTIONS = {
   RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
   RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
-  TRAINING_REPORT_POC_SESSION_COMPLETE: 'trainingReportPocComplete',
-  TRAINING_REPORT_POC_VISION_GOAL_COMPLETE: 'trainingReportPocVisionGoalComplete',
-  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
   TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
-  TRAINING_REPORT_SESSION_COMPLETED: 'trainingReportSessionCompleted',
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
-};
-
-const AWS_ELASTICSEARCH_ACTIONS = {
-  ADD_INDEX_DOCUMENT: 'addIndexDocument',
-  UPDATE_INDEX_DOCUMENT: 'updateIndexDocument',
-  DELETE_INDEX_DOCUMENT: 'deleteIndexDocument',
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
 };
 
 const S3_ACTIONS = {
@@ -195,10 +212,6 @@ const RESOURCE_DOMAIN = {
   ECLKC: 'eclkc.ohs.acf.hhs.gov',
 };
 
-const AWS_ELASTIC_SEARCH_INDEXES = {
-  ACTIVITY_REPORTS: 'activityreports',
-};
-
 const GRANT_INACTIVATION_REASONS = {
   REPLACED: 'Replaced',
   TERMINATED: 'Terminated',
@@ -213,28 +226,35 @@ const MAINTENANCE_TYPE = {
   REINDEX_TABLES: 'REINDEX TABLES',
   DAILY_DB_MAINTENANCE: 'DAILY DB MAINTENANCE',
   CLEAR_MAINTENANCE_LOGS: 'CLEAR MAINTENANCE LOGS',
+  IMPORT_SCHEDULE: 'IMPORT_SCHEDULE',
+  IMPORT_DOWNLOAD: 'IMPORT_DOWNLOAD',
+  IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
 
 const FEATURE_FLAGS = [
-  'resources_dashboard',
-  'rttapa_form',
   'anv_statistics',
   'regional_goal_dashboard',
-  'goal_source',
-  'merge_goals',
-  'monitoring',
   'closed_goal_merge_override',
+  'training_reports_dashboard',
+  'quality_assurance_dashboard',
+  'manual_mark_goals_similar',
 ];
 
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',
   MAINTENANCE: 'MAINTENANCE',
+  IMPORT: 'IMPORT',
 };
 
 const GOAL_CREATED_VIA = ['imported', 'activityReport', 'rtr', 'merge', 'admin'];
 
+const CURRENT_GOAL_SIMILARITY_VERSION = 4;
+
 module.exports = {
+  CURRENT_GOAL_SIMILARITY_VERSION,
   FILE_STATUSES,
+  IMPORT_STATUSES,
+  IMPORT_DATA_STATUSES,
   DATE_FORMAT,
   REPORTS_PER_PAGE,
   RECIPIENTS_PER_PAGE,
@@ -249,18 +269,17 @@ module.exports = {
   GRANT_PERSONNEL_ROLES,
   OBJECTIVE_STATUS,
   OBJECTIVE_COLLABORATORS,
+  GROUP_COLLABORATORS,
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   EMAIL_ACTIONS,
-  AWS_ELASTICSEARCH_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
   PROMPT_FIELD_TYPE,
   SOURCE_FIELD,
   RESOURCE_DOMAIN,
-  AWS_ELASTIC_SEARCH_INDEXES,
   GRANT_INACTIVATION_REASONS,
   MAINTENANCE_TYPE,
   MAINTENANCE_CATEGORY,

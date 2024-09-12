@@ -18,9 +18,14 @@ import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
 
-// TTAHUB-2126
+// TTAHUB-2126 TTAHUB-2334
+// Update the specific attribute (e.g., state code) for each grant,
+// identified by its grant number, in the map below.
+// This patch sets the new value for the grant to ensure data accuracy.
 const grantPatches = new Map([
   [12128, { stateCode: 'OH' }],
+  [10291, { stateCode: 'PW' }],
+  [14869, { stateCode: 'PW' }],
 ]);
 
 function valueFromXML(value) {
@@ -56,7 +61,7 @@ function combineNames(firstName, lastName) {
   return joinedName === '' ? null : joinedName;
 }
 
-function getPersonnelField(role, field, program) {
+export function getPersonnelField(role, field, program) {
   // return if program is not an object.
   if (typeof program !== 'object') {
     return null;
@@ -395,8 +400,13 @@ export async function processFiles(hashSumHex) {
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
 
+      // Deduplicate based on 'id'
+      const uniqueProgramsForDb = Array.from(
+        new Map(programsForDb.map((item) => [item.id, item])).values(),
+      );
+
       await Program.bulkCreate(
-        programsForDb,
+        uniqueProgramsForDb,
         {
           updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
           transaction,

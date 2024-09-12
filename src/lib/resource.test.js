@@ -1,8 +1,7 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
-import { expect } from '@playwright/test';
 import { auditLogger } from '../logger';
-import { getResourceMetaDataJob } from './resource';
+import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 import db, { Resource } from '../models';
 
 jest.mock('../logger');
@@ -32,46 +31,6 @@ test
 const urlMissingTitle = `
 <!DOCTYPE html>
 <html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-<body>
-test
-</body>
-</html>
-`;
-
-const urlTitleOnly = `
-<!DOCTYPE html>
-<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-<head>
-<meta charset="utf-8" />
-<meta name="language" content="en" />
-<meta name="topic" content="Mental Health" />
-<meta name="resource-type" content="Article" />
-<meta name="node-id" content="7858" />
-<meta ="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
-<title>Title only</title>
-<body>
-test
-</body>
-</html>
-`;
-
-const urlNcOnly = `
-<!DOCTYPE html>
-<html lang="en" dir="ltr" prefix="og: https://ogp.me/ns#" class="no-js">
-<head>
-<meta charset="utf-8" />
-<meta name="language" content="en" />
-<meta ="national-centers" content="NC only" />
-<meta name="topic" content="Mental Health" />
-<meta name="resource-type" content="Article" />
-<meta name="node-id" content="7858" />
-<meta ="exclude-from-dynamic-view" content="False" />
-<script>window.dataLayer = window.dataLayer || []; window.dataLayer.push({"language":"en","country":"US","siteName":"ECLKC","entityLangcode":"en","entityVid":"326638","entityCreated":"1490966152","entityStatus":"1","entityName":"leraa","entityType":"node","entityBundle":"page_front","entityId":"2212","entityTitle":"Head Start","userUid":0});</script>
-<link rel="canonical" href="https://eclkc.ohs.acf.hhs.gov/" />
-<link rel="image_src" href="https://eclkc.ohs.acf.hhs.gov/themes/gesso/images/site-logo.png" />
 <body>
 test
 </body>
@@ -604,5 +563,25 @@ describe('resource worker tests', () => {
       status: 500,
       data: { url: 'http://www.test.gov' },
     });
+  });
+});
+
+describe('overrideStatusCodeOnAuthRequired', () => {
+  const httpCodes = { OK: 200, UNAUTHORIZED: 401, SERVICE_UNAVAILABLE: 503 };
+
+  it('returns UNAUTHORIZED if status code is OK and authentication is required', () => {
+    const statusCode = httpCodes.OK;
+    const list = ['auth'];
+    const data = 'some data with auth requirement';
+    const result = overrideStatusCodeOnAuthRequired(statusCode, list, data);
+    expect(result).toBe(httpCodes.UNAUTHORIZED);
+  });
+
+  it('returns OK if status code is OK and authentication is not required', () => {
+    const statusCode = httpCodes.OK;
+    const list = ['no-auth'];
+    const data = 'data without auth requirement';
+    const result = overrideStatusCodeOnAuthRequired(statusCode, list, data);
+    expect(result).toBe(httpCodes.OK);
   });
 });

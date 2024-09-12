@@ -13,6 +13,7 @@ import {
   statusFilter,
   topicsFilter,
   grantNumberFilter,
+  goalNameFilter,
 } from '../goalFilters';
 import FilterErrorContext from '../FilterErrorContext';
 
@@ -108,6 +109,7 @@ describe('goalFilters', () => {
     const grantFilter = grantNumberFilter([{
       numberWithProgramTypes: 'number EHS',
       number: 'number',
+      status: 'Active',
     }]);
 
     const grantFilterWithNoPossibleGrantsYet = grantNumberFilter([]);
@@ -138,7 +140,29 @@ describe('goalFilters', () => {
       const apply = jest.fn();
       renderFilter(() => grantFilter.renderInput('1', 'test', [], apply));
       const grantNumberInput = await screen.findByLabelText('Select grant numbers to filter by');
-      await selectEvent.select(grantNumberInput, ['number EHS']);
+      await selectEvent.select(grantNumberInput, ['number EHS - Active']);
+      expect(apply).toHaveBeenCalled();
+    });
+  });
+
+  describe('goalNameFilter', () => {
+    it('renders correctly', async () => {
+      renderFilter(() => goalNameFilter.renderInput('1', 'test', 'text', () => {}));
+      const input = await screen.findByLabelText('Goal text');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('displays the correct values', async () => {
+      const q = goalNameFilter.displayQuery('number');
+
+      expect(q).toBe('number');
+    });
+
+    it('calls onApply', async () => {
+      const apply = jest.fn();
+      renderFilter(() => goalNameFilter.renderInput('1', 'test', 'test', apply));
+      const input = await screen.findByLabelText('Goal text');
+      userEvent.type(input, 'number');
       expect(apply).toHaveBeenCalled();
     });
   });
