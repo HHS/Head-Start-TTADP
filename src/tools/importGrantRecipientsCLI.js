@@ -15,17 +15,17 @@ const { argv: { skipdownload } } = option('skipdownload', {
   .help()
   .alias('help', 'h');
 
-  (async () => {
-    try {
-      if (skipdownload) {
-        await processFiles();
-      } else {
-        await updateGrantsRecipients();
-      }
-      auditLogger.info('Script completed successfully');
-      process.exit(0);
-    } catch (e) {
-      auditLogger.error(`Error during script execution: ${e.message}`, e);
-      process.exit(1);
+(async () => {
+  try {
+    if (skipdownload) {
+      await processFiles();
+    } else {
+      await updateGrantsRecipients();
     }
-  })();
+    auditLogger.info('Script completed successfully');
+    process.exit(0);
+  } catch (e) {
+    auditLogger.error(`Error during script execution: ${e.message}`, e);
+    process.exit(1);
+  }
+})();
