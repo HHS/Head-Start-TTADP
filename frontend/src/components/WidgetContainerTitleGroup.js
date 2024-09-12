@@ -30,7 +30,6 @@ const WidgetContainerTitleGroup = ({
   subtitle2DrawerTitle,
   subtitle2DrawerCssClass,
 }) => {
-  console.log('subtitleDrawerLinkText', subtitleDrawerLinkText);
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
   const subtitle2DrawerLinkRef = useRef(null);
