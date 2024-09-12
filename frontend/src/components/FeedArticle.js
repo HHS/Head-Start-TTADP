@@ -16,9 +16,8 @@ const FeedArticle = ({
   partial,
 }) => {
   /**
-   * to match the styling in the design system
-   * we need to add the usa-prose class to all
-   * paragraphs in the article content
+   * to match the styling in the design system, we attach USWDS classes to the
+   * appropriate elements
    */
   useLayoutEffect(() => {
     const tags = document.querySelectorAll(`
