@@ -444,9 +444,7 @@ export default function Objective({
         onChangeSuspendContext={onChangeSuspendContext}
         onChangeStatus={onChangeStatus}
         setError={setStatusReasonError}
-        error={errors.closeSuspendReason
-          ? ERROR_FORMAT(errors.closeSuspendReason.message)
-          : NO_ERROR}
+        error={errors.closeSuspendReason}
       />
 
       <ObjectiveStatus
