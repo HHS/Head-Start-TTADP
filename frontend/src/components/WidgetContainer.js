@@ -33,10 +33,10 @@ export default function WidgetContainer(
     setDisplayTable,
     titleDrawerText,
     titleDrawerTitle,
-    titleDrawerCssClass,
+    titleDrawerTag,
     subtitleDrawerLinkText,
     subtitleDrawerLinkTitle,
-    subtitleDrawerCssClass,
+    subtitleDrawerTag,
   },
 ) {
   return (
@@ -63,10 +63,10 @@ export default function WidgetContainer(
         exportRows={exportRows}
         titleDrawerText={titleDrawerText}
         titleDrawerTitle={titleDrawerTitle}
-        titleDrawerCssClass={titleDrawerCssClass}
+        titleDrawerTag={titleDrawerTag}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
         subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
-        subtitleDrawerCssClass={subtitleDrawerCssClass}
+        subtitleDrawerTag={subtitleDrawerTag}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -127,10 +127,10 @@ WidgetContainer.propTypes = {
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
-  titleDrawerCssClass: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerLinkTitle: PropTypes.string,
-  subtitleDrawerCssClass: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -157,8 +157,8 @@ WidgetContainer.defaultProps = {
   setDisplayTable: null,
   titleDrawerText: '',
   titleDrawerTitle: '',
-  titleDrawerCssClass: '',
+  titleDrawerTag: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerLinkTitle: '',
-  subtitleDrawerCssClass: '',
+  subtitleDrawerTag: '',
 };

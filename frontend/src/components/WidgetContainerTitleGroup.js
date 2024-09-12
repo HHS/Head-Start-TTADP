@@ -22,10 +22,10 @@ const WidgetContainerTitleGroup = ({
   setDisplayTable,
   titleDrawerText,
   titleDrawerTitle,
-  titleDrawerCssClass,
+  titleDrawerTag,
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
-  subtitleDrawerCssClass,
+  subtitleDrawerTag,
 }) => {
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
@@ -66,7 +66,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerCssClass} contentSelector="table" />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
                   </Drawer>
                 </>
                 )
@@ -89,7 +89,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerCssClass} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
               </Drawer>
             </div>
           )}
@@ -130,10 +130,10 @@ WidgetContainerTitleGroup.propTypes = {
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
-  titleDrawerCssClass: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerCssClass: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -150,10 +150,10 @@ WidgetContainerTitleGroup.defaultProps = {
   setDisplayTable: null,
   titleDrawerText: '',
   titleDrawerTitle: '',
-  titleDrawerCssClass: '',
+  titleDrawerTag: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: null,
-  subtitleDrawerCssClass: '',
+  subtitleDrawerTag: '',
 };
 
 export default WidgetContainerTitleGroup;
