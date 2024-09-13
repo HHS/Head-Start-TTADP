@@ -1,4 +1,3 @@
-
 const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
