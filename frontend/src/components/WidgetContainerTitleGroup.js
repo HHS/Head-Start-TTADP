@@ -79,7 +79,7 @@ const WidgetContainerTitleGroup = ({
             </div>
           )}
           {subtitleDrawerLinkText && (
-            <div className="margin-x-0 margin-y-3 ">
+            <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
               <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
                 {subtitleDrawerLinkText}
               </DrawerTriggerButton>
