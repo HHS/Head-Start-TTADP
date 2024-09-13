@@ -1174,7 +1174,8 @@ describe('ActivityReport', () => {
     });
 
     const errors = document.querySelectorAll('.usa-error-message');
-    expect(errors.length).toBe(0);
+    expect(errors.length).toBe(1);
+    // they'll be one at least (objective suspend reason modal error sits in the dom at all times)
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/1', { method: 'PUT' })).toBe(true);
