@@ -1,4 +1,3 @@
--- Where each step of each plan is a sepreate file, only running the needed filter files for the filters in that file are active.
 -- Plan:
 -- Phase 1: Grants
 -- Step 1.1: Seed filtered_grants
@@ -18,20 +17,20 @@
 DO $$
 DECLARE
     -- Declare filter variables
-    recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
+    -- recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
     program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
     grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
     state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
     group_filter TEXT := NULLIF(current_setting('ssdi.group', true), '');
     current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
-    domain_emotional_support_filter TEXT := NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '');
-    domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
-    domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
+    -- domain_emotional_support_filter TEXT := NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '');
+    -- domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
+    -- domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
     goal_name_filter TEXT := NULLIF(current_setting('ssdi.goalName', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
-    report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
+    -- report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
     reason_filter TEXT := NULLIF(current_setting('ssdi.reason', true), '');
@@ -85,7 +84,7 @@ BEGIN
       INSERT INTO filtered_grants (id)
       SELECT DISTINCT id
       FROM "Grants"
-      WHERE status = 'Active'
+      WHERE COALESCE(deleted, false) = false
       ORDER BY 1
       RETURNING id
   )
@@ -1061,6 +1060,26 @@ WITH
       COUNT(*) total
     FROM no_tta
   ),
+  no_tta_page AS (
+    SELECT
+      r.id,
+      r.name,
+        (array_agg(a."startDate" ORDER BY a."startDate" DESC))[1] last_tta,
+      now()::date - ((array_agg(a."startDate" ORDER BY a."startDate" desc ))[1])::date days_since_last_tta
+    FROM no_tta nt
+    JOIN "Recipients" r
+    ON nt.id = r.id
+    AND NOT nt.has_tta
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    LEFT JOIN "ActivityRecipients" ar
+    ON gr.id = ar."grantId"
+    LEFT JOIN "ActivityReports" a
+    ON ar."activityReportId" = a.id
+    AND a."calculatedStatus" = 'approved'
+    WHERE gr.status = 'Active'
+    GROUP BY 1,2
+  ),
   with_fei AS (
     SELECT
       r.id,
@@ -1084,6 +1103,27 @@ WITH
       COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
       COUNT(DISTINCT wf.id) total
     FROM with_fei wf
+  ),
+  with_fei_page AS (
+    SELECT
+      r.id "recipientId",
+      r.name "recipientName",
+      gr.number "grantNumber",
+      g.id "goalId",
+      g."createdAt",
+      g.status "goalStatus",
+      gfr.response "rootCause"
+    FROM with_fei wf
+    JOIN "Recipients" r
+    ON wf.id = r.id
+    AND has_fei
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    JOIN "Goals" g
+    ON gr.id = g."grantId"
+    AND g."goalTemplateId" = 19017
+    LEFT JOIN "GoalFieldResponses" gfr
+    ON g.id = gfr."goalId"
   ),
   with_fei_graph AS (
     SELECT
@@ -1136,6 +1176,49 @@ WITH
       COUNT(DISTINCT wc.id) total
     FROM with_class wc
   ),
+  with_class_page AS (
+    SELECT
+      r.id "recipientId",
+      r.name "recipientName",
+      gr.number "grantNumber",
+      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
+      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
+      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
+      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
+      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
+      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
+      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
+      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
+    FROM with_class wc
+    JOIN "Recipients" r
+    ON wc.id = r.id
+    AND (has_class OR has_scores)
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    LEFT JOIN "Goals" g
+    ON gr.id = g."grantId"
+    AND has_class
+    AND g."goalTemplateId" = 18172
+    LEFT JOIN "ActivityReportGoals" arg
+    ON g.id = arg."goalId"
+    LEFT JOIN "ActivityReports" a
+    ON arg."activityReportId" = a.id
+    AND a."calculatedStatus" = 'approved'
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+    ON gr.number = mrg."grantNumber"
+    LEFT JOIN "MonitoringReviews" mr
+    ON mrg."reviewId" = mr."reviewId"
+    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
+    LEFT JOIN "MonitoringReviewStatuses" mrs
+    ON mr."statusId" = mrs."statusId"
+    LEFT JOIN "MonitoringClassSummaries" mcs
+    ON mr."reviewId" = mcs."reviewId"
+    WHERE gr.status = 'Active'
+    AND (has_class OR has_scores)
+    AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
+    GROUP BY 1,2,3
+    order by 1,3
+  ),
   delivery_method_graph AS (
     SELECT
       DATE_TRUNC('month', "startDate")::DATE AS month,
@@ -1179,6 +1262,17 @@ WITH
     FROM no_tta_widget
     UNION
     SELECT
+      'no_tta_page' data_set,
+      COUNT(*) records,
+      JSONB_AGG(JSONB_BUILD_OBJECT(
+        'recipient id', id,
+        'recipient name', name,
+        'last tta', last_tta,
+        'days since last tta', days_since_last_tta
+      ))
+    FROM no_tta_page
+    UNION
+    SELECT
     'with_fei_widget' data_set,
     COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
@@ -1187,6 +1281,20 @@ WITH
       'total', total
     ))
     FROM with_fei_widget
+    UNION
+    SELECT
+      'with_fei_page' data_set,
+      COUNT(*) records,
+      JSONB_AGG(JSONB_BUILD_OBJECT(
+        'recipientId', "recipientId",
+        'recipientName', "recipientName",
+        'grantNumber', "grantNumber",
+        'goalId', "goalId",
+        'createdAt', "createdAt",
+        'goalStatus', "goalStatus",
+        'rootCause', "rootCause"
+      ))
+    FROM with_fei_page
     UNION
     SELECT
     'with_fei_graph' data_set,
@@ -1207,6 +1315,24 @@ WITH
       'total', total
     ))
     FROM with_class_widget
+    UNION
+    SELECT
+      'with_class_page' data_set,
+      COUNT(*) records,
+      JSONB_AGG(JSONB_BUILD_OBJECT(
+        'recipientId', "recipientId",
+        'recipientName', "recipientName",
+        'grantNumber', "grantNumber",
+        'goalId', "goalId",
+        'goalCreatedAt', "goalCreatedAt",
+        'goalStatus', "goalStatus",
+        'lastARStartDate', "lastARStartDate",
+        'emotionalSupport', "emotionalSupport",
+        'classroomOrganization', "classroomOrganization",
+        'instructionalSupport', "instructionalSupport",
+        'reportDeliveryDate', "reportDeliveryDate"
+      ))
+    FROM with_class_page
     UNION
     SELECT
     'delivery_method_graph' data_set,

@@ -1,0 +1,570 @@
+-- Plan:
+-- Phase 1: Grants
+-- Step 1.1: Seed filtered_grants
+-- Step 1.2: If grant filters (set 1), delete from filtered_grants any grarnts filtered grants
+-- Step 1.3: If grant filters (set 2), delete from filtered_grants any grarnts filtered grants
+-- Step 1.4: If grant filters (set 3), delete from filtered_grants any grarnts filtered grants
+-- Phase 2: Goals
+-- Step 2.1: Seed filtered_goals using filtered_grants
+-- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
+
+-- Run main query using filtered_grants, filtered_goals, filtered_activity_reports as needed to generate filtered results
+DO $$
+DECLARE
+    -- Declare filter variables
+    recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
+    -- program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
+    grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
+    state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
+    region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
+    group_filter TEXT := NULLIF(current_setting('ssdi.group', true), '');
+    current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
+    domain_emotional_support_filter TEXT := NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '');
+    domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
+    domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
+    create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
+
+    -- Declare `.not` variables
+    recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipients.not', true), 'false') = 'true';
+    -- program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
+    grant_numbers_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantNumbers.not', true), 'false') = 'true';
+    state_code_not_filter BOOLEAN := COALESCE(current_setting('ssdi.stateCode.not', true), 'false') = 'true';
+    region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.regionIds.not', true), 'false') = 'true';
+    group_not_filter BOOLEAN := COALESCE(current_setting('ssdi.group.not', true), 'false') = 'true';
+    current_user_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.currentUserId.not', true), 'false') = 'true';
+    domain_emotional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainEmotionalSupport.not', true), 'false') = 'true';
+    domain_classroom_organization_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainClassroomOrganization.not', true), 'false') = 'true';
+    domain_instructional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainInstructionalSupport.not', true), 'false') = 'true';
+    create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
+
+BEGIN
+---------------------------------------------------------------------------------------------------
+-- Step 0.1: make a table to hold applied filters
+  DROP TABLE IF EXISTS process_log;
+  CREATE TEMP TABLE IF NOT EXISTS process_log(
+    action TEXT,
+    record_cnt int,
+    occured_at TIMESTAMP DEFAULT NOW()
+  );
+---------------------------------------------------------------------------------------------------
+-- Step 1.1: Seed filtered_grants
+  DROP TABLE IF EXISTS filtered_grants;
+  CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
+
+  WITH seed_filtered_grants AS (
+      INSERT INTO filtered_grants (id)
+      SELECT DISTINCT id
+      FROM "Grants"
+      WHERE COALESCE(deleted, false) = false
+      ORDER BY 1
+      RETURNING id
+  )
+  INSERT INTO process_log (action, record_cnt)
+  SELECT
+      'Seed filtered_grants' AS action,
+      COUNT(*)
+  FROM seed_filtered_grants
+  GROUP BY 1;
+---------------------------------------------------------------------------------------------------
+-- Step 1.2: If grant filters active, delete from filtered_grants any grarnts filtered grants
+  IF
+    recipient_filter IS NOT NULL OR
+    program_type_filter IS NOT NULL OR
+    grant_numbers_filter IS NOT NULL OR
+    state_code_filter IS NOT NULL OR
+    region_ids_filter IS NOT NULL
+  THEN
+  raise notice 'applying filter';
+    WITH
+      applied_filtered_grants AS (
+        SELECT
+          gr.id
+        FROM filtered_grants fgr
+        JOIN "Grants" gr
+        ON fgr.id = gr.id
+        JOIN "Recipients" r
+        ON gr."recipientId" = r.id
+        -- Filter for recipients if ssdi.recipients is defined
+        AND (
+          recipient_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
+            WHERE r.name ~* value::text
+          ) != recipient_not_filter
+          )
+        )
+        JOIN "Programs" p
+        ON gr.id = p."grantId"
+        -- Filter for programType if ssdi.programType is defined
+        AND (
+          program_type_filter IS NULL
+          OR (
+            COALESCE(program_type_filter, '[]')::jsonb @> to_jsonb(p."programType") != program_type_not_filter
+          )
+        )
+        WHERE 1 = 1
+        -- Filter for grantNumbers if ssdi.grantNumbers is defined
+        AND (
+          grant_numbers_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(COALESCE(grant_numbers_filter, '[]')::json) AS value
+            WHERE gr.number ~* value::text
+          ) != grant_numbers_not_filter
+          )
+        )
+        -- Filter for stateCode if ssdi.stateCode is defined
+        AND (
+          state_code_filter IS NULL
+          OR (
+            COALESCE(state_code_filter, '[]')::jsonb @> to_jsonb(gr."stateCode") != state_code_not_filter
+          )
+        )
+        -- Filter for regionIds if ssdi.regionIds is defined
+        AND (
+          region_ids_filter IS NULL
+          OR (
+            COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(gr."regionId")::jsonb
+          )
+        )
+        ORDER BY 1
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+          fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN applied_filtered_grants afgr
+              ON fgr.id = afgr.id
+            WHERE afgr.id IS NULL
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+            DELETE FROM filtered_grants fgr
+            USING applied_filtered_out_grants afogr
+            WHERE fgr.id = afogr.id
+            RETURNING fgr.id
+      )
+      INSERT INTO process_log (action, record_cnt)
+      SELECT
+        'Apply Grant Filters' AS action,
+        COUNT(*)
+      FROM delete_from_grant_filter
+      GROUP BY 1;
+  END IF;
+---------------------------------------------------------------------------------------------------
+-- Step 1.3: If grant filters active, delete from filtered_grants any grarnts filtered grants
+  IF
+    group_filter IS NOT NULL OR
+    current_user_id_filter IS NOT NULL
+  THEN
+    WITH
+      applied_filtered_grants AS (
+        SELECT
+          gr.id
+        FROM filtered_grants fgr
+        JOIN "Grants" gr
+        ON fgr.id = gr.id
+        LEFT JOIN "GroupGrants" gg
+        ON gr.id = gg."grantId"
+        LEFT JOIN "Groups" g
+        ON gg."groupId" = g.id
+        -- Filter for group if ssdi.group is defined
+        AND (
+          group_filter IS NULL
+          OR (
+            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.name) != group_not_filter
+          )
+        )
+        LEFT JOIN "GroupCollaborators" gc
+        ON g.id = gc."groupId"
+        AND gc."deletedAt" IS NULL
+        -- Filter for userId if ssdi.currentUserId is defined
+        AND (
+          current_user_id_filter IS NULL
+          OR (
+            COALESCE(current_user_id_filter, '[]')::jsonb @> to_jsonb(gc."userId")::jsonb
+          )
+        )
+        WHERE 1 = 1
+        -- Continued Filter for group if ssdi.group is defined from left joined table above
+        AND (group_filter IS NULL OR (g.id IS NOT NULL AND gc.id IS NOT NULL))
+        ORDER BY 1
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+          fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN applied_filtered_grants afgr
+              ON fgr.id = afgr.id
+            WHERE afgr.id IS NULL
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+            DELETE FROM filtered_grants fgr
+            USING applied_filtered_out_grants afogr
+            WHERE fgr.id = afogr.id
+            RETURNING fgr.id
+      )
+      INSERT INTO process_log (action, record_cnt)
+      SELECT
+        'Apply Grant Filters' AS action,
+        COUNT(*)
+      FROM delete_from_grant_filter
+      GROUP BY 1;
+  END IF;
+---------------------------------------------------------------------------------------------------
+-- Step 1.4: If grant filters active, delete from filtered_grants any grarnts filtered grants
+  IF
+    domain_emotional_support_filter IS NOT NULL OR
+    domain_classroom_organization_filter IS NOT NULL OR
+    domain_instructional_support_filter IS NOT NULL
+  THEN
+    WITH
+      applied_filtered_grants AS (
+        SELECT
+          gr.id
+        FROM filtered_grants fgr
+        JOIN "Grants" gr
+        ON fgr.id = gr.id
+        LEFT JOIN "MonitoringClassSummaries" mcs
+        ON gr.number = mcs."grantNumber"
+        LEFT JOIN "MonitoringReviews" mr
+        ON mcs."reviewId" = mr."reviewId"
+        LEFT JOIN "MonitoringReviewStatuses" mrs
+        ON mr."statusId" = mrs."statusId"
+        AND mrs."name" = 'Complete'
+        GROUP BY 1
+        HAVING 1 = 1
+        -- Conditional logic for domain support filters and mrs.id requirement
+        AND (
+          -- If any of the domain filters have a value, then mrs.id must not be NULL
+          (
+          COALESCE(
+            domain_emotional_support_filter,
+            domain_classroom_organization_filter,
+            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
+          ) IS NOT NULL
+          AND (ARRAY_AGG(DISTINCT mrs.id))[0] IS NOT NULL
+          )
+          -- If all domain filters are NULL, then mrs.id can be anything
+          OR (
+          COALESCE(
+            domain_emotional_support_filter,
+            domain_classroom_organization_filter,
+            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
+          ) IS NULL
+          )
+        )
+        -- Filter for domainEmotionalSupport if ssdi.domainEmotionalSupport is defined
+        AND (
+          domain_emotional_support_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(
+            COALESCE(domain_emotional_support_filter, '[]')::json
+            ) AS json_values
+            WHERE json_values.value = (
+            CASE
+              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
+              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
+              ELSE 'Below quality'
+            END
+            )
+          )
+          != domain_emotional_support_not_filter
+          )
+        )
+        -- Filter for domainClassroomOrganization if ssdi.domainClassroomOrganization is defined
+        AND (
+          domain_classroom_organization_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(
+            COALESCE(domain_classroom_organization_filter, '[]')::json
+            ) AS json_values
+            WHERE json_values.value = (
+            CASE
+              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
+              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
+              ELSE 'Below quality'
+            END
+            )
+          )
+          != domain_classroom_organization_not_filter
+          )
+        )
+        -- Filter for domainInstructionalSupport if ssdi.domainInstructionalSupport is defined
+        AND (
+          domain_instructional_support_filter IS NULL
+          OR (
+          EXISTS (
+            SELECT 1
+            FROM json_array_elements_text(
+            COALESCE(domain_instructional_support_filter, '[]')::json
+            ) AS json_values
+            WHERE json_values.value = (
+            CASE
+              -- Get the max reportDeliveryDate for the instructionalSupport domain
+              WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 3 THEN 'Above all thresholds'
+              WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
+              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.5)
+              THEN 'Below competitive'
+              WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
+              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.3)
+              THEN 'Below competitive'
+              ELSE 'Below quality'
+            END
+            )
+          )
+          != domain_instructional_support_not_filter
+          )
+        )
+      ),
+      applied_filtered_out_grants AS (
+        SELECT
+          fgr.id
+        FROM filtered_grants fgr
+        LEFT JOIN applied_filtered_grants afgr
+              ON fgr.id = afgr.id
+            WHERE afgr.id IS NULL
+        ORDER BY 1
+      ),
+      delete_from_grant_filter AS (
+            DELETE FROM filtered_grants fgr
+            USING applied_filtered_out_grants afogr
+            WHERE fgr.id = afogr.id
+            RETURNING fgr.id
+      )
+      INSERT INTO process_log (action, record_cnt)
+      SELECT
+        'Apply Grant Filters' AS action,
+        COUNT(*)
+      FROM delete_from_grant_filter
+      GROUP BY 1;
+  END IF;
+---------------------------------------------------------------------------------------------------
+-- Step 2.1: Seed filtered_goals using filtered_grants
+  DROP TABLE IF EXISTS filtered_goals;
+  CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
+
+  WITH seed_filtered_goals AS (
+      INSERT INTO filtered_goals (id)
+      SELECT DISTINCT g.id
+      FROM "Goals" g
+      JOIN filtered_grants fgr
+      ON g."grantId" = fgr.id
+      WHERE g."deletedAt" IS NULL
+      AND g."mapsToParentGoalId" IS NULL
+      ORDER BY g.id  -- Add ORDER BY here
+      RETURNING id
+  )
+  INSERT INTO process_log (action, record_cnt)
+  SELECT
+      'Seed filtered_goals' AS action,
+      COUNT(*)
+  FROM seed_filtered_goals
+  GROUP BY 1;
+---------------------------------------------------------------------------------------------------
+-- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
+
+    IF
+        create_date_filter IS NOT NULL
+    THEN
+    WITH
+      applied_filtered_goals AS (
+        SELECT DISTINCT
+          g.id
+        FROM filtered_goals fg
+        JOIN "Goals" g
+        ON fg.id = g.id
+        -- Filter for createDate dates between two values if ssdi.createDate is defined
+        AND (
+          create_date_filter IS NULL
+          OR (
+          g."createdAt"::date <@ (
+            SELECT
+            CONCAT(
+              '[',
+              MIN(value::timestamp),
+              ',',
+              COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
+              ')'
+            )::daterange AS my_array
+            FROM json_array_elements_text(
+            COALESCE(create_date_filter, '[]')::json
+            ) AS value
+          ) != create_date_not_filter
+          )
+        )
+      ),
+        applied_filtered_out_goals AS (
+            SELECT
+                fg.id
+            FROM filtered_goals fg
+            LEFT JOIN applied_filtered_goals afg
+            ON fg.id = afg.id
+            WHERE afg.id IS NULL
+            ORDER BY 1
+        ),
+        delete_from_goal_filter AS (
+            DELETE FROM filtered_goals fg
+            USING applied_filtered_out_goals afog
+            WHERE fg.id = afog.id
+            RETURNING fg.id
+        ),
+        applied_filtered_out_grants AS (
+            SELECT
+                fgr.id
+            FROM filtered_grants fgr
+            LEFT JOIN "Goals" g
+            ON fgr.id = g."grantId"
+            LEFT JOIN filtered_goals fg
+            ON g.id = fg.id
+            WHERE fg.id IS NULL
+            ORDER BY 1
+        ),
+        delete_from_grant_filter AS (
+            DELETE FROM filtered_grants fgr
+            USING applied_filtered_out_grants afog
+            WHERE fgr.id = afog.id
+            RETURNING fgr.id
+        )
+      INSERT INTO process_log (action, record_cnt)
+      SELECT
+        'Apply Goal Filters' AS action,
+        COUNT(*)
+      FROM delete_from_goal_filter
+      GROUP BY 1
+      UNION
+      SELECT
+        'Apply Goal Filters To Grants' AS action,
+        COUNT(*)
+      FROM delete_from_grant_filter
+      GROUP BY 1;
+  END IF;
+END $$;
+---------------------------------------------------------------------------------------------------
+WITH
+  with_class AS (
+    SELECT
+      r.id,
+      COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
+      COUNT(DISTINCT mcs.id) > 0 has_scores
+    FROM "Recipients" r
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    JOIN filtered_grants fgr
+    ON gr.id = fgr.id
+    LEFT JOIN "Goals" g
+    ON gr.id = g."grantId"
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+    ON gr.number = mrg."grantNumber"
+    LEFT JOIN "MonitoringReviews" mr
+    ON mrg."reviewId" = mr."reviewId"
+    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
+    LEFT JOIN "MonitoringReviewStatuses" mrs
+    ON mr."statusId" = mrs."statusId"
+    LEFT JOIN "MonitoringClassSummaries" mcs
+    ON mr."reviewId" = mcs."reviewId"
+    WHERE gr.status = 'Active'
+    GROUP BY 1
+  ),
+  with_class_widget AS (
+    SELECT
+      (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
+      COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
+      COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
+      COUNT(DISTINCT wc.id) total
+    FROM with_class wc
+  ),
+  with_class_page AS (
+    SELECT
+      r.id "recipientId",
+      r.name "recipientName",
+      gr.number "grantNumber",
+      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
+      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
+      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
+      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
+      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
+      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
+      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
+      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
+    FROM with_class wc
+    JOIN "Recipients" r
+    ON wc.id = r.id
+    AND (has_class OR has_scores)
+    JOIN "Grants" gr
+    ON r.id = gr."recipientId"
+    JOIN filtered_grants fgr
+    ON gr.id = fgr.id
+    LEFT JOIN "Goals" g
+    ON gr.id = g."grantId"
+    AND has_class
+    AND g."goalTemplateId" = 18172
+    LEFT JOIN "ActivityReportGoals" arg
+    ON g.id = arg."goalId"
+    LEFT JOIN "ActivityReports" a
+    ON arg."activityReportId" = a.id
+    AND a."calculatedStatus" = 'approved'
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+    ON gr.number = mrg."grantNumber"
+    LEFT JOIN "MonitoringReviews" mr
+    ON mrg."reviewId" = mr."reviewId"
+    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
+    LEFT JOIN "MonitoringReviewStatuses" mrs
+    ON mr."statusId" = mrs."statusId"
+    LEFT JOIN "MonitoringClassSummaries" mcs
+    ON mr."reviewId" = mcs."reviewId"
+    WHERE gr.status = 'Active'
+    AND (has_class OR has_scores)
+    AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
+    AND (mrs.id IS NULL OR mrs.name = 'Complete')
+    GROUP BY 1,2,3
+    order by 1,3
+  ),
+  datasets AS (
+    SELECT
+        'with_class_widget' data_set,
+        COUNT(*) records,
+        JSONB_AGG(JSONB_BUILD_OBJECT(
+        '% recipients with class', "% recipients with class",
+        'recipients with class', "recipients with class",
+        'total', total
+        ))
+    FROM with_class_widget
+    UNION
+    SELECT
+      'with_class_page' data_set,
+      COUNT(*) records,
+      JSONB_AGG(JSONB_BUILD_OBJECT(
+        'recipientId', "recipientId",
+        'recipientName', "recipientName",
+        'grantNumber', "grantNumber",
+        'goalId', "goalId",
+        'goalCreatedAt', "goalCreatedAt",
+        'goalStatus', "goalStatus",
+        'lastARStartDate', "lastARStartDate",
+        'emotionalSupport', "emotionalSupport",
+        'classroomOrganization', "classroomOrganization",
+        'instructionalSupport', "instructionalSupport",
+        'reportDeliveryDate', "reportDeliveryDate"
+      ))
+    FROM with_class_page
+    UNION
+    SELECT
+      'process_log' data_set,
+      COUNT(*) records,
+      JSONB_AGG(JSONB_BUILD_OBJECT(
+        'action', action,
+        'record_cnt', record_cnt
+      ))
+    FROM process_log
+  )
+  SELECT *
+  FROM datasets;
