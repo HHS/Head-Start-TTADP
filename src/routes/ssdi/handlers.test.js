@@ -2,25 +2,25 @@ import request from 'supertest';
 import express from 'express';
 import {
   listQueryFiles,
-  readFlagsAndQueryFromFile,
-  validateFlagValues,
-  setFlags,
+  readFiltersFromFile,
+  validateFlagValues, // Change this if needed to your new validation logic
+  setFilters,
   sanitizeFilename,
-  generateFlagString,
+  generateFilterString,
   executeQuery,
 } from '../../services/ssdi';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { listQueries, getFlags, runQuery } from './handlers';
+import { listQueries, getFilters, runQuery } from './handlers';
 import Generic from '../../policies/generic';
 
 jest.mock('../../../services/ssdi', () => ({
   listQueryFiles: jest.fn(),
-  readFlagsAndQueryFromFile: jest.fn(),
+  readFiltersFromFile: jest.fn(),
   validateFlagValues: jest.fn(),
-  setFlags: jest.fn(),
+  setFilters: jest.fn(),
   sanitizeFilename: jest.fn(),
-  generateFlagString: jest.fn(),
+  generateFilterString: jest.fn(),
   executeQuery: jest.fn(),
 }));
 
@@ -37,7 +37,7 @@ jest.mock('../../../policies/generic');
 const app = express();
 app.use(express.json());
 app.get('/listQueries', listQueries);
-app.get('/getFlags', getFlags);
+app.get('/getFilters', getFilters);
 app.post('/runQuery', runQuery);
 
 describe('API Endpoints', () => {
@@ -59,39 +59,39 @@ describe('API Endpoints', () => {
     });
   });
 
-  describe('getFlags', () => {
-    it('should get flags from the script', async () => {
-      readFlagsAndQueryFromFile.mockReturnValue({ flags: { flag1: { type: 'integer[]', description: 'Test Flag' } } });
+  describe('getFilters', () => {
+    it('should get filters from the script', async () => {
+      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
 
-      const response = await request(app).get('/getFlags').query({ path: 'src/queries/test/path' });
+      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ flag1: { type: 'integer[]', description: 'Test Flag' } });
+      expect(response.body).toEqual({ filter1: { type: 'integer[]', description: 'Test Filter' } });
     });
 
     it('should return 400 if script path is not provided', async () => {
-      const response = await request(app).get('/getFlags');
+      const response = await request(app).get('/getFilters');
       expect(response.status).toBe(400);
       expect(response.text).toBe('Script path is required');
     });
 
     it('should return 400 for path traversal attempts', async () => {
-      const response = await request(app).get('/getFlags').query({ path: '../outside/path' });
+      const response = await request(app).get('/getFilters').query({ path: '../outside/path' });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
 
     it('should return 400 if script path is not within allowed directory', async () => {
-      const response = await request(app).get('/getFlags').query({ path: 'some/other/path' });
+      const response = await request(app).get('/getFilters').query({ path: 'some/other/path' });
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+      expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
 
     it('should handle errors', async () => {
-      readFlagsAndQueryFromFile.mockImplementation(() => { throw new Error('Error reading flags'); });
+      readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading filters'); });
 
-      const response = await request(app).get('/getFlags').query({ path: 'src/queries/test/path' });
+      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Error reading flags');
+      expect(response.text).toBe('Error reading filters');
     });
   });
 
@@ -106,16 +106,16 @@ describe('API Endpoints', () => {
     };
 
     beforeEach(() => {
-      readFlagsAndQueryFromFile.mockReturnValue({
-        flags: { recipientIds: { type: 'integer[]', description: 'Test Flag' } },
+      readFiltersFromFile.mockReturnValue({
+        filters: { recipientIds: { type: 'integer[]', description: 'Test Filter' } },
         query: 'SELECT * FROM test',
         defaultOutputName: 'test_output',
       });
-      validateFlagValues.mockImplementation(() => {});
-      setFlags.mockResolvedValue([]);
+      validateFlagValues.mockImplementation(() => {}); // Change to your filter validation if required
+      setFilters.mockResolvedValue([]);
       executeQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
       sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');
-      generateFlagString.mockReturnValue('recipientIds_1-2-3');
+      generateFilterString.mockReturnValue('recipientIds_1-2-3');
       currentUserId.mockResolvedValue(user.id);
       userById.mockResolvedValue(user);
       Generic.mockImplementation(() => ({
@@ -127,7 +127,7 @@ describe('API Endpoints', () => {
     it('should run the query and return JSON result', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path' })
+        .query({ path: 'dataRequests/test/path' })
         .send({ recipientIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
@@ -137,7 +137,7 @@ describe('API Endpoints', () => {
     it('should run the query and return CSV result', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path', format: 'csv' })
+        .query({ path: 'dataRequests/test/path', format: 'csv' })
         .send({ recipientIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
@@ -160,7 +160,7 @@ describe('API Endpoints', () => {
     it('should return 400 if script path is not within allowed directory', async () => {
       const response = await request(app).post('/runQuery').query({ path: 'some/other/path' }).send({ recipientIds: [1, 2, 3] });
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Invalid script path: all scripts are located within "src/queries/"' });
+      expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
 
     it('should return 401 if regionIds is an empty set', async () => {
@@ -171,18 +171,18 @@ describe('API Endpoints', () => {
 
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path' })
+        .query({ path: 'dataRequests/test/path' })
         .send({});
 
       expect(response.status).toBe(401);
     });
 
     it('should handle errors', async () => {
-      readFlagsAndQueryFromFile.mockImplementation(() => { throw new Error('Error reading query'); });
+      readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading query'); });
 
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path' })
+        .query({ path: 'dataRequests/test/path' })
         .send({ recipientIds: [1, 2, 3] });
 
       expect(response.status).toBe(500);
@@ -197,7 +197,7 @@ describe('API Endpoints', () => {
       }));
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path' })
+        .query({ path: 'dataRequests/test/path' })
         .send({ regionIds: [1, 'a', 2, 'b', 3] });
 
       expect(response.status).toBe(200);
@@ -212,7 +212,7 @@ describe('API Endpoints', () => {
       }));
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'src/queries/test/path' })
+        .query({ path: 'dataRequests/test/path' })
         .send({ regionIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);

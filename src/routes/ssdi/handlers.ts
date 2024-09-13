@@ -4,6 +4,7 @@ import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import {
   BASE_DIRECTORY,
+  isFile,
   checkFolderPermissions,
   FilterValues,
   listQueryFiles,
@@ -18,11 +19,10 @@ import Generic from '../../policies/generic';
 
 const validateScriptPath = async (
   scriptPath: string,
-  userId: number,
+  user,
   res: Response,
+  skipFileCheck = false,
 ) => {
-  const user = await userById(userId);
-
   // Ensure the scriptPath is provided by the user
   if (!scriptPath) {
     res.status(400).send('Script path is required');
@@ -34,20 +34,28 @@ const validateScriptPath = async (
     res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
     return true;
   }
-
+  
   // Ensure the scriptPath starts with either "dataRequests" or "api"
   if (!(scriptPath.startsWith('dataRequests') || scriptPath.startsWith('api'))) {
     res.status(400).json({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     return true;
   }
-
+  
   // Check folder permissions based on the internal path and user
   const hasAccess = await checkFolderPermissions(user, scriptPath);
   if (!hasAccess) {
     res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
     return true;
   }
-
+  
+  if (!skipFileCheck) {
+    const fileExists = await isFile(scriptPath); 
+    if (!fileExists) {
+      res.status(400).json({ error: 'Invalid script path: No file matches the path specified' });
+      return true;
+    }
+  }
+  
   return res.headersSent; // Return whether headers have been sent to prevent further processing
 };
 
@@ -64,16 +72,17 @@ const listQueries = async (req: Request, res: Response) => {
   // Trim the scriptPath and default to 'dataRequests' if it's not set or an empty string
   const scriptPath = (req.query.path as string || '').trim() || 'dataRequests';
 
-  const userId = await currentUserId(req, res);
+  const userId = await currentUserId(req, res);  
+  const user = await userById(userId);
 
   // Check if the response has been sent (status or headers set) and return early
-  if (await validateScriptPath(scriptPath, userId, res)) {
+  if (await validateScriptPath(scriptPath, user, res, true)) {
     return;
   }
 
   try {
     // Use the validated internal scriptPath for listing queries
-    const queryFiles = await listQueryFiles(scriptPath);
+    const queryFiles = await listQueryFiles(scriptPath, user);
     res.json(queryFiles);
   } catch (error) {
     res.status(500).send('Error listing query files');
