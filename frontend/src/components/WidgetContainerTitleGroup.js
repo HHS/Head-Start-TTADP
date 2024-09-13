@@ -75,7 +75,7 @@ const WidgetContainerTitleGroup = ({
           {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
             <div>
-              <strong><p className="usa-prose margin-x-0 margin-top-1 margin-bottom-2">{subtitle2}</p></strong>
+              <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
             </div>
           )}
           {subtitleDrawerLinkText && (

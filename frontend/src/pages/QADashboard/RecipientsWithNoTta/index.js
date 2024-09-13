@@ -55,6 +55,7 @@ export default function RecipientsWithNoTta() {
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
           RecipientsWithNoTta: [
             {
+              id: 1,
               heading: 'Test Recipient 1',
               name: 'Test Recipient 1',
               recipient: 'Test Recipient 1',
@@ -71,6 +72,7 @@ export default function RecipientsWithNoTta() {
               }],
             },
             {
+              id: 2,
               heading: 'Test Recipient 2',
               name: 'Test Recipient 2',
               recipient: 'Test Recipient 2',
@@ -87,6 +89,7 @@ export default function RecipientsWithNoTta() {
               }],
             },
             {
+              id: 3,
               heading: 'Test Recipient 3',
               name: 'Test Recipient 3',
               recipient: 'Test Recipient 3',
