@@ -160,6 +160,8 @@ export const ESCAPE_KEY_CODE = 27;
 export const GOALS_PER_PAGE = 10;
 export const TOPICS_PER_PAGE = 10;
 export const COURSES_PER_PAGE = 10;
+export const RECIPIENTS_WITH_NO_TTA_PER_PAGE = 10;
+export const RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
