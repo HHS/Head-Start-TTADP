@@ -2,21 +2,34 @@ import fs from 'fs';
 import path from 'path';
 import db from '../models';
 import {
-  queryFileCache,
-  queryDataCache,
-  listQueryFiles,
-  readNameAndDescriptionFromFile,
-  readFlagsAndQueryFromFile,
-  validateFlagValues,
-  validateType,
-  setFlags,
+  cache,
   sanitizeFilename,
-  generateFlagString,
+  checkFolderPermissions,
+  safeResolvePath,
+  isValidJsonHeader,
+  readJsonHeaderFromFile,
+  createQueryFile,
+  listQueryFiles,
+  applyFilterOptions,
+  generateConditions,
+  processFilters,
+  generateArtificialFilters,
+  readFiltersFromFile,
+  validateType,
+  preprocessAndValidateFilters,
+  setFilters,
+  generateFilterString,
   executeQuery,
 } from './ssdi';
 
 // Mock fs and db
-jest.mock('fs');
+jest.mock('fs', () => ({
+  promises: {
+    stat: jest.fn(),
+    readFile: jest.fn(),
+    readdir: jest.fn(),
+  },
+}));
 jest.mock('../models', () => ({
   sequelize: {
     query: jest.fn(),
@@ -26,137 +39,242 @@ jest.mock('../models', () => ({
 
 // Clear the caches before each test
 beforeEach(() => {
-  queryFileCache.clear();
-  queryDataCache.clear();
+  cache.clear();
   jest.clearAllMocks();
 });
 
 describe('ssdi', () => {
-  describe('readNameAndDescriptionFromFile', () => {
-    it('should read name, description, and default output name from file', () => {
-      const fileContents = `
-        @name: TestName
-        @description: Test description
-        @defaultOutputName: test_output
-      `;
-      fs.readFileSync.mockReturnValue(fileContents);
+  describe('sanitizeFilename', () => {
+    it('should sanitize the filename', () => {
+      expect(sanitizeFilename('test@file#name!')).toBe('test_file_name_');
+    });
+  });
 
-      const result = readNameAndDescriptionFromFile('test/path.sql');
-      expect(result).toEqual({
-        name: 'TestName',
-        description: 'Test description',
-        defaultOutputName: 'test_output',
-      });
+  describe('checkFolderPermissions', () => {
+    it('should check folder permissions using the Generic policy class', async () => {
+      const mockGeneric = jest.fn().mockImplementation(() => ({
+        checkPermissions: jest.fn().mockResolvedValue(true),
+      }));
+      jest.mock('../policies/generic', () => mockGeneric);
+
+      const user = { id: 1 };
+      const result = await checkFolderPermissions(user, 'test/path');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('safeResolvePath', () => {
+    it('should resolve the path safely within BASE_DIRECTORY', () => {
+      const result = safeResolvePath('test/path.sql');
+      expect(result).toBe(path.resolve(process.cwd(), '/src/queries/test/path.sql'));
     });
 
-    it('should use filename as default for name and default output name if not provided', () => {
-      const fileContents = `
-        @description: Test description
-      `;
-      fs.readFileSync.mockReturnValue(fileContents);
+    it('should throw an error if the resolved path is outside BASE_DIRECTORY', () => {
+      expect(() => safeResolvePath('../../outside/path.sql')).toThrow(
+        'Attempted to access a file outside the allowed directory.',
+      );
+    });
+  });
 
-      const result = readNameAndDescriptionFromFile('test/path.sql');
+  describe('isValidJsonHeader', () => {
+    it('should return true for a valid JSON header', () => {
+      const validJson = {
+        name: 'Test',
+        description: { standard: 'desc', technical: 'tech desc' },
+        output: { defaultName: 'output', schema: [] },
+        filters: [],
+      };
+      expect(isValidJsonHeader(validJson)).toBe(true);
+    });
+
+    it('should return false and log error for invalid JSON header', () => {
+      const invalidJson = { invalidKey: 'invalid' };
+      const mockLogger = jest.spyOn(console, 'error').mockImplementation();
+      expect(isValidJsonHeader(invalidJson)).toBe(false);
+      expect(mockLogger).toHaveBeenCalled();
+    });
+  });
+
+  describe('readJsonHeaderFromFile', () => {
+    it('should return cached file if modification time is unchanged', async () => {
+      const mockFile = {
+        jsonHeader: {},
+        query: 'SELECT * FROM test',
+        modificationTime: new Date(),
+      };
+      const mockPath = 'test/path.sql';
+      cache.set(mockPath, mockFile);
+
+      const mockStat = { mtime: new Date() };
+      fs.promises.stat.mockResolvedValue(mockStat);
+
+      const result = await readJsonHeaderFromFile(mockPath);
+      expect(result).toEqual(mockFile);
+    });
+
+    it('should read and cache a new file if modification time has changed', async () => {
+      const mockFileContent = `JSON: { "name": "test" } */ SELECT * FROM test;`;
+      const mockStat = { mtime: new Date() };
+
+      fs.promises.stat.mockResolvedValue(mockStat);
+      fs.promises.readFile.mockResolvedValue(mockFileContent);
+
+      const result = await readJsonHeaderFromFile('test/path.sql');
       expect(result).toEqual({
-        name: 'path',
-        description: 'Test description',
-        defaultOutputName: 'path',
+        jsonHeader: { name: 'test' },
+        query: 'SELECT * FROM test;',
+        modificationTime: mockStat.mtime,
       });
     });
   });
 
-  describe('listQueryFiles', () => {
-    it('should list all query files with name and description', () => {
-      fs.readdirSync.mockReturnValue(['file1.sql', 'file2.sql']);
-      fs.readFileSync.mockReturnValue(`
-        @name: TestName
-        @description: Test description
-        @defaultOutputName: test_output
-      `);
-
-      const result = listQueryFiles('test/directory');
-      expect(result).toEqual([
-        {
-          name: 'TestName',
-          description: 'Test description',
-          filePath: 'test/directory/file1.sql',
-          defaultOutputName: 'test_output',
+  describe('createQueryFile', () => {
+    it('should create a query file object from a cached file', () => {
+      const cachedFile = {
+        jsonHeader: {
+          name: 'test',
+          description: { standard: 'desc', technical: 'tech desc' },
+          output: { defaultName: 'output' },
         },
-        {
-          name: 'TestName',
-          description: 'Test description',
-          filePath: 'test/directory/file2.sql',
-          defaultOutputName: 'test_output',
-        },
-      ]);
-    });
-
-    it('should return cached query file data if available', () => {
-      fs.readdirSync.mockReturnValue(['file1.sql']);
-      const cachedQueryFile = {
-        name: 'CachedName',
-        description: 'Cached description',
-        filePath: 'test/directory/file1.sql',
-        defaultOutputName: 'cached_output',
+        query: 'SELECT * FROM test;',
+        modificationTime: new Date(),
       };
-
-      // Set the cache with the cachedQueryFile data
-      queryFileCache.set('test/directory/file1.sql', cachedQueryFile);
-
-      const result = listQueryFiles('test/directory');
-      expect(result).toEqual([cachedQueryFile]);
-
-      // Ensure fs.readFileSync is not called since data is from cache
-      expect(fs.readFileSync).not.toHaveBeenCalledWith('test/directory/file1.sql', 'utf8');
+      const result = createQueryFile('test/path.sql', cachedFile);
+      expect(result).toEqual({
+        name: 'test',
+        description: 'desc',
+        technicalDescription: 'tech desc',
+        filePath: 'test/path.sql',
+        defaultOutputName: 'output',
+      });
     });
   });
 
-  describe('readFlagsAndQueryFromFile', () => {
-    it('should read flags and query from file and remove comments', () => {
-      const fileContents = `
-        /*
-        * - ssdi.flag1 - integer[] - Flag description
-        * @defaultOutputName: test_output
-        */
-        SELECT * FROM table; -- comment
-        SELECT * FROM another_table; -- another comment
-      `;
-      fs.readFileSync.mockReturnValue(fileContents);
-
-      const result = readFlagsAndQueryFromFile('test/path.sql');
-      expect(result).toEqual({
-        flags: {
-          flag1: {
-            type: 'integer[]',
-            name: 'flag1',
-            description: 'Flag description',
-          },
-        },
-        query: 'SELECT * FROM table;\nSELECT * FROM another_table;',
-        defaultOutputName: 'test_output',
-      });
+  describe('applyFilterOptions', () => {
+    it('should return static values if defined', async () => {
+      const filter = { options: { staticValues: [1, 2, 3] } };
+      const result = await applyFilterOptions(filter);
+      expect(result).toEqual([1, 2, 3]);
     });
 
-    it('should return cached query data if available', () => {
-      const cachedQuery = {
-        flags: {
-          flag1: {
-            type: 'integer[]',
-            name: 'flag1',
-            description: 'Cached Flag description',
+    it('should return query results if a SQL query is defined', async () => {
+      db.sequelize.query.mockResolvedValue([{ col1: 'value1' }]);
+      const filter = { options: { query: { sqlQuery: 'SELECT *', column: 'col1' } } };
+
+      const result = await applyFilterOptions(filter);
+      expect(result).toEqual(['value1']);
+    });
+  });
+
+  describe('generateConditions', () => {
+    it('should generate correct conditions for string[] type', () => {
+      const filter = { type: 'string[]', supportsFuzzyMatch: true, supportsExclusion: true };
+      const result = generateConditions(filter);
+      expect(result).toEqual(['ctn', 'nctn']);
+    });
+
+    it('should generate correct conditions for date[] type', () => {
+      const filter = { type: 'date[]', supportsExclusion: true };
+      const result = generateConditions(filter);
+      expect(result).toEqual(['aft', 'win', 'in', 'bef']);
+    });
+  });
+
+  describe('processFilters', () => {
+    it('should process filters and return the correct structure', async () => {
+      const cachedFile = {
+        jsonHeader: {
+          filters: [{ name: 'testFilter', type: 'string[]', description: 'Test filter' }],
+        },
+      };
+      const result = await processFilters(cachedFile, false);
+      expect(result).toEqual({
+        testFilter: {
+          id: 'testFilter',
+          type: 'string[]',
+          description: 'Test filter',
+          conditions: ['in'],
+        },
+      });
+    });
+  });
+
+  describe('generateArtificialFilters', () => {
+    it('should generate artificial filters for sorting and pagination', () => {
+      const cachedFile = {
+        jsonHeader: {
+          output: {
+            schema: [{ columnName: 'col1' }],
+            sorting: { default: [{ name: 'col1', order: 'ASC' }] },
+            supportsPagination: true,
           },
         },
-        query: 'SELECT * FROM cached_table;',
-        defaultOutputName: 'cached_output',
       };
+      const result = generateArtificialFilters(cachedFile, 1);
+      expect(result).toEqual({
+        currentUserId: {
+          id: 'currentUserId',
+          type: 'integer[]',
+          description: 'A static filter to allow restriction to the current user.',
+          options: [1],
+          defaultValues: [1],
+        },
+        'sortOrder.column': {
+          id: 'sortOrder.column',
+          type: 'string[]',
+          description: 'The column to sort by',
+          options: ['col1'],
+          defaultValues: ['col1'],
+        },
+        'sortOrder.direction': {
+          id: 'sortOrder.direction',
+          type: 'string[]',
+          description: 'The direction to sort (ASC or DESC)',
+          options: ['ASC', 'DESC'],
+          defaultValues: ['ASC'],
+        },
+        'pagination.page': {
+          id: 'pagination.page',
+          type: 'integer[]',
+          description: 'The page number to retrieve',
+          defaultValues: [0],
+        },
+        'pagination.size': {
+          id: 'pagination.size',
+          type: 'integer[]',
+          description: 'The number of records to retrieve per page',
+          defaultValues: [2147483647],
+        },
+      });
+    });
+  });
 
-      // Set the cache with the cachedQuery data
-      queryDataCache.set('test/path.sql', cachedQuery);
+  describe('readFiltersFromFile', () => {
+    it('should read and process filters from a file', async () => {
+      const mockFile = {
+        jsonHeader: {
+          filters: [{ name: 'testFilter', type: 'string[]', description: 'Test filter' }],
+        },
+        query: 'SELECT * FROM test',
+      };
+      cache.set('test/path.sql', mockFile);
 
-      const result = readFlagsAndQueryFromFile('test/path.sql');
-      expect(result).toEqual(cachedQuery);
-
-      // Ensure fs.readFileSync is not called since data is from cache
-      expect(fs.readFileSync).not.toHaveBeenCalled();
+      const result = await readFiltersFromFile('test/path.sql', 1);
+      expect(result).toEqual({
+        testFilter: {
+          id: 'testFilter',
+          type: 'string[]',
+          description: 'Test filter',
+          conditions: ['in'],
+        },
+        currentUserId: {
+          id: 'currentUserId',
+          type: 'integer[]',
+          description: 'A static filter to allow restriction to the current user.',
+          options: [1],
+          defaultValues: [1],
+        },
+      });
     });
   });
 
@@ -186,36 +304,33 @@ describe('ssdi', () => {
     });
   });
 
-  describe('validateFlagValues', () => {
-    const flags = {
+  describe('preprocessAndValidateFilters', () => {
+    const filters = {
       flag1: { type: 'integer[]', name: 'flag1', description: 'Flag description' },
     };
 
-    it('should validate flag values correctly', () => {
-      expect(() => validateFlagValues(flags, { flag1: [1, 2, 3] })).not.toThrow();
+    it('should preprocess and validate filters correctly', () => {
+      const input = { flag1: [1, 2, 3] };
+      const { result, errors } = preprocessAndValidateFilters(filters, input);
+      expect(result).toEqual({ flag1: [1, 2, 3] });
+      expect(errors.invalidFilters.length).toBe(0);
+      expect(errors.invalidTypes.length).toBe(0);
     });
 
-    it('should throw error for invalid flag value', () => {
-      expect(() => validateFlagValues(flags, { flag1: [1, '2', 3] })).toThrow(
-        'Invalid type for flag flag1: expected integer[]',
-      );
-    });
-
-    it('should throw error for invalid flag', () => {
-      expect(() => validateFlagValues(flags, { invalidFlag: [1, 2, 3] })).toThrow(
-        'Invalid flag: invalidFlag',
-      );
+    it('should return errors for invalid filters and types', () => {
+      const input = { flag1: [1, '2', 3], invalidFlag: [1, 2, 3] };
+      const { result, errors } = preprocessAndValidateFilters(filters, input);
+      expect(errors.invalidFilters).toEqual(['Invalid filter: invalidFlag']);
+      expect(errors.invalidTypes).toEqual(['Invalid type for filter flag1: expected integer[]']);
     });
   });
 
-  describe('setFlags', () => {
-    it('should set flags in the database', async () => {
-      const flags = { flag1: { type: 'integer[]', name: 'flag1', description: 'Flag description' } };
-      const flagValues = { flag1: [1, 2, 3] };
-
+  describe('setFilters', () => {
+    it('should set filters in the database', async () => {
+      const filterValues = { flag1: [1, 2, 3] };
       db.sequelize.query.mockResolvedValue([{ success: true }]);
 
-      const result = await setFlags(flags, flagValues);
+      const result = await setFilters(filterValues);
       expect(result).toEqual([[{ success: true }]]);
       expect(db.sequelize.query).toHaveBeenCalledWith('SELECT set_config($1, $2, false)', {
         bind: ['ssdi.flag1', JSON.stringify([1, 2, 3])],
@@ -224,40 +339,19 @@ describe('ssdi', () => {
     });
   });
 
-  describe('sanitizeFilename', () => {
-    it('should sanitize the filename', () => {
-      expect(sanitizeFilename('test@file#name!')).toBe('test_file_name_');
-    });
-  });
-
-  describe('generateFlagString', () => {
-    it('should generate a string representation of the flag values', () => {
-      const flagValues = { flag1: [1, 2, 3], flag2: 'value' };
-      expect(generateFlagString(flagValues)).toBe('flag1_1-2-3_flag2_value');
+  describe('generateFilterString', () => {
+    it('should generate a string representation of the filter values', () => {
+      const filterValues = { flag1: [1, 2, 3], flag2: 'value' };
+      expect(generateFilterString(filterValues)).toBe('flag1_1-2-3_flag2_value');
     });
   });
 
   describe('executeQuery', () => {
-    afterEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should throw an error if the query is not a string', async () => {
-      const invalidQuery = 123;
-
-      await expect(executeQuery(invalidQuery)).rejects.toThrow('The query must be a string');
+      await expect(executeQuery(123)).rejects.toThrow('The query must be a string');
     });
 
-    it('should set the transaction to READ ONLY', async () => {
-      const mockQuery = 'SELECT * FROM users;';
-      db.sequelize.query.mockResolvedValueOnce([]);
-
-      await executeQuery(mockQuery);
-
-      expect(db.sequelize.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY;', { type: db.sequelize.QueryTypes.RAW });
-    });
-
-    it('should return the result of the query', async () => {
+    it('should set the transaction to READ ONLY and execute the query', async () => {
       const mockQuery = 'SELECT * FROM users;';
       const mockResult = [{ id: 1, name: 'John Doe' }];
       db.sequelize.query
@@ -265,18 +359,13 @@ describe('ssdi', () => {
         .mockResolvedValueOnce(mockResult); // for the actual query
 
       const result = await executeQuery(mockQuery);
-
       expect(result).toEqual(mockResult);
-    });
-
-    it('should throw an error if the query fails', async () => {
-      const mockQuery = 'SELECT * FROM users;';
-      const mockError = new Error('Query execution failed');
-      db.sequelize.query
-        .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
-        .mockRejectedValueOnce(mockError); // for the actual query
-
-      await expect(executeQuery(mockQuery)).rejects.toThrow(`Query failed: ${mockError.message}`);
+      expect(db.sequelize.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY;', {
+        type: db.sequelize.QueryTypes.RAW,
+      });
+      expect(db.sequelize.query).toHaveBeenCalledWith(mockQuery, {
+        type: db.sequelize.QueryTypes.SELECT,
+      });
     });
   });
 });
