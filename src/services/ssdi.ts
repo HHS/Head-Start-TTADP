@@ -2,7 +2,6 @@ import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
 import { z } from 'zod';
-import { zodToSchema } from 'ts-to-zod';
 import db from '../models';
 import Generic from '../policies/generic';
 import { auditLogger } from '../logger';
@@ -139,9 +138,9 @@ interface CachedFilters {
 }
 
 
-// Generate Zod schemas
-const HeaderFilterSchema = zodToSchema<HeaderFilter>();
-const HeaderStructureSchema = zodToSchema<HeaderStructure>();
+// // Generate Zod schemas
+// const HeaderFilterSchema = zodToSchema<HeaderFilter>();
+// const HeaderStructureSchema = zodToSchema<HeaderStructure>();
 
 // Base directory for file operations
 const BASE_DIRECTORY = path.resolve(process.cwd(), '/src/queries/');
@@ -173,17 +172,35 @@ const safeResolvePath = (inputPath: string): string => {
   return resolvedPath;
 };
 
+/**
+ * Function to check if a given path points to a file
+ * @param filePath - The path to check
+ * @returns {Promise<boolean>} - Returns true if the path is a file, otherwise false
+ */
+const isFile = async (filePath: string): Promise<boolean> => {
+  try {
+    const resolvedPath = safeResolvePath(filePath); // Use safeResolvePath to ensure secure path resolution
+    const stats = await fsPromises.stat(resolvedPath);
+
+    // Check if the path points to a file
+    return stats.isFile();
+  } catch {
+    // Return false if the file doesn't exist or an error occurs
+    return false;
+  }
+};
+
 // Basic JSON validation function
 // TODO: make this more verbose validation
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const isValidJsonHeader = (json: unknown): boolean => {
-  try {
-    HeaderStructureSchema.parse(json); // Validate JSON
-    return true;
-  } catch (e) {
-    auditLogger.error(e.errors); // Handle validation errors
-    return false;
-  }
+  // try {
+  //   HeaderStructureSchema.parse(json); // Validate JSON
+  //   return true;
+  // } catch (e) {
+  //   auditLogger.error(e.errors); // Handle validation errors
+  //   return false;
+  // }
 };
 
 // Modify the readJsonHeaderFromFile function to update the cache structure
@@ -663,6 +680,7 @@ export {
   sanitizeFilename,
   checkFolderPermissions,
   safeResolvePath,
+  isFile,
   isValidJsonHeader,
   readJsonHeaderFromFile,
   createQueryFile,
