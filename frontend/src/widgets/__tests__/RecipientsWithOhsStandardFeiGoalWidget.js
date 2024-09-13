@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import moment from 'moment';
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import RecipientsWithOhsStandardFeiGoalWidget from '../RecipientsWithOhsStandardFeiGoalWidget';
@@ -31,7 +32,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
     };
     renderRecipientsWithOhsStandardFeiGoalWidget(emptyData);
     expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
-    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
+    expect(screen.getByText(/Root causes were identified through self-reported data./i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -47,7 +48,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
           link: '/recipient-tta-records/376/region/1/profile',
           data: [{
             title: 'Goal_created_on',
-            value: '2021-09-01',
+            value: moment('2021-09-01').format('MM/DD/YYYY'),
           },
           {
             title: 'Goal_number',
@@ -72,7 +73,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
           link: '/recipient-tta-records/376/region/1/profile',
           data: [{
             title: 'Goal_created_on',
-            value: '2021-09-02',
+            value: moment('2021-09-02').format('MM/DD/YYYY'),
           },
           {
             title: 'Goal_number',
@@ -96,7 +97,7 @@ describe('Recipients with ohs standard fei goal widget', () => {
           link: '/recipient-tta-records/376/region/1/profile',
           data: [{
             title: 'Goal_created_on',
-            value: '2021-09-03',
+            value: moment('2021-09-03').format('MM/DD/YYYY'),
           },
           {
             title: 'Goal_number',
@@ -115,14 +116,14 @@ describe('Recipients with ohs standard fei goal widget', () => {
     renderRecipientsWithOhsStandardFeiGoalWidget(data);
 
     expect(screen.getByText(/recipients with/i)).toBeInTheDocument();
-    expect(screen.getByText(/Root cause were identified through self-reported data./i)).toBeInTheDocument();
+    expect(screen.getByText(/Root causes were identified through self-reported data./i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 3/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/2021-09-01/i)).toBeInTheDocument();
-    expect(screen.getByText(/2021-09-02/i)).toBeInTheDocument();
-    expect(screen.getByText(/2021-09-03/i)).toBeInTheDocument();
+    expect(screen.getByText('09/01/2021')).toBeInTheDocument();
+    expect(screen.getByText('09/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('09/03/2021')).toBeInTheDocument();
 
     expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
     expect(screen.getByText(/G-359813/i)).toBeInTheDocument();

@@ -3,6 +3,7 @@ import React, {
   useRef,
   useContext,
 } from 'react';
+import moment from 'moment';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -97,6 +98,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
           RecipientsWithOhsStandardFeiGoal: [
             {
+              id: 1,
               heading: 'Test Recipient 1',
               name: 'Test Recipient 1',
               recipient: 'Test Recipient 1',
@@ -105,7 +107,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
                 title: 'Goal_created_on',
-                value: '2021-09-01',
+                value: moment('2021-09-01').format('MM/DD/YYYY'),
               },
               {
                 title: 'Goal_number',
@@ -122,6 +124,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               ],
             },
             {
+              id: 2,
               heading: 'Test Recipient 2',
               name: 'Test Recipient 2',
               recipient: 'Test Recipient 2',
@@ -130,7 +133,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
                 title: 'Goal_created_on',
-                value: '2021-09-02',
+                value: moment('2021-09-02').format('MM/DD/YYYY'),
               },
               {
                 title: 'Goal_number',
@@ -146,6 +149,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               }],
             },
             {
+              id: 3,
               heading: 'Test Recipient 3',
               name: 'Test Recipient 3',
               recipient: 'Test Recipient 3',
@@ -154,7 +158,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               link: '/recipient-tta-records/376/region/1/profile',
               data: [{
                 title: 'Goal_created_on',
-                value: '2021-09-03',
+                value: moment('2021-09-03').format('MM/DD/YYYY'),
               },
               {
                 title: 'Goal_number',
@@ -162,7 +166,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
               },
               {
                 title: 'Goal_status',
-                value: 'Unavailable',
+                value: 'In progress',
               },
               {
                 title: 'Root_cause',

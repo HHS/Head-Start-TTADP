@@ -70,7 +70,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     <>
       <WidgetContainer
         title="Recipients with"
-        subtitle="Root cause were identified through self-reported data."
+        subtitle="Root causes were identified through self-reported data."
         subtitle2={getSubtitleWithPct()}
         loading={loading || localLoading}
         loadingLabel="Recipients with OHS standard FEI goal loading"
@@ -84,10 +84,10 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         exportRows={exportRows}
         titleDrawerText="OHS standard FEI goal"
         titleDrawerTitle="OHS standard FEI goal"
-        titleDrawerCssClass="ttahub-fei-root-causes"
+        titleDrawerTag="ttahub-fei-root-causes"
         subtitleDrawerLinkText="Learn about root causes"
         subtitleDrawerTitle="FEI root cause"
-        subtitleDrawerCssClass="ttahub-fei-root-causes"
+        subtitleDrawerTag="ttahub-fei-root-causes"
       >
         <HorizontalTableWidget
           headers={data.headers || []}

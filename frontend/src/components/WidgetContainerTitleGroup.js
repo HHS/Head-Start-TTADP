@@ -22,10 +22,10 @@ const WidgetContainerTitleGroup = ({
   setDisplayTable,
   titleDrawerText,
   titleDrawerTitle,
-  titleDrawerCssClass,
+  titleDrawerTag,
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
-  subtitleDrawerCssClass,
+  subtitleDrawerTag,
 }) => {
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
@@ -66,7 +66,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerCssClass} contentSelector="table" />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
                   </Drawer>
                 </>
                 )
@@ -75,11 +75,11 @@ const WidgetContainerTitleGroup = ({
           {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
             <div>
-              <strong><p className="usa-prose margin-x-0 margin-top-1 margin-bottom-2">{subtitle2}</p></strong>
+              <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
             </div>
           )}
           {subtitleDrawerLinkText && (
-            <div className="margin-x-0 margin-y-3 ">
+            <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
               <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
                 {subtitleDrawerLinkText}
               </DrawerTriggerButton>
@@ -89,7 +89,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerCssClass} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
               </Drawer>
             </div>
           )}
@@ -130,10 +130,10 @@ WidgetContainerTitleGroup.propTypes = {
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
-  titleDrawerCssClass: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerCssClass: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -150,10 +150,10 @@ WidgetContainerTitleGroup.defaultProps = {
   setDisplayTable: null,
   titleDrawerText: '',
   titleDrawerTitle: '',
-  titleDrawerCssClass: '',
+  titleDrawerTag: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: null,
-  subtitleDrawerCssClass: '',
+  subtitleDrawerTag: '',
 };
 
 export default WidgetContainerTitleGroup;

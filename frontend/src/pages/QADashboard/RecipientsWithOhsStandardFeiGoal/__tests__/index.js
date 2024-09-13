@@ -45,7 +45,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     };
     renderRecipientsWithOhsStandardFeiGoal(emptyData);
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(2);
-    expect(screen.getByText(/root cause were identified through self-reported data\./i)).toBeInTheDocument();
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -129,23 +129,22 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     renderRecipientsWithOhsStandardFeiGoal(data);
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(2);
-    expect(screen.getByText(/root cause were identified through self-reported data\./i)).toBeInTheDocument();
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
 
     expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 2/i)).toBeInTheDocument();
     expect(screen.getByText(/Recipient 3/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/2021-09-01/i)).toBeInTheDocument();
-    expect(screen.getByText(/2021-09-02/i)).toBeInTheDocument();
-    expect(screen.getByText(/2021-09-03/i)).toBeInTheDocument();
+    expect(screen.getByText('09/01/2021')).toBeInTheDocument();
+    expect(screen.getByText('09/02/2021')).toBeInTheDocument();
+    expect(screen.getByText('09/03/2021')).toBeInTheDocument();
 
     expect(screen.getByText(/G-20628/i)).toBeInTheDocument();
     expect(screen.getByText(/G-359813/i)).toBeInTheDocument();
     expect(screen.getByText(/G-457825/i)).toBeInTheDocument();
 
-    expect(screen.getByText(/In progress/i)).toBeInTheDocument();
+    expect(screen.queryAllByText(/In progress/i).length).toBe(2);
     expect(screen.getByText(/Not started/i)).toBeInTheDocument();
-    expect(screen.getByText(/Unavailable/i)).toBeInTheDocument();
 
     expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
     expect(screen.getByText(/Testing/i)).toBeInTheDocument();
