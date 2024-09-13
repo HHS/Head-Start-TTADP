@@ -70,7 +70,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     <>
       <WidgetContainer
         title="Recipients with"
-        subtitle="Root cause were identified through self-reported data."
+        subtitle="Root causes were identified through self-reported data."
         subtitle2={getSubtitleWithPct()}
         loading={loading || localLoading}
         loadingLabel="Recipients with OHS standard FEI goal loading"
