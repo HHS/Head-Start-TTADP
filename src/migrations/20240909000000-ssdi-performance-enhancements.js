@@ -21,6 +21,12 @@ module.exports = {
         CREATE INDEX IF NOT EXISTS activity_reports_tta_type
             ON "ActivityReports" USING gin("ttaType");
 
+        -- Indexes for the "Goals" table
+        -- Index on goalTemplateId for FEI for faster filtering
+        CREATE INDEX IF NOT EXISTS  goals_template_id_19017
+            ON "Goals"("goalTemplateId")
+            WHERE "goalTemplateId" = 19017;
+
         -- Indexes for the "Grants" table
         -- Index on recipientId and status for faster filtering
         CREATE INDEX IF NOT EXISTS grants_recipientid_status
@@ -89,6 +95,15 @@ module.exports = {
         -- Index for faster lookups on groupId and userId in GroupCollaborators
         CREATE INDEX IF NOT EXISTS group_collaborators_group_id_user_id
             ON "GroupCollaborators" ("groupId", "userId");
+
+        -- Index for faster lookups on groupId, userId, and deletedAt in GroupCollaborators
+        CREATE INDEX group_collaborators_group_user_deleted
+            ON "GroupCollaborators"("groupId", "userId", "deletedAt");
+
+        -- Indexes for the "Programs" table
+        -- Index for faster lookups on grantId and programType in Programs
+        CREATE INDEX IF NOT EXISTS programs_grantid_programtype
+            ON "Programs"("grantId", "programType");
       `);
     });
   },
