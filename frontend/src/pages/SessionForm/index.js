@@ -248,6 +248,7 @@ export default function SessionForm({ match }) {
       }
       try {
         const session = await getSessionBySessionId(sessionId);
+        // eslint-disable-next-line max-len
         const isPocFromSession = (session.event.pocIds || []).includes(user.id) && !isAdminUser;
         resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
         reportId.current = session.id;
@@ -440,6 +441,8 @@ export default function SessionForm({ match }) {
     }
   };
 
+  const { event } = formData;
+
   return (
     <div className="smart-hub-training-report--session">
       { error
@@ -504,6 +507,7 @@ export default function SessionForm({ match }) {
               status: formData.status,
               pages: applicationPages,
               isAdminUser,
+              event,
             }}
             formData={formData}
             pages={applicationPages}
