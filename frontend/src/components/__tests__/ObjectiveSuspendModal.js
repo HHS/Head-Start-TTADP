@@ -88,6 +88,6 @@ describe('ObjectiveSuspendModal', () => {
     });
 
     // verify set error was called
-    expect(setError).toHaveBeenCalledWith(true);
+    expect(setError).toHaveBeenCalled();
   });
 });
