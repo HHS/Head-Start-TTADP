@@ -12,7 +12,6 @@ import { updateObjectiveStatus } from '../../fetchers/objective';
 import ObjectiveSuspendModal from '../ObjectiveSuspendModal';
 import colors from '../../colors';
 import './ObjectiveCard.css';
-import { ERROR_FORMAT } from '../../pages/ActivityReport/Pages/components/constants';
 
 function ObjectiveCard({
   objective,
@@ -98,9 +97,6 @@ function ObjectiveCard({
 
     await onChangeStatus(newStatus);
   };
-
-  const suspendError = suspendReasonError ? (
-    ERROR_FORMAT('Select a reason for suspension')) : <></>;
 
   const modalIdentifier = uniqueId('objective-suspend-identifier-');
 
@@ -188,7 +184,7 @@ function ObjectiveCard({
         onChangeSuspendContext={(e) => setLocalCloseSuspendContext(e.target.value)}
         onChangeStatus={onChangeStatus}
         setError={setSuspendReasonError}
-        error={suspendError}
+        error={suspendReasonError}
       />
       )}
     </>
