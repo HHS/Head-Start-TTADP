@@ -1,9 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import Drawer from '../components/Drawer';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
@@ -22,6 +25,9 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   const [localLoading, setLocalLoading] = useState(false);
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
   const [checkBoxes, setCheckBoxes] = useState({});
+
+  const titleDrawerRef = useRef(null);
+  const subtitleDrawerLinkRef = useRef(null);
 
   const {
     offset,
@@ -66,6 +72,21 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients (${numberOfGrants} grants)`;
   };
 
+  const menuItems = [
+    {
+      label: 'Export selected rows',
+      onClick: () => {
+        exportRows('selected');
+      },
+    },
+    {
+      label: 'Export table',
+      onClick: () => {
+        exportRows('all');
+      },
+    },
+  ];
+
   return (
     <>
       <WidgetContainer
@@ -80,14 +101,38 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         offset={offset}
         perPage={RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE}
         handlePageChange={handlePageChange}
-        enableCheckboxes
-        exportRows={exportRows}
-        titleDrawerText="OHS standard FEI goal"
-        titleDrawerTitle="OHS standard FEI goal"
-        titleDrawerTag="ttahub-fei-root-causes"
-        subtitleDrawerLinkText="Learn about root causes"
-        subtitleDrawerTitle="FEI root cause"
-        subtitleDrawerTag="ttahub-fei-root-causes"
+        menuItems={menuItems}
+        // content slots
+        TitleDrawer={(
+          <>
+            <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
+              OHS standard FEI goal
+            </DrawerTriggerButton>
+            <Drawer
+              triggerRef={titleDrawerRef}
+              stickyHeader
+              stickyFooter
+              title="OHS standard FEI goal"
+            >
+              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+            </Drawer>
+          </>
+        )}
+        SubtitleDrawer={(
+          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
+            <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
+              Learn about root causes
+            </DrawerTriggerButton>
+            <Drawer
+              triggerRef={subtitleDrawerLinkRef}
+              stickyHeader
+              stickyFooter
+              title="FEI root cause"
+            >
+              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+            </Drawer>
+          </div>
+        )}
       >
         <HorizontalTableWidget
           headers={data.headers || []}

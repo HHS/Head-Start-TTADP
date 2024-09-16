@@ -1,11 +1,9 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from './ContextMenu';
 
 import DisplayTableToggle from './DisplayTableToggleButton';
-import DrawerTriggerButton from './DrawerTriggerButton';
-import Drawer from './Drawer';
-import ContentFromFeedByTag from './ContentFromFeedByTag';
+
 import './WidgetContainerTitleGroup.scss';
 
 const WidgetContainerTitleGroup = ({
@@ -16,37 +14,16 @@ const WidgetContainerTitleGroup = ({
   subtitle2,
   className,
   pagination,
-  enableCheckboxes,
-  exportRows,
   displayTable,
   setDisplayTable,
-  titleDrawerText,
-  titleDrawerTitle,
-  titleDrawerTag,
-  subtitleDrawerLinkText,
-  subtitleDrawerTitle,
-  subtitleDrawerTag,
+  menuItems,
+
+  TitleDrawer,
+  SubtitleDrawer,
 }) => {
-  const titleDrawerRef = useRef(null);
-  const subtitleDrawerLinkRef = useRef(null);
   if (!title) {
     return null;
   }
-
-  const menuItems = enableCheckboxes ? [
-    {
-      label: 'Export selected rows',
-      onClick: () => {
-        exportRows('selected');
-      },
-    },
-    {
-      label: 'Export table',
-      onClick: () => {
-        exportRows('all');
-      },
-    },
-  ] : [];
 
   return (
     <div className={`smart-hub--table-widget-container ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
@@ -54,23 +31,7 @@ const WidgetContainerTitleGroup = ({
         <div>
           <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">
             {title}
-            {
-                titleDrawerText && (
-                <>
-                  <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
-                    {titleDrawerText}
-                  </DrawerTriggerButton>
-                  <Drawer
-                    triggerRef={titleDrawerRef}
-                    stickyHeader
-                    stickyFooter
-                    title={titleDrawerTitle}
-                  >
-                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
-                  </Drawer>
-                </>
-                )
-              }
+            <TitleDrawer />
           </h2>
           {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
@@ -78,21 +39,7 @@ const WidgetContainerTitleGroup = ({
               <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
             </div>
           )}
-          {subtitleDrawerLinkText && (
-            <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
-              <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
-                {subtitleDrawerLinkText}
-              </DrawerTriggerButton>
-              <Drawer
-                triggerRef={subtitleDrawerLinkRef}
-                stickyHeader
-                stickyFooter
-                title={subtitleDrawerTitle}
-              >
-                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
-              </Drawer>
-            </div>
-          )}
+          <SubtitleDrawer />
         </div>
         {children}
       </div>
@@ -124,16 +71,14 @@ WidgetContainerTitleGroup.propTypes = {
   showHeaderBorder: PropTypes.bool,
   className: PropTypes.string,
   pagination: PropTypes.node,
-  enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
-  titleDrawerText: PropTypes.string,
-  titleDrawerTitle: PropTypes.string,
-  titleDrawerTag: PropTypes.string,
-  subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerTag: PropTypes.string,
+  TitleDrawer: PropTypes.func,
+  SubtitleDrawer: PropTypes.func,
+  menuItems: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    onClick: PropTypes.func,
+  })),
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -144,16 +89,12 @@ WidgetContainerTitleGroup.defaultProps = {
   subtitle2: '',
   showHeaderBorder: false,
   className: 'padding-3 ',
-  enableCheckboxes: false,
-  exportRows: null,
   displayTable: false,
   setDisplayTable: null,
-  titleDrawerText: '',
-  titleDrawerTitle: '',
-  titleDrawerTag: '',
-  subtitleDrawerLinkText: '',
-  subtitleDrawerTitle: null,
-  subtitleDrawerTag: '',
+  menuItems: [],
+
+  SubtitleDrawer: null,
+  TitleDrawer: null,
 };
 
 export default WidgetContainerTitleGroup;
