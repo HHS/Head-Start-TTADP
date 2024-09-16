@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import GoalCard, { goalPropTypes } from './GoalCard';
+import { getScoreBadge } from '../../../components/ClassScoreBadge';
 
 import './RecipientCard.scss';
 
@@ -53,14 +54,23 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Emotional support</p>
             <p className="usa-prose margin-y-0">{recipient.emotionalSupport}</p>
+            <div className="margin-top-1">
+              {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportReceivedDate, 'font-sans-3xs')}
+            </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Classroom organization</p>
-            {recipient.classroomOrganization}
+            <p className="usa-prose text-bold margin-y-0">Emotional support</p>
+            <p className="usa-prose margin-y-0">{recipient.emotionalSupport}</p>
+            <div className="margin-top-1">
+              {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportReceivedDate, 'font-sans-3xs')}
+            </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
-            <p className="usa-prose text-bold  margin-y-0">Instructional support</p>
-            <p className="usa-prose margin-y-0">{recipient.instructionalSupport}</p>
+            <p className="usa-prose text-bold margin-y-0">Emotional support</p>
+            <p className="usa-prose margin-y-0">{recipient.emotionalSupport}</p>
+            <div className="margin-top-1">
+              {getScoreBadge('IS', recipient.instructionalSupport, recipient.reportReceivedDate, 'font-sans-3xs')}
+            </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__date padding-right-3">
             <p className="usa-prose text-bold  margin-y-0">Report received date</p>
