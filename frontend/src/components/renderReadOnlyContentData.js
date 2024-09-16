@@ -3,7 +3,7 @@ import { Editor } from 'react-draft-wysiwyg';
 import { v4 as uuidv4 } from 'uuid';
 import { getEditorState } from '../utils';
 
-function renderEditor(heading, data) {
+export function renderEditor(heading, data) {
   /**
      * sometimes, we may receive JSX
      */

@@ -45,4 +45,18 @@ describe('ReadOnlyGoalCollaborators', () => {
 
     expect(queryByText(/Entered by (1)/i)).not.toBeInTheDocument();
   });
+
+  test('renders correcly when goalCreatorRoles is missing', () => {
+    const collaborators = [
+      {
+        goalCreatorName: 'John Doe',
+        goalNumber: '1',
+      },
+    ];
+
+    const { getByText } = render(<ReadOnlyGoalCollaborators collaborators={collaborators} />);
+
+    expect(getByText('Entered by')).toBeInTheDocument();
+    expect(getByText(/John Doe/i)).toBeInTheDocument();
+  });
 });

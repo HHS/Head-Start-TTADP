@@ -170,6 +170,16 @@ describe('recipient record page', () => {
     expect(recipientName.textContent).toEqual('the Mighty Recipient - Region 45');
   });
 
+  it('handles a 404', async () => {
+    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
+    fetchMock.get('/api/recipient/1?region.in[]=45', 404);
+    fetchMock.get('/api/recipient/undefined/region/45/leadership', []);
+    act(() => renderRecipientRecord());
+
+    const recipientName = await screen.findByRole('heading', { level: 1 });
+    expect(recipientName.textContent).toEqual(' - Region 45');
+  });
+
   it('handles an error fetching merge permissions', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', 500);
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
@@ -305,11 +315,12 @@ describe('recipient record page', () => {
 
     const renderTest = (
       backLink,
+      error = '',
     ) => {
       render(
         <Router history={memoryHistory}>
           <UserContext.Provider value={{ user }}>
-            <PageWithHeading error="" regionId="1" recipientId="1" recipientNameWithRegion={recipientNameWithRegion} slug="sadness" backLink={backLink}>
+            <PageWithHeading error={error} regionId="1" recipientId="1" recipientNameWithRegion={recipientNameWithRegion} slug="sadness" backLink={backLink}>
               <div>
                 <h1>Test</h1>
               </div>
@@ -329,6 +340,12 @@ describe('recipient record page', () => {
       renderTest(<></>);
       const heading = await screen.findByRole('heading', { name: recipientNameWithRegion });
       expect(heading).toHaveClass('margin-top-5');
+    });
+
+    it('handles an error', async () => {
+      renderTest(<a href="/recipient-tta-records/1/region/1/profile">Back to profile</a>, 'error');
+      const error = await screen.findByText('error');
+      expect(error).toBeInTheDocument();
     });
   });
 });

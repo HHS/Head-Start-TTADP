@@ -144,7 +144,10 @@ const getDashboardFields = (data, showTooltip) => ([
 ]);
 
 export function DashboardOverviewWidget({
-  data, loading, fields, showTooltips,
+  data,
+  loading,
+  fields,
+  showTooltips,
 }) {
   // Get the fields we need while maintaining the order.
   const fieldsToDisplay = fields.map(
