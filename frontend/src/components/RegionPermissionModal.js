@@ -6,6 +6,7 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import Modal from './Modal';
 import { getUserRegions } from '../permissions';
 import './RegionPermissionModal.css';
+import { SUPPORT_LINK } from '../Constants';
 
 function RegionPermissionModal({
   filters, user, showFilterWithMyRegions,
@@ -41,8 +42,7 @@ function RegionPermissionModal({
     modalRef.current.toggleModal(false);
   };
 
-  const smartSheetAccessLink = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
-  const openSmartSheetRequest = () => <a href={smartSheetAccessLink} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
+  const openSmartSheetRequest = () => <a href={SUPPORT_LINK} className="usa-button usa-button--primary" target="_blank" rel="noreferrer" onClick={requestSmartSheetAccess}>Request access via Smartsheet</a>;
   return (
     <div className="smart-hub--region-permission-modal">
       <Modal

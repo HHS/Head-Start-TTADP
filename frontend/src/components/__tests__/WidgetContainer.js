@@ -9,7 +9,7 @@ import WidgetContainer from '../WidgetContainer';
 const renderWidgetContainer = (
   title = 'Widget Container Title',
   subtitle = 'Widget Container Subtitle',
-  showPaging = false,
+  showPaging = [false, false],
   handlePageChange = jest.fn(),
   error = null,
   showHeaderBorder = true,
@@ -18,6 +18,8 @@ const renderWidgetContainer = (
   footNote = null,
   subtitle2 = null,
 ) => {
+  const [showPagingBottom, showPagingTop] = showPaging;
+
   render(
     <>
       <WidgetContainer
@@ -25,7 +27,8 @@ const renderWidgetContainer = (
         subtitle={subtitle}
         loading={false}
         loadingLabel="Loading"
-        showPagingBottom={showPaging}
+        showPagingBottom={showPagingBottom}
+        showPagingTop={showPagingTop}
         currentPage={1}
         totalCount={100}
         offset={0}
@@ -58,7 +61,7 @@ const renderWidgetContainer = (
 
 describe('Widget Container', () => {
   it('renders correctly with paging', async () => {
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true);
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false]);
     expect(screen.getByText(/Widget Container Title/i)).toBeInTheDocument();
     expect(screen.getByText(/Widget Container Subtitle/i)).toBeInTheDocument();
     expect(screen.getByText(/This widget has been contained./i)).toBeInTheDocument();
@@ -75,7 +78,7 @@ describe('Widget Container', () => {
 
   it('calls paging correctly', async () => {
     const changePage = jest.fn();
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, changePage);
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [false, true], changePage);
     expect(screen.getByText(/Widget Container Title/i)).toBeInTheDocument();
     expect(screen.getByText(/1-10 of 100/i)).toBeInTheDocument();
     const pageBtn = await screen.findByRole('button', { name: /page 2/i });
@@ -84,25 +87,26 @@ describe('Widget Container', () => {
   });
 
   it('renders without title', async () => {
-    renderWidgetContainer(null, null, true);
+    renderWidgetContainer(null, null, [true, false]);
+
     expect(screen.getByText(/This widget has been contained./i)).toBeInTheDocument();
     expect(screen.getByText(/1-10 of 100/i)).toBeInTheDocument();
   });
 
   it('renders error message', async () => {
-    renderWidgetContainer(null, null, true, () => {}, 'Sample error message');
+    renderWidgetContainer(null, null, [true, false], () => {}, 'Sample error message');
     expect(screen.getByText(/Sample error message/i)).toBeInTheDocument();
   });
 
   it('hides header border', async () => {
-    renderWidgetContainer('Widget container header', null, true, () => {}, null, false);
+    renderWidgetContainer('Widget container header', null, [true, false], () => {}, null, false);
     const containerElement = screen.getByRole('heading', { name: /widget container header/i }).parentElement;
     expect(containerElement).not.toHaveClass('ttahub-border-base-lighter');
   });
 
   it('call exportRows with the correct values', async () => {
     const exportRows = jest.fn();
-    renderWidgetContainer('Widget Container Title', null, true, () => {}, null, false, true, exportRows);
+    renderWidgetContainer('Widget Container Title', null, [true, false], () => {}, null, false, true, exportRows);
 
     // Click the context menu button.
     const contextMenuBtn = screen.getByTestId('ellipsis-button');
@@ -122,12 +126,12 @@ describe('Widget Container', () => {
   });
 
   it('renders foot note', async () => {
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false], () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
     expect(screen.getByText(/There are many footnotes but this one is mine./i)).toBeInTheDocument();
   });
 
   it('displays subtitle2', async () => {
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', true, () => {}, null, false, false, () => {}, null, 'Subtitle 2');
+    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false], () => {}, null, false, false, () => {}, null, 'Subtitle 2');
     expect(screen.getByText(/Subtitle 2/i)).toBeInTheDocument();
   });
 });

@@ -602,7 +602,7 @@ describe('Resource Dashboard page', () => {
   it('handles errors by displaying an error message', async () => {
     // Page Load.
     fetchMock.get(`${resourcesUrl}?${allRegions}`, 500, { overwriteRoutes: true });
-    fetchMock.post(reportPostUrl, reportResponse);
+    fetchMock.post(reportPostUrl, 500);
 
     const user = {
       homeRegionId: 14,
