@@ -4,14 +4,14 @@ import React, {
   useState,
 } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Grid } from '@trussworks/react-uswds';
 import FilterPanel from '../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
 import { DASHBOARD_FILTER_CONFIG } from './constants';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import { regionFilter, specialistNameFilter } from '../../components/filter/activityReportFilters';
+import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import FeatureFlag from '../../components/FeatureFlag';
 import useFilters from '../../hooks/useFilters';
 import './index.css';
@@ -67,19 +67,21 @@ export default function RegionalDashboard({ match }) {
     regions,
     defaultRegion,
     allRegionsFilters,
+    userHasOnlyOneRegion,
 
     // filter functionality
     filters,
     setFilters,
     onApplyFilters,
     onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     filterKey,
     true,
+    [],
+    DASHBOARD_FILTER_CONFIG,
   );
-
-  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
 
   const {
     h1Text,
@@ -88,19 +90,15 @@ export default function RegionalDashboard({ match }) {
   } = pageConfig(userHasOnlyOneRegion, defaultRegion)[reportType] || pageConfig(userHasOnlyOneRegion, defaultRegion).default;
 
   const filtersToUse = useMemo(() => {
-    const filterConfig = [...DASHBOARD_FILTER_CONFIG];
-
-    if (!userHasOnlyOneRegion) {
-      filterConfig.push(regionFilter);
-    }
+    const config = [...filterConfig];
 
     // If user has approve activity report permission add 'Specialist name' filter.
     if (hasApproveActivityReport(user)) {
-      filterConfig.push(specialistNameFilter);
-      filterConfig.sort((a, b) => a.display.localeCompare(b.display));
+      config.push(specialistNameFilter);
+      config.sort((a, b) => a.display.localeCompare(b.display));
     }
-    return filterConfig;
-  }, [user, userHasOnlyOneRegion]);
+    return config;
+  }, [filterConfig, user]);
 
   return (
     <div className="ttahub-dashboard">
@@ -118,7 +116,7 @@ export default function RegionalDashboard({ match }) {
         {h1Text}
       </h1>
       {showFilters && (
-      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+      <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
           filters={filters}
@@ -127,7 +125,7 @@ export default function RegionalDashboard({ match }) {
           filterConfig={filtersToUse}
           allUserRegions={regions}
         />
-      </Grid>
+      </FilterPanelContainer>
       )}
       <Dashboard
         reportType={reportType}

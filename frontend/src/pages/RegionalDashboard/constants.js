@@ -19,6 +19,7 @@ import {
   reportTextFilter,
   deliveryMethodFilter,
   activityReportGoalResponseFilter,
+  regionFilter,
 } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -38,6 +39,7 @@ const DASHBOARD_FILTER_CONFIG = [
   reasonsFilter,
   recipientFilter,
   reportIdFilter,
+  regionFilter,
   reportTextFilter,
   singleOrMultiRecipientsFilter,
   specialistRoleFilter,
@@ -45,6 +47,7 @@ const DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
+  regionFilter,
 ];
 
 // sort by display prop

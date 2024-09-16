@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 import './HorizontalTableWidget.scss';
+import { parseCheckboxEvent } from '../Constants';
 
 export default function HorizontalTableWidget(
   {
@@ -91,7 +92,7 @@ export default function HorizontalTableWidget(
   }, [data, setCheckboxes]);
 
   const toggleSelectAll = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
 
     if (checked === true) {
       setCheckboxes(makeCheckboxes(data, true));
@@ -103,7 +104,7 @@ export default function HorizontalTableWidget(
   };
 
   const handleReportSelect = (event) => {
-    const { target: { checked = null, value = null } = {} } = event;
+    const { checked, value } = parseCheckboxEvent(event);
     if (checked === true) {
       setCheckboxes({ ...checkboxes, [value]: true });
     } else {
