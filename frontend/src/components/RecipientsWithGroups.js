@@ -14,6 +14,7 @@ import { getPossibleSessionParticipants, getGroupsForSession } from '../fetchers
 import FormItem from './FormItem';
 import MultiSelect from './MultiSelect';
 import GroupAlert from './GroupAlert';
+import { parseCheckboxEvent } from '../Constants';
 
 const placeholderText = '- Select -';
 
@@ -121,7 +122,7 @@ const RecipientsWithGroups = ({ regionId }) => {
   };
 
   const toggleUseGroup = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
     // Reset.
     resetGroup(false);
     setUseGroups(checked);

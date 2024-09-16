@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import {
@@ -43,7 +44,13 @@ describe('eventSummary', () => {
       },
     };
 
-    const RenderEventSummary = (user = defaultUser) => {
+    const RenderEventSummary = ({
+      user = defaultUser,
+      creators = [
+        { id: 1, name: 'IST 1', nameWithNationalCenters: 'IST 1' },
+        { id: 2, name: 'IST 2', nameWithNationalCenters: 'IST 2' },
+      ],
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: defaultFormValues,
@@ -63,10 +70,7 @@ describe('eventSummary', () => {
               nameWithNationalCenters: 'Tedwina User',
             },
           ],
-          creators: [
-            { id: 1, name: 'IST 1' },
-            { id: 2, name: 'IST 2' },
-          ],
+          creators,
         },
       };
 
@@ -75,7 +79,7 @@ describe('eventSummary', () => {
 
       return (
         <FormProvider {...hookForm}>
-          <UserContext.Provider value={user}>
+          <UserContext.Provider value={{ user }}>
             <NetworkContext.Provider value={{ connectionActive: true }}>
               <EventSummary
                 additionalData={additionalData}
@@ -87,6 +91,7 @@ describe('eventSummary', () => {
                 weAreAutoSaving={false}
                 datePickerKey="key"
                 Alert={() => <></>}
+                showSubmitModal={jest.fn()}
               />
             </NetworkContext.Provider>
           </UserContext.Provider>
@@ -149,7 +154,10 @@ describe('eventSummary', () => {
       expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
 
       // Event creator.
-      expect(await screen.findByTestId('creator-select')).toBeInTheDocument();
+      const creator = await screen.findByLabelText(/Event creator/i);
+      expect(creator).toBeInTheDocument();
+
+      await selectEvent.select(creator, ['IST 2']);
 
       // Event Organizer.
       expect(await screen.findByRole('combobox', { name: /event organizer/i })).toBeInTheDocument();
@@ -192,6 +200,22 @@ describe('eventSummary', () => {
 
       // Nine additional read only fields.
       expect(screen.queryAllByTestId('read-only-label').length).toBe(9);
+    });
+    it('handles null creators', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [
+          { regionId: 1, scopeId: ADMIN },
+        ],
+      };
+      act(() => {
+        render(<RenderEventSummary user={adminUser} creators={null} />);
+      });
+
+      const creator = await screen.findByLabelText(/Event creator/i);
+
+      // Event creator.
+      expect(creator).toBeInTheDocument();
     });
   });
 });
