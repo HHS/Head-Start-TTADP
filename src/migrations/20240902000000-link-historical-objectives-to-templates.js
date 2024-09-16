@@ -17,6 +17,8 @@ module.exports = {
         -- grow slightly because the template to which they *would* match has been interted
         -- but the objective wasn't associated with any ARs with sufficiently advanced status
 
+        -- Also doing the same for Goals
+
         DROP TABLE IF EXISTS unconnected_objectives;
         CREATE TEMP TABLE unconnected_objectives
         AS
@@ -34,21 +36,15 @@ module.exports = {
         SELECT
           o.id oid,
           ot.id otid,
-          COALESCE(gr."regionId",u."homeRegionId") region,
+          COALESCE(gr."regionId",ar."regionId") region,
           o."createdVia" = 'rtr' is_rtr,
           MAX(statord) most_advanced_ar,
-          MAX(aro."createdAt") last_used
+          MAX(o."createdAt") template_last_used
         FROM "Objectives" o
         LEFT JOIN "Goals" g
           ON o."goalId" = g.id
         LEFT JOIN "Grants" gr
           ON g."grantId" = gr.id
-        LEFT JOIN "ZALObjectives" zo
-          ON o."goalId" IS NULL
-          AND o.id = zo.data_id
-          AND zo.dml_type = 'INSERT'
-        LEFT JOIN "Users" u
-          ON zo.dml_as = u.id
         LEFT JOIN "ObjectiveTemplates" ot
           ON TRIM(o.title) = TRIM(ot."templateTitle")
           AND gr."regionId" = ot."regionId"
@@ -71,15 +67,15 @@ module.exports = {
           is_rtr,
           most_advanced_ar,
           statname,
-          last_used
+          template_last_used
         FROM titlematch
         JOIN stat_progression
           ON most_advanced_ar = statord
         WHERE region IS NOT NULL
         ;
 
-        DROP TABLE IF EXISTS created_templates;
-        CREATE TEMP TABLE created_templates
+        DROP TABLE IF EXISTS created_obj_templates;
+        CREATE TEMP TABLE created_obj_templates
         AS
         WITH updater AS (
         INSERT INTO "ObjectiveTemplates" (
@@ -99,7 +95,7 @@ module.exports = {
           'Automatic'::"enum_ObjectiveTemplates_creationMethod",
           NOW(),
           NOW(),
-          MAX(uo.last_used),
+          MAX(uo.template_last_used),
           NOW()
         FROM unconnected_objectives uo
         JOIN "Objectives" o
@@ -117,7 +113,7 @@ module.exports = {
         UPDATE unconnected_objectives
         SET otid = new_otid
         FROM "Objectives"
-        JOIN created_templates
+        JOIN created_obj_templates
           ON new_template_title = title
         WHERE oid = id
         ;
@@ -155,21 +151,15 @@ module.exports = {
         SELECT
           o.id oid,
           ot.id otid,
-          COALESCE(gr."regionId",u."homeRegionId") region,
+          COALESCE(gr."regionId",ar."regionId") region,
           o."createdVia" = 'rtr' is_rtr,
           MAX(statord) most_advanced_ar,
-          MAX(aro."createdAt") last_used
+          MAX(o."createdAt") template_last_used
         FROM "Objectives" o
         LEFT JOIN "Goals" g
           ON o."goalId" = g.id
         LEFT JOIN "Grants" gr
           ON g."grantId" = gr.id
-        LEFT JOIN "ZALObjectives" zo
-          ON o."goalId" IS NULL
-          AND o.id = zo.data_id
-          AND zo.dml_type = 'INSERT'
-        LEFT JOIN "Users" u
-          ON zo.dml_as = u.id
         LEFT JOIN "ObjectiveTemplates" ot
           ON TRIM(o.title) = TRIM(ot."templateTitle")
           AND gr."regionId" = ot."regionId"
@@ -192,7 +182,7 @@ module.exports = {
           is_rtr,
           most_advanced_ar,
           statname,
-          last_used
+          template_last_used
         FROM titlematch
         JOIN stat_progression
           ON most_advanced_ar = statord
@@ -239,6 +229,211 @@ module.exports = {
         ORDER BY 2,1
         ;
 
+        -- GOAL SECTION -----------------------------------------------------
+
+        DROP TABLE IF EXISTS unconnected_goals;
+        CREATE TEMP TABLE unconnected_goals
+        AS
+        WITH stat_progression AS (
+        SELECT
+          1 statord,
+          'deleted'::"enum_ActivityReports_calculatedStatus" statname
+        UNION SELECT 2, NULL
+        UNION SELECT 3,'draft'
+        UNION SELECT 4,'submitted'
+        UNION SELECT 5,'needs_action'
+        UNION SELECT 6,'approved'
+        ),
+        namematch AS (
+        SELECT
+          g.id gid,
+          gt.id gtid,
+          gr."regionId" region,
+          g."createdVia" = 'rtr' is_rtr,
+          MAX(statord) most_advanced_ar,
+          MAX(g."createdAt") template_last_used
+        FROM "Goals" g
+        JOIN "Grants" gr
+          ON g."grantId" = gr.id
+        LEFT JOIN "GoalTemplates" gt
+          ON TRIM(g.name) = TRIM(gt."templateName")
+          AND gr."regionId" = gt."regionId"
+        LEFT JOIN "ActivityReportGoals" arg
+          ON g.id = arg."goalId"
+        LEFT JOIN "ActivityReports" ar
+          ON arg."activityReportId" = ar.id
+        JOIN stat_progression
+          ON (ar."calculatedStatus" IS NULL AND statname IS NULL)
+          OR ar."calculatedStatus" = statname
+        WHERE g."goalTemplateId" IS NULL
+        GROUP BY 1,2,3,4
+        )
+        SELECT
+          gid,
+          gtid,
+          gtid IS NULL template_missing,
+          region,
+          is_rtr,
+          most_advanced_ar,
+          statname,
+          template_last_used
+        FROM namematch
+        JOIN stat_progression
+          ON most_advanced_ar = statord
+        WHERE region IS NOT NULL
+        ;
+
+        DROP TABLE IF EXISTS created_goal_templates;
+        CREATE TEMP TABLE created_goal_templates
+        AS
+        WITH updater AS (
+        INSERT INTO "GoalTemplates" (
+          hash,
+          "templateName",
+          "regionId",
+          "creationMethod",
+          "createdAt",
+          "updatedAt",
+          "lastUsed",
+          "templateNameModifiedAt"
+          -- not inserting "source" because that's null for autocreated templates
+        )
+        SELECT
+          MD5(g.name),
+          g.name,
+          ug.region,
+          'Automatic'::"enum_GoalTemplates_creationMethod",
+          NOW(),
+          NOW(),
+          MAX(ug.template_last_used),
+          NOW()
+        FROM unconnected_goals ug
+        JOIN "Goals" g
+          ON g.id = ug.gid
+        WHERE ug.gtid IS NULL
+          AND ug.most_advanced_ar > 3
+        GROUP BY 1,2,3,4,5,6,8
+        RETURNING
+          id new_gtid,
+          "templateName" new_template_name
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        UPDATE unconnected_goals
+        SET gtid = new_gtid
+        FROM "Goals"
+        JOIN created_goal_templates
+          ON new_template_name = name
+        WHERE gid = id
+        ;
+
+        DROP TABLE IF EXISTS updated_goals;
+        CREATE TEMP TABLE updated_goals
+        AS
+        WITH updater AS (
+        UPDATE "Goals" g
+        SET "goalTemplateId" = gtid
+        FROM unconnected_goals
+        WHERE g.id = gid
+          AND most_advanced_ar > 3
+          AND "goalTemplateId" IS NULL
+        RETURNING gid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        DROP TABLE IF EXISTS unconnected_goals_after;
+        CREATE TEMP TABLE unconnected_goals_after
+        AS
+        WITH stat_progression AS (
+        SELECT
+          1 statord,
+          'deleted'::"enum_ActivityReports_calculatedStatus" statname
+        UNION SELECT 2, NULL
+        UNION SELECT 3,'draft'
+        UNION SELECT 4,'submitted'
+        UNION SELECT 5,'needs_action'
+        UNION SELECT 6,'approved'
+        ),
+        namematch AS (
+        SELECT
+          g.id gid,
+          gt.id gtid,
+          gr."regionId" region,
+          g."createdVia" = 'rtr' is_rtr,
+          MAX(statord) most_advanced_ar,
+          MAX(g."createdAt") template_last_used
+        FROM "Goals" g
+        JOIN "Grants" gr
+          ON g."grantId" = gr.id
+        LEFT JOIN "GoalTemplates" gt
+          ON TRIM(g.name) = TRIM(gt."templateName")
+          AND gr."regionId" = gt."regionId"
+        LEFT JOIN "ActivityReportGoals" arg
+          ON g.id = arg."goalId"
+        LEFT JOIN "ActivityReports" ar
+          ON arg."activityReportId" = ar.id
+        JOIN stat_progression
+          ON (ar."calculatedStatus" IS NULL AND statname IS NULL)
+          OR ar."calculatedStatus" = statname
+        WHERE g."goalTemplateId" IS NULL
+        GROUP BY 1,2,3,4
+        )
+        SELECT
+          gid,
+          gtid,
+          gtid IS NULL template_missing,
+          region,
+          is_rtr,
+          most_advanced_ar,
+          statname,
+          template_last_used
+        FROM namematch
+        JOIN stat_progression
+          ON most_advanced_ar = statord
+        WHERE region IS NOT NULL
+        ;
+
+        WITH befores AS (
+        SELECT
+          is_rtr,
+          statname,
+          COUNT(*) FILTER (WHERE template_missing) no_templ,
+          COUNT(*) cnt,
+          'before' beforeafter
+        FROM unconnected_goals
+        GROUP BY 1,2,5
+        ),
+        afters AS (
+        SELECT
+          is_rtr,
+          statname,
+          COUNT(*) FILTER (WHERE gtid IS NULL) no_templ,
+          COUNT(*) cnt,
+          'after' beforeafter
+        FROM unconnected_goals_after
+        GROUP BY 1,2,5
+        )
+        SELECT
+          b.is_rtr,
+          b.statname most_advanced_ar_status,
+          b.no_templ no_templ_before,
+          COALESCE(a.no_templ,0) no_templ_after,
+          b.cnt "before",
+          COALESCE(a.cnt,0) "after"
+        FROM befores b
+        LEFT JOIN afters a
+          ON (
+              (b.statname IS NULL AND a.statname IS NULL)
+              OR b.statname = a.statname
+            )
+          AND (
+              (b.is_rtr IS NULL AND a.is_rtr IS NULL)
+              OR b.is_rtr = a.is_rtr
+            )
+        ORDER BY 2,1
+        ;
         
         DROP TABLE IF EXISTS unconnected_objectives;
         DROP TABLE IF EXISTS updated_objectives;
