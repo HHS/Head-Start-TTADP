@@ -17,6 +17,13 @@ describe('getSheets', () => {
     expect(sheets).toEqual(mockSheets);
     expect(fetchMock.called(sheetsUrl)).toBeTruthy();
   });
+
+  it('handles errors', async () => {
+    fetchMock.getOnce(sheetsUrl, 500);
+
+    await expect(getSheets()).rejects.toThrow(Error);
+    expect(fetchMock.called(sheetsUrl)).toBeTruthy();
+  });
 });
 
 describe('getSheetById', () => {

@@ -14,6 +14,11 @@ const rendersRecipientsWithNoTta = (data) => {
 };
 
 describe('Recipients with no tta Widget', () => {
+  it('renders correctly with  null data', async () => {
+    rendersRecipientsWithNoTta({});
+    expect(screen.getByText(/recipients with no tta/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+  });
   it('renders correctly without data', async () => {
     const emptyData = {
       headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],

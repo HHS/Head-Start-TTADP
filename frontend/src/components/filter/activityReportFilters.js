@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import React from 'react';
 import moment from 'moment';
 import { formatDateRange } from '../../utils';
@@ -26,6 +25,7 @@ import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
+import FilterDomainResultSelect from './FilterDomainResultSelect';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
@@ -464,6 +464,50 @@ export const groupsFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterGroups
       inputId={`group-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const domainEmotionalSupportFilter = {
+  id: 'domainEmotionalSupport',
+  display: 'Domain: Emotional support',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainEmotionalSupport-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+export const domainClassroomOrganizationFilter = {
+  id: 'domainClassroomOrganization',
+  display: 'Domain: Classroom organization',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainClassroomOrganization-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const domainInstructionalSupportFilter = {
+  id: 'domainInstructionalSupport',
+  display: 'Domain: Instructional support',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterDomainResultSelect
+      inputId={`domainInstructionalSupport-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

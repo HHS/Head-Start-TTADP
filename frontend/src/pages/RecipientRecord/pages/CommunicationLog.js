@@ -52,6 +52,9 @@ export default function CommunicationLog({ regionId, recipientId }) {
   } = useFilters(
     user,
     FILTER_KEY,
+    false,
+    [],
+    COMMUNICATION_LOG_FILTER_CONFIG,
   );
 
   useDeepCompareEffect(() => {
