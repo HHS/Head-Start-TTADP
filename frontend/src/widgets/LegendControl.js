@@ -1,5 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+import './LegendControl.scss';
 
 /**
    * the legend control for the graph (input, span, line)

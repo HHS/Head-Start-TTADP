@@ -26,17 +26,14 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
-    enableCheckboxes,
-    exportRows,
+    menuItems,
     footNote,
     displayTable,
     setDisplayTable,
-    titleDrawerText,
-    titleDrawerTitle,
-    titleDrawerTag,
-    subtitleDrawerLinkText,
-    subtitleDrawerLinkTitle,
-    subtitleDrawerTag,
+
+    // slot components
+    SubtitleDrawer,
+    TitleDrawer,
   },
 ) {
   return (
@@ -59,14 +56,9 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
-        enableCheckboxes={enableCheckboxes}
-        exportRows={exportRows}
-        titleDrawerText={titleDrawerText}
-        titleDrawerTitle={titleDrawerTitle}
-        titleDrawerTag={titleDrawerTag}
-        subtitleDrawerLinkText={subtitleDrawerLinkText}
-        subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
-        subtitleDrawerTag={subtitleDrawerTag}
+        TitleDrawer={() => TitleDrawer || null}
+        SubtitleDrawer={() => SubtitleDrawer || null}
+        menuItems={menuItems}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -120,17 +112,17 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
-  enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
+  menuItems: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    onClick: PropTypes.func,
+  })),
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
-  titleDrawerText: PropTypes.string,
-  titleDrawerTitle: PropTypes.string,
-  titleDrawerTag: PropTypes.string,
-  subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerLinkTitle: PropTypes.string,
-  subtitleDrawerTag: PropTypes.string,
+
+  // Drawer components
+  SubtitleDrawer: PropTypes.node,
+  TitleDrawer: PropTypes.node,
 };
 
 WidgetContainer.defaultProps = {
@@ -150,15 +142,12 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
-  enableCheckboxes: false,
-  exportRows: null,
+  menuItems: [],
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
-  titleDrawerText: '',
-  titleDrawerTitle: '',
-  titleDrawerTag: '',
-  subtitleDrawerLinkText: '',
-  subtitleDrawerLinkTitle: '',
-  subtitleDrawerTag: '',
+
+  // Drawer components
+  SubtitleDrawer: null,
+  TitleDrawer: null,
 };
