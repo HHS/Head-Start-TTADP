@@ -13,7 +13,7 @@ export default function SupportTypeDrawer({
       stickyFooter
       title="Support type guidance"
     >
-      <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
+      <ContentFromFeedByTag openLinksInNewTab className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" />
     </Drawer>
   );
 }

@@ -14,6 +14,7 @@ const FeedArticle = ({
   content,
   unread,
   partial,
+  openLinksInNewTab,
 }) => {
   /**
    * to match the styling in the design system, we attach USWDS classes to the
@@ -32,6 +33,14 @@ const FeedArticle = ({
         tag.classList.add(tagClass);
       }
     });
+
+    if (openLinksInNewTab) {
+      const links = document.querySelectorAll('.ttahub-feed-article-content a');
+      Array.from(links).forEach((link) => {
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
+      });
+    }
   });
 
   const className = `ttahub-feed-article ${partial ? 'ttahub-feed-article--partial' : ''}`;
@@ -51,10 +60,12 @@ FeedArticle.propTypes = {
   content: PropTypes.string.isRequired,
   unread: PropTypes.bool.isRequired,
   partial: PropTypes.bool,
+  openLinksInNewTab: PropTypes.bool,
 };
 
 FeedArticle.defaultProps = {
   partial: false,
+  openLinksInNewTab: false,
 };
 
 export default FeedArticle;
