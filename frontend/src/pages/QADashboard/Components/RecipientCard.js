@@ -64,7 +64,7 @@ function RecipientCard({
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Classroom organizaiton</p>
+            <p className="usa-prose text-bold margin-y-0">Classroom organization</p>
             <p className="usa-prose margin-y-0">{recipient.classroomOrganization}</p>
             <div className="margin-top-1">
               {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportReceivedDate, 'font-sans-3xs')}
