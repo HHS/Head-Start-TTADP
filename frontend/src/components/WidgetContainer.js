@@ -40,6 +40,7 @@ export default function WidgetContainer(
     subtitle2DrawerLinkText,
     subtitle2DrawerLinkTitle,
     subtitle2DrawerCssClass,
+    displayPaginationBoxOutline,
   },
 ) {
   return (
@@ -87,7 +88,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+        <div className={`border-bottom smart-hub-border-base-lighter padding-3 ${displayPaginationBoxOutline ? 'smart-hub-border-base--pagination-box' : ''}`}>
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -100,6 +101,7 @@ export default function WidgetContainer(
               offset={offset}
               perPage={perPage}
               handlePageChange={handlePageChange}
+              displayPaginationBoxOutline={displayPaginationBoxOutline}
             />
           )}
         </div>
@@ -140,6 +142,7 @@ WidgetContainer.propTypes = {
   subtitle2DrawerLinkText: PropTypes.string,
   subtitle2DrawerLinkTitle: PropTypes.string,
   subtitle2DrawerCssClass: PropTypes.string,
+  displayPaginationBoxOutline: PropTypes.bool,
 };
 
 WidgetContainer.defaultProps = {
@@ -173,4 +176,5 @@ WidgetContainer.defaultProps = {
   subtitle2DrawerLinkText: '',
   subtitle2DrawerLinkTitle: '',
   subtitle2DrawerCssClass: '',
+  displayPaginationBoxOutline: false,
 };
