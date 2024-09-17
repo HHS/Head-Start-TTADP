@@ -98,8 +98,8 @@ const WidgetContainerTitleGroup = ({
             </div>
           )}
           {subtitle2DrawerLinkText && (
-            <div className="margin-x-0 margin-y-3 ">
-              <DrawerTriggerButton drawerTriggerRef={subtitle2DrawerLinkRef} removeLeftMargin>
+            <div className="margin-x-0 margin-y-3 margin-left-0">
+              <DrawerTriggerButton drawerTriggerRef={subtitle2DrawerLinkRef} customClass="margin-left-0">
                 {subtitle2DrawerLinkText}
               </DrawerTriggerButton>
               <Drawer
