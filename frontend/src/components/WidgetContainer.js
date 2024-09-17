@@ -33,13 +33,13 @@ export default function WidgetContainer(
     setDisplayTable,
     titleDrawerText,
     titleDrawerTitle,
-    titleDrawerCssClass,
+    titleDrawerTag,
     subtitleDrawerLinkText,
     subtitleDrawerTitle,
-    subtitleDrawerCssClass,
+    subtitleDrawerTag,
     subtitle2DrawerLinkText,
     subtitle2DrawerLinkTitle,
-    subtitle2DrawerCssClass,
+    subtitle2DrawerTag,
     displayPaginationBoxOutline,
   },
 ) {
@@ -67,13 +67,13 @@ export default function WidgetContainer(
         exportRows={exportRows}
         titleDrawerText={titleDrawerText}
         titleDrawerTitle={titleDrawerTitle}
-        titleDrawerCssClass={titleDrawerCssClass}
+        titleDrawerCssClass={titleDrawerTag}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
         subtitleDrawerTitle={subtitleDrawerTitle}
-        subtitleDrawerCssClass={subtitleDrawerCssClass}
+        subtitleDrawerCssClass={subtitleDrawerTag}
         subtitle2DrawerLinkText={subtitle2DrawerLinkText}
         subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
-        subtitle2DrawerCssClass={subtitle2DrawerCssClass}
+        subtitle2DrawerCssClass={subtitle2DrawerTag}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -135,13 +135,13 @@ WidgetContainer.propTypes = {
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
-  titleDrawerCssClass: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerCssClass: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
   subtitle2DrawerLinkText: PropTypes.string,
   subtitle2DrawerLinkTitle: PropTypes.string,
-  subtitle2DrawerCssClass: PropTypes.string,
+  subtitle2DrawerTag: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
 };
 
@@ -169,12 +169,12 @@ WidgetContainer.defaultProps = {
   setDisplayTable: null,
   titleDrawerText: '',
   titleDrawerTitle: '',
-  titleDrawerCssClass: '',
+  titleDrawerTag: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: '',
-  subtitleDrawerCssClass: '',
+  subtitleDrawerTag: '',
   subtitle2DrawerLinkText: '',
   subtitle2DrawerLinkTitle: '',
-  subtitle2DrawerCssClass: '',
+  subtitle2DrawerTag: '',
   displayPaginationBoxOutline: false,
 };

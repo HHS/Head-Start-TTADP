@@ -10,6 +10,11 @@ $min-width-date-column: 100px;
   border-color: $base-lighter;
 }
 
+@media (min-width: 40em) {
+  .usa-card:last-child {
+      margin-bottom: 1em;
+  }
+}
 // reset font sizes
 .ttahub-recipient-card {
   font-size: 1.06rem;

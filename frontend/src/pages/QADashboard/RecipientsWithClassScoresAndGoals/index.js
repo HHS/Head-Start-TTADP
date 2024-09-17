@@ -137,6 +137,9 @@ export default function RecipientsWithClassScoresAndGoals() {
       </Drawer>
       <WidgetContainer
         title="Recipients with CLASS&reg; scores"
+        subtitleDrawerTitle="CLASS&reg; review thresholds"
+        subtitleDrawerLinkText="How are thresholds met?"
+        subtitleDrawerTag="ttahub-fei-root-causes"
         subtitle2={getSubtitleWithPct()}
         loading={loading}
         loadingLabel="Recipients with CLASS&reg; scores and goals loading"
@@ -150,16 +153,14 @@ export default function RecipientsWithClassScoresAndGoals() {
         exportRows={exportRows}
         titleDrawerText="OHS standard CLASS&reg; goals"
         titleDrawerTitle="OHS standard FEI goal"
-        titleDrawerCssClass="ttahub-fei-root-causes"
-        subtitle2DrawerLinkText="Learn about root causes"
-        subtitle2DrawerTitle="FEI root cause"
-        subtitle2DrawerCssClass="ttahub-fei-root-causes"
+        titleDrawerTag="ttahub-fei-root-causes"
         className="padding-3"
         displayPaginationBoxOutline
+        showHeaderBorder={false}
       >
-        <div className="bg-white padding-3">
-          <div className="desktop:display-flex flex-justify">
-            <div className="flex-align-center margin-bottom-3">
+        <div className="bg-white padding-">
+          <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom padding-x-3">
+            <div className="flex-align-center margin-bottom-3 display-flex">
               {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
               <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
               <Dropdown
@@ -194,7 +195,7 @@ export default function RecipientsWithClassScoresAndGoals() {
               </Dropdown>
             </div>
           </div>
-          <div className="ttahub-recipients-with-ohs-standard-fei-goal---recipient-cards padding-y-3">
+          <div className="ttahub-recipients-with-ohs-standard-fei-goal---recipient-cards padding-top-3">
             {recipients.map((goal, index) => (
               <RecipientCard
                 key={uuidv4()}
