@@ -22,13 +22,13 @@ const WidgetContainerTitleGroup = ({
   setDisplayTable,
   titleDrawerText,
   titleDrawerTitle,
-  titleDrawerCssClass,
+  titleDrawerTag,
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
-  subtitleDrawerCssClass,
+  subtitleDrawerTag,
   subtitle2DrawerLinkText,
   subtitle2DrawerTitle,
-  subtitle2DrawerCssClass,
+  subtitle2DrawerTag,
 }) => {
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
@@ -70,7 +70,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerCssClass} contentSelector="table" />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
                   </Drawer>
                 </>
                 )
@@ -78,7 +78,7 @@ const WidgetContainerTitleGroup = ({
           </h2>
           {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
           {subtitleDrawerLinkText && (
-            <div className="margin-x-0 margin-y-3">
+            <div className="margin-x-0 margin-y-2">
               <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} customClass="margin-x-0">
                 {subtitleDrawerLinkText}
               </DrawerTriggerButton>
@@ -88,7 +88,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerCssClass} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
               </Drawer>
             </div>
           )}
@@ -108,7 +108,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitle2DrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitle2DrawerCssClass} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitle2DrawerTag} contentSelector="table" />
               </Drawer>
             </div>
           )}
@@ -149,13 +149,13 @@ WidgetContainerTitleGroup.propTypes = {
   setDisplayTable: PropTypes.func,
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
-  titleDrawerCssClass: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerCssClass: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
   subtitle2DrawerLinkText: PropTypes.string,
   subtitle2DrawerTitle: PropTypes.string,
-  subtitle2DrawerCssClass: PropTypes.string,
+  subtitle2DrawerTag: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -172,13 +172,13 @@ WidgetContainerTitleGroup.defaultProps = {
   setDisplayTable: null,
   titleDrawerText: '',
   titleDrawerTitle: '',
-  titleDrawerCssClass: '',
+  titleDrawerTag: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: '',
-  subtitleDrawerCssClass: '',
+  subtitleDrawerTag: '',
   subtitle2DrawerLinkText: '',
   subtitle2DrawerTitle: null,
-  subtitle2DrawerCssClass: '',
+  subtitle2DrawerTag: '',
 };
 
 export default WidgetContainerTitleGroup;

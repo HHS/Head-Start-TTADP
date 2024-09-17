@@ -24,7 +24,7 @@ function RecipientCard({
   return (
     <>
       <article
-        className="ttahub-recipient-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-0 position-relative"
+        className="ttahub-recipient-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter position-relative"
         data-testid="recipientCard"
         style={{ zIndex }}
       >
