@@ -1,4 +1,4 @@
-import { useCallback, useContext } from 'react';
+import { useCallback, useContext, useMemo } from 'react';
 import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import AriaLiveContext from '../AriaLiveContext';
@@ -8,6 +8,7 @@ export default function useFilters(
   filterKey,
   manageRegions = false,
   additionalDefaultFilters = [],
+  filterConfig = [],
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
@@ -56,9 +57,24 @@ export default function useFilters(
     }
   };
 
+  const userHasOnlyOneRegion = useMemo(() => regions.length === 1, [regions]);
+
+  const filtersToUse = useMemo(() => {
+    let config = [...filterConfig];
+
+    if (userHasOnlyOneRegion) {
+      config = config.filter((f) => f.id !== 'region');
+    }
+
+    config.sort((a, b) => a.display.localeCompare(b.display));
+
+    return config;
+  }, [filterConfig, userHasOnlyOneRegion]);
+
   return {
     // from useUserDefaultRegionFilters
     regions,
+    userHasOnlyOneRegion,
     defaultRegion,
     hasMultipleRegions,
     allRegionsFilters,
@@ -69,5 +85,7 @@ export default function useFilters(
     setFilters,
     onApplyFilters,
     onRemoveFilter,
+
+    filterConfig: filtersToUse,
   };
 }

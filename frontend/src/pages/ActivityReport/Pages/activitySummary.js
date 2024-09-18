@@ -41,6 +41,7 @@ import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import './activitySummary.scss';
 import GroupAlert from '../../../components/GroupAlert';
+import { parseCheckboxEvent } from '../../../Constants';
 
 const ActivitySummary = ({
   recipients,
@@ -174,7 +175,7 @@ const ActivitySummary = ({
   };
 
   const toggleUseGroup = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
     // Reset.
     resetGroup(false);
     setUseGroup(checked);

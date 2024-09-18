@@ -1,9 +1,0 @@
-/** the 64em comes from the USDWS "desktop" breakpoint */
-@media(min-width: 64em) {
-  .ttahub-goal-card__objective-list--session-objective:not([hidden]) {
-    display: grid;
-    grid-template-columns: 130px 1fr;
-    column-gap: 1.5rem;
-    row-gap: 0.5rem;
-  }
-}
