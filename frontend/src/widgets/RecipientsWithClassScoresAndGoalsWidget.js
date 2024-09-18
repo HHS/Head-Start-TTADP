@@ -221,7 +221,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
             <Checkbox
               label="Select all"
               id="select-all-recipients-checkboxes"
-              aria-label="deselect all recipients"
+              aria-label="select all recipients"
               checked={allRecipientsChecked}
               onChange={selectAllRecipientsCheckboxSelect}
             />

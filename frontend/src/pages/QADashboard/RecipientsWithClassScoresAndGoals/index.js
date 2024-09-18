@@ -19,15 +19,14 @@ import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import RecipientsWithClassScoresAndGoalsWidget from '../../../widgets/RecipientsWithClassScoresAndGoalsWidget';
 
-const recipient = {
+const recipients = [{
   id: 1,
-  name: 'Action for Boston Community Development, Inc.',
-  lastArStartDate: '01/01/2021',
-  lastArEndDate: '01/01/2022',
+  name: 'Recipient 1',
+  lastArStartDate: '01/02/2021',
   emotionalSupport: 6.0430,
   classroomOrganization: 5.0430,
   instructionalSupport: 4.0430,
-  reportReceivedDate: '01/01/2022',
+  reportReceivedDate: '03/01/2022',
   goals: [
     {
       goalNumber: 'G-45641',
@@ -37,18 +36,30 @@ const recipient = {
     },
     {
       goalNumber: 'G-25858',
-      status: 'In progress',
-      creator: 'John Doe',
-      collaborator: 'Jane Doe',
+      status: 'Suspended',
+      creator: 'Bill Smith',
+      collaborator: 'Bob Jones',
     },
   ],
-};
+},
+{
+  id: 2,
+  name: 'Recipient 2',
+  lastArStartDate: '04/02/2021',
+  emotionalSupport: 5.254,
+  classroomOrganization: 8.458,
+  instructionalSupport: 1.214,
+  reportReceivedDate: '05/01/2022',
+  goals: [
+    {
+      goalNumber: 'G-68745',
+      status: 'Complete',
+      creator: 'Bill Parks',
+      collaborator: 'Jack Jones',
+    },
+  ],
+}];
 
-const recipients = Array.from({ length: 50 }, (_, index) => ({
-  ...recipient,
-  id: index + 1,
-  name: `${index + 1} Action for Boston Community Development, Inc.`,
-}));
 export default function RecipientsWithClassScoresAndGoals() {
   const pageDrawerRef = useRef(null);
   const [error] = useState();
