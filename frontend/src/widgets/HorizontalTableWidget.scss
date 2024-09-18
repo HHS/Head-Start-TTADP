@@ -1,7 +1,7 @@
-@use '../colors.scss' as *;
+@use "../colors.scss" as *;
 
-@media(min-width: 60em) {
-  .smarthub-horizontal-table-widget .data-header{
+@media (min-width: 60em) {
+  .smarthub-horizontal-table-widget .data-header {
     background: #fff;
     border-bottom: 0px;
     position: sticky;
@@ -13,10 +13,11 @@
     position: sticky;
     z-index: 1;
     max-width: 330px;
-    min-width: 330px;
+    // min-width: 330px;  I can't figure out why we need this and it's messing me up
   }
 
-  .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column-border {
+  .smarthub-horizontal-table-widget
+    .smarthub-horizontal-table-first-column-border {
     box-shadow: inset 0 0 0 black, inset -1px 0 0 black;
   }
 
@@ -25,7 +26,7 @@
     position: sticky;
     right: 0;
     font-weight: bold;
-    box-shadow: inset 1px 0 0 black, inset 0 0 0 black;
+    box-shadow: inset 1px 0 0 $text-ink, inset 0 0 0 $text-ink;
     min-width: 90px;
   }
 
@@ -39,7 +40,6 @@
   min-width: 44px;
   position: sticky;
   left: 0;
-
 }
 
 .smarthub-horizontal-table-widget thead .checkbox-column {
@@ -48,62 +48,71 @@
   left: 0;
 }
 
-  .smarthub-horizontal-table-widget .usa-table .data-header {
-    min-width: 90px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-header {
+  min-width: 90px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
-      background-color: white;
-  }
+.smarthub-horizontal-table-widget .usa-table thead th[aria-sort] {
+  background-color: white;
+}
 
-  .smarthub-horizontal-table-widget {
-    height: calc(100% - 1.5rem);
-  }
+.smarthub-horizontal-table-widget {
+  height: calc(100% - 1.5rem);
+}
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable {
-    overflow-x: auto;
-    overflow-y: auto;
-  }
+.smarthub-horizontal-table-widget .usa-table-container--scrollable {
+  overflow-x: auto;
+  overflow-y: auto;
+}
 
-  .smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
-    border-top: 1px solid lightgray;
-  }
+.smarthub-horizontal-table-widget .usa-table-container--scrollable thead {
+  border-top: 1px solid lightgray;
+}
 
-  .smarthub-horizontal-table-widget .usa-table td {
-    border: none;
-    text-align: left;
-  }
+.smarthub-horizontal-table-widget .usa-table td {
+  border: none;
+  text-align: left;
+}
 
-  .smarthub-horizontal-table-widget .usa-table .data-description {
-    max-width: 500px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-description {
+  max-width: 500px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table .data-description p {
-    margin: 0px;
-    padding: 0px;
-  }
+.smarthub-horizontal-table-widget .usa-table .data-description p {
+  margin: 0px;
+  padding: 0px;
+}
 
-  .smarthub-horizontal-table-widget .usa-table thead th button {
-    text-decoration: none;
-    font-weight: bold;
-    color: $base-darkest;
-  }
+.smarthub-horizontal-table-widget .usa-table thead th button {
+  text-decoration: none;
+  font-weight: bold;
+  color: $base-darkest;
+}
 
-  .smarthub-horizontal-table-widget .usa-checkbox__label {
-    padding-left: 0;
-  }
+.smarthub-horizontal-table-widget .usa-checkbox__label {
+  padding-left: 0;
+}
 
-  .smarthub-horizontal-table-widget a {
-     max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
-     display: inline-block;
-     vertical-align: middle;
-   }
+.smarthub-horizontal-table-widget a {
+  max-width: 50ch; /* the ch unit is character, so a max width of 55 characters */
+  display: inline-block;
+  vertical-align: middle;
+}
 
-   // select the svg on the page and set the vertical-align to middle.
-   .smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
-      vertical-align: middle;
-    }
+// select the svg on the page and set the vertical-align to middle.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table-first-column svg {
+  vertical-align: middle;
+}
 
-    .smarthub-horizontal-table-widget .left-with-checkbox {
-      left: 44px;
-    }
+.smarthub-horizontal-table-widget .left-with-checkbox {
+  left: 44px;
+}
+
+
+.smarthub-horizontal-table-widget tfoot {
+  border-top: 1px solid $text-ink;
+}
+
+.smarthub-horizontal-table-widget tfoot td {
+  font-weight: bold;
+}

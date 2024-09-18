@@ -5,18 +5,18 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 
+const defaultSortConfig = {
+  sortBy: '1',
+  direction: 'desc',
+  activePage: 1,
+};
+
 function RecipientsWithNoTtaWidget({
   data,
   loading,
   resetPagination,
   setResetPagination,
 }) {
-  const defaultSortConfig = {
-    sortBy: '1',
-    direction: 'desc',
-    activePage: 1,
-  };
-
   const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);

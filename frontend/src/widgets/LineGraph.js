@@ -29,9 +29,6 @@ export default function LineGraph({
   // the dom el for drawing the chart
   const lines = useRef();
 
-  const [columnHeadings, setColumnHeadings] = useState([]);
-  const [tableRows, setTableRows] = useState([]);
-
   useEffect(() => {
     if (!lines || !data || !Array.isArray(data) || showTabularData) {
       return;
@@ -198,53 +195,23 @@ export default function LineGraph({
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle]);
 
-  useEffect(() => {
-    if (!lines || !data || !Array.isArray(data) || !showTabularData) {
-      return;
-    }
-
-    const headings = data[0].x.map((x, index) => {
-      if (data[0].month[index]) {
-        return `${data[0].month[index]} ${x}`;
-      }
-      return x;
-    });
-
-    const rows = data.map((row) => ({
-      heading: row.name,
-      data: row.y.map((y) => ({
-        value: `${(Math.round(y * 10) / 10).toString()}`,
-        title: row.name,
-      })),
-    }));
-
-    setColumnHeadings(headings);
-    setTableRows(rows);
-  }, [data, showTabularData, tableConfig.title]);
-
   return (
     <div className="ttahub-three-trace-line-graph padding-3" ref={widgetRef}>
       { showTabularData
         ? (
-          // <AccessibleWidgetData
-          //   caption={tableConfig.}
-          //   columnHeadings={columnHeadings}
-          //   rows={tableRows}
-          // />
           <HorizontalTableWidget
-            headers={columnHeadings}
-            data={tableRows}
+            headers={tableConfig.headings}
+            data={tableConfig.data}
             caption={tableConfig.caption}
-            firstHeading={tableConfig.title}
+            firstHeading={tableConfig.firstHeading}
             enableSorting={tableConfig.enableSorting}
-          // lastHeading,
-          // sortConfig,
-          // requestSort,
+            sortConfig={tableConfig.sortConfig}
+            requestSort={tableConfig.requestSort}
             enableCheckboxes={tableConfig.enableCheckboxes}
-          // checkboxes,
-          // setCheckboxes,
+            checkboxes={tableConfig.checkboxes}
+            setCheckboxes={tableConfig.setCheckboxes}
             showTotalColumn={tableConfig.showTotalColumn}
-            hideFirstColumnBorder
+            footerData={tableConfig.footer.showFooter ? tableConfig.footer.data : false}
           />
         )
         : (
@@ -296,11 +263,32 @@ LineGraph.propTypes = {
     shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
   })),
   tableConfig: PropTypes.shape({
+    headings: PropTypes.arrayOf(PropTypes.string).isRequired,
+    firstHeading: PropTypes.string.isRequired,
     title: PropTypes.string.isRequired,
+    requestSort: PropTypes.func,
+    sortConfig: PropTypes.shape({
+      sortBy: PropTypes.string,
+      direction: PropTypes.string,
+      activePage: PropTypes.number,
+    }),
     caption: PropTypes.string.isRequired,
     enableCheckboxes: PropTypes.bool.isRequired,
     enableSorting: PropTypes.bool.isRequired,
     showTotalColumn: PropTypes.bool.isRequired,
+    checkboxes: PropTypes.shape({}),
+    setCheckboxes: PropTypes.func,
+    footer: PropTypes.shape({
+      data: PropTypes.arrayOf(PropTypes.string),
+      showFooter: PropTypes.bool.isRequired,
+    }),
+    data: PropTypes.arrayOf(PropTypes.shape({
+      heading: PropTypes.string.isRequired,
+      data: PropTypes.arrayOf(PropTypes.shape({
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+        title: PropTypes.string.isRequired,
+      })).isRequired,
+    })).isRequired,
   }).isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   widgetRef: PropTypes.object.isRequired,
@@ -332,15 +320,4 @@ LineGraph.defaultProps = {
       shape: 'square',
     },
   ],
-//   data: [
-//     {
-//       name: 'Hours of Training', x: [], y: [], month: '',
-//     },
-//     {
-//       name: 'Hours of Technical Assistance', x: [], y: [], month: '',
-//     },
-//     {
-//       name: 'Hours of Both', x: [], y: [], month: '',
-//     },
-//   ],
 };
