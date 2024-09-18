@@ -11,6 +11,7 @@ export default function WidgetContainer(
   {
     title,
     subtitle,
+    subtitle2,
     children,
     showPagingBottom,
     showPagingTop,
@@ -30,6 +31,12 @@ export default function WidgetContainer(
     footNote,
     displayTable,
     setDisplayTable,
+    titleDrawerText,
+    titleDrawerTitle,
+    titleDrawerTag,
+    subtitleDrawerLinkText,
+    subtitleDrawerLinkTitle,
+    subtitleDrawerTag,
   },
 ) {
   return (
@@ -38,6 +45,7 @@ export default function WidgetContainer(
         className="padding-x-3"
         title={title}
         subtitle={subtitle}
+        subtitle2={subtitle2}
         showHeaderBorder={showHeaderBorder}
         displayTable={displayTable}
         setDisplayTable={setDisplayTable}
@@ -53,6 +61,12 @@ export default function WidgetContainer(
         ) : null}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
+        titleDrawerText={titleDrawerText}
+        titleDrawerTitle={titleDrawerTitle}
+        titleDrawerTag={titleDrawerTag}
+        subtitleDrawerLinkText={subtitleDrawerLinkText}
+        subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
+        subtitleDrawerTag={subtitleDrawerTag}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -91,6 +105,7 @@ export default function WidgetContainer(
 WidgetContainer.propTypes = {
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  subtitle2: PropTypes.string,
   children: PropTypes.node,
   showPagingBottom: PropTypes.bool,
   showPagingTop: PropTypes.bool,
@@ -110,12 +125,19 @@ WidgetContainer.propTypes = {
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
+  titleDrawerText: PropTypes.string,
+  titleDrawerTitle: PropTypes.string,
+  titleDrawerTag: PropTypes.string,
+  subtitleDrawerLinkText: PropTypes.string,
+  subtitleDrawerLinkTitle: PropTypes.string,
+  subtitleDrawerTag: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
   children: <></>,
   title: null,
   subtitle: null,
+  subtitle2: null,
   showPagingBottom: false,
   showPagingTop: false,
   totalCount: 0,
@@ -133,4 +155,10 @@ WidgetContainer.defaultProps = {
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
+  titleDrawerText: '',
+  titleDrawerTitle: '',
+  titleDrawerTag: '',
+  subtitleDrawerLinkText: '',
+  subtitleDrawerLinkTitle: '',
+  subtitleDrawerTag: '',
 };
