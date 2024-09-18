@@ -33,7 +33,7 @@ function RecipientCard({
             <Checkbox
               id={`recipient-select-${recipient.name}`}
               label=""
-              value={recipient.name}
+              value={recipient.id}
               checked={isChecked}
               onChange={handleGoalCheckboxSelect}
               aria-label={`Select recipient ${recipient.name}`}
@@ -109,6 +109,7 @@ function RecipientCard({
 
 RecipientCard.propTypes = {
   recipient: PropTypes.shape({
+    id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     lastArStartDate: PropTypes.string.isRequired,
     emotionalSupport: PropTypes.number.isRequired,
