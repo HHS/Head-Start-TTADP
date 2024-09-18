@@ -179,3 +179,19 @@ export const LOCAL_STORAGE_ADDITIONAL_DATA_KEY = (id) => `ar-additional-data-${i
 export const LOCAL_STORAGE_EDITABLE_KEY = (id) => `ar-can-edit-${id}-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const SESSION_STORAGE_IMPERSONATION_KEY = `auth-impersonation-id-${LOCAL_STORAGE_CACHE_NUMBER}`;
 export const REGIONAL_RESOURCE_DASHBOARD_FILTER_KEY = 'regional-resources-dashboard-filters';
+
+export const SUPPORT_LINK = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
+export const mustBeQuarterHalfOrWhole = (value) => {
+  if (value % 0.25 !== 0) {
+    return 'Duration must be rounded to the nearest quarter hour';
+  }
+  return true;
+};
+
+export const parseCheckboxEvent = (event) => {
+  const { target: { checked = null, value = null } = {} } = event;
+  return {
+    checked,
+    value,
+  };
+};

@@ -67,13 +67,13 @@ export default function WidgetContainer(
         exportRows={exportRows}
         titleDrawerText={titleDrawerText}
         titleDrawerTitle={titleDrawerTitle}
-        titleDrawerCssClass={titleDrawerTag}
+        titleDrawerTag={titleDrawerTag}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
         subtitleDrawerTitle={subtitleDrawerTitle}
-        subtitleDrawerCssClass={subtitleDrawerTag}
+        subtitleDrawerTag={subtitleDrawerTag}
         subtitle2DrawerLinkText={subtitle2DrawerLinkText}
         subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
-        subtitle2DrawerCssClass={subtitle2DrawerTag}
+        subtitle2DrawerTag={subtitle2DrawerTag}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>

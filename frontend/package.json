@@ -101,7 +101,8 @@
     "yaml": "^2.2.2",
     "semver": "^7.5.3",
     "es5-ext": "^0.10.63",
-    "braces": "^3.0.3"
+    "braces": "^3.0.3",
+    "path-to-regexp": "^1.9.0"
   },
   "eslintConfig": {
     "root": true,
@@ -207,13 +208,15 @@
       "<rootDir>/src/pages/RegionalDashboard/constants.js",
       "<rootDir>/src/pages/makecolors.js",
       "<rootDir>/src/NetworkContext.js",
-      "<rootDir>/src/hooks/helpers.js"
+      "<rootDir>/src/hooks/helpers.js",
+      "<rootDir>/src/testHelpers.js",
+      "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
     "coverageThreshold": {
       "global": {
         "statements": 90,
-        "functions": 89,
-        "branches": 89,
+        "functions": 90,
+        "branches": 90,
         "lines": 90
       }
     }
