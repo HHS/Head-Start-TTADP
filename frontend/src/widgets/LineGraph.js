@@ -10,6 +10,7 @@ import colors from '../colors';
 import LegendControl from './LegendControl';
 import LegendControlFieldset from './LegendControlFieldset';
 import HorizontalTableWidget from './HorizontalTableWidget';
+import { arrayExistsAndHasLength } from '../Constants';
 
 const HOVER_TEMPLATE = '(%{x}, %{y})<extra></extra>';
 
@@ -30,7 +31,7 @@ export default function LineGraph({
   const lines = useRef();
 
   useEffect(() => {
-    if (!lines || !data || !Array.isArray(data) || showTabularData) {
+    if (!lines || showTabularData || !arrayExistsAndHasLength(data)) {
       return;
     }
 
