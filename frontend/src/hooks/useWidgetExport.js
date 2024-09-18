@@ -61,5 +61,7 @@ export default function useWidgetExport(
     }
   }, [checkboxes, data, exportHeading, exportName, headers]);
 
-  return exportRows;
+  return {
+    exportRows,
+  };
 }

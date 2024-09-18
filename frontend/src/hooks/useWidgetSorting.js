@@ -33,12 +33,14 @@ export default function useWidgetSorting(
       direction = 'desc';
     }
 
+    // make a lookup object with our columns and their types.
     const sorts = {
       ...stringColumns.reduce((acc, sc) => ({ ...acc, [sc]: 'string' }), {}),
       ...dateColumns.reduce((acc, dc) => ({ ...acc, [dc]: 'date' }), {}),
       ...keyColumns.reduce((acc, kc) => ({ ...acc, [kc]: 'key' }), {}),
     };
 
+    // default is "value", otherwise use the key from the lookup
     const sortingBy = sorts[sortBy] || 'value';
 
     let valuesToSort;

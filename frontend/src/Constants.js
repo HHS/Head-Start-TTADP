@@ -194,3 +194,8 @@ export const parseCheckboxEvent = (event) => {
     value,
   };
 };
+
+export const arrayExistsAndHasLength = (array) => array && Array.isArray(array) && array.length > 0;
+
+export const NOOP = () => {};
+export const EMPTY_ARRAY = [];

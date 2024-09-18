@@ -1,14 +1,42 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
+import { arrayExistsAndHasLength, NOOP } from '../Constants';
 
 export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Total TTA hours');
   const [showTabularData, setShowTabularData] = useState(false);
+
+  const [columnHeadings, setColumnHeadings] = useState([]);
+  const [tableRows, setTableRows] = useState([]);
+
+  useEffect(() => {
+    if (!arrayExistsAndHasLength(data)) {
+      return;
+    }
+
+    const headings = data[0].x.map((x, index) => {
+      if (data[0].month[index]) {
+        return `${data[0].month[index]} ${x}`;
+      }
+      return x;
+    });
+
+    const rows = data.map((row) => ({
+      heading: row.name,
+      data: row.y.map((y) => ({
+        title: row.name,
+        value: `${(Math.round(y * 10) / 10).toString()}`,
+      })),
+    }));
+
+    setColumnHeadings(headings);
+    setTableRows(rows);
+  }, [data]);
 
   const menuItems = [{
     label: showTabularData ? 'Display graph' : 'Display table',
@@ -47,11 +75,18 @@ export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
           },
         ]}
         tableConfig={{
+          data: tableRows,
           title: 'TTA Provided',
+          firstHeading: 'TTA Provided',
           caption: 'Total TTA hours by date and type',
           enableCheckboxes: false,
           enableSorting: false,
           showTotalColumn: false,
+          requestSort: NOOP,
+          headings: columnHeadings,
+          footer: {
+            showFooter: false,
+          },
         }}
         widgetRef={widgetRef}
       />
