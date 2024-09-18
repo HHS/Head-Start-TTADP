@@ -20,13 +20,17 @@ const TEST_DATA = [{
   count: 0,
 }];
 
-const renderBarGraph = async () => {
+const renderBarGraph = (data = TEST_DATA) => {
   act(() => {
-    render(<BarGraph data={TEST_DATA} />);
+    render(<BarGraph data={data} />);
   });
 };
 
 describe('Bar Graph', () => {
+  it('handles null data', () => {
+    renderBarGraph(null);
+    expect(document.querySelector('svg')).toBe(null);
+  });
   it('is shown', async () => {
     renderBarGraph();
 

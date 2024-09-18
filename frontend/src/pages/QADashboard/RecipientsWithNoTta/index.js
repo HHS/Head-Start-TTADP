@@ -1,7 +1,6 @@
-/* eslint-disable no-alert */
-/* eslint-disable no-console */
 import React, {
-  useState,
+  useContext,
+  // useState,
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
@@ -9,16 +8,47 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
+// import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
+import FilterPanel from '../../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
+import useFilters from '../../../hooks/useFilters';
 import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
+import UserContext from '../../../UserContext';
+import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
+
+const ALLOWED_SUBFILTERS = [
+  'region',
+  'startDate',
+  'endDate',
+  'grantNumber',
+  'recipient',
+  'stateCode',
+];
 
 export default function RecipientsWithNoTta() {
   const pageDrawerRef = useRef(null);
-  const [error] = useState();
+  // const [error] = useState();
+  const { user } = useContext(UserContext);
+  const {
+    // from useUserDefaultRegionFilters
+    regions,
+
+    // filter functionality
+    filters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
+  } = useFilters(
+    user,
+    QA_DASHBOARD_FILTER_KEY,
+    true,
+    [],
+    QA_DASHBOARD_FILTER_CONFIG,
+  );
 
   return (
     <div className="ttahub-recipients-with-no-tta">
@@ -32,13 +62,24 @@ export default function RecipientsWithNoTta() {
       <h1 className="landing margin-top-0">
         Recipients with no TTA
       </h1>
-      <Grid row>
+      {/* <Grid row>
         {error && (
         <Alert className="margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
         )}
-      </Grid>
+      </Grid> */}
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for QA dashboard"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filterConfig}
+          allUserRegions={regions}
+          allowedSubfilters={ALLOWED_SUBFILTERS}
+        />
+      </FilterPanelContainer>
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
@@ -55,6 +96,7 @@ export default function RecipientsWithNoTta() {
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
           RecipientsWithNoTta: [
             {
+              id: 1,
               heading: 'Test Recipient 1',
               name: 'Test Recipient 1',
               recipient: 'Test Recipient 1',
@@ -71,6 +113,7 @@ export default function RecipientsWithNoTta() {
               }],
             },
             {
+              id: 2,
               heading: 'Test Recipient 2',
               name: 'Test Recipient 2',
               recipient: 'Test Recipient 2',
@@ -87,6 +130,7 @@ export default function RecipientsWithNoTta() {
               }],
             },
             {
+              id: 3,
               heading: 'Test Recipient 3',
               name: 'Test Recipient 3',
               recipient: 'Test Recipient 3',

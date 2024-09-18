@@ -12,7 +12,7 @@ import UserContext from '../UserContext';
 import isAdmin from '../permissions';
 import colors from '../colors';
 import Pill from './Pill';
-import { SESSION_STORAGE_IMPERSONATION_KEY } from '../Constants';
+import { SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
 import { storageAvailable } from '../hooks/helpers';
 
 function UserMenuNav({ items }) {
@@ -77,7 +77,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     {
       key: 4,
       label: 'Contact support',
-      to: 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a',
+      to: SUPPORT_LINK,
       external: true,
     },
     { key: 5, space: true },
