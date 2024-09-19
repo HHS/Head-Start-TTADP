@@ -1,5 +1,5 @@
 import AdmZip from 'adm-zip';
-import { toJson } from 'xml2json';
+import { XMLParser } from 'fast-xml-parser';
 import axios from 'axios';
 import { keyBy, mapValues } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
@@ -17,6 +17,8 @@ import { logger, auditLogger } from '../logger';
 import { GRANT_PERSONNEL_ROLES } from '../constants';
 
 const fs = require('mz/fs');
+
+const parser = new XMLParser();
 
 // TTAHUB-2126 TTAHUB-2334
 // Update the specific attribute (e.g., state code) for each grant,
@@ -215,8 +217,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantAgencyData = await fs.readFile('./temp/grant_agency.xml');
-      const json = toJson(grantAgencyData);
-      const grantAgency = JSON.parse(json);
+      const grantAgency =parser.parse(grantAgencyData);
       // we are only interested in non-delegates
       const grantRecipients = grantAgency.grant_agencies.grant_agency.filter(
         (g) => g.grant_agency_number === '0',
@@ -224,7 +225,7 @@ export async function processFiles(hashSumHex) {
 
       // process recipients aka agencies that are non-delegates
       const agencyData = await fs.readFile('./temp/agency.xml');
-      const agency = JSON.parse(toJson(agencyData));
+      const agency = parser.parse(agencyData);
 
       // filter out delegates by matching to the non-delegates;
       // filter out recipient 5 (TTAHUB-705)
@@ -239,7 +240,7 @@ export async function processFiles(hashSumHex) {
 
       // process grants
       const grantData = await fs.readFile('./temp/grant_award.xml');
-      const grant = JSON.parse(toJson(grantData));
+      const grant = parser.parse(grantData);
 
       // temporary workaround for recipient 628 where it's name is coming in as DBA one.
       // This issue is pending with HSES as of 12/22/22.
@@ -267,7 +268,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const programData = await fs.readFile('./temp/grant_program.xml');
-      const programs = JSON.parse(toJson(programData));
+      const programs = parser.parse(programData);
 
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
         let {
@@ -373,7 +374,7 @@ export async function processFiles(hashSumHex) {
 
       // Load and Process grant replacement data.
       const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');
-      const grantReplacementsJson = JSON.parse(toJson(grantReplacementsData));
+      const grantReplacementsJson = parser.parse(grantReplacementsData);
       const grantReplacements = grantReplacementsJson
         .grant_award_replacements.grant_award_replacement;
 
