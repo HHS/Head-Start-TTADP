@@ -1,19 +1,247 @@
--- Plan:
--- Phase 1: Grants
--- Step 1.1: Seed filtered_grants
--- Step 1.2: If grant filters (set 1), delete from filtered_grants any grarnts filtered grants
--- Step 1.3: If grant filters (set 2), delete from filtered_grants any grarnts filtered grants
--- Step 1.4: If grant filters (set 3), delete from filtered_grants any grarnts filtered grants
--- Phase 2: Goals
--- Step 2.1: Seed filtered_goals using filtered_grants
--- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
-
--- Run main query using filtered_grants, filtered_goals, filtered_activity_reports as needed to generate filtered results
+/*
+JSON: {
+  "name": "QA Dashboard: FEI",
+  "description": {
+    "standard": "Filterable aggrigrated fei data for QA Dashboard",
+    "technical": "Filterable aggrigrated fei data for QA Dashboard for fei widget, fei graph and fei details page."
+  },
+  "output": {
+    "defaultName": "qa_fei",
+    "schema": [
+      {
+        "columnName": "data_set",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the dataset being returned."
+      },
+      {
+        "columnName": "records",
+        "type": "number",
+        "nullable": false,
+        "description": "The number of records in the dataset."
+      },
+      {
+        "columnName": "data",
+        "type": "jsonb",
+        "nullable": false,
+        "description": "The actual data for the dataset, returned as a JSON object."
+      },
+      {
+        "columnName": "active_filters",
+        "type": "string[]",
+        "nullable": false,
+        "description": "Array of active filters applied during the query execution."
+      }
+    ],
+    "multipleDataSets": [
+      {
+        "name": "with_fei_widget",
+        "defaultName": "FEI Widget",
+        "description": "Summary data for recipients with FEI goals, including the percentage of recipients with FEI and the total number of recipients.",
+        "schema": [
+          {
+            "columnName": "% recipients with fei",
+            "type": "decimal",
+            "nullable": false,
+            "description": "Percentage of recipients with a FEI goal."
+          },
+          {
+            "columnName": "recipients with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of recipients with a FEI goal."
+          },
+          {
+            "columnName": "total",
+            "type": "number",
+            "nullable": false,
+            "description": "Total number of recipients."
+          }
+        ]
+      },
+      {
+        "name": "with_fei_page",
+        "defaultName": "Detailed FEI Data",
+        "description": "Detailed information about recipients with FEI goals, including recipient, grant, and goal information.",
+        "schema": [
+          {
+            "columnName": "recipientId",
+            "type": "number",
+            "nullable": false,
+            "description": "Unique identifier for the recipient."
+          },
+          {
+            "columnName": "recipientName",
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the recipient."
+          },
+          {
+            "columnName": "grantNumber",
+            "type": "string",
+            "nullable": true,
+            "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "goalId",
+            "type": "number",
+            "nullable": true,
+            "description": "Unique identifier for the goal."
+          },
+          {
+            "columnName": "createdAt",
+            "type": "date",
+            "nullable": true,
+            "description": "Timestamp when the goal was created."
+          },
+          {
+            "columnName": "goalStatus",
+            "type": "string",
+            "nullable": true,
+            "description": "Status of the goal."
+          },
+          {
+            "columnName": "rootCause",
+            "type": "string",
+            "nullable": true,
+            "description": "Root cause response associated with the goal."
+          }
+        ]
+      },
+      {
+        "name": "with_fei_graph",
+        "defaultName": "FEI Graph",
+        "description": "Graph data for root cause responses related to FEI goals, including response counts and percentages.",
+        "schema": [
+          {
+            "columnName": "rootCause",
+            "type": "string",
+            "nullable": false,
+            "description": "The root cause response."
+          },
+          {
+            "columnName": "response_count",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of occurrences of the root cause response."
+          },
+          {
+            "columnName": "percentage",
+            "type": "decimal",
+            "nullable": false,
+            "description": "Percentage of the total root cause responses."
+          }
+        ]
+      },
+      {
+        "name": "process_log",
+        "defaultName": "Process Log",
+        "description": "Log of actions and record counts from query processing.",
+        "schema": [
+          {
+            "columnName": "action",
+            "type": "string",
+            "nullable": false,
+            "description": "Description of the process action."
+          },
+          {
+            "columnName": "record_cnt",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of records affected by the action."
+          }
+        ]
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "Filter based on the names of the recipients",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "Filter based on the grant numbers",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "programType",
+      "type": "string[]",
+      "display": "Program Type",
+      "description": "Filter based on the type of program",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"programType\" FROM \"Programs\" ORDER BY 1",
+          "column": "programType"
+        }
+      }
+    },
+    {
+      "name": "stateCode",
+      "type": "string[]",
+      "display": "State Code",
+      "description": "Filter based on the state code",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"stateCode\" FROM \"Grants\" WHERE \"stateCode\" IS NOT NULL ORDER BY 1",
+          "column": "stateCode"
+        }
+      }
+    },
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "Filter based on region identifiers",
+      "options": {
+        "staticValues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      }
+    },
+    {
+      "name": "group",
+      "type": "string[]",
+      "display": "Group",
+      "description": "Filter based on group membership",
+      "supportsExclusion": true
+    },
+    {
+      "name": "currentUserId",
+      "type": "integer[]",
+      "display": "Current User",
+      "description": "Filter based on the current user ID",
+      "supportsExclusion": true
+    },
+    {
+      "name": "createDate",
+      "type": "date[]",
+      "display": "Creation Date",
+      "description": "Filter based on the date range of creation",
+      "supportsExclusion": true
+    },
+    {
+      "name": "activityReportGoalResponse",
+      "type": "string[]",
+      "display": "Activity Report Goal Response",
+      "description": "Filter based on goal field responses in activity reports",
+      "supportsExclusion": true
+    }
+  ]
+}
+*/
 DO $$
 DECLARE
     -- Declare filter variables
     recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
-    -- program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
+    program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
     grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
     state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
@@ -24,7 +252,7 @@ DECLARE
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipients.not', true), 'false') = 'true';
-    -- program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
+    program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
     grant_numbers_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantNumbers.not', true), 'false') = 'true';
     state_code_not_filter BOOLEAN := COALESCE(current_setting('ssdi.stateCode.not', true), 'false') = 'true';
     region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.regionIds.not', true), 'false') = 'true';
@@ -36,7 +264,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  DROP TABLE IF EXISTS process_log;
+  -- DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -44,7 +272,7 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  DROP TABLE IF EXISTS filtered_grants;
+  -- DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
@@ -62,7 +290,7 @@ BEGIN
   FROM seed_filtered_grants
   GROUP BY 1;
 ---------------------------------------------------------------------------------------------------
--- Step 1.2: If grant filters active, delete from filtered_grants any grarnts filtered grants
+-- Step 1.2: If grant filters active, delete from filtered_grants any grants filtered grants
   IF
     recipient_filter IS NOT NULL OR
     program_type_filter IS NOT NULL OR
@@ -151,7 +379,7 @@ BEGIN
       GROUP BY 1;
   END IF;
 ---------------------------------------------------------------------------------------------------
--- Step 1.3: If grant filters active, delete from filtered_grants any grarnts filtered grants
+-- Step 1.3: If grant filters active, delete from filtered_grants any grants filtered grants
   IF
     group_filter IS NOT NULL OR
     current_user_id_filter IS NOT NULL
@@ -213,7 +441,7 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 2.1: Seed filtered_goals using filtered_grants
-  DROP TABLE IF EXISTS filtered_goals;
+  -- DROP TABLE IF EXISTS filtered_goals;
   CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
 
   WITH seed_filtered_goals AS (
@@ -253,21 +481,15 @@ BEGIN
           g."createdAt"::date <@ (
             SELECT
             CONCAT(
-              '[',
-              MIN(value::timestamp),
-              ',',
-              COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp),
-              ')'
+              '[', MIN(value::timestamp), ',', 
+              COALESCE(NULLIF(MAX(value::timestamp), MIN(value::timestamp)), NOW()::timestamp), ')'
             )::daterange AS my_array
-            FROM json_array_elements_text(
-            COALESCE(create_date_filter, '[]')::json
-            ) AS value
+            FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
           ) != create_date_not_filter
           )
         )
         LEFT JOIN "GoalFieldResponses" gfr
         ON g.id = gfr."goalId"
-        -- Real FEI goal is in the production DATABASE with an id of 19017 in the GoalTemplates table
         AND g."goalTemplateId" = 19017
         -- Filter for activityReportGoalResponse if ssdi.activityReportGoalResponse is defined, for array columns
         AND (
@@ -286,11 +508,9 @@ BEGIN
         AND (activity_report_goal_response_filter IS NULL OR gfr.id IS NOT NULL)
       ),
         applied_filtered_out_goals AS (
-            SELECT
-                fg.id
+            SELECT fg.id
             FROM filtered_goals fg
-            LEFT JOIN applied_filtered_goals afg
-            ON fg.id = afg.id
+            LEFT JOIN applied_filtered_goals afg ON fg.id = afg.id
             WHERE afg.id IS NULL
             ORDER BY 1
         ),
@@ -301,13 +521,10 @@ BEGIN
             RETURNING fg.id
         ),
         applied_filtered_out_grants AS (
-            SELECT
-                fgr.id
+            SELECT fgr.id
             FROM filtered_grants fgr
-            LEFT JOIN "Goals" g
-            ON fgr.id = g."grantId"
-            LEFT JOIN filtered_goals fg
-            ON g.id = fg.id
+            LEFT JOIN "Goals" g ON fgr.id = g."grantId"
+            LEFT JOIN filtered_goals fg ON g.id = fg.id
             WHERE fg.id IS NULL
             ORDER BY 1
         ),
@@ -332,6 +549,7 @@ BEGIN
   END IF;
 END $$;
 ---------------------------------------------------------------------------------------------------
+
 WITH
   with_fei AS (
     SELECT
@@ -357,6 +575,22 @@ WITH
       COUNT(DISTINCT wf.id) total
     FROM with_fei wf
   ),
+  
+  -- Add active filters collection here
+  active_filters_array AS (
+    SELECT ARRAY_REMOVE(ARRAY[
+      CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
+      CASE WHEN NULLIF(current_setting('ssdi.programType', true), '') IS NOT NULL THEN 'programType' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NOT NULL THEN 'grantNumbers' END,
+      CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
+      CASE WHEN NULLIF(current_setting('ssdi.regionIds', true), '') IS NOT NULL THEN 'regionIds' END,
+      CASE WHEN NULLIF(current_setting('ssdi.group', true), '') IS NOT NULL THEN 'group' END,
+      CASE WHEN NULLIF(current_setting('ssdi.currentUserId', true), '') IS NOT NULL THEN 'currentUserId' END,
+      CASE WHEN NULLIF(current_setting('ssdi.createDate', true), '') IS NOT NULL THEN 'createDate' END,
+      CASE WHEN NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '') IS NOT NULL THEN 'activityReportGoalResponse' END
+    ], NULL) AS active_filters
+  ),
+  
   with_fei_page AS (
     SELECT
       r.id "recipientId",
@@ -386,9 +620,9 @@ WITH
     SELECT
         wfpr.response,
         COUNT(*) AS response_count,
-        (COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ())::decimal(5,2) AS percentage
-    FROM with_fei_page
-    CROSS JOIN UNNEST(wfp.response) wfpr(response)
+        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 0)::decimal(5,2) AS percentage
+    FROM with_fei_page wfp
+    CROSS JOIN UNNEST(wfp."rootCause") wfpr(response)
     GROUP BY 1
   ),
   datasets AS (
@@ -399,9 +633,14 @@ WITH
       '% recipients with fei', "% recipients with fei",
       'recipients with fei', "recipients with fei",
       'total', total
-    ))
+    )) AS data,
+    af.active_filters
     FROM with_fei_widget
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
     UNION
+    
     SELECT
       'with_fei_page' data_set,
       COUNT(*) records,
@@ -413,9 +652,14 @@ WITH
         'createdAt', "createdAt",
         'goalStatus', "goalStatus",
         'rootCause', "rootCause"
-      ))
+      )) AS data,
+      af.active_filters
     FROM with_fei_page
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
     UNION
+    
     SELECT
     'with_fei_graph' data_set,
     COUNT(*) records,
@@ -423,17 +667,34 @@ WITH
       'rootCause', "response",
       'response_count', "response_count",
       'percentage', "percentage"
-    ))
+    )) AS data,
+    af.active_filters
     FROM with_fei_graph
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
     UNION
+    
     SELECT
       'process_log' data_set,
       COUNT(*) records,
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-      ))
+      )) AS data,
+      af.active_filters
     FROM process_log
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
   )
-  SELECT *
-  FROM datasets;
+  
+SELECT *
+FROM datasets
+-- Filter for datasets if ssdi.dataSetSelection is defined
+WHERE 1 = 1
+AND (
+  NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+  OR (
+    COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
+  )
+);

@@ -1,36 +1,242 @@
--- Plan:
--- Phase 1: Grants
--- Step 1.1: Seed filtered_grants
--- Step 1.2: If grant filters (set 1), delete from filtered_grants any grarnts filtered grants
--- Step 1.3: If grant filters (set 2), delete from filtered_grants any grarnts filtered grants
--- Step 1.4: If grant filters (set 3), delete from filtered_grants any grarnts filtered grants
--- Phase 2: Goals
--- Step 2.1: Seed filtered_goals using filtered_grants
--- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
--- Phase 3: Activity Reports
--- Step 3.1: Seed filterd_activity_reports
--- Step 3.2: If activity reports filters (set 1), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
--- Step 3.2: If activity reports filters (set 2), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
--- Step 3.2: If activity reports filters (set 3), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
-
--- Run main query using filtered_grants, filtered_goals, filtered_activity_reports as needed to generate filtered results
+/* 
+JSON: {
+  "name": "QA Dashboard: dashboard",
+  "description": {
+    "standard": "Aggregated data for delivery methods and roles in activity reports.",
+    "technical": "Filters and aggregates data for reporting on delivery methods and user roles from activity reports."
+  },
+  "output": {
+    "defaultName": "qa_dashboard",
+    "schema": [
+      {
+        "columnName": "data_set",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the dataset being returned."
+      },
+      {
+        "columnName": "records",
+        "type": "number",
+        "nullable": false,
+        "description": "The number of records in the dataset."
+      },
+      {
+        "columnName": "data",
+        "type": "jsonb",
+        "nullable": false,
+        "description": "The actual data for the dataset, returned as a JSON object."
+      },
+      {
+        "columnName": "active_filters",
+        "type": "string[]",
+        "nullable": false,
+        "description": "Array of active filters applied during the query execution."
+      }
+    ],
+    "multipleDataSets": [
+      {
+        "name": "delivery_method_graph",
+        "defaultName": "Delivery Method Graph",
+        "description": "Aggregated data showing the number and percentage of activity reports by delivery method.",
+        "schema": [
+          {
+            "columnName": "month",
+            "type": "date",
+            "nullable": false,
+            "description": "The month of the activity report."
+          },
+          {
+            "columnName": "in_person_count",
+            "type": "number",
+            "nullable": false,
+            "description": "The count of in-person activity reports."
+          },
+          {
+            "columnName": "virtual_count",
+            "type": "number",
+            "nullable": false,
+            "description": "The count of virtual activity reports."
+          },
+          {
+            "columnName": "hybrid_count",
+            "type": "number",
+            "nullable": false,
+            "description": "The count of hybrid activity reports."
+          },
+          {
+            "columnName": "in_person_percentage",
+            "type": "decimal",
+            "nullable": false,
+            "description": "The percentage of in-person activity reports."
+          },
+          {
+            "columnName": "virtual_percentage",
+            "type": "decimal",
+            "nullable": false,
+            "description": "The percentage of virtual activity reports."
+          },
+          {
+            "columnName": "hybrid_percentage",
+            "type": "decimal",
+            "nullable": false,
+            "description": "The percentage of hybrid activity reports."
+          }
+        ]
+      },
+      {
+        "name": "role_graph",
+        "defaultName": "Role Graph",
+        "description": "Aggregated data showing the roles of creators in activity reports and their respective counts and percentages.",
+        "schema": [
+          {
+            "columnName": "role_name",
+            "type": "string",
+            "nullable": false,
+            "description": "The name of the role associated with the activity report creator."
+          },
+          {
+            "columnName": "role_count",
+            "type": "number",
+            "nullable": false,
+            "description": "The count of activity reports created by users with this role."
+          },
+          {
+            "columnName": "percentage",
+            "type": "decimal",
+            "nullable": false,
+            "description": "The percentage of activity reports created by users with this role."
+          }
+        ]
+      },
+      {
+        "name": "process_log",
+        "defaultName": "Process Log",
+        "description": "Log of actions and record counts from query processing.",
+        "schema": [
+          {
+            "columnName": "action",
+            "type": "string",
+            "nullable": false,
+            "description": "Description of the process action."
+          },
+          {
+            "columnName": "record_cnt",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of records affected by the action."
+          }
+        ]
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "Filter based on the names of the recipients.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT name FROM \"Recipients\"",
+          "column": "name"
+        }
+      }
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "Filter based on the grant numbers.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT number FROM \"Grants\"",
+          "column": "number"
+        }
+      }
+    },
+    {
+      "name": "programType",
+      "type": "string[]",
+      "display": "Program Type",
+      "description": "Filter based on the type of program.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"programType\" FROM \"Programs\" ORDER BY 1",
+          "column": "programType"
+        }
+      }
+    },
+    {
+      "name": "stateCode",
+      "type": "string[]",
+      "display": "State Code",
+      "description": "Filter based on the state code.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"stateCode\" FROM \"Grants\" ORDER BY 1",
+          "column": "stateCode"
+        }
+      }
+    },
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "Filter based on region identifiers.",
+      "options": {
+        "staticValues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      }
+    },
+    {
+      "name": "group",
+      "type": "string[]",
+      "display": "Group",
+      "description": "Filter based on group membership.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "currentUserId",
+      "type": "integer[]",
+      "display": "Current User",
+      "description": "Filter based on the current user ID.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "createDate",
+      "type": "date[]",
+      "display": "Creation Date",
+      "description": "Filter based on the date range of creation.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "activityReportGoalResponse",
+      "type": "string[]",
+      "display": "Activity Report Goal Response",
+      "description": "Filter based on goal field responses in activity reports.",
+      "supportsExclusion": true
+    }
+  ]
+}
+*/
 DO $$
 DECLARE
     -- Declare filter variables
-    -- recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
+    recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
     program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
     grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
     state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
     group_filter TEXT := NULLIF(current_setting('ssdi.group', true), '');
     current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
-    -- domain_emotional_support_filter TEXT := NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '');
-    -- domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
-    -- domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
     goal_name_filter TEXT := NULLIF(current_setting('ssdi.goalName', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
-    -- report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
     reason_filter TEXT := NULLIF(current_setting('ssdi.reason', true), '');
@@ -49,13 +255,9 @@ DECLARE
     region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.regionIds.not', true), 'false') = 'true';
     group_not_filter BOOLEAN := COALESCE(current_setting('ssdi.group.not', true), 'false') = 'true';
     current_user_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.currentUserId.not', true), 'false') = 'true';
-    -- domain_emotional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainEmotionalSupport.not', true), 'false') = 'true';
-    -- domain_classroom_organization_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainClassroomOrganization.not', true), 'false') = 'true';
-    -- domain_instructional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainInstructionalSupport.not', true), 'false') = 'true';
     goal_name_not_filter BOOLEAN := COALESCE(current_setting('ssdi.goalName.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
-    -- report_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reportId.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
     reason_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reason.not', true), 'false') = 'true';
@@ -69,7 +271,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  DROP TABLE IF EXISTS process_log;
+  -- DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -77,7 +279,7 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  DROP TABLE IF EXISTS filtered_grants;
+  -- DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
@@ -245,140 +447,8 @@ BEGIN
       GROUP BY 1;
   END IF;
 ---------------------------------------------------------------------------------------------------
--- Step 1.4: If grant filters active, delete from filtered_grants any grarnts filtered grants
-  IF
-    domain_emotional_support_filter IS NOT NULL OR
-    domain_classroom_organization_filter IS NOT NULL OR
-    domain_instructional_support_filter IS NOT NULL
-  THEN
-    WITH
-      applied_filtered_grants AS (
-        SELECT
-          gr.id
-        FROM filtered_grants fgr
-        JOIN "Grants" gr
-        ON fgr.id = gr.id
-        LEFT JOIN "MonitoringClassSummaries" mcs
-        ON gr.number = mcs."grantNumber"
-        LEFT JOIN "MonitoringReviews" mr
-        ON mcs."reviewId" = mr."reviewId"
-        LEFT JOIN "MonitoringReviewStatuses" mrs
-        ON mr."statusId" = mrs."statusId"
-        AND mrs."name" = 'Complete'
-        GROUP BY 1
-        HAVING 1 = 1
-        -- Conditional logic for domain support filters and mrs.id requirement
-        AND (
-          -- If any of the domain filters have a value, then mrs.id must not be NULL
-          (
-          COALESCE(
-            domain_emotional_support_filter,
-            domain_classroom_organization_filter,
-            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
-          ) IS NOT NULL
-          AND (ARRAY_AGG(DISTINCT mrs.id))[0] IS NOT NULL
-          )
-          -- If all domain filters are NULL, then mrs.id can be anything
-          OR (
-          COALESCE(
-            domain_emotional_support_filter,
-            domain_classroom_organization_filter,
-            NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '')
-          ) IS NULL
-          )
-        )
-        -- Filter for domainEmotionalSupport if ssdi.domainEmotionalSupport is defined
-        AND (
-          domain_emotional_support_filter IS NULL
-          OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_emotional_support_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_emotional_support_not_filter
-          )
-        )
-        -- Filter for domainClassroomOrganization if ssdi.domainClassroomOrganization is defined
-        AND (
-          domain_classroom_organization_filter IS NULL
-          OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_classroom_organization_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 6 THEN 'Above all thresholds'
-              WHEN (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 5 THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_classroom_organization_not_filter
-          )
-        )
-        -- Filter for domainInstructionalSupport if ssdi.domainInstructionalSupport is defined
-        AND (
-          domain_instructional_support_filter IS NULL
-          OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(
-            COALESCE(domain_instructional_support_filter, '[]')::json
-            ) AS json_values
-            WHERE json_values.value = (
-            CASE
-              -- Get the max reportDeliveryDate for the instructionalSupport domain
-              WHEN (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] >= 3 THEN 'Above all thresholds'
-              WHEN (MAX(mcs."reportDeliveryDate") >= '2025-08-01'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.5)
-              THEN 'Below competitive'
-              WHEN (MAX(mcs."reportDeliveryDate") BETWEEN '2020-11-09' AND '2025-07-31'
-              AND (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mcs."reportDeliveryDate" DESC))[0] < 2.3)
-              THEN 'Below competitive'
-              ELSE 'Below quality'
-            END
-            )
-          )
-          != domain_instructional_support_not_filter
-          )
-        )
-      ),
-      applied_filtered_out_grants AS (
-        SELECT
-          fgr.id
-        FROM filtered_grants fgr
-        LEFT JOIN applied_filtered_grants afgr
-              ON fgr.id = afgr.id
-            WHERE afgr.id IS NULL
-        ORDER BY 1
-      ),
-      delete_from_grant_filter AS (
-            DELETE FROM filtered_grants fgr
-            USING applied_filtered_out_grants afogr
-            WHERE fgr.id = afogr.id
-            RETURNING fgr.id
-      )
-      INSERT INTO process_log (action, record_cnt)
-      SELECT
-        'Apply Grant Filters' AS action,
-        COUNT(*)
-      FROM delete_from_grant_filter
-      GROUP BY 1;
-  END IF;
----------------------------------------------------------------------------------------------------
 -- Step 2.1: Seed filtered_goals using filtered_grants
-  DROP TABLE IF EXISTS filtered_goals;
+  -- DROP TABLE IF EXISTS filtered_goals;
   CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
 
   WITH seed_filtered_goals AS (
@@ -512,7 +582,7 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 3.1: Seed filterd_activity_reports
-  DROP TABLE IF EXISTS filtered_activity_reports;
+  -- DROP TABLE IF EXISTS filtered_activity_reports;
   CREATE TEMP TABLE IF NOT EXISTS filtered_activity_reports (id INT);
 
   WITH seed_filtered_activity_reports AS (
@@ -542,7 +612,6 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.2: If activity reports filters (set 1), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
     IF
-        report_id_filter IS NOT NULL OR
         start_date_filter IS NOT NULL OR
         end_date_filter IS NOT NULL OR
         reason_filter IS NOT NULL OR
@@ -557,25 +626,6 @@ BEGIN
         JOIN "ActivityReports" a
         ON fa.id = a.id
         WHERE a."calculatedStatus" = 'approved'
-        -- Filter for findingType if ssdi.reportId is defined
-        AND (
-          report_id_filter IS NULL
-          OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(COALESCE(report_id_filter, '[]')::json) AS value
-            WHERE COALESCE(
-            "legacyId"::text,
-            CONCAT(
-              'R',
-              LPAD(COALESCE("regionId"::text, '??'), 2, '0'),
-              '-AR-',
-              a."id"::text
-            )
-            ) ~* value::text
-          ) != report_id_not_filter
-          )
-        )
         -- Filter for startDate dates between two values if ssdi.startDate is defined
         AND (
           start_date_filter IS NULL
@@ -608,7 +658,7 @@ BEGIN
         AND (
           reason_filter IS NULL
           OR (
-          (a."reason"::text[] && ARRAY(
+          (a."reason"::string[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(reason_filter, '[]')::json)
           )) != reason_not_filter
@@ -618,7 +668,7 @@ BEGIN
         AND (
           target_populations_filter IS NULL
           OR (
-          (a."targetPopulations"::text[] && ARRAY(
+          (a."targetPopulations"::string[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(target_populations_filter, '[]')::json)
           )) != target_populations_not_filter
@@ -629,11 +679,11 @@ BEGIN
           tta_type_filter IS NULL
           OR (
           (
-            a."ttaType"::text[] @> ARRAY(
+            a."ttaType"::string[] @> ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
-            AND a."ttaType"::text[] <@ ARRAY(
+            AND a."ttaType"::string[] <@ ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
@@ -1033,192 +1083,6 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
-  no_tta AS (
-    SELECT DISTINCT
-      r.id,
-      COUNT(DISTINCT a.id) != 0 has_tta
-    FROM "Recipients" r
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    JOIN filtered_grants fgr
-    ON gr.id = fgr.id
-    LEFT JOIN "ActivityRecipients" ar
-    ON gr.id = ar."grantId"
-    LEFT JOIN filtered_activity_reports far
-    ON ar."activityReportId" = far.id
-    LEFT JOIN "ActivityReports" a
-    ON far.id = a.id
-    AND a."calculatedStatus" = 'approved'
-    AND a."startDate"::date > now() - INTERVAL '90 days'
-    WHERE gr.status = 'Active'
-    GROUP BY 1
-  ),
-  no_tta_widget AS (
-    SELECT
-      (((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/COUNT(*))*100)::decimal(5,2) "% recipients without tta",
-      COUNT(*) FILTER (WHERE not has_tta ) "recipients without tta",
-      COUNT(*) total
-    FROM no_tta
-  ),
-  no_tta_page AS (
-    SELECT
-      r.id,
-      r.name,
-        (array_agg(a."startDate" ORDER BY a."startDate" DESC))[1] last_tta,
-      now()::date - ((array_agg(a."startDate" ORDER BY a."startDate" desc ))[1])::date days_since_last_tta
-    FROM no_tta nt
-    JOIN "Recipients" r
-    ON nt.id = r.id
-    AND NOT nt.has_tta
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    LEFT JOIN "ActivityRecipients" ar
-    ON gr.id = ar."grantId"
-    LEFT JOIN "ActivityReports" a
-    ON ar."activityReportId" = a.id
-    AND a."calculatedStatus" = 'approved'
-    WHERE gr.status = 'Active'
-    GROUP BY 1,2
-  ),
-  with_fei AS (
-    SELECT
-      r.id,
-      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei
-    FROM "Recipients" r
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    JOIN filtered_grants fgr
-    ON gr.id = fgr.id
-    LEFT JOIN "Goals" g
-    ON gr.id = g."grantId"
-    LEFT JOIN filtered_goals fg
-    ON g.id = fg.id
-    WHERE gr.status = 'Active'
-    GROUP BY 1
-  ),
-  with_fei_widget AS (
-    SELECT
-      (((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
-      COUNT(DISTINCT wf.id)))*100)::decimal(5,2) "% recipients with fei",
-      COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
-      COUNT(DISTINCT wf.id) total
-    FROM with_fei wf
-  ),
-  with_fei_page AS (
-    SELECT
-      r.id "recipientId",
-      r.name "recipientName",
-      gr.number "grantNumber",
-      g.id "goalId",
-      g."createdAt",
-      g.status "goalStatus",
-      gfr.response "rootCause"
-    FROM with_fei wf
-    JOIN "Recipients" r
-    ON wf.id = r.id
-    AND has_fei
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    JOIN "Goals" g
-    ON gr.id = g."grantId"
-    AND g."goalTemplateId" = 19017
-    LEFT JOIN "GoalFieldResponses" gfr
-    ON g.id = gfr."goalId"
-  ),
-  with_fei_graph AS (
-    SELECT
-      gfrr.response,
-      COUNT(*) AS response_count,
-      (COUNT(*) * 100.0 / SUM(COUNT(*)) OVER ())::decimal(5,2) AS percentage
-    FROM with_fei wf
-    JOIN "Recipients" r
-    ON wf.id = r.id
-    AND has_fei
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    JOIN "Goals" g
-    ON gr.id = g."grantId"
-    AND g."goalTemplateId" = 19017
-    LEFT JOIN "GoalFieldResponses" gfr
-    ON g.id = gfr."goalId"
-    CROSS JOIN UNNEST(gfr.response) gfrr(response)
-    GROUP BY 1
-  ),
-  with_class AS (
-    SELECT
-      r.id,
-      COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
-      COUNT(DISTINCT mcs.id) > 0 has_scores
-    FROM "Recipients" r
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    LEFT JOIN "Goals" g
-    ON gr.id = g."grantId"
-    JOIN filtered_grants fgr
-    ON gr.id = fgr.id
-    LEFT JOIN "MonitoringReviewGrantees" mrg
-    ON gr.number = mrg."grantNumber"
-    LEFT JOIN "MonitoringReviews" mr
-    ON mrg."reviewId" = mr."reviewId"
-    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
-    LEFT JOIN "MonitoringReviewStatuses" mrs
-    ON mr."statusId" = mrs."statusId"
-    LEFT JOIN "MonitoringClassSummaries" mcs
-    ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
-    GROUP BY 1
-  ),
-  with_class_widget AS (
-    SELECT
-      (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
-      COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
-      COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
-      COUNT(DISTINCT wc.id) total
-    FROM with_class wc
-  ),
-  with_class_page AS (
-    SELECT
-      r.id "recipientId",
-      r.name "recipientName",
-      gr.number "grantNumber",
-      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
-      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
-      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
-      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
-      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
-      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
-      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
-      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
-    FROM with_class wc
-    JOIN "Recipients" r
-    ON wc.id = r.id
-    AND (has_class OR has_scores)
-    JOIN "Grants" gr
-    ON r.id = gr."recipientId"
-    LEFT JOIN "Goals" g
-    ON gr.id = g."grantId"
-    AND has_class
-    AND g."goalTemplateId" = 18172
-    LEFT JOIN "ActivityReportGoals" arg
-    ON g.id = arg."goalId"
-    LEFT JOIN "ActivityReports" a
-    ON arg."activityReportId" = a.id
-    AND a."calculatedStatus" = 'approved'
-    LEFT JOIN "MonitoringReviewGrantees" mrg
-    ON gr.number = mrg."grantNumber"
-    LEFT JOIN "MonitoringReviews" mr
-    ON mrg."reviewId" = mr."reviewId"
-    AND mr."reviewType" in ('CLASS', 'PR-CLASS', 'AIAN CLASS Self-Observations', 'AIAN-CLASS', 'VP-CLASS', 'CLASS-Video')
-    LEFT JOIN "MonitoringReviewStatuses" mrs
-    ON mr."statusId" = mrs."statusId"
-    LEFT JOIN "MonitoringClassSummaries" mcs
-    ON mr."reviewId" = mcs."reviewId"
-    WHERE gr.status = 'Active'
-    AND (has_class OR has_scores)
-    AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
-    GROUP BY 1,2,3
-    order by 1,3
-  ),
   delivery_method_graph AS (
     SELECT
       DATE_TRUNC('month', "startDate")::DATE AS month,
@@ -1251,89 +1115,6 @@ WITH
     ORDER BY 1 DESC
   ),
   datasets AS (
-    SELECT
-    'no_tta_widget' data_set,
-    COUNT(*) records,
-    JSONB_AGG(JSONB_BUILD_OBJECT(
-      '% recipients without tta', "% recipients without tta",
-      'recipients without tta', "recipients without tta",
-      'total', total
-    ))
-    FROM no_tta_widget
-    UNION
-    SELECT
-      'no_tta_page' data_set,
-      COUNT(*) records,
-      JSONB_AGG(JSONB_BUILD_OBJECT(
-        'recipient id', id,
-        'recipient name', name,
-        'last tta', last_tta,
-        'days since last tta', days_since_last_tta
-      ))
-    FROM no_tta_page
-    UNION
-    SELECT
-    'with_fei_widget' data_set,
-    COUNT(*) records,
-    JSONB_AGG(JSONB_BUILD_OBJECT(
-      '% recipients with fei', "% recipients with fei",
-      'recipients with fei', "recipients with fei",
-      'total', total
-    ))
-    FROM with_fei_widget
-    UNION
-    SELECT
-      'with_fei_page' data_set,
-      COUNT(*) records,
-      JSONB_AGG(JSONB_BUILD_OBJECT(
-        'recipientId', "recipientId",
-        'recipientName', "recipientName",
-        'grantNumber', "grantNumber",
-        'goalId', "goalId",
-        'createdAt', "createdAt",
-        'goalStatus', "goalStatus",
-        'rootCause', "rootCause"
-      ))
-    FROM with_fei_page
-    UNION
-    SELECT
-    'with_fei_graph' data_set,
-    COUNT(*) records,
-    JSONB_AGG(JSONB_BUILD_OBJECT(
-      'rootCause', "response",
-      'response_count', "response_count",
-      'percentage', "percentage"
-    ))
-    FROM with_fei_graph
-    UNION
-    SELECT
-    'with_class_widget' data_set,
-    COUNT(*) records,
-    JSONB_AGG(JSONB_BUILD_OBJECT(
-      '% recipients with class', "% recipients with class",
-      'recipients with class', "recipients with class",
-      'total', total
-    ))
-    FROM with_class_widget
-    UNION
-    SELECT
-      'with_class_page' data_set,
-      COUNT(*) records,
-      JSONB_AGG(JSONB_BUILD_OBJECT(
-        'recipientId', "recipientId",
-        'recipientName', "recipientName",
-        'grantNumber', "grantNumber",
-        'goalId', "goalId",
-        'goalCreatedAt', "goalCreatedAt",
-        'goalStatus', "goalStatus",
-        'lastARStartDate', "lastARStartDate",
-        'emotionalSupport', "emotionalSupport",
-        'classroomOrganization', "classroomOrganization",
-        'instructionalSupport', "instructionalSupport",
-        'reportDeliveryDate', "reportDeliveryDate"
-      ))
-    FROM with_class_page
-    UNION
     SELECT
     'delivery_method_graph' data_set,
     COUNT(*) records,

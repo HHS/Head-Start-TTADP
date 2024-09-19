@@ -1,19 +1,264 @@
--- Plan:
--- Phase 1: Grants
--- Step 1.1: Seed filtered_grants
--- Step 1.2: If grant filters (set 1), delete from filtered_grants any grarnts filtered grants
--- Step 1.3: If grant filters (set 2), delete from filtered_grants any grarnts filtered grants
--- Step 1.4: If grant filters (set 3), delete from filtered_grants any grarnts filtered grants
--- Phase 2: Goals
--- Step 2.1: Seed filtered_goals using filtered_grants
--- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
-
--- Run main query using filtered_grants, filtered_goals, filtered_activity_reports as needed to generate filtered results
+/*
+JSON: {
+  "name": "QA Dashboard: CLASS",
+  "description": {
+    "standard": "Filterable aggrigrated class data for QA Dashboard",
+    "technical": "Filterable aggrigrated class data for QA Dashboard for CLASS widget and CLASS details page."
+  },
+  "output": {
+    "defaultName": "qa_class",
+    "schema": [
+      {
+        "columnName": "data_set",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the dataset being returned."
+      },
+      {
+        "columnName": "records",
+        "type": "number",
+        "nullable": false,
+        "description": "The number of records in the dataset."
+      },
+      {
+        "columnName": "data",
+        "type": "jsonb",
+        "nullable": false,
+        "description": "The actual data for the dataset, returned as a JSON object."
+      },
+      {
+        "columnName": "active_filters",
+        "type": "string[]",
+        "nullable": false,
+        "description": "An array of the active filters used"
+      }
+    ],
+    "multipleDataSets": [
+      {
+        "name": "with_class_widget",
+        "defaultName": "CLASS Widget",
+        "description": "Summary of CLASS data with the percentage of recipients with a CLASS review.",
+        "schema": [
+          {
+            "columnName": "% recipients with class",
+            "type": "decimal",
+            "nullable": false,
+            "description": "Percentage of recipients with a CLASS review."
+          },
+          {
+            "columnName": "recipients with class",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of recipients with a CLASS review."
+          },
+          {
+            "columnName": "total",
+            "type": "number",
+            "nullable": false,
+            "description": "Total number of recipients."
+          }
+        ]
+      },
+      {
+        "name": "with_class_page",
+        "defaultName": "Detailed CLASS Data",
+        "description": "Detailed data for recipients with CLASS reviews and their associated grants, goals, and activity reports.",
+        "schema": [
+          {
+            "columnName": "recipientId",
+            "type": "number",
+            "nullable": false,
+            "description": "Unique identifier for the recipient."
+          },
+          {
+            "columnName": "recipientName",
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the recipient."
+          },
+          {
+            "columnName": "grantNumber",
+            "type": "string",
+            "nullable": true,
+            "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "goalId",
+            "type": "number",
+            "nullable": true,
+            "description": "Unique identifier for the goal."
+          },
+          {
+            "columnName": "goalCreatedAt",
+            "type": "date",
+            "nullable": true,
+            "description": "Timestamp when the goal was created."
+          },
+          {
+            "columnName": "goalStatus",
+            "type": "string",
+            "nullable": true,
+            "description": "Status of the goal."
+          },
+          {
+            "columnName": "lastARStartDate",
+            "type": "date",
+            "nullable": true,
+            "description": "The start date of the last associated activity report."
+          },
+          {
+            "columnName": "emotionalSupport",
+            "type": "number",
+            "nullable": true,
+            "description": "Score for emotional support in the CLASS review."
+          },
+          {
+            "columnName": "classroomOrganization",
+            "type": "number",
+            "nullable": true,
+            "description": "Score for classroom organization in the CLASS review."
+          },
+          {
+            "columnName": "instructionalSupport",
+            "type": "number",
+            "nullable": true,
+            "description": "Score for instructional support in the CLASS review."
+          },
+          {
+            "columnName": "reportDeliveryDate",
+            "type": "date",
+            "nullable": true,
+            "description": "Date when the monitoring report was delivered."
+          }
+        ]
+      },
+      {
+        "name": "process_log",
+        "defaultName": "Process Log",
+        "description": "Log of actions and record counts from query processing.",
+        "schema": [
+          {
+            "columnName": "action",
+            "type": "string",
+            "nullable": false,
+            "description": "Description of the process action."
+          },
+          {
+            "columnName": "record_cnt",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of records affected by the action."
+          }
+        ]
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "Filter based on the names of the recipients",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "Filter based on the grant numbers",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "programType",
+      "type": "string[]",
+      "display": "Program Type",
+      "description": "Filter based on the type of program",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"programType\" FROM \"Programs\" ORDER BY 1",
+          "column": "programType"
+        }
+      }
+    },
+    {
+      "name": "stateCode",
+      "type": "string[]",
+      "display": "State Code",
+      "description": "Filter based on the state code",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"stateCode\" FROM \"Grants\" WHERE \"stateCode\" IS NOT NULL ORDER BY 1",
+          "column": "stateCode"
+        }
+      }
+    },
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "Filter based on region identifiers",
+      "options": {
+        "staticValues": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      }
+    },
+    {
+      "name": "domainEmotionalSupport",
+      "type": "string[]",
+      "display": "Emotional Support Domain",
+      "description": "Filter based on emotional support domain scores",
+      "options": {
+        "staticValues": [
+          "Above all thresholds",
+          "Below quality",
+          "Below competitive"
+        ]
+      }
+    },
+    {
+      "name": "domainClassroomOrganization",
+      "type": "string[]",
+      "display": "Classroom Organization Domain",
+      "description": "Filter based on classroom organization domain scores",
+      "options": {
+        "staticValues": [
+          "Above all thresholds",
+          "Below quality",
+          "Below competitive"
+        ]
+      }
+    },
+    {
+      "name": "domainInstructionalSupport",
+      "type": "string[]",
+      "display": "Instructional Support Domain",
+      "description": "Filter based on instructional support domain scores",
+      "options": {
+        "staticValues": [
+          "Above all thresholds",
+          "Below quality",
+          "Below competitive"
+        ]
+      }
+    },
+    {
+      "name": "createDate",
+      "type": "date[]",
+      "display": "Creation Date",
+      "description": "Filter based on the date range of creation",
+      "supportsExclusion": true
+    }
+  ]
+}
+*/
 DO $$
 DECLARE
     -- Declare filter variables
     recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
-    -- program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
+    program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
     grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
     state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
     region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
@@ -26,7 +271,7 @@ DECLARE
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipients.not', true), 'false') = 'true';
-    -- program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
+    program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
     grant_numbers_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantNumbers.not', true), 'false') = 'true';
     state_code_not_filter BOOLEAN := COALESCE(current_setting('ssdi.stateCode.not', true), 'false') = 'true';
     region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.regionIds.not', true), 'false') = 'true';
@@ -40,7 +285,7 @@ DECLARE
 BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
-  DROP TABLE IF EXISTS process_log;
+  -- DROP TABLE IF EXISTS process_log;
   CREATE TEMP TABLE IF NOT EXISTS process_log(
     action TEXT,
     record_cnt int,
@@ -48,7 +293,7 @@ BEGIN
   );
 ---------------------------------------------------------------------------------------------------
 -- Step 1.1: Seed filtered_grants
-  DROP TABLE IF EXISTS filtered_grants;
+  -- DROP TABLE IF EXISTS filtered_grants;
   CREATE TEMP TABLE IF NOT EXISTS filtered_grants (id INT);
 
   WITH seed_filtered_grants AS (
@@ -349,7 +594,7 @@ BEGIN
   END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 2.1: Seed filtered_goals using filtered_grants
-  DROP TABLE IF EXISTS filtered_goals;
+  -- DROP TABLE IF EXISTS filtered_goals;
   CREATE TEMP TABLE IF NOT EXISTS filtered_goals (id INT);
 
   WITH seed_filtered_goals AS (
@@ -526,8 +771,25 @@ WITH
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     GROUP BY 1,2,3
-    order by 1,3
+    ORDER BY 1,3
   ),
+  
+  -- CTE for fetching active filters using NULLIF() to handle empty strings
+  active_filters_array AS (
+    SELECT ARRAY_REMOVE(ARRAY[
+      CASE WHEN NULLIF(current_setting('ssdi.recipients', true), '') IS NOT NULL THEN 'recipients' END,
+      CASE WHEN NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NOT NULL THEN 'grantNumbers' END,
+      CASE WHEN NULLIF(current_setting('ssdi.stateCode', true), '') IS NOT NULL THEN 'stateCode' END,
+      CASE WHEN NULLIF(current_setting('ssdi.regionIds', true), '') IS NOT NULL THEN 'regionIds' END,
+      CASE WHEN NULLIF(current_setting('ssdi.group', true), '') IS NOT NULL THEN 'group' END,
+      CASE WHEN NULLIF(current_setting('ssdi.currentUserId', true), '') IS NOT NULL THEN 'currentUserId' END,
+      CASE WHEN NULLIF(current_setting('ssdi.domainEmotionalSupport', true), '') IS NOT NULL THEN 'domainEmotionalSupport' END,
+      CASE WHEN NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '') IS NOT NULL THEN 'domainClassroomOrganization' END,
+      CASE WHEN NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '') IS NOT NULL THEN 'domainInstructionalSupport' END,
+      CASE WHEN NULLIF(current_setting('ssdi.createDate', true), '') IS NOT NULL THEN 'createDate' END
+    ], NULL) AS active_filters
+  ),
+  
   datasets AS (
     SELECT
         'with_class_widget' data_set,
@@ -536,9 +798,14 @@ WITH
         '% recipients with class', "% recipients with class",
         'recipients with class', "recipients with class",
         'total', total
-        ))
+        )) AS data,
+        af.active_filters  -- Use precomputed active_filters
     FROM with_class_widget
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
     UNION
+
     SELECT
       'with_class_page' data_set,
       COUNT(*) records,
@@ -554,17 +821,26 @@ WITH
         'classroomOrganization', "classroomOrganization",
         'instructionalSupport', "instructionalSupport",
         'reportDeliveryDate', "reportDeliveryDate"
-      ))
+      )) AS data,
+      af.active_filters  -- Use precomputed active_filters
     FROM with_class_page
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
+    
     UNION
+    
     SELECT
       'process_log' data_set,
       COUNT(*) records,
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-      ))
+      )) AS data,
+      af.active_filters  -- Use precomputed active_filters
     FROM process_log
+    CROSS JOIN active_filters_array af
+    GROUP BY af.active_filters
   )
-  SELECT *
-  FROM datasets;
+  
+SELECT *
+FROM datasets;
