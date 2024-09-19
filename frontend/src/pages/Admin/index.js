@@ -13,13 +13,14 @@ import SS from './SS';
 import TrainingReports from './TrainingReports';
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
+import FeedPreview from './FeedPreview';
 
 function Admin() {
   return (
     <>
       <h1>Admin</h1>
       <h2>Support</h2>
-      <div className="margin-bottom-2">
+      <div className="margin-bottom-2 flex-wrap display-flex flex-gap-1">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/cdi">
           CDI grants
         </NavLink>
@@ -49,6 +50,9 @@ function Admin() {
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
           SS
+        </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feed-preview">
+          Confluence feed preview
         </NavLink>
       </div>
       <h2>Engineer only</h2>
@@ -105,6 +109,10 @@ function Admin() {
         <Route
           path="/admin/course/:courseId"
           render={({ match }) => <CourseEdit match={match} />}
+        />
+        <Route
+          path="/admin/feed-preview"
+          render={() => <FeedPreview />}
         />
       </Switch>
     </>
