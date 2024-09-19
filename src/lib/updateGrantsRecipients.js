@@ -340,8 +340,13 @@ export async function processFiles(hashSumHex) {
         ),
       })));
 
+      // Deduplicate based on 'id'
+      const uniqueProgramsForDb = Array.from(
+        new Map(programsForDb.map((item) => [item.id, item])).values(),
+      );
+
       // Extract an array of all grant personnel to update.
-      const programPersonnel = programsForDb.flatMap((p) => p.programPersonnel);
+      const programPersonnel = uniqueProgramsForDb.flatMap((p) => p.programPersonnel);
 
       // Split grants between CDI and non-CDI grants.
       const cdiGrants = grantsForDb.filter((g) => g.regionId === 13);
@@ -399,11 +404,6 @@ export async function processFiles(hashSumHex) {
       });
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
-
-      // Deduplicate based on 'id'
-      const uniqueProgramsForDb = Array.from(
-        new Map(programsForDb.map((item) => [item.id, item])).values(),
-      );
 
       await Program.bulkCreate(
         uniqueProgramsForDb,
