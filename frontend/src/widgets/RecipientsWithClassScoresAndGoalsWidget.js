@@ -33,10 +33,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
 
   // Probably we WONT use the useWidgetPaging hook here.
   const {
-    // offset,
-    // activePage,
     handlePageChange,
-    // requestSort,
     exportRows,
     sortConfig,
     setSortConfig,
@@ -200,7 +197,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
               <option value="LastArStartDate-desc">Last AR start date (oldest to newest) </option>
             </Dropdown>
           </div>
-          <div className="smart-hub--table-nav">
+          <div className="flex-align-center margin-bottom-3 display-flex">
+            {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+            <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"
               id="perPage"

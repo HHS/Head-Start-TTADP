@@ -127,6 +127,8 @@ export default function useWidgetPaging(
       }
 
       // Create data array if its missing (headers array must be populated correctly).
+      // The below code was to be able to re-use the export function for different data structures.
+      // More than likely this will not be needed.
       const createMissingData = dataToExport.every((d) => !d.data);
       if (createMissingData) {
         dataToExport = dataToExport.map((d) => ({
