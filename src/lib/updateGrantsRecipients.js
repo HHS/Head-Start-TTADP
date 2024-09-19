@@ -217,7 +217,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantAgencyData = await fs.readFile('./temp/grant_agency.xml');
-      const grantAgency =parser.parse(grantAgencyData);
+      const grantAgency = parser.parse(grantAgencyData);
       // we are only interested in non-delegates
       const grantRecipients = grantAgency.grant_agencies.grant_agency.filter(
         (g) => g.grant_agency_number === '0',
