@@ -12,6 +12,8 @@ import UserContext from '../../UserContext';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants';
+import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
+import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
@@ -21,7 +23,7 @@ const DISALLOWED_FILTERS = [
 const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
   .filter((id) => !DISALLOWED_FILTERS.includes(id));
 
-const DATA = {
+const DELIVERY_METHOD_GRAPH_DATA = {
   total_in_person_count: 8420,
   average_in_person_percentage: 73,
   total_virtual_count: 2734,
@@ -138,6 +140,90 @@ const DATA = {
   ],
 };
 
+const ROLE_GRAPH_DATA = {
+  totalNumberOfReports: 11510,
+  totalPercentage: 100,
+  records: [
+    {
+      role_name: 'ECM',
+      role_count: 6,
+      percentage: 1,
+    },
+    {
+      role_name: 'ECS',
+      role_count: 6892,
+      percentage: 58,
+    },
+    {
+      role_name: 'FES',
+      role_count: 135,
+      percentage: 2,
+    },
+    {
+      role_name: 'GS',
+      role_count: 4258,
+      percentage: 36,
+    },
+    {
+      role_name: 'GSM',
+      role_count: 23,
+      percentage: 1,
+    },
+    {
+      role_name: 'HS',
+      role_count: 153,
+      percentage: 2,
+    },
+    {
+      role_name: 'SS',
+      role_count: 0,
+      percentage: 0,
+    },
+    {
+      role_name: 'TTAC',
+      role_count: 0,
+      percentage: 0,
+    },
+  ],
+};
+
+const ROOT_CAUSE_FEI_GOALS_DATA = {
+  totalNumberOfGoals: 11510,
+  totalNumberOfRootCauses: 21637,
+  records: [
+    {
+      rootCause: 'Community Partnerships',
+      response_count: 2532,
+      percentage: 22,
+    },
+    {
+      rootCause: 'Facilities',
+      response_count: 2186,
+      percentage: 19,
+    },
+    {
+      rootCause: 'Family Circumstances',
+      response_count: 2762,
+      percentage: 24,
+    },
+    {
+      rootCause: 'Other ECE Care Options',
+      response_count: 3683,
+      percentage: 32,
+    },
+    {
+      rootCause: 'Unavailable',
+      response_count: 115,
+      percentage: 1,
+    },
+    {
+      rootCause: 'Workforce',
+      response_count: 10359,
+      percentage: 90,
+    },
+  ],
+};
+
 export default function QADashboard() {
   const { user } = useContext(UserContext);
   const {
@@ -189,10 +275,19 @@ export default function QADashboard() {
         <div>
           <Grid row>
             <DeliveryMethod
-              data={DATA}
+              data={DELIVERY_METHOD_GRAPH_DATA}
               loading={false}
             />
           </Grid>
+          <Grid row gap={2}>
+            <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
+              <PercentageActivityReportByRole data={ROLE_GRAPH_DATA} />
+            </Grid>
+            <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
+              <RootCauseFeiGoals data={ROOT_CAUSE_FEI_GOALS_DATA} />
+            </Grid>
+          </Grid>
+
         </div>
       </div>
     </>

@@ -9,7 +9,14 @@ import './BarGraph.css';
 const Plot = createPlotlyComponent(Plotly);
 const BottomAxis = createPlotlyComponent(Plotly);
 
-function BarGraph({ data }) {
+function BarGraph({
+  data,
+  leftMargin,
+  topMargin,
+  barHeightMultiplier,
+  barGraphTopHeight,
+  widgetRef,
+}) {
   const parentRef = useRef(null);
   const [width, setWidth] = useState(850);
 
@@ -59,7 +66,7 @@ function BarGraph({ data }) {
 
   const layout = {
     bargap: 0.5,
-    height: 25 * data.length,
+    height: barHeightMultiplier * data.length,
     width,
     hoverlabel: {
       bgcolor: '#000',
@@ -73,9 +80,9 @@ function BarGraph({ data }) {
       color: colors.textInk,
     },
     margin: {
-      l: 320,
+      l: leftMargin,
       r: 0,
-      t: 0,
+      t: topMargin,
       b: 0,
     },
     xaxis: {
@@ -99,10 +106,10 @@ function BarGraph({ data }) {
   };
 
   return (
-    <>
+    <div ref={widgetRef}>
       <div className="ttahub-bar-graph maxh-mobile-lg overflow-y-scroll" ref={parentRef}>
         {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
-        <div className="ttahub-bar-graph--bars-top" tabIndex={0}>
+        <div className="ttahub-bar-graph--bars-top" style={{ height: barGraphTopHeight }} tabIndex={0}>
           <span className="sr-only">Use the arrow keys to scroll graph</span>
           <Plot
             data={[trace]}
@@ -118,7 +125,7 @@ function BarGraph({ data }) {
             width,
             height: 40,
             margin: {
-              l: 320,
+              l: leftMargin,
               t: 0,
               r: 0,
             },
@@ -133,7 +140,7 @@ function BarGraph({ data }) {
           }}
         />
       </div>
-    </>
+    </div>
   );
 }
 
@@ -144,10 +151,23 @@ BarGraph.propTypes = {
       count: PropTypes.number,
     }),
   ),
+  leftMargin: PropTypes.number,
+  topMargin: PropTypes.number,
+  barHeightMultiplier: PropTypes.number,
+  barGraphTopHeight: PropTypes.oneOfType([
+    PropTypes.number,
+    PropTypes.string,
+  ]),
+  widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
 };
 
 BarGraph.defaultProps = {
   data: [],
+  leftMargin: 320,
+  topMargin: 0,
+  barHeightMultiplier: 25,
+  barGraphTopHeight: 400,
+  widgetRef: { current: null },
 };
 
 export default BarGraph;
