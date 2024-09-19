@@ -28,20 +28,19 @@ function RecipientCard({
         data-testid="recipientCard"
         style={{ zIndex }}
       >
-        <div className="ttahub-recipient-card__row position-relative">
-          <div className="ttahub-recipient-card__recipient-column__cb margin-top-1">
-            <Checkbox
-              id={`recipient-select-${recipient.name}`}
-              label=""
-              value={recipient.id}
-              checked={isChecked}
-              onChange={handleGoalCheckboxSelect}
-              aria-label={`Select recipient ${recipient.name}`}
-              className="margin-right-1"
-              data-testid="selectRecipientTestId"
-            />
-          </div>
-          <div className="ttahub-recipient-card__recipient-column__break" />
+        <div>
+          <Checkbox
+            id={`recipient-select-${recipient.name}`}
+            label=""
+            value={recipient.id}
+            checked={isChecked}
+            onChange={handleGoalCheckboxSelect}
+            aria-label={`Select recipient ${recipient.name}`}
+            className="margin-right-1"
+            data-testid="selectRecipientTestId"
+          />
+        </div>
+        <div className="ttahub-recipient-card__row position-relative margin-left-5">
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <p className="usa-prose margin-y-0">
@@ -81,17 +80,18 @@ function RecipientCard({
             <p className="usa-prose text-bold  margin-y-0">Report received date</p>
             <p className="usa-prose margin-y-0">{checkForDate(recipient.reportReceivedDate)}</p>
           </div>
+          <div className="ttahub-recipient-card__row margin-top-3">
+            <ExpanderButton
+              type="goal"
+              ariaLabel={`goals for recipient ${recipient.name}`}
+              closeOrOpen={closeOrOpenGoals}
+              count={recipient.goals.length}
+              expanded={goalsExpanded}
+            />
+          </div>
         </div>
 
-        <div className="margin-top-3">
-          <ExpanderButton
-            type="goal"
-            ariaLabel={`goals for recipient ${recipient.name}`}
-            closeOrOpen={closeOrOpenGoals}
-            count={recipient.goals.length}
-            expanded={goalsExpanded}
-          />
-        </div>
+        <div className="margin-left-4 margin-top-3" />
 
         {recipient.goals.map((goal) => (
           <GoalCard
