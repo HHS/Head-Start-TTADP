@@ -581,6 +581,91 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('USER 2')).toBeInTheDocument();
   });
 
+  it('displays the is ist visit field and the appropriate participants', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        isIstVisit: 'yes',
+        regionalOfficeTta: ['Ist Office 1', 'Ist Office 2'],
+      },
+    },
+    {
+      ...e.sessionReports[1],
+      data: {
+        ...e.sessionReports[1].data,
+        isIstVisit: 'no',
+        recipients: [{ label: 'Recipient 1' }, { label: 'Recipient 2' }],
+        participants: ['Participants 1', 'Participants 2'],
+      },
+    }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+
+    expect(screen.queryAllByText('IST visit').length).toBe(2);
+    expect(await screen.findByText('Regional Office/TTA')).toBeInTheDocument();
+    expect(await screen.findByText('Yes')).toBeInTheDocument();
+    expect(await screen.findByText(/ist office 1, ist office 2/i)).toBeInTheDocument();
+
+    expect(await screen.findByText('Recipient participants')).toBeInTheDocument();
+    expect(await screen.findByText('No')).toBeInTheDocument();
+    expect(await screen.findByText(/Recipient 1, Recipient 2/i)).toBeInTheDocument();
+
+    expect(await screen.findByText('Recipient participants')).toBeInTheDocument();
+    expect(await screen.findByText(/Participants 1, Participants 2/i)).toBeInTheDocument();
+  });
+
+  it('displays the delivery method field and the appropriate participants attending', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        deliveryMethod: 'in-person',
+        numberOfParticipants: 10,
+      },
+    },
+    {
+      ...e.sessionReports[1],
+      data: {
+        ...e.sessionReports[1].data,
+        deliveryMethod: 'hybrid',
+        numberOfParticipantsInPerson: 11,
+        numberOfParticipantsVirtually: 12,
+      },
+    }];
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+
+    expect(screen.queryAllByText('Delivery method').length).toBe(2);
+    expect(await screen.findByText('In-person')).toBeInTheDocument();
+    expect(await screen.findByText('Number of participants')).toBeInTheDocument();
+    expect(await screen.findByText('10')).toBeInTheDocument();
+
+    expect(await screen.findByText('Hybrid')).toBeInTheDocument();
+    expect(await screen.findByText('Number of participants attending in person')).toBeInTheDocument();
+    expect(await screen.findByText('11')).toBeInTheDocument();
+    expect(await screen.findByText('Number of participants attending virtually')).toBeInTheDocument();
+    expect(await screen.findByText('12')).toBeInTheDocument();
+  });
+
   describe('formatOwnerName', () => {
     test('handles an error', () => {
       const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });

@@ -214,14 +214,41 @@ export default function ViewTrainingReport({ match }) {
       'Training type': event.data['Event Duration/# NC Days of Support'],
       Reasons: event.data.reasons,
       'Target populations': event.data.targetPopulations,
-    },
-    striped: true,
-  }, {
-    heading: 'Vision',
-    data: {
       Vision: event.data.vision,
     },
+    striped: true,
   }] : [];
+  // console.log('sessions: ', event.sessionReports);
+
+  const generateIstOfficeOrRecipientProperties = (session) => {
+    if (session.data.isIstVisit === 'yes') {
+      return {
+        'Regional Office/TTA': session.data.regionalOfficeTta.join(', '),
+      };
+    }
+
+    return {
+      Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
+      'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+    };
+  };
+
+  const generateNumberOfParticipants = (session) => {
+    // In person or virtual.
+    if (session.data.deliveryMethod === 'in-person' || session.data.deliveryMethod === 'virtual') {
+      const numberOfParticipants = session.data.numberOfParticipants ? session.data.numberOfParticipants.toString() : '';
+      return {
+        'Number of participants': numberOfParticipants,
+      };
+    }
+    // Hybrid.
+    const numberOfParticipantsInPerson = session.data.numberOfParticipantsInPerson ? session.data.numberOfParticipantsInPerson.toString() : '';
+    const numberOfParticipantsVirtually = session.data.numberOfParticipantsVirtually ? session.data.numberOfParticipantsVirtually.toString() : '';
+    return {
+      'Number of participants attending in person': numberOfParticipantsInPerson,
+      'Number of participants attending virtually': numberOfParticipantsVirtually,
+    };
+  };
 
   const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
     <ReadOnlyContent
@@ -253,16 +280,10 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Participants',
         striped: true,
         data: {
-          Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
-          'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
-          'Number of participants': String((
-            session.data.numberOfParticipants || 0
-          ) + (
-            session.data.numberOfParticipantsVirtually || 0
-          ) + (
-            session.data.numberOfParticipantsInPerson || 0
-          )),
+          'IST visit': session.data.isIstVisit ? capitalize(session.data.isIstVisit) : '',
+          ...generateIstOfficeOrRecipientProperties(session),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
+          ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],
           'TTA provided': session.data.ttaProvided,
         },
