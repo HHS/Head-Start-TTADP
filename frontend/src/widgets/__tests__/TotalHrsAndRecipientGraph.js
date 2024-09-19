@@ -8,7 +8,8 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import { TotalHrsAndRecipientGraph, LegendControl } from '../TotalHrsAndRecipientGraph';
+import LegendControl from '../LegendControl';
+import { TotalHrsAndRecipientGraph } from '../TotalHrsAndRecipientGraph';
 
 const TEST_DATA_MONTHS = [
   {

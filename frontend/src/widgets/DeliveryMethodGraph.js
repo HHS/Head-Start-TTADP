@@ -11,6 +11,7 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetSorting from '../hooks/useWidgetSorting';
 import useWidgetExport from '../hooks/useWidgetExport';
 import { EMPTY_ARRAY } from '../Constants';
+import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 
 // the following constants are to configure the table
 // we store them outside of the component to avoid
@@ -205,33 +206,13 @@ export default function DeliveryMethodGraph({ data }) {
     sortConfig,
   ]);
 
-  const menuItems = [{
-    label: showTabularData ? 'Display graph' : 'Display table',
-    onClick: () => setShowTabularData(!showTabularData),
-  }];
-
-  if (!showTabularData) {
-    menuItems.push({
-      label: 'Save screenshot',
-      onClick: capture,
-    });
-  }
-
-  if (showTabularData) {
-    menuItems.push({
-      label: 'Export table',
-      onClick: () => exportRows(),
-    });
-  }
-
-  const atLeastOneRowIsSelected = Object.values(checkboxes).some((v) => v);
-
-  if (showTabularData && atLeastOneRowIsSelected) {
-    menuItems.push({
-      label: 'Export selected rows',
-      onClick: () => exportRows('selected'),
-    });
-  }
+  const menuItems = useWidgetMenuItems(
+    showTabularData,
+    setShowTabularData,
+    capture,
+    checkboxes,
+    exportRows,
+  );
 
   return (
     <WidgetContainer
