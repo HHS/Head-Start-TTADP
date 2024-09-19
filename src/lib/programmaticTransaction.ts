@@ -9,21 +9,41 @@ interface MaxIdRecord {
 }
 
 // Fetch the maximum IDs from the audit tables
-const fetchMaxIds = async (): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(/* sql */ `
-  SELECT
-      cls.relname AS table_name,
-      COALESCE(seq_data.last_value, 0) AS max_id
-  FROM pg_class seq
-  JOIN pg_depend dep ON dep.objid = seq.oid
-  JOIN pg_class cls ON cls.oid = dep.refobjid
-  JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
-  JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
-  WHERE seq.relkind = 'S'
-  AND cls.relname LIKE 'ZAL%'
-  AND cls.relname != 'ZALDDL'
-  AND attr.attname = 'id'
-  AND seq_data.schemaname = 'public';
-`, { type: QueryTypes.SELECT });
+const fetchMaxIds = async (
+  includeDDL = false
+): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(
+  includeDDL
+  ? /* sql */ `
+    SELECT
+        cls.relname AS table_name,
+        COALESCE(seq_data.last_value, 0) AS max_id
+    FROM pg_class seq
+    JOIN pg_depend dep ON dep.objid = seq.oid
+    JOIN pg_class cls ON cls.oid = dep.refobjid
+    JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
+    JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
+    WHERE seq.relkind = 'S'
+    AND cls.relname LIKE 'ZAL%'
+    AND attr.attname = 'id'
+    AND seq_data.schemaname = 'public';
+  `
+  : /* sql */ `
+    SELECT
+        cls.relname AS table_name,
+        COALESCE(seq_data.last_value, 0) AS max_id
+    FROM pg_class seq
+    JOIN pg_depend dep ON dep.objid = seq.oid
+    JOIN pg_class cls ON cls.oid = dep.refobjid
+    JOIN pg_attribute attr ON attr.attrelid = dep.refobjid AND attr.attnum = dep.refobjsubid
+    JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
+    WHERE seq.relkind = 'S'
+    AND cls.relname LIKE 'ZAL%'
+    AND cls.relname != 'ZALDDL'
+    AND attr.attname = 'id'
+    AND seq_data.schemaname = 'public';
+  `,
+  { type: QueryTypes.SELECT }
+);
 
 interface ChangeRecord {
   source_table: string;
@@ -154,7 +174,7 @@ const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   }
 };
 
-const captureSnapshot = async (): Promise<MaxIdRecord[]> => fetchMaxIds();
+const captureSnapshot = async (includeDDL = false): Promise<MaxIdRecord[]> => fetchMaxIds(includeDDL);
 const rollbackToSnapshot = async (maxIds: MaxIdRecord[]): Promise<void> => revertAllChanges(maxIds);
 
 export {
