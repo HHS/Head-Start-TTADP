@@ -21,6 +21,7 @@ export default function ControlledDatePicker({
   isStartDate,
   inputId,
   endDate,
+  customValidationMessages,
   required,
 }) {
   /**
@@ -54,20 +55,25 @@ export default function ControlledDatePicker({
 
   const formattedValue = value ? moment(value, DATE_DISPLAY_FORMAT).format(DATEPICKER_VALUE_FORMAT) : '';
 
+  const {
+    beforeMessage,
+    afterMessage,
+    invalidMessage,
+  } = customValidationMessages;
+
   // this is our custom validation function we pass to the hook form controller
   function validate(v) {
     const newValue = moment(v, DATE_DISPLAY_FORMAT);
-
     if (!newValue.isValid()) {
-      return 'Enter valid date';
+      return invalidMessage || 'Enter valid date';
     }
 
     if (newValue.isBefore(min.moment)) {
-      return `Please enter a date after ${min.display}`;
+      return afterMessage || `Please enter a date after ${min.display}`;
     }
 
     if (newValue.isAfter(max.moment)) {
-      return `Please enter a date before ${max.display}`;
+      return beforeMessage || `Please enter a date before ${max.display}`;
     }
 
     return true;
@@ -135,6 +141,11 @@ ControlledDatePicker.propTypes = {
   inputId: PropTypes.string.isRequired,
   endDate: PropTypes.string,
   required: PropTypes.bool,
+  customValidationMessages: PropTypes.shape({
+    beforeMessage: PropTypes.string,
+    afterMessage: PropTypes.string,
+    invalidMessage: PropTypes.string,
+  }),
 };
 
 ControlledDatePicker.defaultProps = {
@@ -145,4 +156,9 @@ ControlledDatePicker.defaultProps = {
   setEndDate: () => {},
   required: true,
   value: '',
+  customValidationMessages: {
+    beforeMessage: '',
+    afterMessage: '',
+    invalidMessage: '',
+  },
 };
