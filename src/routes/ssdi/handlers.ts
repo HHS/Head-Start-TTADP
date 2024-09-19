@@ -72,7 +72,7 @@ const listQueries = async (req: Request, res: Response) => {
   // Trim the scriptPath and default to 'dataRequests' if it's not set or an empty string
   const scriptPath = (req.query.path as string || '').trim() || 'dataRequests';
 
-  const userId = await currentUserId(req, res);  
+  const userId = await currentUserId(req, res);
   const user = await userById(userId);
 
   // Check if the response has been sent (status or headers set) and return early
@@ -103,14 +103,20 @@ const listQueriesWithWildcard = (req: Request, res: Response) => {
 const getFilters = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   // Check if the response has been sent (status or headers set) and return early
-  if (await validateScriptPath(scriptPath, userId, res)) {
+  if (await validateScriptPath(scriptPath, user, res)) {
     return;
   }
 
   try {
-    const filters = await readFiltersFromFile(`./${scriptPath}`, userId);
+    // Extract the `options` query parameter and default it to `false` if not provided
+    const includeOptions = req.query.options === 'true';
+    
+    // Pass the `includeOptions` argument to the `readFiltersFromFile` function
+    const filters = await readFiltersFromFile(`./${scriptPath}`, userId, includeOptions);
+    
     res.json(filters);
   } catch (error) {
     res.status(500).send('Error reading filters');
@@ -132,9 +138,10 @@ const runQuery = async (req: Request, res: Response) => {
   const scriptPath = req.query.path as string;
   const outputFormat = (req.query.format as string) || 'json';
   const userId = await currentUserId(req, res);
+  const user = await userById(userId);
 
   // Check if the response has been sent (status or headers set) and return early
-  if (await validateScriptPath(scriptPath, userId, res)) {
+  if (await validateScriptPath(scriptPath, user, res)) {
     return;
   }
 
@@ -148,7 +155,6 @@ const runQuery = async (req: Request, res: Response) => {
       ['path', 'format'],
     );
 
-    const user = await userById(userId);
     const policy = new Generic(user);
 
     // Handle regionIds with policy filtering
