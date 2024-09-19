@@ -15,7 +15,8 @@ export default class Generic {
   user: User;
 
   constructor(user: User) {
-    this.user = user;
+    // Convert Sequelize model instance to plain object
+    this.user = user.get({ plain: true });
   }
 
   canAccessRegion(region: number): boolean {
@@ -49,9 +50,9 @@ export default class Generic {
 
   hasFeatureFlag(flag: string): boolean {
     // Check if the user has ADMIN permissions which grants all flags
-    const hasAdminPermission = this.user.permissions.some(
+    const hasAdminPermission = this.user?.permissions?.some(
       (permission) => permission.scopeId === SCOPES.ADMIN,
-    );
+    ) || false;
 
     if (hasAdminPermission) {
       return true;
