@@ -1,7 +1,7 @@
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
-import { z } from 'zod';
+// import { z } from 'zod'; // TODO: use for validation of JSON header
 import db from '../models';
 import Generic from '../policies/generic';
 import { auditLogger } from '../logger';
@@ -137,13 +137,8 @@ interface CachedFilters {
   supportsPagination: boolean;
 }
 
-
-// // Generate Zod schemas
-// const HeaderFilterSchema = zodToSchema<HeaderFilter>();
-// const HeaderStructureSchema = zodToSchema<HeaderStructure>();
-
 // Base directory for file operations
-const BASE_DIRECTORY = path.resolve(process.cwd(), '/src/queries/');
+const BASE_DIRECTORY = path.resolve(process.cwd(), '/app/src/queries/');
 
 // Cache to store parsed JSON headers and queries
 const cache: Map<string, CachedFile> = new Map();
@@ -191,16 +186,14 @@ const isFile = async (filePath: string): Promise<boolean> => {
 };
 
 // Basic JSON validation function
-// TODO: make this more verbose validation
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// TODO: use zod for full validation
 const isValidJsonHeader = (json: unknown): boolean => {
-  // try {
-  //   HeaderStructureSchema.parse(json); // Validate JSON
-  //   return true;
-  // } catch (e) {
-  //   auditLogger.error(e.errors); // Handle validation errors
-  //   return false;
-  // }
+  // Simple structure validation
+  return (
+    json &&
+    typeof (json as HeaderStructure).name === 'string' &&
+    Array.isArray((json as HeaderStructure).filters)
+  );
 };
 
 // Modify the readJsonHeaderFromFile function to update the cache structure
@@ -226,7 +219,6 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
       const jsonHeader = JSON.parse(jsonMatch[1].trim());
 
       // Simple validation of the JSON header
-      // TODO: Perform a more complex and complete validation
       if (!isValidJsonHeader(jsonHeader)) {
         auditLogger.error('Invalid JSON structure');
         return null;
@@ -282,11 +274,25 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
   return files.flat();
 };
 
+// Function to check if the directory exists using fsPromises
+const checkDirectoryExists = async (directory: string): Promise<boolean> => {
+  try {
+    await fsPromises.access(directory);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};
+
 // Function to list all query files in a directory
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]> => {
   try {
     const safeDirectory = safeResolvePath(directory);
+    await checkDirectoryExists(process.cwd());
+    if (!await checkDirectoryExists(safeDirectory)) {
+      throw new Error(`Directory ${safeDirectory} does not exist.`);
+    }
     const files = await readFilesRecursively(safeDirectory); // Use recursive lookup
 
     const queryFiles = await Promise.all(
@@ -308,14 +314,19 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
     );
 
     // Filter out null results
-    return queryFiles.filter((queryFile): queryFile is QueryFile => queryFile !== null);
+    return queryFiles
+      .filter((queryFile): queryFile is QueryFile => queryFile !== null)
+      .map((queryFile) => ({
+        ...queryFile,
+        filePath: queryFile.filePath.replace(BASE_DIRECTORY, ''),
+      }));
   } catch (error) {
     auditLogger.error(`Error reading files from directory ${directory}: ${error.message}`);
     return [];
   }
 };
 
-/// Modularized filter options application
+// Modularized filter options application
 const applyFilterOptions = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filter: any,
@@ -323,7 +334,6 @@ const applyFilterOptions = async (
 ): Promise<string[] | number[] | boolean[] | Record<string, any>[]> => {
   // If the filter has a query, run it and store the results in options
   if (filter?.options?.query) {
-    await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
     const results = await db.sequelize.query(
       filter.options.query.sqlQuery,
       { type: QueryTypes.SELECT },
@@ -346,17 +356,17 @@ const generateConditions = (filter: HeaderFilter): string[] => {
   const { type, supportsFuzzyMatch, supportsExclusion } = filter;
   const conditions: string[] = [];
 
-  if (type === 'string[]') {
+  if (type === FilterType.StringArray) {
     conditions.push(supportsFuzzyMatch ? 'ctn' : 'in');
     if (supportsExclusion) {
       conditions.push(supportsFuzzyMatch ? 'nctn' : 'nin');
     }
-  } else if (type === 'date[]') {
+  } else if (type === FilterType.DateArray) {
     conditions.push('aft', 'win', 'in');
     if (supportsExclusion) {
       conditions.push('bef');
     }
-  } else if (type === 'integer[]') {
+  } else if (type === FilterType.IntegerArray) {
     conditions.push('in');
     if (supportsExclusion) {
       conditions.push('nin');
@@ -497,8 +507,12 @@ const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number
       id: 'dataSetSelection',
       type: FilterType.StringArray,
       description: 'Select which datasets to include in the result',
-      options: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
-      defaultValues: cachedFile.jsonHeader.output.multipleDataSets.map((dataSet) => dataSet.name),
+      options: cachedFile.jsonHeader.output.multipleDataSets
+        .map((dataSet) => dataSet.name)
+        .filter((name) => name != 'process_log'),
+      defaultValues: cachedFile.jsonHeader.output.multipleDataSets
+        .map((dataSet) => dataSet.name)
+        .filter((name) => name != 'process_log'),
     };
   }
 
@@ -585,45 +599,49 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
     result[newKey] = newValue;
   });
 
+  // Apply default values for filters that were not provided in the input
+  Object.keys(filters).forEach((filterKey) => {
+    if (!result[filterKey] && filters[filterKey]?.defaultValues) {
+      result[filterKey] = filters[filterKey].defaultValues;
+    }
+  });
+
   return { result, errors };
 };
 
 // Helper function to set filters in the database
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const setFilters = async (filterValues: FilterValues): Promise<any[]> => {
-  await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
-  return Promise.all(
-    Object.entries(filterValues).map(async ([key, value]) => {
-      if (key.endsWith('.not')) {
-        const baseKey = key.slice(0, -4);
+const setFilters = async (filterValues: FilterValues): Promise<any[]> => Promise.all(
+  Object.entries(filterValues).map(async ([key, value]) => {
+    if (key.endsWith('.not')) {
+      const baseKey = key.slice(0, -4);
 
-        return Promise.all([
-          db.sequelize.query(
-            'SELECT set_config($1, $2, false)',
-            {
-              bind: [`ssdi.${baseKey}`, JSON.stringify(value)],
-              type: db.sequelize.QueryTypes.SELECT,
-            },
-          ),
-          db.sequelize.query(
-            'SELECT set_config($1, $2, false)',
-            {
-              bind: [`ssdi.${key}`, JSON.stringify(true)],
-              type: db.sequelize.QueryTypes.SELECT,
-            },
-          ),
-        ]);
-      }
-      return db.sequelize.query(
-        'SELECT set_config($1, $2, false)',
-        {
-          bind: [`ssdi.${key}`, JSON.stringify(value)],
-          type: db.sequelize.QueryTypes.SELECT,
-        },
-      );
-    }),
-  );
-};
+      return Promise.all([
+        db.sequelize.query(
+          'SELECT set_config($1, $2, false)',
+          {
+            bind: [`ssdi.${baseKey}`, JSON.stringify(value)],
+            type: db.sequelize.QueryTypes.SELECT,
+          },
+        ),
+        db.sequelize.query(
+          'SELECT set_config($1, $2, false)',
+          {
+            bind: [`ssdi.${key}`, JSON.stringify(true)],
+            type: db.sequelize.QueryTypes.SELECT,
+          },
+        ),
+      ]);
+    }
+    return db.sequelize.query(
+      'SELECT set_config($1, $2, false)',
+      {
+        bind: [`ssdi.${key}`, JSON.stringify(value)],
+        type: db.sequelize.QueryTypes.SELECT,
+      },
+    );
+  }),
+);
 
 // Helper function to generate a string representation of the filter values
 const generateFilterString = (filterValues: FilterValues): string => Object.entries(filterValues)
@@ -655,7 +673,6 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 
   try {
-    await db.sequelize.query('SET TRANSACTION READ ONLY;', { type: QueryTypes.RAW });
     const result = await db.sequelize.query(query, { type: QueryTypes.SELECT });
     return result;
   } catch (error) {
