@@ -295,7 +295,15 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
     expect(sequelize.models.Goal.update).toHaveBeenCalledWith(
       { onAR: true, onApprovedAR: false }, // onApprovedAR is false since no approved reports
       {
-        where: { id: instance.goalId },
+        where: {
+          id: instance.goalId,
+          [Op.or]: [
+            // Ensure onAR condition is in the where clause
+            { onAR: { [Op.ne]: true } },
+            // Ensure onApprovedAR condition is in the where clause
+            { onApprovedAR: { [Op.ne]: false } },
+          ],
+        },
         individualHooks: true,
       },
     );
