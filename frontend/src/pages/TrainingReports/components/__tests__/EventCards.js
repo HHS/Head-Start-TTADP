@@ -270,7 +270,7 @@ describe('EventCards', () => {
     button.click(button);
   });
 
-  it('collaborators cannot create training', () => {
+  it('collaborators cannot edit training', () => {
     const collaboratorEvents = [{
       id: 1,
       ownerId: 3,
@@ -314,7 +314,7 @@ describe('EventCards', () => {
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
     expect(screen.queryByText(/create session/i)).toBeInTheDocument();
-    expect(screen.queryByText(/edit event/i)).toBeInTheDocument();
+    expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view event/i)).toBeInTheDocument();
     button.click(button);
   });

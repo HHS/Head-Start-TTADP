@@ -9,7 +9,6 @@ import Drawer from '../Drawer';
 import Req from '../Req';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
 import DrawerTriggerButton from '../DrawerTriggerButton';
-import './ObjectiveTopics.scss';
 
 export default function ObjectiveTopics({
   error,
