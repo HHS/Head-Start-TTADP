@@ -1,3 +1,4 @@
+const { Op } = require('sequelize'); // Import Sequelize operators
 const { REPORT_STATUSES } = require('@ttahub/common');
 const {
   destroyLinkedSimilarityGroups,
