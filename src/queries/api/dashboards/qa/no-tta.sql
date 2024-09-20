@@ -432,7 +432,8 @@ WITH active_filters_array AS (
 ),
 
 no_tta AS (
-    SELECT DISTINCT r.id, COUNT(DISTINCT a.id) != 0 has_tta
+    SELECT DISTINCT r.id, 
+        COUNT(DISTINCT a.id) != 0 OR COUNT(DISTINCT srp.id) != 0 AS has_tta
     FROM "Recipients" r
     JOIN "Grants" gr ON r.id = gr."recipientId"
     JOIN filtered_grants fgr ON gr.id = fgr.id
@@ -441,6 +442,13 @@ no_tta AS (
     LEFT JOIN "ActivityReports" a ON far.id = a.id
     AND a."calculatedStatus" = 'approved'
     AND a."startDate"::date > now() - INTERVAL '90 days'
+    LEFT JOIN "SessionReportPilots" srp ON EXISTS (
+        SELECT 1 
+        FROM jsonb_array_elements(srp.data -> 'recipients') AS elem
+        WHERE (elem ->> 'value')::int = r.id
+    )
+    AND srp.data ->> 'status' = 'Complete'
+    AND (srp.data ->> 'endDate')::DATE > now() - INTERVAL '90 days'
     WHERE gr.status = 'Active'
     GROUP BY 1
 ),
@@ -453,8 +461,8 @@ no_tta_widget AS (
 ),
 no_tta_page AS (
     SELECT r.id, r.name,
-      (array_agg(a."startDate" ORDER BY a."startDate" DESC))[1] last_tta,
-      now()::date - ((array_agg(a."startDate" ORDER BY a."startDate" DESC))[1])::date days_since_last_tta
+      (array_agg(a."endDate" ORDER BY a."endDate" DESC))[1] last_tta,
+      now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
     AND NOT nt.has_tta
@@ -490,4 +498,13 @@ datasets AS (
     ))
     FROM process_log
 )
-SELECT * FROM datasets;
+SELECT *
+FROM datasets
+-- Filter for datasets if ssdi.dataSetSelection is defined
+WHERE 1 = 1
+AND (
+  NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+  OR (
+    COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
+  )
+);

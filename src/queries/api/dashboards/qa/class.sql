@@ -843,4 +843,12 @@ WITH
   )
   
 SELECT *
-FROM datasets;
+FROM datasets
+-- Filter for datasets if ssdi.dataSetSelection is defined
+WHERE 1 = 1
+AND (
+  NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+  OR (
+    COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
+  )
+);
