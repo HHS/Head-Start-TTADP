@@ -23,9 +23,11 @@ const WidgetContainerTitleGroup = ({
   titleDrawerText,
   titleDrawerTitle,
   titleDrawerTag,
+  titleDrawerCss,
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
   subtitleDrawerTag,
+  subtitleDrawerCss,
 }) => {
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
@@ -66,7 +68,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerTag} />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} className={titleDrawerCss} />
                   </Drawer>
                 </>
                 )
@@ -89,7 +91,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerTag} />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} className={subtitleDrawerCss} />
               </Drawer>
             </div>
           )}
@@ -131,9 +133,11 @@ WidgetContainerTitleGroup.propTypes = {
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
   titleDrawerTag: PropTypes.string,
+  titleDrawerCss: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerTag: PropTypes.string,
+  subtitleDrawerCss: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -151,9 +155,11 @@ WidgetContainerTitleGroup.defaultProps = {
   titleDrawerText: '',
   titleDrawerTitle: '',
   titleDrawerTag: '',
+  titleDrawerCss: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: null,
   subtitleDrawerTag: '',
+  subtitleDrawerCss: '',
 };
 
 export default WidgetContainerTitleGroup;
