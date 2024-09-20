@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {
@@ -179,11 +180,11 @@ const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
       {
         where: {
           id: goalId,
-          [sequelize.Op.or]: [
+          [Op.or]: [
             // Update if onAR is not already true
-            { onAR: { [sequelize.Op.ne]: true } },
+            { onAR: { [Op.ne]: true } },
             // Update if onApprovedAR differs
-            { onApprovedAR: { [sequelize.Op.ne]: onApprovedAR } },
+            { onApprovedAR: { [Op.ne]: onApprovedAR } },
           ],
         },
         individualHooks: true, // Ensure individual hooks are triggered
