@@ -47,6 +47,7 @@ export function TotalHrsAndRecipientGraph({ data, hideYAxis }) {
     menuItems.push({
       label: 'Save screenshot',
       onClick: capture,
+      id: 'rd-save-screenshot',
     });
   }
 
