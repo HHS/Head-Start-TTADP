@@ -21,7 +21,7 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
   }
 
   // Filter the keys of the `db` object for tables that start with 'ZAL'
-  const zalTables = Object.keys(db).filter(key => key.startsWith('ZAL'));
+  const zalTables = Object.keys(db).filter((key) => key.startsWith('ZAL'));
 
   if (zalTables.length === 0) {
     return false;
@@ -44,7 +44,7 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
   };
 
   // Create an array of promises for each table
-  const queryPromises = zalTables.map(table => {
+  const queryPromises = zalTables.map((table) => {
     const tableName = db[table].getTableName();
     const snapShotEntry = snapShot.find((entry) => entry.tableName === tableName);
 
