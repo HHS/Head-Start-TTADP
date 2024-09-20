@@ -1083,21 +1083,40 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
-  delivery_method_graph AS (
+  delivery_method_graph_values AS (
     SELECT
-      DATE_TRUNC('month', "startDate")::DATE AS month,
-      COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) AS in_person_count,
-      COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) AS virtual_count,
-      COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) AS hybrid_count,
-      ((COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / COUNT(*))::decimal(5,2) AS in_person_percentage,
-      ((COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / COUNT(*))::decimal(5,2) AS virtual_percentage,
-      ((COUNT(*) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / COUNT(*))::decimal(5,2) AS hybrid_percentage
+      DATE_TRUNC('month', "startDate")::DATE::TEXT AS month,
+      COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) AS in_person_count,
+      COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) AS virtual_count,
+      COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) AS hybrid_count,
+      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS in_person_percentage,
+      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS virtual_percentage,
+      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS hybrid_percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
     WHERE a."calculatedStatus" = 'approved'
+    AND a."startDate" IS NOT NULL
     GROUP BY DATE_TRUNC('month', "startDate")
     ORDER BY 1
+  ),
+  delivery_method_graph_totals AS (
+    SELECT
+      'Total' AS month,
+      SUM(in_person_count) in_person_count,
+      SUM(virtual_count) virtual_count,
+      SUM(hybrid_count) hybrid_count,
+      ((SUM(in_person_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS in_person_percentage,
+      ((SUM(virtual_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS virtual_percentage,
+      ((SUM(hybrid_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS hybrid_percentage
+    FROM delivery_method_graph_values
+  ),
+  delivery_method_graph AS (
+    SELECT *
+    FROM delivery_method_graph_values
+    UNION ALL 
+    SELECT *
+    FROM delivery_method_graph_totals
   ),
   role_graph AS (
     SELECT
@@ -1149,4 +1168,12 @@ WITH
     FROM process_log
   )
   SELECT *
-  FROM datasets;
+  FROM datasets
+-- Filter for datasets if ssdi.dataSetSelection is defined
+WHERE 1 = 1
+AND (
+  NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+  OR (
+    COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> to_jsonb("data_set")::jsonb
+  )
+);
