@@ -113,6 +113,7 @@ describe('ssdi', () => {
     });
 
     it('should read and cache a new file if modification time has changed', async () => {
+      // eslint-disable-next-line typescript-eslint/quotes
       const mockFileContent = `JSON: { "name": "test" } */ SELECT * FROM test;`;
       const mockStat = { mtime: new Date() };
 
