@@ -160,7 +160,7 @@ const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
     && changed.includes('originalGoalId')
     && changed.includes('goalId')
     && instance.originalGoalId !== null) {
-    const {goalId} = instance;
+    const { goalId } = instance;
 
     // Check if the ActivityReport linked to this ActivityReportGoal has a
     // calculatedStatus of 'approved'

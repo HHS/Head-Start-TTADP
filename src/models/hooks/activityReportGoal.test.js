@@ -369,5 +369,5 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
         individualHooks: true,
       },
     );
-  }); 
+  });
 });
