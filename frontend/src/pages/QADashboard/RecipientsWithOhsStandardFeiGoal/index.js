@@ -91,7 +91,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         stickyFooter
         title="QA dashboard filters"
       >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+        <ContentFromFeedByTag tagName="ttahub-qa-dash-fei-filters" />
       </Drawer>
       <RecipientsWithOhsStandardFeiGoalWidget
         data={{
