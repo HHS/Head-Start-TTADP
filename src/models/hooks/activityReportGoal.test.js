@@ -256,11 +256,11 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
       {
         where: {
           id: instance.goalId,
-          [sequelize.Op.or]: [
+          [Op.or]: [
             // Ensure onAR condition is in the where clause
-            { onAR: { [sequelize.Op.ne]: true } },
+            { onAR: { [Op.ne]: true } },
             // Ensure onApprovedAR condition is in the where clause
-            { onApprovedAR: { [sequelize.Op.ne]: true } },
+            { onApprovedAR: { [Op.ne]: true } },
           ],
         },
         individualHooks: true,
@@ -362,9 +362,9 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
       {
         where: {
           id: instance.goalId,
-          [sequelize.Op.or]: [
-            { onAR: { [sequelize.Op.ne]: true } }, // Check if onAR is already true
-            { onApprovedAR: { [sequelize.Op.ne]: true } }, // Check if onApprovedAR is already true
+          [Op.or]: [
+            { onAR: { [Op.ne]: true } }, // Check if onAR is already true
+            { onApprovedAR: { [Op.ne]: true } }, // Check if onApprovedAR is already true
           ],
         },
         individualHooks: true,
