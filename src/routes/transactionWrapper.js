@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import httpContext from 'express-http-context';
 import db, { sequelize } from '../models';
 import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
@@ -30,7 +31,7 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
     let condition = {
       id: { [Op.gt]: maxId },
       dml_txid: transactionId,
-    };  // Default condition for ZAL tables
+    }; // Default condition for ZAL tables
 
     if (table === 'ZALDDL') {
       condition = {
