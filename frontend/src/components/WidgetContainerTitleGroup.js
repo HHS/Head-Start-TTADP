@@ -66,7 +66,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} />
                   </Drawer>
                 </>
                 )
@@ -89,7 +89,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} />
               </Drawer>
             </div>
           )}
