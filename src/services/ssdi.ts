@@ -174,7 +174,8 @@ const safeResolvePath = (inputPath: string): string => {
  */
 const isFile = async (filePath: string): Promise<boolean> => {
   try {
-    const resolvedPath = safeResolvePath(filePath); // Use safeResolvePath to ensure secure path resolution
+    // Use safeResolvePath to ensure secure path resolution
+    const resolvedPath = safeResolvePath(filePath);
     const stats = await fsPromises.stat(resolvedPath);
 
     // Check if the path points to a file
@@ -187,14 +188,11 @@ const isFile = async (filePath: string): Promise<boolean> => {
 
 // Basic JSON validation function
 // TODO: use zod for full validation
-const isValidJsonHeader = (json: unknown): boolean => {
-  // Simple structure validation
-  return (
-    json &&
-    typeof (json as HeaderStructure).name === 'string' &&
-    Array.isArray((json as HeaderStructure).filters)
-  );
-};
+const isValidJsonHeader = (json: unknown): boolean => (
+  json
+  && typeof (json as HeaderStructure).name === 'string'
+  && Array.isArray((json as HeaderStructure).filters)
+);
 
 // Modify the readJsonHeaderFromFile function to update the cache structure
 const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | null> => {
@@ -509,10 +507,10 @@ const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number
       description: 'Select which datasets to include in the result',
       options: cachedFile.jsonHeader.output.multipleDataSets
         .map((dataSet) => dataSet.name)
-        .filter((name) => name != 'process_log'),
+        .filter((name) => name !== 'process_log'),
       defaultValues: cachedFile.jsonHeader.output.multipleDataSets
         .map((dataSet) => dataSet.name)
-        .filter((name) => name != 'process_log'),
+        .filter((name) => name !== 'process_log'),
     };
   }
 

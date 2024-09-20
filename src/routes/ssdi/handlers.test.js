@@ -3,7 +3,6 @@ import express from 'express';
 import {
   listQueryFiles,
   readFiltersFromFile,
-  validateFlagValues, // Change this if needed to your new validation logic
   setFilters,
   sanitizeFilename,
   generateFilterString,
@@ -17,7 +16,6 @@ import Generic from '../../policies/generic';
 jest.mock('../../../services/ssdi', () => ({
   listQueryFiles: jest.fn(),
   readFiltersFromFile: jest.fn(),
-  validateFlagValues: jest.fn(),
   setFilters: jest.fn(),
   sanitizeFilename: jest.fn(),
   generateFilterString: jest.fn(),
@@ -111,7 +109,6 @@ describe('API Endpoints', () => {
         query: 'SELECT * FROM test',
         defaultOutputName: 'test_output',
       });
-      validateFlagValues.mockImplementation(() => {}); // Change to your filter validation if required
       setFilters.mockResolvedValue([]);
       executeQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
       sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');

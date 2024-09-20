@@ -34,28 +34,28 @@ const validateScriptPath = async (
     res.status(400).json({ error: 'Invalid script path: Path traversal detected' });
     return true;
   }
-  
+
   // Ensure the scriptPath starts with either "dataRequests" or "api"
   if (!(scriptPath.startsWith('dataRequests') || scriptPath.startsWith('api'))) {
     res.status(400).json({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     return true;
   }
-  
+
   // Check folder permissions based on the internal path and user
   const hasAccess = await checkFolderPermissions(user, scriptPath);
   if (!hasAccess) {
     res.status(403).json({ error: 'Access forbidden: You do not have permission to run this query' });
     return true;
   }
-  
+
   if (!skipFileCheck) {
-    const fileExists = await isFile(scriptPath); 
+    const fileExists = await isFile(scriptPath);
     if (!fileExists) {
       res.status(400).json({ error: 'Invalid script path: No file matches the path specified' });
       return true;
     }
   }
-  
+
   return res.headersSent; // Return whether headers have been sent to prevent further processing
 };
 
@@ -113,10 +113,10 @@ const getFilters = async (req: Request, res: Response) => {
   try {
     // Extract the `options` query parameter and default it to `false` if not provided
     const includeOptions = req.query.options === 'true';
-    
+
     // Pass the `includeOptions` argument to the `readFiltersFromFile` function
     const filters = await readFiltersFromFile(`./${scriptPath}`, userId, includeOptions);
-    
+
     res.json(filters);
   } catch (error) {
     res.status(500).send('Error reading filters');

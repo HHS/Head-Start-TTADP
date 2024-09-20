@@ -45,17 +45,17 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
   // Create an array of promises for each table
   const queryPromises = zalTables.map(table => {
     const tableName = db[table].getTableName();
-    const snapShotEntry = snapShot.find(entry => entry.tableName === tableName);
+    const snapShotEntry = snapShot.find((entry) => entry.tableName === tableName);
 
     if (!snapShotEntry) {
       throw new Error(`Snapshot entry not found for table: ${tableName}`);
     }
 
     const condition = buildCondition(table, snapShotEntry.maxId);
-    
+
     return db[table].findOne({
       where: condition,
-      attributes: ['id'],  // Only return the `id` column
+      attributes: ['id'], // Only return the `id` column
     });
   });
 
@@ -63,10 +63,8 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
   const results = await Promise.all(queryPromises);
 
   // Check if any of the results returned a non-null value
-  return results.some(result => result !== null);
+  return results.some((result) => result !== null);
 }
-
-
 
 export default function transactionWrapper(originalFunction, context = '', isReadOnly = false) {
   return async function wrapper(req, res, next) {
