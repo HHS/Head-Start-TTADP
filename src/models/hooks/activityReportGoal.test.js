@@ -232,38 +232,40 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
       activityReportId: 1,
       changed: () => ['originalGoalId', 'goalId'], // Simulate that both columns have changed
     };
-  
+
     const options = {
       transaction: 'mockTransaction',
     };
-  
+
     // Mock the necessary Sequelize methods
-    sequelize.models.ActivityReport.count.mockResolvedValue(1); // Simulate approved ActivityReport exists
-  
+    // Simulate approved ActivityReport exists
+    sequelize.models.ActivityReport.count.mockResolvedValue(1);
+
     await updateOnARAndOnApprovedARForMergedGoals(sequelize, instance, options);
-  
+
     expect(sequelize.models.ActivityReport.count).toHaveBeenCalledWith({
       where: {
         calculatedStatus: 'approved',
         id: instance.activityReportId,
       },
     });
-  
+
     expect(sequelize.models.Goal.update).toHaveBeenCalledWith(
       { onAR: true, onApprovedAR: true },
       {
         where: {
           id: instance.goalId,
           [sequelize.Op.or]: [
-            { onAR: { [sequelize.Op.ne]: true } },  // Ensure onAR condition is in the where clause
-            { onApprovedAR: { [sequelize.Op.ne]: true } },  // Ensure onApprovedAR condition is in the where clause
+            // Ensure onAR condition is in the where clause
+            { onAR: { [sequelize.Op.ne]: true } },
+            // Ensure onApprovedAR condition is in the where clause
+            { onApprovedAR: { [sequelize.Op.ne]: true } },
           ],
         },
         individualHooks: true,
-      }
+      },
     );
   });
-  
 
   it('should update onAR and onApprovedAR with false when there are no approved activity reports', async () => {
     const instance = {
@@ -294,7 +296,7 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
       {
         where: { id: instance.goalId },
         individualHooks: true,
-      }
+      },
     );
   });
 
@@ -341,17 +343,19 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
       activityReportId: 1,
       changed: () => ['originalGoalId', 'goalId'], // Simulate that both columns have changed
     };
-  
+
     const options = {
       transaction: 'mockTransaction',
     };
-  
+
     // Mock the necessary Sequelize methods
-    sequelize.models.ActivityReport.count.mockResolvedValue(1); // Simulate approved ActivityReport exists
-    sequelize.models.Goal.update.mockResolvedValue(0); // Simulate that the update doesn't happen
-  
+    // Simulate approved ActivityReport exists
+    sequelize.models.ActivityReport.count.mockResolvedValue(1);
+    // Simulate that the update doesn't happen
+    sequelize.models.Goal.update.mockResolvedValue(0);
+
     await updateOnARAndOnApprovedARForMergedGoals(sequelize, instance, options);
-  
+
     expect(sequelize.models.Goal.update).toHaveBeenCalledWith(
       { onAR: true, onApprovedAR: true },
       {
@@ -363,8 +367,7 @@ describe('updateOnARAndOnApprovedARForMergedGoals', () => {
           ],
         },
         individualHooks: true,
-      }
+      },
     );
-  });
-  
+  }); 
 });

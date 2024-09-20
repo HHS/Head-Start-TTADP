@@ -160,13 +160,14 @@ const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
     && changed.includes('originalGoalId')
     && changed.includes('goalId')
     && instance.originalGoalId !== null) {
-    const goalId = instance.goalId;
+    const {goalId} = instance;
 
-    // Check if the ActivityReport linked to this ActivityReportGoal has a calculatedStatus of 'approved'
+    // Check if the ActivityReport linked to this ActivityReportGoal has a
+    // calculatedStatus of 'approved'
     const approvedActivityReports = await sequelize.models.ActivityReport.count({
       where: {
         calculatedStatus: 'approved',
-        id: instance.activityReportId,  // Use the activityReportId from the instance
+        id: instance.activityReportId, // Use the activityReportId from the instance
       },
     });
 
@@ -179,16 +180,17 @@ const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
         where: {
           id: goalId,
           [sequelize.Op.or]: [
-            { onAR: { [sequelize.Op.ne]: true } },  // Update if onAR is not already true
-            { onApprovedAR: { [sequelize.Op.ne]: onApprovedAR } },  // Update if onApprovedAR differs
+            // Update if onAR is not already true
+            { onAR: { [sequelize.Op.ne]: true } },
+            // Update if onApprovedAR differs
+            { onApprovedAR: { [sequelize.Op.ne]: onApprovedAR } },
           ],
         },
-        individualHooks: true,  // Ensure individual hooks are triggered
-      }
+        individualHooks: true, // Ensure individual hooks are triggered
+      },
     );
   }
 };
-
 
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
@@ -214,7 +216,7 @@ const afterDestroy = async (sequelize, instance, options) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
-  await destroyLinkedSimilarityGroups(sequelize, instance, options); 
+  await destroyLinkedSimilarityGroups(sequelize, instance, options);
   await updateOnARAndOnApprovedARForMergedGoals(sequelize, instance);
 };
 
