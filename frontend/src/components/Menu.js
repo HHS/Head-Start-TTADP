@@ -152,7 +152,7 @@ function Menu({
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">
-              <Button type="button" onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
+              <Button type="button" id={item.id || ''} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
                 <div className="padding-2 padding-right-3">
                   {item.label}
                 </div>
@@ -171,6 +171,7 @@ Menu.propTypes = {
   menuItems: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
     onClick: PropTypes.func,
+    id: PropTypes.string,
   })).isRequired,
   backgroundColor: PropTypes.string,
   buttonTestId: PropTypes.string,
