@@ -100,7 +100,7 @@ export default function GoalForm({
   useDeepCompareEffect(() => {
     const newPrompts = grantsToMultiValue(selectedGrants, { ...prompts });
     if ((!isEqual(newPrompts, prompts))) {
-      setSource(newPrompts);
+      setPrompts(newPrompts);
     }
   }, [prompts, selectedGrants]);
 
