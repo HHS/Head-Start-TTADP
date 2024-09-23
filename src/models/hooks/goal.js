@@ -37,6 +37,9 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
 };
 
 const checkForCuratedGoal = async (sequelize, instance) => {
+  // we don't want to be setting goalTemplateId if it's already set
+  if (instance.goalTemplateId) return;
+
   const curatedTemplate = await sequelize.models.GoalTemplate.findOne({
     where: {
       hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')),
