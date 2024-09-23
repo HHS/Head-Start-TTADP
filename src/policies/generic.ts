@@ -16,7 +16,7 @@ export default class Generic {
 
   constructor(user: User) {
     // Convert Sequelize model instance to plain object
-    this.user = user.get({ plain: true });
+    this.user = user?.get({ plain: true }) || { permissions: [] };
   }
 
   canAccessRegion(region: number): boolean {
