@@ -1,9 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from './ContextMenu';
-
 import DisplayTableToggle from './DisplayTableToggleButton';
-
 import './WidgetContainerTitleGroup.scss';
 
 const WidgetContainerTitleGroup = ({
@@ -11,7 +9,6 @@ const WidgetContainerTitleGroup = ({
   title,
   showHeaderBorder,
   subtitle,
-  subtitle2,
   className,
   pagination,
   displayTable,
@@ -33,7 +30,7 @@ const WidgetContainerTitleGroup = ({
             {title}
             <TitleDrawer />
           </h2>
-          {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
+          {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null}
           <SubtitleDrawer />
         </div>
         {children}
@@ -62,7 +59,6 @@ WidgetContainerTitleGroup.propTypes = {
   children: PropTypes.node,
   title: PropTypes.string,
   subtitle: PropTypes.string,
-  subtitle2: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   className: PropTypes.string,
   pagination: PropTypes.node,
@@ -81,7 +77,6 @@ WidgetContainerTitleGroup.defaultProps = {
   pagination: null,
   title: '',
   subtitle: '',
-  subtitle2: '',
   showHeaderBorder: false,
   className: 'padding-3 ',
   displayTable: false,
