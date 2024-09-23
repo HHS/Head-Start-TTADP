@@ -9,6 +9,7 @@ const WidgetContainerTitleGroup = ({
   title,
   showHeaderBorder,
   subtitle,
+  subtitle2,
   className,
   pagination,
   displayTable,
@@ -31,6 +32,11 @@ const WidgetContainerTitleGroup = ({
             <TitleDrawer />
           </h2>
           {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null}
+          {subtitle2 && (
+            <div>
+              <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
+            </div>
+          )}
           <SubtitleDrawer />
         </div>
         {children}
@@ -59,6 +65,7 @@ WidgetContainerTitleGroup.propTypes = {
   children: PropTypes.node,
   title: PropTypes.string,
   subtitle: PropTypes.string,
+  subtitle2: PropTypes.string,
   showHeaderBorder: PropTypes.bool,
   className: PropTypes.string,
   pagination: PropTypes.node,
@@ -77,6 +84,7 @@ WidgetContainerTitleGroup.defaultProps = {
   pagination: null,
   title: '',
   subtitle: '',
+  subtitle2: '',
   showHeaderBorder: false,
   className: 'padding-3 ',
   displayTable: false,
