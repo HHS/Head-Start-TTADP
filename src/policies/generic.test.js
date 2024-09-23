@@ -3,21 +3,25 @@ import SCOPES from '../middleware/scopeConstants';
 
 describe('Generic', () => {
   const user = {
-    permissions: [
-      { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
-      { scopeId: SCOPES.APPROVE_REPORTS, regionId: 2 },
-      { scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 3 },
-    ],
-    roles: [{ name: 'Admin' }],
-    flags: ['feature-flag-1', 'feature-flag-2'],
+    get: () => ({
+      permissions: [
+        { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
+        { scopeId: SCOPES.APPROVE_REPORTS, regionId: 2 },
+        { scopeId: SCOPES.READ_WRITE_REPORTS, regionId: 3 },
+      ],
+      roles: [{ name: 'Admin' }],
+      flags: ['feature-flag-1', 'feature-flag-2'],
+    }),
   };
 
   const adminUser = {
-    permissions: [
-      { scopeId: SCOPES.ADMIN, regionId: 1 },
-    ],
-    roles: [{ name: 'Super Admin' }],
-    flags: [],
+    get: () => ({
+      permissions: [
+        { scopeId: SCOPES.ADMIN, regionId: 1 },
+      ],
+      roles: [{ name: 'Super Admin' }],
+      flags: [],
+    }),
   };
 
   test('should correctly initialize with user', () => {
