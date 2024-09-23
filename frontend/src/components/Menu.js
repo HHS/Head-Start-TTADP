@@ -152,7 +152,7 @@ function Menu({
         <ul className="usa-list usa-list--unstyled" role="menu">
           {menuItems.map((item) => (
             <li key={item.label} role="menuitem">
-              <Button type="button" id={item.id || ''} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
+              <Button type="button" id={item.id || false} onClick={() => { updateShown(false); item.onClick(); }} unstyled className="smart-hub--menu-button smart-hub--button__no-margin">
                 <div className="padding-2 padding-right-3">
                   {item.label}
                 </div>
