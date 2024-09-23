@@ -46,7 +46,7 @@ export default function WidgetContainer(
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-x-3"
+        className="padding-top-2"
         title={title}
         subtitle={subtitle}
         subtitle2={subtitle2}
