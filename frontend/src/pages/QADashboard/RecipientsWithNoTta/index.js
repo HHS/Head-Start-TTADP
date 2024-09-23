@@ -89,7 +89,7 @@ export default function RecipientsWithNoTta() {
         stickyFooter
         title="QA dashboard filters"
       >
-        <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+        <ContentFromFeedByTag tagName="ttahub-qa-dash-recipients-no-tta-filter" />
       </Drawer>
       <RecipientsWithNoTtaWidget
         data={{
