@@ -175,6 +175,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
       className="padding-3"
       displayPaginationBoxOutline
       showHeaderBorder={false}
+      widgetContainerTitleClass="padding-top-2"
     >
       <div className="bg-white padding-">
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
