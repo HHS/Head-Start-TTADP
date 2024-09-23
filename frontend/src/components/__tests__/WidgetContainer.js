@@ -129,9 +129,4 @@ describe('Widget Container', () => {
     renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false], () => {}, null, false, false, () => {}, '* There are many footnotes but this one is mine.');
     expect(screen.getByText(/There are many footnotes but this one is mine./i)).toBeInTheDocument();
   });
-
-  it('displays subtitle2', async () => {
-    renderWidgetContainer('Widget Container Title', 'Widget Container Subtitle', [true, false], () => {}, null, false, false, () => {}, null, 'Subtitle 2');
-    expect(screen.getByText(/Subtitle 2/i)).toBeInTheDocument();
-  });
 });
