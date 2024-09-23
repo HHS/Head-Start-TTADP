@@ -97,4 +97,16 @@ describe('Admin landing page', () => {
     const heading = await screen.findByRole('heading', { name: /national centers/i });
     expect(heading).toBeVisible();
   });
+
+  it('displays the feed preview page', async () => {
+    history.push('/admin/feed-preview');
+    render(
+      <Router history={history}>
+        <Admin />
+      </Router>,
+    );
+
+    const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });
+    expect(heading).toBeVisible();
+  });
 });

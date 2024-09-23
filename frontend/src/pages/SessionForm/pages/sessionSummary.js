@@ -54,7 +54,7 @@ const DEFAULT_RESOURCE = {
   value: '',
 };
 
-const SessionSummary = ({ datePickerKey }) => {
+const SessionSummary = ({ datePickerKey, event }) => {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
 
   const {
@@ -70,6 +70,8 @@ const SessionSummary = ({ datePickerKey }) => {
   const data = getValues();
 
   const { id } = data;
+
+  const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
   const startDate = watch('startDate');
   const endDate = watch('endDate');
@@ -275,6 +277,10 @@ const SessionSummary = ({ datePickerKey }) => {
             isStartDate
             inputId="startDate"
             endDate={endDate}
+            minDate={eventStartDate}
+            customValidationMessages={{
+              afterMessage: 'Date selected can\'t be before event start date.',
+            }}
           />
         </FormItem>
 
@@ -624,6 +630,15 @@ const SessionSummary = ({ datePickerKey }) => {
 
 SessionSummary.propTypes = {
   datePickerKey: PropTypes.string.isRequired,
+  event: PropTypes.shape({
+    data: {
+      endDate: PropTypes.string,
+    },
+  }),
+};
+
+SessionSummary.defaultProps = {
+  event: null,
 };
 
 const fields = [...Object.keys(sessionSummaryFields), 'endDate', 'startDate'];
@@ -663,7 +678,7 @@ export default {
     Alert,
   ) => (
     <div className="padding-x-1">
-      <SessionSummary datePickerKey={datePickerKey} />
+      <SessionSummary datePickerKey={datePickerKey} event={additionalData.event} />
       <Alert />
       <div className="display-flex">
         {
@@ -680,7 +695,6 @@ export default {
           && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
             <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
           )
-
         }
       </div>
     </div>
