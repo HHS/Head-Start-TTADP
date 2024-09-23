@@ -4,6 +4,7 @@ import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
+import './RecipientsWithOhsStandardFeiGoalWidget.scss';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
@@ -84,7 +85,8 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         exportRows={exportRows}
         titleDrawerText="OHS standard FEI goal"
         titleDrawerTitle="OHS standard FEI goal"
-        titleDrawerTag="ttahub-fei-root-causes"
+        titleDrawerTag="ttahub-ohs-standard-fei-goal"
+        titleDrawerCss="smart-hub--recipients-with-ohs-standard-fei-goal--title-drawer"
         subtitleDrawerLinkText="Learn about root causes"
         subtitleDrawerTitle="FEI root cause"
         subtitleDrawerTag="ttahub-fei-root-causes"
