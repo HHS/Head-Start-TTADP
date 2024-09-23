@@ -69,7 +69,6 @@ export default async function getGoalsForReport(reportId: number) {
           LEFT JOIN "ActivityReportGoalFieldResponses" argfr
           ON gtfp.id = argfr."goalTemplateFieldPromptId"
           AND argfr."activityReportGoalId" = "activityReportGoals".id
-          WHERE "goalTemplate".id = gtfp."goalTemplateId"
           GROUP BY 1=1
         )`), 'prompts'],
       ],
