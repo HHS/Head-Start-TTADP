@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
-
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
   Dropdown, Checkbox, Button,
@@ -12,11 +11,16 @@ import colors from '../colors';
 import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import Drawer from '../components/Drawer';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import RecipientCard from '../pages/QADashboard/Components/RecipientCard';
 
 function RecipientsWithClassScoresAndGoalsWidget({
   data,
 }) {
+  const titleDrawerRef = useRef(null);
+  const subtitleRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [allRecipientsData, setAllRecipientsData] = useState([]);
   const [recipientsDataToDisplay, setRecipientsDataToDisplay] = useState([]);
@@ -154,11 +158,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   ).length;
   return (
     <WidgetContainer
-      title="Recipients with CLASS&reg; scores"
-      subtitleDrawerTitle="CLASS&reg; review thresholds"
-      subtitleDrawerLinkText="How are thresholds met?"
-      subtitleDrawerTag="ttahub-fei-root-causes"
-      subtitle2={getSubtitleWithPct()}
+      title="Recipients with CLASS&reg; scores and"
       loading={loading}
       loadingLabel="Recipients with CLASS&reg; scores and goals loading"
       showPagingBottom
@@ -169,9 +169,42 @@ function RecipientsWithClassScoresAndGoalsWidget({
       handlePageChange={handlePageChange}
       enableCheckboxes
       exportRows={exportRows}
-      titleDrawerText="OHS standard CLASS&reg; goals"
-      titleDrawerTitle="OHS standard FEI goal"
-      titleDrawerTag="ttahub-fei-root-causes"
+        // content slots
+      TitleDrawer={(
+        <>
+          <DrawerTriggerButton customClass="font-sans-lg margin-left-1 text-bold" drawerTriggerRef={titleDrawerRef}>
+            OHS standard CLASS&reg; goals
+          </DrawerTriggerButton>
+          <Drawer
+            triggerRef={titleDrawerRef}
+            stickyHeader
+            stickyFooter
+            title="OHS standard CLASS&reg; goal"
+          >
+            <ContentFromFeedByTag tagName="ttahub-ohs-standard-class-goal" />
+          </Drawer>
+        </>
+        )}
+      SubtitleDrawer={(
+        <>
+          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-2">
+            <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
+              How are thresholds met?
+            </DrawerTriggerButton>
+            <Drawer
+              triggerRef={subtitleRef}
+              stickyHeader
+              stickyFooter
+              title="CLASS&reg; review thresholds"
+            >
+              <ContentFromFeedByTag tagName="ttahub-class-thresholds" />
+            </Drawer>
+          </div>
+          <p className="margin-top-0 usa-prose text-bold">
+            {getSubtitleWithPct()}
+          </p>
+        </>
+        )}
       className="padding-3"
       displayPaginationBoxOutline
       showHeaderBorder={false}
