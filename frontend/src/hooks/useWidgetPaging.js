@@ -87,6 +87,10 @@ export default function useWidgetPaging(
     setOffset(0);
   }, [requestSort]);
 
+  useEffect(() => {
+    setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));
+  }, [offset, perPageNumber, dataToUse, setDataPerPage]);
+
   return {
     offset,
     activePage,

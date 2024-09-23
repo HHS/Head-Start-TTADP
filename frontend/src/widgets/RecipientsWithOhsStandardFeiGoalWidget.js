@@ -114,7 +114,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
               stickyFooter
               title="OHS standard FEI goal"
             >
-              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
             </Drawer>
           </>
         )}
@@ -129,10 +129,12 @@ function RecipientsWithOhsStandardFeiGoalWidget({
               stickyFooter
               title="FEI root cause"
             >
-              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" contentSelector="table" />
+              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
             </Drawer>
           </div>
         )}
+        enableCheckboxes
+        exportRows={exportRows}
       >
         <HorizontalTableWidget
           headers={data.headers || []}
