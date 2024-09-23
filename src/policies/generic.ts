@@ -11,12 +11,25 @@ interface User {
   flags?: string[];
 }
 
+interface DBUser {
+  get: (options?: { plain: boolean }) => User;
+}
+
 export default class Generic {
   user: User;
 
-  constructor(user: User) {
-    // Convert Sequelize model instance to plain object
-    this.user = user?.get({ plain: true }) || { permissions: [] };
+  // Type guard to check if the user is a DBUser
+  private isDBUser(user: User | DBUser): user is DBUser {
+    return (user as DBUser).get !== undefined;
+  }
+
+  constructor(user: User | DBUser) {
+    // Use a type guard to check if user is a DBUser and extract the plain object
+    if (this.isDBUser(user)) {
+      this.user = user.get({ plain: true });
+    } else {
+      this.user = user || { permissions: [] };
+    }
   }
 
   canAccessRegion(region: number): boolean {
