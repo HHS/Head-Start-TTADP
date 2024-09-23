@@ -55,6 +55,14 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error listing query files');
     });
+
+    it('should return 500 when an unexpected error occurs', async () => {
+      listQueryFiles.mockImplementation(() => { throw new Error('Unexpected Error'); });
+
+      const response = await request(app).get('/listQueries');
+      expect(response.status).toBe(500);
+      expect(response.text).toBe('Unexpected Error');
+    });
   });
 
   describe('getFilters', () => {
@@ -78,8 +86,19 @@ describe('API Endpoints', () => {
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
 
+    it('should return 400 for a script path with invalid characters', async () => {
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'invalid/../../path' });
+  
+      expect(response.status).toBe(400);
+      expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
+    });
+
     it('should return 400 if script path is not within allowed directory', async () => {
-      const response = await request(app).get('/getFilters').query({ path: 'some/other/path' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'some/other/path' });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
@@ -143,21 +162,49 @@ describe('API Endpoints', () => {
     });
 
     it('should return 400 if script path is not provided', async () => {
-      const response = await request(app).post('/runQuery').send({ recipientIds: [1, 2, 3] });
+      const response = await request(app)
+        .post('/runQuery')
+        .send({ recipientIds: [1, 2, 3] });
       expect(response.status).toBe(400);
       expect(response.text).toBe('Script path is required');
     });
 
     it('should return 400 for path traversal attempts', async () => {
-      const response = await request(app).post('/runQuery').query({ path: '../outside/path' }).send({ recipientIds: [1, 2, 3] });
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: '../outside/path' })
+        .send({ recipientIds: [1, 2, 3] });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
 
     it('should return 400 if script path is not within allowed directory', async () => {
-      const response = await request(app).post('/runQuery').query({ path: 'some/other/path' }).send({ recipientIds: [1, 2, 3] });
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'some/other/path' })
+        .send({ recipientIds: [1, 2, 3] });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+    });
+
+    it('should return 400 if recipientIds are missing', async () => {
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'dataRequests/test/path' })
+        .send({}); // No recipientIds sent
+  
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid recipientIds: recipientIds are required');
+    });
+  
+    it('should return 400 if recipientIds are not an array of integers', async () => {
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'dataRequests/test/path' })
+        .send({ recipientIds: 'invalidType' }); // Invalid data type
+  
+      expect(response.status).toBe(400);
+      expect(response.text).toBe('Invalid recipientIds: must be an array of integers');
     });
 
     it('should return 401 if regionIds is an empty set', async () => {
@@ -171,6 +218,20 @@ describe('API Endpoints', () => {
         .query({ path: 'dataRequests/test/path' })
         .send({});
 
+      expect(response.status).toBe(401);
+    });
+
+    it('should return 401 if no accessible regions are found', async () => {
+      Generic.mockImplementation(() => ({
+        filterRegions: jest.fn(() => []),
+        getAllAccessibleRegions: jest.fn(() => [])
+      }));
+  
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'dataRequests/test/path' })
+        .send({ recipientIds: [1, 2, 3] });
+  
       expect(response.status).toBe(401);
     });
 
@@ -190,7 +251,7 @@ describe('API Endpoints', () => {
       const filterRegionsMock = jest.fn((val) => val);
       Generic.mockImplementation(() => ({
         filterRegions: filterRegionsMock,
-        getAllAccessibleRegions: jest.fn(() => []),
+        getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
       }));
       const response = await request(app)
         .post('/runQuery')
