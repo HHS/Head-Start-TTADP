@@ -90,7 +90,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .get('/getFilters')
         .query({ path: 'invalid/../../path' });
-  
+
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
@@ -192,17 +192,17 @@ describe('API Endpoints', () => {
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
         .send({}); // No recipientIds sent
-  
+
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid recipientIds: recipientIds are required');
     });
-  
+
     it('should return 400 if recipientIds are not an array of integers', async () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
         .send({ recipientIds: 'invalidType' }); // Invalid data type
-  
+
       expect(response.status).toBe(400);
       expect(response.text).toBe('Invalid recipientIds: must be an array of integers');
     });
@@ -224,14 +224,14 @@ describe('API Endpoints', () => {
     it('should return 401 if no accessible regions are found', async () => {
       Generic.mockImplementation(() => ({
         filterRegions: jest.fn(() => []),
-        getAllAccessibleRegions: jest.fn(() => [])
+        getAllAccessibleRegions: jest.fn(() => []),
       }));
-  
+
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
         .send({ recipientIds: [1, 2, 3] });
-  
+
       expect(response.status).toBe(401);
     });
 
@@ -276,6 +276,19 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3, 4]);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
+    });
+
+    it('should return CSV response with sanitized file name', async () => {
+      sanitizeFilename.mockReturnValue('test_output_sanitized.csv');
+
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'dataRequests/test/path', format: 'csv' })
+        .send({ recipientIds: [1, 2, 3] });
+
+      expect(response.status).toBe(200);
+      expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
+      expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_sanitized.csv"');
     });
   });
 });
