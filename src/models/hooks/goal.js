@@ -1,5 +1,10 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS, GOAL_COLLABORATORS, OBJECTIVE_STATUS } = require('../../constants');
+const {
+  GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_STATUS,
+  CREATION_METHOD,
+} = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
@@ -28,7 +33,22 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  return { id: goalTemplate[0].id, name };
+  return { id: goalTemplate[0].id, name, creationMethod: goalTemplate[0].creationMethod };
+};
+
+const checkForCuratedGoal = async (sequelize, instance) => {
+  const curatedTemplate = await sequelize.models.GoalTemplate.findOne({
+    where: {
+      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')),
+      creationMethod: CREATION_METHOD.CURATED,
+      regionId: null,
+    },
+    attributes: ['id'],
+  });
+
+  if (curatedTemplate) {
+    instance.set('goalTemplateId', curatedTemplate.id);
+  }
 };
 
 const autoPopulateOnAR = (_sequelize, instance, options) => {
@@ -299,6 +319,10 @@ const beforeValidate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
 };
 
+const beforeCreate = async (sequelize, instance, options) => {
+  await checkForCuratedGoal(sequelize, instance, options);
+};
+
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
@@ -329,10 +353,12 @@ export {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   preventCloseIfObjectivesOpen,
+  checkForCuratedGoal,
   propagateName,
   beforeValidate,
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  beforeCreate,
   afterDestroy,
 };
