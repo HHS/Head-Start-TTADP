@@ -72,7 +72,7 @@ describe('Resource Dashboard page', () => {
     // Header
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
-    const filters = await screen.findByRole('button', { name: /filters/i });
+    const filters = await screen.findByRole('button', { name: 'open filters for this page' });
 
     act(() => {
       userEvent.click(filters);

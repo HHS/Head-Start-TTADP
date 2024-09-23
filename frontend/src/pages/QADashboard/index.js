@@ -1,5 +1,6 @@
 import React, {
   useContext,
+  useRef,
 } from 'react';
 import { Helmet } from 'react-helmet';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
@@ -8,6 +9,9 @@ import UserContext from '../../UserContext';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants';
+import DrawerTriggerButton from '../../components/DrawerTriggerButton';
+import Drawer from '../../components/Drawer';
+import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
@@ -19,6 +23,7 @@ const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
 
 export default function QADashboard() {
   const { user } = useContext(UserContext);
+  const drawerTriggerRef = useRef(null);
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -56,6 +61,14 @@ export default function QADashboard() {
             allowedSubfilters={ALLOWED_SUBFILTERS}
           />
         </FilterPanelContainer>
+        <div className="margin-bottom-3">
+          <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+            Learn how filters impact the data displayed
+          </DrawerTriggerButton>
+          <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
+            <ContentFromFeedByTag tag="ttahub-qa-dash-filters" />
+          </Drawer>
+        </div>
         <QAOverview
           data={{
             recipientsWithNoTTA: { pct: '2.52%', filterApplicable: true },
