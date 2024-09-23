@@ -30,10 +30,14 @@ export default function WidgetContainer(
     footNote,
     displayTable,
     setDisplayTable,
+    enableCheckboxes,
+    exportRows,
 
     // slot components
     SubtitleDrawer,
     TitleDrawer,
+
+    displayPaginationBoxOutline,
   },
 ) {
   return (
@@ -59,6 +63,8 @@ export default function WidgetContainer(
         TitleDrawer={() => TitleDrawer || null}
         SubtitleDrawer={() => SubtitleDrawer || null}
         menuItems={menuItems}
+        enableCheckboxes={enableCheckboxes}
+        exportRows={exportRows}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -73,7 +79,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+        <div className={`border-bottom smart-hub-border-base-lighter padding-3 ${displayPaginationBoxOutline ? 'smart-hub-border-base--pagination-box' : ''}`}>
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -86,6 +92,7 @@ export default function WidgetContainer(
               offset={offset}
               perPage={perPage}
               handlePageChange={handlePageChange}
+              displayPaginationBoxOutline={displayPaginationBoxOutline}
             />
           )}
         </div>
@@ -123,6 +130,10 @@ WidgetContainer.propTypes = {
   // Drawer components
   SubtitleDrawer: PropTypes.node,
   TitleDrawer: PropTypes.node,
+
+  displayPaginationBoxOutline: PropTypes.bool,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -146,8 +157,12 @@ WidgetContainer.defaultProps = {
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
+  enableCheckboxes: false,
+  exportRows: null,
 
   // Drawer components
   SubtitleDrawer: null,
   TitleDrawer: null,
+
+  displayPaginationBoxOutline: false,
 };
