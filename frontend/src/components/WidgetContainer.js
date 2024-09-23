@@ -41,12 +41,13 @@ export default function WidgetContainer(
     subtitle2DrawerLinkTitle,
     subtitle2DrawerTag,
     displayPaginationBoxOutline,
+    widgetContainerTitleClass,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-top-2"
+        className={widgetContainerTitleClass}
         title={title}
         subtitle={subtitle}
         subtitle2={subtitle2}
@@ -143,6 +144,7 @@ WidgetContainer.propTypes = {
   subtitle2DrawerLinkTitle: PropTypes.string,
   subtitle2DrawerTag: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
+  widgetContainerTitleClass: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -177,4 +179,5 @@ WidgetContainer.defaultProps = {
   subtitle2DrawerLinkTitle: '',
   subtitle2DrawerTag: '',
   displayPaginationBoxOutline: false,
+  widgetContainerTitleClass: 'padding-x-3',
 };
