@@ -2,7 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
-  Dropdown, Checkbox, Button,
+  Dropdown,
+  Checkbox,
+  Label,
+  Button,
 } from '@trussworks/react-uswds';
 import { v4 as uuidv4 } from 'uuid';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -232,7 +235,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</label>
+            <Label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"
               id="perPage"
