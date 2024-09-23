@@ -19,13 +19,13 @@ export default class Generic {
   user: User;
 
   // Type guard to check if the user is a DBUser
-  private isDBUser(user: User | DBUser): user is DBUser {
+  private static isDBUser(user: User | DBUser): user is DBUser {
     return (user as DBUser).get !== undefined;
   }
 
   constructor(user: User | DBUser) {
     // Use a type guard to check if user is a DBUser and extract the plain object
-    if (this.isDBUser(user)) {
+    if (Generic.isDBUser(user)) {
       this.user = user.get({ plain: true });
     } else {
       this.user = user || { permissions: [] };
