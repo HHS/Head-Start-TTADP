@@ -218,7 +218,6 @@ export default function ViewTrainingReport({ match }) {
     },
     striped: true,
   }] : [];
-  // console.log('sessions: ', event.sessionReports);
 
   const generateIstOfficeOrRecipientProperties = (session) => {
     if (session.data.isIstVisit === 'yes') {
