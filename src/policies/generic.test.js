@@ -26,7 +26,7 @@ describe('Generic', () => {
 
   test('should correctly initialize with user', () => {
     const generic = new Generic(user);
-    expect(generic.user).toBe(user);
+    expect(generic.user).toBe(user.get());
   });
 
   test('should return true if user can access a region', () => {
@@ -55,7 +55,7 @@ describe('Generic', () => {
   });
 
   test('should return an empty array if user has no permissions', () => {
-    const emptyUser = { permissions: [] };
+    const emptyUser = { get: () => ({ permissions: [] }) };
     const generic = new Generic(emptyUser);
     const filteredRegions = generic.filterRegions([]);
     expect(filteredRegions).toEqual([]);
@@ -88,11 +88,13 @@ describe('Generic', () => {
 
   test('should return false for feature flag if user has no flags and is not ADMIN', () => {
     const userWithoutFlags = {
-      permissions: [
-        { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
-      ],
-      roles: [{ name: 'User' }],
-      flags: [],
+      get: () => ({
+        permissions: [
+          { scopeId: SCOPES.READ_REPORTS, regionId: 1 },
+        ],
+        roles: [{ name: 'User' }],
+        flags: [],
+      }),
     };
     const generic = new Generic(userWithoutFlags);
     expect(generic.hasFeatureFlag('feature-flag-1')).toBe(false);
