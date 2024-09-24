@@ -4,3 +4,10 @@
   margin-bottom: 12px;
   padding-bottom: 0;
 }
+
+.ttahub-class-feed-article .ttahub-feed-article p:has(strong){
+  text-align: left;
+}
+.ttahub-class-feed-article .ttahub-feed-article th .usa-prose {
+  margin: 0;
+}
