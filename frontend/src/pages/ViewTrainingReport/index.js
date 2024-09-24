@@ -277,9 +277,9 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
-          'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
-          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
-          'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
+          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name) : 'None',
+          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
           'Support type': session.data.objectiveSupportType,
         },
       }, {
