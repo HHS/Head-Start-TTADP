@@ -23,6 +23,7 @@ jest.mock('../../../services/ssdi', () => ({
   sanitizeFilename: jest.fn(),
   generateFilterString: jest.fn(),
   executeQuery: jest.fn(),
+  isFile: jest.fn(),
 }));
 
 jest.mock('../../../services/currentUser', () => ({
