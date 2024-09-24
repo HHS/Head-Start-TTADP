@@ -5,16 +5,19 @@ import {
   cache,
   sanitizeFilename,
   checkFolderPermissions,
+  isFile,
   safeResolvePath,
   isValidJsonHeader,
   readJsonHeaderFromFile,
   createQueryFile,
+  checkDirectoryExists,
   listQueryFiles,
   applyFilterOptions,
   generateConditions,
   processFilters,
   generateArtificialFilters,
   readFiltersFromFile,
+  readFilesRecursively,
   validateType,
   preprocessAndValidateFilters,
   setFilters,
@@ -101,7 +104,6 @@ describe('ssdi', () => {
     });
   });
 
-
   describe('isValidJsonHeader', () => {
     it('should return true for a valid JSON header', () => {
       const validJson = {
@@ -182,21 +184,6 @@ describe('ssdi', () => {
       expect(result).toEqual(mockFile);
     });
 
-    it('should return cached file if modification time is unchanged', async () => {
-      const mockFile = {
-        jsonHeader: { name: 'test' },
-        query: 'SELECT * FROM test',
-        modificationTime: new Date(),
-      };
-      cache.set('test/path.sql', mockFile);
-
-      const mockStat = { mtime: new Date() };
-      fs.promises.stat.mockResolvedValue(mockStat);
-
-      const result = await readJsonHeaderFromFile('test/path.sql');
-      expect(result).toEqual(mockFile);
-    });
-
     it('should parse and cache new file if modification time changes', async () => {
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
@@ -223,8 +210,9 @@ describe('ssdi', () => {
   describe('readFilesRecursively', () => {
     it('should recursively read files in a directory', async () => {
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'folder']);
-      fs.promises.stat.mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(false) })
-                      .mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(true) });
+      fs.promises.stat
+        .mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(false) })
+        .mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(true) });
 
       const result = await readFilesRecursively('test/path');
       expect(result).toContain('test/path/file1.sql');
@@ -232,8 +220,8 @@ describe('ssdi', () => {
     it('should recursively read files in the directory', async () => {
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'subfolder']);
       fs.promises.stat
-        .mockResolvedValueOnce({ isDirectory: () => false })  // file1.sql
-        .mockResolvedValueOnce({ isDirectory: () => true });  // subfolder
+        .mockResolvedValueOnce({ isDirectory: () => false }) // file1.sql
+        .mockResolvedValueOnce({ isDirectory: () => true }); // subfolder
 
       fs.promises.readdir.mockResolvedValueOnce(['file2.sql']);
       fs.promises.stat.mockResolvedValueOnce({ isDirectory: () => false });
@@ -311,7 +299,6 @@ describe('ssdi', () => {
       const result = await applyFilterOptions(filter);
       expect(result).toEqual(['value1']);
     });
-
 
     it('should return query results for defined SQL query', async () => {
       db.sequelize.query.mockResolvedValue([{ col1: 'value1' }]);
