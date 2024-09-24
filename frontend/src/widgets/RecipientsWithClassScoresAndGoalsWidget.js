@@ -13,6 +13,7 @@ import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constan
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 import RecipientCard from '../pages/QADashboard/Components/RecipientCard';
+import './QaDetailsDrawer.scss';
 
 function RecipientsWithClassScoresAndGoalsWidget({
   data,
@@ -176,6 +177,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
       displayPaginationBoxOutline
       showHeaderBorder={false}
       widgetContainerTitleClass="padding-top-2"
+      titleDrawerCss="smart-hub--qa-details--title-drawer"
     >
       <div className="bg-white padding-">
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">

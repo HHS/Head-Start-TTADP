@@ -34,6 +34,7 @@ export default function WidgetContainer(
     titleDrawerText,
     titleDrawerTitle,
     titleDrawerTag,
+    titleDrawerCss,
     subtitleDrawerLinkText,
     subtitleDrawerTitle,
     subtitleDrawerTag,
@@ -42,8 +43,10 @@ export default function WidgetContainer(
     subtitle2DrawerTag,
     displayPaginationBoxOutline,
     widgetContainerTitleClass,
+    subtitleDrawerCss,
   },
 ) {
+  console.log('title drawer css TOP: ', titleDrawerCss);
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
@@ -69,12 +72,14 @@ export default function WidgetContainer(
         titleDrawerText={titleDrawerText}
         titleDrawerTitle={titleDrawerTitle}
         titleDrawerTag={titleDrawerTag}
+        titleDrawerCss={titleDrawerCss}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
         subtitleDrawerTitle={subtitleDrawerTitle}
         subtitleDrawerTag={subtitleDrawerTag}
         subtitle2DrawerLinkText={subtitle2DrawerLinkText}
         subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
         subtitle2DrawerTag={subtitle2DrawerTag}
+        subtitleDrawerCss={subtitleDrawerCss}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -137,6 +142,7 @@ WidgetContainer.propTypes = {
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
   titleDrawerTag: PropTypes.string,
+  titleDrawerCss: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerTag: PropTypes.string,
@@ -145,6 +151,7 @@ WidgetContainer.propTypes = {
   subtitle2DrawerTag: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
   widgetContainerTitleClass: PropTypes.string,
+  subtitleDrawerCss: PropTypes.string,
 };
 
 WidgetContainer.defaultProps = {
@@ -172,6 +179,7 @@ WidgetContainer.defaultProps = {
   titleDrawerText: '',
   titleDrawerTitle: '',
   titleDrawerTag: '',
+  titleDrawerCss: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: '',
   subtitleDrawerTag: '',
@@ -180,4 +188,5 @@ WidgetContainer.defaultProps = {
   subtitle2DrawerTag: '',
   displayPaginationBoxOutline: false,
   widgetContainerTitleClass: 'padding-x-3',
+  subtitleDrawerCss: '',
 };

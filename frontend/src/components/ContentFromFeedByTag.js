@@ -61,6 +61,8 @@ export default function ContentFromFeedByTag({
 
   const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
 
+  console.log('passed css: ', className);
+
   return (
     <div className={classNames}>
       <FeedArticle title="" content={content} unread={false} key={content} openLinksInNewTab={openLinksInNewTab} partial />
