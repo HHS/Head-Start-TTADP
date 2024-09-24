@@ -23,13 +23,16 @@ const WidgetContainerTitleGroup = ({
   titleDrawerText,
   titleDrawerTitle,
   titleDrawerTag,
+  titleDrawerCss,
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
   subtitleDrawerTag,
   subtitle2DrawerLinkText,
   subtitle2DrawerTitle,
   subtitle2DrawerTag,
+  subtitleDrawerCss,
 }) => {
+  console.log('title css: ', titleDrawerCss);
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
   const subtitle2DrawerLinkRef = useRef(null);
@@ -70,7 +73,7 @@ const WidgetContainerTitleGroup = ({
                     stickyFooter
                     title={titleDrawerTitle}
                   >
-                    <ContentFromFeedByTag tagName={titleDrawerTag} contentSelector="table" />
+                    <ContentFromFeedByTag tagName={titleDrawerTag} className={titleDrawerCss} />
                   </Drawer>
                 </>
                 )
@@ -88,7 +91,7 @@ const WidgetContainerTitleGroup = ({
                 stickyFooter
                 title={subtitleDrawerTitle}
               >
-                <ContentFromFeedByTag tagName={subtitleDrawerTag} contentSelector="table" />
+                <ContentFromFeedByTag tagName={subtitleDrawerTag} className={subtitleDrawerCss} />
               </Drawer>
             </div>
           )}
@@ -150,12 +153,14 @@ WidgetContainerTitleGroup.propTypes = {
   titleDrawerText: PropTypes.string,
   titleDrawerTitle: PropTypes.string,
   titleDrawerTag: PropTypes.string,
+  titleDrawerCss: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerTag: PropTypes.string,
   subtitle2DrawerLinkText: PropTypes.string,
   subtitle2DrawerTitle: PropTypes.string,
   subtitle2DrawerTag: PropTypes.string,
+  subtitleDrawerCss: PropTypes.string,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -173,12 +178,14 @@ WidgetContainerTitleGroup.defaultProps = {
   titleDrawerText: '',
   titleDrawerTitle: '',
   titleDrawerTag: '',
+  titleDrawerCss: '',
   subtitleDrawerLinkText: '',
   subtitleDrawerTitle: '',
   subtitleDrawerTag: '',
   subtitle2DrawerLinkText: '',
   subtitle2DrawerTitle: null,
   subtitle2DrawerTag: '',
+  subtitleDrawerCss: '',
 };
 
 export default WidgetContainerTitleGroup;
