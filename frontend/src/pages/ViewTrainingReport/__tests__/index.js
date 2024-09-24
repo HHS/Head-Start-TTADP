@@ -666,6 +666,57 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('12')).toBeInTheDocument();
   });
 
+  it('display the correct value for Is IST visit if the value isIstVisit is not set and we have recipients', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        isIstVisit: null,
+      },
+    }];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.findByText('No')).toBeInTheDocument();
+
+    expect(screen.queryAllByText('IST visit').length).toBe(1);
+  });
+
+  it('display the correct value for Is IST visit if the value isIstVisit is not set and we have no recipients', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        isIstVisit: null,
+        recipients: [],
+        regionalOfficeTta: ['office 1', 'office 2'],
+      },
+    }];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.findByText('Yes')).toBeInTheDocument();
+
+    expect(screen.queryAllByText('IST visit').length).toBe(1);
+    expect(await screen.findByText(/office 1, office 2/i)).toBeInTheDocument();
+  });
+
   describe('formatOwnerName', () => {
     test('handles an error', () => {
       const result = formatOwnerName({ eventReportPilotNationalCenterUsers: 123 });

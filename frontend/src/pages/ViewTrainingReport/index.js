@@ -219,8 +219,15 @@ export default function ViewTrainingReport({ match }) {
     striped: true,
   }] : [];
 
+  const isIstVisit = (session) => {
+    if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
+      return true;
+    }
+    return false;
+  };
+
   const generateIstOfficeOrRecipientProperties = (session) => {
-    if (session.data.isIstVisit === 'yes') {
+    if (isIstVisit(session)) {
       return {
         'Regional Office/TTA': session.data.regionalOfficeTta.join(', '),
       };
@@ -279,7 +286,7 @@ export default function ViewTrainingReport({ match }) {
         heading: 'Participants',
         striped: true,
         data: {
-          'IST visit': session.data.isIstVisit ? capitalize(session.data.isIstVisit) : '',
+          'IST visit': isIstVisit(session) ? 'Yes' : 'No',
           ...generateIstOfficeOrRecipientProperties(session),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
           ...generateNumberOfParticipants(session),
