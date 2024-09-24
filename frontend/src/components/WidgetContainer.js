@@ -46,7 +46,6 @@ export default function WidgetContainer(
     subtitleDrawerCss,
   },
 ) {
-  console.log('title drawer css TOP: ', titleDrawerCss);
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
