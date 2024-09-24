@@ -349,7 +349,7 @@ describe('ssdi', () => {
   describe('executeQuery', () => {
     it('should throw an error if the query is not a string', async () => {
       await expect(executeQuery(123)).rejects
-        .toThrow('The \"paths[1]\" argument must be of type string. Received type number (123)');
+        .toThrow('The "paths[1]" argument must be of type string. Received type number (123)');
     });
 
     it('should set the transaction to READ ONLY and execute the query', async () => {

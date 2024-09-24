@@ -241,7 +241,8 @@ describe('API Endpoints', () => {
     it('should return 400 if scriptPath is invalid', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(true); // Simulate early return due to invalid script path
+      // Simulate early return due to invalid script path
+      validateScriptPath.mockResolvedValue(true); 
 
       const response = await request(app).get('/listQueries?path=invalidPath');
       expect(response.status).toBe(400);
@@ -270,28 +271,12 @@ describe('API Endpoints', () => {
       expect(response.body).toEqual([{ name: 'Default Query', description: 'Default Description' }]);
     });
 
-    it('should list all available query files', async () => {
-      listQueryFiles.mockReturnValue([{ name: 'Test Query', description: 'Test Description' }]);
-
-      const response = await request(app).get('/listQueries');
-      expect(response.status).toBe(200);
-      expect(response.body).toEqual([{ name: 'Test Query', description: 'Test Description' }]);
-    });
-
     it('should handle errors', async () => {
       listQueryFiles.mockImplementation(() => { throw new Error('Error listing query files'); });
 
       const response = await request(app).get('/listQueries');
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error listing query files');
-    });
-
-    it('should return 500 when an unexpected error occurs', async () => {
-      listQueryFiles.mockImplementation(() => { throw new Error('Unexpected Error'); });
-
-      const response = await request(app).get('/listQueries');
-      expect(response.status).toBe(500);
-      expect(response.text).toBe('Unexpected Error');
     });
   });
 
