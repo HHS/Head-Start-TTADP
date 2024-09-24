@@ -1,9 +1,7 @@
 import request from 'supertest';
 import express from 'express';
 import {
-  validateScriptPath,
   checkFolderPermissions,
-  filterAttributes,
   listQueryFiles,
   readFiltersFromFile,
   setFilters,
@@ -13,7 +11,13 @@ import {
 } from '../../services/ssdi';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { listQueries, getFilters, runQuery } from './handlers';
+import { 
+  validateScriptPath,
+  filterAttributes,
+  listQueries,
+  getFilters,
+  runQuery,
+} from './handlers';
 import Generic from '../../policies/generic';
 
 jest.mock('../../../services/ssdi', () => ({
@@ -242,7 +246,7 @@ describe('API Endpoints', () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       // Simulate early return due to invalid script path
-      validateScriptPath.mockResolvedValue(true); 
+      validateScriptPath.mockResolvedValue(true);
 
       const response = await request(app).get('/listQueries?path=invalidPath');
       expect(response.status).toBe(400);
