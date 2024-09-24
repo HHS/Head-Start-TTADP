@@ -12,7 +12,7 @@ import {
 } from '../../services/ssdi';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
-import { 
+import {
   validateScriptPath,
   filterAttributes,
   listQueries,
