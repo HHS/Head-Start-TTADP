@@ -27,10 +27,14 @@ const WidgetContainerTitleGroup = ({
   subtitleDrawerLinkText,
   subtitleDrawerTitle,
   subtitleDrawerTag,
+  subtitle2DrawerLinkText,
+  subtitle2DrawerTitle,
+  subtitle2DrawerTag,
   subtitleDrawerCss,
 }) => {
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
+  const subtitle2DrawerLinkRef = useRef(null);
   if (!title) {
     return null;
   }
@@ -75,14 +79,9 @@ const WidgetContainerTitleGroup = ({
               }
           </h2>
           {subtitle ? <p className={`usa-prose margin-x-0 ${subtitle2 ? 'margin-y-0' : 'margin-y-2'}`}>{subtitle}</p> : null}
-          {subtitle2 && (
-            <div>
-              <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
-            </div>
-          )}
           {subtitleDrawerLinkText && (
-            <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-3 ">
-              <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
+            <div className="margin-x-0 margin-y-2">
+              <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} customClass="margin-x-0">
                 {subtitleDrawerLinkText}
               </DrawerTriggerButton>
               <Drawer
@@ -92,6 +91,26 @@ const WidgetContainerTitleGroup = ({
                 title={subtitleDrawerTitle}
               >
                 <ContentFromFeedByTag tagName={subtitleDrawerTag} className={subtitleDrawerCss} />
+              </Drawer>
+            </div>
+          )}
+          {subtitle2 && (
+            <div>
+              <strong><p className="usa-prose margin-x-0 margin-top-1 margin-bottom-2">{subtitle2}</p></strong>
+            </div>
+          )}
+          {subtitle2DrawerLinkText && (
+            <div className="margin-x-0 margin-y-3 margin-left-0">
+              <DrawerTriggerButton drawerTriggerRef={subtitle2DrawerLinkRef} customClass="margin-left-0">
+                {subtitle2DrawerLinkText}
+              </DrawerTriggerButton>
+              <Drawer
+                triggerRef={subtitle2DrawerLinkRef}
+                stickyHeader
+                stickyFooter
+                title={subtitle2DrawerTitle}
+              >
+                <ContentFromFeedByTag tagName={subtitle2DrawerTag} contentSelector="table" />
               </Drawer>
             </div>
           )}
@@ -137,6 +156,9 @@ WidgetContainerTitleGroup.propTypes = {
   subtitleDrawerLinkText: PropTypes.string,
   subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerTag: PropTypes.string,
+  subtitle2DrawerLinkText: PropTypes.string,
+  subtitle2DrawerTitle: PropTypes.string,
+  subtitle2DrawerTag: PropTypes.string,
   subtitleDrawerCss: PropTypes.string,
 };
 
@@ -157,8 +179,11 @@ WidgetContainerTitleGroup.defaultProps = {
   titleDrawerTag: '',
   titleDrawerCss: '',
   subtitleDrawerLinkText: '',
-  subtitleDrawerTitle: null,
+  subtitleDrawerTitle: '',
   subtitleDrawerTag: '',
+  subtitle2DrawerLinkText: '',
+  subtitle2DrawerTitle: null,
+  subtitle2DrawerTag: '',
   subtitleDrawerCss: '',
 };
 

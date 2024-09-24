@@ -36,15 +36,20 @@ export default function WidgetContainer(
     titleDrawerTag,
     titleDrawerCss,
     subtitleDrawerLinkText,
-    subtitleDrawerLinkTitle,
+    subtitleDrawerTitle,
     subtitleDrawerTag,
+    subtitle2DrawerLinkText,
+    subtitle2DrawerLinkTitle,
+    subtitle2DrawerTag,
+    displayPaginationBoxOutline,
+    widgetContainerTitleClass,
     subtitleDrawerCss,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-x-3"
+        className={widgetContainerTitleClass}
         title={title}
         subtitle={subtitle}
         subtitle2={subtitle2}
@@ -68,8 +73,11 @@ export default function WidgetContainer(
         titleDrawerTag={titleDrawerTag}
         titleDrawerCss={titleDrawerCss}
         subtitleDrawerLinkText={subtitleDrawerLinkText}
-        subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
+        subtitleDrawerTitle={subtitleDrawerTitle}
         subtitleDrawerTag={subtitleDrawerTag}
+        subtitle2DrawerLinkText={subtitle2DrawerLinkText}
+        subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
+        subtitle2DrawerTag={subtitle2DrawerTag}
         subtitleDrawerCss={subtitleDrawerCss}
       >
         {titleSlot}
@@ -85,7 +93,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+        <div className={`border-bottom smart-hub-border-base-lighter padding-3 ${displayPaginationBoxOutline ? 'smart-hub-border-base--pagination-box' : ''}`}>
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -98,6 +106,7 @@ export default function WidgetContainer(
               offset={offset}
               perPage={perPage}
               handlePageChange={handlePageChange}
+              displayPaginationBoxOutline={displayPaginationBoxOutline}
             />
           )}
         </div>
@@ -134,8 +143,13 @@ WidgetContainer.propTypes = {
   titleDrawerTag: PropTypes.string,
   titleDrawerCss: PropTypes.string,
   subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerLinkTitle: PropTypes.string,
+  subtitleDrawerTitle: PropTypes.string,
   subtitleDrawerTag: PropTypes.string,
+  subtitle2DrawerLinkText: PropTypes.string,
+  subtitle2DrawerLinkTitle: PropTypes.string,
+  subtitle2DrawerTag: PropTypes.string,
+  displayPaginationBoxOutline: PropTypes.bool,
+  widgetContainerTitleClass: PropTypes.string,
   subtitleDrawerCss: PropTypes.string,
 };
 
@@ -166,7 +180,12 @@ WidgetContainer.defaultProps = {
   titleDrawerTag: '',
   titleDrawerCss: '',
   subtitleDrawerLinkText: '',
-  subtitleDrawerLinkTitle: '',
+  subtitleDrawerTitle: '',
   subtitleDrawerTag: '',
+  subtitle2DrawerLinkText: '',
+  subtitle2DrawerLinkTitle: '',
+  subtitle2DrawerTag: '',
+  displayPaginationBoxOutline: false,
+  widgetContainerTitleClass: 'padding-x-3',
   subtitleDrawerCss: '',
 };

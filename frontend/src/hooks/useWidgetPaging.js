@@ -126,6 +126,23 @@ export default function useWidgetPaging(
         dataToExport = dataToUse.filter((row) => selectedRowsIds.includes(row.id));
       }
 
+      // Create data array if its missing (headers array must be populated correctly).
+      // The below code was to be able to re-use the export function for different data structures.
+      // More than likely this will not be needed.
+      const createMissingData = dataToExport.every((d) => !d.data);
+      if (createMissingData) {
+        dataToExport = dataToExport.map((d) => ({
+          ...d,
+          heading: d.name,
+          data: Object.keys(d)
+            .filter((key) => headers.includes(key))
+            .map((key) => ({
+              title: key,
+              value: d[key].toString().replace(/,/g, ''),
+            })),
+        }));
+      }
+
       // Create a header row.
       const headerData = headers.map((h) => ({ title: h, value: h }));
       dataToExport = [
