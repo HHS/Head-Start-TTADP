@@ -39,7 +39,7 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
     data: data.recipientsWithOhsStandardClass.pct,
-    route: 'qa-dashboard/quality-assurance-details',
+    route: 'qa-dashboard/recipients-with-class-scores-and-goals',
     filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
   },
 ]);
