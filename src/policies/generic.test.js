@@ -26,7 +26,7 @@ describe('Generic', () => {
 
   test('should correctly initialize with user', () => {
     const generic = new Generic(user);
-    expect(generic.user).toBe(user.get());
+    expect(generic.user).toStrictEqual(user.get());
   });
 
   test('should return true if user can access a region', () => {
