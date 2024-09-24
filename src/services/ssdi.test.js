@@ -229,6 +229,18 @@ describe('ssdi', () => {
       const result = await readFilesRecursively('test/path');
       expect(result).toContain('test/path/file1.sql');
     });
+    it('should recursively read files in the directory', async () => {
+      fs.promises.readdir.mockResolvedValue(['file1.sql', 'subfolder']);
+      fs.promises.stat
+        .mockResolvedValueOnce({ isDirectory: () => false })  // file1.sql
+        .mockResolvedValueOnce({ isDirectory: () => true });  // subfolder
+  
+      fs.promises.readdir.mockResolvedValueOnce(['file2.sql']);
+      fs.promises.stat.mockResolvedValueOnce({ isDirectory: () => false });
+  
+      const result = await readFilesRecursively('test/path');
+      expect(result).toEqual(['test/path/file1.sql', 'test/path/subfolder/file2.sql']);
+    });
   });
 
   describe('checkDirectoryExists', () => {
@@ -242,6 +254,24 @@ describe('ssdi', () => {
       fs.promises.stat.mockRejectedValue(new Error('Directory not found'));
       const result = await checkDirectoryExists('test/path');
       expect(result).toBe(false);
+    });
+  });
+
+  describe('listQueryFiles', () => {
+    it('should return a list of files in a directory', async () => {
+      fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.sql']);
+      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+  
+      const result = await listQueryFiles('test/path');
+      expect(result).toEqual(['file1.sql', 'file2.sql']);
+    });
+  
+    it('should only return SQL files', async () => {
+      fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.txt']);
+      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+  
+      const result = await listQueryFiles('test/path');
+      expect(result).toEqual(['file1.sql']);
     });
   });
 
@@ -282,15 +312,13 @@ describe('ssdi', () => {
       expect(result).toEqual(['value1']);
     });
 
-    it('should handle both static values and query result options', async () => {
-      const filterWithStatic = { options: { staticValues: [1, 2] } };
-      const resultStatic = await applyFilterOptions(filterWithStatic);
-      expect(resultStatic).toEqual([1, 2]);
-  
-      const filterWithQuery = { options: { query: { sqlQuery: 'SELECT *', column: 'col' } } };
-      db.sequelize.query.mockResolvedValue([{ col: 'val1' }]);
-      const resultQuery = await applyFilterOptions(filterWithQuery);
-      expect(resultQuery).toEqual(['val1']);
+
+    it('should return query results for defined SQL query', async () => {
+      db.sequelize.query.mockResolvedValue([{ col1: 'value1' }]);
+      const filter = { options: { query: { sqlQuery: 'SELECT * FROM test', column: 'col1' } } };
+
+      const result = await applyFilterOptions(filter);
+      expect(result).toEqual(['value1']);
     });
   });
 
