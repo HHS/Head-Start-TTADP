@@ -8,6 +8,7 @@ import {
   sanitizeFilename,
   generateFilterString,
   executeQuery,
+  isFile,
 } from '../../services/ssdi';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
