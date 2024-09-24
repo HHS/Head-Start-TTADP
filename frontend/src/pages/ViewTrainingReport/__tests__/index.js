@@ -73,7 +73,7 @@ const mockEvent = (data = {}) => ({
     eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     eventOrganizer: 'Regional PD Event (with National Centers)',
     'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-    targetPopulations: ['None'],
+    targetPopulations: ['Tgt Pop 1'],
     'Event Duration/# NC Days of Support': 'Series',
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
@@ -251,7 +251,7 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('Regional PD Event (with National Centers)')).toBeInTheDocument();
 
     // target populations
-    expect(screen.getByText('None')).toBeInTheDocument();
+    expect(screen.getByText('Tgt Pop 1')).toBeInTheDocument();
 
     // session 1
     expect(screen.getByText('Session 1')).toBeInTheDocument();
@@ -715,6 +715,30 @@ describe('ViewTrainingReport', () => {
 
     expect(screen.queryAllByText('IST visit').length).toBe(1);
     expect(await screen.findByText(/office 1, office 2/i)).toBeInTheDocument();
+  });
+
+  it('displays none for objectiveResources not set', async () => {
+    const e = mockEvent();
+    e.sessionReports = [{
+      ...e.sessionReports[0],
+      data: {
+        ...e.sessionReports[0].data,
+        objectiveResources: [{ value: '' }],
+        courses: [],
+        files: [],
+      },
+    }];
+
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
+    fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
+    fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
+
+    act(() => {
+      renderTrainingReport();
+    });
+
+    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(await screen.queryAllByText('None').length).toBe(3);
   });
 
   describe('formatOwnerName', () => {
