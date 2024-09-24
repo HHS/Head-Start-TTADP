@@ -80,27 +80,27 @@ describe('ssdi', () => {
     it('should return true for a valid file', async () => {
       const mockStat = { isFile: jest.fn().mockReturnValue(true) };
       fs.promises.stat.mockResolvedValue(mockStat);
-  
+
       const result = await isFile('valid/path');
       expect(result).toBe(true);
     });
-  
+
     it('should return false for a non-file path', async () => {
       const mockStat = { isFile: jest.fn().mockReturnValue(false) };
       fs.promises.stat.mockResolvedValue(mockStat);
-  
+
       const result = await isFile('invalid/path');
       expect(result).toBe(false);
     });
-  
+
     it('should return false if stat throws an error', async () => {
       fs.promises.stat.mockRejectedValue(new Error('File not found'));
-  
+
       const result = await isFile('invalid/path');
       expect(result).toBe(false);
     });
   });
-  
+
 
   describe('isValidJsonHeader', () => {
     it('should return true for a valid JSON header', () => {
@@ -126,12 +126,12 @@ describe('ssdi', () => {
       fs.promises.stat.mockRejectedValue(new Error('File not found'));
       await expect(readJsonHeaderFromFile('invalid/path.sql')).rejects.toThrow('File not found');
     });
-  
+
     it('should parse JSON header correctly from a valid file', async () => {
       const mockFileContent = 'JSON: { "name": "test" } */ SELECT * FROM test;';
       fs.promises.readFile.mockResolvedValue(mockFileContent);
       fs.promises.stat.mockResolvedValue({ mtime: new Date() });
-  
+
       const result = await readJsonHeaderFromFile('test/path.sql');
       expect(result.jsonHeader.name).toBe('test');
     });
@@ -174,7 +174,7 @@ describe('ssdi', () => {
         modificationTime: new Date(),
       };
       cache.set('test/path.sql', mockFile);
-      
+
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
 
@@ -200,10 +200,10 @@ describe('ssdi', () => {
     it('should parse and cache new file if modification time changes', async () => {
       const mockStat = { mtime: new Date() };
       fs.promises.stat.mockResolvedValue(mockStat);
-      
+
       const mockFileContent = 'JSON: { "name": "test" } */ SELECT * FROM test;';
       fs.promises.readFile.mockResolvedValue(mockFileContent);
-      
+
       const result = await readJsonHeaderFromFile('test/path.sql');
       expect(result).toEqual({
         jsonHeader: { name: 'test' },
@@ -215,11 +215,11 @@ describe('ssdi', () => {
     it('should handle JSON parsing errors gracefully', async () => {
       fs.promises.stat.mockResolvedValue({ mtime: new Date() });
       fs.promises.readFile.mockResolvedValue('INVALID JSON HEADER');
-      
+
       await expect(readJsonHeaderFromFile('test/path.sql')).rejects.toThrow('Invalid JSON header');
     });
   });
-  
+
   describe('readFilesRecursively', () => {
     it('should recursively read files in a directory', async () => {
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'folder']);
@@ -234,10 +234,10 @@ describe('ssdi', () => {
       fs.promises.stat
         .mockResolvedValueOnce({ isDirectory: () => false })  // file1.sql
         .mockResolvedValueOnce({ isDirectory: () => true });  // subfolder
-  
+
       fs.promises.readdir.mockResolvedValueOnce(['file2.sql']);
       fs.promises.stat.mockResolvedValueOnce({ isDirectory: () => false });
-  
+
       const result = await readFilesRecursively('test/path');
       expect(result).toEqual(['test/path/file1.sql', 'test/path/subfolder/file2.sql']);
     });
@@ -249,7 +249,7 @@ describe('ssdi', () => {
       const result = await checkDirectoryExists('test/path');
       expect(result).toBe(true);
     });
-  
+
     it('should return false if the directory does not exist', async () => {
       fs.promises.stat.mockRejectedValue(new Error('Directory not found'));
       const result = await checkDirectoryExists('test/path');
@@ -261,15 +261,15 @@ describe('ssdi', () => {
     it('should return a list of files in a directory', async () => {
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.sql']);
       fs.promises.stat.mockResolvedValue({ isFile: () => true });
-  
+
       const result = await listQueryFiles('test/path');
       expect(result).toEqual(['file1.sql', 'file2.sql']);
     });
-  
+
     it('should only return SQL files', async () => {
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.txt']);
       fs.promises.stat.mockResolvedValue({ isFile: () => true });
-  
+
       const result = await listQueryFiles('test/path');
       expect(result).toEqual(['file1.sql']);
     });
