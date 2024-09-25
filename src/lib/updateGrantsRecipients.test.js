@@ -955,7 +955,7 @@ describe('Update grants, program personnel, and recipients', () => {
     // simulate updating an existing grant replacement with null replacementDate
     await GrantReplacement.update(
       { replacementDate: null },
-      { where: { replacedGrantId: grant.id }, individualHooks: true }
+      { where: { replacedGrantId: grant.id }, individualHooks: true },
     );
     const grantReplacementWithNullDate = await GrantReplacement.findOne({
       where: { replacedGrantId: 8317 },
@@ -972,7 +972,7 @@ describe('Update grants, program personnel, and recipients', () => {
     // simulate updating an existing grant replacement with null grantReplacementTypeId
     await GrantReplacement.update(
       { grantReplacementTypeId: null },
-      { where: { replacedGrantId: grant.id }, individualHooks: true }
+      { where: { replacedGrantId: grant.id }, individualHooks: true },
     );
     const grantReplacementWithNullType = await GrantReplacement.findOne({
       where: { replacedGrantId: 8317 },
