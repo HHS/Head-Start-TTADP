@@ -44,7 +44,7 @@ module.exports = {
       }, { transaction });
 
       // Create GrantReplacement table
-      await queryInterface.createTable('GrantReplacement', {
+      await queryInterface.createTable('GrantReplacements', {
         id: {
           type: Sequelize.INTEGER,
           autoIncrement: true,
@@ -91,7 +91,7 @@ module.exports = {
       }, { transaction });
 
       await queryInterface.sequelize.query(/* sql */`
-        INSERT INTO "GrantReplacement" (
+        INSERT INTO "GrantReplacements" (
           "replacedGrantId",
           "replacingGrantId",
           "replacementDate",
@@ -134,7 +134,7 @@ module.exports = {
         allowNull: true,
       }, { transaction });
 
-      await queryInterface.dropTable('GrantReplacement', { transaction });
+      await queryInterface.dropTable('GrantReplacements', { transaction });
       await queryInterface.dropTable('GrantReplacementTypes', { transaction });
     },
   ),

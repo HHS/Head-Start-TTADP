@@ -3,11 +3,13 @@ import { REPORT_STATUSES, TRAINING_REPORT_STATUSES, REASONS } from '@ttahub/comm
 import {
   ActivityReport,
   Grant,
+  GrantReplacements,
   Recipient,
   SessionReportPilot,
   Topic,
   sequelize,
 } from '../models';
+import { mergeIncludes } from '../scopes';
 
 export const getAllTopicsForWidget = async () => Topic.findAll({
   attributes: ['id', 'name', 'deletedAt'],
@@ -61,25 +63,32 @@ export function baseTRScopes(scopes) {
 export async function getAllRecipientsFiltered(scopes) {
   return Recipient.findAll({
     attributes: [
-      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'],
+      [sequelize.fn('DISTINCT', sequelize.col('"Recipient"."id"')), 'id'], // This is required for scopes.
+      [sequelize.col('grants.regionId'), 'regionId'],
     ],
     raw: true,
+    where: {
+      '$grants.endDate$': { [Op.gt]: '2020-08-31' },
+      '$grants.deleted$': { [Op.ne]: true },
+      [Op.or]: [
+        { '$grants.replacedGrantReplacements.replacementDate$': null },
+        { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+      ],
+    },
     include: [
       {
-        attributes: ['regionId'], // This is required for scopes.
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grants',
         required: true,
-        where: {
-          [Op.and]: [
-            scopes.grant,
-            { endDate: { [Op.gt]: '2020-08-31' } },
-            { deleted: { [Op.ne]: true } },
-            {
-              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
-            },
-          ],
-        },
+        attributes: [],
+        where: scopes.grant.where,
+        include: [
+          ...mergeIncludes(scopes.grant.include, [{
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            attributes: [],
+          }]),
+        ],
       },
     ],
   });

@@ -4,7 +4,16 @@ import axios from 'axios';
 import fs from 'mz/fs';
 import updateGrantsRecipients, { getPersonnelField, processFiles, updateCDIGrantsWithOldGrantData } from './updateGrantsRecipients';
 import db, {
-  sequelize, Recipient, Goal, Grant, Program, ZALGrant, ActivityRecipient, ProgramPersonnel,
+  sequelize,
+  Recipient,
+  Goal,
+  Grant,
+  GrantReplacement,
+  GrantReplacementType,
+  Program,
+  ZALGrant,
+  ActivityRecipient,
+  ProgramPersonnel,
 } from '../models';
 
 jest.mock('axios');
@@ -943,25 +952,42 @@ describe('Update grants, program personnel, and recipients', () => {
   it('includes the inactivated date', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
-    // simulate updating an existing grant with null inactivationDate
-    await grant.update({ inactivationDate: null }, { individualHooks: true });
-    const grantWithNullinactivationDate = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithNullinactivationDate.inactivationDate).toBeNull();
+    // simulate updating an existing grant replacement with null replacementDate
+    await GrantReplacement.update(
+      { replacementDate: null },
+      { where: { replacedGrantId: grant.id }, individualHooks: true }
+    );
+    const grantReplacementWithNullDate = await GrantReplacement.findOne({
+      where: { replacedGrantId: 8317 },
+    });
+    expect(grantReplacementWithNullDate.replacementDate).toBeNull();
     await processFiles();
-    const grantWithinactivationDate = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithinactivationDate.inactivationDate).toEqual(new Date('2022-07-31'));
+    const grantReplacement = await GrantReplacement.findOne({ where: { replacedGrantId: 8317 } });
+    expect(grantReplacement.replacementDate).toEqual(new Date('2022-07-31'));
   });
 
   it('includes the inactivated reason', async () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
-    // simulate updating an existing grant with null inactivationReason
-    await grant.update({ inactivationReason: null }, { individualHooks: true });
-    const grantWithNullinactivationReason = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithNullinactivationReason.inactivationReason).toBeNull();
+    // simulate updating an existing grant replacement with null grantReplacementTypeId
+    await GrantReplacement.update(
+      { grantReplacementTypeId: null },
+      { where: { replacedGrantId: grant.id }, individualHooks: true }
+    );
+    const grantReplacementWithNullType = await GrantReplacement.findOne({
+      where: { replacedGrantId: 8317 },
+    });
+    expect(grantReplacementWithNullType.grantReplacementTypeId).toBeNull();
     await processFiles();
-    const grantWithinactivationReason = await Grant.findOne({ where: { id: 8317 } });
-    expect(grantWithinactivationReason.inactivationReason).toEqual('Replaced');
+    const grantReplacements = await GrantReplacement.findAll({
+      where: { replacedGrantId: 8317 },
+      include: [{
+        model: GrantReplacementType,
+        attributes: ['name'],
+        as: 'grantReplacementType',
+      }],
+    });
+    expect(grantReplacements[0].grantReplacementType.name).toEqual('Replaced');
   });
 
   describe('updateCDIGrantsWithOldGrantData', () => {

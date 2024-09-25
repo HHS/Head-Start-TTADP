@@ -33,8 +33,10 @@ export function noActivityWithin(dates) {
   const [startActivityDate, endActivityDate] = dates[0].split('-');
 
   return {
-    id: {
-      [Op.in]: grantsMissingActivitySql(startActivityDate, endActivityDate),
+    where: {
+      id: {
+        [Op.in]: grantsMissingActivitySql(startActivityDate, endActivityDate),
+      },
     },
   };
 }

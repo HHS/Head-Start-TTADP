@@ -3,6 +3,7 @@ import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
 import {
   Grant,
+  GrantReplacements,
   Recipient,
   CollaboratorType,
   Program,
@@ -32,7 +33,7 @@ import {
   GOAL_STATUS,
   CREATION_METHOD,
 } from '../constants';
-import filtersToScopes from '../scopes';
+import filtersToScopes, { mergeIncludes } from '../scopes';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
 import {
@@ -137,10 +138,27 @@ export async function allRecipients() {
               },
             },
             {
-              [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+              [Op.or]: [
+                { '$replacedGrantReplacements.replacementDate$': null },
+                { '$replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                { '$replacingGrantReplacements.replacementDate$': null },
+                { '$replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+              ],
             },
           ],
         },
+        include: [
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            attributes: [],
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacingGrantReplacements',
+            attributes: [],
+          },
+        ],
       },
     ],
   });
@@ -186,7 +204,12 @@ export async function recipientById(recipientId, grantScopes) {
                       },
                     },
                     {
-                      [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
+                      [Op.or]: [
+                        { '$replacedGrantReplacements.replacementDate$': null },
+                        { '$replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                        { '$replacingGrantReplacements.replacementDate$': null },
+                        { '$replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                      ],
                     },
                   ],
                 },
@@ -199,6 +222,16 @@ export async function recipientById(recipientId, grantScopes) {
             attributes: ['name', 'programType'],
             model: Program,
             as: 'programs',
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            attributes: [],
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacingGrantReplacements',
+            attributes: [],
           },
         ],
       },
@@ -246,40 +279,57 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
           ],
         },
       ],
+      [Op.and]: [
+        { '$grants.deleted$': { [Op.ne]: true } },
+        {
+          [Op.and]: { '$grants.regionId$': userRegions },
+        },
+        {
+          [Op.or]: [
+            {
+              '$grants.status$': 'Active',
+            },
+            {
+              [Op.and]: [
+                {
+                  '$grants.endDate$': {
+                    [Op.gt]: '2020-08-31',
+                  },
+                },
+                {
+                  [Op.or]: [
+                    { '$grants.replacedGrantReplacements.replacementDate$': null },
+                    { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                    { '$grants.replacingGrantReplacements.replacementDate$': null },
+                    { '$grants.replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
     },
     include: [{
       attributes: [],
       model: Grant.unscoped(),
       as: 'grants',
       required: true,
-      where: [{
-        [Op.and]: [
-          { deleted: { [Op.ne]: true } },
+      where: scopes.where,
+      include: [
+        ...mergeIncludes(scopes.include, [
           {
-            [Op.and]: { regionId: userRegions },
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            attributes: [],
           },
-          { [Op.and]: scopes },
           {
-            [Op.or]: [
-              {
-                status: 'Active',
-              },
-              {
-                [Op.and]: [
-                  {
-                    endDate: {
-                      [Op.gt]: '2020-08-31',
-                    },
-                  },
-                  {
-                    [Op.or]: [{ inactivationDate: null }, { inactivationDate: { [Op.gt]: '2020-08-31' } }],
-                  },
-                ],
-              },
-            ],
+            model: GrantReplacements,
+            as: 'replacingGrantReplacements',
+            attributes: [],
           },
-        ],
-      }],
+        ]),
+      ],
     }],
     subQuery: false,
     raw: true,
