@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
+import UserContext from '../../UserContext';
 
 const recipient = {
   id: 1,
@@ -32,12 +33,14 @@ const recipient = {
 const renderRecipientsWithClassScoresAndGoalsWidget = (data) => {
   const history = createMemoryHistory();
   render(
-    <Router history={history}>
-      <RecipientsWithClassScoresAndGoalsWidget
-        data={data}
-        loading={false}
-      />
-    </Router>,
+    <UserContext.Provider value={{ user: { id: 1 } }}>
+      <Router history={history}>
+        <RecipientsWithClassScoresAndGoalsWidget
+          data={data}
+          loading={false}
+        />
+      </Router>
+    </UserContext.Provider>,
   );
 };
 
