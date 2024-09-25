@@ -30,8 +30,6 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportId',
         as: 'activityReports',
       });
-      Grant.hasMany(models.Grant, { foreignKey: 'oldGrantId', as: 'oldGrants' });
-      Grant.belongsTo(models.Grant, { foreignKey: 'oldGrantId', as: 'grant' });
 
       Grant.addScope('defaultScope', {
         include: [

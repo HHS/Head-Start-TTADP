@@ -17,6 +17,7 @@ import {
   ActivityRecipient,
   File,
   Grant,
+  GrantReplacements,
   Recipient,
   OtherEntity,
   Goal,
@@ -638,9 +639,25 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
-    include: [{
-      model: Grant, as: 'grant', required: false,
-    }],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        required: false,
+        include: [
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            required: false,
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacingGrantReplacements',
+            required: false,
+          },
+        ],
+      },
+    ],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({
@@ -1088,6 +1105,12 @@ export async function possibleRecipients(regionId, activityReportId = null) {
             attributes: [],
             required: false,
           },
+          {
+            model: GrantReplacements,
+            as: 'replacements',
+            attributes: [],
+            required: false,
+          },
         ],
       },
     ],
@@ -1097,7 +1120,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
         { '$grants.status$': 'Active' },
         { ...(activityReportId ? { '$grants.activityRecipients.activityReportId$': activityReportId } : {}) },
         {
-          '$grants.inactivationDate$': {
+          '$grants.replacements.replacementDate$': {
             [Op.gte]: sequelize.literal(`
           CASE
             WHEN ${activityReportId ? 'true' : 'false'}

@@ -19,9 +19,9 @@ const models = {
  *
  * an object roughly like this
  * {
- *   activityReport: SEQUELIZE OP,
- *   grant: SEQUELIZE OP,
- *   recipient: SEQUELIZE OP,
+ *   activityReport: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   grant: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
+ *   recipient: { where: SEQUELIZE OP, include: SEQUELIZE INCLUDE },
  * }
  *
  * options is right now only {
@@ -54,3 +54,27 @@ export default async function filtersToScopes(filters, options) {
     return scopes;
   }, {});
 }
+
+/**
+ * Merges the provided includes with the required includes, ensuring no duplicates.
+ *
+ * @param {Array} includes - The initial array of Sequelize includes.
+ * @param {Array} requiredIncludes - The array of required Sequelize includes
+ *                                   that must be present.
+ * @returns {Array} - The merged array of includes.
+ */
+export const mergeIncludes = (includes, requiredIncludes) => {
+  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+    return requiredIncludes;
+  }
+
+  const outIncludes = [...includes];
+
+  requiredIncludes.forEach((requiredInclude) => {
+    if (!outIncludes.some((include) => include.as && include.as === requiredInclude.as)) {
+      outIncludes.push(requiredInclude);
+    }
+  });
+
+  return outIncludes;
+};

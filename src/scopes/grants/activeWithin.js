@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { GrantReplacement } from '../../models';
 
 export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => [
@@ -11,7 +12,10 @@ export function activeBefore(dates) {
   ], []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
+    include: [],
   };
 }
 
@@ -23,17 +27,34 @@ export function activeAfter(dates) {
         [Op.gte]: new Date(date),
       },
       [Op.or]: [{
-        inactivationDate: {
+        '$replacedGrantReplacements.replacementDate$': {
           [Op.gte]: new Date(date),
         },
       }, {
-        inactivationDate: null,
+        '$replacedGrantReplacements.replacementDate$': null,
+      }, {
+        '$replacingGrantReplacements.replacementDate$': {
+          [Op.gte]: new Date(date),
+        },
+      }, {
+        '$replacingGrantReplacements.replacementDate$': null,
       }],
     },
   ], []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
+    include: [{
+      model: GrantReplacement,
+      as: 'replacedGrantReplacements',
+      attributes: [],
+    }, {
+      model: GrantReplacement,
+      as: 'replacingGrantReplacements',
+      attributes: [],
+    }],
   };
 }
 
@@ -58,17 +79,34 @@ export function activeWithinDates(dates) {
           [Op.gte]: new Date(sd),
         },
         [Op.or]: [{
-          inactivationDate: {
+          '$replacedGrantReplacements.replacementDate$': {
             [Op.gte]: new Date(sd),
           },
         }, {
-          inactivationDate: null,
+          '$replacedGrantReplacements.replacementDate$': null,
+        }, {
+          '$replacingGrantReplacements.replacementDate$': {
+            [Op.gte]: new Date(sd),
+          },
+        }, {
+          '$replacingGrantReplacements.replacementDate$': null,
         }],
       },
     ];
   }, []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
+    include: [{
+      model: GrantReplacement,
+      as: 'replacedGrantReplacements',
+      attributes: [],
+    }, {
+      model: GrantReplacement,
+      as: 'replacingGrantReplacements',
+      attributes: [],
+    }],
   };
 }

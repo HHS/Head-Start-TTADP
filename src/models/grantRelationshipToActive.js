@@ -1,5 +1,7 @@
 const { Model } = require('sequelize');
 
+const suppressSuccessMessage = process.env.SUPPRESS_SUCCESS_MESSAGE === 'true';
+
 export default (sequelize, DataTypes) => {
   class GrantRelationshipToActive extends Model {
     static associate(models) {
@@ -14,7 +16,9 @@ export default (sequelize, DataTypes) => {
     static async refresh() {
       try {
         await sequelize.query('REFRESH MATERIALIZED VIEW "GrantRelationshipToActive";');
-        console.log('Materialized view refreshed successfully');
+        if (!suppressSuccessMessage) {
+          console.log('Materialized view refreshed successfully');
+        }
       } catch (error) {
         console.error('Error refreshing materialized view:', error);
         throw error;

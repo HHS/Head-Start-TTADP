@@ -24,9 +24,9 @@ module.exports = {
                 NULL::int AS "activeGrantId",
                 ARRAY[g."id"] AS "visited_grantIds"  -- Initialize the array with the first grantId
             FROM "Grants" g
-            JOIN "GrantReplacement" gr1
+            JOIN "GrantReplacements" gr1
             ON g.id = gr1."replacingGrantId"
-            LEFT JOIN "GrantReplacement" gr2
+            LEFT JOIN "GrantReplacements" gr2
             ON g.id = gr2."replacedGrantId"
             WHERE g.status != 'Active'
             AND gr2.id IS NULL
@@ -39,7 +39,7 @@ module.exports = {
                 NULL::int AS "activeGrantId",
                 ARRAY[g."id"] AS "visited_grantIds"  -- Initialize the array with the first grantId
             FROM "Grants" g
-            JOIN "GrantReplacement" gr
+            JOIN "GrantReplacements" gr
             ON g.id = gr."replacingGrantId"
             OR g.id = gr."replacedGrantId"
             WHERE g.status != 'Active'
@@ -53,7 +53,7 @@ module.exports = {
                 rcte."activeGrantId",
                 "visited_grantIds" || g."id"  -- Append the current grantId to the array
             FROM recursive_cte rcte
-            JOIN "GrantReplacement" gr
+            JOIN "GrantReplacements" gr
             ON rcte."grantId" = gr."replacingGrantId"
             JOIN "Grants" g
             ON g."id" = gr."replacedGrantId"

@@ -1,4 +1,5 @@
 /* eslint-disable import/prefer-default-export */
+import sequelize, { Op } from 'sequelize';
 import { map, pickBy } from 'lodash';
 import { activeBefore, activeAfter, activeWithinDates } from './activeWithin';
 import { withRegion, withoutRegion } from './region';
@@ -70,7 +71,7 @@ export function grantsFiltersToScopes(filters, options, userId) {
     return condition in topicToQuery[topic];
   });
 
-  return map(validFilters, (query, topicAndCondition) => {
+  const scopes = map(validFilters, (query, topicAndCondition) => {
     const [topic, condition] = topicAndCondition.split('.');
 
     if ((topic === 'startDate' || topic === 'endDate') && isSubset) {
@@ -79,4 +80,12 @@ export function grantsFiltersToScopes(filters, options, userId) {
 
     return topicToQuery[topic][condition]([query].flat(), options, userId);
   });
+
+  const whereClauses = scopes.map((scope) => scope.where);
+  const includeClauses = scopes.map((scope) => scope.include).filter(Boolean);
+
+  return {
+    where: whereClauses.length > 0 ? { [Op.and]: whereClauses } : {},
+    include: includeClauses.length > 0 ? includeClauses : [],
+  };
 }
