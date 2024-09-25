@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { createRef } from 'react';
 import {
   render,
   waitFor,
@@ -22,7 +22,7 @@ const TEST_DATA = [{
 
 const renderBarGraph = (data = TEST_DATA) => {
   act(() => {
-    render(<BarGraph data={data} />);
+    render(<BarGraph data={data} widgetRef={createRef()} />);
   });
 };
 

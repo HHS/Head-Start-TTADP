@@ -1,0 +1,80 @@
+@use "../colors.scss" as *;
+
+.ttahub-legend-control label::after {
+  height: 3px;
+  content: " ";
+  width: 80px;
+  display: inline-block;
+  margin-left: 10px;
+  margin-bottom: 2px;
+}
+
+.ttahub-legend-control.circle label::after {
+  background-color: $ttahub-blue; /* Technical assistance */
+}
+
+.ttahub-legend-control.triangle label::after {
+  border-top: 3px dashed $ttahub-orange; /* training */
+  height: 3px;
+  background-color: #ffffff00;
+}
+
+.ttahub-legend-control.square label::after {
+  border-top: 3px dashed $ttahub-medium-deep-teal; /* both */
+  height: 3px;
+  background-color: #ffffff00;
+}
+
+.ttahub-legend-control.usa-checkbox::after {
+  content: "";
+  height: 9px;
+  position: absolute;
+  right: 4.2rem;
+  top: 7px;
+  width: 9px;
+}
+
+/* both */
+.ttahub-legend-control.usa-checkbox.square::after {
+  background: $ttahub-medium-deep-teal;
+}
+
+/* technical assistance */
+.ttahub-legend-control.usa-checkbox.circle::after {
+  background: $ttahub-blue;
+  border-radius: 50%;
+  height: 12px;
+  width: 12px;
+}
+
+/* training */
+.ttahub-legend-control.usa-checkbox.triangle::after {
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid $ttahub-orange;
+  height: 0;
+  width: 0;
+  right: 4rem;
+  z-index: 1;
+}
+
+/* this adds a white line around the triangle to make it stand out a bit more*/
+.ttahub-legend-control.usa-checkbox.triangle::before {
+  content: "";
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 11px solid white;
+  height: 0;
+  width: 0;
+  position: absolute;
+  right: calc(4rem - 1px);
+  top: 6px;
+  z-index: 1;
+}
+
+@media (max-width: 1606px) {
+  .ttahub-legend-control {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+}
