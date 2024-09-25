@@ -23,6 +23,7 @@ import {
 import {
   createDateFilter,
   goalNameFilter,
+  statusFilter,
 } from '../../components/filter/goalFilters';
 
 const QA_DASHBOARD_FILTER_KEY = 'qa-dashboard';
@@ -50,6 +51,7 @@ const QA_DASHBOARD_FILTER_CONFIG = [
   domainClassroomOrganizationFilter,
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
+  statusFilter,
 ];
 
 QA_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
