@@ -190,7 +190,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
         )}
       SubtitleDrawer={(
         <>
-          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-y-2">
+          <div className="smart-hub--table-widget-subtitle margin-x-0 margin-bottom-2">
             <DrawerTriggerButton drawerTriggerRef={subtitleRef} removeLeftMargin>
               How are thresholds met?
             </DrawerTriggerButton>

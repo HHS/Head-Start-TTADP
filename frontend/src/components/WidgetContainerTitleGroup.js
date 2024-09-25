@@ -27,10 +27,12 @@ const WidgetContainerTitleGroup = ({
     <div className={`smart-hub--table-widget-container ${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
         <div>
-          <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">
-            {title}
+          <div className="display-flex">
+            <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">
+              {title}
+            </h2>
             <TitleDrawer />
-          </h2>
+          </div>
           {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null}
           {subtitle2 && (
             <div>
