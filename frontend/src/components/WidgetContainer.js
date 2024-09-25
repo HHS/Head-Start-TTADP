@@ -26,24 +26,18 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
-    enableCheckboxes,
-    exportRows,
+    menuItems,
     footNote,
     displayTable,
     setDisplayTable,
-    titleDrawerText,
-    titleDrawerTitle,
-    titleDrawerTag,
-    titleDrawerCss,
-    subtitleDrawerLinkText,
-    subtitleDrawerTitle,
-    subtitleDrawerTag,
-    subtitle2DrawerLinkText,
-    subtitle2DrawerLinkTitle,
-    subtitle2DrawerTag,
-    displayPaginationBoxOutline,
+    enableCheckboxes,
+    exportRows,
+
+    // slot components
+    SubtitleDrawer,
+    TitleDrawer,
     widgetContainerTitleClass,
-    subtitleDrawerCss,
+    displayPaginationBoxOutline,
   },
 ) {
   return (
@@ -66,19 +60,11 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        TitleDrawer={() => TitleDrawer || null}
+        SubtitleDrawer={() => SubtitleDrawer || null}
+        menuItems={menuItems}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
-        titleDrawerText={titleDrawerText}
-        titleDrawerTitle={titleDrawerTitle}
-        titleDrawerTag={titleDrawerTag}
-        titleDrawerCss={titleDrawerCss}
-        subtitleDrawerLinkText={subtitleDrawerLinkText}
-        subtitleDrawerTitle={subtitleDrawerTitle}
-        subtitleDrawerTag={subtitleDrawerTag}
-        subtitle2DrawerLinkText={subtitle2DrawerLinkText}
-        subtitle2DrawerLinkTitle={subtitle2DrawerLinkTitle}
-        subtitle2DrawerTag={subtitle2DrawerTag}
-        subtitleDrawerCss={subtitleDrawerCss}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -133,24 +119,22 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
-  enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
+  menuItems: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    onClick: PropTypes.func,
+  })),
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
-  titleDrawerText: PropTypes.string,
-  titleDrawerTitle: PropTypes.string,
-  titleDrawerTag: PropTypes.string,
-  titleDrawerCss: PropTypes.string,
-  subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerTitle: PropTypes.string,
-  subtitleDrawerTag: PropTypes.string,
-  subtitle2DrawerLinkText: PropTypes.string,
-  subtitle2DrawerLinkTitle: PropTypes.string,
-  subtitle2DrawerTag: PropTypes.string,
-  displayPaginationBoxOutline: PropTypes.bool,
+
+  // Drawer components
+  SubtitleDrawer: PropTypes.node,
+  TitleDrawer: PropTypes.node,
+
   widgetContainerTitleClass: PropTypes.string,
-  subtitleDrawerCss: PropTypes.string,
+  displayPaginationBoxOutline: PropTypes.bool,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -170,22 +154,16 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
-  enableCheckboxes: false,
-  exportRows: null,
+  menuItems: [],
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
-  titleDrawerText: '',
-  titleDrawerTitle: '',
-  titleDrawerTag: '',
-  titleDrawerCss: '',
-  subtitleDrawerLinkText: '',
-  subtitleDrawerTitle: '',
-  subtitleDrawerTag: '',
-  subtitle2DrawerLinkText: '',
-  subtitle2DrawerLinkTitle: '',
-  subtitle2DrawerTag: '',
-  displayPaginationBoxOutline: false,
+  enableCheckboxes: false,
+  exportRows: null,
+
+  // Drawer components
+  SubtitleDrawer: null,
+  TitleDrawer: null,
   widgetContainerTitleClass: 'padding-x-3',
-  subtitleDrawerCss: '',
+  displayPaginationBoxOutline: false,
 };

@@ -10,11 +10,11 @@ const renderWidgetContainer = (
   title = 'Widget Container Title',
   subtitle = 'Widget Container Subtitle',
   showPaging = [false, false],
-  handlePageChange = () => {},
+  handlePageChange = jest.fn(),
   error = null,
   showHeaderBorder = true,
   enableCheckboxes = false,
-  exportRows = () => {},
+  exportRows = jest.fn(),
   footNote = null,
   subtitle2 = null,
 ) => {
@@ -36,8 +36,20 @@ const renderWidgetContainer = (
         handlePageChange={handlePageChange}
         error={error}
         showHeaderBorder={showHeaderBorder}
-        enableCheckboxes={enableCheckboxes}
-        exportRows={exportRows}
+        menuItems={enableCheckboxes ? [
+          {
+            label: 'Export selected rows',
+            onClick: () => {
+              exportRows('selected');
+            },
+          },
+          {
+            label: 'Export table',
+            onClick: () => {
+              exportRows('all');
+            },
+          },
+        ] : []}
         footNote={footNote}
         subtitle2={subtitle2}
       >

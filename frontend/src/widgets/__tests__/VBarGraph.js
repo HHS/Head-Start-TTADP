@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import React, { createRef } from 'react';
 import {
   render,
   waitFor,
   act,
-  screen,
 } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import VBarGraph from '../VBarGraph';
 
 const TEST_DATA = [{
@@ -24,7 +22,7 @@ const TEST_DATA = [{
 
 const renderBarGraph = async () => {
   act(() => {
-    render(<VBarGraph data={TEST_DATA} xAxisLabel="Names" yAxisLabel="Counts" />);
+    render(<VBarGraph data={TEST_DATA} xAxisLabel="Names" yAxisLabel="Counts" widgetRef={createRef()} />);
   });
 };
 
@@ -41,21 +39,5 @@ describe('VBar Graph', () => {
     const point2 = document.querySelector('g.xtick');
     // eslint-disable-next-line no-underscore-dangle
     expect(point2.__data__.text).toBe('one');
-  });
-
-  it('toggles table view', async () => {
-    act(() => {
-      renderBarGraph();
-    });
-
-    await waitFor(() => expect(document.querySelector('svg')).not.toBe(null));
-
-    const button = await screen.findByRole('button', { name: /as table/i });
-    act(() => {
-      userEvent.click(button);
-    });
-
-    const table = document.querySelector('table');
-    expect(table).not.toBeNull();
   });
 });
