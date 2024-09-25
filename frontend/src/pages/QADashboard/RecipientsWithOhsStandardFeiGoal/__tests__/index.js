@@ -44,7 +44,8 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
       RecipientsWithNoTta: [],
     };
     renderRecipientsWithOhsStandardFeiGoal(emptyData);
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(2);
+
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
   });
 
@@ -128,7 +129,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     };
     renderRecipientsWithOhsStandardFeiGoal(data);
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(2);
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
 
     expect(screen.getByText(/Recipient 1/i)).toBeInTheDocument();
@@ -237,7 +238,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     };
     renderRecipientsWithOhsStandardFeiGoal(data, u);
 
-    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(2);
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
     const filters = await screen.findByRole('button', { name: /open filters for this page/i });
 
     act(() => {
