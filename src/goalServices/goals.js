@@ -1672,7 +1672,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
         if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
           grantLookup[grant.id] = relationship.activeGrantId;
         }
-      })
+      });
     }
   });
 
