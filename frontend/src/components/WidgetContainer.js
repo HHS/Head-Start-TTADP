@@ -36,14 +36,14 @@ export default function WidgetContainer(
     // slot components
     SubtitleDrawer,
     TitleDrawer,
-
+    widgetContainerTitleClass,
     displayPaginationBoxOutline,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-x-3"
+        className={widgetContainerTitleClass}
         title={title}
         subtitle={subtitle}
         subtitle2={subtitle2}
@@ -131,6 +131,7 @@ WidgetContainer.propTypes = {
   SubtitleDrawer: PropTypes.node,
   TitleDrawer: PropTypes.node,
 
+  widgetContainerTitleClass: PropTypes.string,
   displayPaginationBoxOutline: PropTypes.bool,
   enableCheckboxes: PropTypes.bool,
   exportRows: PropTypes.func,
@@ -163,6 +164,6 @@ WidgetContainer.defaultProps = {
   // Drawer components
   SubtitleDrawer: null,
   TitleDrawer: null,
-
+  widgetContainerTitleClass: 'padding-x-3',
   displayPaginationBoxOutline: false,
 };

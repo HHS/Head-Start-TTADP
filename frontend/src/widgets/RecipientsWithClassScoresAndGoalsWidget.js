@@ -13,6 +13,7 @@ import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constan
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 import RecipientCard from '../pages/QADashboard/Components/RecipientCard';
+import './QaDetailsDrawer.scss';
 
 function RecipientsWithClassScoresAndGoalsWidget({
   data,
@@ -175,9 +176,11 @@ function RecipientsWithClassScoresAndGoalsWidget({
       className="padding-3"
       displayPaginationBoxOutline
       showHeaderBorder={false}
+      widgetContainerTitleClass="padding-top-2"
+      titleDrawerCss="smart-hub--qa-details--title-drawer"
     >
       <div className="bg-white padding-">
-        <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom padding-x-3">
+        <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
