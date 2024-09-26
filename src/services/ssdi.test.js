@@ -169,30 +169,30 @@ describe('ssdi', () => {
     it('should return cached file if modification time is unchanged', async () => {
       const mockFile = {
         jsonHeader: {
-          "name": "Sample Header",
-          "description": {
-            "standard": "A standard description",
-            "technical": "A technical description"
+          name: 'Sample Header',
+          description: {
+            standard: 'A standard description',
+            technical: 'A technical description',
           },
-          "output": {
-            "defaultName": "Sample Output",
-            "schema": [
+          output: {
+            defaultName: 'Sample Output',
+            schema: [
               {
-                "columnName": "sample_column",
-                "type": "string",
-                "nullable": true,
-                "description": "A sample column description"
-              }
-            ]
+                columnName: 'sample_column',
+                type: 'string',
+                nullable: true,
+                description: 'A sample column description',
+              },
+            ],
           },
-          "filters": [
+          filters: [
             {
-              "name": "sampleFilter",
-              "type": "string",
-              "display": "Sample Filter",
-              "description": "This is a sample filter"
-            }
-          ]
+              name: 'sampleFilter',
+              type: 'string[]',
+              display: 'Sample Filter',
+              description: 'This is a sample filter',
+            },
+          ],
         },
         query: 'SELECT * FROM test;',
         modificationTime: new Date(),
@@ -357,11 +357,11 @@ describe('ssdi', () => {
       name: 'Test User',
       permissions: ['dataRequests/ohs', 'dataRequests/internal'],
     };
-  
+
     beforeEach(() => {
       jest.resetAllMocks();
     });
-  
+
     it('should return a list of SQL files when the user has permission', async () => {
       // Mock the file system and permissions
       fs.promises.readdir.mockResolvedValue([
@@ -400,20 +400,20 @@ describe('ssdi', () => {
       }
       */
      SELECT * FROM test;`);
-  
+
       // Mock the permission check to always return true
       const checkFolderPermissionsMock = jest
         .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
         .mockResolvedValue(true);
-  
+
       const result = await listQueryFiles('test/path', mockUser);
-  
+
       // Assert the result is as expected
       expect(result).toEqual([
         expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
         expect.objectContaining({ filePath: expect.stringContaining('file2.sql') }),
       ]);
-  
+
       // Assert that permissions were checked
       expect(checkFolderPermissionsMock).toHaveBeenNthCalledWith(
         1,
@@ -429,52 +429,52 @@ describe('ssdi', () => {
         'ssdi_restricted', // The restriction string
       );
     });
-  
+
     it('should only return SQL files when user has permission and ignore non-SQL files', async () => {
       // Mock the file system and permissions
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.txt']);
       fs.promises.stat.mockResolvedValue({ isFile: () => true });
-  
+
       // Mock the permission check to always return true
       const checkFolderPermissionsMock = jest
         .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
         .mockResolvedValue(true);
-  
+
       const result = await listQueryFiles('test/path', mockUser);
-  
+
       // Assert that only SQL files are returned
       expect(result).toEqual([
         expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
       ]);
-  
+
       // Assert that permissions were checked
       expect(checkFolderPermissionsMock).toHaveBeenCalled();
     });
-  
+
     it('should skip files if the user does not have permission', async () => {
       // Mock the file system and permissions
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.sql']);
       fs.promises.stat.mockResolvedValue({ isFile: () => true });
-  
+
       // Mock the permission check to return false for one file
       const checkFolderPermissionsMock = jest
         .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
         .mockImplementation((user, path) => {
           return path.includes('file1.sql') ? true : false;
         });
-  
+
       const result = await listQueryFiles('test/path', mockUser);
-  
+
       // Assert that only the file with permission is returned
       expect(result).toEqual([
         expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
       ]);
-  
+
       // Assert that permissions were checked
       expect(checkFolderPermissionsMock).toHaveBeenCalled();
     });
   });
-  
+
 
   describe('createQueryFile', () => {
     it('should create a query file object from a cached file', () => {
@@ -609,30 +609,30 @@ describe('ssdi', () => {
     it('should read and process filters from a file', async () => {
       const mockFile = {
         jsonHeader: {
-          "name": "Sample Header",
-          "description": {
-            "standard": "A standard description",
-            "technical": "A technical description"
+          name: 'Sample Header',
+          description: {
+            standard: 'A standard description',
+            technical: 'A technical description',
           },
-          "output": {
-            "defaultName": "Sample Output",
-            "schema": [
+          output: {
+            defaultName: 'Sample Output',
+            schema: [
               {
-                "columnName": "sample_column",
-                "type": "string",
-                "nullable": true,
-                "description": "A sample column description"
-              }
-            ]
+                columnName: 'sample_column',
+                type: 'string',
+                nullable: true,
+                description: 'A sample column description',
+              },
+            ],
           },
-          "filters": [
+          filters: [
             {
-              "name": "sampleFilter",
-              "type": "string[]",
-              "display": "Sample Filter",
-              "description": "This is a sample filter"
-            }
-          ]
+              name: 'sampleFilter',
+              type: 'string[]',
+              display: 'Sample Filter',
+              description: 'This is a sample filter',
+            },
+          ],
         },
         query: 'SELECT * FROM test',
       };
