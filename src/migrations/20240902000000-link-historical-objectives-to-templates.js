@@ -162,7 +162,7 @@ module.exports = {
           target_otid new_value
         ),
         insert AS (
-        INSERT INTO updated_goal_template_obj_tempalate
+        INSERT INTO updated_goal_template_obj_template
         SELECT * FROM updater
         RETURNING *
         )
