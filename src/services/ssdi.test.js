@@ -24,7 +24,7 @@ import {
   generateFilterString,
   executeQuery,
 } from './ssdi';
-import GenericPolicy  from '../policies/generic';
+import GenericPolicy from '../policies/generic';
 
 // Mock fs and db
 jest.mock('fs', () => ({
@@ -532,7 +532,7 @@ describe('ssdi', () => {
           targetString,
           _matchStrings,
           _featureFlag,
-        ) => targetString.includes('file1.sql') ? true : false);
+        ) => targetString.includes('file1.sql'));
 
       const result = await listQueryFiles('test/path', mockUser);
 
