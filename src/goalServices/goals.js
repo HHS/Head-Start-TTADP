@@ -584,7 +584,7 @@ export async function createOrUpdateGoals(goals) {
           if (!objective) {
             objective = await Objective.create({
               status: objectiveStatus,
-              title,
+              title: title.trim(),
               goalId: newGoal.id,
               createdVia: 'rtr',
             });
