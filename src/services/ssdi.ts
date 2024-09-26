@@ -264,12 +264,17 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
         // Recursively read files from subdirectories, return promise directly
         return readFilesRecursively(fullPath);
       }
+      if(!dirent.name.endsWith('.sql')){
+        return null;
+      }
       return fullPath;
     }),
   );
 
   // Flatten the array of results (since subdirectories return arrays)
-  return files.flat();
+  return files
+    .filter((fullPath) => fullPath)
+    .flat();
 };
 
 // Function to check if the directory exists using fsPromises
