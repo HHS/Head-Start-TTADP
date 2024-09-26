@@ -33,6 +33,7 @@ jest.mock('fs', () => ({
     readFile: jest.fn(),
     readdir: jest.fn(),
     access: jest.fn(),
+    constants: { R_OK: 1 },
   },
 }));
 jest.mock('../models', () => ({
@@ -49,6 +50,12 @@ beforeEach(() => {
 });
 
 describe('ssdi', () => {
+  // Clear the caches before each test
+  beforeEach(() => {
+    cache.clear();
+    jest.clearAllMocks();
+  });
+
   describe('sanitizeFilename', () => {
     it('should sanitize the filename', () => {
       expect(sanitizeFilename('test@file#name!')).toBe('test_file_name_');
@@ -341,12 +348,21 @@ describe('ssdi', () => {
   describe('checkDirectoryExists', () => {
     it('should return true if the directory exists', async () => {
       fs.promises.stat.mockResolvedValue({ isDirectory: jest.fn().mockReturnValue(true) });
+      fs.promises.access.mockReturnValue(true);
       const result = await checkDirectoryExists('test/path');
       expect(result).toBe(true);
     });
 
     it('should return false if the directory does not exist', async () => {
+      fs.promises.stat.mockRejectedValue({ isDirectory: jest.fn().mockReturnValue(true) });
+      fs.promises.access.mockReturnValue(new Error('No access'));
+      const result = await checkDirectoryExists('test/path');
+      expect(result).toBe(false);
+    });
+
+    it('should return false if the directory does not exist', async () => {
       fs.promises.stat.mockRejectedValue(new Error('Directory not found'));
+      fs.promises.access.mockReturnValue();
       const result = await checkDirectoryExists('test/path');
       expect(result).toBe(false);
     });
@@ -677,44 +693,55 @@ describe('ssdi', () => {
 
   describe('readFiltersFromFile', () => {
     it('should read and process filters from a file', async () => {
-      const mockFile = {
-        jsonHeader: {
-          name: 'Sample Header',
-          description: {
-            standard: 'A standard description',
-            technical: 'A technical description',
-          },
-          output: {
-            defaultName: 'Sample Output',
-            schema: [
-              {
-                columnName: 'sample_column',
-                type: 'string',
-                nullable: true,
-                description: 'A sample column description',
-              },
-            ],
-          },
-          filters: [
-            {
-              name: 'sampleFilter',
-              type: 'string[]',
-              display: 'Sample Filter',
-              description: 'This is a sample filter',
-            },
-          ],
+      // Mock the file system and permissions
+      fs.promises.readdir.mockResolvedValue([
+        { name: 'file1.sql', isDirectory: () => false },
+      ]);
+      fs.promises.stat.mockResolvedValue({ isFile: () => true, mtime: new Date() });
+      fs.promises.access.mockResolvedValue(true);
+      fs.promises.readFile.mockResolvedValue(`
+      /*
+      JSON: {
+        "name": "Sample Header",
+        "description": {
+          "standard": "A standard description",
+          "technical": "A technical description"
         },
-        query: 'SELECT * FROM test',
-      };
-      fs.promises.stat.mockResolvedValue({ mtime: new Date() });
-      cache.set('test/path.sql', mockFile);
+        "output": {
+          "defaultName": "Sample Output",
+          "schema": [
+            {
+              "columnName": "sample_column",
+              "type": "string",
+              "nullable": true,
+              "description": "A sample column description"
+            }
+          ]
+        },
+        "filters": [
+          {
+            "name": "sampleFilter",
+            "type": "string[]",
+            "display": "Sample Filter",
+            "description": "This is a sample filter"
+          }
+        ]
+      }
+      */
+    SELECT * FROM test;`);
 
-      const result = await readFiltersFromFile('test/path.sql', 1);
+      // Mock the permission check to always return true
+      const checkFolderPermissionsMock = jest
+        .spyOn(GenericPolicy.prototype, 'checkPermissions')
+        .mockResolvedValue(true);
+
+      const result = await readFiltersFromFile('file1.sql', 1);
       expect(result).toEqual({
-        testFilter: {
+        sampleFilter: {
           id: 'sampleFilter',
           type: 'string[]',
-          description: 'Sample filter',
+          description: 'This is a sample filter',
+          display: "Sample Filter",
           conditions: ['in'],
         },
         currentUserId: {

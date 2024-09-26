@@ -277,10 +277,18 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
     .flat();
 };
 
-// Function to check if the directory exists using fsPromises
+// Function to check if the directory exists and is readable using fsPromises
 const checkDirectoryExists = async (directory: string): Promise<boolean> => {
   try {
-    await fsPromises.access(directory);
+    // Check if the path exists and is a directory
+    const stats = await fsPromises.stat(directory);
+    if (!stats.isDirectory()) {
+      return false;
+    }
+
+    // Check if the directory has read access
+    await fsPromises.access(directory, fsPromises.constants.R_OK);
+    
     return true;
   } catch (error) {
     return false;
