@@ -1,9 +1,9 @@
 import React, {
-  useEffect, useState, useRef, useContext,
+  useEffect, useState, useRef,
 } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import moment from 'moment-timezone';
 import { Helmet } from 'react-helmet';
 import { getReport, unlockReport } from '../../fetchers/activityReports';
@@ -18,11 +18,9 @@ import './index.scss';
 import ApprovedReportV1 from './components/ApprovedReportV1';
 import ApprovedReportV2 from './components/ApprovedReportV2';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export default function ApprovedActivityReport({ match, user }) {
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
-
+  const history = useHistory();
   const [justUnlocked, updatedJustUnlocked] = useState(false);
 
   const [report, setReport] = useState({
@@ -86,12 +84,12 @@ export default function ApprovedActivityReport({ match, user }) {
         // review and submit table
         setReport(data);
       } catch (err) {
-        setErrorResponseCode(err.status);
+        history.push(`/something-went-wrong/${err.status}`);
       }
     }
 
     fetchReport();
-  }, [match.params.activityReportId, user, setErrorResponseCode]);
+  }, [match.params.activityReportId, user, history]);
 
   const {
     id: reportId,

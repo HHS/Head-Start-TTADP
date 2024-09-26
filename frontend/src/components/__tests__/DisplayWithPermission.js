@@ -8,7 +8,6 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import DisplayWithPermission from '../DisplayWithPermission';
 import UserContext from '../../UserContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS, READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
@@ -19,18 +18,9 @@ describe('display with permissions', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{
-            errorResponseCode: null,
-            setErrorResponseCode: jest.fn(),
-            setShowingNotFound: jest.fn(),
-            showingNotFoundL: false,
-          }}
-          >
-
-            <DisplayWithPermission scopes={scopes} renderNotFound={renderNotFound}>
-              <h1>This is a test</h1>
-            </DisplayWithPermission>
-          </SomethingWentWrongContext.Provider>
+          <DisplayWithPermission scopes={scopes} renderNotFound={renderNotFound}>
+            <h1>This is a test</h1>
+          </DisplayWithPermission>
         </UserContext.Provider>
       </Router>,
     );

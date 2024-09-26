@@ -8,7 +8,6 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const { ADMIN } = SCOPE_IDS;
 
@@ -19,17 +18,9 @@ describe('feature flag', () => {
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{
-            errorResponseCode: null,
-            setErrorResponseCode: jest.fn(),
-            setShowingNotFound: jest.fn(),
-            showingNotFoundL: false,
-          }}
-          >
-            <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
-              <h1>This is a test</h1>
-            </FeatureFlag>
-          </SomethingWentWrongContext.Provider>
+          <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
+            <h1>This is a test</h1>
+          </FeatureFlag>
         </UserContext.Provider>
       </Router>,
     );

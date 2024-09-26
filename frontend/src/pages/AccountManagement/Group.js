@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { Helmet } from 'react-helmet';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import colors from '../../colors';
@@ -9,10 +9,10 @@ import { fetchGroup } from '../../fetchers/groups';
 import AppLoadingContext from '../../AppLoadingContext';
 import WidgetCard from '../../components/WidgetCard';
 import ReadOnlyField from '../../components/ReadOnlyField';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export default function Group({ match }) {
   const { groupId } = match.params;
+  const history = useHistory();
 
   const [group, setGroup] = useState({
     name: '',
@@ -20,7 +20,6 @@ export default function Group({ match }) {
   });
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   useEffect(() => {
     async function getGroup() {
@@ -29,7 +28,7 @@ export default function Group({ match }) {
         const existingGroupData = await fetchGroup(groupId);
         setGroup(existingGroupData);
       } catch (err) {
-        setErrorResponseCode(err.status);
+        history.push(`/something-went-wrong/${err.status}`);
       } finally {
         setIsAppLoading(false);
       }
@@ -39,7 +38,7 @@ export default function Group({ match }) {
     if (groupId) {
       getGroup();
     }
-  }, [groupId, setIsAppLoading, setErrorResponseCode]);
+  }, [groupId, setIsAppLoading, history]);
 
   if (!group) {
     return null;

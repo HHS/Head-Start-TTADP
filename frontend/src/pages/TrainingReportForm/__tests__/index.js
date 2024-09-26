@@ -10,7 +10,6 @@ import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
-import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 const completedForm = {
   regionId: '1',
@@ -48,18 +47,15 @@ describe('TrainingReportForm', () => {
 
   const renderTrainingReportForm = (
     trainingReportId,
-    setErrorResponseCode = jest.fn,
     user = { id: 1, permissions: [], name: 'Ted User' },
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
-            <TrainingReportForm match={{
-              params: { trainingReportId },
-            }}
-            />
-          </SomethingWentWrong.Provider>
+          <TrainingReportForm match={{
+            params: { trainingReportId },
+          }}
+          />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,

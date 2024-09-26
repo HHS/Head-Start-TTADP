@@ -22,7 +22,6 @@ import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import BackLink from '../../components/BackLink';
 import EventSummary from './pages/eventSummary';
 import AppLoadingContext from '../../AppLoadingContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 import Modal from '../../components/VanillaModal';
 
 /**
@@ -114,7 +113,6 @@ export default function TrainingReportForm({ match }) {
   const eventRegion = hookForm.watch('regionId');
   const formData = hookForm.getValues();
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   useEffect(() => {
     const loading = !reportFetched || !additionalDataFetched;
@@ -152,18 +150,14 @@ export default function TrainingReportForm({ match }) {
         resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
       } catch (e) {
-        setErrorResponseCode(e.status);
+        history.push(`/something-went-wrong${e.status}`);
       } finally {
         setReportFetched(true);
         setDatePickerKey(Date.now().toString());
       }
     }
     fetchReport();
-  }, [hookForm.reset,
-    isAppLoading,
-    reportFetched,
-    trainingReportId,
-    setErrorResponseCode]);
+  }, [hookForm.reset, isAppLoading, reportFetched, trainingReportId, history]);
 
   useEffect(() => {
     // set error if no training report id

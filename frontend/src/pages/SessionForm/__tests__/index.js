@@ -14,7 +14,6 @@ import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE, IN_PROGRESS } from '../../../components/Navigator/constants';
 import { mockRSSData } from '../../../testHelpers';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 import { istKeys, pocKeys } from '../constants';
 
 const istAndPocFields = {
@@ -105,21 +104,18 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    setErrorResponseCode = jest.fn,
     user = { user: { id: 1, permissions: [], name: 'Ted User' } },
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={user}>
-            <SessionForm match={{
-              params: { currentPage, trainingReportId, sessionId },
-              path: currentPage,
-              url: currentPage,
-            }}
-            />
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+        <UserContext.Provider value={user}>
+          <SessionForm match={{
+            params: { currentPage, trainingReportId, sessionId },
+            path: currentPage,
+            url: currentPage,
+          }}
+          />
+        </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
   );

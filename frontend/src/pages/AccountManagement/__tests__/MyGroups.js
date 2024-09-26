@@ -14,7 +14,6 @@ import MyGroups, { GROUP_FIELD_NAMES } from '../MyGroups';
 import MyGroupsProvider from '../../../components/MyGroupsProvider';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const error = 'This group name already exists, please use a different name';
 
@@ -23,17 +22,15 @@ const user = {
 };
 
 describe('MyGroups', () => {
-  const renderMyGroups = (groupId = null, setErrorResponseCode = jest.fn()) => {
+  const renderMyGroups = (groupId = null) => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-            <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-              <MyGroupsProvider>
-                <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
-              </MyGroupsProvider>
-            </AppLoadingContext.Provider>
-          </SomethingWentWrongContext.Provider>
+          <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+            <MyGroupsProvider>
+              <MyGroups match={{ params: { groupId }, path: '/my-groups/', url: '' }} />
+            </MyGroupsProvider>
+          </AppLoadingContext.Provider>
         </UserContext.Provider>
       </MemoryRouter>,
     );
