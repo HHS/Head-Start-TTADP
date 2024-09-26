@@ -264,7 +264,7 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
         // Recursively read files from subdirectories, return promise directly
         return readFilesRecursively(fullPath);
       }
-      if(!dirent.name.endsWith('.sql')){
+      if (!dirent.name.endsWith('.sql')) {
         return null;
       }
       return fullPath;
