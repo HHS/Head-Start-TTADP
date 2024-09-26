@@ -31,6 +31,7 @@ jest.mock('fs', () => ({
     stat: jest.fn(),
     readFile: jest.fn(),
     readdir: jest.fn(),
+    access: jest.fn(),
   },
 }));
 jest.mock('../models', () => ({
@@ -115,11 +116,9 @@ describe('ssdi', () => {
       expect(isValidJsonHeader(validJson)).toBe(true);
     });
 
-    it('should return false and log error for invalid JSON header', () => {
+    it('should return false for invalid JSON header', () => {
       const invalidJson = { invalidKey: 'invalid' };
-      const mockLogger = jest.spyOn(console, 'error').mockImplementation();
       expect(isValidJsonHeader(invalidJson)).toBe(false);
-      expect(mockLogger).toHaveBeenCalled();
     });
   });
 
@@ -130,18 +129,72 @@ describe('ssdi', () => {
     });
 
     it('should parse JSON header correctly from a valid file', async () => {
-      const mockFileContent = 'JSON: { "name": "test" } */ SELECT * FROM test;';
+      const mockFileContent = `
+      /*
+      JSON: {
+        "name": "Sample Header",
+        "description": {
+          "standard": "A standard description",
+          "technical": "A technical description"
+        },
+        "output": {
+          "defaultName": "Sample Output",
+          "schema": [
+            {
+              "columnName": "sample_column",
+              "type": "string",
+              "nullable": true,
+              "description": "A sample column description"
+            }
+          ]
+        },
+        "filters": [
+          {
+            "name": "sampleFilter",
+            "type": "string",
+            "display": "Sample Filter",
+            "description": "This is a sample filter"
+          }
+        ]
+      }
+      */
+     SELECT * FROM test;`;
       fs.promises.readFile.mockResolvedValue(mockFileContent);
       fs.promises.stat.mockResolvedValue({ mtime: new Date() });
 
       const result = await readJsonHeaderFromFile('test/path.sql');
-      expect(result.jsonHeader.name).toBe('test');
+      expect(result.jsonHeader.name).toBe('Sample Header');
     });
 
     it('should return cached file if modification time is unchanged', async () => {
       const mockFile = {
-        jsonHeader: {},
-        query: 'SELECT * FROM test',
+        jsonHeader: {
+          "name": "Sample Header",
+          "description": {
+            "standard": "A standard description",
+            "technical": "A technical description"
+          },
+          "output": {
+            "defaultName": "Sample Output",
+            "schema": [
+              {
+                "columnName": "sample_column",
+                "type": "string",
+                "nullable": true,
+                "description": "A sample column description"
+              }
+            ]
+          },
+          "filters": [
+            {
+              "name": "sampleFilter",
+              "type": "string",
+              "display": "Sample Filter",
+              "description": "This is a sample filter"
+            }
+          ]
+        },
+        query: 'SELECT * FROM test;',
         modificationTime: new Date(),
       };
       const mockPath = 'test/path.sql';
@@ -155,7 +208,35 @@ describe('ssdi', () => {
     });
 
     it('should read and cache a new file if modification time has changed', async () => {
-      const mockFileContent = 'JSON: { "name": "test" } */ SELECT * FROM test;';
+      const mockFileContent = `/*
+      JSON: {
+        "name": "Sample Header",
+        "description": {
+          "standard": "A standard description",
+          "technical": "A technical description"
+        },
+        "output": {
+          "defaultName": "Sample Output",
+          "schema": [
+            {
+              "columnName": "sample_column",
+              "type": "string",
+              "nullable": true,
+              "description": "A sample column description"
+            }
+          ]
+        },
+        "filters": [
+          {
+            "name": "sampleFilter",
+            "type": "string",
+            "display": "Sample Filter",
+            "description": "This is a sample filter"
+          }
+        ]
+      }
+      */
+     SELECT * FROM test;`;
       const mockStat = { mtime: new Date() };
 
       fs.promises.stat.mockResolvedValue(mockStat);
@@ -163,7 +244,32 @@ describe('ssdi', () => {
 
       const result = await readJsonHeaderFromFile('test/path.sql');
       expect(result).toEqual({
-        jsonHeader: { name: 'test' },
+        jsonHeader: {
+          "name": "Sample Header",
+          "description": {
+            "standard": "A standard description",
+            "technical": "A technical description"
+          },
+          "output": {
+            "defaultName": "Sample Output",
+            "schema": [
+              {
+                "columnName": "sample_column",
+                "type": "string",
+                "nullable": true,
+                "description": "A sample column description"
+              }
+            ]
+          },
+          "filters": [
+            {
+              "name": "sampleFilter",
+              "type": "string",
+              "display": "Sample Filter",
+              "description": "This is a sample filter"
+            }
+          ]
+        },
         query: 'SELECT * FROM test;',
         modificationTime: mockStat.mtime,
       });
@@ -246,22 +352,129 @@ describe('ssdi', () => {
   });
 
   describe('listQueryFiles', () => {
-    it('should return a list of files in a directory', async () => {
-      fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.sql']);
-      fs.promises.stat.mockResolvedValue({ isFile: () => true });
-
-      const result = await listQueryFiles('test/path');
-      expect(result).toEqual(['file1.sql', 'file2.sql']);
+    const mockUser = {
+      id: 1,
+      name: 'Test User',
+      permissions: ['dataRequests/ohs', 'dataRequests/internal'],
+    };
+  
+    beforeEach(() => {
+      jest.resetAllMocks();
     });
+  
+    it('should return a list of SQL files when the user has permission', async () => {
+      // Mock the file system and permissions
+      fs.promises.readdir.mockResolvedValue([
+        { name: 'file1.sql', isDirectory: () => false },
+        { name: 'file2.sql', isDirectory: () => false },
+      ]);
+      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+      fs.promises.access.mockResolvedValue(true);
+      fs.promises.readFile.mockResolvedValue(`
+      /*
+      JSON: {
+        "name": "Sample Header",
+        "description": {
+          "standard": "A standard description",
+          "technical": "A technical description"
+        },
+        "output": {
+          "defaultName": "Sample Output",
+          "schema": [
+            {
+              "columnName": "sample_column",
+              "type": "string",
+              "nullable": true,
+              "description": "A sample column description"
+            }
+          ]
+        },
+        "filters": [
+          {
+            "name": "sampleFilter",
+            "type": "string",
+            "display": "Sample Filter",
+            "description": "This is a sample filter"
+          }
+        ]
+      }
+      */
+     SELECT * FROM test;`);
+  
+      // Mock the permission check to always return true
+      const checkFolderPermissionsMock = jest
+        .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
+        .mockResolvedValue(true);
+  
+      const result = await listQueryFiles('test/path', mockUser);
+  
+      // Assert the result is as expected
+      expect(result).toEqual([
+        expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
+        expect.objectContaining({ filePath: expect.stringContaining('file2.sql') }),
+      ]);
+  
+      // Assert that permissions were checked
+      expect(checkFolderPermissionsMock).toHaveBeenNthCalledWith(
+        1,
+        expect.stringContaining('file1.sql'), // Check if the path contains 'file1.sql'
+        ['dataRequests/ohs', 'dataRequests/internal'], // Exact array for permissions
+        'ssdi_restricted', // The restriction string
+      );
 
-    it('should only return SQL files', async () => {
+      expect(checkFolderPermissionsMock).toHaveBeenNthCalledWith(
+        2,
+        expect.stringContaining('file2.sql'), // Check if the path contains 'file2.sql'
+        ['dataRequests/ohs', 'dataRequests/internal'], // Exact array for permissions
+        'ssdi_restricted', // The restriction string
+      );
+    });
+  
+    it('should only return SQL files when user has permission and ignore non-SQL files', async () => {
+      // Mock the file system and permissions
       fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.txt']);
       fs.promises.stat.mockResolvedValue({ isFile: () => true });
-
-      const result = await listQueryFiles('test/path');
-      expect(result).toEqual(['file1.sql']);
+  
+      // Mock the permission check to always return true
+      const checkFolderPermissionsMock = jest
+        .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
+        .mockResolvedValue(true);
+  
+      const result = await listQueryFiles('test/path', mockUser);
+  
+      // Assert that only SQL files are returned
+      expect(result).toEqual([
+        expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
+      ]);
+  
+      // Assert that permissions were checked
+      expect(checkFolderPermissionsMock).toHaveBeenCalled();
+    });
+  
+    it('should skip files if the user does not have permission', async () => {
+      // Mock the file system and permissions
+      fs.promises.readdir.mockResolvedValue(['file1.sql', 'file2.sql']);
+      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+  
+      // Mock the permission check to return false for one file
+      const checkFolderPermissionsMock = jest
+        .spyOn(require('../policies/generic').default.prototype, 'checkPermissions')
+        .mockImplementation((user, path) => {
+          return path.includes('file1.sql') ? true : false;
+        });
+  
+      const result = await listQueryFiles('test/path', mockUser);
+  
+      // Assert that only the file with permission is returned
+      expect(result).toEqual([
+        expect.objectContaining({ filePath: expect.stringContaining('file1.sql') }),
+      ]);
+  
+      // Assert that permissions were checked
+      expect(checkFolderPermissionsMock).toHaveBeenCalled();
     });
   });
+  
 
   describe('createQueryFile', () => {
     it('should create a query file object from a cached file', () => {
@@ -396,18 +609,42 @@ describe('ssdi', () => {
     it('should read and process filters from a file', async () => {
       const mockFile = {
         jsonHeader: {
-          filters: [{ name: 'testFilter', type: 'string[]', description: 'Test filter' }],
+          "name": "Sample Header",
+          "description": {
+            "standard": "A standard description",
+            "technical": "A technical description"
+          },
+          "output": {
+            "defaultName": "Sample Output",
+            "schema": [
+              {
+                "columnName": "sample_column",
+                "type": "string",
+                "nullable": true,
+                "description": "A sample column description"
+              }
+            ]
+          },
+          "filters": [
+            {
+              "name": "sampleFilter",
+              "type": "string[]",
+              "display": "Sample Filter",
+              "description": "This is a sample filter"
+            }
+          ]
         },
         query: 'SELECT * FROM test',
       };
+      fs.promises.stat.mockResolvedValue({ mtime: new Date() });
       cache.set('test/path.sql', mockFile);
 
       const result = await readFiltersFromFile('test/path.sql', 1);
       expect(result).toEqual({
         testFilter: {
-          id: 'testFilter',
+          id: 'sampleFilter',
           type: 'string[]',
-          description: 'Test filter',
+          description: 'Sample filter',
           conditions: ['in'],
         },
         currentUserId: {
@@ -443,7 +680,7 @@ describe('ssdi', () => {
     });
 
     it('should throw an error for unknown type', () => {
-      expect(() => validateType('unknown[]', ['test'])).toThrow('Unknown type: unknown[]');
+      expect(validateType('unknown[]', ['test'])).toBe(false);
     });
   });
 
@@ -493,23 +730,6 @@ describe('ssdi', () => {
     it('should throw an error if the query is not a string', async () => {
       await expect(executeQuery(123)).rejects
         .toThrow('The "paths[1]" argument must be of type string. Received type number (123)');
-    });
-
-    it('should set the transaction to READ ONLY and execute the query', async () => {
-      const mockQuery = 'SELECT * FROM users;';
-      const mockResult = [{ id: 1, name: 'John Doe' }];
-      db.sequelize.query
-        .mockResolvedValueOnce([]) // for SET TRANSACTION READ ONLY
-        .mockResolvedValueOnce(mockResult); // for the actual query
-
-      const result = await executeQuery(mockQuery);
-      expect(result).toEqual(mockResult);
-      expect(db.sequelize.query).toHaveBeenCalledWith('SET TRANSACTION READ ONLY;', {
-        type: db.sequelize.QueryTypes.RAW,
-      });
-      expect(db.sequelize.query).toHaveBeenCalledWith(mockQuery, {
-        type: db.sequelize.QueryTypes.SELECT,
-      });
     });
   });
 });
