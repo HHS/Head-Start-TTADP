@@ -70,7 +70,7 @@ describe('Recipients With Class and Scores and Goals', () => {
     expect(screen.queryAllByText(/Recipients with CLASS® scores/i).length).toBe(2);
     expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
 
-    expect(screen.getByText('Recipient 1')).toBeInTheDocument();
+    expect(screen.getByText('Abernathy, Mraz and Bogan')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
     expect(screen.getByText(/6\.043/i)).toBeInTheDocument();
     expect(screen.getByText(/5\.043/i)).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('Recipients With Class and Scores and Goals', () => {
     expect(screen.getByText('03/01/2022')).toBeInTheDocument();
 
     // Expand goals.
-    let goalsButton = screen.getByRole('button', { name: /view goals for recipient recipient 1/i });
+    let goalsButton = screen.getByRole('button', { name: /view goals for recipient Abernathy, Mraz and Bogan/i });
     goalsButton.click();
 
     expect(screen.getByText('G-45641')).toBeInTheDocument();
