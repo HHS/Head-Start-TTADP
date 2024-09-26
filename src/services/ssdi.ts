@@ -288,7 +288,7 @@ const checkDirectoryExists = async (directory: string): Promise<boolean> => {
 
     // Check if the directory has read access
     await fsPromises.access(directory, fsPromises.constants.R_OK);
-    
+
     return true;
   } catch (error) {
     return false;
