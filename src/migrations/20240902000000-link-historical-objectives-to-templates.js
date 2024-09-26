@@ -6,6 +6,23 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
 
       await queryInterface.sequelize.query(/* sql */`
+        -- This starts by deduping Goal and Objective templates so that re-linking operations
+        -- will be deterministic and won't create a greater mess. This involves:
+        --   - Collecting the list of templates to merge
+        --   - Failing the transaction if any goal templates with question prompts (e.g. root cause)
+        --     are slated to be merged away. If those ever appear they need an extra look
+        --   - Finding GoalTemplateObjectiveTemplates that would simply create duplicate
+        --     obj-template,goal-template pairs and deleting from GoalTemplateObjectiveTemplates
+        --     rather than updating those
+        --   - Updating GoalTemplateObjectiveTemplates to the new obj templates
+        --   - Updating GoalTemplateObjectiveTemplates to the new goal templates
+        --   - Redirecting GoalTemplateResources to their new template
+        --   - Update any goals or objectives to the merged templates
+        --   - Delete the duplicate templates
+        -- Many of these steps are empty but all the steps are included in case either something changes
+        -- between when this is written and when it's run, or if it gets rerun in the future
+
+        -- THE MAIN WORK:
         -- This finds all objectives that have titles long enough to be meaningful but
         -- are not linked to a matching template and marks whether they're created on an
         -- RTR and what the most advanced status of a connected AR is. Then every
@@ -19,6 +36,216 @@ module.exports = {
 
         -- Also doing the same for Goals
 
+        -- Deduping templates ------------------------------------------------------------------
+        -- Create the mappings
+        DROP TABLE IF EXISTS obj_template_mapping;
+        CREATE TEMP TABLE obj_template_mapping
+        AS
+        WITH hash_sets AS (
+        SELECT
+          hash,
+          "regionId" region,
+          MIN(id) target_otid,
+          MIN("createdAt") hash_created_at,
+          MAX("updatedAt") hash_updated_at,
+          MAX("lastUsed") hash_last_used,
+          COUNT(*)
+        FROM "ObjectiveTemplates"
+        GROUP BY 1,2
+        HAVING COUNT(*) > 1
+        )
+        SELECT
+          id otid,
+          target_otid,
+          hash_created_at,
+          hash_updated_at,
+          hash_last_used
+        FROM hash_sets hs
+        JOIN "ObjectiveTemplates" ot
+          ON hs.hash = ot.hash
+          AND hs.region = ot."regionId"
+        ;
+
+        DROP TABLE IF EXISTS goal_template_mapping;
+        CREATE TEMP TABLE goal_template_mapping
+        AS
+        WITH hash_sets AS (
+        SELECT
+          hash,
+          "regionId" region,
+          MIN(id) target_gtid,
+          MIN("createdAt") hash_created_at,
+          MAX("updatedAt") hash_updated_at,
+          MAX("lastUsed") hash_last_used,
+          COUNT(*)
+        FROM "GoalTemplates"
+        GROUP BY 1,2
+        HAVING COUNT(*) > 1
+        )
+        SELECT
+          id gtid,
+          target_gtid,
+          hash_created_at,
+          hash_updated_at,
+          hash_last_used
+        FROM hash_sets hs
+        JOIN "GoalTemplates" gt
+          ON hs.hash = gt.hash
+          AND hs.region = gt."regionId"
+        ;
+
+        -- Fail out of the transaction with a divide by zero error if there
+        -- are any field prompts for a goal template slated to be merged.
+        -- There won't be any now, but this makes sure that if the logic is
+        -- ever rerun in the future we won't accidentally make a big mess.
+        SELECT 1 /
+        (LEAST(COUNT(*),1) - 1)
+        FROM goal_template_mapping
+        JOIN "GoalTemplateFieldPrompts"
+          ON "goalTemplateId" = gtid
+        WHERE gtid != target_gtid
+        ;
+
+        -- Find GoalTemplateObjectiveTemplates that would just duplicate
+        -- if updated. This is also empty so far
+        DROP TABLE IF EXISTS gtot_to_be_deleted;
+        CREATE TEMP TABLE gtot_to_be_deleted
+        AS
+        SELECT
+          gtot.id target_gtotid,
+          gtot2.id gtotid_to_delete
+        FROM "GoalTemplateObjectiveTemplates" gtot
+        JOIN goal_template_mapping gtm
+          ON gtot."goalTemplateId" = gtm.target_gtid
+        JOIN obj_template_mapping otm
+          ON gtot."objectiveTemplateId" = otm.target_otid
+        JOIN "GoalTemplateObjectiveTemplates" gtot2
+          ON gtm.gtid = gtot2."goalTemplateId"
+          AND otm.otid = gtot2."objectiveTemplateId"
+        ;
+
+        
+        DELETE FROM "GoalTemplateObjectiveTemplates" gtot
+        USING gtot_to_be_deleted 
+        WHERE gtot.id = gtotid_to_delete
+        ;
+
+        -- Update GoalTemplateObjectiveTemplates to point to the merged records
+        -- create a list of goal updates
+        DROP TABLE IF EXISTS updated_goal_template_obj_template;
+        CREATE TEMP TABLE updated_goal_template_obj_template
+        AS
+        WITH updater AS (
+        UPDATE "GoalTemplateObjectiveTemplates" gtot
+        SET "goalTemplateId" = target_gtid
+        FROM goal_template_mapping
+        WHERE gtot."goalTemplateId" = gtid
+        RETURNING
+          id gtotid,
+          'goal_template' update_type,
+          gtid old_value,
+          target_gtid new_value
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        -- Add the objective updates to the list
+        WITH updater AS (
+        UPDATE "GoalTemplateObjectiveTemplates" gtot
+        SET "objectiveTemplateId" = target_otid
+        FROM obj_template_mapping
+        WHERE gtot."objectiveTemplateId" = otid
+        RETURNING
+          id gtotid,
+          'obj_template' update_type,
+          otid old_value,
+          target_otid new_value
+        ),
+        insert AS (
+        INSERT INTO updated_goal_template_obj_tempalate
+        SELECT * FROM updater
+        RETURNING *
+        )
+        SELECT COUNT(*) FROM insert
+        ;
+
+        -- Update GoalTemplateResources
+        -- The table is currently empty so this doesn't do anything yet
+        DROP TABLE IF EXISTS updated_goal_tempalate_resources;
+        CREATE TEMP TABLE updated_goal_tempalate_resources
+        AS
+        WITH updater AS (
+        UPDATE "GoalTemplateResources" gtr
+        SET "goalTemplateId" = target_gtid
+        FROM goal_template_mapping
+        WHERE gtr."goalTemplateId" = gtid
+        RETURNING gtid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        -- update Goals to point to the merged template
+        DROP TABLE IF EXISTS redirected_goals;
+        CREATE TEMP TABLE redirected_goals
+        AS
+        WITH updater AS (
+        UPDATE "Goals" g
+        SET "goalTemplateId" = target_gtid
+        FROM goal_template_mapping
+        WHERE g."goalTemplateId" = gtid
+          AND g."goalTemplateId" != target_gtid
+        RETURNING
+          id gid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        -- update Objectives to point to the merged template
+        DROP TABLE IF EXISTS redirected_objectives;
+        CREATE TEMP TABLE redirected_objectives
+        AS
+        WITH updater AS (
+        UPDATE "Objectives" o
+        SET "objectiveTemplateId" = target_otid
+        FROM obj_template_mapping
+        WHERE o."objectiveTemplateId" = otid
+          AND o."objectiveTemplateId" != target_otid
+        RETURNING
+          id oid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        -- Actually delete duplicate templates
+        DROP TABLE IF EXISTS deleted_gt_dupes;
+        CREATE TEMP TABLE deleted_gt_dupes
+        AS
+        WITH updater AS (
+        DELETE FROM "GoalTemplates" gt
+        USING goal_template_mapping
+        WHERE gt.id = gtid
+          AND gt.id != target_gtid
+        RETURNING
+          id gid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        DROP TABLE IF EXISTS deleted_ot_dupes;
+        CREATE TEMP TABLE deleted_ot_dupes
+        AS
+        WITH updater AS (
+        DELETE FROM "ObjectiveTemplates" ot
+        USING obj_template_mapping
+        WHERE ot.id = otid
+          AND ot.id != target_otid
+        RETURNING
+          id oid
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        -- Connecting to objectives ------------------------------------------------------------------
         DROP TABLE IF EXISTS unconnected_objectives;
         CREATE TEMP TABLE unconnected_objectives
         AS
@@ -435,9 +662,25 @@ module.exports = {
         ORDER BY 2,1
         ;
         
+        DROP TABLE IF EXISTS obj_template_mapping;
+        DROP TABLE IF EXISTS goal_template_mapping;
+        DROP TABLE IF EXISTS gtot_to_be_deleted;
+        DROP TABLE IF EXISTS updated_goal_template_obj_template;
+        DROP TABLE IF EXISTS updated_goal_tempalate_resources;
+        DROP TABLE IF EXISTS redirected_goals;
+        DROP TABLE IF EXISTS redirected_objectives;
+        DROP TABLE IF EXISTS deleted_gt_dupes;
+        DROP TABLE IF EXISTS deleted_ot_dupes;
+
         DROP TABLE IF EXISTS unconnected_objectives;
+        DROP TABLE IF EXISTS created_obj_templates;
         DROP TABLE IF EXISTS updated_objectives;
         DROP TABLE IF EXISTS unconnected_objectives_after;
+
+        DROP TABLE IF EXISTS unconnected_goal;
+        DROP TABLE IF EXISTS created_goal_templates;
+        DROP TABLE IF EXISTS updated_goals;
+        DROP TABLE IF EXISTS unconnected_goals_after;
 
       `, { transaction });
     },
