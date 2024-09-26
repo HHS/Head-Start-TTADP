@@ -19,7 +19,6 @@ import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 import AppLoadingContext from '../../../AppLoadingContext';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -103,33 +102,31 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, goalId = 'new', setErrorResponseCode = jest.fn()) {
+  function renderForm(recipient = defaultRecipient, goalId = 'new') {
     const history = createMemoryHistory();
     render((
       <Router history={history}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={{
-            user: {
-              permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-            },
-          }}
-          >
-            <AppLoadingContext.Provider value={
+        <UserContext.Provider value={{
+          user: {
+            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          },
+        }}
+        >
+          <AppLoadingContext.Provider value={
           {
             setIsAppLoading: jest.fn(),
             setAppLoadingText: jest.fn(),
             isAppLoading: false,
           }
         }
-            >
-              <CreateGoal
-                recipient={recipient}
-                regionId="1"
-                isNew={goalId === 'new'}
-              />
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+          >
+            <CreateGoal
+              recipient={recipient}
+              regionId="1"
+              isNew={goalId === 'new'}
+            />
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
       </Router>
     ));
   }

@@ -16,7 +16,7 @@ export default function DisplayWithPermission({
 
   if (!admin && !userHasScope) {
     if (renderNotFound) {
-      return <SomethingWentWrong />;
+      return <SomethingWentWrong responseCode={404} />;
     }
     return <></>;
   }

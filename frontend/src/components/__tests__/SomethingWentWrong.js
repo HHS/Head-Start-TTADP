@@ -1,27 +1,10 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { Router } from 'react-router';
 import SomethingWentWrong from '../SomethingWentWrong';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
-
-const history = createMemoryHistory();
 
 const renderSomethingWentWrong = (
   responseCode = 500,
-) => render(
-  <Router history={history}>
-    <SomethingWentWrongContext.Provider value={{
-      errorResponseCode: null,
-      setErrorResponseCode: jest.fn(),
-      setShowingNotFound: jest.fn(),
-      showingNotFoundL: false,
-    }}
-    >
-      <SomethingWentWrong passedErrorResponseCode={responseCode} />
-    </SomethingWentWrongContext.Provider>
-  </Router>,
-);
+) => render(<SomethingWentWrong responseCode={responseCode} />);
 
 describe('SomethingWentWrong component', () => {
   // Write a test to pass the response code 401 to the component.
@@ -71,6 +54,14 @@ describe('SomethingWentWrong component', () => {
   // Write a test to pass an unknown response code to the component.
   it('renders a generic error message', async () => {
     renderSomethingWentWrong();
+    expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument();
+    expect(screen.getByText(/Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i)).toBeInTheDocument();
+    expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();
+  });
+
+  // Write a test to pass an unknown response code to the component.
+  it('defaults to a generic error message', async () => {
+    renderSomethingWentWrong(502);
     expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument();
     expect(screen.getByText(/Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i)).toBeInTheDocument();
     expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();

@@ -10,7 +10,6 @@ import { createMemoryHistory } from 'history';
 import RecipientRecord, { PageWithHeading } from '../index';
 import { formatDateRange } from '../../../utils';
 import UserContext from '../../../UserContext';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import AppLoadingContext from '../../../AppLoadingContext';
 import { GrantDataProvider } from '../pages/GrantDataContext';
@@ -90,7 +89,7 @@ describe('recipient record page', () => {
     ],
   };
 
-  function renderRecipientRecord(history = memoryHistory, regionId = '45', setErrorResponseCode = jest.fn()) {
+  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
     const match = {
       path: '',
       url: '',
@@ -102,22 +101,20 @@ describe('recipient record page', () => {
 
     render(
       <Router history={history}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={{ user }}>
-            <GrantDataProvider>
-              <AppLoadingContext.Provider value={
+        <UserContext.Provider value={{ user }}>
+          <GrantDataProvider>
+            <AppLoadingContext.Provider value={
             {
               setIsAppLoading: jest.fn(),
               setAppLoadingText: jest.fn(),
               isAppLoading: false,
             }
           }
-              >
-                <RecipientRecord match={match} />
-              </AppLoadingContext.Provider>
-            </GrantDataProvider>
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+            >
+              <RecipientRecord match={match} />
+            </AppLoadingContext.Provider>
+          </GrantDataProvider>
+        </UserContext.Provider>
       </Router>,
     );
   }

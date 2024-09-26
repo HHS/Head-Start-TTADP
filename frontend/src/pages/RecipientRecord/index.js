@@ -1,10 +1,10 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
-import { Switch, Route } from 'react-router';
+import { Switch, Route, useHistory } from 'react-router';
 import { DECIMAL_BASE } from '@ttahub/common';
 import { getMergeGoalPermissions, getRecipient } from '../../fetchers/recipient';
 import RecipientTabs from './components/RecipientTabs';
@@ -22,7 +22,6 @@ import CommunicationLogForm from './pages/CommunicationLogForm';
 import ViewCommunicationLog from './pages/ViewCommunicationLog';
 import { GrantDataProvider } from './pages/GrantDataContext';
 import ViewGoals from './pages/ViewGoals';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 export function PageWithHeading({
   children,
@@ -76,7 +75,7 @@ PageWithHeading.defaultProps = {
 };
 
 export default function RecipientRecord({ match, hasAlerts }) {
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
+  const history = useHistory();
   const { recipientId, regionId } = match.params;
 
   const [loading, setLoading] = useState(true);
@@ -123,7 +122,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           });
         }
       } catch (e) {
-        setErrorResponseCode(e.status);
+        history.push(`/something-went-wrong${e.status}`);
       } finally {
         setLoading(false);
       }

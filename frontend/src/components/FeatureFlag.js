@@ -12,7 +12,7 @@ export default function FeatureFlag({
 
   if (!admin && user.flags && !user.flags.includes(flag)) {
     if (renderNotFound) {
-      return <SomethingWentWrong />;
+      return <SomethingWentWrong responseCode={404} />;
     }
     return <></>;
   }

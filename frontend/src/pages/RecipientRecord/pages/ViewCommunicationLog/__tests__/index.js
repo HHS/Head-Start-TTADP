@@ -10,7 +10,6 @@ import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { NOT_STARTED, COMPLETE } from '../../../../../components/Navigator/constants';
 import ViewCommunicationForm from '../index';
-import SomethingWentWrongContext from '../../../../../SomethingWentWrongContext';
 
 const RECIPIENT_ID = 1;
 const REGION_ID = 1;
@@ -27,26 +26,23 @@ describe('ViewCommunicationForm', () => {
 
   const renderTest = (
     communicationLogId = '1',
-    setErrorResponseCode = jest.fn(),
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-            <ViewCommunicationForm
-              recipientName={RECIPIENT_NAME}
-              match={{
-                params: {
-                  communicationLogId,
-                  recipientId: RECIPIENT_ID,
-                  regionId: REGION_ID,
-                },
-                path: '',
-                url: '',
-              }}
-            />
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+          <ViewCommunicationForm
+            recipientName={RECIPIENT_NAME}
+            match={{
+              params: {
+                communicationLogId,
+                recipientId: RECIPIENT_ID,
+                regionId: REGION_ID,
+              },
+              path: '',
+              url: '',
+            }}
+          />
+        </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
   );

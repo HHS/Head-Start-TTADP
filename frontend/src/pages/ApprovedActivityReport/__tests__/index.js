@@ -10,7 +10,6 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 import ApprovedActivityReport from '../index';
 
@@ -105,7 +104,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderApprovedActivityReport(id, passedUser = user, setErrorResponseCode = jest.fn()) {
+  function renderApprovedActivityReport(id, passedUser = user) {
     const match = {
       path: '',
       url: '',
@@ -115,9 +114,7 @@ describe('Activity report print and share view', () => {
     };
 
     render(
-      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-        <ApprovedActivityReport user={passedUser} match={match} />
-      </SomethingWentWrongContext.Provider>,
+      <ApprovedActivityReport user={passedUser} match={match} />,
     );
   }
   afterEach(() => fetchMock.restore());

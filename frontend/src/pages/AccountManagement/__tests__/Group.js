@@ -10,7 +10,6 @@ import join from 'url-join';
 import { MemoryRouter } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
-import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 const endpoint = join('/', 'api', 'groups');
 
@@ -19,13 +18,11 @@ describe('Group', () => {
     fetchMock.restore();
   });
 
-  const renderGroup = (groupId, setErrorResponseCode = jest.fn()) => {
+  const renderGroup = (groupId) => {
     render(
       <MemoryRouter>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
-            <Group match={{ params: { groupId }, path: '', url: '' }} />
-          </SomethingWentWrong.Provider>
+          <Group match={{ params: { groupId }, path: '', url: '' }} />
         </AppLoadingContext.Provider>
       </MemoryRouter>,
     );

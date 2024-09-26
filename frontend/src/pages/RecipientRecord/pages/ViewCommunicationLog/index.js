@@ -3,7 +3,7 @@ import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 import Container from '../../../../components/Container';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getCommunicationLogById } from '../../../../fetchers/communicationLog';
@@ -12,9 +12,9 @@ import BackLink from '../../../../components/BackLink';
 import UserContext from '../../../../UserContext';
 import DisplayNextSteps from './components/DisplayNextSteps';
 import LogLine from './components/LogLine';
-import SomethingWentWrongContext from '../../../../SomethingWentWrongContext';
 
 export default function ViewCommunicationLog({ match, recipientName }) {
+  const history = useHistory();
   const {
     params: {
       recipientId,
@@ -24,7 +24,6 @@ export default function ViewCommunicationLog({ match, recipientName }) {
   } = match;
 
   const { user } = useContext(UserContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const [log, setLog] = useState();
 
@@ -37,7 +36,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         const response = await getCommunicationLogById(regionId, communicationLogId);
         setLog(response);
       } catch (err) {
-        setErrorResponseCode(err.status);
+        history.push(`/something-went-wrong/${err.response}`);
       } finally {
         setIsAppLoading(false);
       }
@@ -46,7 +45,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
     if (!log) {
       fetchLog();
     }
-  }, [communicationLogId, log, regionId, setIsAppLoading, setErrorResponseCode]);
+  }, [communicationLogId, log, regionId, setIsAppLoading, history]);
 
   if (!log) {
     return null;
