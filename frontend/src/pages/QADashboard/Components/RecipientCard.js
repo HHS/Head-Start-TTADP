@@ -59,21 +59,21 @@ function RecipientCard({
             <p className="usa-prose text-bold margin-y-0">Emotional support</p>
             <p className="usa-prose margin-y-0">{recipient.emotionalSupport}</p>
             <div className="margin-top-1">
-              {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportReceivedDate, 'font-sans-3xs')}
+              {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-classroom-organization padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Classroom organization</p>
             <p className="usa-prose margin-y-0">{recipient.classroomOrganization}</p>
             <div className="margin-top-1">
-              {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportReceivedDate, 'font-sans-3xs')}
+              {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Instructional support</p>
             <p className="usa-prose margin-y-0">{recipient.instructionalSupport}</p>
             <div className="margin-top-1">
-              {getScoreBadge('IS', recipient.instructionalSupport, recipient.reportReceivedDate, 'font-sans-3xs')}
+              {getScoreBadge('IS', recipient.instructionalSupport, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__date padding-right-3">

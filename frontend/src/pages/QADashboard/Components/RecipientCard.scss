@@ -24,6 +24,10 @@ $min-width-date-column: 100px;
   margin-bottom: 16px;
 }
 
+.ttahub-recipient-card__recipient-column__badge {
+  font-size: 10px;
+}
+
 @container ttahub-recipient-card (min-width: 710px) {
 .ttahub-recipient-card__row {
     display: flex;
