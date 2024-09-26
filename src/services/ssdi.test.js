@@ -353,7 +353,7 @@ describe('ssdi', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if the directory does not exist', async () => {
+    it('should return false if the directory does not have permission', async () => {
       fs.promises.stat.mockRejectedValue({ isDirectory: jest.fn().mockReturnValue(true) });
       fs.promises.access.mockReturnValue(new Error('No access'));
       const result = await checkDirectoryExists('test/path');
@@ -741,7 +741,7 @@ describe('ssdi', () => {
           id: 'sampleFilter',
           type: 'string[]',
           description: 'This is a sample filter',
-          display: "Sample Filter",
+          display: 'Sample Filter',
           conditions: ['in'],
         },
         currentUserId: {
