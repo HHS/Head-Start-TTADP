@@ -41,22 +41,19 @@ $min-width-date-column: 100px;
 
   // Recipient Title and Recipient Number.
   .ttahub-recipient-card__recipient-column__title,
-  .ttahub-recipient-card__recipient-column__number {
+  .ttahub-recipient-card__recipient-column__number,
+  .ttahub-recipient-card__recipient-classroom-organization {
     width: 33%;
   }
 
   // Recipient Date.
-  .ttahub-recipient-card__recipient-column__date {
+  .ttahub-recipient-card__recipient-column__date,
+  .ttahub-recipient-card__recipient-last-ar-start-date {
     width: 33%;
   }
 }
 
 @container ttahub-recipient-card (min-width: 980px) {
-
-  .ttahub-recipient-card {
-    color: red;
-  }
-
   .ttahub-recipient-card__recipient-column:not(:last-child) {
     margin-bottom: 0px;
   }
@@ -66,13 +63,21 @@ $min-width-date-column: 100px;
     flex-basis: clamp($min-width-title-column, 20%, 100%);
   }
 
+  .ttahub-recipient-card__recipient-classroom-organization {
+    flex-basis: clamp($min-width-title-column, 18%, 100%);
+  }
+
   // recipient number value.
   .ttahub-recipient-card__recipient-column__number {
-    flex-basis: clamp($min-width-number-column, 18%, 100%);
+    flex-basis: clamp($min-width-number-column, 16%, 100%);
+  }
+
+  .ttahub-recipient-card__recipient-last-ar-start-date {
+    flex-basis: clamp($min-width-number-column, 14%, 100%);
   }
 
   // recipient Date.
   .ttahub-recipient-card__recipient-column__date {
-    flex-basis: clamp($min-width-date-column, 13%, 100%);
+    flex-basis: clamp($min-width-date-column, 16%, 100%);
   }
 }

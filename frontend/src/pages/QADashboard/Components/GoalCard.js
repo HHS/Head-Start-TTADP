@@ -22,27 +22,15 @@ function GoalCard({
         />
         <DataRow
           label="Goal status"
-          value={(
-            <Link to="recipient-tta-records/376/region/1/goals?id[]=83697">
-              {goal.status}
-            </Link>
-          )}
+          value={goal.status}
         />
         <DataRow
           label="Creator"
-          value={(
-            <Link to="recipient-tta-records/376/region/1/goals?id[]=83697">
-              {goal.creator}
-            </Link>
-          )}
+          value={goal.creator}
         />
         <DataRow
           label="Collaborator"
-          value={(
-            <Link to="recipient-tta-records/376/region/1/goals?id[]=83697">
-              {goal.collaborator}
-            </Link>
-          )}
+          value={goal.collaborator}
         />
       </Grid>
       )}

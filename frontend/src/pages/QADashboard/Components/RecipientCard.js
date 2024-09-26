@@ -49,7 +49,7 @@ function RecipientCard({
               </Link>
             </p>
           </div>
-          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__date padding-right-3">
+          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-last-ar-start-date padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Last AR start date</p>
             <p className="usa-prose margin-y-0">
               {checkForDate(recipient.lastArStartDate)}
@@ -62,7 +62,7 @@ function RecipientCard({
               {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportReceivedDate, 'font-sans-3xs')}
             </div>
           </div>
-          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
+          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-classroom-organization padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Classroom organization</p>
             <p className="usa-prose margin-y-0">{recipient.classroomOrganization}</p>
             <div className="margin-top-1">
