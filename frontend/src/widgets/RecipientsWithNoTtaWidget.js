@@ -5,18 +5,18 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 
+const defaultSortConfig = {
+  sortBy: '1',
+  direction: 'desc',
+  activePage: 1,
+};
+
 function RecipientsWithNoTtaWidget({
   data,
   loading,
   resetPagination,
   setResetPagination,
 }) {
-  const defaultSortConfig = {
-    sortBy: '1',
-    direction: 'desc',
-    activePage: 1,
-  };
-
   const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
@@ -65,6 +65,21 @@ function RecipientsWithNoTtaWidget({
     return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients`;
   };
 
+  const menuItems = [
+    {
+      label: 'Export selected rows',
+      onClick: () => {
+        exportRows('selected');
+      },
+    },
+    {
+      label: 'Export table',
+      onClick: () => {
+        exportRows('all');
+      },
+    },
+  ];
+
   return (
     <WidgetContainer
       title="Recipients with no TTA"
@@ -78,8 +93,7 @@ function RecipientsWithNoTtaWidget({
       offset={offset}
       perPage={RECIPIENTS_WITH_NO_TTA_PER_PAGE}
       handlePageChange={handlePageChange}
-      enableCheckboxes
-      exportRows={exportRows}
+      menuItems={menuItems}
     >
       <HorizontalTableWidget
         headers={data.headers || []}

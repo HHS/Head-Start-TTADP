@@ -43,6 +43,7 @@ ContextMenu.propTypes = {
   menuItems: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
     onClick: PropTypes.func,
+    id: PropTypes.string,
   })).isRequired,
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,

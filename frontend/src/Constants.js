@@ -162,6 +162,7 @@ export const TOPICS_PER_PAGE = 10;
 export const COURSES_PER_PAGE = 10;
 export const RECIPIENTS_WITH_NO_TTA_PER_PAGE = 10;
 export const RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE = 10;
+export const RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE = 10;
 
 // In Internet Explorer (tested on release 9 and 11) and Firefox 36 and earlier
 // the Esc key returns "Esc" instead of "Escape".
@@ -194,3 +195,8 @@ export const parseCheckboxEvent = (event) => {
     value,
   };
 };
+
+export const arrayExistsAndHasLength = (array) => array && Array.isArray(array) && array.length > 0;
+
+export const NOOP = () => {};
+export const EMPTY_ARRAY = [];
