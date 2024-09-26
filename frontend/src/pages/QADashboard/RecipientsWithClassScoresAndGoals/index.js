@@ -38,7 +38,7 @@ const ALLOWED_SUBFILTERS = [
 
 const recipients = [{
   id: 1,
-  name: 'Recipient 1',
+  name: 'Abernathy, Mraz and Bogan',
   lastArStartDate: '01/02/2021',
   emotionalSupport: 6.0430,
   classroomOrganization: 5.0430,
