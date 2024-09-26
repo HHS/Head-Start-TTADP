@@ -26,25 +26,24 @@ export default function WidgetContainer(
     showHeaderBorder,
     titleSlot,
     className,
-    enableCheckboxes,
-    exportRows,
+    menuItems,
     footNote,
     displayTable,
     setDisplayTable,
-    titleDrawerText,
-    titleDrawerTitle,
-    titleDrawerTag,
-    titleDrawerCss,
-    subtitleDrawerLinkText,
-    subtitleDrawerLinkTitle,
-    subtitleDrawerTag,
-    subtitleDrawerCss,
+    enableCheckboxes,
+    exportRows,
+
+    // slot components
+    SubtitleDrawer,
+    TitleDrawer,
+    widgetContainerTitleClass,
+    displayPaginationBoxOutline,
   },
 ) {
   return (
     <Container className={`smart-hub-widget-container width-full shadow-2 padding-top-0 ${className}`} paddingX={0} paddingY={0} loading={loading} loadingLabel={loadingLabel}>
       <WidgetContainerTitleGroup
-        className="padding-x-3"
+        className={widgetContainerTitleClass}
         title={title}
         subtitle={subtitle}
         subtitle2={subtitle2}
@@ -61,16 +60,11 @@ export default function WidgetContainer(
             className="flex-justify-self-end"
           />
         ) : null}
+        TitleDrawer={() => TitleDrawer || null}
+        SubtitleDrawer={() => SubtitleDrawer || null}
+        menuItems={menuItems}
         enableCheckboxes={enableCheckboxes}
         exportRows={exportRows}
-        titleDrawerText={titleDrawerText}
-        titleDrawerTitle={titleDrawerTitle}
-        titleDrawerTag={titleDrawerTag}
-        titleDrawerCss={titleDrawerCss}
-        subtitleDrawerLinkText={subtitleDrawerLinkText}
-        subtitleDrawerLinkTitle={subtitleDrawerLinkTitle}
-        subtitleDrawerTag={subtitleDrawerTag}
-        subtitleDrawerCss={subtitleDrawerCss}
       >
         {titleSlot}
       </WidgetContainerTitleGroup>
@@ -85,7 +79,7 @@ export default function WidgetContainer(
         {children}
       </div>
       {showPagingBottom || footNote ? (
-        <div className="border-bottom smart-hub-border-base-lighter padding-3">
+        <div className={`border-bottom smart-hub-border-base-lighter padding-3 ${displayPaginationBoxOutline ? 'smart-hub-border-base--pagination-box' : ''}`}>
           {footNote && (
           <p className="usa-prose font-sans-3xs margin-top-0">
             {footNote}
@@ -98,6 +92,7 @@ export default function WidgetContainer(
               offset={offset}
               perPage={perPage}
               handlePageChange={handlePageChange}
+              displayPaginationBoxOutline={displayPaginationBoxOutline}
             />
           )}
         </div>
@@ -124,19 +119,22 @@ WidgetContainer.propTypes = {
   showHeaderBorder: PropTypes.bool,
   titleSlot: PropTypes.node,
   className: PropTypes.string,
-  enableCheckboxes: PropTypes.bool,
-  exportRows: PropTypes.func,
+  menuItems: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    onClick: PropTypes.func,
+  })),
   footNote: PropTypes.string,
   displayTable: PropTypes.bool,
   setDisplayTable: PropTypes.func,
-  titleDrawerText: PropTypes.string,
-  titleDrawerTitle: PropTypes.string,
-  titleDrawerTag: PropTypes.string,
-  titleDrawerCss: PropTypes.string,
-  subtitleDrawerLinkText: PropTypes.string,
-  subtitleDrawerLinkTitle: PropTypes.string,
-  subtitleDrawerTag: PropTypes.string,
-  subtitleDrawerCss: PropTypes.string,
+
+  // Drawer components
+  SubtitleDrawer: PropTypes.node,
+  TitleDrawer: PropTypes.node,
+
+  widgetContainerTitleClass: PropTypes.string,
+  displayPaginationBoxOutline: PropTypes.bool,
+  enableCheckboxes: PropTypes.bool,
+  exportRows: PropTypes.func,
 };
 
 WidgetContainer.defaultProps = {
@@ -156,17 +154,16 @@ WidgetContainer.defaultProps = {
   titleSlot: null,
   loadingLabel: 'Loading',
   className: '',
-  enableCheckboxes: false,
-  exportRows: null,
+  menuItems: [],
   footNote: null,
   displayTable: false,
   setDisplayTable: null,
-  titleDrawerText: '',
-  titleDrawerTitle: '',
-  titleDrawerTag: '',
-  titleDrawerCss: '',
-  subtitleDrawerLinkText: '',
-  subtitleDrawerLinkTitle: '',
-  subtitleDrawerTag: '',
-  subtitleDrawerCss: '',
+  enableCheckboxes: false,
+  exportRows: null,
+
+  // Drawer components
+  SubtitleDrawer: null,
+  TitleDrawer: null,
+  widgetContainerTitleClass: 'padding-x-3',
+  displayPaginationBoxOutline: false,
 };

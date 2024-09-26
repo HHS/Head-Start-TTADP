@@ -5,8 +5,8 @@ import { Table, Checkbox } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
-import './HorizontalTableWidget.scss';
 import { parseCheckboxEvent } from '../Constants';
+import './HorizontalTableWidget.scss';
 
 export default function HorizontalTableWidget(
   {
@@ -22,6 +22,8 @@ export default function HorizontalTableWidget(
     setCheckboxes,
     showTotalColumn,
     hideFirstColumnBorder,
+    caption,
+    footerData,
   },
 ) {
   // State for select all check box.
@@ -117,6 +119,7 @@ export default function HorizontalTableWidget(
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
+        <caption className="usa-sr-only">{caption}</caption>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
             {
@@ -187,6 +190,15 @@ export default function HorizontalTableWidget(
             ))
             }
         </tbody>
+        {footerData && (
+          <tfoot>
+            <tr>
+              {footerData.map((f, index) => (
+                <td key={`horizontal_table_footer_${index}`}>{f}</td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
       </Table>
     </div>
   );
@@ -217,9 +229,15 @@ HorizontalTableWidget.propTypes = {
   setCheckboxes: PropTypes.func,
   showTotalColumn: PropTypes.bool,
   hideFirstColumnBorder: PropTypes.bool,
+  caption: PropTypes.string,
+  footerData: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
 };
 
 HorizontalTableWidget.defaultProps = {
+  footerData: false,
   data: [],
   lastHeading: 'Total',
   sortConfig: {
@@ -235,4 +253,5 @@ HorizontalTableWidget.defaultProps = {
   setCheckboxes: () => {},
   showTotalColumn: true,
   hideFirstColumnBorder: false,
+  caption: '',
 };
