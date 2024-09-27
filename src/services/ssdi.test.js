@@ -385,7 +385,9 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.sql', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
+        ? { isDirectory: () => true, isFile: () => false }
+        : { isFile: () => true }));
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
@@ -423,7 +425,7 @@ describe('ssdi', () => {
         .spyOn(GenericPolicy.prototype, 'checkPermissions')
         .mockResolvedValue(true);
 
-      const result = await listQueryFiles('test/path', mockUser);
+      const result = await listQueryFiles('api', mockUser);
 
       // Assert the result is as expected
       expect(result).toEqual([
@@ -453,7 +455,9 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.text', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
+        ? { isDirectory: () => true, isFile: () => false }
+        : { isFile: () => true }));
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
@@ -508,7 +512,9 @@ describe('ssdi', () => {
         { name: 'file1.sql', isDirectory: () => false },
         { name: 'file2.sql', isDirectory: () => false },
       ]);
-      fs.promises.stat.mockResolvedValue({ isFile: () => true });
+      fs.promises.stat.mockImplementation((filePath) => (!filePath.endsWith('sql')
+        ? { isDirectory: () => true, isFile: () => false }
+        : { isFile: () => true }));
       fs.promises.access.mockResolvedValue(true);
       fs.promises.readFile.mockResolvedValue(`
       /*
