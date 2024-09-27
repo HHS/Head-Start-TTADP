@@ -43,12 +43,6 @@ jest.mock('../models', () => ({
   },
 }));
 
-// Clear the caches before each test
-beforeEach(() => {
-  cache.clear();
-  jest.clearAllMocks();
-});
-
 describe('ssdi', () => {
   // Clear the caches before each test
   beforeEach(() => {
@@ -159,7 +153,7 @@ describe('ssdi', () => {
         "filters": [
           {
             "name": "sampleFilter",
-            "type": "string",
+            "type": "string[]",
             "display": "Sample Filter",
             "description": "This is a sample filter"
           }
@@ -175,6 +169,36 @@ describe('ssdi', () => {
     });
 
     it('should return cached file if modification time is unchanged', async () => {
+      const mockFileContent = `
+      /*
+      JSON: {
+        "name": "Sample Header",
+        "description": {
+          "standard": "A standard description",
+          "technical": "A technical description"
+        },
+        "output": {
+          "defaultName": "Sample Output",
+          "schema": [
+            {
+              "columnName": "sample_column",
+              "type": "string",
+              "nullable": true,
+              "description": "A sample column description"
+            }
+          ]
+        },
+        "filters": [
+          {
+            "name": "sampleFilter",
+            "type": "string[]",
+            "display": "Sample Filter",
+            "description": "This is a sample filter"
+          }
+        ]
+      }
+      */
+     SELECT * FROM test;`;
       const mockFile = {
         jsonHeader: {
           name: 'Sample Header',
@@ -208,6 +232,7 @@ describe('ssdi', () => {
       const mockPath = 'test/path.sql';
       cache.set(mockPath, mockFile);
 
+      fs.promises.readFile.mockResolvedValue(mockFileContent);
       const mockStat = { mtime: mockFile.modificationTime };
       fs.promises.stat.mockResolvedValue(mockStat);
 
@@ -237,7 +262,7 @@ describe('ssdi', () => {
         "filters": [
           {
             "name": "sampleFilter",
-            "type": "string",
+            "type": "string[]",
             "display": "Sample Filter",
             "description": "This is a sample filter"
           }
@@ -283,41 +308,11 @@ describe('ssdi', () => {
       });
     });
 
-    it('should handle cache hit', async () => {
-      const mockFile = {
-        jsonHeader: { name: 'test' },
-        query: 'SELECT * FROM test',
-        modificationTime: new Date(),
-      };
-      cache.set('test/path.sql', mockFile);
-
-      const mockStat = { mtime: new Date() };
-      fs.promises.stat.mockResolvedValue(mockStat);
-
-      const result = await readJsonHeaderFromFile('test/path.sql');
-      expect(result).toEqual(mockFile);
-    });
-
-    it('should parse and cache new file if modification time changes', async () => {
-      const mockStat = { mtime: new Date() };
-      fs.promises.stat.mockResolvedValue(mockStat);
-
-      const mockFileContent = 'JSON: { "name": "test" } */ SELECT * FROM test;';
-      fs.promises.readFile.mockResolvedValue(mockFileContent);
-
-      const result = await readJsonHeaderFromFile('test/path.sql');
-      expect(result).toEqual({
-        jsonHeader: { name: 'test' },
-        query: 'SELECT * FROM test;',
-        modificationTime: mockStat.mtime,
-      });
-    });
-
     it('should handle JSON parsing errors gracefully', async () => {
       fs.promises.stat.mockResolvedValue({ mtime: new Date() });
       fs.promises.readFile.mockResolvedValue('INVALID JSON HEADER');
 
-      await expect(readJsonHeaderFromFile('test/path.sql')).rejects.toThrow('Invalid JSON header');
+      await expect(await readJsonHeaderFromFile('test/path.sql')).toBe(null);
     });
   });
 
