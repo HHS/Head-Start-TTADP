@@ -1145,7 +1145,7 @@ WITH
       'in_person_percentage', in_person_percentage,
       'virtual_percentage', virtual_percentage,
       'hybrid_percentage', hybrid_percentage
-    ))
+    )) data
     FROM delivery_method_graph
     UNION
     SELECT
@@ -1155,7 +1155,7 @@ WITH
       'role_name', role_name,
       'role_count', role_count,
       'percentage', percentage
-    ))
+    )) data
     FROM role_graph
     UNION
     SELECT
@@ -1164,7 +1164,7 @@ WITH
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-      ))
+      )) data
     FROM process_log
   )
   SELECT *
