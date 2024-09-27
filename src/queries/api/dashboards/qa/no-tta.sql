@@ -326,7 +326,7 @@ BEGIN
       JOIN "ActivityRecipients" ar ON a.id = ar."activityReportId"
       JOIN filtered_grants fgr ON ar."grantId" = fgr.id
       JOIN "ActivityReportGoals" arg ON a.id = arg."activityReportId"
-      JOIN filtered_goals fg ON arg."goalId" = fg.id
+      --JOIN filtered_goals fg ON arg."goalId" = fg.id
       WHERE a."calculatedStatus" = 'approved'
       ORDER BY a.id
       RETURNING id
@@ -479,7 +479,7 @@ datasets AS (
       '% recipients without tta', "% recipients without tta",
       'recipients without tta', "recipients without tta",
       'total', total
-    ))
+    )) data
     FROM no_tta_widget
     UNION
     SELECT 'no_tta_page' data_set, COUNT(*) records,
@@ -488,14 +488,14 @@ datasets AS (
         'recipient name', name,
         'last tta', last_tta,
         'days since last tta', days_since_last_tta
-    ))
+    )) data
     FROM no_tta_page
     UNION
     SELECT 'process_log' data_set, COUNT(*) records,
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'action', action,
         'record_cnt', record_cnt
-    ))
+    )) data
     FROM process_log
 )
 SELECT *
