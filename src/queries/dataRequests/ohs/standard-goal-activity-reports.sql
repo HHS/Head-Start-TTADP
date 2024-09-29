@@ -1,24 +1,81 @@
-/**
-* @name: Standard Goal Report Download URL Generator
-* @description: Generates downloadable URLs for approved reports based on various filters for standard goals.
-* @defaultOutputName: standard_goal_report_download_urls
-* @technicalDescription: Runs a query using the supplied filters to build a set of URLs. Pasting each URL to the browser downloads an Activity Report Export CSV from the TTA Hub containing filtered goals that use the desired standard goal template. Future standard goals will need to be added to the case statement where specified.
-*
-* This query filters reports based on several SSDI flags and generates URLs for downloading the reports.
-*
-* The query results are filterable by the following SSDI flags, which are passed as an array of values:
-* - ssdi.regionIds - integer[] - One or more values for 1 through 12
-* - ssdi.startDate - date[] - Two dates defining a range for the startDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.
-* - ssdi.standardGoal - string[] - One or more values for 'CLASS' and/or 'FEI' for filtering goalTemplateId. If this filter is empty or null, it defaults to 'CLASS'.
-* - ssdi.grantNumbers - string[] - One or more grant numbers
-* - ssdi.recipients - string[] - One or more recipient names
-* - ssdi.uei - string[] - One or more UEI values
-*
-* Zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
-* SELECT SET_CONFIG('ssdi.startDate','["2023-10-01"]',TRUE);
+/*
+JSON: {
+  "name": "Standard Goal Report Download URL Generator",
+  "description": {
+    "standard": "Generates downloadable URLs for approved reports based on various filters for standard goals.",
+    "technical": "Runs a query using the supplied filters to build a set of URLs. Pasting each URL to the browser downloads an Activity Report Export CSV from the TTA Hub containing filtered goals that use the desired standard goal template. Future standard goals will need to be added to the case statement where specified."
+  },
+  "output": {
+    "defaultName": "standard_goal_report_download_urls",
+    "schema": [
+      {
+        "columnName": "group_num",
+        "type": "integer",
+        "nullable": false,
+        "description": "The group number used to partition the reports into separate download URLs."
+      },
+      {
+        "columnName": "report_count",
+        "type": "integer",
+        "nullable": false,
+        "description": "The count of distinct report IDs within the current group."
+      },
+      {
+        "columnName": "download_url",
+        "type": "string",
+        "nullable": false,
+        "description": "The generated URL for downloading the activity report CSV for this group."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12 representing the region IDs."
+    },
+    {
+      "name": "startDate",
+      "type": "date[]",
+      "display": "Start Date Range",
+      "description": "Two dates defining a range for the startDate. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored."
+    },
+    {
+      "name": "standardGoal",
+      "type": "string[]",
+      "display": "Standard Goals",
+      "description": "One or more values for 'CLASS' and/or 'FEI' to filter by goal template. Defaults to 'CLASS' if no value is provided."
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "One or more grant numbers to filter the results."
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "One or more recipient names to filter the results."
+    },
+    {
+      "name": "uei",
+      "type": "string[]",
+      "display": "UEI Values",
+      "description": "One or more UEI values to filter the results."
+    }
+  ],
+  "sorting": {
+    "default": [
+      { "level": 1, "name": "group_num", "order": "ASC" }
+    ]
+  },
+  "customSortingSupported": false,
+  "paginationSupported": false,
+  "exampleUsage": "SELECT SET_CONFIG('ssdi.startDate', '[\"2023-10-01\"]', TRUE);"
+}
 */
-
 WITH
   "BaseURL" AS (
     SELECT
