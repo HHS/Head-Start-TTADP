@@ -1,24 +1,164 @@
-/**
-* @name: Communication Log Report
-* @description: A comprehensive report of communication logs based on several criteria.
-* @defaultOutputName: communication_log_report
-*
-* This query collects all the communication logs based on several criteria.
-*
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values.
-* The following are the available flags within this script:
-* - ssdi.regionIds - integer[] - one or more values for 1 through 12
-* - ssdi.recipients - text[] - one or more verbatim recipient names
-* - ssdi.users - text[] - one or more verbatim user names
-* - ssdi.role - text[] - one or more verbatim role names
-* - ssdi.method - text[] - one or more verbatim method names
-* - ssdi.communicationDate - date[] - two dates defining a range for the communicationDate to be within
-* - ssdi.uei - text[] - one or more verbatim UEI values
-*
-* Zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
-* SELECT SET_CONFIG('ssdi.regionIds','[9]',TRUE);
-* SELECT SET_CONFIG('ssdi.communicationDate','["2023-07-01","2024-06-27"]',TRUE);
+/*
+JSON: {
+  "name": "Communication Log Report",
+  "description": {
+    "standard": "A comprehensive report of communication logs based on several criteria.",
+    "technical": "This query collects all the communication logs based on multiple filters such as region, recipient name, user name, role, communication method, and date range. It retrieves various details, including the communication method, purpose, result, and any next steps."
+  },
+  "output": {
+    "defaultName": "communication_log_report",
+    "schema": [
+      {
+        "columnName": "name",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the recipient associated with the communication log."
+      },
+      {
+        "columnName": "uei",
+        "type": "string",
+        "nullable": true,
+        "description": "The Unique Entity Identifier (UEI) for the recipient."
+      },
+      {
+        "columnName": "user",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the user who conducted the communication."
+      },
+      {
+        "columnName": "roles",
+        "type": "string",
+        "nullable": false,
+        "description": "The roles of the user conducting the communication, separated by spaces."
+      },
+      {
+        "columnName": "createdAt",
+        "type": "timestamp",
+        "nullable": false,
+        "description": "The timestamp of when the communication log was created."
+      },
+      {
+        "columnName": "method",
+        "type": "string",
+        "nullable": true,
+        "description": "The communication method used, such as 'email' or 'phone'."
+      },
+      {
+        "columnName": "result",
+        "type": "string",
+        "nullable": true,
+        "description": "The result of the communication."
+      },
+      {
+        "columnName": "purpose",
+        "type": "string",
+        "nullable": true,
+        "description": "The purpose of the communication."
+      },
+      {
+        "columnName": "duration",
+        "type": "string",
+        "nullable": true,
+        "description": "The duration of the communication, if available."
+      },
+      {
+        "columnName": "region",
+        "type": "string",
+        "nullable": true,
+        "description": "The region ID where the communication took place."
+      },
+      {
+        "columnName": "communicationDate",
+        "type": "date",
+        "nullable": false,
+        "description": "The date of the communication in MM/DD/YYYY format."
+      },
+      {
+        "columnName": "pocComplete",
+        "type": "string",
+        "nullable": true,
+        "description": "Indicates if the Point of Contact (POC) for the communication is complete."
+      },
+      {
+        "columnName": "notes",
+        "type": "string",
+        "nullable": true,
+        "description": "Any additional notes related to the communication."
+      },
+      {
+        "columnName": "recipientNextSteps",
+        "type": "string",
+        "nullable": true,
+        "description": "Details of the next steps expected from the recipient, formatted as a JSON array string."
+      },
+      {
+        "columnName": "specialistNextSteps",
+        "type": "string",
+        "nullable": true,
+        "description": "Details of the next steps expected from the specialist, formatted as a JSON array string."
+      },
+      {
+        "columnName": "filenames",
+        "type": "string",
+        "nullable": true,
+        "description": "Names of any attached files related to the communication."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12 representing the region IDs."
+    },
+    {
+      "name": "communicationDate",
+      "type": "date[]",
+      "display": "Communication Date Range",
+      "description": "Two dates defining a range for the communicationDate. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored."
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "One or more recipient names to filter the results."
+    },
+    {
+      "name": "users",
+      "type": "string[]",
+      "display": "User Names",
+      "description": "One or more user names to filter the results."
+    },
+    {
+      "name": "role",
+      "type": "string[]",
+      "display": "Role Names",
+      "description": "One or more role names to filter the results."
+    },
+    {
+      "name": "method",
+      "type": "string[]",
+      "display": "Communication Methods",
+      "description": "One or more communication methods to filter the results, such as 'email' or 'phone'."
+    },
+    {
+      "name": "uei",
+      "type": "string[]",
+      "display": "UEI Values",
+      "description": "One or more UEI values to filter the results."
+    }
+  ],
+  "sorting": {
+    "default": [
+      { "level": 1, "name": "name", "order": "ASC" },
+      { "level": 2, "name": "communicationDate", "order": "ASC" }
+    ]
+  },
+  "customSortingSupported": true,
+  "paginationSupported": false
+}
 */
 SELECT
     r.name,

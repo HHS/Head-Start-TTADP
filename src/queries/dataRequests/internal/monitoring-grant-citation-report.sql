@@ -1,262 +1,180 @@
 /**
 JSON: {
-  name: "Monitoring Grant Citation Report",
-  description: {
-    standard: "Retrieves monitoring report data based on various filters for compliance and audit purposes.",
-    technical: "This query extracts monitoring report details including region, grant number, report delivery date, finding type, and citations, filtered by several parameters such as report delivery date, review outcomes, review types, finding reported date, and others."
+  "name": "Monitoring Grant Citation Report",
+  "description": {
+    "standard": "Retrieves monitoring report data based on various filters for compliance and audit purposes.",
+    "technical": "This query extracts monitoring report details including region, grant number, report delivery date, finding type, and citations, filtered by several parameters such as report delivery date, review outcomes, review types, finding reported date, and others."
   },
-  output: {
-    defaultName: "monitoring_grant_citation_report",
-    schema: [
+  "output": {
+    "defaultName": "monitoring_grant_citation_report",
+    "schema": [
       {
-        columnName: "regionId",
-        type: "integer",
-        nullable: false,
-        description: "The region ID associated with the grant."
+        "columnName": "regionId",
+        "type": "integer",
+        "nullable": false,
+        "description": "The region ID associated with the grant."
       },
       {
-        columnName: "number",
-        type: "string",
-        nullable: false,
-        description: "The grant number."
+        "columnName": "number",
+        "type": "string",
+        "nullable": false,
+        "description": "The grant number."
       },
       {
-        columnName: "reportDeliveryDate",
-        type: "date",
-        nullable: true,
-        description: "The date when the review was delivered."
+        "columnName": "reportDeliveryDate",
+        "type": "date",
+        "nullable": true,
+        "description": "The date when the review was delivered."
       },
       {
-        columnName: "reviewType",
-        type: "string",
-        nullable: true,
-        description: "The type of review."
+        "columnName": "reviewType",
+        "type": "string",
+        "nullable": true,
+        "description": "The type of review."
       },
       {
-        columnName: "findingType",
-        type: "string",
-        nullable: true,
-        description: "The type of finding in the review."
+        "columnName": "findingType",
+        "type": "string",
+        "nullable": true,
+        "description": "The type of finding in the review."
       },
       {
-        columnName: "citation",
-        type: "string",
-        nullable: true,
-        description: "The specific citation related to the finding."
+        "columnName": "citation",
+        "type": "string",
+        "nullable": true,
+        "description": "The specific citation related to the finding."
       }
     ]
   },
-  filters: [
+  "filters": [
     {
-      name: "regionIds",
-      type: "integer[]",
-      description: "One or more values for 1 through 12",
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT name::int name
-            FROM \"Regions\"
-            WHERE name ~ E'^\\d+$'
-            -- Filter for regionIds if ssdi.regionIds is defined
-            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-              OR name::int in (
-                  SELECT
-                      value::integer AS my_array
-                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-              ))
-            ORDER BY name;
-          ",
-          column: "outcome"
+      "name": "regionIds",
+      "type": "integer[]",
+      "description": "One or more values for 1 through 12",
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT name::int AS name FROM \"Regions\" WHERE name ~ E'^\\d+$' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR name::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY name;",
+          "column": "name"
         }
       }
     },
     {
-      name: "reportDeliveryDate",
-      type: "date[]",
-      description: "Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
-      supportsExclusion: true
+      "name": "reportDeliveryDate",
+      "type": "date[]",
+      "description": "Two dates defining a range for the reportDeliveryDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      "supportsExclusion": true
     },
     {
-      name: "reviewOutcomes",
-      type: "string[]",
-      description: "One or more review outcomes. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT outcome
-            FROM \"MonitoringReviews\"
-            WHERE outcome IS NOT NULL
-            AND \"reportDeliveryDate\" > '2023-01-01'
-            ORDER BY outcome;
-          ",
-          column: "outcome"
+      "name": "reviewOutcomes",
+      "type": "string[]",
+      "description": "One or more review outcomes. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT outcome FROM \"MonitoringReviews\" WHERE outcome IS NOT NULL AND \"reportDeliveryDate\" > '2023-01-01' ORDER BY outcome;",
+          "column": "outcome"
         }
       }
     },
     {
-      name: "reviewTypes",
-      type: "string[]",
-      description: "One or more review types. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT \"reviewType\"
-            FROM \"MonitoringReviews\"
-            WHERE \"reviewType\" IS NOT NULL
-            AND \"reportDeliveryDate\" > '2023-01-01'
-            ORDER BY \"reviewType\";
-          ",
-          column: "reviewType"
+      "name": "reviewTypes",
+      "type": "string[]",
+      "description": "One or more review types. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"reviewType\" FROM \"MonitoringReviews\" WHERE \"reviewType\" IS NOT NULL AND \"reportDeliveryDate\" > '2023-01-01' ORDER BY \"reviewType\";",
+          "column": "reviewType"
         }
       }
     },
     {
-      name: "findingReportedDate",
-      type: "date[]",
-      description: "Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
-      supportsExclusion: true
+      "name": "findingReportedDate",
+      "type": "date[]",
+      "description": "Two dates defining a range for the findingReportedDate to be within. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored.",
+      "supportsExclusion": true
     },
     {
-      name: "findingStatuses",
-      type: "string[]",
-      description: "One or more finding statuses. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT name
-            FROM \"MonitoringFindingStatuses\"
-            ORDER BY name;
-          ",
-          column: "name"
+      "name": "findingStatuses",
+      "type": "string[]",
+      "description": "One or more finding statuses. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT name FROM \"MonitoringFindingStatuses\" ORDER BY name;",
+          "column": "name"
         }
       }
     },
     {
-      name: "findingTypes",
-      type: "string[]",
-      description: "One or more finding types. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT \"findingType\"
-            FROM \"MonitoringFindings\"
-            WHERE \"findingType\" IS NOT NULL
-            ORDER BY \"findingType\";
-          ",
-          column: "findingType"
+      "name": "findingTypes",
+      "type": "string[]",
+      "description": "One or more finding types. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT \"findingType\" FROM \"MonitoringFindings\" WHERE \"findingType\" IS NOT NULL ORDER BY \"findingType\";",
+          "column": "findingType"
         }
       }
     },
     {
-      name: "citations",
-      type: "string[]",
-      description: "One or more citations. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      supportsFuzzyMatch: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT citation
-            FROM \"MonitoringStandards\"
-            WHERE citation IS NOT NULL
-            ORDER BY citation;
-          ",
-          column: "citation"
+      "name": "citations",
+      "type": "string[]",
+      "description": "One or more citations. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT citation FROM \"MonitoringStandards\" WHERE citation IS NOT NULL ORDER BY citation;",
+          "column": "citation"
         }
       }
     },
     {
-      name: "grantNumbers",
-      type: "string[]",
-      description: "One or more grant numbers. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      supportsFuzzyMatch: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT number
-            FROM \"Grants\"
-            WHERE status = 'Active'
-            -- Filter for regionIds if ssdi.regionIds is defined
-            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-              OR \"regionId\" in (
-                  SELECT
-                      value::integer AS my_array
-                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-              ))
-            ORDER BY number;
-          ",
-          column: "number"
+      "name": "grantNumbers",
+      "type": "string[]",
+      "description": "One or more grant numbers. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "description": "One or more recipient names. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT r.name FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY r.name;",
+          "column": "name"
         }
       }
     },
     {
-      name: "recipients",
-      type: "string[]",
-      description: "One or more recipient names. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      supportsFuzzyMatch: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT r.name
-            FROM "Recipients" r
-            JOIN "Grants" gr
-            ON r.id = gr."recipientId"
-            WHERE gr.status = 'Active'
-            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-              OR gr."regionId"::int in (
-                  SELECT
-                      value::integer AS my_array
-                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-              ))
-            ORDER BY r.name;
-          ",
-          column: "name"
-        }
-      }
-    },
-    {
-      name: "uei",
-      type: "string[]",
-      description: "One or more UEI values. If no values are supplied, this filter is ignored.",
-      supportsExclusion: true,
-      supportsFuzzyMatch: true,
-      options: {
-        query: {
-          sqlQuery: "
-            SELECT DISTINCT r.uei
-            FROM "Recipients" r
-            JOIN "Grants" gr
-            ON r.id = gr."recipientId"
-            WHERE gr.status = 'Active'
-            AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
-              OR gr."regionId"::int in (
-                  SELECT
-                      value::integer AS my_array
-                  FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
-              ))
-            ORDER BY r.uei;
-          ",
-          column: "uei"
+      "name": "uei",
+      "type": "string[]",
+      "description": "One or more UEI values. If no values are supplied, this filter is ignored.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true,
+      "options": {
+        "query": {
+          "sqlQuery": "SELECT DISTINCT r.uei FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY r.uei;",
+          "column": "uei"
         }
       }
     }
   ],
-  sorting: {
-    default: [
-      { level: 1, name: "regionId", order: "ASC" }
-      { level: 2, name: "number", order: "ASC" }
-      { level: 3, name: "reportDeliveryDate", order: "ASC" }
+  "sorting": {
+    "default": [
+      { "level": 1, "name": "regionId", "order": "ASC" },
+      { "level": 2, "name": "number", "order": "ASC" },
+      { "level": 3, "name": "reportDeliveryDate", "order": "ASC" }
     ]
   },
-  customSortingSupported: false,
-  paginationSupported: false,
-  exampleUsage: `SELECT SET_CONFIG('ssdi.reportDeliveryDate', '["2023-01-01", "2023-12-31"]', TRUE);`
+  "customSortingSupported": false,
+  "paginationSupported": false,
+  "exampleUsage": "SELECT SET_CONFIG('ssdi.reportDeliveryDate', '[\"2023-01-01\", \"2023-12-31\"]', TRUE);"
 }
 */
 SELECT DISTINCT

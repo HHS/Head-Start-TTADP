@@ -1,24 +1,125 @@
-/**
-* @name: Monitoring Goals Report
-* @description: This query collects all the Monitoring goals used on approved reports within the defined time range.
-* @defaultOutputName: monitoring_goals_report
-*
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values.
-* The following are the available flags within this script:
-* - ssdi.regionIds - integer[] - one or more values for 1 through 12
-* - ssdi.recipients - string[] - one or more verbatim recipient names
-* - ssdi.grantNumbers - string[] - one or more verbatim grant numbers
-* - ssdi.goals - string[] - one or more verbatim goal text
-* - ssdi.status - string[] - one or more verbatim statuses
-* - ssdi.createdVia - string[] - one or more verbatim created via values
-* - ssdi.onApprovedAR - boolean[] - true or false
-* - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
-* - ssdi.startDate - date[] - two dates defining a range for the startDate to be within
-* - ssdi.endDate - date[] - two dates defining a range for the endDate to be within
-*
-* Zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set an SSDI flag:
-* SELECT SET_CONFIG('ssdi.createdbetween','["2023-10-01","2023-10-15"]',TRUE);
+/*
+JSON: {
+  "name": "Monitoring Goals Report",
+  "description": {
+    "standard": "This report collects all the monitoring goals used on approved activity reports within the defined time range.",
+    "technical": "The query retrieves monitoring goals details including region, grant number, recipient name, start date, end date, and the reason for the activity report, filtered by various SSDI flags such as region IDs, recipients, grant numbers, goal status, and date ranges for createdAt, startDate, and endDate."
+  },
+  "output": {
+    "defaultName": "monitoring_goals_report",
+    "schema": [
+      {
+        "columnName": "regionId",
+        "type": "integer",
+        "nullable": false,
+        "description": "The region ID associated with the grant."
+      },
+      {
+        "columnName": "Recipient Name",
+        "type": "string",
+        "nullable": false,
+        "description": "The name of the recipient associated with the grant."
+      },
+      {
+        "columnName": "grant number",
+        "type": "string",
+        "nullable": false,
+        "description": "The grant number associated with the goal."
+      },
+      {
+        "columnName": "reason",
+        "type": "string",
+        "nullable": true,
+        "description": "The reason for the activity report."
+      },
+      {
+        "columnName": "startDate",
+        "type": "date",
+        "nullable": true,
+        "description": "The start date of the activity report."
+      },
+      {
+        "columnName": "endDate",
+        "type": "date",
+        "nullable": true,
+        "description": "The end date of the activity report."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12 representing the region IDs."
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "One or more recipient names to filter the results."
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "One or more grant numbers to filter the results."
+    },
+    {
+      "name": "goals",
+      "type": "string[]",
+      "display": "Goals",
+      "description": "One or more goal text values to filter the results."
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "One or more status values to filter the goals."
+    },
+    {
+      "name": "createdVia",
+      "type": "string[]",
+      "display": "Created Via",
+      "description": "One or more created via values to filter the goals."
+    },
+    {
+      "name": "onApprovedAR",
+      "type": "boolean[]",
+      "display": "On Approved AR",
+      "description": "Boolean filter indicating if the goal is linked to an approved Activity Report."
+    },
+    {
+      "name": "createdbetween",
+      "type": "date[]",
+      "display": "Created Date Range",
+      "description": "Two dates defining a range for the 'createdAt' timestamp to be within."
+    },
+    {
+      "name": "startDate",
+      "type": "date[]",
+      "display": "Start Date Range",
+      "description": "Two dates defining a range for the 'startDate' timestamp to be within."
+    },
+    {
+      "name": "endDate",
+      "type": "date[]",
+      "display": "End Date Range",
+      "description": "Two dates defining a range for the 'endDate' timestamp to be within."
+    }
+  ],
+  "sorting": {
+    "default": [
+      { "level": 1, "name": "regionId", "order": "ASC" },
+      { "level": 2, "name": "Recipient Name", "order": "ASC" },
+      { "level": 3, "name": "grant number", "order": "ASC" },
+      { "level": 4, "name": "startDate", "order": "ASC" }
+    ]
+  },
+  "customSortingSupported": true,
+  "paginationSupported": false,
+  "exampleUsage": "SELECT SET_CONFIG('ssdi.createdbetween', '[\"2023-10-01\",\"2023-10-15\"]', TRUE);"
+}
 */
 SELECT
 	gr."regionId",

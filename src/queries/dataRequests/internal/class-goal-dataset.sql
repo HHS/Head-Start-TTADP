@@ -1,22 +1,120 @@
-/**
-* @name: Goals Report
-* @description: This query collects all the goals.
-* @defaultOutputName: goals_report
-*
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values.
-* The following are the available flags within this script:
-* - ssdi.regionIds - integer[] - one or more values for 1 through 12
-* - ssdi.recipients - string[] - one or more verbatim recipient names
-* - ssdi.grantNumbers - string[] - one or more verbatim grant numbers
-* - ssdi.goals - string[] - one or more verbatim goal text
-* - ssdi.status - string[] - one or more verbatim statuses
-* - ssdi.createdVia - string[] - one or more verbatim created via values
-* - ssdi.onApprovedAR - boolean[] - true or false
-* - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
-*
-* Zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set an SSDI flag:
-* SELECT SET_CONFIG('ssdi.createdbetween','["2022-07-01","2023-06-30"]',TRUE);
+/*
+JSON: {
+  "name": "Goals Report",
+  "description": {
+    "standard": "Filterable goals report with detailed information on goals and associated grants.",
+    "technical": "The query results are filterable by the SSDI flags, which are passed as an array of values. All available SSDI flags are listed and can be set within the same transaction as the query is executed."
+  },
+  "output": {
+    "defaultName": "goals_report",
+    "schema": [
+      {
+        "columnName": "goal id",
+        "type": "integer",
+        "nullable": false,
+        "description": "Unique identifier for the goal."
+      },
+      {
+        "columnName": "grant id",
+        "type": "integer",
+        "nullable": false,
+        "description": "Unique identifier for the associated grant."
+      },
+      {
+        "columnName": "grant number",
+        "type": "string",
+        "nullable": false,
+        "description": "Number identifying the grant associated with the goal."
+      },
+      {
+        "columnName": "template id",
+        "type": "integer",
+        "nullable": true,
+        "description": "Unique identifier for the goal template."
+      },
+      {
+        "columnName": "recipient id",
+        "type": "integer",
+        "nullable": false,
+        "description": "Unique identifier for the recipient associated with the goal."
+      },
+      {
+        "columnName": "region id",
+        "type": "integer",
+        "nullable": false,
+        "description": "ID representing the region the grant belongs to."
+      },
+      {
+        "columnName": "goal text",
+        "type": "string",
+        "nullable": true,
+        "description": "Text description of the goal."
+      },
+      {
+        "columnName": "goal status",
+        "type": "string",
+        "nullable": false,
+        "description": "Current status of the goal."
+      },
+      {
+        "columnName": "create date",
+        "type": "date",
+        "nullable": false,
+        "description": "Date when the goal was created."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12."
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "Filter based on the names of the recipients."
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "Filter based on the grant numbers."
+    },
+    {
+      "name": "goals",
+      "type": "string[]",
+      "display": "Goals",
+      "description": "Filter based on the goal text."
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on the goal status."
+    },
+    {
+      "name": "createdVia",
+      "type": "string[]",
+      "display": "Created Via",
+      "description": "Filter based on the method used to create the goal."
+    },
+    {
+      "name": "onApprovedAR",
+      "type": "boolean[]",
+      "display": "On Approved AR",
+      "description": "Boolean filter indicating if the goal is on an approved Activity Report."
+    },
+    {
+      "name": "createdbetween",
+      "type": "date[]",
+      "display": "Creation Date Range",
+      "description": "Two dates defining a range for the 'createdAt' timestamp to be within."
+    }
+  ]
+}
 */
 SELECT
 	g."id" AS "goal id",
