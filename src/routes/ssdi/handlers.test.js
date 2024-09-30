@@ -220,7 +220,6 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      jest.spyOn(require('./handlers'), 'validateScriptPath').mockResolvedValue(true);
       listQueryFiles.mockResolvedValue([{ name: 'Test Query', description: 'Test Description' }]);
 
       const response = await request(app).get('/listQueries');
@@ -282,7 +281,7 @@ describe('API Endpoints', () => {
       listQueryFiles.mockResolvedValue([{ name: 'Default Query', description: 'Default Description' }]);
 
       const response = await request(app).get('/listQueries'); // No path provided
-      expect(checkFolderPermissions).toHaveBeenCalledWith({ id: 1, name: 'John Doe' },'dataRequests');
+      expect(checkFolderPermissions).toHaveBeenCalledWith({ id: 1, name: 'John Doe' }, 'dataRequests');
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ name: 'Default Query', description: 'Default Description' }]);
     });
