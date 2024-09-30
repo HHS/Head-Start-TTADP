@@ -275,7 +275,6 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
         }
 
         return fullPath;
-
       }),
     )
     : [];
