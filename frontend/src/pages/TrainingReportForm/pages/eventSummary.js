@@ -176,7 +176,7 @@ const EventSummary = ({
               </FormItem>
             </div>
             <div className="margin-top-2" data-testid="creator-select">
-              <Label htmlFor="creatorName">
+              <Label htmlFor="ownerId">
                 Event creator
                 <Req />
               </Label>
