@@ -210,6 +210,7 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
 
   try {
     const fileContents = await fsPromises.readFile(resolvedFilePath, 'utf8');
+    // eslint-disable-next-line no-useless-escape
     const jsonMatch = fileContents.match(/[\/][*](?:.|\n)+JSON:\s*([{][\s\S]*[}])(?:.|\n)+[*][\/]/);
     const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
 
@@ -262,18 +263,19 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
         if (!dirent || !dirent.name) {
           return null;
         }
-        console.log(directory, dirent.name);
         const fullPath = path.join(directory, dirent.name);
 
         if (dirent.isDirectory()) {
           // Recursively read files from subdirectories, return promise directly
           return readFilesRecursively(fullPath);
         }
+
         if (!dirent.name.endsWith('.sql')) {
           return null;
         }
+
         return fullPath;
-        
+
       }),
     )
     : [];
