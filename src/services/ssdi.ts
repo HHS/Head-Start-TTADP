@@ -210,7 +210,7 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
 
   try {
     const fileContents = await fsPromises.readFile(resolvedFilePath, 'utf8');
-    const jsonMatch = fileContents.match(/JSON:\s*({[\s\S]*})/);
+    const jsonMatch = fileContents.match(/[\/][*](?:.|\n)+JSON:\s*([{][\s\S]*[}])(?:.|\n)+[*][\/]/);
     const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
 
     if (jsonMatch && queryMatch) {
@@ -256,20 +256,27 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
   const list = await fsPromises.readdir(directory, { withFileTypes: true });
 
   // Use map to recursively process directories and files
-  const files = await Promise.all(
-    list.map((dirent) => {
-      const fullPath = path.join(directory, dirent.name);
+  const files = list
+    ? await Promise.all(
+      list.map((dirent) => {
+        if (!dirent || !dirent.name) {
+          return null;
+        }
+        console.log(directory, dirent.name);
+        const fullPath = path.join(directory, dirent.name);
 
-      if (dirent.isDirectory()) {
-        // Recursively read files from subdirectories, return promise directly
-        return readFilesRecursively(fullPath);
-      }
-      if (!dirent.name.endsWith('.sql')) {
-        return null;
-      }
-      return fullPath;
-    }),
-  );
+        if (dirent.isDirectory()) {
+          // Recursively read files from subdirectories, return promise directly
+          return readFilesRecursively(fullPath);
+        }
+        if (!dirent.name.endsWith('.sql')) {
+          return null;
+        }
+        return fullPath;
+        
+      }),
+    )
+    : [];
 
   // Flatten the array of results (since subdirectories return arrays)
   return files

@@ -155,9 +155,7 @@ JSON: {
       { "level": 1, "name": "name", "order": "ASC" },
       { "level": 2, "name": "communicationDate", "order": "ASC" }
     ]
-  },
-  "customSortingSupported": true,
-  "paginationSupported": false
+  }
 }
 */
 SELECT

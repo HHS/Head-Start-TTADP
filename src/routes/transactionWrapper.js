@@ -29,13 +29,13 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
 
   const buildCondition = (table, maxId) => {
     let condition = {
-      id: { [Op.gt]: maxId },
+      id: { [Op.gt]: Number(maxId) },
       dml_txid: transactionId,
     }; // Default condition for ZAL tables
 
     if (table === 'ZALDDL') {
       condition = {
-        id: { [Op.gt]: maxId },
+        id: { [Op.gt]: Number(maxId) },
         ddl_txid: transactionId,
         object_identity: { [Op.notLike]: 'pg_temp.%' },
       };
@@ -46,13 +46,13 @@ export async function hasModifiedData(snapShot, transactionId = httpContext.get(
   // Create an array of promises for each table
   const queryPromises = zalTables.map((table) => {
     const tableName = db[table].getTableName();
-    const snapShotEntry = snapShot.find((entry) => entry.tableName === tableName);
+    const snapShotEntry = snapShot.find((entry) => entry.table_name === tableName);
 
     if (!snapShotEntry) {
       throw new Error(`Snapshot entry not found for table: ${tableName}`);
     }
 
-    const condition = buildCondition(table, snapShotEntry.maxId);
+    const condition = buildCondition(table, snapShotEntry.max_id);
 
     return db[table].findOne({
       where: condition,
