@@ -22,6 +22,7 @@ import {
 import Generic from '../../policies/generic';
 
 jest.mock('../../services/ssdi', () => ({
+  checkFolderPermissions: jest.fn(),
   listQueryFiles: jest.fn(),
   readFiltersFromFile: jest.fn(),
   setFilters: jest.fn(),
@@ -48,10 +49,14 @@ app.get('/getFilters', getFilters);
 app.post('/runQuery', runQuery);
 
 describe('API Endpoints', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
   describe('validateScriptPath', () => {
     let mockRes;
 
     beforeEach(() => {
+      jest.resetAllMocks();
       mockRes = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn().mockReturnThis(),
@@ -213,7 +218,7 @@ describe('API Endpoints', () => {
     it('should list all available query files', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      jest.spyOn(require('./handlers'), 'validateScriptPath').mockResolvedValue(true);
       listQueryFiles.mockResolvedValue([{ name: 'Test Query', description: 'Test Description' }]);
 
       const response = await request(app).get('/listQueries');
@@ -224,7 +229,7 @@ describe('API Endpoints', () => {
     it('should handle errors when listing query files', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      jest.spyOn(require('./handlers'), 'validateScriptPath').mockResolvedValue(false);
       listQueryFiles.mockImplementation(() => { throw new Error('Error listing query files'); });
 
       const response = await request(app).get('/listQueries');
