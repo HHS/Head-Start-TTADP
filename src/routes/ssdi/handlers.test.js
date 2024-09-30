@@ -218,6 +218,8 @@ describe('API Endpoints', () => {
     it('should list all available query files', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       jest.spyOn(require('./handlers'), 'validateScriptPath').mockResolvedValue(true);
       listQueryFiles.mockResolvedValue([{ name: 'Test Query', description: 'Test Description' }]);
 
@@ -229,7 +231,8 @@ describe('API Endpoints', () => {
     it('should handle errors when listing query files', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      jest.spyOn(require('./handlers'), 'validateScriptPath').mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       listQueryFiles.mockImplementation(() => { throw new Error('Error listing query files'); });
 
       const response = await request(app).get('/listQueries');
@@ -240,19 +243,21 @@ describe('API Endpoints', () => {
     it('should return 500 when an unexpected error occurs', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       listQueryFiles.mockImplementation(() => { throw new Error('Unexpected Error'); });
 
       const response = await request(app).get('/listQueries');
       expect(response.status).toBe(500);
-      expect(response.text).toBe('Unexpected Error');
+      expect(response.text).toBe('Error listing query files');
     });
 
     it('should return 400 if scriptPath is invalid', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       // Simulate early return due to invalid script path
-      validateScriptPath.mockResolvedValue(true);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(false); // Mock permission check
 
       const response = await request(app).get('/listQueries?path=invalidPath');
       expect(response.status).toBe(400);
@@ -262,31 +267,24 @@ describe('API Endpoints', () => {
     it('should return early if validateScriptPath sends a response', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(true); // Simulate early return
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
 
-      const response = await request(app).get('/listQueries?path=dataRequests');
-      expect(validateScriptPath).toHaveBeenCalled();
+      const response = await request(app).get('/listQueries?path=../dataRequests');
       expect(response.status).toBe(400); // Assuming validateScriptPath causes a 400 response
     });
 
     it('should default scriptPath to "dataRequests" when not provided', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       listQueryFiles.mockResolvedValue([{ name: 'Default Query', description: 'Default Description' }]);
 
       const response = await request(app).get('/listQueries'); // No path provided
-      expect(validateScriptPath).toHaveBeenCalledWith('dataRequests', expect.any(Object), expect.any(Object), true);
+      expect(checkFolderPermissions).toHaveBeenCalledWith({ id: 1, name: 'John Doe' },'dataRequests');
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ name: 'Default Query', description: 'Default Description' }]);
-    });
-
-    it('should handle errors', async () => {
-      listQueryFiles.mockImplementation(() => { throw new Error('Error listing query files'); });
-
-      const response = await request(app).get('/listQueries');
-      expect(response.status).toBe(500);
-      expect(response.text).toBe('Error listing query files');
     });
   });
 
