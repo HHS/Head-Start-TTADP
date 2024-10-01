@@ -75,6 +75,7 @@ export default function ApprovedActivityReport({ match, user }) {
 
   useEffect(() => {
     if (!parseInt(match.params.activityReportId, 10)) {
+      history.push('/something-went-wrong/404');
       return;
     }
 
