@@ -112,7 +112,7 @@ export default function MyGroups({ match }) {
           });
         }
       } catch (err) {
-        history.push(`/something-went-wrong/${err.status}`);
+        history.push(`/something-went-wrong/${err.status || 500}`);
       } finally {
         setIsAppLoading(false);
       }
