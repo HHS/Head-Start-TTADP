@@ -4,7 +4,6 @@ import { Helmet } from 'react-helmet';
 import { Link as RouterLink } from 'react-router-dom';
 import PropTypes from 'prop-types';
 import AppLoadingContext from '../AppLoadingContext';
-import './SomethingWentWrong.scss';
 
 const SUPPORT_LINK = 'https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a';
 
@@ -116,18 +115,17 @@ function SomethingWentWrong({ responseCode }) {
     <>
       <Helmet>
         <title>
-          Something went wrong -
           {messageToDisplay.title}
         </title>
       </Helmet>
       <div className="smart-hub--something-went-wrong padding-3">
         {
         messageToDisplay.message && (
-        <h3 className="margin-bottom-1">{messageToDisplay.message}</h3>
+        <h3 className="margin-bottom-1 base-medium">{messageToDisplay.message}</h3>
         )
       }
-        <h1 className="margin-top-0 margin-bottom-2">{messageToDisplay.title}</h1>
-        <div className="smart-hub--something-went-wrong-body">
+        <h1 className="margin-top-0 margin-bottom-2 font-serif-2xl">{messageToDisplay.title}</h1>
+        <div className="smart-hub--something-went-wrong-body maxw-tablet-lg">
           { messageToDisplay.body }
         </div>
       </div>
