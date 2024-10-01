@@ -169,7 +169,14 @@ SELECT
     COALESCE(cl.data ->> 'purpose', '') AS "purpose",
     COALESCE(cl.data ->> 'duration', '') AS "duration",
     COALESCE(cl.data ->> 'regionId', '') AS "region",
-    to_date(cl.data ->> 'communicationDate', 'MM/DD/YYYY') AS "communicationDate",
+    CASE
+		WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$' THEN TO_DATE(data ->> 'communicationDate', 'MM/DD/YYYY')
+		WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}$' THEN TO_DATE(data ->> 'communicationDate', 'MM/DD/YY')
+		WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}-[0-9]{1,2}-[0-9]{2}$' THEN TO_DATE(data ->> 'communicationDate', 'MM-DD-YY')
+		WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}//[0-9]{2}$' THEN TO_DATE(regexp_replace(data ->> 'communicationDate', '//', '/'), 'MM/DD/YY')
+		WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}?[0-9]{1,2}.[0-9]{1,2}$' THEN TO_DATE(LEFT(data ->> 'communicationDate', 10), 'MM/DD/YYYY')
+		ELSE NULL
+	END AS "communicationDate",
     COALESCE(cl.data ->> 'pocComplete', '') AS "pocComplete",
     COALESCE(cl.data ->> 'notes', '') AS "notes",
     COALESCE((
@@ -206,7 +213,16 @@ WHERE
 AND
 -- Filter for communicationDate if ssdi.communicationDate is defined
 (NULLIF(current_setting('ssdi.communicationDate', true), '') IS NULL
-        OR to_date(cl.data ->> 'communicationDate', 'MM/DD/YYYY') <@ (
+        OR (
+			CASE
+			    WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}$' THEN TO_DATE(data ->> 'communicationDate', 'MM/DD/YYYY')
+			    WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{2}$' THEN TO_DATE(data ->> 'communicationDate', 'MM/DD/YY')
+			    WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}-[0-9]{1,2}-[0-9]{2}$' THEN TO_DATE(data ->> 'communicationDate', 'MM-DD-YY')
+			    WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}//[0-9]{2}$' THEN TO_DATE(regexp_replace(data ->> 'communicationDate', '//', '/'), 'MM/DD/YY')
+			    WHEN data ->> 'communicationDate' ~ '^[0-9]{1,2}/[0-9]{1,2}/[0-9]{4}?[0-9]{1,2}.[0-9]{1,2}$' THEN TO_DATE(LEFT(data ->> 'communicationDate', 10), 'MM/DD/YYYY')
+			    ELSE NULL
+			END
+		) <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.communicationDate', true), ''),'[]')::json) AS value
         ))
