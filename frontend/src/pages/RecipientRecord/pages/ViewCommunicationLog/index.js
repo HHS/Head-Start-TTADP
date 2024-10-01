@@ -36,7 +36,7 @@ export default function ViewCommunicationLog({ match, recipientName }) {
         const response = await getCommunicationLogById(regionId, communicationLogId);
         setLog(response);
       } catch (err) {
-        history.push(`/something-went-wrong/${err.response}`);
+        history.push(`/something-went-wrong/${err.status}`);
       } finally {
         setIsAppLoading(false);
       }
