@@ -10,7 +10,7 @@ There are a number of examples of writing tests in here, but the basic pattern i
 
 ```typescript
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 
 test('get /endpoint', async ({ request }) => {
