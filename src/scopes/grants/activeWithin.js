@@ -26,19 +26,14 @@ export function activeAfter(dates) {
       endDate: {
         [Op.gte]: new Date(date),
       },
-      [Op.or]: [{
-        '$replacedGrantReplacements.replacementDate$': {
-          [Op.gte]: new Date(date),
+      [Op.or]: [
+        {
+          inactivationDate: { [Op.gte]: new Date(date) },
         },
-      }, {
-        '$replacedGrantReplacements.replacementDate$': null,
-      }, {
-        '$replacingGrantReplacements.replacementDate$': {
-          [Op.gte]: new Date(date),
+        {
+          inactivationDate: null,
         },
-      }, {
-        '$replacingGrantReplacements.replacementDate$': null,
-      }],
+      ],
     },
   ], []);
 
