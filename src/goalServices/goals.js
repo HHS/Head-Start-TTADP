@@ -1961,20 +1961,26 @@ export async function mergeGoals(
 
   grantsWithReplacements.forEach((grant) => {
     if (grant.status === 'Active') {
-      // If the grant itself is active, map it directly
-      grantsWithReplacementsDictionary[grant.id] = grant.id;
+      if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+        grantsWithReplacementsDictionary[grant.id].push(grant.id);
+      } else {
+        grantsWithReplacementsDictionary[grant.id] = [grant.id];
+      }
     } else {
-      // If the grant is inactive but has an active replacement, map to the active one
       grant.grantRelationships.forEach((relationship) => {
         if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
-          grantsWithReplacementsDictionary[grant.id] = relationship.activeGrantId;
+          if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+            grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
+          } else {
+            grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
+          }
         }
       });
     }
   });
 
   // unique list of grant IDs
-  const grantIds = uniq(Object.values(grantsWithReplacementsDictionary));
+  const grantIds = uniq(Object.values(grantsWithReplacementsDictionary).flat());
 
   const goalsToBulkCreate = grantIds.map((grantId) => ({
     ...finalGoalValues,

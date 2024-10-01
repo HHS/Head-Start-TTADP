@@ -8,6 +8,10 @@ const {
   afterDestroy,
 } = require('./hooks/grant');
 
+const { GRANT_INACTIVATION_REASONS } = require('../constants');
+
+const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
+
 export default (sequelize, DataTypes) => {
   class Grant extends Model {
     static associate(models) {
@@ -64,6 +68,8 @@ export default (sequelize, DataTypes) => {
     stateCode: DataTypes.STRING,
     startDate: DataTypes.DATE,
     endDate: DataTypes.DATE,
+    inactivationDate: DataTypes.DATE,
+    inactivationReason: DataTypes.ENUM(inactivationReasons),
     recipientId: {
       type: DataTypes.INTEGER,
       allowNull: false,

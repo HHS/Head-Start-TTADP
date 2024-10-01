@@ -1,9 +1,5 @@
 const { prepMigration } = require('../lib/migration');
 
-const { GRANT_INACTIVATION_REASONS } = require('../constants');
-
-const inactivationReasons = Object.values(GRANT_INACTIVATION_REASONS);
-
 module.exports = {
   up: async (queryInterface, Sequelize) => queryInterface.sequelize.transaction(
     async (transaction) => {
@@ -42,6 +38,14 @@ module.exports = {
           allowNull: true,
         },
       }, { transaction });
+
+      // Create initial GrantReplacementTypes from distinct inactivation reasons
+      await queryInterface.sequelize.query(/* sql */`
+        INSERT INTO "GrantReplacementTypes" ("name")
+          SELECT DISTINCT gr."inactivationReason"
+          FROM "Grants" gr
+          WHERE gr."inactivationReason" IS NOT NULL;
+      `, { transaction });
 
       // Create GrantReplacement table
       await queryInterface.createTable('GrantReplacements', {
@@ -102,17 +106,18 @@ module.exports = {
           gr1."oldGrantId" AS "replacedGrantId",
           gr1."id" AS "replacingGrantId",
           gr2."inactivationDate" AS "replacementDate",
+          grt.id AS "grantReplacementTypeId"
           gr1."createdAt",
           gr1."updatedAt"
         FROM "Grants" gr1
         JOIN "Grants" gr2
         ON gr1."oldGrantId" = gr2.id
+        LEFT JOIN "GrantReplacementTypes" grt
+        ON gr1."inactivationReason" = grt.name
         WHERE gr1."oldGrantId" IS NOT NULL;
       `, { transaction });
 
       await queryInterface.removeColumn('Grants', 'oldGrantId', { transaction });
-      await queryInterface.removeColumn('Grants', 'inactivationDate', { transaction });
-      await queryInterface.removeColumn('Grants', 'inactivationReason', { transaction });
     },
   ),
 
@@ -121,16 +126,6 @@ module.exports = {
       await prepMigration(queryInterface, transaction, __filename);
       await queryInterface.addColumn('Grants', 'oldGrantId', {
         type: Sequelize.INTEGER,
-        allowNull: true,
-      }, { transaction });
-
-      await queryInterface.addColumn('Grants', 'inactivationDate', {
-        type: Sequelize.DATE,
-        allowNull: true,
-      }, { transaction });
-
-      await queryInterface.addColumn('Grants', 'inactivationReason', {
-        type: Sequelize.ENUM(...inactivationReasons),
         allowNull: true,
       }, { transaction });
 
