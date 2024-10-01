@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { Router } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   fireEvent,
@@ -11,9 +12,12 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 
+import { createMemoryHistory } from 'history';
 import ApprovedActivityReport from '../index';
 
 describe('Activity report print and share view', () => {
+  const history = createMemoryHistory();
+
   const report = {
     version: 1,
     regionId: 45,
@@ -114,7 +118,9 @@ describe('Activity report print and share view', () => {
     };
 
     render(
-      <ApprovedActivityReport user={passedUser} match={match} />,
+      <Router history={history}>
+        <ApprovedActivityReport user={passedUser} match={match} />
+      </Router>,
     );
   }
   afterEach(() => fetchMock.restore());
@@ -226,23 +232,27 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
+    const spy = jest.spyOn(history, 'push');
     const setErrorResponseCode = jest.fn();
     act(() => renderApprovedActivityReport(5007, user, setErrorResponseCode));
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
-      expect(setErrorResponseCode).toHaveBeenCalledWith(401);
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
   });
 
   it('handles data errors', async () => {
-    const setErrorResponseCode = jest.fn();
-    act(() => renderApprovedActivityReport(5002, user, setErrorResponseCode));
+    const spy = jest.spyOn(history, 'push');
+
+    act(() => renderApprovedActivityReport(5002, user));
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/5002')).toBeTruthy();
-      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('copies a url to clipboard', async () => {
