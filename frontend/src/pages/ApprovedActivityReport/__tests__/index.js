@@ -323,12 +323,14 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles a malformed url', async () => {
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
+    fetchMock.get('/api/activity-reports/butter-lover', {});
     act(async () => {
-      renderApprovedActivityReport('butter-lover', user, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
-      });
+      renderApprovedActivityReport('butter-lover', user);
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
   });
 
