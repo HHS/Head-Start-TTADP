@@ -1053,7 +1053,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectives(objectiveIdsToRemove, reportId);
 }
 
-async function createObjectivesForGoal(goal, objectives) {
+export async function createObjectivesForGoal(goal, objectives) {
   /*
      Note: Objective Status
      We only want to set Objective status from here on initial Objective creation.
@@ -1066,10 +1066,10 @@ async function createObjectivesForGoal(goal, objectives) {
 
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
-    || o.topics.length
-    || o.resources.length
-    || o.courses.length
-    || o.files.length).map(async (objective, index) => {
+    || o.topics?.length
+    || o.resources?.length
+    || o.courses?.length
+    || o.files?.length).map(async (objective, index) => {
     const {
       id,
       isNew,
