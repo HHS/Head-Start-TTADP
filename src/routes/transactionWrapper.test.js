@@ -1,5 +1,5 @@
-import transactionWrapper, { hasModifiedData, readOnlyTransactionWrapper } from './transactionWrapper';
 import httpContext from 'express-http-context';
+import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
 import { auditLogger } from '../logger';
 import db from '../models';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
