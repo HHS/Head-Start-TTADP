@@ -28,7 +28,7 @@ export default function Group({ match }) {
         const existingGroupData = await fetchGroup(groupId);
         setGroup(existingGroupData);
       } catch (err) {
-        history.push(`/something-went-wrong/${err.status}`);
+        history.push(`/something-went-wrong/${err.status || 500}`);
       } finally {
         setIsAppLoading(false);
       }

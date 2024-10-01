@@ -6,8 +6,9 @@ import {
   waitFor,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
 import join from 'url-join';
-import { MemoryRouter } from 'react-router';
+import { Router } from 'react-router';
 import Group from '../Group';
 import AppLoadingContext from '../../../AppLoadingContext';
 
@@ -18,13 +19,15 @@ describe('Group', () => {
     fetchMock.restore();
   });
 
+  const history = createMemoryHistory();
+
   const renderGroup = (groupId) => {
     render(
-      <MemoryRouter>
+      <Router history={history}>
         <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
           <Group match={{ params: { groupId }, path: '', url: '' }} />
         </AppLoadingContext.Provider>
-      </MemoryRouter>,
+      </Router>,
     );
   };
 
@@ -76,36 +79,39 @@ describe('Group', () => {
   });
 
   it('handles null response', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), null);
-    const setErrorResponseCode = jest.fn();
     act(async () => {
-      renderGroup(1, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(null);
-      });
+      renderGroup(1);
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
     });
   });
 
   it('handles 404', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), 404);
-    const setErrorResponseCode = jest.fn();
     act(async () => {
-      renderGroup(1, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
-      });
+      renderGroup(1);
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
   });
 
   it('handles 500', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(join(endpoint, '1'), 500);
 
-    const setErrorResponseCode = jest.fn();
     await act(async () => {
-      renderGroup(1, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(500);
-      });
+      renderGroup(1);
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
     });
   });
 

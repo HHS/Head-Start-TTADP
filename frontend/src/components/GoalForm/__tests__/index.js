@@ -37,6 +37,7 @@ const topicsFromApi = [
 ].map((name, id) => ({ name, id }));
 
 describe('create goal', () => {
+  const history = createMemoryHistory();
   const defaultRecipient = {
     id: 1,
     grants: [
@@ -103,7 +104,6 @@ describe('create goal', () => {
   }];
 
   function renderForm(recipient = defaultRecipient, goalId = 'new') {
-    const history = createMemoryHistory();
     render((
       <Router history={history}>
         <UserContext.Provider value={{
@@ -370,13 +370,18 @@ describe('create goal', () => {
   });
 
   it('correctly calls the setErrorResponseCode function when there is an error', async () => {
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
     fetchMock.restore();
     fetchMock.get('/api/recipient/1/goals?goalIds=', 500);
     await act(async () => {
-      renderForm(defaultRecipient, '48743', setErrorResponseCode);
-      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+      renderForm(defaultRecipient, '48743');
     });
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/recipient/1/goals?goalIds=')).toBeTruthy();
+    });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('removes goals', async () => {
