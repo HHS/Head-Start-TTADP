@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import {
+  Redirect,
   Route,
   Switch,
   useLocation,
@@ -324,9 +325,7 @@ export default function Routes({
         />
         <Route
           render={() => (
-            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
-              <SomethingWentWrong responseCode={404} />
-            </AppWrapper>
+            <Redirect to="/something-went-wrong/404" />
           )}
         />
       </Switch>

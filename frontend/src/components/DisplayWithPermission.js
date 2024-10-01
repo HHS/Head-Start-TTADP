@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { Redirect } from 'react-router';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
-import SomethingWentWrong from './SomethingWentWrong';
 
 export default function DisplayWithPermission({
   scopes, renderNotFound, children,
@@ -16,7 +16,7 @@ export default function DisplayWithPermission({
 
   if (!admin && !userHasScope) {
     if (renderNotFound) {
-      return <SomethingWentWrong responseCode={404} />;
+      return <Redirect to="/something-went-wrong/404" />;
     }
     return <></>;
   }
