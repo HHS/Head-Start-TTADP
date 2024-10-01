@@ -1,6 +1,11 @@
 import { Op } from 'sequelize';
 import {
-  createObjectivesForGoal, saveGoalsForReport, goalsForGrants, getReportCountForGoals, verifyAllowedGoalStatusTransition, updateGoalStatusById
+  createObjectivesForGoal,
+  saveGoalsForReport,
+  goalsForGrants,
+  getReportCountForGoals,
+  verifyAllowedGoalStatusTransition,
+  updateGoalStatusById,
 } from './goals';
 import {
   sequelize,
@@ -10,10 +15,11 @@ import {
   ActivityReportObjective,
   ActivityReportGoal,
 } from '../models';
-const { OBJECTIVE_STATUS } = require('../constants');
 import { GOAL_STATUS } from '../constants';
 import changeGoalStatus from './changeGoalStatus';
 import { auditLogger } from '../logger';
+
+const { OBJECTIVE_STATUS } = require('../constants');
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
@@ -444,7 +450,7 @@ describe('Goals DB service', () => {
         supportType: 'supportType2',
         goalId: 2,
         createdHere: true,
-      }
+      },
     ];
 
     beforeEach(() => {
@@ -464,8 +470,8 @@ describe('Goals DB service', () => {
           id: 2,
           title: 'Objective title 2',
           status: OBJECTIVE_STATUS.NOT_STARTED,
-          goalId: goal.id
-        })
+          goalId: goal.id,
+        }),
       });
 
       const result = await createObjectivesForGoal(goal, objectives);
@@ -493,8 +499,8 @@ describe('Goals DB service', () => {
           id: 1,
           title: 'Objective title 1',
           status: OBJECTIVE_STATUS.IN_PROGRESS,
-          goalId: goal.id
-        })
+          goalId: goal.id,
+        }),
       });
 
       Objective.findOne = jest.fn().mockResolvedValue(null);
@@ -544,14 +550,14 @@ describe('Goals DB service', () => {
     });
 
     it('should handle undefined fields without throwing an error', async () => {
-      const objectives = [
+      const incompleteObjectives = [
         {
           id: 1,
           isNew: false,
           supportType: 'supportType1',
           goalId: 1,
           createdHere: false,
-        }
+        },
       ];
 
       Objective.findByPk = jest.fn().mockResolvedValue(null);
@@ -562,10 +568,10 @@ describe('Goals DB service', () => {
           title: 'Objective with missing fields',
           status: OBJECTIVE_STATUS.NOT_STARTED,
           goalId: goal.id,
-        })
+        }),
       });
 
-      const result = await createObjectivesForGoal(goal, objectives);
+      const result = await createObjectivesForGoal(goal, incompleteObjectives);
 
       expect(result).toHaveLength(0);
       expect(Objective.create).not.toHaveBeenCalled();
@@ -579,37 +585,65 @@ describe('Goals DB service', () => {
     });
 
     it('should not allow transition from DRAFT to IN_PROGRESS', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.DRAFT, GOAL_STATUS.IN_PROGRESS, []);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.DRAFT,
+        GOAL_STATUS.IN_PROGRESS,
+        [],
+      );
       expect(result).toBe(false);
     });
 
     it('should allow transition from NOT_STARTED to CLOSED', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.NOT_STARTED, GOAL_STATUS.CLOSED, []);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.CLOSED,
+        [],
+      );
       expect(result).toBe(true);
     });
 
     it('should allow transition from NOT_STARTED to SUSPENDED', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.NOT_STARTED, GOAL_STATUS.SUSPENDED, []);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.NOT_STARTED,
+        GOAL_STATUS.SUSPENDED,
+        [],
+      );
       expect(result).toBe(true);
     });
 
     it('should allow transition from IN_PROGRESS to CLOSED', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.IN_PROGRESS, GOAL_STATUS.CLOSED, []);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.IN_PROGRESS,
+        GOAL_STATUS.CLOSED,
+        [],
+      );
       expect(result).toBe(true);
     });
 
     it('should allow transition from SUSPENDED to IN_PROGRESS', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.IN_PROGRESS, [GOAL_STATUS.IN_PROGRESS]);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.IN_PROGRESS,
+        [GOAL_STATUS.IN_PROGRESS],
+      );
       expect(result).toBe(true);
     });
 
     it('should allow transition from SUSPENDED to a previous status (e.g., IN_PROGRESS)', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.IN_PROGRESS, [GOAL_STATUS.IN_PROGRESS]);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.IN_PROGRESS,
+        [GOAL_STATUS.IN_PROGRESS],
+      );
       expect(result).toBe(true);
     });
 
     it('should not allow transition from CLOSED to any other status', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.CLOSED, GOAL_STATUS.IN_PROGRESS, []);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.CLOSED,
+        GOAL_STATUS.IN_PROGRESS,
+        [],
+      );
       expect(result).toBe(false);
     });
 
@@ -619,12 +653,20 @@ describe('Goals DB service', () => {
     });
 
     it('should allow transition from SUSPENDED to CLOSED', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED, [GOAL_STATUS.IN_PROGRESS]);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.CLOSED,
+        [GOAL_STATUS.IN_PROGRESS],
+      );
       expect(result).toBe(true);
     });
 
     it('should allow transition from SUSPENDED to the previous status when previous status is provided', () => {
-      const result = verifyAllowedGoalStatusTransition(GOAL_STATUS.SUSPENDED, GOAL_STATUS.IN_PROGRESS, [GOAL_STATUS.IN_PROGRESS]);
+      const result = verifyAllowedGoalStatusTransition(
+        GOAL_STATUS.SUSPENDED,
+        GOAL_STATUS.IN_PROGRESS,
+        [GOAL_STATUS.IN_PROGRESS],
+      );
       expect(result).toBe(true);
     });
   });
@@ -650,7 +692,7 @@ describe('Goals DB service', () => {
         mockNewStatus,
         mockReason,
         mockContext,
-        mockPreviousStatus
+        mockPreviousStatus,
       );
 
       expect(changeGoalStatus).toHaveBeenCalledTimes(mockGoalIds.length);
@@ -678,7 +720,7 @@ describe('Goals DB service', () => {
         mockNewStatus,
         null,
         mockContext,
-        mockPreviousStatus
+        mockPreviousStatus,
       );
 
       expect(changeGoalStatus).toHaveBeenCalledWith({
@@ -699,13 +741,13 @@ describe('Goals DB service', () => {
         'In Progress',
         mockReason,
         mockContext,
-        mockPreviousStatus
+        mockPreviousStatus,
       );
 
       expect(changeGoalStatus).not.toHaveBeenCalled();
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        `UPDATEGOALSTATUSBYID: Goal status transition from Not Started to In Progress not allowed for goal ${mockGoalIds}`
+        `UPDATEGOALSTATUSBYID: Goal status transition from Not Started to In Progress not allowed for goal ${mockGoalIds}`,
       );
 
       expect(result).toBe(false);
@@ -719,14 +761,12 @@ describe('Goals DB service', () => {
         mockNewStatus,
         mockReason,
         mockContext,
-        mockPreviousStatus
+        mockPreviousStatus,
       );
 
       expect(changeGoalStatus).toHaveBeenCalledTimes(2);
     });
   });
-
-
 
   describe('getReportCountForGoals', () => {
     it('should return an empty object if no goals are provided', () => {
@@ -790,7 +830,6 @@ describe('Goals DB service', () => {
       expect(result).toEqual(expected);
     });
   });
-
 });
 
 describe('goalsForGrants', () => {
