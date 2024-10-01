@@ -378,6 +378,10 @@ describe('API Endpoints', () => {
     });
 
     it('should handle errors', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading filters'); });
 
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
@@ -510,6 +514,10 @@ describe('API Endpoints', () => {
     });
 
     it('should handle errors', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading query'); });
 
       const response = await request(app)
