@@ -12,7 +12,7 @@ jest.mock('../lib/programmaticTransaction', {
 });
 
 describe('transactionWrapper', () => {
-  const originalFunction = jest.fn().mockResolvedValue('result');
+  let originalFunction = jest.fn().mockResolvedValue('result');
   let wrapper;
 
   afterEach(() => {
@@ -20,24 +20,25 @@ describe('transactionWrapper', () => {
   });
   afterAll(() => db.sequelize.close());
   it('should call the original function', async () => {
-    const originalFunction = jest.fn();
-    const wrapper = transactionWrapper(originalFunction);
+    originalFunction = jest.fn();
+    wrapper = transactionWrapper(originalFunction);
     await wrapper();
     expect(originalFunction).toHaveBeenCalled();
   });
 
   it('should log the execution time of the original function', async () => {
-    const originalFunction = jest.fn().mockResolvedValue('result');
-    const wrapper = transactionWrapper(originalFunction);
+    originalFunction = jest.fn().mockResolvedValue('result');
+    wrapper = transactionWrapper(originalFunction);
     const mockAuditLogger = jest.spyOn(auditLogger, 'info');
 
     await wrapper();
 
     expect(mockAuditLogger).toHaveBeenCalledWith(expect.stringContaining('execution time'));
   });
+
   it('should accept and log the context, if specified', async () => {
-    const originalFunction = jest.fn().mockResolvedValue('result');
-    const wrapper = transactionWrapper(originalFunction, 'testContext');
+    originalFunction = jest.fn().mockResolvedValue('result');
+    wrapper = transactionWrapper(originalFunction, 'testContext');
     const mockAuditLogger = jest.spyOn(auditLogger, 'info');
 
     await wrapper();
@@ -46,8 +47,8 @@ describe('transactionWrapper', () => {
   });
 
   it('should handle errors in the original function', async () => {
-    const originalFunction = jest.fn().mockRejectedValue(new Error('Test Error'));
-    const wrapper = transactionWrapper(originalFunction);
+    originalFunction = jest.fn().mockRejectedValue(new Error('Test Error'));
+    wrapper = transactionWrapper(originalFunction);
 
     // Correctly mock `handleErrors` as a function
     const req = {};
@@ -61,8 +62,8 @@ describe('transactionWrapper', () => {
   });
 
   it('should call hasModifiedData and throw error if data is modified in readOnlyTransactionWrapper', async () => {
-    const originalFunction = jest.fn().mockResolvedValue('result');
-    const wrapper = readOnlyTransactionWrapper(originalFunction);
+    originalFunction = jest.fn().mockResolvedValue('result');
+    wrapper = readOnlyTransactionWrapper(originalFunction);
 
     const mockHasModifiedData = hasModifiedData.mockResolvedValue(true);
     const req = {};
