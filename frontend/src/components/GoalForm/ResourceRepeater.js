@@ -3,7 +3,11 @@ import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import {
-  FormGroup, Label, Button, Fieldset,
+  FormGroup,
+  Label,
+  Button,
+  Fieldset,
+  ErrorMessage,
 } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +26,7 @@ export default function ResourceRepeater({
   isLoading,
 }) {
   const addResource = () => {
-    if ((error.props.children) || resources.some((r) => !r.value)) {
+    if ((error) || resources.some((r) => !r.value)) {
       return;
     }
     const newResources = [...resources, { key: uuidv4(), value: '' }];
@@ -45,7 +49,7 @@ export default function ResourceRepeater({
 
   return (
     <>
-      <FormGroup error={error.props.children}>
+      <FormGroup error={!!(error)}>
         <div>
           <Fieldset>
             <legend>
@@ -58,7 +62,9 @@ export default function ResourceRepeater({
               Enter one resource per field. To enter more resources, select “Add new resource”
             </span>
           </Fieldset>
-          {error.props.children ? error : null}
+          <ErrorMessage>
+            {error}
+          </ErrorMessage>
           <div className="ttahub-resource-repeater">
             { resources.map((r, i) => (
               <div key={r.key} className={`display-flex${r.value && !isValidResourceUrl(r.value) ? ' ttahub-resource__error' : ''}`} id="resources">
@@ -103,13 +109,14 @@ ResourceRepeater.propTypes = {
     value: PropTypes.string,
   })).isRequired,
   setResources: PropTypes.func.isRequired,
-  error: PropTypes.node.isRequired,
+  error: PropTypes.string,
   validateResources: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   toolTipText: PropTypes.string,
 };
 
 ResourceRepeater.defaultProps = {
+  error: '',
   isLoading: false,
   toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually an ECLKC page.',
 };

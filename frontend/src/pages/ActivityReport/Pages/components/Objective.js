@@ -388,9 +388,7 @@ export default function Objective({
         resources={resourcesForRepeater}
         isOnReport={isOnReport || false}
         setResources={onChangeResources}
-        error={errors.resources
-          ? ERROR_FORMAT(errors.resources.message)
-          : NO_ERROR}
+        error={errors.resources ? errors.resources.message : ''}
         validateResources={onBlurResources}
         inputName={objectiveResourcesInputName}
         userCanEdit
