@@ -185,16 +185,16 @@ describe('SessionReportForm', () => {
 
   it('sets response error', async () => {
     const url = join(sessionsUrl, 'id', '1');
-
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(
       url, 500,
     );
-    const setErrorResponseCode = jest.fn();
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', setErrorResponseCode);
+      renderSessionForm('1', 'session-summary', '1');
     });
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('saves draft', async () => {
@@ -487,7 +487,7 @@ describe('SessionReportForm', () => {
     };
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+      renderSessionForm('1', 'session-summary', '1', adminUser);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -525,7 +525,7 @@ describe('SessionReportForm', () => {
     );
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1', jest.fn(), adminUser);
+      renderSessionForm('1', 'session-summary', '1', adminUser);
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
