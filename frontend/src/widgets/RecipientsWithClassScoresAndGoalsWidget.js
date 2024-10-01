@@ -22,6 +22,7 @@ import './QaDetailsDrawer.scss';
 
 function RecipientsWithClassScoresAndGoalsWidget({
   data,
+  parentLoading,
 }) {
   const titleDrawerRef = useRef(null);
   const subtitleRef = useRef(null);
@@ -163,7 +164,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   return (
     <WidgetContainer
       title="Recipients with CLASS&reg; scores and"
-      loading={loading}
+      loading={loading || parentLoading}
       loadingLabel="Recipients with CLASS&reg; scores and goals loading"
       showPagingBottom
       currentPage={sortConfig.activePage}
@@ -334,6 +335,7 @@ RecipientsWithClassScoresAndGoalsWidget.propTypes = {
       PropTypes.shape({}),
     ]),
   }),
+  parentLoading: PropTypes.bool.isRequired,
 };
 
 RecipientsWithClassScoresAndGoalsWidget.defaultProps = {
