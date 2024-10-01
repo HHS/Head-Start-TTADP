@@ -67,6 +67,15 @@ export default function RootCauseFeiGoals({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfGoals: 0,
+        totalNumberOfRootCauses: 0,
+      });
+      return;
+    }
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects

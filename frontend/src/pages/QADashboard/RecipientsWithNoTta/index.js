@@ -1,14 +1,15 @@
 import React, {
   useContext,
-  // useState,
+  useState,
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import useDeepCompareEffect from 'use-deep-compare-effect';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
-// import { Grid, Alert } from '@trussworks/react-uswds';
+import { Grid, Alert } from '@trussworks/react-uswds';
 import colors from '../../../colors';
 import RecipientsWithNoTtaWidget from '../../../widgets/RecipientsWithNoTtaWidget';
 import FilterPanel from '../../../components/filter/FilterPanel';
@@ -19,6 +20,7 @@ import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import UserContext from '../../../UserContext';
 import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
+import { getSelfServiceData } from '../../../fetchers/ssdi';
 
 const ALLOWED_SUBFILTERS = [
   'region',
@@ -28,10 +30,11 @@ const ALLOWED_SUBFILTERS = [
   'recipient',
   'stateCode',
 ];
-
 export default function RecipientsWithNoTta() {
   const pageDrawerRef = useRef(null);
-  // const [error] = useState();
+  const [error, updateError] = useState();
+  const [isLoading, setIsLoading] = useState(false);
+  const [recipientsWithNoTTA, setRecipientsWithNoTTA] = useState([]);
   const { user } = useContext(UserContext);
   const {
     // from useUserDefaultRegionFilters
@@ -50,6 +53,27 @@ export default function RecipientsWithNoTta() {
     QA_DASHBOARD_FILTER_CONFIG,
   );
 
+  useDeepCompareEffect(() => {
+    async function fetchQaDat() {
+      setIsLoading(true);
+      // Filters passed also contains region.
+      try {
+        const data = await getSelfServiceData(
+          'recipients-with-no-tta',
+          filters,
+        );
+        setRecipientsWithNoTTA(data);
+        updateError('');
+      } catch (e) {
+        updateError('Unable to fetch QA data');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    // Call resources fetch.
+    fetchQaDat();
+  }, [filters]);
+
   return (
     <div className="ttahub-recipients-with-no-tta">
       <Helmet>
@@ -62,13 +86,13 @@ export default function RecipientsWithNoTta() {
       <h1 className="landing margin-top-0">
         Recipients with no TTA
       </h1>
-      {/* <Grid row>
+      <Grid row>
         {error && (
         <Alert className="margin-bottom-2" type="error" role="alert">
           {error}
         </Alert>
         )}
-      </Grid> */}
+      </Grid>
       <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for QA dashboard"
@@ -92,62 +116,8 @@ export default function RecipientsWithNoTta() {
         <ContentFromFeedByTag tagName="ttahub-qa-dash-recipients-no-tta-filter" />
       </Drawer>
       <RecipientsWithNoTtaWidget
-        data={{
-          headers: ['Date of Last TTA', 'Days Since Last TTA'],
-          RecipientsWithNoTta: [
-            {
-              id: 1,
-              heading: 'Test Recipient 1',
-              name: 'Test Recipient 1',
-              recipient: 'Test Recipient 1',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Date_of_Last_TTA',
-                value: '2021-09-01',
-              },
-              {
-                title: 'Days_Since_Last_TTA',
-                value: '90',
-              }],
-            },
-            {
-              id: 2,
-              heading: 'Test Recipient 2',
-              name: 'Test Recipient 2',
-              recipient: 'Test Recipient 2',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Date_of_Last_TTA',
-                value: '2021-09-02',
-              },
-              {
-                title: 'Days_Since_Last_TTA',
-                value: '91',
-              }],
-            },
-            {
-              id: 3,
-              heading: 'Test Recipient 3',
-              name: 'Test Recipient 3',
-              recipient: 'Test Recipient 3',
-              isUrl: true,
-              hideLinkIcon: true,
-              link: '/recipient-tta-records/376/region/1/profile',
-              data: [{
-                title: 'Date_of_Last_TTA',
-                value: '2021-09-03',
-              },
-              {
-                title: 'Days_Since_Last_TTA',
-                value: '92',
-              }],
-            }],
-        }}
-        loading={false}
+        data={recipientsWithNoTTA}
+        loading={isLoading}
       />
     </div>
   );

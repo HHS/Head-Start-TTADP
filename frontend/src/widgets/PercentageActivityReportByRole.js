@@ -64,6 +64,16 @@ export default function PercentageActivityReportByRole({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfReports: 0,
+        totalPercentage: 100,
+      });
+      return;
+    }
+
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects

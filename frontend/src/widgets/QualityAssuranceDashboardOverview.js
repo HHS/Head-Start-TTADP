@@ -47,6 +47,9 @@ const createOverviewFieldArray = (data) => ([
 export function QualityAssuranceDashboardOverview({
   data, loading,
 }) {
+  if (!data) {
+    return null;
+  }
   const DASHBOARD_FIELDS = createOverviewFieldArray(data);
   return (
     <DashboardOverviewContainer

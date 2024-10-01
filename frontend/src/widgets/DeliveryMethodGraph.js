@@ -77,6 +77,20 @@ export default function DeliveryMethodGraph({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTraces([]);
+      setTotals({
+        totalInPerson: 0,
+        averageInPersonPercentage: 0,
+        totalVirtualCount: 0,
+        averageVirtualPercentage: 0,
+        totalHybridCount: 0,
+        averageHybridPercentage: 0,
+      });
+      return;
+    }
+
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
