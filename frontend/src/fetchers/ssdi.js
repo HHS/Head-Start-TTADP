@@ -20,6 +20,13 @@ const allowedTopicsForQuery = {
     'grantNumber',
     'stateCode',
   ],
+  'recipients-with-class-scores-and-goals': [
+    'region',
+    'startDate',
+    'endDate',
+    'grantNumber',
+    'stateCode',
+  ],
   'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter.id), 'region'],
 };
 
@@ -42,7 +49,6 @@ const getSelfServiceUrl = (filterName, filters) => {
 
 export const getSelfServiceData = async (filterName, filters) => {
   const url = getSelfServiceUrl(filterName, filters);
-
   const response = await get(url);
   if (!response.ok) {
     throw new Error('Error fetching self service data');

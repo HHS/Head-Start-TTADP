@@ -1,15 +1,17 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
+import {
+  render, screen, act, waitFor,
+} from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import RecipientsWithClassScoresAndGoals from '../index';
 import UserContext from '../../../../UserContext';
 
-/*
 const recipients = [{
   id: 1,
-  name: 'Recipient 1',
+  name: 'Abernathy, Mraz and Bogan',
   lastArStartDate: '01/02/2021',
   emotionalSupport: 6.0430,
   classroomOrganization: 5.0430,
@@ -41,34 +43,45 @@ const recipients = [{
   goals: [
     {
       goalNumber: 'G-68745',
-      status: 'In progress',
+      status: 'Complete',
       creator: 'Bill Parks',
       collaborator: 'Jack Jones',
     },
   ],
 }];
-*/
 
-const renderRecipientsWithClassScoresAndGoals = (data) => {
+const recipientsWithClassScoresAndGoalsData = {
+  headers: ['Emotional Support', 'Classroom Organization', 'Instructional Support', 'Report Received Date', 'Goals'],
+  RecipientsWithOhsStandardFeiGoal: recipients,
+};
+
+const renderRecipientsWithClassScoresAndGoals = () => {
   const history = createMemoryHistory();
   render(
     <UserContext.Provider value={{ user: { id: 1 } }}>
       <Router history={history}>
-        <RecipientsWithClassScoresAndGoals
-          data={data}
-          loading={false}
-        />
+        <RecipientsWithClassScoresAndGoals />
       </Router>
     </UserContext.Provider>,
   );
 };
 
 describe('Recipients With Class and Scores and Goals', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   it('renders correctly with data', async () => {
+    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
 
     expect(screen.queryAllByText(/Recipients with CLASS® scores/i).length).toBe(2);
-    expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+      });
+    });
 
     expect(screen.getByText('Abernathy, Mraz and Bogan')).toBeInTheDocument();
     expect(screen.getByText('01/02/2021')).toBeInTheDocument();
@@ -108,7 +121,15 @@ describe('Recipients With Class and Scores and Goals', () => {
   });
 
   it('selects and unselects all recipients', async () => {
+    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
+
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+      });
+    });
+
     const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
     selectAllButton.click();
     expect(screen.getByText(/2 selected/i)).toBeInTheDocument();
@@ -117,7 +138,13 @@ describe('Recipients With Class and Scores and Goals', () => {
   });
 
   it('Shows the selected pill and unselects when pill is removed', async () => {
+    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/1-2 of 2/i)).toBeInTheDocument();
+      });
+    });
     const selectAllButton = screen.getByRole('checkbox', { name: /select all recipients/i });
     selectAllButton.click();
     expect(screen.getByText(/2 selected/i)).toBeInTheDocument();
