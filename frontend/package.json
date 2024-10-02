@@ -20,7 +20,8 @@
     "detect-file-encoding-and-language": "^2.4.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
-    "ejs": "^3.1.10",
+    "ejs": "^3.1.7",
+    "html-react-parser": "^5.1.1",
     "follow-redirects": "^1.15.6",
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
@@ -59,7 +60,7 @@
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^8.3.2",
-    "micromatch": "^4.0.7"
+    "micromatch": "^4.0.8"
   },
   "engines": {
     "node": "18.20.3"
@@ -101,7 +102,8 @@
     "yaml": "^2.2.2",
     "semver": "^7.5.3",
     "es5-ext": "^0.10.63",
-    "braces": "^3.0.3"
+    "braces": "^3.0.3",
+    "path-to-regexp": "^1.9.0"
   },
   "eslintConfig": {
     "root": true,
