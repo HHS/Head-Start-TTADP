@@ -81,7 +81,7 @@ const Forbidden = () => (
 const responseCodeMessages = {
   401: {
     message: '401 error - unauthorized',
-    title: 'Unauthorized access.',
+    title: 'Restricted access.',
     body: <Forbidden />,
   },
   403: {

@@ -1,17 +1,20 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import SomethingWentWrong from '../SomethingWentWrong';
 
 const renderSomethingWentWrong = (
   responseCode = 500,
-) => render(<SomethingWentWrong responseCode={responseCode} />);
+) => render(
+  <MemoryRouter><SomethingWentWrong responseCode={responseCode} /></MemoryRouter>,
+);
 
 describe('SomethingWentWrong component', () => {
   // Write a test to pass the response code 401 to the component.
   it('renders a 401 error message', async () => {
     renderSomethingWentWrong(401);
 
-    expect(screen.getByText('403 error - forbidden')).toBeInTheDocument();
+    expect(screen.getByText('401 error - unauthorized')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /restricted access/i })).toBeInTheDocument();
     expect(screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)).toBeInTheDocument();
     expect(screen.getByText(/Double-check permissions:/i)).toBeInTheDocument();
