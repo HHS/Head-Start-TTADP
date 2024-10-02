@@ -37,8 +37,8 @@ function Bar({
   };
 
   return (
-    <div className="ttahub-goal-bar-container display-flex flex-justify flex-1">
-      <div className="ttahub-goal-bar height-3 bg-base-lightest width-full" aria-hidden="true">
+    <div className="ttahub-goal-bar-container display-flex flex-justify flex-1" aria-hidden="true">
+      <div className="ttahub-goal-bar height-3 bg-base-lightest width-full">
         <div className="ttahub-goal-bar-color height-full width-full" style={style} />
       </div>
     </div>
@@ -82,6 +82,7 @@ export function GoalStatusChart({ data, loading }) {
       color: STATUS_COLORS[index],
       count: data[status],
       total: data.total,
+      readableRatio: `${data[status]} of ${data.total} goals`,
     }));
 
     setBars(newBars);
@@ -157,13 +158,14 @@ export function GoalStatusChart({ data, loading }) {
               </p>
               <div className="display-flex flex-justify">
                 <div>
-                  {bars.map(({ label }) => (
+                  {bars.map(({ label, readableRatio }) => (
                     <div key={label} className="display-flex height-6 margin-right-1">
                       <span>{label}</span>
+                      <span className="usa-sr-only">{readableRatio}</span>
                     </div>
                   ))}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1" aria-hidden="true">
                   {bars.map(({ label, percentage, color }) => (
                     <div key={label} className="display-flex height-6">
                       <div className="display-flex width-full" key={color}>
@@ -176,10 +178,10 @@ export function GoalStatusChart({ data, loading }) {
                     </div>
                   ))}
                 </div>
-                <div>
-                  {bars.map(({ label, ratio, readableRatio }) => (
+                <div aria-hidden="true">
+                  {bars.map(({ label, ratio }) => (
                     <div key={label} className="display-flex height-6 margin-left-1">
-                      <span aria-label={readableRatio}>{ratio}</span>
+                      <span>{ratio}</span>
                     </div>
                   ))}
                 </div>

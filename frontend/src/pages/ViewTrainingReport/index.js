@@ -214,14 +214,47 @@ export default function ViewTrainingReport({ match }) {
       'Training type': event.data['Event Duration/# NC Days of Support'],
       Reasons: event.data.reasons,
       'Target populations': event.data.targetPopulations,
-    },
-    striped: true,
-  }, {
-    heading: 'Vision',
-    data: {
       Vision: event.data.vision,
     },
+    striped: true,
   }] : [];
+
+  const isIstVisit = (session) => {
+    if (session.data.isIstVisit === 'yes' || (session.data.regionalOfficeTta && session.data.regionalOfficeTta.length > 0)) {
+      return true;
+    }
+    return false;
+  };
+
+  const generateIstOfficeOrRecipientProperties = (session) => {
+    if (isIstVisit(session)) {
+      return {
+        'Regional Office/TTA': session.data.regionalOfficeTta.join(', '),
+      };
+    }
+
+    return {
+      Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
+      'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
+    };
+  };
+
+  const generateNumberOfParticipants = (session) => {
+    // In person or virtual.
+    if (session.data.deliveryMethod === 'in-person' || session.data.deliveryMethod === 'virtual') {
+      const numberOfParticipants = session.data.numberOfParticipants ? session.data.numberOfParticipants.toString() : '';
+      return {
+        'Number of participants': numberOfParticipants,
+      };
+    }
+    // Hybrid.
+    const numberOfParticipantsInPerson = session.data.numberOfParticipantsInPerson ? session.data.numberOfParticipantsInPerson.toString() : '';
+    const numberOfParticipantsVirtually = session.data.numberOfParticipantsVirtually ? session.data.numberOfParticipantsVirtually.toString() : '';
+    return {
+      'Number of participants attending in person': numberOfParticipantsInPerson,
+      'Number of participants attending virtually': numberOfParticipantsVirtually,
+    };
+  };
 
   const sessions = event && event.sessionReports ? event.sessionReports.map((session, index) => (
     <ReadOnlyContent
@@ -244,25 +277,19 @@ export default function ViewTrainingReport({ match }) {
           'Session objective': session.data.objective,
           Topics: session.data.objectiveTopics,
           Trainers: session.data.objectiveTrainers,
-          'Resource links': session.data.objectiveResources ? session.data.objectiveResources.map((o) => o.value) : [],
-          'iPD Courses': session.data.courses ? session.data.courses.map((o) => o.name) : [],
-          'Resource attachments': session.data.files ? session.data.files.map((f) => f.originalFileName) : [],
+          'Resource links': session.data.objectiveResources && session.data.objectiveResources.filter((r) => r.value).length ? session.data.objectiveResources.map((o) => o.value) : 'None',
+          'iPD Courses': session.data.courses && session.data.courses.length ? session.data.courses.map((o) => o.name) : 'None',
+          'Resource attachments': session.data.files && session.data.files.length ? session.data.files.map((f) => f.originalFileName) : 'None',
           'Support type': session.data.objectiveSupportType,
         },
       }, {
         heading: 'Participants',
         striped: true,
         data: {
-          Recipients: session.data.recipients ? session.data.recipients.map((r) => r.label).join(', ') : '',
-          'Recipient participants': session.data.participants ? session.data.participants.join(', ') : [],
-          'Number of participants': String((
-            session.data.numberOfParticipants || 0
-          ) + (
-            session.data.numberOfParticipantsVirtually || 0
-          ) + (
-            session.data.numberOfParticipantsInPerson || 0
-          )),
+          'IST visit': isIstVisit(session) ? 'Yes' : 'No',
+          ...generateIstOfficeOrRecipientProperties(session),
           'Delivery method': capitalize(session.data.deliveryMethod || ''),
+          ...generateNumberOfParticipants(session),
           'Language used': session.data.language ? session.data.language.join(', ') : [],
           'TTA provided': session.data.ttaProvided,
         },

@@ -1173,7 +1173,7 @@ describe('ActivityReport', () => {
       userEvent.click(saveGoal);
     });
 
-    const errors = document.querySelectorAll('.usa-error-message');
+    const errors = document.querySelectorAll('.usa-error-message:not(:empty)');
     expect(errors.length).toBe(0);
 
     await waitFor(() => {

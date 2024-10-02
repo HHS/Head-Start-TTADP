@@ -49,7 +49,7 @@ function EventCard({
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
   const isNotCompleteOrSuspended = !isComplete && !isSuspended;
 
-  const canEditEvent = ((isOwnerOrCollaborator && !eventSubmitted && isNotCompleteOrSuspended)
+  const canEditEvent = ((isOwner && !eventSubmitted && isNotCompleteOrSuspended)
     || (hasAdminRights && isNotCompleteOrSuspended));
   const canCreateSession = isNotCompleteOrSuspended && isOwnerOrCollaborator;
   const canDeleteEvent = hasAdminRights && (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED
