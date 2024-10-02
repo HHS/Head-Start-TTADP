@@ -150,7 +150,7 @@ export default function TrainingReportForm({ match }) {
         resetFormData(hookForm.reset, event);
         reportId.current = trainingReportId;
       } catch (e) {
-        history.push(`/something-went-wrong${e.status}`);
+        history.push(`/something-went-wrong/${e.status}`);
       } finally {
         setReportFetched(true);
         setDatePickerKey(Date.now().toString());

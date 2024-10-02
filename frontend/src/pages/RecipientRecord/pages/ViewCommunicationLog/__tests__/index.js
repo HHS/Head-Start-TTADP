@@ -103,14 +103,13 @@ describe('ViewCommunicationForm', () => {
 
   it('shows error message', async () => {
     const url = `${communicationLogUrl}/region/${REGION_ID}/log/1`;
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
     fetchMock.get(url, 500);
     await act(async () => {
-      await waitFor(() => {
-        renderTest('1', setErrorResponseCode);
-        expect(setErrorResponseCode).toHaveBeenCalledWith(500);
-      });
+      renderTest('1');
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('should render the view without edit button', async () => {

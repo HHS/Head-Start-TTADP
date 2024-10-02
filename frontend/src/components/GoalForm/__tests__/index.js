@@ -369,7 +369,7 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
   });
 
-  it('correctly calls the setErrorResponseCode function when there is an error', async () => {
+  it('correctly redirects when there is an error', async () => {
     const spy = jest.spyOn(history, 'push');
     fetchMock.restore();
     fetchMock.get('/api/recipient/1/goals?goalIds=', 500);
