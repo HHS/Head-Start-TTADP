@@ -9,6 +9,7 @@ import { fileHash } from './fileUtils';
 import db, {
   Recipient,
   Grant,
+  GrantReplacements,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -259,7 +260,9 @@ export async function processFiles(hashSumHex) {
             name: grantAward ? grantAward.grantee_name : r.name,
             recipientType: r.recipientType,
           });
-        } return r;
+        }
+
+        return r;
       });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
@@ -387,20 +390,30 @@ export async function processFiles(hashSumHex) {
           && grantIds.includes(parseInt(g.replacement_grant_award_id, 10)),
       );
 
-      const grantUpdatePromises = grantsToUpdate.map((g) => (
-        Grant.unscoped().update(
-          { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
-          {
-            where: { id: parseInt(g.replacement_grant_award_id, 10) },
-            fields: ['oldGrantId'],
-            sideEffects: false,
+      const grantReplacementPromises = grantsToUpdate.map(async (g) => {
+        const [grantReplacement, created] = await GrantReplacements.findOrCreate({
+          where: {
+            replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
+            replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
+          },
+          defaults: {
+            replacementDate: new Date(), // Example: setting the replacementDate to current date, modify as needed
+          },
+          transaction,
+        });
+
+        if (!created) {
+          await grantReplacement.update({
+            grantReplacementTypeId: g.grantReplacementType, // Update fields as needed
+            replacementDate: new Date(), // Example: updating the replacementDate to current date, modify as needed
+          }, {
             transaction,
             individualHooks: true,
-          },
-        )
-      ));
+          });
+        }
+      });
 
-      await Promise.all(grantUpdatePromises);
+      await Promise.all(grantReplacementPromises);
 
       // Automate CDI linking to preceding recipients
       const cdiGrantsToLink = await Grant.unscoped().findAll({
