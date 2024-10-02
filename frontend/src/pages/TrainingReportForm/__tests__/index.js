@@ -304,4 +304,39 @@ describe('TrainingReportForm', () => {
     await waitFor(() => expect(screen.getByText(/: e-1 event/i)).toBeInTheDocument());
     await waitFor(() => expect(screen.getByText(/r01-pd-1234/i)).toBeInTheDocument());
   });
+  it('passes correct values to backend', async () => {
+    fetchMock.get('/api/events/id/1', completedForm);
+
+    fetchMock.put('/api/events/id/1', {});
+    fetchMock.get(sessionsUrl, [
+      { id: 2, eventId: 1, data: { sessionName: 'Toothbrushing vol 2', status: 'Complete' } },
+      { id: 3, eventId: 1, data: { sessionName: 'Toothbrushing vol 3', status: 'Complete' } },
+    ]);
+
+    act(() => {
+      renderTrainingReportForm('1');
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'GET' })).toBe(true));
+    const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
+    act(() => {
+      userEvent.click(submitButton);
+    });
+
+    // Wait for the modal to display.
+    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the event./i)).toBeInTheDocument());
+
+    // get the button with the text "Yes, continue".
+    const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
+    act(() => {
+      userEvent.click(yesContinueButton);
+    });
+
+    await waitFor(() => expect(fetchMock.called('/api/events/id/1', { method: 'PUT' })).toBe(true));
+
+    // expect the data to contain "eventSubmitted: true"
+    expect(fetchMock.lastOptions('/api/events/id/1').body).toContain('"eventSubmitted":true');
+
+    await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
+  });
 });

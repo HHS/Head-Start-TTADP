@@ -208,7 +208,7 @@ commands:
             if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
                 PR_NUMBER=${CIRCLE_PULL_REQUEST##*/}
 
-                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g")
+                PR_TITLE=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "<bdi class=\"js-issue-title markdown-title\">[^<]+</bdi>" | sed -re "s~<[^>]+>~~g" | sed -e 's/"/\\"/g')
 
                 if [ ! -z "${PR_TITLE}" ]; then
                     JIRA_URLS=$(curl -s "${CIRCLE_PULL_REQUEST}" | sed -e :a -e "N; s/\n/ /g; ta" | grep -oP "Issue[(]s[)]</h2>.*Checklists</h2>" | grep -oP "\"https[^\"]+\"" | sed -e "s~\"~~g" | grep -o "https://jira.acf.gov/browse/[A-Z0-9-]*")
@@ -224,7 +224,8 @@ commands:
                 COMMIT_MESSAGE=$(git log -1 --pretty=%B)
                 if echo "$COMMIT_MESSAGE" | grep -q "Merge pull request #"; then
                   PR_NUMBER=$(git log -1 --pretty=%B | grep -oP '(?<=Merge pull request #)\d+')
-                  MESSAGE_TEXT=":rocket: Deployment of PR #${PR_NUMBER} to <${ENV_URL}|${env_name}> was successful!"
+                  PR_LINK="https://github.com/HHS/Head-Start-TTADP/pull/${PR_NUMBER}"
+                  MESSAGE_TEXT=":rocket: Deployment of PR <${PR_LINK}|${PR_NUMBER}> to <${ENV_URL}|${env_name}> was successful!"
                   if [ ! -z "${JIRA_URLS}" ]; then
                       MESSAGE_TEXT="${MESSAGE_TEXT}\nJIRA URLs in the PR:\n${JIRA_URLS}"
                   fi
@@ -559,10 +560,10 @@ parameters:
     type: string
   dev_git_branch: # change to feature branch to test deployment
     description: "Name of github branch that will deploy to dev"
-    default: "al-ttahub-3196-new-tr-views"
+    default: "al-ttahub-3329-fix-event-view"
     type: string
   sandbox_git_branch: # change to feature branch to test deployment
-    default: "kw-test-deploy"
+    default: "kw-fix-duplicate-programs"
     type: string
   prod_new_relic_app_id:
     default: "877570491"
@@ -987,6 +988,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $SANDBOX_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $SANDBOX_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-sandbox.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-sandbox
                 auth_client_id: SANDBOX_AUTH_CLIENT_ID
@@ -1054,6 +1056,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $DEV_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $DEV_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-dev.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-dev
                 auth_client_id: DEV_AUTH_CLIENT_ID
@@ -1121,6 +1124,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $STAGING_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $STAGING_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://tta-smarthub-staging.app.cloud.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-staging
                 auth_client_id: STAGING_AUTH_CLIENT_ID
@@ -1186,6 +1190,7 @@ jobs:
                   REACT_APP_GTM_AUTH: $PROD_GTM_AUTH
                   REACT_APP_GTM_PREVIEW: $PROD_GTM_PREVIEW
                   REACT_APP_WEBSOCKET_URL: wss://ttahub.ohs.acf.hhs.gov
+                  REACT_APP_INCLUDE_ACCESSIBILITY_CSS: 'false'
             - cf_deploy:
                 app_name: tta-smarthub-prod
                 auth_client_id: PROD_AUTH_CLIENT_ID

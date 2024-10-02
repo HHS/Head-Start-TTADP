@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import Drawer from './Drawer';
 import ContentFromFeedByTag from './ContentFromFeedByTag';
-import './SupportTypeDrawer.scss';
 
 export default function SupportTypeDrawer({
   drawerTriggerRef,
@@ -14,7 +13,7 @@ export default function SupportTypeDrawer({
       stickyFooter
       title="Support type guidance"
     >
-      <ContentFromFeedByTag className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" contentSelector="table" />
+      <ContentFromFeedByTag openLinksInNewTab className="ttahub-drawer--objective-support-type-guidance" tagName="ttahub-tta-support-type" />
     </Drawer>
   );
 }
