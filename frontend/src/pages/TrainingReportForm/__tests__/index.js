@@ -95,13 +95,13 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
-  it('calls setErrorResponseCode when an error occurs', async () => {
+  it('redirects when an error occurs', async () => {
     fetchMock.get('/api/events/id/1', 500);
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
     act(() => {
-      renderTrainingReportForm('1', setErrorResponseCode);
+      renderTrainingReportForm('1');
     });
-    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/500'));
   });
 
   it('redirects to event summary', async () => {

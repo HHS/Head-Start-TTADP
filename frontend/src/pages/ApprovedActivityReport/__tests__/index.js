@@ -233,8 +233,7 @@ describe('Activity report print and share view', () => {
 
   it('handles authorization errors', async () => {
     const spy = jest.spyOn(history, 'push');
-    const setErrorResponseCode = jest.fn();
-    act(() => renderApprovedActivityReport(5007, user, setErrorResponseCode));
+    act(() => renderApprovedActivityReport(5007, user));
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
