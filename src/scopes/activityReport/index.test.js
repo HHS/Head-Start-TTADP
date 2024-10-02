@@ -3560,4 +3560,178 @@ describe('filtersToScopes', () => {
         ]));
     });
   });
+
+  describe('cdiGrants', () => {
+    let cdiReportActive;
+    let cdiReportInactive;
+    let nonCdiReport;
+    let activeCdiGrant;
+    let inactiveCdiGrant;
+    let nonCdiGrant;
+    let reportIds;
+
+    beforeAll(async () => {
+      // Grants.
+      activeCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      inactiveCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Inactive',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      nonCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: false,
+      });
+
+      // Activity Report.
+      cdiReportActive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      cdiReportInactive = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      nonCdiReport = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
+
+      reportIds = [cdiReportActive.id, cdiReportInactive.id, nonCdiReport.id];
+
+      // Activity Recipients.
+      await ActivityRecipient.create({
+        activityReportId: cdiReportActive.id,
+        grantId: activeCdiGrant.id,
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: cdiReportInactive.id,
+        grantId: inactiveCdiGrant.id,
+      });
+
+      await ActivityRecipient.create({
+        activityReportId: nonCdiReport.id,
+        grantId: nonCdiGrant.id,
+      });
+    });
+
+    afterAll(async () => {
+      // Clean up ActivityRecipients.
+      await ActivityRecipient.destroy({
+        where: {
+          activityReportId: reportIds,
+        },
+      });
+
+      // Clean up ActivityReport.
+      await ActivityReport.destroy({
+        where: { id: reportIds },
+      });
+
+      // Clean up Grants.
+      await Grant.destroy({
+        where: { id: reportIds },
+      });
+    });
+
+    it('includes reports with ActiveCDI grants', async () => {
+      const filters = { 'cdiGrants.in': 'Active' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      // eslint-disable-next-line max-len
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(cdiReportActive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with ActiveCDI grants', async () => {
+      const filters = { 'cdiGrants.nin': 'Active' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      // eslint-disable-next-line max-len
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(cdiReportInactive.id)).toBe(true);
+    });
+
+    it('includes reports with InactiveCDI grants', async () => {
+      const filters = { 'cdiGrants.in': 'Inactive' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(cdiReportInactive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with InactiveCDI grants', async () => {
+      const filters = { 'cdiGrants.nin': 'Inactive' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(cdiReportActive.id)).toBe(true);
+    });
+
+    it('includes reports with NonCDI grants', async () => {
+      const filters = { 'cdiGrants.in': 'CDI' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id).includes(cdiReportInactive.id)).toBe(true);
+      expect(found.map((f) => f.id).includes(cdiReportInactive.id)).toBe(true);
+    });
+
+    it('doesn\'t include reports with NonCDI grants', async () => {
+      const filters = { 'cdiGrants.nin': 'CDI' };
+      const { activityReport: scope } = await filtersToScopes(filters);
+
+      const found = await ActivityReport.findAll({
+        where: {
+          [Op.and]: [scope, {
+            id: reportIds,
+          }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiReport.id)).toBe(true);
+    });
+  });
 });
