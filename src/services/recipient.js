@@ -189,7 +189,7 @@ export async function recipientById(recipientId, grantScopes) {
         as: 'grants',
         where: [{
           [Op.and]: [
-            { [Op.and]: grantScopes },
+            { [Op.and]: grantScopes.where },
             { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
