@@ -38,6 +38,7 @@ jest.mock('../services/reportCache');
 
 const mockObjectiveId = 10000001;
 const mockGoalId = 10000002;
+const mockNonexistentGoalId = 10000002;
 const mockGoalTemplateId = 10000003;
 const mockGrantId = 10000004;
 const mockActivityReportGoalId = 10000005;
@@ -118,10 +119,12 @@ describe('Goals DB service', () => {
 
     it('should return an empty array when no goals are found', async () => {
       Goal.findAll = jest.fn().mockResolvedValue([]);
+      reduceGoals.mockReturnValue([]);
 
       const result = await goalsByIdsAndActivityReport(1, mockActivityReportId);
 
       expect(Goal.findAll).toHaveBeenCalledWith(expect.any(Object));
+      expect(reduceGoals).toHaveBeenCalled();
       expect(result).toEqual([]);
     });
   });
