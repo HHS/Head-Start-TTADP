@@ -419,7 +419,6 @@ export async function processFiles(hashSumHex) {
 
         if (!created) {
           await grantReplacement.update({
-            grantReplacementTypeId: g.grantReplacementType,
             replacementDate: new Date(g.replacement_date),
             grantReplacementTypeId: grantReplacementType.id,
           }, {
