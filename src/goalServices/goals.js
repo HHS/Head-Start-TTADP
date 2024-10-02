@@ -246,7 +246,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       })),
   }));
 
-  const reducedGoals = reduceGoals(reformattedGoals);
+  const reducedGoals = reduceGoals(reformattedGoals) || [];
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {

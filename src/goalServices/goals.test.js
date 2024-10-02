@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import {
+  goalsByIdsAndActivityReport,
   createObjectivesForGoal,
   saveGoalsForReport,
   goalsForGrants,
@@ -17,7 +18,11 @@ import {
 } from '../models';
 import { GOAL_STATUS } from '../constants';
 import changeGoalStatus from './changeGoalStatus';
+import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { auditLogger } from '../logger';
+import extractObjectiveAssociationsFromActivityReportObjectives
+  from './extractObjectiveAssociationsFromActivityReportObjectives';
+import { reduceGoals } from './reduceGoals';
 
 const { OBJECTIVE_STATUS } = require('../constants');
 
@@ -25,6 +30,9 @@ jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
   default: jest.fn(),
 }));
+jest.mock('./wasGoalPreviouslyClosed');
+jest.mock('./extractObjectiveAssociationsFromActivityReportObjectives');
+jest.mock('./reduceGoals');
 
 jest.mock('../services/reportCache');
 
@@ -47,6 +55,76 @@ describe('Goals DB service', () => {
 
   const existingGoalUpdate = jest.fn();
   const existingObjectiveUpdate = jest.fn();
+
+  describe('goalsByIdsAndActivityReport', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+    it('should return goals with the correct structure and call associated services', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([
+        {
+          id: mockGoalId,
+          name: 'Test Goal',
+          status: 'Draft',
+          endDate: '2023-12-31',
+          objectives: [{
+            id: 1,
+            title: 'Test Objective',
+            status: 'In Progress',
+            goalId: mockGoalId,
+            activityReportObjectives: [],
+            toJSON: jest.fn().mockReturnValue({
+              id: 1,
+              title: 'Test Objective',
+              status: 'In Progress',
+              goalId: mockGoalId,
+            }),
+          }],
+        },
+      ]);
+
+      wasGoalPreviouslyClosed.mockReturnValue(false);
+      extractObjectiveAssociationsFromActivityReportObjectives.mockImplementation((obj, field) => (
+        field === 'topics' ? ['Topic 1'] : []));
+      reduceGoals.mockReturnValue([
+        { id: mockGoalId, name: 'Test Goal', rtrOrder: 1 },
+      ]);
+
+      const result = await goalsByIdsAndActivityReport(mockGoalId, mockActivityReportId);
+
+      expect(Goal.findAll).toHaveBeenCalledWith({
+        attributes: [
+          'endDate',
+          'status',
+          ['id', 'value'],
+          ['name', 'label'],
+          'id',
+          'name',
+        ],
+        where: {
+          id: mockGoalId,
+        },
+        include: expect.any(Array),
+      });
+
+      expect(wasGoalPreviouslyClosed).toHaveBeenCalled();
+      expect(extractObjectiveAssociationsFromActivityReportObjectives).toHaveBeenCalledWith(expect.any(Array), 'topics');
+      expect(reduceGoals).toHaveBeenCalledWith(expect.any(Array));
+
+      expect(result).toEqual([
+        { id: mockGoalId, name: 'Test Goal', rtrOrder: 1 },
+      ]);
+    });
+
+    it('should return an empty array when no goals are found', async () => {
+      Goal.findAll = jest.fn().mockResolvedValue([]);
+
+      const result = await goalsByIdsAndActivityReport(1, mockActivityReportId);
+
+      expect(Goal.findAll).toHaveBeenCalledWith(expect.any(Object));
+      expect(result).toEqual([]);
+    });
+  });
 
   describe('saveGoalsForReport', () => {
     beforeEach(() => {
