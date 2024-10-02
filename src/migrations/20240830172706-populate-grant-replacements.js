@@ -106,7 +106,7 @@ module.exports = {
           gr1."oldGrantId" AS "replacedGrantId",
           gr1."id" AS "replacingGrantId",
           gr2."inactivationDate" AS "replacementDate",
-          grt.id AS "grantReplacementTypeId"
+          grt.id AS "grantReplacementTypeId",
           gr1."createdAt",
           gr1."updatedAt"
         FROM "Grants" gr1
