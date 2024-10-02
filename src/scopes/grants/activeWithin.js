@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { GrantReplacement } from '../../models';
+import { GrantReplacements } from '../../models';
 
 export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => [
@@ -42,11 +42,11 @@ export function activeAfter(dates) {
       [Op.or]: scopes,
     },
     include: [{
-      model: GrantReplacement,
+      model: GrantReplacements,
       as: 'replacedGrantReplacements',
       attributes: [],
     }, {
-      model: GrantReplacement,
+      model: GrantReplacements,
       as: 'replacingGrantReplacements',
       attributes: [],
     }],
@@ -95,11 +95,11 @@ export function activeWithinDates(dates) {
       [Op.or]: scopes,
     },
     include: [{
-      model: GrantReplacement,
+      model: GrantReplacements,
       as: 'replacedGrantReplacements',
       attributes: [],
     }, {
-      model: GrantReplacement,
+      model: GrantReplacements,
       as: 'replacingGrantReplacements',
       attributes: [],
     }],

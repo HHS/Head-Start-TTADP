@@ -468,6 +468,8 @@ class Grants{
  granteeName : varchar(255)
  grantSpecialistEmail : varchar(255)
  grantSpecialistName : varchar(255)
+ inactivationDate : timestamp with time zone
+ inactivationReason : enum
  programSpecialistEmail : varchar(255)
  programSpecialistName : varchar(255)
  startDate : timestamp with time zone
