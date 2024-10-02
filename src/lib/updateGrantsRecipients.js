@@ -10,6 +10,7 @@ import db, {
   Recipient,
   Grant,
   GrantReplacements,
+  GrantReplacementType,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -391,10 +392,24 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantReplacementPromises = grantsToUpdate.map(async (g) => {
+        let grantReplacementType = await GrantReplacementType.findOne({
+          where: {
+            name: g.grant_replacement_type,
+          },
+        });
+
+        if (!grantReplacementType) {
+          // Create the new type
+          grantReplacementType = await GrantReplacementType.create({
+            name: g.grant_replacement_type,
+          });
+        }
+
         const [grantReplacement, created] = await GrantReplacements.findOrCreate({
           where: {
             replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
             replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
+            grantReplacementTypeId: grantReplacementType.id,
           },
           defaults: {
             replacementDate: new Date(g.replacement_date),
@@ -406,6 +421,7 @@ export async function processFiles(hashSumHex) {
           await grantReplacement.update({
             grantReplacementTypeId: g.grantReplacementType,
             replacementDate: new Date(g.replacement_date),
+            grantReplacementTypeId: grantReplacementType.id,
           }, {
             transaction,
             individualHooks: true,
