@@ -7,6 +7,7 @@ const {
   afterCreate,
   afterUpdate,
   afterDestroy,
+  beforeCreate,
 } = require('./hooks/goal');
 const { GOAL_CREATED_VIA, CREATION_METHOD } = require('../constants');
 
@@ -152,6 +153,7 @@ export default (sequelize, DataTypes) => {
     hooks: {
       beforeValidate: async (instance, options) => beforeValidate(sequelize, instance, options),
       beforeUpdate: async (instance, options) => beforeUpdate(sequelize, instance, options),
+      beforeCreate: async (instance, options) => beforeCreate(sequelize, instance, options),
       afterCreate: async (instance, options) => afterCreate(sequelize, instance, options),
       afterUpdate: async (instance, options) => afterUpdate(sequelize, instance, options),
       afterDestroy: async (instance, options) => afterDestroy(sequelize, instance, options),
