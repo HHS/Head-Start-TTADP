@@ -6,10 +6,10 @@ import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction
 import handleErrors from '../lib/apiErrorHandler';
 
 jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
-jest.mock('../lib/programmaticTransaction', {
+jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
   hasModifiedData: jest.fn(),
-});
+}));
 
 describe('transactionWrapper', () => {
   let originalFunction = jest.fn().mockResolvedValue('result');
