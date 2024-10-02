@@ -19,6 +19,9 @@ import {
   listQueries,
   getFilters,
   runQuery,
+  listQueriesWithWildcard,
+  getFiltersWithWildcard,
+  runQueryWithWildcard,
 } from './handlers';
 import Generic from '../../policies/generic';
 
@@ -49,6 +52,9 @@ app.use(express.json());
 app.get('/listQueries', listQueries);
 app.get('/getFilters', getFilters);
 app.post('/runQuery', runQuery);
+app.get('/*/list', listQueriesWithWildcard);
+app.get('/*/filters', getFiltersWithWildcard);
+app.post('/*', runQueryWithWildcard);
 
 describe('API Endpoints', () => {
   beforeEach(() => {
@@ -289,6 +295,24 @@ describe('API Endpoints', () => {
     });
   });
 
+  describe('listQueriesWithWildcard ', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should list all available query files', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      listQueryFiles.mockResolvedValue([{ name: 'Test Query', description: 'Test Description' }]);
+
+      const response = await request(app).get('/dataRequests/list');
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([{ name: 'Test Query', description: 'Test Description' }]);
+    });
+  });
+
   describe('getFilters', () => {
     beforeEach(() => {
       jest.clearAllMocks();
@@ -385,6 +409,26 @@ describe('API Endpoints', () => {
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error reading filters');
+    });
+  });
+
+  describe('getFiltersWithWildcard', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('should get filters with options when the options query param is set to true', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+
+      const response = await request(app).get('/dataRequests/test/path/filters').query({ options: 'true' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+      expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, true);
     });
   });
 
@@ -535,6 +579,23 @@ describe('API Endpoints', () => {
       expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3]);
     });
 
+    it('should return 401 when no regionIds are available', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
+      Generic.mockImplementation(() => ({
+        filterRegions: jest.fn((ids) => ids.filter((id) => id <= null)),
+        getAllAccessibleRegions: jest.fn(() => []),
+      }));
+      const response = await request(app)
+        .post('/runQuery')
+        .query({ path: 'dataRequests/test/path' });
+
+      expect(response.status).toBe(401);
+    });
+
     it('should filter regionIds using policy', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
@@ -572,6 +633,49 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
       expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_sanitized.csv"');
+    });
+  });
+
+  describe('runQueryWithWildcard', () => {
+    const user = {
+      id: 1,
+      permissions: [
+        { scopeId: 1, regionId: 1 },
+        { scopeId: 2, regionId: 2 },
+        { scopeId: 3, regionId: 3 },
+      ],
+    };
+
+    beforeEach(() => {
+      readFiltersFromFile.mockReturnValue({
+        filters: { recipientIds: { type: 'integer[]', description: 'Test Filter' } },
+        query: 'SELECT * FROM test',
+        defaultOutputName: 'test_output',
+      });
+      setFilters.mockResolvedValue([]);
+      executeQuery.mockResolvedValue([{ id: 1, name: 'Test' }]);
+      sanitizeFilename.mockReturnValue('test_output_recipientIds_1-2-3');
+      generateFilterString.mockReturnValue('recipientIds_1-2-3');
+      currentUserId.mockResolvedValue(user.id);
+      userById.mockResolvedValue(user);
+      Generic.mockImplementation(() => ({
+        filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
+        getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
+      }));
+    });
+
+    it('should run the query and return JSON result', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
+      const response = await request(app)
+        .post('/dataRequests/test/path')
+        .send({ regionIds: [1, 2, 3, 4] });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
     });
   });
 });

@@ -168,7 +168,7 @@ const runQuery = async (req: Request, res: Response) => {
     }
 
     if (!filterValues.regionIds || filterValues.regionIds.length === 0) {
-      res.sendStatus(401);
+      res.sendStatus(401).json({ error: 'Access forbidden: User has no region access configured.' });
       return;
     }
 
