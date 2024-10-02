@@ -397,15 +397,15 @@ export async function processFiles(hashSumHex) {
             replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
           },
           defaults: {
-            replacementDate: new Date(), // Example: setting the replacementDate to current date, modify as needed
+            replacementDate: new Date(g.replacement_date),
           },
           transaction,
         });
 
         if (!created) {
           await grantReplacement.update({
-            grantReplacementTypeId: g.grantReplacementType, // Update fields as needed
-            replacementDate: new Date(), // Example: updating the replacementDate to current date, modify as needed
+            grantReplacementTypeId: g.grantReplacementType,
+            replacementDate: new Date(g.replacement_date),
           }, {
             transaction,
             individualHooks: true,
