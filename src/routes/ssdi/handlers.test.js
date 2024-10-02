@@ -295,7 +295,7 @@ describe('API Endpoints', () => {
     });
   });
 
-  describe('listQueriesWithWildcard ', () => {
+  describe('listQueriesWithWildcard', () => {
     beforeEach(() => {
       jest.clearAllMocks();
     });
