@@ -624,7 +624,7 @@ export async function goalsForGrants(grantIds) {
    * get all the matching grants
    */
   const grants = await Grant.findAll({
-    attributes: ['id', ['grantRelationships.grantId']],
+    attributes: ['id', ['grantRelationships.grantId', 'grantId']],
     where: {
       id: grantIds,
     },
