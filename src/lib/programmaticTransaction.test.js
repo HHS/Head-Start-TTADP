@@ -373,15 +373,14 @@ describe('Programmatic Transaction', () => {
       await expect(transactionModule.hasModifiedData([], null)).rejects.toThrow('Transaction ID not found');
     });
 
-    it('returns false when no ZAL tables are present', async () => {
+    it('throws error if snapshot entry is not found for a ZAL table', async () => {
+      await expect(transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
+    });
+    it('returns false when a ZAL table is not present', async () => {
       const original = db.ZALActivityRecipients;
       db.ZALActivityRecipients = undefined; // Temporarily remove the ZALExample table for this test
       await expect(transactionModule.hasModifiedData([{ table_name: 'ZALActivityRecipients', max_id: '100' }], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Table name not found for model: ZALActivityRecipients');
       db.ZALActivityRecipients = original; // Restore the mock
-    });
-
-    it('throws error if snapshot entry is not found for a ZAL table', async () => {
-      await expect(transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
     });
   });
 });
