@@ -7,6 +7,7 @@ import {
   getReportCountForGoals,
   verifyAllowedGoalStatusTransition,
   updateGoalStatusById,
+  createMultiRecipientGoalsFromAdmin,
 } from './goals';
 import {
   sequelize,
@@ -15,6 +16,9 @@ import {
   Objective,
   ActivityReportObjective,
   ActivityReportGoal,
+  ActivityReport,
+  ActivityRecipient,
+  GoalTemplate,
 } from '../models';
 import { GOAL_STATUS } from '../constants';
 import changeGoalStatus from './changeGoalStatus';
@@ -23,6 +27,7 @@ import { auditLogger } from '../logger';
 import extractObjectiveAssociationsFromActivityReportObjectives
   from './extractObjectiveAssociationsFromActivityReportObjectives';
 import { reduceGoals } from './reduceGoals';
+import { setFieldPromptsForCuratedTemplate } from '../services/goalTemplates';
 
 const { OBJECTIVE_STATUS } = require('../constants');
 
@@ -35,10 +40,12 @@ jest.mock('./extractObjectiveAssociationsFromActivityReportObjectives');
 jest.mock('./reduceGoals');
 
 jest.mock('../services/reportCache');
+jest.mock('../services/goalTemplates', () => ({
+  setFieldPromptsForCuratedTemplate: jest.fn(),
+}));
 
 const mockObjectiveId = 10000001;
 const mockGoalId = 10000002;
-const mockNonexistentGoalId = 10000002;
 const mockGoalTemplateId = 10000003;
 const mockGrantId = 10000004;
 const mockActivityReportGoalId = 10000005;
@@ -931,5 +938,135 @@ describe('goalsForGrants', () => {
       505,
       506,
     ]);
+  });
+});
+
+describe('createMultiRecipientGoalsFromAdmin', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return an error when no goal name is provided', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      goalText: '',
+    };
+
+    const result = await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(result.isError).toBe(true);
+    expect(result.message).toBe('Goal name is required');
+  });
+
+  it('should fetch a template if useCuratedGoal is true and templateId is provided', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      useCuratedGoal: true,
+      templateId: 1,
+      goalText: 'Test Goal',
+    };
+
+    GoalTemplate.findByPk = jest.fn().mockResolvedValue({ templateName: 'Test Template' });
+
+    await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(GoalTemplate.findByPk).toHaveBeenCalledWith(1);
+  });
+
+  it('should return an error if a goal with the same name already exists for a grant', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      goalText: 'Test Goal',
+    };
+
+    Goal.findAll = jest.fn().mockResolvedValue([{ id: 1, grantId: 1 }]);
+
+    const result = await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(result.isError).toBe(true);
+    expect(result.message).toContain('A goal with that name already exists for grants');
+  });
+
+  it('should create goals for the correct grant IDs', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }, { id: 2 }]),
+      goalText: 'Test Goal',
+    };
+
+    Goal.findAll = jest.fn().mockResolvedValue([]); // No existing goals
+    Goal.bulkCreate = jest.fn().mockResolvedValue([
+      { id: 1, name: 'Goal 1' },
+      { id: 2, name: 'Goal 2' },
+    ]);
+
+    await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(Goal.bulkCreate).toHaveBeenCalledWith(
+      [
+        {
+          name: 'Test Goal',
+          grantId: 1,
+          source: null,
+          endDate: null,
+          status: 'Not Started',
+          createdVia: 'admin',
+          goalTemplateId: null,
+        },
+        {
+          name: 'Test Goal',
+          grantId: 2,
+          source: null,
+          endDate: null,
+          status: 'Not Started',
+          createdVia: 'admin',
+          goalTemplateId: null,
+        },
+      ],
+      { individualHooks: true },
+    );
+  });
+
+  it('should call setFieldPromptsForCuratedTemplate if prompt responses exist', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      goalText: 'Test Goal',
+      goalPrompts: [
+        { promptId: 1, fieldName: 'promptResponse1' },
+      ],
+      promptResponse1: 'Response 1', // Add the actual response for the prompt
+      useCuratedGoal: true,
+    };
+
+    Goal.findAll = jest.fn().mockResolvedValue([]); // No existing goals
+    Goal.bulkCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
+
+    await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(setFieldPromptsForCuratedTemplate).toHaveBeenCalledWith([1], [{ promptId: 1, response: 'Response 1' }]);
+  });
+
+  it('should create an activity report when createReport is true', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      goalText: 'Test Goal',
+      createReport: true,
+      creator: 1,
+      region: 1,
+    };
+
+    Goal.findAll = jest.fn().mockResolvedValue([]); // No existing goals
+    Goal.bulkCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
+    jest.spyOn(ActivityReport, 'create').mockResolvedValue({ id: 123 });
+    jest.spyOn(ActivityReportGoal, 'bulkCreate').mockResolvedValue({});
+    jest.spyOn(ActivityRecipient, 'bulkCreate').mockResolvedValue({});
+
+    await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(ActivityReport.create).toHaveBeenCalledWith(expect.objectContaining({
+      regionId: 1,
+      userId: 1,
+    }));
+    expect(ActivityReportGoal.bulkCreate).toHaveBeenCalled();
+    expect(ActivityRecipient.bulkCreate).toHaveBeenCalled();
   });
 });
