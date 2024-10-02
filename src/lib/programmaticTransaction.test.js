@@ -16,7 +16,6 @@ import db, {
 import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
-import { now } from 'moment';
 
 // Mock the Queue from 'bull'
 jest.mock('bull');
