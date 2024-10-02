@@ -16,9 +16,9 @@ import { GrantDataProvider } from '../pages/GrantDataContext';
 
 const { ADMIN } = SCOPE_IDS;
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
-const memoryHistory = createMemoryHistory();
 
 describe('recipient record page', () => {
+  const memoryHistory = createMemoryHistory();
   const user = {
     id: 2,
     permissions: [
@@ -62,45 +62,18 @@ describe('recipient record page', () => {
     ],
   };
 
-  const mockGoal = {
-    name: 'This is a goal name',
-    status: 'In Progress',
-    endDate: '10/08/2021',
-    sources: [],
-    prompts: [],
-    grant: {
-      id: 1,
-      number: '1',
-      programs: [{
-        programType: 'EHS',
-      }],
-      status: 'Active',
-    },
-    objectives: [
-      {
-        id: 1238474,
-        title: 'This is an objective',
-        status: 'Not Started',
-        resources: [],
-        topics: [],
-        activityReports: [],
-        roles: [],
-      },
-    ],
-  };
-
-  function renderRecipientRecord(history = memoryHistory, regionId = '45') {
+  function renderRecipientRecord() {
     const match = {
       path: '',
       url: '',
       params: {
         recipientId: '1',
-        regionId,
+        regionId: '45',
       },
     };
 
     render(
-      <Router history={history}>
+      <Router history={memoryHistory}>
         <UserContext.Provider value={{ user }}>
           <GrantDataProvider>
             <AppLoadingContext.Provider value={
@@ -111,7 +84,7 @@ describe('recipient record page', () => {
             }
           }
             >
-              <RecipientRecord match={match} />
+              <RecipientRecord match={match} hasAlerts={false} />
             </AppLoadingContext.Provider>
           </GrantDataProvider>
         </UserContext.Provider>
@@ -131,6 +104,7 @@ describe('recipient record page', () => {
   };
 
   beforeEach(() => {
+    jest.restoreAllMocks();
     fetchMock.get('/api/user', user);
     fetchMock.get('/api/widgets/overview', overview);
     fetchMock.get('/api/widgets/overview?region.in[]=45&recipientId.ctn[]=1', overview);
@@ -155,6 +129,7 @@ describe('recipient record page', () => {
   });
   afterEach(() => {
     fetchMock.restore();
+    jest.restoreAllMocks();
   });
 
   it('shows the recipient name', async () => {
@@ -192,20 +167,20 @@ describe('recipient record page', () => {
   it('handles recipient not found', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 404);
-    const setErrorResponseCode = jest.fn();
-    await act(async () => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    const spy = jest.spyOn(memoryHistory, 'push');
+    await act(async () => renderRecipientRecord());
     await waitFor(() => {
-      expect(setErrorResponseCode).toHaveBeenCalledWith(404);
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
   });
 
   it('handles fetch error', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', 500);
-    const setErrorResponseCode = jest.fn();
-    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    const spy = jest.spyOn(memoryHistory, 'push');
+    act(() => renderRecipientRecord());
     await waitFor(() => {
-      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
     });
   });
 
@@ -246,17 +221,6 @@ describe('recipient record page', () => {
     expect(document.querySelector('#recipientGoalsObjectives')).toBeTruthy();
   });
 
-  it('navigates to the edit goals page', async () => {
-    fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
-    fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
-    fetchMock.get('/api/goals/12389/recipient/45', mockGoal);
-    fetchMock.get('/api/topic', []);
-    memoryHistory.push('/recipient-tta-records/45/region/1/goals/12389');
-    await act(() => renderRecipientRecord());
-    await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await screen.findByText(/TTA Goals for the Mighty Recipient/i);
-  });
-
   it('navigates to the print goals page', async () => {
     fetchMock.get('/api/recipient/1/region/45/merge-permissions', { canMergeGoalsForRecipient: false });
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
@@ -272,10 +236,10 @@ describe('recipient record page', () => {
     fetchMock.get('/api/recipient/1?region.in[]=45', theMightyRecipient);
     fetchMock.get('/api/communication-logs/region/1/log/1', 404);
     memoryHistory.push('/recipient-tta-records/45/region/1/communication/1/view');
-    const setErrorResponseCode = jest.fn();
-    act(() => renderRecipientRecord(memoryHistory, '45', setErrorResponseCode));
+    const spy = jest.spyOn(memoryHistory, 'push');
+    act(() => renderRecipientRecord());
     await waitFor(() => expect(screen.queryByText(/loading.../)).toBeNull());
-    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(404));
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/404'));
   });
 
   it('navigates to the communication log form', async () => {

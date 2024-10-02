@@ -122,7 +122,7 @@ export default function RecipientRecord({ match, hasAlerts }) {
           });
         }
       } catch (e) {
-        history.push(`/something-went-wrong${e.status}`);
+        history.push(`/something-went-wrong/${e.status}`);
       } finally {
         setLoading(false);
       }
