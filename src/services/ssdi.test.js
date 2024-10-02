@@ -318,22 +318,24 @@ describe('ssdi', () => {
 
   describe('readFilesRecursively', () => {
     it('should recursively read files in a directory', async () => {
-      fs.promises.readdir.mockResolvedValue(['file1.sql', 'folder']);
-      fs.promises.stat
-        .mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(false) })
-        .mockResolvedValueOnce({ isDirectory: jest.fn().mockReturnValue(true) });
+      fs.promises.readdir.mockResolvedValueOnce([
+        { name: 'file1.sql', isDirectory: () => false },
+        { name: 'subfolder', isDirectory: () => true },
+      ]);
 
       const result = await readFilesRecursively('test/path');
       expect(result).toContain('test/path/file1.sql');
     });
-    it('should recursively read files in the directory', async () => {
-      fs.promises.readdir.mockResolvedValue(['file1.sql', 'subfolder']);
-      fs.promises.stat
-        .mockResolvedValueOnce({ isDirectory: () => false }) // file1.sql
-        .mockResolvedValueOnce({ isDirectory: () => true }); // subfolder
 
-      fs.promises.readdir.mockResolvedValueOnce(['file2.sql']);
-      fs.promises.stat.mockResolvedValueOnce({ isDirectory: () => false });
+    it('should recursively read files in the directory', async () => {
+      fs.promises.readdir
+        .mockResolvedValueOnce([
+          { name: 'file1.sql', isDirectory: () => false },
+          { name: 'subfolder', isDirectory: () => true },
+        ])
+        .mockResolvedValueOnce([
+          { name: 'file2.sql', isDirectory: () => false },
+        ]);
 
       const result = await readFilesRecursively('test/path');
       expect(result).toEqual(['test/path/file1.sql', 'test/path/subfolder/file2.sql']);
