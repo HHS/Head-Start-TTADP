@@ -295,47 +295,39 @@ describe('API Endpoints', () => {
     });
 
     it('should get filters with options when the options query param is set to true', async () => {
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
 
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path', options: 'true' });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filter1: { type: 'integer[]', description: 'Test Filter with options' } });
+      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
       expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, true);
     });
 
     it('should default options query param to false if not provided', async () => {
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
 
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filter1: { type: 'integer[]', description: 'Test Filter' } });
+      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
       expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, false);
     });
 
-    it('should return early if validateScriptPath sends a response', async () => {
-      currentUserId.mockResolvedValue(1);
-      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(true); // Simulate early return
-
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
-
-      expect(validateScriptPath).toHaveBeenCalledWith('dataRequests/test/path', { id: 1, name: 'John Doe' }, expect.any(Object));
-      expect(response.status).toBe(400); // Assuming validateScriptPath triggers a 400 response
-    });
-
     it('should return 500 if an unexpected error occurs when reading filters', async () => {
-      readFiltersFromFile.mockImplementation(() => { throw new Error('Unexpected Error'); });
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
-      validateScriptPath.mockResolvedValue(false);
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      readFiltersFromFile.mockImplementation(() => { throw new Error('Unexpected Error'); });
 
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
 
@@ -343,11 +335,15 @@ describe('API Endpoints', () => {
       expect(response.text).toBe('Error reading filters');
     });
     it('should get filters from the script', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
       readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
 
       const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filter1: { type: 'integer[]', description: 'Test Filter' } });
+      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
     });
 
     it('should return 400 if script path is not provided', async () => {
