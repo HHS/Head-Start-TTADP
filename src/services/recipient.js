@@ -165,6 +165,8 @@ export async function allRecipients() {
 }
 
 export async function recipientById(recipientId, grantScopes) {
+  console.log('grantScopes', grantScopes);
+  const whereCondition = grantScopes?.where ? grantScopes.where : {};
   return Recipient.findOne({
     attributes: ['id', 'name', 'recipientType', 'uei'],
     where: {
@@ -189,7 +191,7 @@ export async function recipientById(recipientId, grantScopes) {
         as: 'grants',
         where: [{
           [Op.and]: [
-            { [Op.and]: grantScopes.where },
+            { [Op.and]: whereCondition },
             { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
