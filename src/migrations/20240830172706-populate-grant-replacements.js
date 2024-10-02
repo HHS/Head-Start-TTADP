@@ -113,7 +113,7 @@ module.exports = {
         JOIN "Grants" gr2
         ON gr1."oldGrantId" = gr2.id
         LEFT JOIN "GrantReplacementTypes" grt
-        ON gr1."inactivationReason" = grt.name
+        ON gr1."inactivationReason"::text = grt.name
         WHERE gr1."oldGrantId" IS NOT NULL;
       `, { transaction });
 
