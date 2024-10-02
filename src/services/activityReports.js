@@ -1107,7 +1107,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
           },
           {
             model: GrantReplacements,
-            as: 'replacements',
+            as: 'replacedGrantReplacements',
             attributes: [],
             required: false,
           },
