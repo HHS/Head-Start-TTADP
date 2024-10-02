@@ -3,15 +3,15 @@ import { sequelize } from '../../models';
 
 const cdiGrantsSql = (cdiStatus, withCdi) => {
   let status = null;
-  if (cdiStatus === 'Active' || cdiStatus === 'Inactive') {
-    status = cdiStatus;
+  if (cdiStatus === 'active' || cdiStatus === 'inactive') {
+    status = cdiStatus.charAt(0).toUpperCase() + cdiStatus.slice(1);
   }
 
   const isOrIsNot = withCdi ? '=' : '!=';
 
   return `
 SELECT
-  "ActivityRecipients"."activityReportId"
+  DISTINCT "ActivityRecipients"."activityReportId"
   FROM "ActivityRecipients" "ActivityRecipients"
   INNER JOIN "Grants" "Grants"
   ON "ActivityRecipients"."grantId" = "Grants"."id"
@@ -30,11 +30,20 @@ export function withCdiGrants(cdiStatus) {
 }
 
 export function withoutCdiGrants(cdiStatus) {
-  return {
-    id: {
-      [Op.in]: sequelize.literal(`(
+  // If its NOT cdi grants we use not in clause.
+  return cdiStatus[0] !== 'active' && cdiStatus[0] !== 'inactive'
+    ? {
+      id: {
+        [Op.notIn]: sequelize.literal(`(
           ${cdiGrantsSql(cdiStatus[0], false)}
         )`),
-    },
-  };
+      },
+    }
+    : {
+      id: {
+        [Op.in]: sequelize.literal(`(
+          ${cdiGrantsSql(cdiStatus[0], false)}
+        )`),
+      },
+    };
 }
