@@ -76,7 +76,7 @@ describe('transactionWrapper', () => {
       req,
       res,
       new Error('Transaction was flagged as READONLY, but has modifed data.'),
-      {"namespace": "SERVICE:WRAPPER"},
+      { namespace: 'SERVICE:WRAPPER' },
     );
 
     mockHasModifiedData.mockRestore();
