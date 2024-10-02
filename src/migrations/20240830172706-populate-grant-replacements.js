@@ -99,7 +99,7 @@ module.exports = {
           "replacedGrantId",
           "replacingGrantId",
           "replacementDate",
-          "replacementTypeId",
+          "grantReplacementTypeId",
           "createdAt",
           "updatedAt"
         )
