@@ -3642,7 +3642,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes reports with ActiveCDI grants', async () => {
-      const filters = { 'cdiGrants.in': 'Active' };
+      const filters = { 'cdiGrants.in': 'active' };
       const { activityReport: scope } = await filtersToScopes(filters);
 
       // eslint-disable-next-line max-len
@@ -3658,7 +3658,7 @@ describe('filtersToScopes', () => {
     });
 
     it('doesn\'t include reports with ActiveCDI grants', async () => {
-      const filters = { 'cdiGrants.nin': 'Active' };
+      const filters = { 'cdiGrants.nin': 'active' };
       const { activityReport: scope } = await filtersToScopes(filters);
 
       // eslint-disable-next-line max-len
@@ -3674,7 +3674,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes reports with InactiveCDI grants', async () => {
-      const filters = { 'cdiGrants.in': 'Inactive' };
+      const filters = { 'cdiGrants.in': 'inactive' };
       const { activityReport: scope } = await filtersToScopes(filters);
 
       const found = await ActivityReport.findAll({
@@ -3689,9 +3689,9 @@ describe('filtersToScopes', () => {
     });
 
     it('doesn\'t include reports with InactiveCDI grants', async () => {
-      const filters = { 'cdiGrants.nin': 'Inactive' };
+      //
+      const filters = { 'cdiGrants.nin': 'inactive' };
       const { activityReport: scope } = await filtersToScopes(filters);
-
       const found = await ActivityReport.findAll({
         where: {
           [Op.and]: [scope, {
@@ -3704,7 +3704,7 @@ describe('filtersToScopes', () => {
     });
 
     it('includes reports with NonCDI grants', async () => {
-      const filters = { 'cdiGrants.in': 'CDI' };
+      const filters = { 'cdiGrants.in': 'cdi' };
       const { activityReport: scope } = await filtersToScopes(filters);
 
       const found = await ActivityReport.findAll({
@@ -3720,7 +3720,7 @@ describe('filtersToScopes', () => {
     });
 
     it('doesn\'t include reports with NonCDI grants', async () => {
-      const filters = { 'cdiGrants.nin': 'CDI' };
+      const filters = { 'cdiGrants.nin': 'cdi' };
       const { activityReport: scope } = await filtersToScopes(filters);
 
       const found = await ActivityReport.findAll({
