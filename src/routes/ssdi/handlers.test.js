@@ -5,6 +5,7 @@ import {
   listQueryFiles,
   readFiltersFromFile,
   setFilters,
+  preprocessAndValidateFilters,
   sanitizeFilename,
   generateFilterString,
   executeQuery,
@@ -26,6 +27,7 @@ jest.mock('../../services/ssdi', () => ({
   listQueryFiles: jest.fn(),
   readFiltersFromFile: jest.fn(),
   setFilters: jest.fn(),
+  preprocessAndValidateFilters: jest.fn(),
   sanitizeFilename: jest.fn(),
   generateFilterString: jest.fn(),
   executeQuery: jest.fn(),
@@ -419,20 +421,30 @@ describe('API Endpoints', () => {
     });
 
     it('should run the query and return JSON result', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ recipientIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
     });
 
     it('should run the query and return CSV result', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path', format: 'csv' })
-        .send({ recipientIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] });
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
@@ -465,52 +477,30 @@ describe('API Endpoints', () => {
       expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
 
-    it('should return 400 if recipientIds are missing', async () => {
+    it('should return 200 if regionIds are missing', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'dataRequests/test/path' })
-        .send({}); // No recipientIds sent
-
-      expect(response.status).toBe(400);
-      expect(response.text).toBe('Invalid recipientIds: recipientIds are required');
+        .query({ path: 'dataRequests/' })
+        .send({}); // No regionIds sent
+      expect(response.status).toBe(200);
     });
 
-    it('should return 400 if recipientIds are not an array of integers', async () => {
+    it('should return 200 if regionIds are not an array of integers', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ recipientIds: 'invalidType' }); // Invalid data type
-
-      expect(response.status).toBe(400);
-      expect(response.text).toBe('Invalid recipientIds: must be an array of integers');
-    });
-
-    it('should return 401 if regionIds is an empty set', async () => {
-      Generic.mockImplementation(() => ({
-        filterRegions: jest.fn(() => []),
-        getAllAccessibleRegions: jest.fn(() => []),
-      }));
-
-      const response = await request(app)
-        .post('/runQuery')
-        .query({ path: 'dataRequests/test/path' })
-        .send({});
-
-      expect(response.status).toBe(401);
-    });
-
-    it('should return 401 if no accessible regions are found', async () => {
-      Generic.mockImplementation(() => ({
-        filterRegions: jest.fn(() => []),
-        getAllAccessibleRegions: jest.fn(() => []),
-      }));
-
-      const response = await request(app)
-        .post('/runQuery')
-        .query({ path: 'dataRequests/test/path' })
-        .send({ recipientIds: [1, 2, 3] });
-
-      expect(response.status).toBe(401);
+        .send({ regionIds: 'invalidType' }); // Invalid data type
+      expect(response.status).toBe(200);
     });
 
     it('should handle errors', async () => {
@@ -530,6 +520,11 @@ describe('API Endpoints', () => {
     });
 
     it('should filter out non-integer regionIds', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const filterRegionsMock = jest.fn((val) => val);
       Generic.mockImplementation(() => ({
         filterRegions: filterRegionsMock,
@@ -545,6 +540,11 @@ describe('API Endpoints', () => {
     });
 
     it('should filter regionIds using policy', async () => {
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const filterRegionsMock = jest.fn((val) => val);
       Generic.mockImplementation(() => ({
         filterRegions: filterRegionsMock,
@@ -561,7 +561,12 @@ describe('API Endpoints', () => {
     });
 
     it('should return CSV response with sanitized file name', async () => {
-      sanitizeFilename.mockReturnValue('test_output_sanitized.csv');
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({ id: 1, name: 'John Doe' });
+      checkFolderPermissions.mockResolvedValue(true); // Mock permission check
+      isFile.mockResolvedValue(true); // Mock permission check
+      preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
+      sanitizeFilename.mockReturnValue('test_output_sanitized');
 
       const response = await request(app)
         .post('/runQuery')

@@ -158,7 +158,7 @@ const runQuery = async (req: Request, res: Response) => {
     const policy = new Generic(user);
 
     // Handle regionIds with policy filtering
-    if (filterValues.regionIds) {
+    if (filterValues.regionIds && Array.isArray(filterValues.regionIds)) {
       filterValues.regionIds = filterValues.regionIds
         .map(Number)
         .filter((num) => !Number.isNaN(num));
@@ -173,7 +173,7 @@ const runQuery = async (req: Request, res: Response) => {
     }
 
     const { result, errors } = preprocessAndValidateFilters(filters, filterValues);
-    if (errors.invalidFilters.length || errors.invalidTypes.length) {
+    if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });
       return;
     }
