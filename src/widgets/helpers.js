@@ -82,13 +82,13 @@ export async function getAllRecipientsFiltered(scopes) {
         required: true,
         attributes: [],
         where: scopes.grant.where,
-        include: [
-          ...mergeIncludes(scopes.grant.include, [{
+        include: mergeIncludes(scopes.grant.include, [
+          {
             model: GrantReplacements,
             as: 'replacedGrantReplacements',
             attributes: [],
-          }]),
-        ],
+          },
+        ]),
       },
     ],
   });
