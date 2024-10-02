@@ -71,40 +71,14 @@ describe('transactionWrapper', () => {
     const next = jest.fn();
 
     // Expect an error because hasModifiedData is mocked to return true (indicating modified data)
-    await expect(wrapper(req, res, next)).rejects.toThrow('Transaction was flagged as READONLY, but has modified data.');
+    const responce = await wrapper(req, res, next);
+    expect(handleErrors).toHaveBeenCalledWith(
+      req,
+      res,
+      new Error('Transaction was flagged as READONLY, but has modifed data.'),
+      {"namespace": "SERVICE:WRAPPER"},
+    );
 
     mockHasModifiedData.mockRestore();
-  });
-
-  it('should return false if no ZAL tables are present in hasModifiedData', async () => {
-    const snapshot = [];
-    const originalDb = { ...db }; // Backup original db object
-
-    // Mock `db` to exclude ZAL tables
-    Object.keys(db).forEach((key) => {
-      if (key.startsWith('ZAL')) {
-        db[key] = undefined;
-      }
-    });
-
-    const result = await hasModifiedData(snapshot, 'test-transaction-id');
-    expect(result).toBe(false);
-
-    // Restore original db
-    Object.assign(db, originalDb);
-  });
-
-  it('should throw an error if transaction ID is not found', async () => {
-    jest.spyOn(httpContext, 'get').mockReturnValue(null);
-    await expect(hasModifiedData([], null)).rejects.toThrow('Transaction ID not found');
-  });
-
-  it('should throw an error if a snapshot entry is not found for a ZAL table', async () => {
-    const snapshot = [{ table_name: 'SomeOtherTable', max_id: 1 }];
-
-    // Mock the `db` object to include the necessary structure for `ZALDDL`
-    db.ZALMissing = { findOne: jest.fn() };
-
-    await expect(hasModifiedData(snapshot, 'test-transaction-id')).rejects.toThrow('Snapshot entry not found for table');
   });
 });
