@@ -1,10 +1,9 @@
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import filtersToScopes, { mergeIncludes } from '../index';
+import filtersToScopes from '../index';
 import {
   Recipient,
   Grant,
-  GrantReplacements,
   ActivityReport,
   Program,
   User,
