@@ -1028,16 +1028,13 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grantWithNullInactivationType).not.toBeNull();
     await processFiles();
     const grantReplacementWithInactivationReason = await GrantReplacements.findOne({
-      where: { replacedGrantId: 7842 },
-      include: [{
-        model: GrantReplacementTypes,
-        attributes: ['name'],
-        as: 'grantReplacementType',
-      }],
+      where: { replacedGrantId: 7842, grantReplacementTypeId: { [Op.ne]: null } },
     });
+
     const grantReplacementType = await GrantReplacementTypes.findOne({
       where: { id: grantReplacementWithInactivationReason.grantReplacementTypeId },
     });
+
     expect(grantReplacementType.name).toEqual('DRS Non-Competitive Continuation');
   });
 
