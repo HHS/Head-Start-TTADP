@@ -201,8 +201,13 @@ const hasModifiedData = async (snapShot, transactionId) => {
     throw new Error('Transaction ID not found');
   }
 
-  // Filter the keys of the `db` object for tables that start with 'ZAL'
-  const zalTables = Object.keys(db).filter((key) => key.startsWith('ZAL')).sort();
+  const zalTables = Object.keys(db)
+     // Filter the keys of the `db` object for tables that start with 'ZAL'
+    .filter((key) => key.startsWith('ZAL'))
+    // Endpoints Descriptor Are allowed to be added to the audit log
+    .filter((key) => key !== 'ZALZADescriptor')
+    .sort();
+
 
   if (zalTables.length === 0) {
     return false;
