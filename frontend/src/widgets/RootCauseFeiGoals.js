@@ -129,7 +129,7 @@ export default function RootCauseFeiGoals({ data }) {
         loading={false}
         title="Root cause on FEI goals"
         subtitle="Each goal can have up to 2 root causes"
-        subtitle2={`Total of ${totals.totalNumberOfGoals} goals and ${totals.totalNumberOfRootCauses} root causes`}
+        subtitle2={`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
         menuItems={menuItems}
       >
         {showTabularData ? (
@@ -156,6 +156,11 @@ export default function RootCauseFeiGoals({ data }) {
             barGraphTopHeight="auto"
             barHeightMultiplier={40}
             widgetRef={widgetRef}
+            xAxisConfig={{
+              title: 'Percentage',
+              ticksuffix: '%',
+              standoff: 40,
+            }}
           />
         )}
       </WidgetContainer>
