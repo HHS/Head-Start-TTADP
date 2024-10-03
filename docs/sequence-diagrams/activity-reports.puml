@@ -1,19 +1,10 @@
 @startuml
 
-title "TTA Hub"
+title "TTA Hub Activity Reports"
 
 actor User as TTAProvider
-participant "HSES\n Login" as HSESLogin
 participant "TTA Hub\n frontend" as TTAHUBF
 participant "TTA Hub\n backend" as TTAHUBB
-
-group Access: Accessing TTA Hub pages
-    autonumber
-    TTAProvider -> HSESLogin : Enter credentials
-    TTAProvider <- HSESLogin : Provide access token
-    else
-    TTAProvider <-- HSESLogin : Invalid credentials
-end
 
 group View: Activity Reports
     autonumber 1
