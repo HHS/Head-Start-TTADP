@@ -13,18 +13,30 @@ export default (sequelize, DataTypes) => {
   }
 
   GrantReplacement.init({
-    replacedGrantId: DataTypes.INTEGER,
-    replacingGrantId: DataTypes.INTEGER,
+    replacedGrantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    replacingGrantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
     grantReplacementTypeId: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
     replacementDate: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
-    createdAt: DataTypes.DATE,
-    updatedAt: DataTypes.DATE,
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
   }, {
     sequelize,
     modelName: 'GrantReplacements',
