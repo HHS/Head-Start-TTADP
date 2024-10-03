@@ -177,28 +177,23 @@ async function getProgramPersonnel(grantId, programId, program) {
 
 export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
-    const promises = grantsToUpdate.map(async (grant) => {
-      const replacedGrants = await GrantReplacements.findAll({
-        where: { replacingGrantId: grant.id },
-      });
+    const updates = grantsToUpdate.map(async (grant) => {
+      // eslint-disable-next-line max-len
+      const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+      // eslint-disable-next-line max-len
+      const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
 
-      const oldGrants = await Promise.all(replacedGrants.map(rg => Grant.findByPk(rg.replacedGrantId)));
-      const validOldGrants = oldGrants.filter(Boolean);
+      const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
+      const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
 
-      const replacedRegionIds = uniq(validOldGrants.map(g => g.regionId));
-      const replacedRecipientIds = uniq(validOldGrants.map(g => g.recipientId));
-
-      if (replacedRegionIds.length !== 1 || replacedRecipientIds.length !== 1) {
-        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${replacedRegionIds.length} regions and ${replacedRecipientIds.length} recipients`);
+      if (!regionId || !recipientId || validOldGrants.length !== replacedGrants.length) {
+        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
       }
 
-      return grant.update({
-        recipientId: replacedRecipientIds[0],
-        regionId: replacedRegionIds[0],
-      });
+      return grant.update({ recipientId, regionId });
     });
 
-    await Promise.all(promises);
+    await Promise.all(updates);
   } catch (error) {
     logger.error('updateGrantsRecipients: Error updating grants:', error);
   }
