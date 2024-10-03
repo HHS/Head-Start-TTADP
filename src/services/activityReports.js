@@ -1120,7 +1120,7 @@ export async function possibleRecipients(regionId, activityReportId = null) {
         { '$grants.status$': 'Active' },
         { ...(activityReportId ? { '$grants.activityRecipients.activityReportId$': activityReportId } : {}) },
         {
-          '$grants.replacedGrantReplacements.replacementDate$': {
+          '$grants.inactivationDate$': {
             [Op.gte]: sequelize.literal(`
           CASE
             WHEN ${activityReportId ? 'true' : 'false'}
