@@ -165,12 +165,17 @@ export async function allRecipients() {
 }
 
 export async function recipientById(recipientId, grantScopes) {
-  console.log('grantScopes', grantScopes);
-  const whereCondition = grantScopes?.where ? grantScopes.where : {};
+  const grantsWhereCondition = grantScopes?.where ? grantScopes.where : {};
   return Recipient.findOne({
     attributes: ['id', 'name', 'recipientType', 'uei'],
     where: {
       id: recipientId,
+      [Op.or]: [
+        { '$grants.replacedGrantReplacements.replacementDate$': null },
+        { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+        { '$grants.replacingGrantReplacements.replacementDate$': null },
+        { '$grants.replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+      ],
     },
     include: [
       {
@@ -191,30 +196,12 @@ export async function recipientById(recipientId, grantScopes) {
         as: 'grants',
         where: [{
           [Op.and]: [
-            { [Op.and]: whereCondition },
+            { [Op.and]: grantsWhereCondition },
             { deleted: { [Op.ne]: true } },
             {
               [Op.or]: [
-                {
-                  status: 'Active',
-                },
-                {
-                  [Op.and]: [
-                    {
-                      endDate: {
-                        [Op.gt]: '2020-08-31',
-                      },
-                    },
-                    {
-                      [Op.or]: [
-                        { '$replacedGrantReplacements.replacementDate$': null },
-                        { '$replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-                        { '$replacingGrantReplacements.replacementDate$': null },
-                        { '$replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-                      ],
-                    },
-                  ],
-                },
+                { status: 'Active' },
+                { [Op.and]: [ { endDate: { [Op.gt]: '2020-08-31' } } ] },
               ],
             },
           ],
