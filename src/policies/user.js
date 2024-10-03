@@ -35,7 +35,7 @@ export default class Users {
   canSeeBehindFeatureFlag(flag) {
     return this.isAdmin() || this.user.flags.find((f) => f === flag);
   }
-  
+
   getAllAccessibleRegions() {
     // Return all regions the user has rights for
     const accessibleRegions = new Set();
