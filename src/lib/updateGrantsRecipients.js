@@ -10,7 +10,7 @@ import db, {
   Recipient,
   Grant,
   GrantReplacements,
-  GrantReplacementType,
+  GrantReplacementTypes,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -392,7 +392,7 @@ export async function processFiles(hashSumHex) {
       );
 
       const grantReplacementPromises = grantsToUpdate.map(async (g) => {
-        let grantReplacementType = await GrantReplacementType.findOne({
+        let grantReplacementType = await GrantReplacementTypes.findOne({
           where: {
             name: g.grant_replacement_type,
           },
@@ -400,7 +400,7 @@ export async function processFiles(hashSumHex) {
 
         if (!grantReplacementType) {
           // Create the new type
-          grantReplacementType = await GrantReplacementType.create({
+          grantReplacementType = await GrantReplacementTypes.create({
             name: g.grant_replacement_type,
           });
         }
