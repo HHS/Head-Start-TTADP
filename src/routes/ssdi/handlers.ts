@@ -173,26 +173,32 @@ const runQuery = async (req: Request, res: Response) => {
       return;
     }
 
-    const { result: validatedFilters, errors } = preprocessAndValidateFilters(filters, filterValues);
+    const {
+      result: validatedFilters,
+      errors,
+    } = preprocessAndValidateFilters(
+      filters,
+      filterValues
+    );
     if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });
       return;
     }
 
-    const runQuery = async () => {
+    const run = async () => {
       await setFilters(validatedFilters);
       const queryResult = await executeQuery(scriptPath);
       return JSON.stringify(queryResult);
-    }
+    };
 
     const queryResultString = useCache
       ? await getCachedResponse(
         `${scriptPath} ${JSON.stringify(validatedFilters)}`,
-        runQuery,
+        run,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ) as any
-      : await runQuery();
+      : await run();
     const queryResult = JSON.parse(queryResultString);
-      console.log(queryResult);
 
     const sanitizedOutputName = sanitizeFilename(`${filters.outputName}`);
 
@@ -206,7 +212,6 @@ const runQuery = async (req: Request, res: Response) => {
       res.json(queryResult);
     }
   } catch (error) {
-    console.log(error);
     res.status(500).send(`Error executing query: ${error.message}`);
   }
 };

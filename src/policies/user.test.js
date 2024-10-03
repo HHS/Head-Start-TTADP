@@ -181,13 +181,13 @@ describe('User policies', () => {
       const filteredRegions = policy.filterRegions(regionList);
       expect(filteredRegions).toEqual([1, 2, 3]);
     });
-  
+
     it('should return all accessible regions if region list is empty', () => {
       const policy = new User(user);
       const filteredRegions = policy.filterRegions([]);
       expect(filteredRegions).toEqual([1, 2, 3]);
     });
-  
+
     it('should return an empty array if user has no permissions', () => {
       const emptyUser = { get: () => ({ permissions: [] }) };
       const policy = new User(emptyUser);
@@ -201,36 +201,36 @@ describe('User policies', () => {
       permissions: [{ regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS }],
       flags: ['featureA'],
     };
-  
+
     const userWithoutFeatureFlag = {
       permissions: [{ regionId: 1, scopeId: SCOPES.READ_WRITE_REPORTS }],
       flags: [],
     };
-  
+
     it('returns true if targetString contains matchString and user can see the feature flag', () => {
       const policy = new User(userWithFeatureFlag);
       const result = policy.checkPermissions('targetString', ['target'], 'featureA');
       expect(result).toBeTruthy();
     });
-  
+
     it('returns false if targetString contains matchString but user cannot see the feature flag', () => {
       const policy = new User(userWithoutFeatureFlag);
       const result = policy.checkPermissions('targetString', ['target'], 'featureA');
       expect(result).toBeFalsy();
     });
-  
+
     it('returns true if targetString does not contain any matchStrings', () => {
       const policy = new User(userWithoutFeatureFlag);
       const result = policy.checkPermissions('noMatchString', ['target'], 'featureA');
       expect(result).toBeTruthy();
     });
-  
+
     it('returns true if matchStrings is an empty array', () => {
       const policy = new User(userWithFeatureFlag);
       const result = policy.checkPermissions('targetString', [], 'featureA');
       expect(result).toBeTruthy();
     });
-  
+
     it('returns true if targetString is empty and matchStrings is not empty', () => {
       const policy = new User(userWithoutFeatureFlag);
       const result = policy.checkPermissions('', ['target'], 'featureA');
