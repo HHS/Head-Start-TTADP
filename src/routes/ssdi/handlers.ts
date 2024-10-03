@@ -3,7 +3,6 @@ import { Request, Response } from 'express';
 import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import {
-  BASE_DIRECTORY,
   isFile,
   checkFolderPermissions,
   FilterValues,
@@ -16,6 +15,7 @@ import {
   executeQuery,
 } from '../../services/ssdi';
 import User from '../../policies/user';
+import getCachedResponse from '../../lib/cache';
 
 const validateScriptPath = async (
   scriptPath: string,
@@ -146,13 +146,14 @@ const runQuery = async (req: Request, res: Response) => {
   }
 
   try {
+    const useCache = !(req.body.cache === 'false' || req.query.cache === 'false');
     const filters = await readFiltersFromFile(scriptPath, userId, true);
     const filterValues: FilterValues = filterAttributes(
       {
         ...req.body,
         ...req.query,
       },
-      ['path', 'format'],
+      ['path', 'format', 'cache'],
     );
 
     const policy = new User(user);
@@ -172,16 +173,28 @@ const runQuery = async (req: Request, res: Response) => {
       return;
     }
 
-    const { result, errors } = preprocessAndValidateFilters(filters, filterValues);
+    const { result: validatedFilters, errors } = preprocessAndValidateFilters(filters, filterValues);
     if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });
       return;
     }
 
-    await setFilters(result);
-    const queryResult = await executeQuery(scriptPath);
+    const runQuery = async () => {
+      await setFilters(validatedFilters);
+      const queryResult = await executeQuery(scriptPath);
+      return JSON.stringify(queryResult);
+    }
 
-    const sanitizedOutputName = sanitizeFilename(`${filters.outputName}_${generateFilterString(result)}`);
+    const queryResultString = useCache
+      ? await getCachedResponse(
+        `${scriptPath} ${JSON.stringify(validatedFilters)}`,
+        runQuery,
+      ) as any
+      : await runQuery();
+    const queryResult = JSON.parse(queryResultString);
+      console.log(queryResult);
+
+    const sanitizedOutputName = sanitizeFilename(`${filters.outputName}`);
 
     if (outputFormat === 'csv') {
       res.setHeader('Content-Type', 'text/csv');
@@ -193,6 +206,7 @@ const runQuery = async (req: Request, res: Response) => {
       res.json(queryResult);
     }
   } catch (error) {
+    console.log(error);
     res.status(500).send(`Error executing query: ${error.message}`);
   }
 };

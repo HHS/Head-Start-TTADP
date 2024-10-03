@@ -469,7 +469,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
@@ -484,7 +485,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path', format: 'csv' })
-        .send({ regionIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
@@ -494,7 +496,8 @@ describe('API Endpoints', () => {
     it('should return 400 if script path is not provided', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .send({ recipientIds: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] })
+        .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.text).toBe('Script path is required');
     });
@@ -503,7 +506,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: '../outside/path' })
-        .send({ recipientIds: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] })
+        .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
@@ -512,7 +516,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'some/other/path' })
-        .send({ recipientIds: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] })
+        .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
@@ -526,7 +531,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/' })
-        .send({}); // No regionIds sent
+        .send({}) // No regionIds sent
+        .send({ cache: false });
       expect(response.status).toBe(200);
     });
 
@@ -539,7 +545,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: 'invalidType' }); // Invalid data type
+        .send({ regionIds: 'invalidType' }) // Invalid data type
+        .send({ cache: false });
       expect(response.status).toBe(200);
     });
 
@@ -553,7 +560,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ recipientIds: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] })
+        .send({ cache: false });
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error executing query: Error reading query');
@@ -573,7 +581,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 'a', 2, 'b', 3] });
+        .send({ regionIds: [1, 'a', 2, 'b', 3] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3]);
@@ -591,7 +600,8 @@ describe('API Endpoints', () => {
       }));
       const response = await request(app)
         .post('/runQuery')
-        .query({ path: 'dataRequests/test/path' });
+        .query({ path: 'dataRequests/test/path' })
+        .send({ cache: false });
 
       expect(response.status).toBe(401);
     });
@@ -610,7 +620,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3, 4]);
@@ -628,7 +639,8 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path', format: 'csv' })
-        .send({ recipientIds: [1, 2, 3] });
+        .send({ recipientIds: [1, 2, 3] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
@@ -672,7 +684,8 @@ describe('API Endpoints', () => {
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/dataRequests/test/path')
-        .send({ regionIds: [1, 2, 3, 4] });
+        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(response.body).toEqual([{ id: 1, name: 'Test' }]);
