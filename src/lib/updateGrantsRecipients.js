@@ -1,7 +1,7 @@
 import AdmZip from 'adm-zip';
 import xml2js from 'xml2js';
 import axios from 'axios';
-import { keyBy, mapValues } from 'lodash';
+import { keyBy, mapValues, uniq } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Op } from 'sequelize';
@@ -177,20 +177,46 @@ async function getProgramPersonnel(grantId, programId, program) {
 
 export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
-    const updatePromises = grantsToUpdate.map(async (grant) => {
-      if (grant.oldGrantId) {
-        const oldGrant = await Grant.findByPk(grant.oldGrantId);
+    const promises = [];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const grant of grantsToUpdate) {
+      // eslint-disable-next-line no-await-in-loop
+      const replacedGrants = await GrantReplacements.findAll({
+        where: { replacingGrantId: grant.id },
+      });
+
+      let replacedRegionIds = [];
+      let replacedRecipientIds = [];
+
+      // eslint-disable-next-line no-restricted-syntax
+      for (const replacedGrant of replacedGrants) {
+      // eslint-disable-next-line no-await-in-loop
+        const oldGrant = await Grant.findByPk(replacedGrant.replacedGrantId);
         if (oldGrant) {
-          return grant.update({
-            recipientId: oldGrant.recipientId,
-            regionId: oldGrant.regionId,
-          });
+          replacedRegionIds.push(oldGrant.regionId);
+          replacedRecipientIds.push(oldGrant.recipientId);
         }
       }
-      return null;
-    });
 
-    await Promise.all(updatePromises);
+      // All of the grants that this CDI grant has replaced should
+      // all have the same region and be of the same recipient.
+      replacedRegionIds = uniq(replacedRegionIds);
+      replacedRecipientIds = uniq(replacedRecipientIds);
+
+      if (replacedRegionIds.length !== 1 || replacedRecipientIds.length !== 1) {
+        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${replacedRegionIds.length} regions and ${replacedRecipientIds.length} recipients`);
+      }
+
+      promises.push(
+        grant.update({
+          recipientId: replacedRecipientIds[0],
+          regionId: replacedRegionIds[0],
+        }),
+      );
+    }
+
+    await Promise.all(promises);
   } catch (error) {
     logger.error('updateGrantsRecipients: Error updating grants:', error);
   }
@@ -433,7 +459,7 @@ export async function processFiles(hashSumHex) {
       // Automate CDI linking to preceding recipients
       const cdiGrantsToLink = await Grant.unscoped().findAll({
         where: { regionId: 13, endDate: { [Op.gte]: '2021-03-17' } },
-        attributes: ['id', 'endDate', 'oldGrantId'],
+        attributes: ['id', 'endDate'],
       });
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
