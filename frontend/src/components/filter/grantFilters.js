@@ -6,6 +6,7 @@ import FilterGroups from './FilterGroups';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
+import CdiGrants, { displayCdiGrantsStatus } from './CdiGrants';
 
 export const groupsFilter = {
   id: 'group',
@@ -71,6 +72,24 @@ export const recipientsWithoutTTA = {
       updateSingleDate={onApplyQuery}
       onApplyDateRange={onApplyQuery}
       customDateOptions={RECIPIENT_WITHOUT_TTA_DATE_OPTIONS}
+    />
+  ),
+};
+
+export const cdiGrantsFilter = {
+  id: 'cdiGrants',
+  display: 'CDI grants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'active',
+    'is not': 'active',
+  },
+  displayQuery: displayCdiGrantsStatus,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <CdiGrants
+      inputId={`cdiGrants-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
