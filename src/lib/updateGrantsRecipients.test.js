@@ -8,7 +8,7 @@ import db, {
   Recipient,
   Goal,
   Grant,
-  GrantReplacement,
+  GrantReplacements,
   GrantReplacementType,
   Program,
   ZALGrant,
@@ -953,16 +953,16 @@ describe('Update grants, program personnel, and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
     // simulate updating an existing grant replacement with null replacementDate
-    await GrantReplacement.update(
+    await GrantReplacements.update(
       { replacementDate: null },
       { where: { replacedGrantId: grant.id }, individualHooks: true },
     );
-    const grantReplacementWithNullDate = await GrantReplacement.findOne({
+    const grantReplacementWithNullDate = await GrantReplacements.findOne({
       where: { replacedGrantId: 8317 },
     });
     expect(grantReplacementWithNullDate.replacementDate).toBeNull();
     await processFiles();
-    const grantReplacement = await GrantReplacement.findOne({ where: { replacedGrantId: 8317 } });
+    const grantReplacement = await GrantReplacements.findOne({ where: { replacedGrantId: 8317 } });
     expect(grantReplacement.replacementDate).toEqual(new Date('2022-07-31'));
   });
 
@@ -970,16 +970,16 @@ describe('Update grants, program personnel, and recipients', () => {
     await processFiles();
     const grant = await Grant.findOne({ where: { id: 8317 } });
     // simulate updating an existing grant replacement with null grantReplacementTypeId
-    await GrantReplacement.update(
+    await GrantReplacements.update(
       { grantReplacementTypeId: null },
       { where: { replacedGrantId: grant.id }, individualHooks: true },
     );
-    const grantReplacementWithNullType = await GrantReplacement.findOne({
+    const grantReplacementWithNullType = await GrantReplacements.findOne({
       where: { replacedGrantId: 8317 },
     });
     expect(grantReplacementWithNullType.grantReplacementTypeId).toBeNull();
     await processFiles();
-    const grantReplacements = await GrantReplacement.findAll({
+    const grantReplacements = await GrantReplacements.findAll({
       where: { replacedGrantId: 8317 },
       include: [{
         model: GrantReplacementType,
