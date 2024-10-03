@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import filtersToScopes from '../index';
 import {
@@ -13,6 +14,9 @@ import {
   sequelize,
   GroupCollaborator,
 } from '../../models';
+import {
+  createGrant,
+} from '../../testUtils';
 
 const draftReport = {
   submissionStatus: REPORT_STATUSES.DRAFT,
@@ -708,6 +712,127 @@ describe('grant filtersToScopes', () => {
       expectedGrants.forEach((grant) => {
         expect(foundGrants).not.toContain(grant);
       });
+    });
+  });
+
+  describe('cdiGrants', () => {
+    let activeCdiGrant;
+    let inactiveCdiGrant;
+    let nonCdiGrant;
+    beforeAll(async () => {
+      // Create the grants.
+      activeCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      inactiveCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Inactive',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: true,
+      });
+
+      nonCdiGrant = await createGrant({
+        userId: mockUser.id,
+        regionId: 1,
+        status: 'Active',
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        cdi: false,
+      });
+    });
+
+    afterAll(async () => {
+      // Clean up grants.
+      await Grant.destroy({
+        where: {
+          id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id],
+        },
+      });
+
+      // Clean up recipients.
+      await Recipient.destroy({
+        where: {
+          id: [activeCdiGrant.recipientId, inactiveCdiGrant.recipientId, nonCdiGrant.recipientId],
+        },
+      });
+    });
+
+    it('filters by active cdi grants', async () => {
+      const filters = { 'cdiGrants.in': ['active'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(activeCdiGrant.id)).toBe(true);
+    });
+
+    it('filters by not active cdi grants', async () => {
+      const filters = { 'cdiGrants.nin': ['active'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(inactiveCdiGrant.id)).toBe(true);
+    });
+
+    it('filters by inactive cdi grants', async () => {
+      const filters = { 'cdiGrants.in': ['inactive'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(inactiveCdiGrant.id)).toBe(true);
+    });
+
+    it('filters by not inactive cdi grants', async () => {
+      const filters = { 'cdiGrants.nin': ['inactive'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(activeCdiGrant.id)).toBe(true);
+    });
+
+    it('filters by non cdi grants', async () => {
+      const filters = { 'cdiGrants.in': ['cdi'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(2);
+      expect(found.map((f) => f.id).includes(activeCdiGrant.id)).toBe(true);
+      expect(found.map((f) => f.id).includes(inactiveCdiGrant.id)).toBe(true);
+    });
+
+    it('filters by not non cdi grants', async () => {
+      const filters = { 'cdiGrants.nin': ['cdi'] };
+      const scope = await filtersToScopes(filters);
+      const found = await Grant.findAll({
+        where: {
+          [Op.and]: [scope.grant, { id: [activeCdiGrant.id, inactiveCdiGrant.id, nonCdiGrant.id] }],
+        },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id).includes(nonCdiGrant.id)).toBe(true);
     });
   });
 });
