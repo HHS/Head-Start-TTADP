@@ -3639,6 +3639,13 @@ describe('filtersToScopes', () => {
       await Grant.destroy({
         where: { id: reportIds },
       });
+
+      // Clean up Recipients.
+      await Recipient.destroy({
+        where: {
+          id: [activeCdiGrant.recipientId, inactiveCdiGrant.recipientId, nonCdiGrant.recipientId],
+        },
+      });
     });
 
     it('includes reports with ActiveCDI grants', async () => {
