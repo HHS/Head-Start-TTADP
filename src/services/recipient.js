@@ -124,6 +124,14 @@ export async function recipientsByUserId(userId) {
 
 export async function allRecipients() {
   return Recipient.findAll({
+    where: {
+      [Op.or]: [
+        { '$grants.replacedGrantReplacements.replacementDate$': null },
+        { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+        { '$grants.replacingGrantReplacements.replacementDate$': null },
+        { '$grants.replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+      ],
+    },
     include: [
       {
         attributes: ['id', 'number', 'regionId'],
@@ -132,19 +140,7 @@ export async function allRecipients() {
         where: {
           [Op.and]: [
             { deleted: { [Op.ne]: true } },
-            {
-              endDate: {
-                [Op.gt]: '2020-08-31',
-              },
-            },
-            {
-              [Op.or]: [
-                { '$replacedGrantReplacements.replacementDate$': null },
-                { '$replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-                { '$replacingGrantReplacements.replacementDate$': null },
-                { '$replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
-              ],
-            },
+            { endDate: { [Op.gt]: '2020-08-31' } },
           ],
         },
         include: [
