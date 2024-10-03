@@ -474,13 +474,7 @@ describe('grant filtersToScopes', () => {
         where: {
           [Op.and]: [scope.grant.where, { id: possibleIds }],
         },
-        include: mergeIncludes(scope.grant.include, [
-          {
-            model: GrantReplacements,
-            as: 'replacedGrantReplacements',
-            attributes: [],
-          },
-        ]),
+        include: scope.grant.include,
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -494,13 +488,7 @@ describe('grant filtersToScopes', () => {
         where: {
           [Op.and]: [scope.grant.where, { id: possibleIds }],
         },
-        include: mergeIncludes(scope.grant.include, [
-          {
-            model: GrantReplacements,
-            as: 'replacedGrantReplacements',
-            attributes: [],
-          },
-        ]),
+        include: scope.grant.include,
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
