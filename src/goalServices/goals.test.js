@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 import {
   goalsByIdsAndActivityReport,
+  goalByIdAndActivityReport,
   createObjectivesForGoal,
   saveGoalsForReport,
   goalsForGrants,
@@ -19,8 +20,11 @@ import {
   ActivityReport,
   ActivityRecipient,
   GoalTemplate,
+  Resource,
+  Topic,
+  File,
 } from '../models';
-import { GOAL_STATUS } from '../constants';
+import { GOAL_STATUS, SOURCE_FIELD } from '../constants';
 import changeGoalStatus from './changeGoalStatus';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import { auditLogger } from '../logger';
@@ -133,6 +137,116 @@ describe('Goals DB service', () => {
       expect(Goal.findAll).toHaveBeenCalledWith(expect.any(Object));
       expect(reduceGoals).toHaveBeenCalled();
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('goalByIdAndActivityReport', () => {
+    it('should call Goal.findOne with the correct query', async () => {
+      const mockGoal = {
+        id: mockGoalId,
+        name: 'Test Goal',
+        status: 'In Progress',
+        endDate: '2023-12-31',
+        objectives: [{
+          id: 1,
+          title: 'Test Objective',
+          status: 'In Progress',
+          resources: [],
+          activityReportObjectives: [{
+            ttaProvided: 'Technical Assistance',
+          }],
+          topics: [],
+          files: [],
+        }],
+      };
+
+      Goal.findOne = jest.fn().mockResolvedValue(mockGoal);
+
+      const result = await goalByIdAndActivityReport(mockGoalId, mockActivityReportId);
+
+      expect(Goal.findOne).toHaveBeenCalledWith({
+        attributes: [
+          'endDate',
+          'status',
+          ['id', 'value'],
+          ['name', 'label'],
+          'id',
+          'name',
+        ],
+        where: {
+          id: mockGoalId,
+        },
+        include: [
+          {
+            where: {
+              [Op.and]: [
+                {
+                  title: {
+                    [Op.ne]: '',
+                  },
+                },
+                {
+                  status: {
+                    [Op.notIn]: ['Complete'],
+                  },
+                },
+              ],
+            },
+            attributes: [
+              'id',
+              'title',
+              'title',
+              'status',
+            ],
+            model: Objective,
+            as: 'objectives',
+            required: false,
+            include: [
+              {
+                model: Resource,
+                as: 'resources',
+                attributes: [
+                  ['url', 'value'],
+                  ['id', 'key'],
+                ],
+                required: false,
+                through: {
+                  attributes: [],
+                  where: { sourceFields: { [Op.contains]: [SOURCE_FIELD.OBJECTIVE.RESOURCE] } },
+                  required: false,
+                },
+              },
+              {
+                model: ActivityReportObjective,
+                as: 'activityReportObjectives',
+                attributes: [
+                  'ttaProvided',
+                ],
+                required: true,
+                where: {
+                  activityReportId: mockActivityReportId,
+                },
+              },
+              {
+                model: Topic,
+                as: 'topics',
+                attributes: [
+                  ['id', 'value'],
+                  ['name', 'label'],
+                ],
+                required: false,
+              },
+              {
+                model: File,
+                as: 'files',
+                required: false,
+              },
+            ],
+          },
+        ],
+      });
+
+      expect(result).toEqual(mockGoal);
     });
   });
 
@@ -1068,5 +1182,33 @@ describe('createMultiRecipientGoalsFromAdmin', () => {
     }));
     expect(ActivityReportGoal.bulkCreate).toHaveBeenCalled();
     expect(ActivityRecipient.bulkCreate).toHaveBeenCalled();
+  });
+
+  it('should set endDate if goalDate is provided', async () => {
+    const data = {
+      selectedGrants: JSON.stringify([{ id: 1 }]),
+      goalText: 'Test Goal',
+      goalDate: '2023-12-31', // Provide a goalDate to cover this condition
+    };
+
+    Goal.findAll = jest.fn().mockResolvedValue([]); // No existing goals
+    Goal.bulkCreate = jest.fn().mockResolvedValue([{ id: 1 }]);
+
+    await createMultiRecipientGoalsFromAdmin(data);
+
+    expect(Goal.bulkCreate).toHaveBeenCalledWith(
+      [
+        {
+          name: 'Test Goal',
+          grantId: 1,
+          source: null,
+          endDate: '2023-12-31', // Ensure that endDate is set correctly
+          status: 'Not Started',
+          createdVia: 'admin',
+          goalTemplateId: null,
+        },
+      ],
+      { individualHooks: true },
+    );
   });
 });
