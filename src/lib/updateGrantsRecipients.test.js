@@ -1050,7 +1050,7 @@ describe('Update grants, program personnel, and recipients', () => {
       await db.sequelize.close();
     });
 
-    it('should update CDI grants based on oldGrantId', async () => {
+    it('should update CDI grants based on replacedGrantId', async () => {
       // Create old grants
       const oldGrant1 = await Grant.create({
         id: 3001, recipientId: 10, regionId: 1, number: 'X1',
