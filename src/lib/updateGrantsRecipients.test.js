@@ -9,7 +9,7 @@ import db, {
   Goal,
   Grant,
   GrantReplacements,
-  GrantReplacementType,
+  GrantReplacementTypes,
   Program,
   ZALGrant,
   ActivityRecipient,
@@ -982,7 +982,7 @@ describe('Update grants, program personnel, and recipients', () => {
     const grantReplacements = await GrantReplacements.findAll({
       where: { replacedGrantId: 8317 },
       include: [{
-        model: GrantReplacementType,
+        model: GrantReplacementTypes,
         attributes: ['name'],
         as: 'grantReplacementType',
       }],
