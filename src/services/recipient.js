@@ -197,7 +197,7 @@ export async function recipientById(recipientId, grantScopes) {
             {
               [Op.or]: [
                 { status: 'Active' },
-                { [Op.and]: [ { endDate: { [Op.gt]: '2020-08-31' } } ] },
+                { [Op.and]: [{ endDate: { [Op.gt]: '2020-08-31' } }] },
               ],
             },
           ],
