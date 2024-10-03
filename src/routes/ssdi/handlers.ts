@@ -178,7 +178,7 @@ const runQuery = async (req: Request, res: Response) => {
       errors,
     } = preprocessAndValidateFilters(
       filters,
-      filterValues
+      filterValues,
     );
     if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });

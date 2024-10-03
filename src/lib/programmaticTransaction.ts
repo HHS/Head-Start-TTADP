@@ -208,7 +208,6 @@ const hasModifiedData = async (snapShot, transactionId) => {
     .filter((key) => key !== 'ZALZADescriptor')
     .sort();
 
-
   if (zalTables.length === 0) {
     return false;
   }
