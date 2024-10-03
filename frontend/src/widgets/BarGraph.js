@@ -11,6 +11,7 @@ const BottomAxis = createPlotlyComponent(Plotly);
 
 function BarGraph({
   data,
+  xAxisConfig,
   leftMargin,
   topMargin,
   barHeightMultiplier,
@@ -61,7 +62,12 @@ function BarGraph({
       color: colors.ttahubMediumBlue,
     },
     width: 0.75,
-    hovertemplate: '%{y}: %{x}<extra></extra>',
+    hovertemplate: '%{x}<extra></extra>',
+  };
+
+  const bottomPlotXaxisConfig = {
+    range,
+    ...xAxisConfig,
   };
 
   const layout = {
@@ -130,9 +136,7 @@ function BarGraph({
               r: 0,
             },
             yaxis: { tickmode: 'array', tickvals: [] },
-            xaxis: {
-              range,
-            },
+            xaxis: bottomPlotXaxisConfig,
           }}
           config={{
             displayModeBar: false,
@@ -159,6 +163,11 @@ BarGraph.propTypes = {
     PropTypes.string,
   ]),
   widgetRef: PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
+  xAxisConfig: PropTypes.shape({
+    title: PropTypes.string,
+    ticksuffix: PropTypes.string,
+    standoff: PropTypes.number,
+  }),
 };
 
 BarGraph.defaultProps = {
@@ -168,6 +177,7 @@ BarGraph.defaultProps = {
   barHeightMultiplier: 25,
   barGraphTopHeight: 400,
   widgetRef: { current: null },
+  xAxisConfig: {},
 };
 
 export default BarGraph;
