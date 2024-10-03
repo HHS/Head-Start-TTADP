@@ -177,26 +177,44 @@ async function getProgramPersonnel(grantId, programId, program) {
 
 export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
-    const promises = grantsToUpdate.map(async (grant) => {
+    const promises = [];
+
+    // eslint-disable-next-line no-restricted-syntax
+    for (const grant of grantsToUpdate) {
+      // eslint-disable-next-line no-await-in-loop
       const replacedGrants = await GrantReplacements.findAll({
         where: { replacingGrantId: grant.id },
       });
 
-      const oldGrants = await Promise.all(replacedGrants.map(rg => Grant.findByPk(rg.replacedGrantId)));
-      const validOldGrants = oldGrants.filter(Boolean);
+      let replacedRegionIds = [];
+      let replacedRecipientIds = [];
 
-      const replacedRegionIds = uniq(validOldGrants.map(g => g.regionId));
-      const replacedRecipientIds = uniq(validOldGrants.map(g => g.recipientId));
+      // eslint-disable-next-line no-restricted-syntax
+      for (const replacedGrant of replacedGrants) {
+      // eslint-disable-next-line no-await-in-loop
+        const oldGrant = await Grant.findByPk(replacedGrant.replacedGrantId);
+        if (oldGrant) {
+          replacedRegionIds.push(oldGrant.regionId);
+          replacedRecipientIds.push(oldGrant.recipientId);
+        }
+      }
+
+      // All of the grants that this CDI grant has replaced should
+      // all have the same region and be of the same recipient.
+      replacedRegionIds = uniq(replacedRegionIds);
+      replacedRecipientIds = uniq(replacedRecipientIds);
 
       if (replacedRegionIds.length !== 1 || replacedRecipientIds.length !== 1) {
         throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${replacedRegionIds.length} regions and ${replacedRecipientIds.length} recipients`);
       }
 
-      return grant.update({
-        recipientId: replacedRecipientIds[0],
-        regionId: replacedRegionIds[0],
-      });
-    });
+      promises.push(
+        grant.update({
+          recipientId: replacedRecipientIds[0],
+          regionId: replacedRegionIds[0],
+        }),
+      );
+    }
 
     await Promise.all(promises);
   } catch (error) {
