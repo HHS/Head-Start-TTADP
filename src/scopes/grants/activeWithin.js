@@ -41,15 +41,6 @@ export function activeAfter(dates) {
     where: {
       [Op.or]: scopes,
     },
-    include: [{
-      model: GrantReplacements,
-      as: 'replacedGrantReplacements',
-      attributes: [],
-    }, {
-      model: GrantReplacements,
-      as: 'replacingGrantReplacements',
-      attributes: [],
-    }],
   };
 }
 
@@ -73,19 +64,12 @@ export function activeWithinDates(dates) {
         endDate: {
           [Op.gte]: new Date(sd),
         },
-        [Op.or]: [{
-          '$replacedGrantReplacements.replacementDate$': {
-            [Op.gte]: new Date(sd),
-          },
-        }, {
-          '$replacedGrantReplacements.replacementDate$': null,
-        }, {
-          '$replacingGrantReplacements.replacementDate$': {
-            [Op.gte]: new Date(sd),
-          },
-        }, {
-          '$replacingGrantReplacements.replacementDate$': null,
-        }],
+        [Op.or]: [
+          { inactivationDate: { [Op.gte]: new Date(sd) } },
+          { inactivationDate: null },
+          { inactivationDate: { [Op.gte]: new Date(sd) } },
+          { inactivationDate: null },
+        ],
       },
     ];
   }, []);
@@ -94,14 +78,5 @@ export function activeWithinDates(dates) {
     where: {
       [Op.or]: scopes,
     },
-    include: [{
-      model: GrantReplacements,
-      as: 'replacedGrantReplacements',
-      attributes: [],
-    }, {
-      model: GrantReplacements,
-      as: 'replacingGrantReplacements',
-      attributes: [],
-    }],
   };
 }
