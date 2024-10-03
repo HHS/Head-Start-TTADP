@@ -10,8 +10,9 @@ interface MaxIdRecord {
 
 // Fetch the maximum IDs from the audit tables
 // Parameters:
-// - includeDDL (boolean): If true, includes tables with Data Definition Language (DDL) logs (e.g., schema changes).
-// DDL refers to commands used to create, alter, and delete database objects, such as CREATE TABLE, ALTER TABLE, etc.
+// - includeDDL (boolean): If true, includes tables with Data Definition Language (DDL) logs
+// (e.g., schema changes).  DDL refers to commands used to create, alter, and delete database
+// objects, such as CREATE TABLE, ALTER TABLE, etc.
 const fetchMaxIds = async (
   includeDDL = false,
 ): Promise<MaxIdRecord[]> => sequelize.query<MaxIdRecord>(
@@ -20,7 +21,8 @@ const fetchMaxIds = async (
     ? /* sql */ `
       SELECT
           cls.relname AS table_name, -- The name of the table in the database
-          COALESCE(seq_data.last_value, 0) AS max_id -- The highest ID value in the sequence, or 0 if no value
+          -- The highest ID value in the sequence, or 0 if no value
+          COALESCE(seq_data.last_value, 0) AS max_id
       FROM pg_class seq
       -- Join to capture dependency relationships between sequences and tables
       JOIN pg_depend dep ON dep.objid = seq.oid
@@ -37,7 +39,8 @@ const fetchMaxIds = async (
     : /* sql */ `
       SELECT
           cls.relname AS table_name, -- The name of the table in the database
-          COALESCE(seq_data.last_value, 0) AS max_id -- The highest ID value in the sequence, or 0 if no value
+          -- The highest ID value in the sequence, or 0 if no value
+          COALESCE(seq_data.last_value, 0) AS max_id
       FROM pg_class seq
       -- Join to capture dependency relationships between sequences and tables
       JOIN pg_depend dep ON dep.objid = seq.oid
@@ -48,7 +51,8 @@ const fetchMaxIds = async (
       JOIN pg_sequences seq_data ON seq_data.sequencename = seq.relname
       WHERE seq.relkind = 'S' -- Limit to sequence objects ('S' indicates sequences)
       AND cls.relname LIKE 'ZAL%' -- Limit to audit tables (tables starting with 'ZAL')
-      AND cls.relname != 'ZALDDL' -- Exclude the DDL audit table ('ZALDDL' is used for schema change logs)
+      -- Exclude the DDL audit table ('ZALDDL' is used for schema change logs)
+      AND cls.relname != 'ZALDDL'
       AND attr.attname = 'id' -- Ensure the sequence is linked to the 'id' column in the table
       AND seq_data.schemaname = 'public'; -- Only consider sequences in the 'public' schema
     `,
