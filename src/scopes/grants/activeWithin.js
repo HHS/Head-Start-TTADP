@@ -1,5 +1,4 @@
 import { Op } from 'sequelize';
-import { GrantReplacements } from '../../models';
 
 export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => [
