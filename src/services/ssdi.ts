@@ -3,7 +3,7 @@ import path from 'path';
 import { QueryTypes } from 'sequelize';
 // import { z } from 'zod'; // TODO: use for validation of JSON header
 import db from '../models';
-import Generic from '../policies/generic';
+import User from '../policies/user';
 import { auditLogger } from '../logger';
 
 // Constants for readability
@@ -150,7 +150,7 @@ const sanitizeFilename = (filename: string): string => path.normalize(filename).
 const checkFolderPermissions = async (
   user,
   scriptPath: string,
-) => (new Generic(user)).checkPermissions(
+) => (new User(user)).checkPermissions(
   scriptPath,
   ['dataRequests/ohs', 'dataRequests/internal'],
   'ssdi_restricted',

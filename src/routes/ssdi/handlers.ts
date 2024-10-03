@@ -15,7 +15,7 @@ import {
   generateFilterString,
   executeQuery,
 } from '../../services/ssdi';
-import Generic from '../../policies/generic';
+import User from '../../policies/user';
 
 const validateScriptPath = async (
   scriptPath: string,
@@ -155,7 +155,7 @@ const runQuery = async (req: Request, res: Response) => {
       ['path', 'format'],
     );
 
-    const policy = new Generic(user);
+    const policy = new User(user);
 
     // Handle regionIds with policy filtering
     if (filterValues.regionIds && Array.isArray(filterValues.regionIds)) {

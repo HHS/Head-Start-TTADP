@@ -24,7 +24,7 @@ import {
   generateFilterString,
   executeQuery,
 } from './ssdi';
-import GenericPolicy from '../policies/generic';
+import UserPolicy from '../policies/user';
 
 // Mock fs and db
 jest.mock('fs', () => ({
@@ -58,10 +58,10 @@ describe('ssdi', () => {
 
   describe('checkFolderPermissions', () => {
     it('should check folder permissions using the Generic policy class', async () => {
-      const mockGeneric = jest.fn().mockImplementation(() => ({
+      const mockUser = jest.fn().mockImplementation(() => ({
         checkPermissions: jest.fn().mockResolvedValue(true),
       }));
-      jest.mock('../policies/generic', () => mockGeneric);
+      jest.mock('../policies/user', () => mockUser);
 
       const user = { id: 1 };
       const result = await checkFolderPermissions(user, 'test/path');
@@ -419,7 +419,7 @@ describe('ssdi', () => {
 
       // Mock the permission check to always return true
       const checkFolderPermissionsMock = jest
-        .spyOn(GenericPolicy.prototype, 'checkPermissions')
+        .spyOn(UserPolicy.prototype, 'checkPermissions')
         .mockResolvedValue(true);
 
       const result = await listQueryFiles('api', mockUser);
@@ -489,7 +489,7 @@ describe('ssdi', () => {
 
       // Mock the permission check to always return true
       const checkFolderPermissionsMock = jest
-        .spyOn(GenericPolicy.prototype, 'checkPermissions')
+        .spyOn(UserPolicy.prototype, 'checkPermissions')
         .mockResolvedValue(true);
 
       const result = await listQueryFiles('test/path', mockUser);
@@ -546,7 +546,7 @@ describe('ssdi', () => {
 
       // Mock the permission check to return false for one file
       const checkFolderPermissionsMock = jest
-        .spyOn(GenericPolicy.prototype, 'checkPermissions')
+        .spyOn(UserPolicy.prototype, 'checkPermissions')
         .mockImplementation((
           targetString,
           _matchStrings,
@@ -735,7 +735,7 @@ describe('ssdi', () => {
 
       // Mock the permission check to always return true
       const checkFolderPermissionsMock = jest
-        .spyOn(GenericPolicy.prototype, 'checkPermissions')
+        .spyOn(UserPolicy.prototype, 'checkPermissions')
         .mockResolvedValue(true);
 
       const result = await readFiltersFromFile('file1.sql', 1);

@@ -23,7 +23,7 @@ import {
   getFiltersWithWildcard,
   runQueryWithWildcard,
 } from './handlers';
-import Generic from '../../policies/generic';
+import User from '../../policies/user';
 
 jest.mock('../../services/ssdi', () => ({
   checkFolderPermissions: jest.fn(),
@@ -45,7 +45,7 @@ jest.mock('../../services/users', () => ({
   userById: jest.fn(),
 }));
 
-jest.mock('../../policies/generic');
+jest.mock('../../policies/user');
 
 const app = express();
 app.use(express.json());
@@ -454,7 +454,7 @@ describe('API Endpoints', () => {
       generateFilterString.mockReturnValue('recipientIds_1-2-3');
       currentUserId.mockResolvedValue(user.id);
       userById.mockResolvedValue(user);
-      Generic.mockImplementation(() => ({
+      User.mockImplementation(() => ({
         filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
         getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
       }));
@@ -566,7 +566,7 @@ describe('API Endpoints', () => {
       isFile.mockResolvedValue(true); // Mock permission check
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const filterRegionsMock = jest.fn((val) => val);
-      Generic.mockImplementation(() => ({
+      User.mockImplementation(() => ({
         filterRegions: filterRegionsMock,
         getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
       }));
@@ -585,7 +585,7 @@ describe('API Endpoints', () => {
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
-      Generic.mockImplementation(() => ({
+      User.mockImplementation(() => ({
         filterRegions: jest.fn((ids) => ids.filter((id) => id <= null)),
         getAllAccessibleRegions: jest.fn(() => []),
       }));
@@ -603,7 +603,7 @@ describe('API Endpoints', () => {
       isFile.mockResolvedValue(true); // Mock permission check
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const filterRegionsMock = jest.fn((val) => val);
-      Generic.mockImplementation(() => ({
+      User.mockImplementation(() => ({
         filterRegions: filterRegionsMock,
         getAllAccessibleRegions: jest.fn(() => []),
       }));
@@ -658,7 +658,7 @@ describe('API Endpoints', () => {
       generateFilterString.mockReturnValue('recipientIds_1-2-3');
       currentUserId.mockResolvedValue(user.id);
       userById.mockResolvedValue(user);
-      Generic.mockImplementation(() => ({
+      User.mockImplementation(() => ({
         filterRegions: jest.fn((ids) => ids.filter((id) => id <= 3)),
         getAllAccessibleRegions: jest.fn(() => [1, 2, 3]),
       }));
