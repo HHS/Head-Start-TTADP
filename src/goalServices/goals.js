@@ -12,7 +12,6 @@ import {
   GoalResource,
   GoalStatusChange,
   Grant,
-  GrantReplacements,
   GrantRelationshipToActive,
   Objective,
   ActivityReportObjective,
