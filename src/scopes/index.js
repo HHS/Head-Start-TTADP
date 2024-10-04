@@ -57,6 +57,7 @@ export default async function filtersToScopes(filters, options) {
 
 /**
  * Merges the provided includes with the required includes, ensuring no duplicates.
+ * It is considered duplicate if it has the same value for `as`.
  *
  * @param {Array} includes - The initial array of Sequelize includes.
  * @param {Array} requiredIncludes - The array of required Sequelize includes
