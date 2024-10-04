@@ -9,6 +9,7 @@ import { fileHash } from './fileUtils';
 import db, {
   Recipient,
   Grant,
+  GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
   Program,
@@ -431,6 +432,8 @@ export async function processFiles(hashSumHex) {
       });
 
       await Promise.all(grantReplacementPromises);
+
+      await GrantRelationshipToActive.refresh();
 
       // Automate CDI linking to preceding recipients
       const cdiGrantsToLink = await Grant.unscoped().findAll({
