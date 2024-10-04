@@ -10,6 +10,8 @@ import db, {
   Grant,
   GrantReplacements,
   GrantReplacementTypes,
+  Group,
+  GroupGrant,
   Program,
   ZALGrant,
   ActivityRecipient,
@@ -1036,6 +1038,45 @@ describe('Update grants, program personnel, and recipients', () => {
     });
 
     expect(grantReplacementType.name).toEqual('DRS Non-Competitive Continuation');
+  });
+
+  describe('Automatically updating GroupGrants', () => {
+    let group;
+    let groupGrant;
+    let grant;
+
+    afterAll(async () => {
+      await Grant.destroy({ where: { id: grant.id }});
+    });
+
+    it('should update the group', async () => {
+      [grant,] = await Grant.findOrCreate({
+        where: { id: 7842 },
+        defaults: {
+          recipientId: 10, regionId: 1, number: 'X1',
+        }
+      });
+
+      [group,] = await Group.findOrCreate({
+        where: { name: 'my test group 1234' },
+        defaults: { isPublic: true },
+      });
+
+      [groupGrant,] = await GroupGrant.findOrCreate({
+        where: { grantId: grant.id, groupId: group.id },
+        defaults: { grantId: grant.id, groupId: group.id },
+      });
+
+      await processFiles();
+      const found = await GroupGrant.findOne({ where: { groupId: group.id } });
+
+      // Expect the grant id referenced by this group to have been updated with
+      // the id of the grant that has replaced this one.
+      expect(found.grantId).toBe(8110);
+
+      await GroupGrant.destroy({ where: { id: groupGrant.id }});
+      await Group.destroy({ where: { id: group.id }});
+    });
   });
 
   describe('updateCDIGrantsWithOldGrantData', () => {
