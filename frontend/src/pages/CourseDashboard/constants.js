@@ -20,7 +20,7 @@ import {
   reportTextFilter,
   ttaTypeFilter,
   activityReportGoalResponseFilter,
-  cdiGrantsFilter,
+  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
 
@@ -46,7 +46,7 @@ const COURSE_DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
-  cdiGrantsFilter,
+  grantStatusFilter,
 ];
 
 COURSE_DASHBOARD_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));

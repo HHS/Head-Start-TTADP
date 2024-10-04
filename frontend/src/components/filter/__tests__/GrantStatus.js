@@ -5,32 +5,32 @@ import {
   screen,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CdiGrants, { displayCdiGrantsStatus } from '../CdiGrants';
+import GrantStatus, { displayGrantsStatus } from '../GrantStatus';
 
 const { findByRole } = screen;
 
 describe('displayCdiGrantStatus', () => {
   it('returns the correct string for active', () => {
-    expect(displayCdiGrantsStatus('active')).toEqual('Active');
+    expect(displayGrantsStatus('active')).toEqual('Active');
   });
 
   it('returns the correct string for inactive', () => {
-    expect(displayCdiGrantsStatus('inactive')).toEqual('Inactive');
+    expect(displayGrantsStatus('inactive')).toEqual('Inactive');
   });
 
   it('returns the correct string for interim-management-cdi', () => {
-    expect(displayCdiGrantsStatus('interim-management-cdi')).toEqual('Interim management (CDI)');
+    expect(displayGrantsStatus('interim-management-cdi')).toEqual('Interim management (CDI)');
   });
 
   it('returns an empty string for an empty string', () => {
-    expect(displayCdiGrantsStatus('')).toEqual('');
+    expect(displayGrantsStatus('')).toEqual('');
   });
 });
 
 describe('CdiGrantFilter', () => {
   const renderCdiGrantSelect = (appliedType, onApply) => (
     render(
-      <CdiGrants
+      <GrantStatus
         onApply={onApply}
         inputId="cdiGrantFilter"
         appliedTTAType={appliedType}

@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 
-export function displayCdiGrantsStatus(q) {
+export function displayGrantsStatus(q) {
   if (q === 'active') {
     return 'Active';
   }
@@ -18,7 +18,7 @@ export function displayCdiGrantsStatus(q) {
   return '';
 }
 
-export default function CdiGrants({ onApply, query, inputId }) {
+export default function GrantStatus({ onApply, query, inputId }) {
   const onApplyTTAType = (e) => {
     const { target: { value } } = e;
     onApply(value);
@@ -43,12 +43,12 @@ export default function CdiGrants({ onApply, query, inputId }) {
   );
 }
 
-CdiGrants.propTypes = {
+GrantStatus.propTypes = {
   onApply: PropTypes.func.isRequired,
   query: PropTypes.string.isRequired,
   inputId: PropTypes.string,
 };
 
-CdiGrants.defaultProps = {
-  inputId: 'cdiGrants',
+GrantStatus.defaultProps = {
+  inputId: 'grantStatus',
 };

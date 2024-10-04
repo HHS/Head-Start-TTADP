@@ -10,7 +10,7 @@ import { withGrantNumber, withoutGrantNumber } from './grantNumber';
 import { withGroup, withoutGroup } from './group';
 import { noActivityWithin } from './recipientsWithoutTTA';
 import { withGoalName, withoutGoalName } from './goalName';
-import { withCdiGrants, withoutCdiGrants } from './cdiGrants';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
 
 export const topicToQuery = {
   recipient: {
@@ -54,9 +54,9 @@ export const topicToQuery = {
     ctn: (query) => withGoalName(query),
     nctn: (query) => withoutGoalName(query),
   },
-  cdiGrants: {
-    in: (query) => withCdiGrants(query),
-    nin: (query) => withoutCdiGrants(query),
+  grantStatus: {
+    in: (query) => withGrantStatus(query),
+    nin: (query) => withoutGrantStatus(query),
   },
 };
 

@@ -6,7 +6,7 @@ import FilterGroups from './FilterGroups';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
-import CdiGrants, { displayCdiGrantsStatus } from './CdiGrants';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 
 export const groupsFilter = {
   id: 'group',
@@ -77,17 +77,17 @@ export const recipientsWithoutTTA = {
 };
 
 export const cdiGrantsFilter = {
-  id: 'cdiGrants',
-  display: 'CDI grants',
+  id: 'grantStatus',
+  display: 'Grant status',
   conditions: FILTER_CONDITIONS,
   defaultValues: {
     is: 'active',
     'is not': 'active',
   },
-  displayQuery: displayCdiGrantsStatus,
+  displayQuery: displayGrantsStatus,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <CdiGrants
-      inputId={`cdiGrants-${condition.replace(/ /g, '-')}-${id}`}
+    <GrantStatus
+      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
