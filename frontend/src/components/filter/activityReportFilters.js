@@ -26,7 +26,7 @@ import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
-import CdiGrants, { displayCdiGrantsStatus } from './CdiGrants';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
@@ -348,18 +348,18 @@ export const ttaTypeFilter = {
   ),
 };
 
-export const cdiGrantsFilter = {
-  id: 'cdiGrants',
-  display: 'CDI grants',
+export const grantStatusFilter = {
+  id: 'grantStatus',
+  display: 'Grant status',
   conditions: FILTER_CONDITIONS,
   defaultValues: {
     is: 'active',
     'is not': 'active',
   },
-  displayQuery: displayCdiGrantsStatus,
+  displayQuery: displayGrantsStatus,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <CdiGrants
-      inputId={`cdiGrants-${condition.replace(/ /g, '-')}-${id}`}
+    <GrantStatus
+      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

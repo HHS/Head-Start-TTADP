@@ -20,7 +20,7 @@ import {
   reportTextFilter,
   ttaTypeFilter,
   activityReportGoalResponseFilter,
-  cdiGrantsFilter,
+  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
 
@@ -49,7 +49,7 @@ export const LANDING_FILTER_CONFIG = (withRegions = false) => {
     targetPopulationsFilter,
     topicsFilter,
     ttaTypeFilter,
-    cdiGrantsFilter,
+    grantStatusFilter,
   ];
 
   if (withRegions) {
