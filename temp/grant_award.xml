@@ -29,6 +29,26 @@
   <inactivation_date xsi:nil="true"/>
   <inactivation_reason xsi:nil="true"/>
 </grant_award>
+<!--
+  The below element was added to test the behavior of multiple grants replacing a single grant.
+  In this case, 7842 is replaced by both 8110 and 9999.
+  See grant_award_replacement.xml for replacement details.
+-->
+<grant_award>
+  <grant_award_id>9999</grant_award_id>
+  <agency_id>1335</agency_id>
+  <region_id>2</region_id>
+  <grant_number>02CH09999</grant_number>
+  <grantee_state>MS</grantee_state>
+  <grant_start_date>2014-07-01</grant_start_date>
+  <grant_end_date>2020-10-30</grant_end_date>
+  <annual_funding_month>March</annual_funding_month>
+  <program_acronym>CH</program_acronym>
+  <grantee_name>Agency 1, Inc.</grantee_name>
+  <grant_status>Inactive</grant_status>
+  <inactivation_date xsi:nil="true"/>
+  <inactivation_reason xsi:nil="true"/>
+</grant_award>
 <grant_award>
   <grant_award_id>2591</grant_award_id>
   <agency_id>1335</agency_id>

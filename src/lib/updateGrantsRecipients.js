@@ -429,16 +429,35 @@ export async function processFiles(hashSumHex) {
             individualHooks: true,
           });
         }
-
-        // Update any GroupGrants entities that have a `grantId` of the grant that
-        // was just replaced. Set the `grantId` value to the `replacingGrantId`.
-        await GroupGrant.update(
-          { grantId: parseInt(g.replacement_grant_award_id, 10) },
-          { where: { grantId: parseInt(g.replaced_grant_award_id, 10) } },
-        );
       });
 
       await Promise.all(grantReplacementPromises);
+
+      // ---
+      // Update GroupGrants
+      const HOUR_AGO = new Date(new Date() - 60 * 60 * 1000);
+
+      const replacements = await GrantReplacements.findAll({
+        where: { updatedAt: { [Op.gte]: HOUR_AGO } },
+        attributes: ['replacedGrantId', 'replacingGrantId'],
+        raw: true,
+      });
+
+      const affectedGroupGrants = await GroupGrant.findAll({
+        where: { grantId: uniq(replacements.map((g) => g.replacedGrantId)) },
+        attributes: ['id', 'grantId', 'groupId'],
+        raw: true,
+      });
+
+      for (const g of affectedGroupGrants) {
+        if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
+          await GroupGrant.destroy({ where: { id: g.id } });
+          for (const r of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
+            await GroupGrant.create({ groupId: g.groupId, grantId: r.replacingGrantId });
+          }
+        }
+      }
+      // ---
 
       await GrantRelationshipToActive.refresh();
 
