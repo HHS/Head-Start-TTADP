@@ -12,6 +12,7 @@ import db, {
   GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
+  GroupGrant,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -428,6 +429,13 @@ export async function processFiles(hashSumHex) {
             individualHooks: true,
           });
         }
+
+        // Update any GroupGrants entities that have a `grantId` of the grant that
+        // was just replaced. Set the `grantId` value to the `replacingGrantId`.
+        await GroupGrant.update(
+          { grantId: parseInt(g.replacement_grant_award_id, 10) },
+          { where: { grantId: parseInt(g.replaced_grant_award_id, 10) } },
+        );
       });
 
       await Promise.all(grantReplacementPromises);
