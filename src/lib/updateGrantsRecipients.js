@@ -452,8 +452,8 @@ export async function processFiles(hashSumHex) {
       for (const g of affectedGroupGrants) {
         if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
           await GroupGrant.destroy({ where: { id: g.id } });
-          for (const r of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
-            await GroupGrant.create({ groupId: g.groupId, grantId: r.replacingGrantId });
+          for (const replacement of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
+            await GroupGrant.create({ groupId: g.groupId, grantId: replacement.replacingGrantId });
           }
         }
       }
