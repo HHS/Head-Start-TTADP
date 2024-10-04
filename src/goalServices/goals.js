@@ -622,16 +622,27 @@ export async function goalsForGrants(grantIds) {
   /**
    * get all the matching grants
    */
-  const grants = await Grant.findAll({
-    attributes: ['id', ['grantRelationships.grantId', 'grantId']],
+  const grants = await Grant.unscoped().findAll({
+    attributes: [
+      'id',
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grantRelationships.grantId'),
+        ),
+      ), 'oldGrantIds'],
+    ],
     where: {
       id: grantIds,
     },
     include: [{
       model: GrantRelationshipToActive,
       as: 'grantRelationships',
+      required: false,
       attributes: [],
     }],
+    group: ['"Grant".id'],
   });
 
   /**
@@ -666,7 +677,7 @@ export async function goalsForGrants(grantIds) {
         'ARRAY_AGG',
         sequelize.fn(
           'DISTINCT',
-          sequelize.col('grantRelationships.grantId'),
+          sequelize.col('grant.grantRelationships.grantId'),
         ),
       ), 'oldGrantIds'],
       [sequelize.fn(
@@ -691,7 +702,7 @@ export async function goalsForGrants(grantIds) {
       'createdVia',
       [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"', '"Goal".id'],
     where: {
       name: {
         [Op.ne]: '', // exclude "blank" goals
