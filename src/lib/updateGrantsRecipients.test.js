@@ -1040,7 +1040,7 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grantReplacementType.name).toEqual('DRS Non-Competitive Continuation');
   });
 
-  describe('Automatically updating GroupGrants', () => {
+  describe('Updating GroupGrants', () => {
     let group;
     let groupGrant;
     let grant;
