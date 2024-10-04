@@ -216,7 +216,7 @@ describe('Update grants, program personnel, and recipients', () => {
 
     const grants = await Grant.unscoped().findAll({ where: { recipientId: 1335 } });
     expect(grants).toBeDefined();
-    expect(grants.length).toBe(7);
+    expect(grants.length).toBe(8);
     const containsNumber = grants.some((g) => g.number === '02CH01111');
     expect(containsNumber).toBeTruthy();
 
