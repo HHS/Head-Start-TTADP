@@ -1045,8 +1045,11 @@ describe('Update grants, program personnel, and recipients', () => {
     let groupGrant;
     let grant;
 
-    afterAll(async () => {
-      await Grant.destroy({ where: { id: grant.id }});
+    afterEach(async () => {
+      if (grant && grant.id) {
+        await GrantReplacements.destroy({ where: { replacedGrantId: grant.id } });
+        await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
+      }
     });
 
     it('should update the group', async () => {
@@ -1072,9 +1075,37 @@ describe('Update grants, program personnel, and recipients', () => {
 
       // Expect the grant id referenced by this group to have been updated with
       // the id of the grant that has replaced this one.
-      expect(found.grantId).toBe(8110);
+      expect([8110, 9999]).toContain(found.grantId);
 
-      await GroupGrant.destroy({ where: { id: groupGrant.id }});
+      await GroupGrant.destroy({ where: { groupId: group.id }});
+      await Group.destroy({ where: { id: group.id }});
+    });
+
+    it('should update all groups when multiple grants replace a single grant', async () => {
+      [grant,] = await Grant.findOrCreate({
+        where: { id: 7842 },
+        defaults: {
+          recipientId: 10, regionId: 1, number: 'X1',
+        }
+      });
+
+      [group,] = await Group.findOrCreate({
+        where: { name: 'my test group 1234' },
+        defaults: { isPublic: true },
+      });
+
+      [groupGrant,] = await GroupGrant.findOrCreate({
+        where: { grantId: grant.id, groupId: group.id },
+        defaults: { grantId: grant.id, groupId: group.id },
+      });
+
+      await processFiles();
+      const found = await GroupGrant.findAll({ where: { groupId: group.id } });
+
+      // expect there to be two entities found:
+      expect(found.length).toBe(2);
+
+      await GroupGrant.destroy({ where: { grantId: [8110, 9999] }});
       await Group.destroy({ where: { id: group.id }});
     });
   });
