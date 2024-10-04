@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention */
+/* eslint-disable @typescript-eslint/comma-spacing */
+/* eslint-disable @typescript-eslint/comma-dangle */
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
@@ -1077,8 +1079,8 @@ describe('Update grants, program personnel, and recipients', () => {
       // the id of the grant that has replaced this one.
       expect([8110, 9999]).toContain(found.grantId);
 
-      await GroupGrant.destroy({ where: { groupId: group.id }});
-      await Group.destroy({ where: { id: group.id }});
+      await GroupGrant.destroy({ where: { groupId: group.id } });
+      await Group.destroy({ where: { id: group.id } });
     });
 
     it('should update all groups when multiple grants replace a single grant', async () => {
@@ -1086,7 +1088,7 @@ describe('Update grants, program personnel, and recipients', () => {
         where: { id: 7842 },
         defaults: {
           recipientId: 10, regionId: 1, number: 'X1',
-        }
+        },
       });
 
       [group,] = await Group.findOrCreate({
@@ -1105,8 +1107,8 @@ describe('Update grants, program personnel, and recipients', () => {
       // expect there to be two entities found:
       expect(found.length).toBe(2);
 
-      await GroupGrant.destroy({ where: { grantId: [8110, 9999] }});
-      await Group.destroy({ where: { id: group.id }});
+      await GroupGrant.destroy({ where: { grantId: [8110, 9999] } });
+      await Group.destroy({ where: { id: group.id } });
     });
   });
 
