@@ -1,3 +1,6 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import AdmZip from 'adm-zip';
 import xml2js from 'xml2js';
 import axios from 'axios';
