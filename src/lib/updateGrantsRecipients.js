@@ -425,7 +425,6 @@ export async function processFiles(hashSumHex) {
             replacementDate: new Date(g.replacement_date),
             grantReplacementTypeId: grantReplacementType.id,
           }, {
-            transaction,
             individualHooks: true,
           });
         }
