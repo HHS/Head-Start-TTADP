@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-/* eslint-disable @typescript-eslint/comma-spacing */
-/* eslint-disable @typescript-eslint/comma-dangle */
 import { Op, QueryTypes } from 'sequelize';
 import axios from 'axios';
 import fs from 'mz/fs';
@@ -1055,19 +1053,19 @@ describe('Update grants, program personnel, and recipients', () => {
     });
 
     it('should update the group', async () => {
-      [grant,] = await Grant.findOrCreate({
+      [grant] = await Grant.findOrCreate({
         where: { id: 7842 },
         defaults: {
           recipientId: 10, regionId: 1, number: 'X1',
-        }
+        },
       });
 
-      [group,] = await Group.findOrCreate({
+      [group] = await Group.findOrCreate({
         where: { name: 'my test group 1234' },
         defaults: { isPublic: true },
       });
 
-      [groupGrant,] = await GroupGrant.findOrCreate({
+      [groupGrant] = await GroupGrant.findOrCreate({
         where: { grantId: grant.id, groupId: group.id },
         defaults: { grantId: grant.id, groupId: group.id },
       });
@@ -1084,19 +1082,19 @@ describe('Update grants, program personnel, and recipients', () => {
     });
 
     it('should update all groups when multiple grants replace a single grant', async () => {
-      [grant,] = await Grant.findOrCreate({
+      [grant] = await Grant.findOrCreate({
         where: { id: 7842 },
         defaults: {
           recipientId: 10, regionId: 1, number: 'X1',
         },
       });
 
-      [group,] = await Group.findOrCreate({
+      [group] = await Group.findOrCreate({
         where: { name: 'my test group 1234' },
         defaults: { isPublic: true },
       });
 
-      [groupGrant,] = await GroupGrant.findOrCreate({
+      [groupGrant] = await GroupGrant.findOrCreate({
         where: { grantId: grant.id, groupId: group.id },
         defaults: { grantId: grant.id, groupId: group.id },
       });
