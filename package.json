@@ -148,6 +148,7 @@
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
+      "ecmaVersion": 2020,
       "project": "./src/tsconfig.json"
     },
     "plugins": [
