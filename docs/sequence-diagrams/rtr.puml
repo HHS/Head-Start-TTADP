@@ -1,6 +1,6 @@
 @startuml
 
-title "Recepient TTA Records"
+title "Recipient TTA Records"
 
 actor CREATOR as CR
 actor COLLABORATOR as CL
@@ -8,31 +8,31 @@ actor REGIONALPOC as RPOC
 participant "TTA Hub\n frontend" as FRONTEND
 participant "TTA Hub\n backend" as BACKEND
 
-group View: Recepient Records
+group View: Recipient Records
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
 end
 
-group Search: Recepient Records
+group Search: Recipient Records
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
     CR -> FRONTEND : Enter search criteria and Search
-    FRONTEND <- BACKEND : Display Recepient Record results
+    FRONTEND <- BACKEND : Display Recipient Record results
     CR --> FRONTEND : Apply Filters
-    FRONTEND <-- BACKEND : Display Recepient Record results
+    FRONTEND <-- BACKEND : Display Recipient Record results
 end
 
-group View: Recepient Record
+group View: Recipient Record
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
-    CR -> FRONTEND : Click Recepient Name link
-    FRONTEND <- BACKEND : Display Selected Recepient Record
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
+    CR -> FRONTEND : Click Recipient Name link
+    FRONTEND <- BACKEND : Display Selected Recipient Record
     CR --> FRONTEND : Click Grant Number
     FRONTEND <-- BACKEND : Extenernal - Navigate to OHS grant page
 end
@@ -40,10 +40,10 @@ end
 group View: RTTAPA tab
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
-    CR -> FRONTEND : Click Recepient Name link
-    FRONTEND <- BACKEND : Display Selected Recepient Record
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
+    CR -> FRONTEND : Click Recipient Name link
+    FRONTEND <- BACKEND : Display Selected Recipient Record
     CR -> FRONTEND : Click RTTAPA navigation tab
     FRONTEND <- BACKEND : Display RTTAPA page
     CR --> FRONTEND : Adjudt RTTAPA page filters
@@ -57,7 +57,7 @@ group View: RTTAPA tab
     CR --> FRONTEND : Choose to Display/Hide objective
     FRONTEND <-- BACKEND : Display/Hide objective
     CR --> FRONTEND : Create New Goal
-    FRONTEND <-- BACKEND : Display Recepient TTA Goal creation screen
+    FRONTEND <-- BACKEND : Display Recipient TTA Goal creation screen
     CR --> FRONTEND : Input data
     CR --> FRONTEND : Cancel
     CR --> FRONTEND : Save draft
@@ -68,10 +68,10 @@ end
 group View: Communication tab
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
-    CR -> FRONTEND : Click Recepient Name link
-    FRONTEND <- BACKEND : Display Selected Recepient Record
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
+    CR -> FRONTEND : Click Recipient Name link
+    FRONTEND <- BACKEND : Display Selected Recipient Record
     CR -> FRONTEND : Click Communication navigation tab
     FRONTEND <- BACKEND : Display Communication page
     CR --> FRONTEND : Adjust Filters
@@ -91,10 +91,10 @@ end
 group View: TTA History tab
     autonumber 1
     CR -> FRONTEND : View Landing Pages
-    CR -> FRONTEND : Navigate to Recepient TTA Records
-    FRONTEND <- BACKEND: Display Recepient Records
-    CR -> FRONTEND : Click Recepient Name link
-    FRONTEND <- BACKEND : Display Selected Recepient Record
+    CR -> FRONTEND : Navigate to Recipient TTA Records
+    FRONTEND <- BACKEND: Display Recipient Records
+    CR -> FRONTEND : Click Recipient Name link
+    FRONTEND <- BACKEND : Display Selected Recipient Record
     CR -> FRONTEND : Click TTA History navigation tab
     FRONTEND <- BACKEND : Display TTA History page
     CR --> FRONTEND : Adjust Filters
