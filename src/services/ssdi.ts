@@ -211,7 +211,7 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
   try {
     const fileContents = await fsPromises.readFile(resolvedFilePath, 'utf8');
     // eslint-disable-next-line no-useless-escape
-    const jsonMatch = fileContents.match(/[\/][*](?:.|\n)+JSON:\s*([{][\s\S]*[}])(?:.|\n)+[*][\/]/);
+    const jsonMatch = fileContents.match(/[\/][*](?:.|\r?\n)+JSON:\s*([{][\s\S]*[}])(?:.|\r?\n)+[*][\/]/);
     const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
 
     if (jsonMatch && queryMatch) {
