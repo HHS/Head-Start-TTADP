@@ -8,7 +8,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
       return queryInterface.sequelize.query(`
         UPDATE "SessionReportPilots" SET data = data - 'event';
-        UPDATE "EventReportPilots" SET data = data - 'sessions';
+        UPDATE "EventReportPilots" SET data = data - 'sessionReports';
         UPDATE "SessionReportPilots"
         SET data = COALESCE(
           jsonb_set(
