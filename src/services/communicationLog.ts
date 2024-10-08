@@ -6,16 +6,18 @@ import { communicationLogToCsvRecord } from '../lib/transform';
 
 const { sequelize, CommunicationLog } = db;
 
+interface CommLogData {
+  communicationDate?: string;
+  purpose?: string;
+  result?: string;
+}
+
 interface CommLog {
   files: unknown[];
   recipientId: number;
   userId: number;
   id: number;
-  data: {
-    communicationDate: string;
-    purpose: string;
-    result: string;
-  };
+  data: CommLogData;
   authorName: string;
   author: {
     id: number;
@@ -23,7 +25,7 @@ interface CommLog {
   }
 }
 
-export const formatCommunicationDateWithJsonData = (data: { communicationDate: string }) => {
+export const formatCommunicationDateWithJsonData = (data: CommLogData): CommLogData => {
   if (data.communicationDate) {
     const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
 
@@ -232,7 +234,7 @@ const updateLog = async (id: number, logData: CommLog) => {
     ...data
   } = logData;
   const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
-  return log.update({ data: formatCommunicationDateWithJsonData(data) });
+  return log.update({ data: formatCommunicationDateWithJsonData(data as CommLogData) });
 };
 
 export {
