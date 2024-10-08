@@ -32,6 +32,8 @@ import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
 import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
 import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
 import { withGoalName, withoutGoalName } from './goalName';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withoutStatus } from '../goals/status';
 
 export const topicToQuery = {
   reportId: {
@@ -102,6 +104,10 @@ export const topicToQuery = {
   reason: {
     in: (query) => withReason(query),
     nin: (query) => withoutReason(query),
+  },
+  grantStatus: {
+    in: (query) => withGrantStatus(query),
+    nin: (query) => withoutGrantStatus(query),
   },
   participants: {
     in: (query) => withParticipants(query),
