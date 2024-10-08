@@ -443,13 +443,11 @@ export async function processFiles(hashSumHex) {
       const replacements = await GrantReplacements.findAll({
         where: { updatedAt: { [Op.gte]: HOUR_AGO } },
         attributes: ['replacedGrantId', 'replacingGrantId'],
-        raw: true,
       });
 
       const affectedGroupGrants = await GroupGrant.findAll({
         where: { grantId: uniq(replacements.map((g) => g.replacedGrantId)) },
         attributes: ['id', 'grantId', 'groupId'],
-        raw: true,
       });
 
       for (const g of affectedGroupGrants) {
