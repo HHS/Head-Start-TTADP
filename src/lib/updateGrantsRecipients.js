@@ -1,3 +1,6 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import AdmZip from 'adm-zip';
 import xml2js from 'xml2js';
 import axios from 'axios';
@@ -12,6 +15,7 @@ import db, {
   GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
+  GroupGrant,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -431,6 +435,30 @@ export async function processFiles(hashSumHex) {
       });
 
       await Promise.all(grantReplacementPromises);
+
+      // ---
+      // Update GroupGrants
+      const HOUR_AGO = new Date(new Date() - 60 * 60 * 1000);
+
+      const replacements = await GrantReplacements.findAll({
+        where: { updatedAt: { [Op.gte]: HOUR_AGO } },
+        attributes: ['replacedGrantId', 'replacingGrantId'],
+      });
+
+      const affectedGroupGrants = await GroupGrant.findAll({
+        where: { grantId: uniq(replacements.map((g) => g.replacedGrantId)) },
+        attributes: ['id', 'grantId', 'groupId'],
+      });
+
+      for (const g of affectedGroupGrants) {
+        if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
+          await GroupGrant.destroy({ where: { id: g.id } });
+          for (const replacement of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
+            await GroupGrant.create({ groupId: g.groupId, grantId: replacement.replacingGrantId });
+          }
+        }
+      }
+      // ---
 
       await GrantRelationshipToActive.refresh();
 
