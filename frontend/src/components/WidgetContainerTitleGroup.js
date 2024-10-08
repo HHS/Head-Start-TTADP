@@ -33,10 +33,10 @@ const WidgetContainerTitleGroup = ({
             </h2>
             <TitleDrawer />
           </div>
-          {subtitle ? <p className="usa-prose margin-x-0 margin-y-2">{subtitle}</p> : null}
+          {subtitle ? <p className={`smart-hub-table-widget--subtitle usa-prose margin-x-0 margin-y-${subtitle2 ? '0' : '2'}`}>{subtitle}</p> : null}
           {subtitle2 && (
             <div>
-              <strong><p className="usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
+              <strong><p className="smart-hub-table-widget--subtitle-2 usa-prose margin-x-0 margin-top-0 margin-bottom-2">{subtitle2}</p></strong>
             </div>
           )}
           <SubtitleDrawer />

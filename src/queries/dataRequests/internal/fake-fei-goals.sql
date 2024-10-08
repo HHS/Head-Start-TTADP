@@ -1,22 +1,132 @@
-/**
-* @name: Fake FEI Goals
-* @description: A report of all goals relating to under/full enrollment that are not linked to the official FEI template.
-* @defaultOutputName: fake_fei_report
-*
-* This query collects goals relating to under/full enrollment that are not linked to the official FEI template.
-*
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
-* The following are the available flags within this script:
-* - ssdi.regionIds - integer[] - one or more values for 1 through 12
-* - ssdi.createdbetween - date[] - two dates defining a range for the createdAt to be within
-* - ssdi.recipients - string[] - one or more verbatim recipient names
-* - ssdi.uei - text[] - one or more verbatim UEI values
-* - ssdi.grantNumbers - string[] - one or more verbatim grant numbers
-* - ssdi.status - string[] - one or more verbatim statuses
-*
-* zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
-* SELECT SET_CONFIG('ssdi.regionIds','[11]',TRUE);
+/*
+JSON: {
+  "name": "Fake FEI Goals",
+  "description": {
+    "standard": "Report of goals related to under/full enrollment that are not linked to the official FEI template.",
+    "technical": "The query collects goals relating to under/full enrollment, excluding those linked to the official FEI template. The results are filterable using SSDI flags set at the transaction level."
+  },
+  "output": {
+    "defaultName": "fake_fei_report",
+    "schema": [
+      {
+        "columnName": "name",
+        "type": "string",
+        "nullable": false,
+        "description": "Name of the recipient associated with the grant."
+      },
+      {
+        "columnName": "uei",
+        "type": "string",
+        "nullable": true,
+        "description": "Unique Entity Identifier (UEI) of the recipient."
+      },
+      {
+        "columnName": "grant number",
+        "type": "string",
+        "nullable": false,
+        "description": "Number identifying the grant associated with the goal."
+      },
+      {
+        "columnName": "grant status",
+        "type": "string",
+        "nullable": false,
+        "description": "Current status of the grant."
+      },
+      {
+        "columnName": "regionId",
+        "type": "integer",
+        "nullable": false,
+        "description": "ID representing the region the grant belongs to."
+      },
+      {
+        "columnName": "goal id",
+        "type": "integer",
+        "nullable": false,
+        "description": "Unique identifier for the goal."
+      },
+      {
+        "columnName": "goal status",
+        "type": "string",
+        "nullable": false,
+        "description": "Current status of the goal."
+      },
+      {
+        "columnName": "goal creation time",
+        "type": "timestamp",
+        "nullable": false,
+        "description": "Timestamp indicating when the goal was created."
+      },
+      {
+        "columnName": "approved reports",
+        "type": "integer",
+        "nullable": true,
+        "description": "Count of approved Activity Reports linked to the goal."
+      },
+      {
+        "columnName": "pending reports",
+        "type": "integer",
+        "nullable": true,
+        "description": "Count of draft or submitted Activity Reports linked to the goal."
+      },
+      {
+        "columnName": "similarity",
+        "type": "decimal",
+        "nullable": false,
+        "description": "Similarity score between the goal name and the official FEI template name."
+      },
+      {
+        "columnName": "goal user list",
+        "type": "string",
+        "nullable": true,
+        "description": "List of collaborators associated with the goal."
+      },
+      {
+        "columnName": "goal text",
+        "type": "string",
+        "nullable": false,
+        "description": "Full text of the goal."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "regionIds",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12."
+    },
+    {
+      "name": "createdbetween",
+      "type": "date[]",
+      "display": "Creation Date Range",
+      "description": "Two dates defining a range for the 'createdAt' timestamp to be within."
+    },
+    {
+      "name": "recipients",
+      "type": "string[]",
+      "display": "Recipient Names",
+      "description": "Filter based on the names of the recipients."
+    },
+    {
+      "name": "uei",
+      "type": "string[]",
+      "display": "UEI",
+      "description": "Filter based on the Unique Entity Identifier of the recipient."
+    },
+    {
+      "name": "grantNumbers",
+      "type": "string[]",
+      "display": "Grant Numbers",
+      "description": "Filter based on the grant numbers."
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on the goal status."
+    }
+  ]
+}
 */
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 SELECT

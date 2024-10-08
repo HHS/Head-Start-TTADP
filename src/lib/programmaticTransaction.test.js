@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import * as transactionModule from './programmaticTransaction';
-import {
+import db, {
   Grant,
   Goal,
   Recipient,
@@ -340,5 +340,47 @@ describe('Programmatic Transaction', () => {
 
     querySpy.mockRestore();
     auditLogger.error.mockRestore();
+  });
+
+  describe('hasModifiedData', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('returns true when changes are detected', async () => {
+      const snapshot = await transactionModule.captureSnapshot(true);
+      await db.ZALActivityRecipient.create({
+        data_id: 1,
+        dml_type: 'UPDATE',
+        old_row_data: null,
+        new_row_data: null,
+        dml_timestamp: new Date(),
+        dml_by: -1,
+        dml_as: -1,
+        dml_txid: 'cb26d433-173d-4cea-8ab0-a7af8ed37c81',
+      });
+      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      expect(result).toBe(true);
+    });
+
+    it('returns false when no changes are detected', async () => {
+      const snapshot = await transactionModule.captureSnapshot(true);
+      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      expect(result).toBe(false);
+    });
+
+    it('throws error when transaction ID is missing', async () => {
+      await expect(transactionModule.hasModifiedData([], null)).rejects.toThrow('Transaction ID not found');
+    });
+
+    it('throws error if snapshot entry is not found for a ZAL table', async () => {
+      await expect(transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
+    });
+    it('returns false when a ZAL table is not present', async () => {
+      const original = db.ZALActivityRecipients;
+      db.ZALActivityRecipients = undefined; // Temporarily remove the ZALExample table for this test
+      await expect(transactionModule.hasModifiedData([{ table_name: 'ZALActivityRecipients', max_id: '100' }], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Table name not found for model: ZALActivityRecipients');
+      db.ZALActivityRecipients = original; // Restore the mock
+    });
   });
 });
