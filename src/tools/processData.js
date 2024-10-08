@@ -326,7 +326,8 @@ const convertRecipientNameAndNumberCreate = async () => sequelize.query(/* sql *
   END $$;
 `);
 
-// Function to drop the "convertRecipientNameAndNumber" function from the PostgreSQL database if it exists
+// Function to drop the "convertRecipientNameAndNumber" function from the PostgreSQL
+// database if it exists
 const convertRecipientNameAndNumberDrop = async () => sequelize.query(/* sql */`
   DROP FUNCTION IF EXISTS "convertRecipientNameAndNumber"(TEXT);
 `);
@@ -1016,7 +1017,7 @@ export const processTraningReports = async (where = '') => {
     WHERE data ? 'recipients'
     ${where};
   `);
-}
+};
 
 /* Main function to orchestrate the entire anonymization process, including creating and dropping
 * database functions, hiding users, recipients, and grants, processing activity reports and files,
