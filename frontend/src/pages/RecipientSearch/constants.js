@@ -1,14 +1,14 @@
 /* eslint-disable import/prefer-default-export */
 import { regionFilter } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
-import { groupsFilter, recipientsWithoutTTA, cdiGrantsFilter } from '../../components/filter/grantFilters';
+import { groupsFilter, recipientsWithoutTTA, grantStatusFilter } from '../../components/filter/grantFilters';
 
 const RECIPIENT_SEARCH_FILTER_CONFIG = [
   goalNameFilter,
   groupsFilter,
   regionFilter,
   recipientsWithoutTTA,
-  cdiGrantsFilter,
+  grantStatusFilter,
 ];
 
 // sort by display prop

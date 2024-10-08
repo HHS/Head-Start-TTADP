@@ -76,7 +76,7 @@ export const recipientsWithoutTTA = {
   ),
 };
 
-export const cdiGrantsFilter = {
+export const grantStatusFilter = {
   id: 'grantStatus',
   display: 'Grant status',
   conditions: FILTER_CONDITIONS,
