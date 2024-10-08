@@ -1,5 +1,6 @@
 import { WhereOptions, Op } from 'sequelize';
 import stringify from 'csv-stringify/lib/sync';
+import moment from 'moment';
 import db from '../models';
 import { communicationLogToCsvRecord } from '../lib/transform';
 
@@ -10,13 +11,39 @@ interface CommLog {
   recipientId: number;
   userId: number;
   id: number;
-  data: unknown;
+  data: {
+    communicationDate: string;
+    purpose: string;
+    result: string;
+  };
   authorName: string;
   author: {
     id: number;
     name: string;
   }
 }
+
+export const formatCommunicationDateWithJsonData = (data: { communicationDate: string }) => {
+  if (data.communicationDate) {
+    const formattedCommunicationDate = moment(data.communicationDate, 'MM/DD/YYYY').format('MM/DD/YYYY');
+
+    if (formattedCommunicationDate === 'Invalid date') {
+      return {
+        ...data,
+        communicationDate: '',
+      };
+    }
+
+    if (formattedCommunicationDate !== data.communicationDate) {
+      return {
+        ...data,
+        communicationDate: formattedCommunicationDate,
+      };
+    }
+  }
+
+  return data;
+};
 
 const COMMUNICATION_LOGS_PER_PAGE = 10;
 
@@ -65,11 +92,13 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
 const createLog = async (
   recipientId: number,
   userId: number,
-  data: unknown,
+  data: {
+    communicationDate: string;
+  },
 ) => CommunicationLog.create({
   recipientId,
   userId,
-  data,
+  data: formatCommunicationDateWithJsonData(data),
 });
 
 const LOG_INCLUDE_ATTRIBUTES = {
@@ -203,7 +232,7 @@ const updateLog = async (id: number, logData: CommLog) => {
     ...data
   } = logData;
   const log = await CommunicationLog.findOne(LOG_WHERE_OPTIONS(id));
-  return log.update({ data });
+  return log.update({ data: formatCommunicationDateWithJsonData(data) });
 };
 
 export {
