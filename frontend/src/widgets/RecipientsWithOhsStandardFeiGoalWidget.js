@@ -114,7 +114,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
               stickyFooter
               title="OHS standard FEI goal"
             >
-              <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
+              <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
             </Drawer>
           </>
         )}
