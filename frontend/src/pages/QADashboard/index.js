@@ -273,7 +273,7 @@ export default function QADashboard() {
             Learn how filters impact the data displayed
           </DrawerTriggerButton>
           <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
-            <ContentFromFeedByTag tag="ttahub-qa-dash-filters" />
+            <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
           </Drawer>
         </div>
         <QAOverview
