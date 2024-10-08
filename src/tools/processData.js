@@ -219,10 +219,57 @@ export const convertName = (name, email) => {
   return foundTransformedUser;
 };
 
+const convertUserNameCreate = async () => sequelize.query(/* sql */`
+CREATE OR REPLACE FUNCTION "convertUserName"(user_name TEXT, user_id INT) 
+RETURNS TEXT LANGUAGE plpgsql AS $$
+DECLARE
+    transformed_name TEXT;
+BEGIN
+    IF user_name IS NULL THEN
+        RETURN 'Unknown Name';
+    END IF;
+
+    -- Remove leading and trailing whitespace from the user name
+    user_name := trim(user_name);
+
+    -- Perform the conversion using the provided SQL logic
+    SELECT zul.new_row_data ->> 'name'
+    INTO transformed_name
+    FROM "ZALUsers" zul
+    JOIN "Users" u ON zul.data_id = u.id
+    WHERE u.name = user_name
+    AND zul.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+    AND zul.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+
+    -- Handle cases where no match was found and assign default value
+    IF transformed_name IS NULL THEN
+        SELECT zul.new_row_data ->> 'name'
+        INTO transformed_name
+        FROM "ZALUsers" zul
+        JOIN "Users" u ON zul.data_id = u.id
+        WHERE u.id = user_id
+        AND zul.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+        AND zul.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+    END IF;
+
+    -- Handle cases where no match was found and assign default value
+    IF transformed_name IS NULL THEN
+        transformed_name := 'Unknown Name';
+    END IF;
+
+    RETURN transformed_name;
+END $$;
+
+`);
+
+const convertUserNameDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "convertUserName"(TEXT, INT);
+`);
+
 // Function to create a PL/pgSQL function in the PostgreSQL database that converts recipient names
 // and grant numbers to anonymized data
-const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
-  CREATE OR REPLACE FUNCTION "convertRecipientName"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
+const convertRecipientNameAndNumberCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "convertRecipientNameAndNumber"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
       recipient_grants_array TEXT[];
       converted_recipients_grants TEXT[];
@@ -279,9 +326,101 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
   END $$;
 `);
 
-// Function to drop the "convertRecipientName" function from the PostgreSQL database if it exists
+// Function to drop the "convertRecipientNameAndNumber" function from the PostgreSQL database if it exists
+const convertRecipientNameAndNumberDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "convertRecipientNameAndNumber"(TEXT);
+`);
+
+const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "convertGrantNumber"(grant_number TEXT, grant_id INT) 
+  RETURNS TEXT LANGUAGE plpgsql AS $$
+  DECLARE
+      transformed_grant_number TEXT;
+  BEGIN
+      IF grant_number IS NULL THEN
+          RETURN 'UnknownGrant';
+      END IF;
+
+      -- Remove leading and trailing whitespace from the grant number
+      grant_number := trim(grant_number);
+
+      -- Perform the conversion using the provided SQL logic
+      SELECT zgr.new_row_data ->> 'number'
+      INTO transformed_grant_number
+      FROM "ZALGrants" zgr
+      JOIN "Grants" gr ON zgr.data_id = gr.id
+      WHERE zgr.old_row_data ->> 'number' = grant_number
+      AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+      AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+
+      -- Handle cases where no match was found and assign default value
+      IF transformed_grant_number IS NULL THEN
+        SELECT zgr.new_row_data ->> 'number'
+        INTO transformed_grant_number
+        FROM "ZALGrants" zgr
+        JOIN "Grants" gr ON zrec.data_id = gr.id
+        WHERE gr.id = grant_id
+        AND zrec.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+        AND zrec.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+      END IF;
+
+      -- Handle cases where no match was found and assign default value
+      IF transformed_grant_number IS NULL THEN
+          transformed_grant_number := 'UnknownGrant';
+      END IF;
+
+      RETURN transformed_grant_number;
+  END $$;
+`);
+
+const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
+  DROP FUNCTION IF EXISTS "convertGrantNumber"(TEXT, INT);
+`);
+
+const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
+  CREATE OR REPLACE FUNCTION "convertRecipientName"(recipient_name TEXT, grant_id INT) 
+  RETURNS TEXT LANGUAGE plpgsql AS $$
+  DECLARE
+      transformed_recipient_name TEXT;
+  BEGIN
+      IF recipient_name IS NULL THEN
+          RETURN 'Unknown Recipient';
+      END IF;
+
+      -- Remove leading and trailing whitespace from the recipient name
+      recipient_name := trim(recipient_name);
+
+      -- Perform the conversion using the provided SQL logic
+      SELECT zrec.new_row_data ->> 'name'
+      INTO transformed_recipient_name
+      FROM "ZALRecipients" zrec
+      JOIN "Recipients" r ON zrec.data_id = r.id
+      WHERE r.name = recipient_name
+      AND zrec.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+      AND zrec.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+
+       -- Handle cases where no match was found and assign default value
+       IF transformed_recipient_name IS NULL THEN
+          SELECT zrec.new_row_data ->> 'name'
+          INTO transformed_recipient_name
+          FROM "ZALRecipients" zrec
+          JOIN "Grants" gr ON zrec.data_id = gr."recipientId"
+          WHERE gr.id = grant_id
+          AND zrec.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+          AND zrec.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+      END IF;
+
+      -- Handle cases where no match was found and assign default value
+      IF transformed_recipient_name IS NULL THEN
+          transformed_recipient_name := 'Unknown Recipient';
+      END IF;
+
+      RETURN transformed_recipient_name;
+  END $$;
+`);
+
 const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
-  DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT);
+  DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT, INT);
 `);
 
 // Function to anonymize user data by replacing names, emails, and other details with generated
@@ -294,7 +433,7 @@ export const hideUsers = async (userIds) => {
   // Query the database to retrieve real user data based on the WHERE clause
   [realUsers] = await sequelize.query(/* sql */`
     SELECT "id", "email", "name"
-    FROM "Users"
+    FROM "Users" --test
     WHERE 1 = 1
     ${whereClause};
   `);
@@ -353,7 +492,8 @@ export const hideUsers = async (userIds) => {
   // Retrieve the transformed (anonymized) user data from the Users table for further processing
   [transformedUsers] = await sequelize.query(/* sql */`
     SELECT "id", "email", "name"
-    FROM "Users"
+    FROM "Users" -- test 2
+    WHERE 1 = 1
     ${whereClause};
   `);
 };
@@ -372,7 +512,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     ? `WHERE "name" ILIKE ANY(ARRAY[${recipientsArray.map((r) => `'${r}'`).join(', ')}])`
     : '';
   const grantWhere = grantsArray
-    ? `WHERE "number" ILIKE ANY(ARRAY[${grantsArray.map((g) => `'${g}'}`).join(', ')}])`
+    ? `WHERE "number" ILIKE ANY(ARRAY[${grantsArray.map((g) => `'${g}'`).join(', ')}])`
     : '';
 
   // Query the database to retrieve real recipient data based on the WHERE clause
@@ -612,29 +752,264 @@ export const processFiles = async () => sequelize.query(/* sql */`
 
 // Function to process and anonymize sensitive data in Activity Reports by replacing specific
 // fields with generated fake data
-export const processActivityReports = async (where) => sequelize.query(/* sql */`
+export const processActivityReports = async (
+  where = '',
+) => sequelize.query(/* sql */`-- Update additionalNotes field
   UPDATE "ActivityReports"
-  SET
-    "additionalNotes" = "processHtml"("additionalNotes"),
-    "context" = "processHtml"("context"),
-    "imported" = CASE
-      WHEN "imported" IS NOT NULL THEN
-        jsonb_set("imported", '{additionalNotesForThisActivity}', to_jsonb("processHtml"("imported"->>'additionalNotesForThisActivity')), true)
-        || jsonb_set("imported", '{cdiGranteeName}', to_jsonb("processHtml"("imported"->>'cdiGranteeName')), true)
-        || jsonb_set("imported", '{contextForThisActivity}', to_jsonb("processHtml"("imported"->>'contextForThisActivity')), true)
-        || jsonb_set("imported", '{createdBy}', to_jsonb("convertEmails"("imported"->>'createdBy')), true)
-        || jsonb_set("imported", '{granteeFollowUpTasksObjectives}', to_jsonb("processHtml"("imported"->>'granteeFollowUpTasksObjectives')), true)
-        || jsonb_set("imported", '{granteeName}', to_jsonb("convertRecipientName"("imported"->>'granteeName')), true)
-        || jsonb_set("imported", '{manager}', to_jsonb("convertEmails"("imported"->>'manager')), true)
-        || jsonb_set("imported", '{modifiedBy}', to_jsonb("convertEmails"("imported"->>'modifiedBy')), true)
-        || jsonb_set("imported", '{otherSpecialists}', to_jsonb("convertEmails"("imported"->>'otherSpecialists')), true)
-        || jsonb_set("imported", '{specialistFollowUpTasksObjectives}', to_jsonb("processHtml"("imported"->>'specialistFollowUpTasksObjectives')), true)
-      ELSE
-        "imported"
-    END
-  WHERE 1 = 1
+  SET "additionalNotes" = "processHtml"("additionalNotes")
+  WHERE "additionalNotes" IS NOT NULL
+  ${where};
+  
+  -- Update context field
+  UPDATE "ActivityReports"
+  SET "context" = "processHtml"("context")
+  WHERE "context" IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'additionalNotesForThisActivity'
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{additionalNotesForThisActivity}',
+    to_jsonb("processHtml"("imported"->>'additionalNotesForThisActivity')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'additionalNotesForThisActivity' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'cdiGranteeName'
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{cdiGranteeName}',
+    to_jsonb("processHtml"("imported"->>'cdiGranteeName')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'cdiGranteeName' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'contextForThisActivity'
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{contextForThisActivity}',
+    to_jsonb("processHtml"("imported"->>'contextForThisActivity')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'contextForThisActivity' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'createdBy' using convertEmails()
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{createdBy}',
+    to_jsonb("convertEmails"("imported"->>'createdBy')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'createdBy' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'granteeFollowUpTasksObjectives'
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{granteeFollowUpTasksObjectives}',
+    to_jsonb("processHtml"("imported"->>'granteeFollowUpTasksObjectives')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'granteeFollowUpTasksObjectives' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'granteeName' using convertRecipientNameAndNumber()
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{granteeName}',
+    to_jsonb("convertRecipientNameAndNumber"("imported"->>'granteeName')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'granteeName' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'manager' using convertEmails()
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{manager}',
+    to_jsonb("convertEmails"("imported"->>'manager')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'manager' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'modifiedBy' using convertEmails()
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{modifiedBy}',
+    to_jsonb("convertEmails"("imported"->>'modifiedBy')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'modifiedBy' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'otherSpecialists' using convertEmails()
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{otherSpecialists}',
+    to_jsonb("convertEmails"("imported"->>'otherSpecialists')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'otherSpecialists' IS NOT NULL
+  ${where};
+  
+  -- Update imported -> 'specialistFollowUpTasksObjectives'
+  UPDATE "ActivityReports"
+  SET "imported" = jsonb_set(
+    "imported",
+    '{specialistFollowUpTasksObjectives}',
+    to_jsonb("processHtml"("imported"->>'specialistFollowUpTasksObjectives')),
+    true
+  )
+  WHERE "imported" IS NOT NULL AND "imported"->>'specialistFollowUpTasksObjectives' IS NOT NULL
     ${where};
 `);
+
+export const processTraningReports = async (where = '') => {
+  // Event
+  await sequelize.query(/* sql */`
+    -- 1. Update data -> 'creator' field using convertEmails()
+    UPDATE "EventReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{creator}',
+        CASE
+            WHEN "convertEmails"(data ->> 'creator') IS NOT NULL THEN to_jsonb("convertEmails"(data ->> 'creator'))
+            ELSE data -> 'creator'
+        END,
+        false
+    )
+    WHERE data ? 'creator'
+    ${where};
+
+    -- 2. Update data -> 'owner' -> 'name' field using convertUserName()
+    UPDATE "EventReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{owner, name}',
+        CASE
+            WHEN "convertUserName"(data #>> '{owner, name}', (data #>> '{owner, id}')::int) IS NOT NULL THEN to_jsonb("convertUserName"(data #>> '{owner, name}', (data #>> '{owner, id}')::int))
+            ELSE data #> '{owner, name}'
+        END,
+        false
+    )
+    WHERE data ? 'owner' AND data->'owner' ? 'name'
+    ${where};
+
+    -- 3. Update data -> 'owner' -> 'email' field using convertEmails()
+    UPDATE "EventReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{owner, email}',
+        CASE
+            WHEN "convertEmails"(data #>> '{owner, email}') IS NOT NULL THEN to_jsonb("convertEmails"(data #>> '{owner, email}'))
+            ELSE data #> '{owner, email}'
+        END,
+        false
+    )
+    WHERE data ? 'owner' AND data->'owner' ? 'email'
+    ${where};
+
+    -- 4. Update data -> 'owner' -> 'nameWithNationalCenters' field with a suffix, using convertUserName()
+    UPDATE "EventReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{owner, nameWithNationalCenters}',
+        CASE
+            WHEN "convertUserName"(split_part(data #>> '{owner, nameWithNationalCenters}', ',', 1), (data #>> '{owner, id}')::int) IS NOT NULL THEN
+                to_jsonb("convertUserName"(split_part(data #>> '{owner, nameWithNationalCenters}', ',', 1), (data #>> '{owner, id}')::int) || ', ' || split_part(data #>> '{owner, nameWithNationalCenters}', ',', 2))
+            ELSE data #> '{owner, nameWithNationalCenters}'
+        END,
+        false
+    )
+    WHERE data ? 'owner' AND data->'owner' ? 'nameWithNationalCenters'
+    ${where};
+
+    -- 5. Update each element's userName in eventReportPilotNationalCenterUsers array using convertUserName()
+    UPDATE "EventReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{eventReportPilotNationalCenterUsers}',
+        (
+            SELECT jsonb_agg(
+                CASE 
+                    WHEN "convertUserName"(user_elem ->> 'userName', (user_elem ->> 'userId')::int) IS NOT NULL THEN
+                        jsonb_set(user_elem, '{userName}', to_jsonb("convertUserName"(user_elem ->> 'userName', (user_elem ->> 'userId')::int)))
+                    ELSE user_elem
+                END
+            )
+            FROM jsonb_array_elements(data->'eventReportPilotNationalCenterUsers') AS user_elem
+        ),
+        false
+    )
+    WHERE data ? 'eventReportPilotNationalCenterUsers'
+    ${where};
+  `);
+  // Session
+  await sequelize.query(/* sql */`
+    UPDATE "SessionReportPilots"
+    SET data = jsonb_set(
+        data,
+        '{recipients}',
+        COALESCE(
+            (
+                SELECT jsonb_agg(new_recipient)
+                FROM (
+                    SELECT
+                        jsonb_set(
+                            recipient,
+                            '{label}',
+                            to_jsonb(new_label)
+                        ) AS new_recipient
+                    FROM (
+                        SELECT
+                            recipient,
+                            -- Reconstruct the new label
+                            CASE
+                                WHEN array_length(reversed_parts, 1) >= 3 THEN
+                                    "convertRecipientName"(REVERSE(array_to_string(reversed_parts[3:array_upper(reversed_parts, 1)], ' - ')), "value") || ' - ' ||
+                                    "convertGrantNumber"(REVERSE(reversed_parts[2]), "value") || ' - ' ||
+                                    REVERSE(reversed_parts[1])
+                                WHEN array_length(reversed_parts, 1) = 2 THEN
+                                    "convertRecipientName"(REVERSE(reversed_parts[2]), "value") || ' - ' ||
+                                    "convertGrantNumber"(REVERSE(reversed_parts[1]), "value")
+                                WHEN array_length(reversed_parts, 1) = 1 THEN
+                                    "convertRecipientName"(REVERSE(reversed_parts[1]), "value")
+                                ELSE
+                                    recipient ->> 'label'
+                            END AS new_label
+                        FROM (
+                            SELECT
+                                recipient,
+                                REVERSE(recipient ->> 'label') AS reversed_label,
+                                string_to_array(REVERSE(recipient ->> 'label'), ' - ') AS reversed_parts,
+                                (recipient ->> 'value')::int "value"
+                            FROM jsonb_array_elements(data->'recipients') AS recipient
+                        ) sub1
+                    ) sub2
+                ) sub3
+            ),
+            data->'recipients'  -- Fallback to original value if transformation fails
+        ),
+        false
+    )
+    WHERE data ? 'recipients'
+    ${where};
+  `);
+}
+
 /* Main function to orchestrate the entire anonymization process, including creating and dropping
 * database functions, hiding users, recipients, and grants, processing activity reports and files,
 * and truncating audit tables
@@ -649,7 +1024,10 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   // Create the necessary database functions for data processing
   await processHtmlCreate();
   await convertEmailsCreate();
+  await convertRecipientNameAndNumberCreate();
+  await convertGrantNumberCreate();
   await convertRecipientNameCreate();
+  await convertUserNameCreate();
 
   // Anonymize user data
   await hideUsers(userIds);
@@ -659,6 +1037,8 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
 
   // Anonymize activity reports
   await processActivityReports(where);
+
+  await processTraningReports();
 
   // Anonymize file names
   await processFiles();
@@ -675,7 +1055,10 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   // Drop the database functions used for data processing
   await processHtmlDrop();
   await convertEmailsDrop();
+  await convertRecipientNameAndNumberDrop();
+  await convertGrantNumberDrop();
   await convertRecipientNameDrop();
+  await convertUserNameDrop();
 
   // Truncate audit tables
   return truncateAuditTables();
