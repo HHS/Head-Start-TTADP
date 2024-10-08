@@ -122,9 +122,11 @@ describe('S3', () => {
       mockS3.getBucketVersioning = jest.fn();
       mockS3.putBucketVersioning = jest.fn();
       mockGet = mockS3.getBucketVersioning.mockImplementation(async () => mockVersioningData);
-      mockPut = mockS3.putBucketVersioning.mockImplementation(async (params) => new Promise((res) => {
-        res(params);
-      }));
+      mockPut = mockS3.putBucketVersioning.mockImplementation(
+        async (params) => new Promise((res) => {
+          res(params);
+        }),
+      );
       mockGet.mockClear();
       mockPut.mockClear();
     });
@@ -252,7 +254,7 @@ describe('S3', () => {
       mockDeleteObject.mockImplementationOnce(
         () => ({ promise: () => Promise.reject(anotherFakeError) }),
       );
-      const got = deleteFileFromS3(Key, undefined , mockS3);
+      const got = deleteFileFromS3(Key, undefined, mockS3);
       await expect(got).rejects.toBe(anotherFakeError);
       expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
