@@ -826,11 +826,19 @@ export const processActivityReports = async (
   SET "imported" = jsonb_set(
     "imported",
     '{granteeName}',
-    to_jsonb("convertRecipientNameAndNumber"("imported"->>'granteeName')),
+    to_jsonb(
+      array_to_string(
+        array(
+          SELECT "convertRecipientNameAndNumber"(unnest(string_to_array("imported"->>'granteeName', E'\n')))
+        ),
+        E'\n'
+      )
+    ),
     true
   )
-  WHERE "imported" IS NOT NULL AND "imported"->>'granteeName' IS NOT NULL
-  ${where};
+  WHERE "imported" IS NOT NULL 
+    AND "imported"->>'granteeName' IS NOT NULL
+    ${where};
   
   -- Update imported -> 'manager' using convertEmails()
   UPDATE "ActivityReports"
