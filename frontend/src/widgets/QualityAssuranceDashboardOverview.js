@@ -17,9 +17,9 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with no TTA',
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
-    data: data && data.recipientsWithNoTTA ? data.recipientsWithNoTTA.pct : 0,
+    data: data && data.recipientsWithNoTTA ? `${data.recipientsWithNoTTA.pct}%` : '0%',
     route: 'qa-dashboard/recipients-with-no-tta',
-    filterApplicable: false,
+    filterApplicable: data.recipientsWithNoTTA.filterApplicable,
   },
   {
     icon: faBus,
@@ -28,10 +28,10 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
     data: data && data.recipientsWithOhsStandardFeiGoals
-      ? data.recipientsWithOhsStandardFeiGoals.pct
-      : 0,
+      ? `${data.recipientsWithOhsStandardFeiGoals.pct}%`
+      : '0%',
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
-    filterApplicable: false,
+    filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -41,10 +41,10 @@ const createOverviewFieldArray = (data) => ([
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
     data: data && data.recipientsWithOhsStandardClass
-      ? data.recipientsWithOhsStandardClass.pct
-      : 0,
+      ? `${data.recipientsWithOhsStandardClass.pct}%`
+      : '0%',
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
-    filterApplicable: false,
+    filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
   },
 ]);
 
@@ -81,15 +81,15 @@ QualityAssuranceDashboardOverview.propTypes = {
 QualityAssuranceDashboardOverview.defaultProps = {
   data: {
     recipientsWithNoTTA: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
     recipientsWithOhsStandardFeiGoals: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
     recipientsWithOhsStandardClass: {
-      pct: '0%',
+      pct: 0,
       filterApplicable: false,
     },
   },

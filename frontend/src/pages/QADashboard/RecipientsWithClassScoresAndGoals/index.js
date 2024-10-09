@@ -68,6 +68,7 @@ export default function RecipientsWithClassScoresAndGoals() {
         const data = await getSelfServiceData(
           'recipients-with-class-scores-and-goals',
           filters,
+          ['delivery_method_graph', 'role_graph'],
         );
         setRecipientsWithClassScoresAndGoalsData(data);
         updateError('');

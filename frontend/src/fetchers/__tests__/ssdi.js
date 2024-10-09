@@ -2,7 +2,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import { getSelfServiceData } from '../ssdi';
 
-const ssdiUrl = join('/', 'api', 'ssdi');
+const ssdiUrl = join('/', 'api', 'ssdi', 'api', 'dashboards', 'qa');
 
 beforeEach(() => {
   fetchMock.restore();
@@ -11,7 +11,7 @@ beforeEach(() => {
 describe('SSDI fetcher', () => {
   it('should fetch data for qa-dashboard', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(ssdiUrl, 'qa-dashboard', '?region.in[]=14');
+    const url = join(ssdiUrl, 'dashboard.sql', '?region.in[]=14');
     fetchMock.getOnce(url, mockData);
     const res = await getSelfServiceData('qa-dashboard', [{
       id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
@@ -24,10 +24,10 @@ describe('SSDI fetcher', () => {
   });
   it('recipients-with-ohs-standard-goal', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(ssdiUrl, 'recipients-with-ohs-standard-goal', '?region.in[]=14');
+    const url = join(ssdiUrl, 'fei.sql', '?region.in[]=14');
     fetchMock.getOnce(url, mockData);
 
-    const res = await getSelfServiceData('recipients-with-ohs-standard-goal', [
+    const res = await getSelfServiceData('recipients-with-ohs-standard-fei-goal', [
       {
         id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
         topic: 'region',
@@ -46,7 +46,7 @@ describe('SSDI fetcher', () => {
   });
   it('recipients-with-no-tta', async () => {
     const mockData = [{ data: 'Expected' }];
-    const url = join(ssdiUrl, 'recipients-with-no-tta', '?region.in[]=14');
+    const url = join(ssdiUrl, 'no-tta.sql', '?region.in[]=14');
     fetchMock.getOnce(url, mockData);
 
     const res = await getSelfServiceData('recipients-with-no-tta', [
