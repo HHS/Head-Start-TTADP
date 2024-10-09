@@ -9,6 +9,8 @@ import { createMemoryHistory } from 'history';
 import RecipientsWithClassScoresAndGoals from '../index';
 import UserContext from '../../../../UserContext';
 
+const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph';
+
 const recipients = [{
   id: 1,
   name: 'Abernathy, Mraz and Bogan',
@@ -72,7 +74,7 @@ describe('Recipients With Class and Scores and Goals', () => {
   });
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
 
     expect(screen.queryAllByText(/Recipients with CLASS® scores/i).length).toBe(2);
@@ -121,7 +123,7 @@ describe('Recipients With Class and Scores and Goals', () => {
   });
 
   it('selects and unselects all recipients', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
 
     await act(async () => {
@@ -138,7 +140,7 @@ describe('Recipients With Class and Scores and Goals', () => {
   });
 
   it('Shows the selected pill and unselects when pill is removed', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-class-scores-and-goals', recipientsWithClassScoresAndGoalsData);
+    fetchMock.get(dashboardApi, recipientsWithClassScoresAndGoalsData);
     renderRecipientsWithClassScoresAndGoals();
     await act(async () => {
       await waitFor(() => {

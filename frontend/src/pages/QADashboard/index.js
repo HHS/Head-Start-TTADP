@@ -59,7 +59,6 @@ export default function QADashboard() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        /*
         // Recipient with no tta data.
         const recipientsWithNoTtaData = await getSelfServiceData(
           'recipients-with-no-tta',
@@ -103,7 +102,7 @@ export default function QADashboard() {
             pct: classOverviewData.data[0]['% recipients with class'] || '0%',
           },
         };
-        */
+
         // Dashboard data.
         const dashboardData = await getSelfServiceData(
           'qa-dashboard',
@@ -112,7 +111,7 @@ export default function QADashboard() {
         );
 
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
-        // const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
+        const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
 
         const deliveryMethod = {
           records: deliveryMethodData.data,
@@ -124,11 +123,16 @@ export default function QADashboard() {
           averageHybridPercentage: 0,
         };
 
+        const roleGraph = {
+          records: roleGraphData.data,
+        };
+
         // Set data.
         setQaData({
-          // overviewData,
-          // rootCauseFeiGoalsGraph,
+          overviewData,
+          rootCauseFeiGoalsGraph,
           deliveryMethod,
+          roleGraph,
         });
         updateError('');
       } catch (e) {
@@ -187,11 +191,12 @@ export default function QADashboard() {
           </Grid>
           <Grid row gap={2}>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
-              <PercentageActivityReportByRole data={qaData.roleGraph} />
+              <PercentageActivityReportByRole data={qaData.roleGraph} loading={isLoading} />
             </Grid>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
               <RootCauseFeiGoals
                 data={qaData.rootCauseFeiGoalsGraph}
+                loading={isLoading}
               />
             </Grid>
           </Grid>

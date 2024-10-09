@@ -18,7 +18,7 @@ const allowedTopicsForQuery = {
     'grantNumber',
     'programType',
     'stateCode',
-    // 'region',
+    'region',
     'regionIds',
     'startDate',
     'endDate',
@@ -29,7 +29,7 @@ const allowedTopicsForQuery = {
     'grantNumber',
     'programType',
     'stateCode',
-    //'region',
+    'region',
     'regionIds',
     'group',
     'createDate',
@@ -40,7 +40,7 @@ const allowedTopicsForQuery = {
     'grantNumber',
     'programType',
     'stateCode',
-    // 'region',
+    'region',
     'regionIds',
     'domainEmotionalSupport',
     'domainClassroomOrganization',
@@ -48,7 +48,7 @@ const allowedTopicsForQuery = {
     'createDate',
   ],
   'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
-  //  'region'
+    'region',
     'regionIds',
   ],
 };
@@ -72,7 +72,8 @@ const getSelfServiceUrl = (filterName, filters) => {
 
 export const getSelfServiceData = async (filterName, filters, dataSetSelection) => {
   const url = getSelfServiceUrl(filterName, filters);
-  const response = await get(url + (dataSetSelection.length ? dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('') : ''));
+  const urlToUse = url + (dataSetSelection && dataSetSelection.length ? dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('') : '');
+  const response = await get(urlToUse);
   if (!response.ok) {
     throw new Error('Error fetching self service data');
   }

@@ -99,14 +99,14 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   afterEach(() => fetchMock.restore());
 
   it('renders correctly without data', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-no-tta?region.in[]=1&region.in[]=2', RecipientsWithNoTtaDataEmpty);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget', RecipientsWithNoTtaDataEmpty);
     renderRecipientsWithNoTta();
     expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
     expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-no-tta?region.in[]=1&region.in[]=2', RecipientsWithNoTtaData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget', RecipientsWithNoTtaData);
     renderRecipientsWithNoTta();
     expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
     expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   it('handles a user with only one region', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-no-tta?region.in[]=1&region.in[]=2', RecipientsWithNoTtaData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?&dataSetSelection[]=no_tta_widget', RecipientsWithNoTtaData);
     const u = {
       homeRegionId: 14,
       permissions: [{

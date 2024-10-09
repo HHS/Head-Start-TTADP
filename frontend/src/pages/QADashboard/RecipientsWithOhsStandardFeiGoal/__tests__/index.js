@@ -127,7 +127,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   it('renders correctly without data', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-ohs-standard-fei-goal?region.in[]=1&region.in[]=2', recipientsWithOhsStandardFeiGoalEmptyData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalEmptyData);
     renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
@@ -135,7 +135,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/recipients-with-ohs-standard-goal?region.in[]=1&region.in[]=2', recipientsWithOhsStandardFeiGoalData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalData);
     renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
@@ -172,7 +172,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }],
     };
-    fetchMock.get('/api/ssdi/recipients-with-ohs-standard-fei-goal?region.in[]=1&region.in[]=2', recipientsWithOhsStandardFeiGoalData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalData);
     renderRecipientsWithOhsStandardFeiGoal(u);
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);

@@ -61,8 +61,9 @@ export default function RecipientsWithOhsStandardFeiGoal() {
       // Filters passed also contains region.
       try {
         const data = await getSelfServiceData(
-          'recipients-with-ohs-standard-goal',
+          'recipients-with-ohs-standard-fei-goal',
           filters,
+          ['with_fei_widget', 'with_fei_graph'],
         );
         setRecipientsWithOhsStandardFeiGoal(data);
         updateError('');

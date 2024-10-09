@@ -24,7 +24,7 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-export default function PercentageActivityReportByRole({ data }) {
+export default function PercentageActivityReportByRole({ data, loading }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Percentage of activity reports by role');
   const [showTabularData, setShowTabularData] = useState(false);
@@ -133,7 +133,7 @@ export default function PercentageActivityReportByRole({ data }) {
     <div>
 
       <WidgetContainer
-        loading={false}
+        loading={loading}
         title="Percentage of activity reports by role"
         subtitle="Activity report by specialist role"
         subtitle2="11,510 Activity reports"
@@ -184,4 +184,9 @@ PercentageActivityReportByRole.propTypes = {
       percentage: PropTypes.number,
     })),
   }).isRequired,
+  loading: PropTypes.bool,
+};
+
+PercentageActivityReportByRole.defaultProps = {
+  loading: false,
 };

@@ -61,6 +61,7 @@ export default function RecipientsWithNoTta() {
         const data = await getSelfServiceData(
           'recipients-with-no-tta',
           filters,
+          ['no_tta_widget'],
         );
         setRecipientsWithNoTTA(data);
         updateError('');
