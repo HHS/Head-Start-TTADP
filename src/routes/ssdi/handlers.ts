@@ -160,7 +160,7 @@ const runQuery = async (req: Request, res: Response) => {
 
     // Handle regionIds with policy filtering
     if (filterValues.region && Array.isArray(filterValues.region)) {
-      filterValues.region = filterValues.regionIds
+      filterValues.region = filterValues.region
         .map(Number)
         .filter((num) => !Number.isNaN(num));
       filterValues.region = policy.filterRegions(filterValues.region);
