@@ -478,7 +478,7 @@ describe('Course dashboard', () => {
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(2);
     expect(headers[0]).toStrictEqual({ displayName: 'Jan-21', name: 'January 2021' });
-    expect(headers[1]).toStrictEqual({ displayName: 'Feb-21', name: 'February 2025' });
+    expect(headers[1]).toStrictEqual({ displayName: 'Feb-21', name: 'February 2021' });
 
     expect(courses).not.toBeNull();
     expect(courses.length).toBe(3);
