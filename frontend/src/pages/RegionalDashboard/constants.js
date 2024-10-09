@@ -20,6 +20,7 @@ import {
   deliveryMethodFilter,
   activityReportGoalResponseFilter,
   regionFilter,
+  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter } from '../../components/filter/grantFilters';
@@ -48,6 +49,7 @@ const DASHBOARD_FILTER_CONFIG = [
   topicsFilter,
   ttaTypeFilter,
   regionFilter,
+  grantStatusFilter,
 ];
 
 // sort by display prop

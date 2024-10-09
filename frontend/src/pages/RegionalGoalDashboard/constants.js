@@ -18,6 +18,7 @@ import {
   participantsFilter,
   myReportsFilter,
   ttaTypeFilter,
+  grantStatusFilter,
 } from '../../components/filter/activityReportFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
@@ -39,6 +40,7 @@ const DASHBOARD_FILTER_CONFIG = [
   targetPopulationsFilter,
   topicsFilter,
   ttaTypeFilter,
+  grantStatusFilter,
 ];
 
 // sort by display prop
