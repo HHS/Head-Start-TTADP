@@ -72,7 +72,7 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "One or more values for 1 through 12 representing different regions."
@@ -97,11 +97,11 @@ WITH
       a."startDate"
     FROM "ActivityReports" a
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if ssdi.regionIds is defined
-    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     -- Filter for startDate dates between two values if ssdi.startDate is defined
     AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
@@ -122,11 +122,11 @@ WITH
     JOIN "ActivityReportCollaborators" arc
     ON a.id = arc."activityReportId"
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if ssdi.regionIds is defined
-    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     -- Filter for startDate dates between two values if ssdi.startDate is defined
     AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
@@ -144,10 +144,10 @@ WITH
     LEFT JOIN "Permissions" p ON u.id = p."userId"
     LEFT JOIN "Scopes" s ON p."scopeId" = s.id
     LEFT JOIN "reports" a ON a."userId" = u.id
-    WHERE (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    WHERE (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR u."homeRegionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     GROUP BY 1,2,3
     HAVING COUNT(DISTINCT a.id) > 0 OR 'SITE_ACCESS' = ANY(ARRAY_AGG(s.name))
@@ -247,11 +247,11 @@ WITH
       COUNT(DISTINCT gr."recipientId") AS recipient_count
     FROM "Grants" gr
     WHERE gr.status = 'Active'
-      -- Filter for regionIds if ssdi.regionIds is defined
-      AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+      -- Filter for region if ssdi.region is defined
+      AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
           OR gr."regionId" in (
           SELECT value::integer AS my_array
-            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
           ))
   ),
   recipient_data AS (
