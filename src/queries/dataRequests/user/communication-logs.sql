@@ -108,7 +108,7 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "One or more values for 1 through 12 representing the region IDs."
@@ -120,7 +120,7 @@ JSON: {
       "description": "Two dates defining a range for the communicationDate. If only one date is supplied, the range is from the supplied date to the current timestamp. If no dates are supplied, this filter is ignored."
     },
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
       "description": "One or more recipient names to filter the results."
@@ -204,11 +204,11 @@ LEFT JOIN "CommunicationLogFiles" clf
 LEFT JOIN "Files" f
     ON clf."fileId" = f.id
 WHERE
--- Filter for regionIds if ssdi.regionIds is defined
-(NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+-- Filter for region if ssdi.region is defined
+(NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR (cl.data ->> 'regionId')::int in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
 AND
 -- Filter for communicationDate if ssdi.communicationDate is defined
@@ -227,11 +227,11 @@ AND
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.communicationDate', true), ''),'[]')::json) AS value
         ))
 AND
--- Filter for recipients if ssdi.recipients is defined
-(NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+-- Filter for recipient if ssdi.recipient is defined
+(NULLIF(current_setting('ssdi.recipient', true), '') IS NULL
       OR r.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipient', true), ''),'[]')::json) AS value
       ))
 AND
 -- Filter for users if ssdi.users is defined

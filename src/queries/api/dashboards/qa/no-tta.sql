@@ -113,7 +113,7 @@ JSON: {
   },
   "filters": [
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
       "description": "Filter based on the names of the recipients.",
@@ -127,7 +127,7 @@ JSON: {
       }
     },
     {
-      "name": "grantNumbers",
+      "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
       "description": "Filter based on the grant numbers.",
@@ -167,7 +167,7 @@ JSON: {
       }
     },
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "Filter based on region identifiers.",
@@ -195,20 +195,20 @@ JSON: {
 DO $$
 DECLARE
     -- Declare filter variables
-    recipient_filter TEXT := NULLIF(current_setting('ssdi.recipients', true), '');
+    recipient_filter TEXT := NULLIF(current_setting('ssdi.recipient', true), '');
     program_type_filter TEXT := NULLIF(current_setting('ssdi.programType', true), '');
-    grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumbers', true), '');
+    grant_numbers_filter TEXT := NULLIF(current_setting('ssdi.grantNumber', true), '');
     state_code_filter TEXT := NULLIF(current_setting('ssdi.stateCode', true), '');
-    region_ids_filter TEXT := NULLIF(current_setting('ssdi.regionIds', true), '');
+    region_ids_filter TEXT := NULLIF(current_setting('ssdi.region', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
 
     -- Declare `.not` variables
-    recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipients.not', true), 'false') = 'true';
+    recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
     program_type_not_filter BOOLEAN := COALESCE(current_setting('ssdi.programType.not', true), 'false') = 'true';
-    grant_numbers_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantNumbers.not', true), 'false') = 'true';
+    grant_numbers_not_filter BOOLEAN := COALESCE(current_setting('ssdi.grantNumber.not', true), 'false') = 'true';
     state_code_not_filter BOOLEAN := COALESCE(current_setting('ssdi.stateCode.not', true), 'false') = 'true';
-    region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.regionIds.not', true), 'false') = 'true';
+    region_ids_not_filter BOOLEAN := COALESCE(current_setting('ssdi.region.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
 
