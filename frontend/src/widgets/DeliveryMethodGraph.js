@@ -103,8 +103,6 @@ export default function DeliveryMethodGraph({ data, loading }) {
     const total = [...unfilteredRecords].pop();
     const records = unfilteredRecords.filter((record) => record.month !== 'Total');
 
-    console.log(total);
-
     const {
       in_person_count: totalInPerson,
       in_person_percentage: averageInPersonPercentage,
