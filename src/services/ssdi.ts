@@ -139,7 +139,7 @@ interface CachedFilters {
 
 // Base directory for file operations
 const isWindows = process.platform === 'win32';
-const BASE_DIRECTORY = path.resolve(process.cwd(), isWindows ? 'src/queries/' : 'app/src/queries/');
+const BASE_DIRECTORY = path.resolve(process.cwd(), isWindows ? 'src/queries/' : '/app/src/queries/');
 
 // Cache to store parsed JSON headers and queries
 const cache: Map<string, CachedFile> = new Map();
