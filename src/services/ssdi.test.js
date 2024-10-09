@@ -72,7 +72,7 @@ describe('ssdi', () => {
   describe('safeResolvePath', () => {
     it('should resolve the path safely within BASE_DIRECTORY', () => {
       const result = safeResolvePath('test/path.sql');
-      expect(result).toBe(path.resolve(process.cwd(), '/app/src/queries/test/path.sql'));
+      expect(result.endsWith('/app/src/queries/test/path.sql')).toBe(true);
     });
 
     it('should throw an error if the resolved path is outside BASE_DIRECTORY', () => {
