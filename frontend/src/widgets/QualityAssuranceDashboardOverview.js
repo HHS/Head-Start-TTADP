@@ -17,9 +17,9 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with no TTA',
     iconColor: colors.ttahubBlue,
     backgroundColor: colors.ttahubBlueLight,
-    data: data.recipientsWithNoTTA.pct,
+    data: data && data.recipientsWithNoTTA ? data.recipientsWithNoTTA.pct : 0,
     route: 'qa-dashboard/recipients-with-no-tta',
-    filterApplicable: data.recipientsWithNoTTA.filterApplicable,
+    filterApplicable: false,
   },
   {
     icon: faBus,
@@ -27,9 +27,11 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard FEI goal',
     iconColor: colors.ttahubOrange,
     backgroundColor: colors.ttahubOrangeLight,
-    data: data.recipientsWithOhsStandardFeiGoals.pct,
+    data: data && data.recipientsWithOhsStandardFeiGoals
+      ? data.recipientsWithOhsStandardFeiGoals.pct
+      : 0,
     route: 'qa-dashboard/recipients-with-ohs-standard-fei-goal',
-    filterApplicable: data.recipientsWithOhsStandardFeiGoals.filterApplicable,
+    filterApplicable: false,
   },
   {
     key: 'recipients-with-ohs-standard-class-goals',
@@ -38,9 +40,11 @@ const createOverviewFieldArray = (data) => ([
     label1: 'Recipients with OHS standard CLASS goal',
     iconColor: colors.success,
     backgroundColor: colors.ttahubDeepTealLight,
-    data: data.recipientsWithOhsStandardClass.pct,
+    data: data && data.recipientsWithOhsStandardClass
+      ? data.recipientsWithOhsStandardClass.pct
+      : 0,
     route: 'qa-dashboard/recipients-with-class-scores-and-goals',
-    filterApplicable: data.recipientsWithOhsStandardClass.filterApplicable,
+    filterApplicable: false,
   },
 ]);
 
@@ -62,13 +66,13 @@ export function QualityAssuranceDashboardOverview({
 QualityAssuranceDashboardOverview.propTypes = {
   data: PropTypes.shape({
     recipientsWithNoTTA: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
     recipientsWithOhsStandardFeiGoals: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
     recipientsWithOhsStandardClass: PropTypes.shape({
-      pct: PropTypes.string,
+      pct: PropTypes.number,
     }),
   }),
   loading: PropTypes.bool,

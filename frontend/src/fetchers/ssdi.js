@@ -5,29 +5,52 @@ import { QA_DASHBOARD_FILTER_CONFIG } from '../pages/QADashboard/constants';
 
 const ssdiUrl = join('/', 'api', 'ssdi');
 
+const urlsForQuery = {
+  'recipients-with-no-tta': join(ssdiUrl, 'api', 'dashboards', 'qa', 'no-tta.sql'),
+  'recipients-with-ohs-standard-fei-goal': join(ssdiUrl, 'api', 'dashboards', 'qa', 'fei.sql'),
+  'recipients-with-class-scores-and-goals': join(ssdiUrl, 'api', 'dashboards', 'qa', 'class.sql'),
+  'qa-dashboard': join(ssdiUrl, 'api', 'dashboards', 'qa', 'dashboard.sql'),
+};
+
 const allowedTopicsForQuery = {
   'recipients-with-no-tta': [
-    'region',
+    'recipient',
+    'grantNumber',
+    'programType',
+    'stateCode',
+    // 'region',
+    'regionIds',
     'startDate',
     'endDate',
-    'grantNumber',
-    'stateCode',
+    'dataSetSelection',
   ],
-  'recipients-with-ohs-standard-goal': [
-    'region',
-    'startDate',
-    'endDate',
+  'recipients-with-ohs-standard-fei-goal': [
+    'recipient',
     'grantNumber',
+    'programType',
     'stateCode',
+    //'region',
+    'regionIds',
+    'group',
+    'createDate',
+    'reason',
   ],
   'recipients-with-class-scores-and-goals': [
-    'region',
-    'startDate',
-    'endDate',
+    'recipient',
     'grantNumber',
+    'programType',
     'stateCode',
+    // 'region',
+    'regionIds',
+    'domainEmotionalSupport',
+    'domainClassroomOrganization',
+    'domainInstructionalSupport',
+    'createDate',
   ],
-  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter.id), 'region'],
+  'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
+  //  'region'
+    'regionIds',
+  ],
 };
 
 export const getSelfServiceDataQueryString = (filterName, filters) => {
@@ -43,13 +66,13 @@ export const getSelfServiceDataQueryString = (filterName, filters) => {
 
 const getSelfServiceUrl = (filterName, filters) => {
   const queryString = getSelfServiceDataQueryString(filterName, filters);
-  const baseUrl = join(ssdiUrl, filterName);
+  const baseUrl = join(urlsForQuery[filterName]);
   return `${baseUrl}?${queryString}`;
 };
 
-export const getSelfServiceData = async (filterName, filters) => {
+export const getSelfServiceData = async (filterName, filters, dataSetSelection) => {
   const url = getSelfServiceUrl(filterName, filters);
-  const response = await get(url);
+  const response = await get(url + (dataSetSelection.length ? dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('') : ''));
   if (!response.ok) {
     throw new Error('Error fetching self service data');
   }
