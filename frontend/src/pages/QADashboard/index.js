@@ -111,10 +111,8 @@ export default function QADashboard() {
           ['delivery_method_graph', 'role_graph'],
         );
 
-        console.log('----------------> await come back with data: ', dashboardData);
-
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
-        const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
+        // const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
 
         const deliveryMethod = {
           records: deliveryMethodData.data,
@@ -126,14 +124,10 @@ export default function QADashboard() {
           averageHybridPercentage: 0,
         };
 
-        console.log('-----ALL: deliveryMethod ', deliveryMethod);
-
-       
-
         // Set data.
         setQaData({
-          //overviewData,
-          //rootCauseFeiGoalsGraph,
+          // overviewData,
+          // rootCauseFeiGoalsGraph,
           deliveryMethod,
         });
         updateError('');
@@ -184,7 +178,6 @@ export default function QADashboard() {
           data={qaData.overviewData}
           loading={isLoading}
         />
-
         <div>
           <Grid row>
             <DeliveryMethod
@@ -202,7 +195,6 @@ export default function QADashboard() {
               />
             </Grid>
           </Grid>
-
         </div>
       </div>
     </>

@@ -186,12 +186,10 @@ export default function LineGraph({
           bgcolor: colors.textInk,
         },
       },
-
     ];
 
     const tracesToDraw = legends.map((legend, index) => (legend.selected ? traces[index] : null))
-      .filter((trace) => trace !== null);
-
+      .filter((trace) => Boolean(trace));
     // draw the plot
     Plotly.newPlot(lines.current, tracesToDraw, layout, { displayModeBar: false, hovermode: 'none', responsive: true });
   }, [data, hideYAxis, legends, showTabularData, xAxisTitle, yAxisTitle]);
