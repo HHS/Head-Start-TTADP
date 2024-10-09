@@ -78,25 +78,25 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "One or more values for 1 through 12 representing the region IDs."
     },
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
       "description": "One or more recipient names to filter the results."
     },
     {
-      "name": "grantNumbers",
+      "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
       "description": "One or more grant numbers to filter the results."
     },
     {
-      "name": "goals",
+      "name": "goalName",
       "type": "string[]",
       "display": "Goals",
       "description": "One or more goal text values to filter the results."
@@ -126,7 +126,7 @@ JSON: {
       "description": "One or more response values to filter the goals."
     },
     {
-      "name": "createdbetween",
+      "name": "createDate",
       "type": "date[]",
       "display": "Created Date Range",
       "description": "Two dates defining a range for the 'createdAt' timestamp to be within."
@@ -142,7 +142,7 @@ JSON: {
   },
   "customSortingSupported": true,
   "paginationSupported": false,
-  "exampleUsage": "SELECT SET_CONFIG('ssdi.createdbetween', '[\"2023-10-01\",\"2023-10-15\"]', TRUE);"
+  "exampleUsage": "SELECT SET_CONFIG('ssdi.createDate', '[\"2023-10-01\",\"2023-10-15\"]', TRUE);"
 }
 */
 WITH bad AS (
@@ -188,32 +188,32 @@ ON b."grantId" = gr.id
 JOIN "Recipients" r
 ON gr."recipientId" = r.id
 WHERE
--- Filter for regionIds if ssdi.regionIds is defined
-(NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+-- Filter for region if ssdi.region is defined
+(NULLIF(current_setting('ssdi.region', true), '') IS NULL
       OR gr."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for recipients if ssdi.recipients is defined
-(NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+-- Filter for recipient if ssdi.recipient is defined
+(NULLIF(current_setting('ssdi.recipient', true), '') IS NULL
       OR r.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipient', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for grantNumbers if ssdi.grantNumbers is defined
-(NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
+-- Filter for grantNumber if ssdi.grantNumber is defined
+(NULLIF(current_setting('ssdi.grantNumber', true), '') IS NULL
       OR gr.number in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumber', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for goals if ssdi.goals is defined
-(NULLIF(current_setting('ssdi.goals', true), '') IS NULL
+-- Filter for goalName if ssdi.goalName is defined
+(NULLIF(current_setting('ssdi.goalName', true), '') IS NULL
       OR b.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.goals', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.goalName', true), ''),'[]')::json) AS value
       ))
 AND
 -- Filter for status if ssdi.status is defined
@@ -245,10 +245,10 @@ AND
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.response', true), ''),'[]')::json) AS value
       ))
 AND
--- Filter for createdAt dates between two values if ssdi.createdbetween is defined
-(NULLIF(current_setting('ssdi.createdbetween', true), '') IS NULL
+-- Filter for createdAt dates between two values if ssdi.createDate is defined
+(NULLIF(current_setting('ssdi.createDate', true), '') IS NULL
       OR b."createdAt"::date <@ (
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.createdbetween', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.createDate', true), ''),'[]')::json) AS value
       ))
 order by 3,1,2,4

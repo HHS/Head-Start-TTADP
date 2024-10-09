@@ -48,12 +48,12 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "description": "One or more values for 1 through 12",
       "options": {
         "query": {
-          "sqlQuery": "SELECT name::int AS name FROM \"Regions\" WHERE name ~ E'^\\d+$' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR name::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY name;",
+          "sqlQuery": "SELECT name::int AS name FROM \"Regions\" WHERE name ~ E'^\\d+$' AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL OR name::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''), '[]')::json) AS value)) ORDER BY name;",
           "column": "name"
         }
       }
@@ -95,7 +95,7 @@ JSON: {
       "supportsExclusion": true
     },
     {
-      "name": "findingStatuses",
+      "name": "findingStatus",
       "type": "string[]",
       "description": "One or more finding statuses. If no values are supplied, this filter is ignored.",
       "supportsExclusion": true,
@@ -132,21 +132,21 @@ JSON: {
       }
     },
     {
-      "name": "grantNumbers",
+      "name": "grantNumber",
       "type": "string[]",
       "description": "One or more grant numbers. If no values are supplied, this filter is ignored.",
       "supportsExclusion": true,
       "supportsFuzzyMatch": true
     },
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "description": "One or more recipient names. If no values are supplied, this filter is ignored.",
       "supportsExclusion": true,
       "supportsFuzzyMatch": true,
       "options": {
         "query": {
-          "sqlQuery": "SELECT DISTINCT r.name FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY r.name;",
+          "sqlQuery": "SELECT DISTINCT r.name FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''), '[]')::json) AS value)) ORDER BY r.name;",
           "column": "name"
         }
       }
@@ -159,7 +159,7 @@ JSON: {
       "supportsFuzzyMatch": true,
       "options": {
         "query": {
-          "sqlQuery": "SELECT DISTINCT r.uei FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''), '[]')::json) AS value)) ORDER BY r.uei;",
+          "sqlQuery": "SELECT DISTINCT r.uei FROM \"Recipients\" r JOIN \"Grants\" gr ON r.id = gr.\"recipientId\" WHERE gr.status = 'Active' AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL OR gr.\"regionId\"::int IN (SELECT value::integer AS my_array FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''), '[]')::json) AS value)) ORDER BY r.uei;",
           "column": "uei"
         }
       }
@@ -324,25 +324,25 @@ AND (
     )
   )
 )
--- Filter for findingStatus if ssdi.findingStatuses is defined
+-- Filter for findingStatus if ssdi.findingStatus is defined
 AND (
-  NULLIF(current_setting('ssdi.findingStatuses', true), '') IS NULL
+  NULLIF(current_setting('ssdi.findingStatus', true), '') IS NULL
   OR (
-    (current_setting('ssdi.findingStatuses.not', true) = 'true'
+    (current_setting('ssdi.findingStatus.not', true) = 'true'
       AND mfs2."name" NOT IN (
         SELECT
           value::text
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.findingStatuses', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.findingStatus', true), '[]')::json, '[]'::json)
         )
       )
     )
-    OR (current_setting('ssdi.findingStatuses.not', true) != 'true'
+    OR (current_setting('ssdi.findingStatus.not', true) != 'true'
       AND mfs2."name" IN (
         SELECT
           value::text
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.findingStatuses', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.findingStatus', true), '[]')::json, '[]'::json)
         )
       )
     )
@@ -396,61 +396,61 @@ AND (
     )
   )
 )
--- Filter for regionIds if ssdi.regionIds is defined
+-- Filter for region if ssdi.region is defined
 AND (
-  NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+  NULLIF(current_setting('ssdi.region', true), '') IS NULL
   OR (
     gr."regionId" IN (
       SELECT
         value::integer
       FROM json_array_elements_text(
-        COALESCE(NULLIF(current_setting('ssdi.regionIds', true), '[]')::json, '[]'::json)
+        COALESCE(NULLIF(current_setting('ssdi.region', true), '[]')::json, '[]'::json)
       )
     )
   )
 )
--- Filter for grantNumbers if ssdi.grantNumbers is defined
+-- Filter for grantNumber if ssdi.grantNumber is defined
 AND (
-  NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
+  NULLIF(current_setting('ssdi.grantNumber', true), '') IS NULL
   OR (
-    (current_setting('ssdi.grantNumbers.not', true) = 'true'
+    (current_setting('ssdi.grantNumber.not', true) = 'true'
       AND NOT EXISTS (
         SELECT 1
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.grantNumber', true), '[]')::json, '[]'::json)
         ) AS value
         WHERE gr.number ~* value::text
       )
     )
-    OR (current_setting('ssdi.grantNumbers.not', true) != 'true'
+    OR (current_setting('ssdi.grantNumber.not', true) != 'true'
       AND EXISTS (
         SELECT 1
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.grantNumber', true), '[]')::json, '[]'::json)
         ) AS value
         WHERE gr.number ~* value::text
       )
     )
   )
 )
--- Filter for recipients if ssdi.recipients is defined
+-- Filter for recipient if ssdi.recipient is defined
 AND (
-  NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+  NULLIF(current_setting('ssdi.recipient', true), '') IS NULL
   OR (
-    (current_setting('ssdi.recipients.not', true) = 'true'
+    (current_setting('ssdi.recipient.not', true) = 'true'
       AND NOT EXISTS (
         SELECT 1
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.recipients', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.recipient', true), '[]')::json, '[]'::json)
         ) AS value
         WHERE r.name ~* value::text
       )
     )
-    OR (current_setting('ssdi.recipients.not', true) != 'true'
+    OR (current_setting('ssdi.recipient.not', true) != 'true'
       AND EXISTS (
         SELECT 1
         FROM json_array_elements_text(
-          COALESCE(NULLIF(current_setting('ssdi.recipients', true), '[]')::json, '[]'::json)
+          COALESCE(NULLIF(current_setting('ssdi.recipient', true), '[]')::json, '[]'::json)
         ) AS value
         WHERE r.name ~* value::text
       )

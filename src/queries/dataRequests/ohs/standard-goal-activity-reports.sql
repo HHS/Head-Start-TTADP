@@ -30,7 +30,7 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "One or more values for 1 through 12 representing the region IDs."
@@ -48,13 +48,13 @@ JSON: {
       "description": "One or more values for 'CLASS' and/or 'FEI' to filter by goal template. Defaults to 'CLASS' if no value is provided."
     },
     {
-      "name": "grantNumbers",
+      "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
       "description": "One or more grant numbers to filter the results."
     },
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
       "description": "One or more recipient names to filter the results."
@@ -132,26 +132,26 @@ WITH
           )::daterange AS my_array
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.startDate', true), ''),'[]')::json) AS value
       ))
-    -- Filter for regionIds if ssdi.regionIds is defined
-    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
       OR a."regionId" in (
         SELECT
           value::integer AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
       ))
-    -- Filter for grantNumbers if ssdi.grantNumbers is defined
-    AND (NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
+    -- Filter for grantNumber if ssdi.grantNumber is defined
+    AND (NULLIF(current_setting('ssdi.grantNumber', true), '') IS NULL
       OR gr.number in (
         SELECT
           value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumber', true), ''),'[]')::json) AS value
       ))
-    -- Filter for recipients if ssdi.recipients is defined
-    AND (NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+    -- Filter for recipient if ssdi.recipient is defined
+    AND (NULLIF(current_setting('ssdi.recipient', true), '') IS NULL
       OR r.name in (
         SELECT
           value::text AS my_array
-        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
+        FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipient', true), ''),'[]')::json) AS value
       ))
     -- Filter for UEI if ssdi.uei is defined
     AND (NULLIF(current_setting('ssdi.uei', true), '') IS NULL

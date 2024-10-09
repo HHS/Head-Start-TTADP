@@ -90,7 +90,7 @@ JSON: {
   },
   "filters": [
     {
-      "name": "regionIds",
+      "name": "region",
       "type": "integer[]",
       "display": "Region IDs",
       "description": "One or more values for 1 through 12."
@@ -102,7 +102,7 @@ JSON: {
       "description": "Two dates defining a range for the 'createdAt' timestamp to be within."
     },
     {
-      "name": "recipients",
+      "name": "recipient",
       "type": "string[]",
       "display": "Recipient Names",
       "description": "Filter based on the names of the recipients."
@@ -114,7 +114,7 @@ JSON: {
       "description": "Filter based on the Unique Entity Identifier of the recipient."
     },
     {
-      "name": "grantNumbers",
+      "name": "grantNumber",
       "type": "string[]",
       "display": "Grant Numbers",
       "description": "Filter based on the grant numbers."
@@ -175,11 +175,11 @@ AND NOT gr.deleted
 AND NOT (g."createdVia" = 'tr' AND a.id IS NULL)
 AND g.name ~* '(^|[^a-zA-Z])(under[- ]?enrollment|full[- ]?enrollment|fei)($|[^a-zA-Z])'
 AND COALESCE(g."goalTemplateId", 0) != gt.id
--- Filter for regionIds if ssdi.regionIds is defined
-AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+-- Filter for region if ssdi.region is defined
+AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
   OR gr."regionId" in (
   SELECT value::integer AS my_array
-    FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+    FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
   ))
 -- Filter for createdAt dates between two values if ssdi.createdbetween is defined
 AND (NULLIF(current_setting('ssdi.createdbetween', true), '') IS NULL
@@ -187,11 +187,11 @@ AND (NULLIF(current_setting('ssdi.createdbetween', true), '') IS NULL
         SELECT CONCAT('[',MIN(value::timestamp),',',MAX(value::timestamp),')')::daterange AS my_array
         FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.createdbetween', true), ''),'[]')::json) AS value
       ))
--- Filter for recipients if ssdi.recipients is defined
-AND (NULLIF(current_setting('ssdi.recipients', true), '') IS NULL
+-- Filter for recipient if ssdi.recipient is defined
+AND (NULLIF(current_setting('ssdi.recipient', true), '') IS NULL
       OR r.name in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipients', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.recipient', true), ''),'[]')::json) AS value
       ))
 -- Filter for UEI if ssdi.uei is defined
 AND (NULLIF(current_setting('ssdi.uei', true), '') IS NULL
@@ -199,11 +199,11 @@ AND (NULLIF(current_setting('ssdi.uei', true), '') IS NULL
         SELECT value::text AS my_array
           FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.uei', true), ''),'[]')::json) AS value
       ))
--- Filter for grantNumbers if ssdi.grantNumbers is defined
-AND (NULLIF(current_setting('ssdi.grantNumbers', true), '') IS NULL
+-- Filter for grantNumber if ssdi.grantNumber is defined
+AND (NULLIF(current_setting('ssdi.grantNumber', true), '') IS NULL
       OR gr.number in (
         SELECT value::text AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumbers', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.grantNumber', true), ''),'[]')::json) AS value
       ))
 -- Filter for status if ssdi.status is defined
 AND (NULLIF(current_setting('ssdi.status', true), '') IS NULL

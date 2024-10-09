@@ -469,7 +469,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ region: [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
@@ -485,7 +485,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path', format: 'csv' })
-        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ region: [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
@@ -496,7 +496,7 @@ describe('API Endpoints', () => {
     it('should return 400 if script path is not provided', async () => {
       const response = await request(app)
         .post('/runQuery')
-        .send({ recipientIds: [1, 2, 3] })
+        .send({ recipient: [1, 2, 3] })
         .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.text).toBe('Script path is required');
@@ -506,7 +506,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: '../outside/path' })
-        .send({ recipientIds: [1, 2, 3] })
+        .send({ recipient: [1, 2, 3] })
         .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
@@ -516,13 +516,13 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'some/other/path' })
-        .send({ recipientIds: [1, 2, 3] })
+        .send({ recipient: [1, 2, 3] })
         .send({ cache: false });
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
     });
 
-    it('should return 200 if regionIds are missing', async () => {
+    it('should return 200 if region are missing', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
@@ -536,7 +536,7 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should return 200 if regionIds are not an array of integers', async () => {
+    it('should return 200 if region are not an array of integers', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
@@ -545,7 +545,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: 'invalidType' }) // Invalid data type
+        .send({ region: 'invalidType' }) // Invalid data type
         .send({ cache: false });
       expect(response.status).toBe(200);
     });
@@ -567,7 +567,7 @@ describe('API Endpoints', () => {
       expect(response.text).toBe('Error executing query: Error reading query');
     });
 
-    it('should filter out non-integer regionIds', async () => {
+    it('should filter out non-integer region', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
@@ -581,14 +581,14 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 'a', 2, 'b', 3] })
+        .send({ region: [1, 'a', 2, 'b', 3] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
       expect(filterRegionsMock).toHaveBeenCalledWith([1, 2, 3]);
     });
 
-    it('should return 401 when no regionIds are available', async () => {
+    it('should return 401 when no region are available', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
@@ -606,7 +606,7 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should filter regionIds using policy', async () => {
+    it('should filter region using policy', async () => {
       currentUserId.mockResolvedValue(1);
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
@@ -620,7 +620,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ region: [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
@@ -684,7 +684,7 @@ describe('API Endpoints', () => {
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/dataRequests/test/path')
-        .send({ regionIds: [1, 2, 3, 4] })
+        .send({ region: [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
