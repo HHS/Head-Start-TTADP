@@ -376,7 +376,7 @@ describe('Course dashboard', () => {
 
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(1);
-    expect(headers[0]).toBe('Jan-25');
+    expect(headers[0]).toBe({ displayName: 'Jan-25', name: 'January 2025' });
 
     const expectedResults = [
       {
@@ -477,8 +477,8 @@ describe('Course dashboard', () => {
 
     expect(headers).not.toBeNull();
     expect(headers.length).toBe(2);
-    expect(headers[0]).toBe('Jan-21');
-    expect(headers[1]).toBe('Feb-21');
+    expect(headers[0]).toBe({ displayName: 'Jan-25', name: 'January 2025' });
+    expect(headers[1]).toBe({ displayName: 'Feb-21', name: 'February 2025' });
 
     expect(courses).not.toBeNull();
     expect(courses.length).toBe(3);
@@ -561,8 +561,8 @@ describe('Course dashboard', () => {
     const { headers, courses } = result;
 
     expect(headers.length).toBe(2);
-    expect(headers[0]).toBe('Mar-24');
-    expect(headers[1]).toBe('Apr-24');
+    expect(headers[0]).toBe({ displayName: 'Mar-24', name: 'March 2024' });
+    expect(headers[1]).toBe({ displayName: 'Apr-24', name: 'April 2024' });
 
     expect(courses).not.toBeNull();
     expect(courses.length).toBe(1);
