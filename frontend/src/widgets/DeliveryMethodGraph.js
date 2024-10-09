@@ -5,6 +5,7 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -88,6 +89,7 @@ export default function DeliveryMethodGraph({ data, loading }) {
         totalHybridCount: 0,
         averageHybridPercentage: 0,
       });
+
       return;
     }
 
@@ -96,17 +98,21 @@ export default function DeliveryMethodGraph({ data, loading }) {
     // that the LineGraph component expects
     // (an object for each trace)
     // and the table (an array of objects in the format defined by proptypes)
-    const {
-      records,
-      total_in_person_count: totalInPerson,
-      average_in_person_percentage: averageInPersonPercentage,
-      total_virtual_count: totalVirtualCount,
-      average_virtual_percentage: averageVirtualPercentage,
-      total_hybrid_count: totalHybridCount,
-      average_hybrid_percentage: averageHybridPercentage,
-    } = data;
 
-    console.log('data passed to DeliveryMethodGraph', data);
+    const { records: unfilteredRecords } = data;
+    const total = [...unfilteredRecords].pop();
+    const records = unfilteredRecords.filter((record) => record.month !== 'Total');
+
+    console.log(total);
+
+    const {
+      in_person_count: totalInPerson,
+      in_person_percentage: averageInPersonPercentage,
+      virtual_count: totalVirtualCount,
+      virtual_percentage: averageVirtualPercentage,
+      hybrid_count: totalHybridCount,
+      hybrid_percentage: averageHybridPercentage,
+    } = total;
 
     const tableData = [];
     // use a map for quick lookup
@@ -123,7 +129,7 @@ export default function DeliveryMethodGraph({ data, loading }) {
 
     records.forEach((dataset, index) => {
       tableData.push({
-        heading: dataset.month,
+        heading: moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'),
         sortKey: index + 1,
         id: index + 1,
         data: [
@@ -160,25 +166,25 @@ export default function DeliveryMethodGraph({ data, loading }) {
         ],
       });
 
-      traceMap.get('In person').x.push(dataset.month);
+      traceMap.get('In person').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('In person').y.push(dataset.in_person_percentage);
 
-      traceMap.get('Virtual').x.push(dataset.month);
+      traceMap.get('Virtual').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('Virtual').y.push(dataset.virtual_percentage);
 
-      traceMap.get('Hybrid').x.push(dataset.month);
+      traceMap.get('Hybrid').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
 
     setTraces(Array.from(traceMap.values()));
     setTabularData(tableData);
     setTotals({
-      totalInPerson,
-      averageInPersonPercentage,
-      totalVirtualCount,
-      averageVirtualPercentage,
-      totalHybridCount,
-      averageHybridPercentage,
+      totalInPerson: totalInPerson.toLocaleString('en-us'),
+      averageInPersonPercentage: `${averageInPersonPercentage}%`,
+      totalVirtualCount: totalVirtualCount.toLocaleString('en-us'),
+      averageVirtualPercentage: `${averageVirtualPercentage}%`,
+      totalHybridCount: totalHybridCount.toLocaleString('en-us'),
+      averageHybridPercentage: `${averageHybridPercentage}%`,
     });
   }, [data]);
   // end use effect
