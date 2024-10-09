@@ -55,15 +55,87 @@ export default function QADashboard() {
   );
 
   useDeepCompareEffect(() => {
-    async function fetchQaDat() {
+    async function fetchQaData() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        const data = await getSelfServiceData(
+        /*
+        // Recipient with no tta data.
+        const recipientsWithNoTtaData = await getSelfServiceData(
+          'recipients-with-no-tta',
+          filters,
+          ['no_tta_widget'],
+        );
+        const noTTAData = recipientsWithNoTtaData.find((item) => item.data_set === 'no_tta_widget');
+
+        // FEI data.
+        const feiData = await getSelfServiceData(
+          'recipients-with-ohs-standard-fei-goal',
+          filters,
+          ['with_fei_widget', 'with_fei_graph'],
+        );
+        const feiOverviewData = feiData.find((item) => item.data_set === 'with_fei_widget');
+        const feiGraphData = feiData.find((item) => item.data_set === 'with_fei_graph');
+
+        const rootCauseFeiGoalsGraph = {
+          records: feiGraphData.data,
+          totalNumberOfGoals: feiOverviewData.data[0].total,
+          totalNumberOfRootCauses: feiOverviewData.data[0]['recipients with fei'],
+        };
+
+        // CLASS data.
+        const classData = await getSelfServiceData(
+          'recipients-with-class-scores-and-goals',
+          filters,
+          ['with_class_widget'],
+        );
+        const classOverviewData = classData.find((item) => item.data_set === 'with_class_widget');
+
+        // Build overview data.
+        const overviewData = {
+          recipientsWithNoTTA: {
+            pct: noTTAData.data[0]['% recipients without tta'] || '0%',
+          },
+          recipientsWithOhsStandardFeiGoals: {
+            pct: feiOverviewData.data[0]['% recipients with fei'] || '0%',
+          },
+          recipientsWithOhsStandardClass: {
+            pct: classOverviewData.data[0]['% recipients with class'] || '0%',
+          },
+        };
+        */
+        // Dashboard data.
+        const dashboardData = await getSelfServiceData(
           'qa-dashboard',
           filters,
+          ['delivery_method_graph', 'role_graph'],
         );
-        setQaData(data);
+
+        console.log('----------------> await come back with data: ', dashboardData);
+
+        const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
+        const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
+
+        const deliveryMethod = {
+          records: deliveryMethodData.data,
+          totalInPerson: 0,
+          averageInPersonPercentage: 0,
+          totalVirtualCount: 0,
+          averageVirtualPercentage: 0,
+          totalHybridCount: 0,
+          averageHybridPercentage: 0,
+        };
+
+        console.log('-----ALL: deliveryMethod ', deliveryMethod);
+
+       
+
+        // Set data.
+        setQaData({
+          //overviewData,
+          //rootCauseFeiGoalsGraph,
+          deliveryMethod,
+        });
         updateError('');
       } catch (e) {
         updateError('Unable to fetch QA data');
@@ -72,7 +144,7 @@ export default function QADashboard() {
       }
     }
     // Call resources fetch.
-    fetchQaDat();
+    fetchQaData();
   }, [filters]);
 
   return (

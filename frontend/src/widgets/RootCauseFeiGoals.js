@@ -87,6 +87,8 @@ export default function RootCauseFeiGoals({ data }) {
       totalNumberOfRootCauses,
     } = data;
 
+    console.log('records>>>>>', records);
+
     const tableData = [];
     const traceData = [];
 

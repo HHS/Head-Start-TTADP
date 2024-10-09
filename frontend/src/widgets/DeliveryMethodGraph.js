@@ -33,7 +33,7 @@ const DEFAULT_SORT_CONFIG = {
 
 const KEY_COLUMNS = ['Months'];
 
-export default function DeliveryMethodGraph({ data }) {
+export default function DeliveryMethodGraph({ data, loading }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Total TTA hours');
   const [showTabularData, setShowTabularData] = useState(false);
@@ -105,6 +105,8 @@ export default function DeliveryMethodGraph({ data }) {
       total_hybrid_count: totalHybridCount,
       average_hybrid_percentage: averageHybridPercentage,
     } = data;
+
+    console.log('data passed to DeliveryMethodGraph', data);
 
     const tableData = [];
     // use a map for quick lookup
@@ -230,7 +232,7 @@ export default function DeliveryMethodGraph({ data }) {
 
   return (
     <WidgetContainer
-      loading={false}
+      loading={loading}
       title="Delivery method"
       subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
       subtitle2="11,510 Activity reports"
@@ -279,8 +281,10 @@ DeliveryMethodGraph.propTypes = {
       }),
     ),
   }),
+  loading: PropTypes.bool,
 };
 
 DeliveryMethodGraph.defaultProps = {
   data: null,
+  loading: false,
 };
