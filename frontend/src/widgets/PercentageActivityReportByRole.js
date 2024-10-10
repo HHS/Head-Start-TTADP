@@ -24,7 +24,7 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-export default function PercentageActivityReportByRole({ data }) {
+export default function PercentageActivityReportByRole({ data, loading }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Percentage of activity reports by role');
   const [showTabularData, setShowTabularData] = useState(false);
@@ -64,6 +64,16 @@ export default function PercentageActivityReportByRole({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfReports: 0,
+        totalPercentage: 100,
+      });
+      return;
+    }
+
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
@@ -123,7 +133,7 @@ export default function PercentageActivityReportByRole({ data }) {
     <div>
 
       <WidgetContainer
-        loading={false}
+        loading={loading}
         title="Percentage of activity reports by role"
         subtitle="Activity report by specialist role"
         subtitle2="11,510 Activity reports"
@@ -174,4 +184,9 @@ PercentageActivityReportByRole.propTypes = {
       percentage: PropTypes.number,
     })),
   }).isRequired,
+  loading: PropTypes.bool,
+};
+
+PercentageActivityReportByRole.defaultProps = {
+  loading: false,
 };

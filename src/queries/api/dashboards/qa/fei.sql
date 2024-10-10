@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -554,7 +560,8 @@ WITH
   with_fei AS (
     SELECT
       r.id,
-      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei
+      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -572,7 +579,8 @@ WITH
       (((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
       COUNT(DISTINCT wf.id)))*100)::decimal(5,2) "% recipients with fei",
       COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
-      COUNT(DISTINCT wf.id) total
+      COUNT(DISTINCT wf.id) total,
+      SUM(grant_count) "grants with fei"
     FROM with_fei wf
   ),
   
@@ -632,7 +640,8 @@ WITH
     JSONB_AGG(JSONB_BUILD_OBJECT(
       '% recipients with fei', "% recipients with fei",
       'recipients with fei', "recipients with fei",
-      'total', total
+      'total', total,
+      'grants with fei', "grants with fei"
     )) AS data,
     af.active_filters
     FROM with_fei_widget

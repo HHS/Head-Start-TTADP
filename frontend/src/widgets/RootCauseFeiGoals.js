@@ -27,7 +27,7 @@ const DEFAULT_SORT_CONFIG = {
   activePage: 1,
 };
 
-export default function RootCauseFeiGoals({ data }) {
+export default function RootCauseFeiGoals({ data, loading }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'RootCauseOnFeiGoals');
   const [showTabularData, setShowTabularData] = useState(false);
@@ -67,6 +67,15 @@ export default function RootCauseFeiGoals({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTrace([]);
+      setTotals({
+        totalNumberOfGoals: 0,
+        totalNumberOfRootCauses: 0,
+      });
+      return;
+    }
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
@@ -126,7 +135,7 @@ export default function RootCauseFeiGoals({ data }) {
     <div>
       <WidgetContainer
         className="tta-qa-dashboard-percentage-ars-by-role"
-        loading={false}
+        loading={loading}
         title="Root cause on FEI goals"
         subtitle="Each goal can have up to 2 root causes"
         subtitle2={`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
@@ -178,4 +187,9 @@ RootCauseFeiGoals.propTypes = {
       percentage: PropTypes.number,
     })),
   }).isRequired,
+  loading: PropTypes.bool,
+};
+
+RootCauseFeiGoals.defaultProps = {
+  loading: false,
 };
