@@ -46,7 +46,6 @@ import {
 import useLocalStorage, { setConnectionActiveWithError } from '../../hooks/useLocalStorage';
 import NetworkContext, { isOnlineMode } from '../../NetworkContext';
 import UserContext from '../../UserContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const defaultValues = {
   ECLKCResourcesUsed: [],
@@ -204,7 +203,6 @@ function ActivityReport({
   const [creatorNameWithRole, updateCreatorRoleWithName] = useState('');
   const reportId = useRef();
   const { user } = useContext(UserContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -264,7 +262,7 @@ function ActivityReport({
             fetchedReport = await getReport(activityReportId);
           } catch (e) {
             // If error retrieving the report show the "something went wrong" page.
-            setErrorResponseCode(e.status);
+            history.push('/something-went-wrong/500');
           }
           report = convertReportToFormData(fetchedReport);
         } else {

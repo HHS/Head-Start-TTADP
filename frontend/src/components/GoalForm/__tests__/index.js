@@ -19,7 +19,6 @@ import UserContext from '../../../UserContext';
 import { OBJECTIVE_ERROR_MESSAGES } from '../constants';
 import { BEFORE_OBJECTIVES_CREATE_GOAL, BEFORE_OBJECTIVES_SELECT_RECIPIENTS } from '../Form';
 import AppLoadingContext from '../../../AppLoadingContext';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
 const [objectiveTitleError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -38,6 +37,7 @@ const topicsFromApi = [
 ].map((name, id) => ({ name, id }));
 
 describe('create goal', () => {
+  const history = createMemoryHistory();
   const defaultRecipient = {
     id: 1,
     grants: [
@@ -103,33 +103,30 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, goalId = 'new', setErrorResponseCode = jest.fn()) {
-    const history = createMemoryHistory();
+  function renderForm(recipient = defaultRecipient, goalId = 'new') {
     render((
       <Router history={history}>
-        <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
-          <UserContext.Provider value={{
-            user: {
-              permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
-            },
-          }}
-          >
-            <AppLoadingContext.Provider value={
+        <UserContext.Provider value={{
+          user: {
+            permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+          },
+        }}
+        >
+          <AppLoadingContext.Provider value={
           {
             setIsAppLoading: jest.fn(),
             setAppLoadingText: jest.fn(),
             isAppLoading: false,
           }
         }
-            >
-              <CreateGoal
-                recipient={recipient}
-                regionId="1"
-                isNew={goalId === 'new'}
-              />
-            </AppLoadingContext.Provider>
-          </UserContext.Provider>
-        </SomethingWentWrongContext.Provider>
+          >
+            <CreateGoal
+              recipient={recipient}
+              regionId="1"
+              isNew={goalId === 'new'}
+            />
+          </AppLoadingContext.Provider>
+        </UserContext.Provider>
       </Router>
     ));
   }
@@ -372,14 +369,19 @@ describe('create goal', () => {
     expect(alert.textContent).toBe('There was an error saving your goal');
   });
 
-  it('correctly calls the setErrorResponseCode function when there is an error', async () => {
-    const setErrorResponseCode = jest.fn();
+  it('correctly redirects when there is an error', async () => {
+    const spy = jest.spyOn(history, 'push');
     fetchMock.restore();
     fetchMock.get('/api/recipient/1/goals?goalIds=', 500);
     await act(async () => {
-      renderForm(defaultRecipient, '48743', setErrorResponseCode);
-      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+      renderForm(defaultRecipient, '48743');
     });
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/recipient/1/goals?goalIds=')).toBeTruthy();
+    });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('removes goals', async () => {

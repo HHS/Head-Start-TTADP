@@ -19,6 +19,7 @@ const colors = {
 
   baseDarkest: '#1b1b1b',
   baseDark: '#565c65',
+  baseMedium: '#71767A',
   baseLight: '#a9aeb1',
   baseLighter: '#dfe1e2',
   baseLightest: '#f0f0f0',

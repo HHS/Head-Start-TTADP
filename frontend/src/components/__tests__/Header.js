@@ -7,7 +7,6 @@ import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import Header from '../Header';
 import UserContext from '../../UserContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const history = createMemoryHistory();
 
@@ -15,20 +14,17 @@ describe('Header', () => {
   const renderHeader = (
     authenticated,
     alert,
-    errorResponseCode = null,
-    showingNotFound = false,
+
   ) => {
     render((
       <Router history={history}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <SomethingWentWrongContext.Provider value={{ errorResponseCode, showingNotFound }}>
-            <Header
-              authenticated={authenticated}
-              alert={alert}
-              areThereUnreadNotifications={false}
-              setAreThereUnreadNotifications={jest.fn()}
-            />
-          </SomethingWentWrongContext.Provider>
+          <Header
+            authenticated={authenticated}
+            alert={alert}
+            areThereUnreadNotifications={false}
+            setAreThereUnreadNotifications={jest.fn()}
+          />
         </UserContext.Provider>
       </Router>
     ));
