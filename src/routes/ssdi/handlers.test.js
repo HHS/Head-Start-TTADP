@@ -581,7 +581,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ region: [1, 'a', 2, 'b', 3] })
+        .send({ 'region.in': [1, 'a', 2, 'b', 3] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
@@ -620,7 +620,7 @@ describe('API Endpoints', () => {
       const response = await request(app)
         .post('/runQuery')
         .query({ path: 'dataRequests/test/path' })
-        .send({ region: [1, 2, 3, 4] })
+        .send({ 'region.in': [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
@@ -684,7 +684,7 @@ describe('API Endpoints', () => {
       preprocessAndValidateFilters.mockResolvedValue({ result: {}, errors: {} });
       const response = await request(app)
         .post('/dataRequests/test/path')
-        .send({ region: [1, 2, 3, 4] })
+        .send({ 'region.in': [1, 2, 3, 4] })
         .send({ cache: false });
 
       expect(response.status).toBe(200);
