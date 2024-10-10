@@ -20,7 +20,6 @@ import {
   getGoalIdsBySimilarity,
   destroyGoal,
 } from './goals';
-import * as goalStatusService from './goals';
 import {
   sequelize,
   Goal,
@@ -48,6 +47,9 @@ import { similarGoalsForRecipient } from '../services/similarity';
 import {
   getSimilarityGroupsByRecipientId,
 } from '../services/goalSimilarityGroup';
+import {
+  mergeCollaborators,
+} from '../models/helpers/genericCollaborator';
 
 jest.mock('./changeGoalStatus', () => ({
   __esModule: true,
@@ -71,6 +73,9 @@ jest.mock('../services/goalSimilarityGroup', () => ({
   getSimilarityGroupsByRecipientId: jest.fn(),
   createSimilarityGroup: jest.fn(),
   setSimilarityGroupAsUserMerged: jest.fn(),
+}));
+jest.mock('../models/helpers/genericCollaborator', () => ({
+  mergeCollaborators: jest.fn(),
 }));
 
 const mockObjectiveId = 10000001;
@@ -1203,17 +1208,15 @@ describe('Goals DB service', () => {
       ];
 
       Goal.findAll = jest.fn().mockResolvedValue(mockGoals);
-
       Grant.findAll = jest.fn().mockResolvedValue(mockGrantsWithReplacements);
-
       GoalFieldResponse.create = jest.fn().mockResolvedValue({});
-
       Goal.bulkCreate = jest.fn().mockResolvedValue(
         Object.keys(grantToGoalDictionary).map((grantId) => ({
           grantId: parseInt(grantId, 10),
           id: grantToGoalDictionary[grantId],
         })),
       );
+      mergeCollaborators.mockResolvedValue({});
 
       await mergeGoals(finalGoalId, selectedGoalIds, goalSimiliarityGroupId, mockUserId);
 
