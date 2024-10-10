@@ -535,6 +535,7 @@ describe('Objectives DB service', () => {
           id: grant.id,
         },
         force: true,
+        individualHooks: true,
       });
 
       await Recipient.destroy({

@@ -90,7 +90,7 @@ If you are already using git hooks, add the .githooks/pre-commit contents to you
 It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary.
 
 With that in mind, there a few "gotchas" to remember to help write sanitary tests.
-- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete.
+- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete. Additionally, the hooks on destroy also update the materialized view (GrantRelationshipToActive).
 - When you call ```Model.destroy``` you should be adding  ```individualHooks: true``` to the Sequelize options. Often this is required for proper cleanup. There may be times when this is undesirable; this should be indicated with a comment.
 - Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped()
 - There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.
