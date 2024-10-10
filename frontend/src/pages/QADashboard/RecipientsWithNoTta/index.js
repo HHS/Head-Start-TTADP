@@ -64,6 +64,7 @@ export default function RecipientsWithNoTta() {
           ['no_tta_widget', 'no_tta_page'],
         );
 
+        // Get summary and row data.
         const pageData = data.filter((d) => d.data_set === 'no_tta_page');
         const widgetData = data.filter((d) => d.data_set === 'no_tta_widget');
 

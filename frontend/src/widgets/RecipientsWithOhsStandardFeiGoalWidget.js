@@ -14,13 +14,14 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   resetPagination,
   setResetPagination,
 }) {
+  const { pageData, widgetData } = data;
   const defaultSortConfig = {
     sortBy: '1',
     direction: 'desc',
     activePage: 1,
   };
 
-  const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
+  const [recipientDataToUse, setRecipientDataToUse] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
@@ -37,20 +38,20 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     exportRows,
     sortConfig,
   } = useWidgetPaging(
-    data.headers,
+    pageData ? pageData.headers : [],
     'recipientsWithOhsStandardFeiGoal',
     defaultSortConfig,
     RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE,
-    numberOfRecipientsPerPage,
-    setNumberOfRecipientsPerPage,
+    recipientDataToUse, // Data to use.
+    setRecipientDataToUse,
     resetPagination,
     setResetPagination,
     loading,
     checkBoxes,
     'RecipientsWithOhsStandardFeiGoal',
     setRecipientsPerPage,
-    ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
-    ['Goal_created_on'],
+    ['Recipient', 'Goal number', 'Goal status', 'Root cause'],
+    ['Goal created on'],
     'recipientsWithOhsStandardFeiGoal.csv',
   );
 
@@ -58,18 +59,19 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     try {
       // Set local data.
       setLocalLoading(true);
-      const recipientToUse = data.RecipientsWithOhsStandardFeiGoal || [];
-      setNumberOfRecipientsPerPage(recipientToUse);
-      setRecipientCount(recipientToUse.length);
+      const recipientToUse = pageData ? pageData.RecipientsWithOhsStandardFeiGoal : [];
+      setRecipientDataToUse(recipientToUse);
+      setRecipientCount(widgetData ? widgetData['recipients with fei'] : 0);
     } finally {
       setLocalLoading(false);
     }
-  }, [data]);
+  }, [pageData, widgetData]);
 
-  const numberOfGrants = 70;
+  const numberOfGrants = widgetData ? widgetData['grants with fei'] : 0;
   const getSubtitleWithPct = () => {
-    const totalRecipients = 159;
-    return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients (${numberOfGrants} grants)`;
+    const totalRecipients = widgetData ? widgetData.total : 0;
+    const pct = widgetData ? widgetData['% recipients with fei'] : 0;
+    return `${recipientCount} of ${totalRecipients} (${pct}%) recipients (${numberOfGrants} grants)`;
   };
 
   const menuItems = [
@@ -137,7 +139,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         exportRows={exportRows}
       >
         <HorizontalTableWidget
-          headers={data.headers || []}
+          headers={pageData ? pageData.headers : []}
           data={recipientsPerPage || []}
           firstHeading="Recipient"
           enableSorting
@@ -155,21 +157,29 @@ function RecipientsWithOhsStandardFeiGoalWidget({
 }
 
 RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
-  data: PropTypes.oneOfType([
-    PropTypes.shape({
-      headers: PropTypes.arrayOf(PropTypes.string),
-      RecipientsWithOhsStandardFeiGoal: PropTypes.arrayOf(
-        PropTypes.shape({
-          recipient: PropTypes.string,
-          goalCreatedOn: PropTypes.date,
-          goalNumber: PropTypes.string,
-          goalStatus: PropTypes.string,
-          rootCause: PropTypes.string,
-        }),
-      ),
+  data: PropTypes.shape({
+    pageData: PropTypes.oneOfType([
+      PropTypes.shape({
+        headers: PropTypes.arrayOf(PropTypes.string),
+        RecipientsWithOhsStandardFeiGoal: PropTypes.arrayOf(
+          PropTypes.shape({
+            recipientName: PropTypes.string,
+            goalNumber: PropTypes.number,
+            goalStatus: PropTypes.string,
+            rootCause: PropTypes.string,
+            createdAt: PropTypes.string,
+          }),
+        ),
+      }),
+      PropTypes.shape({}),
+    ]),
+    widgetData: PropTypes.shape({
+      'recipients with fei': PropTypes.number,
+      total: PropTypes.number,
+      '% recipients with fei': PropTypes.number,
+      'grants with fei': PropTypes.number,
     }),
-    PropTypes.shape({}),
-  ]),
+  }),
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
   loading: PropTypes.bool.isRequired,
