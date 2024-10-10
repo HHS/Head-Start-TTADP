@@ -159,16 +159,16 @@ const runQuery = async (req: Request, res: Response) => {
     const policy = new User(user);
 
     // Handle regionIds with policy filtering
-    if (filterValues.region && Array.isArray(filterValues.region)) {
-      filterValues.region = filterValues.region
+    if (filterValues['region.in'] && Array.isArray(filterValues['region.in'])) {
+      filterValues['region.in'] = filterValues['region.in']
         .map(Number)
         .filter((num) => !Number.isNaN(num));
-      filterValues.region = policy.filterRegions(filterValues.region);
+      filterValues['region.in'] = policy.filterRegions(filterValues['region.in']);
     } else {
-      filterValues.region = policy.getAllAccessibleRegions();
+      filterValues['region.in'] = policy.getAllAccessibleRegions();
     }
 
-    if (!filterValues.region || filterValues.region.length === 0) {
+    if (!filterValues['region.in'] || filterValues['region.in'].length === 0) {
       res.status(401).json({ error: 'Access forbidden: User has no region access configured.' });
       return;
     }
