@@ -17,7 +17,8 @@ function RecipientsWithNoTtaWidget({
   resetPagination,
   setResetPagination,
 }) {
-  const [numberOfRecipientsPerPage, setNumberOfRecipientsPerPage] = useState([]);
+  const { pageData, widgetData } = data;
+  const [allRecipientData, setAllRecipientData] = useState([]);
   const [recipientCount, setRecipientCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
   const [recipientsPerPage, setRecipientsPerPage] = useState([]);
@@ -31,12 +32,12 @@ function RecipientsWithNoTtaWidget({
     exportRows,
     sortConfig,
   } = useWidgetPaging(
-    data.headers,
+    pageData ? pageData.headers : [],
     'recipientsWithNoTta',
     defaultSortConfig,
     RECIPIENTS_WITH_NO_TTA_PER_PAGE,
-    numberOfRecipientsPerPage,
-    setNumberOfRecipientsPerPage,
+    allRecipientData, // data to use.
+    setAllRecipientData,
     resetPagination,
     setResetPagination,
     loading,
@@ -52,17 +53,17 @@ function RecipientsWithNoTtaWidget({
     try {
       // Set local data.
       setLocalLoading(true);
-      const recipientToUse = data.RecipientsWithNoTta || [];
-      setNumberOfRecipientsPerPage(recipientToUse);
-      setRecipientCount(recipientToUse.length);
+      setAllRecipientData(pageData ? pageData.RecipientsWithNoTta : []); // TODO: Put this back.
+      setRecipientCount(widgetData ? widgetData['recipients without tta'] : 0);
     } finally {
       setLocalLoading(false);
     }
   }, [data]);
 
   const getSubtitleWithPct = () => {
-    const totalRecipients = 159;
-    return `${recipientCount} of ${totalRecipients} (${((recipientCount / totalRecipients) * 100).toFixed(2)}%) recipients`;
+    const totalRecipients = widgetData ? widgetData.total : 0;
+    const pct = widgetData ? widgetData['% recipients without tta'] : 0;
+    return `${recipientCount} of ${totalRecipients} (${pct}%) recipients`;
   };
 
   const menuItems = [
@@ -96,7 +97,7 @@ function RecipientsWithNoTtaWidget({
       menuItems={menuItems}
     >
       <HorizontalTableWidget
-        headers={data.headers || []}
+        headers={pageData ? pageData.headers : []}
         data={recipientsPerPage || []}
         firstHeading="Recipient"
         enableSorting
@@ -113,19 +114,26 @@ function RecipientsWithNoTtaWidget({
 }
 
 RecipientsWithNoTtaWidget.propTypes = {
-  data: PropTypes.oneOfType([
-    PropTypes.shape({
-      headers: PropTypes.arrayOf(PropTypes.string),
-      RecipientsWithNoTta: PropTypes.arrayOf(
-        PropTypes.shape({
-          recipient: PropTypes.string,
-          dateOfLastTta: PropTypes.date,
-          daysSinceLastTta: PropTypes.number,
-        }),
-      ),
+  data: PropTypes.shape({
+    pageData: PropTypes.oneOfType([
+      PropTypes.shape({
+        headers: PropTypes.arrayOf(PropTypes.string),
+        RecipientsWithNoTta: PropTypes.arrayOf(
+          PropTypes.shape({
+            recipient: PropTypes.string,
+            dateOfLastTta: PropTypes.date,
+            daysSinceLastTta: PropTypes.number,
+          }),
+        ),
+      }),
+      PropTypes.shape({}),
+    ]),
+    widgetData: PropTypes.shape({
+      'recipients without tta': PropTypes.number,
+      total: PropTypes.number,
+      '% recipients without tta': PropTypes.number,
     }),
-    PropTypes.shape({}),
-  ]),
+  }),
   resetPagination: PropTypes.bool,
   setResetPagination: PropTypes.func,
   loading: PropTypes.bool.isRequired,

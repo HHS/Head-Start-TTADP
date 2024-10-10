@@ -61,9 +61,48 @@ export default function RecipientsWithNoTta() {
         const data = await getSelfServiceData(
           'recipients-with-no-tta',
           filters,
-          ['no_tta_widget'],
+          ['no_tta_widget', 'no_tta_page'],
         );
-        setRecipientsWithNoTTA(data);
+
+        const pageData = data.filter((d) => d.data_set === 'no_tta_page');
+        const widgetData = data.filter((d) => d.data_set === 'no_tta_widget');
+
+        // Format the recipient data for the generic widget.
+        let formattedRecipientPageData = pageData[0].data.map((item) => {
+          const recipientId = item['recipient id'];
+          const recipientName = item['recipient name'];
+          const dateOfLastTta = item['last tta'];
+          const daysSinceLastTta = item['days since last tta'];
+          return {
+            id: recipientId,
+            heading: recipientName,
+            name: recipientName,
+            isURL: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile', // TODO: Set to correct link.
+            data: [
+              {
+                title: 'Date_of_Last_TTA',
+                value: dateOfLastTta,
+              },
+              {
+                title: 'Days_Since_Last_TTA',
+                value: daysSinceLastTta,
+              },
+            ],
+          };
+        });
+
+        // Add headers.
+        formattedRecipientPageData = {
+          headers: ['Date of Last TTA', 'Days Since Last TTA'],
+          RecipientsWithNoTta: [...formattedRecipientPageData],
+        };
+
+        setRecipientsWithNoTTA({
+          pageData: formattedRecipientPageData,
+          widgetData: widgetData[0].data[0],
+        });
         updateError('');
       } catch (e) {
         updateError('Unable to fetch QA data');

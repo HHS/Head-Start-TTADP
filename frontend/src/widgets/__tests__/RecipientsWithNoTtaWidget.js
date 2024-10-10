@@ -31,41 +31,48 @@ describe('Recipients with no tta Widget', () => {
 
   it('renders correctly with data', async () => {
     const data = {
-      headers: ['Date of Last TTA', 'Days Since Last TTA'],
-      RecipientsWithNoTta: [
-        {
-          heading: 'Test Recipient 1',
-          name: 'Test Recipient 1',
-          recipient: 'Test Recipient 1',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Date of Last TTA',
-            value: '2021-09-01',
+      widgetData: {
+        total: 1460,
+        'recipients without tta': 794,
+        '% recipients without tta': 54.38,
+      },
+      pageData: {
+        headers: ['Date of Last TTA', 'Days Since Last TTA'],
+        RecipientsWithNoTta: [
+          {
+            heading: 'Test Recipient 1',
+            name: 'Test Recipient 1',
+            recipient: 'Test Recipient 1',
+            isUrl: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile',
+            data: [{
+              title: 'Date of Last TTA',
+              value: '2021-09-01',
+            },
+            {
+              title: 'Days Since Last TTA',
+              value: '90',
+            }],
           },
           {
-            title: 'Days Since Last TTA',
-            value: '90',
-          }],
-        },
-        {
-          heading: 'Test Recipient 2',
-          name: 'Test Recipient 2',
-          recipient: 'Test Recipient 2',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Date of Last TTA',
-            value: '2021-09-02',
+            heading: 'Test Recipient 2',
+            name: 'Test Recipient 2',
+            recipient: 'Test Recipient 2',
+            isUrl: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile',
+            data: [{
+              title: 'Date of Last TTA',
+              value: '2021-09-02',
+            },
+            {
+              title: 'Days Since Last TTA',
+              value: '91',
+            }],
           },
-          {
-            title: 'Days Since Last TTA',
-            value: '91',
-          }],
-        },
-      ],
+        ],
+      },
     };
     rendersRecipientsWithNoTta(data);
 
