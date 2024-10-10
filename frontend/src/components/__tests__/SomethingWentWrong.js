@@ -1,7 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Router } from 'react-router';
+import userEvent from '@testing-library/user-event';
 import SomethingWentWrong from '../SomethingWentWrong';
 import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
@@ -74,5 +75,17 @@ describe('SomethingWentWrong component', () => {
     expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument();
     expect(screen.getByText(/Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i)).toBeInTheDocument();
     expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();
+  });
+
+  it('handles a click on the home', async () => {
+    renderSomethingWentWrong(500);
+
+    const button = await screen.findByRole('button', { name: /home/i });
+
+    act(() => {
+      userEvent.click(button);
+    });
+
+    expect(history.location.pathname).toBe('/');
   });
 });

@@ -16,6 +16,7 @@ import GoalsPercentage from '../../widgets/RegionalGoalDashboard/GoalsPercentage
 import GoalStatusChart from '../../widgets/RegionalGoalDashboard/GoalStatusChart';
 import TotalHrsAndRecipientGraphWidget from '../../widgets/TotalHrsAndRecipientGraph';
 import TopicsTable from '../../widgets/RegionalGoalDashboard/TopicsTable';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 
 const defaultDate = formatDateRange({
   forDateTime: true,
@@ -121,7 +122,7 @@ export default function RegionalGoalDashboard() {
         {' '}
         Goal Dashboard
       </h1>
-      <Grid className="ttahub-dashboard--filters display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+      <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for regional dashboard"
           filters={filters}
@@ -130,7 +131,7 @@ export default function RegionalGoalDashboard() {
           filterConfig={DASHBOARD_FILTER_CONFIG}
           allUserRegions={regions}
         />
-      </Grid>
+      </FilterPanelContainer>
       <GridContainer className="margin-0 padding-0">
         <GoalsPercentage
           filters={filtersToApply}
