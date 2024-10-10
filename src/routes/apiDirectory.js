@@ -33,6 +33,7 @@ import monitoringRouter from './monitoring';
 import coursesRouter from './courses';
 import { currentUserId } from '../services/currentUser';
 import objectiveRouter from './objectives';
+import ssdiRouter from './ssdi';
 
 export const loginPath = '/login';
 
@@ -80,6 +81,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/communication-logs', communicationLogRouter);
 router.use('/monitoring', monitoringRouter);
 router.use('/courses', coursesRouter);
+router.use('/ssdi', ssdiRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
