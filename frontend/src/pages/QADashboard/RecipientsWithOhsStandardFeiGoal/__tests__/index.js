@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import moment from 'moment';
 import fetchMock from 'fetch-mock';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -25,91 +24,73 @@ const defaultUser = {
   }],
 };
 
-const recipientsWithOhsStandardFeiGoalEmptyData = {
-  headers: ['Recipient', 'Date of Last TTA', 'Days Since Last TTA'],
-  RecipientsWithNoTta: [],
-};
+const recipientsWithOhsStandardFeiGoalEmptyData = [
+  {
+    data_set: 'with_fei_widget',
+    records: '1',
+    data: [
+      {
+        total: 1550,
+        '% recipients with fei': 0,
+        'grants with fei': 0,
+        'recipients with fei': 0,
+      },
+    ],
+  },
+  {
+    data_set: 'with_fei_page',
+    records: '0',
+    data: [],
+  },
+];
 
-const recipientsWithOhsStandardFeiGoalData = {
-  headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
-  RecipientsWithOhsStandardFeiGoal: [
-    {
-      id: 1,
-      heading: 'Test Recipient 1',
-      name: 'Test Recipient 1',
-      recipient: 'Test Recipient 1',
-      isUrl: true,
-      hideLinkIcon: true,
-      link: '/recipient-tta-records/376/region/1/profile',
-      data: [{
-        title: 'Goal_created_on',
-        value: moment('2021-09-01').format('MM/DD/YYYY'),
+const recipientsWithOhsStandardFeiGoalSsdiData = [
+  {
+    data_set: 'with_fei_widget',
+    records: '1',
+    data: [
+      {
+        total: 1550,
+        '% recipients with fei': 55.35,
+        'grants with fei': 1093,
+        'recipients with fei': 858,
+      },
+    ],
+  },
+  {
+    data_set: 'with_fei_page',
+    records: '799',
+    data: [
+      {
+        recipientId: 1,
+        recipientName: 'Test Recipient 1',
+        createdAt: '2021-09-01T13:05:17.944+00:00',
+        goalId: 20628,
+        goalStatus: 'In progress',
+        grantNumber: '234234',
+        rootCause: ['Community Partnership', 'Workforce'],
       },
       {
-        title: 'Goal_number',
-        value: 'G-20628',
+        recipientId: 2,
+        recipientName: 'Test Recipient 2',
+        createdAt: '2021-09-02T13:05:17.944+00:00',
+        goalId: 359813,
+        goalStatus: 'Not started',
+        grantNumber: '234234',
+        rootCause: ['Testing'],
       },
       {
-        title: 'Goal_status',
-        value: 'In progress',
+        recipientId: 3,
+        recipientName: 'Test Recipient 3',
+        createdAt: '2021-09-03T13:05:17.944+00:00',
+        goalId: 457825,
+        goalStatus: 'In progress',
+        grantNumber: '234234',
+        rootCause: ['Facilities'],
       },
-      {
-        title: 'Root_cause',
-        value: 'Community Partnership, Workforce',
-      },
-      ],
-    },
-    {
-      id: 2,
-      heading: 'Test Recipient 2',
-      name: 'Test Recipient 2',
-      recipient: 'Test Recipient 2',
-      isUrl: true,
-      hideLinkIcon: true,
-      link: '/recipient-tta-records/376/region/1/profile',
-      data: [{
-        title: 'Goal_created_on',
-        value: moment('2021-09-02').format('MM/DD/YYYY'),
-      },
-      {
-        title: 'Goal_number',
-        value: 'G-359813',
-      },
-      {
-        title: 'Goal_status',
-        value: 'Not started',
-      },
-      {
-        title: 'Root_cause',
-        value: 'Testing',
-      }],
-    },
-    {
-      id: 3,
-      heading: 'Test Recipient 3',
-      name: 'Test Recipient 3',
-      recipient: 'Test Recipient 3',
-      isUrl: true,
-      hideLinkIcon: true,
-      link: '/recipient-tta-records/376/region/1/profile',
-      data: [{
-        title: 'Goal_created_on',
-        value: moment('2021-09-03').format('MM/DD/YYYY'),
-      },
-      {
-        title: 'Goal_number',
-        value: 'G-457825',
-      },
-      {
-        title: 'Goal_status',
-        value: 'In progress',
-      },
-      {
-        title: 'Root_cause',
-        value: 'Facilities',
-      }],
-    }],
-};
+    ],
+  },
+];
 
 const renderRecipientsWithOhsStandardFeiGoal = (user = defaultUser) => {
   render(
@@ -125,9 +106,8 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   afterEach(() => {
     fetchMock.restore();
   });
-
   it('renders correctly without data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalEmptyData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalEmptyData);
     renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
@@ -135,7 +115,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
   });
 
   it('renders correctly with data', async () => {
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
     renderRecipientsWithOhsStandardFeiGoal();
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
@@ -156,7 +136,6 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
 
         expect(screen.queryAllByText(/In progress/i).length).toBe(2);
         expect(screen.getByText(/Not started/i)).toBeInTheDocument();
-
         expect(screen.getByText(/Community Partnership, Workforce/i)).toBeInTheDocument();
         expect(screen.getByText(/Testing/i)).toBeInTheDocument();
         expect(screen.getByText(/Facilities/i)).toBeInTheDocument();
@@ -172,7 +151,7 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
       }],
     };
-    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph', recipientsWithOhsStandardFeiGoalData);
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', recipientsWithOhsStandardFeiGoalSsdiData);
     renderRecipientsWithOhsStandardFeiGoal(u);
 
     expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);

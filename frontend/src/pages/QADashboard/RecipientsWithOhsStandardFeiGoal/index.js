@@ -3,6 +3,7 @@ import React, {
   useRef,
   useContext,
 } from 'react';
+import moment from 'moment';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -63,9 +64,60 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         const data = await getSelfServiceData(
           'recipients-with-ohs-standard-fei-goal',
           filters,
-          ['with_fei_widget', 'with_fei_graph'],
+          ['with_fei_widget', 'with_fei_page'],
         );
-        setRecipientsWithOhsStandardFeiGoal(data);
+
+        // Get summary and row data.
+        const pageData = data.filter((d) => d.data_set === 'with_fei_page');
+        const widgetData = data.filter((d) => d.data_set === 'with_fei_widget');
+
+        // Convert data to format that widget expects.
+        let formattedRecipientPageData = pageData[0].data.map((item) => {
+          const { recipientId } = item;
+          const { recipientName } = item;
+          const { goalId } = item;
+          const { goalStatus } = item;
+          // const { grantNumber } = item;
+          const { createdAt } = item;
+          const { rootCause } = item;
+          return {
+            id: recipientId,
+            heading: recipientName,
+            name: recipientName,
+            isURL: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile', // TODO: Set to correct link.
+            data: [
+              {
+                title: 'Goal_created_on',
+                value: moment(createdAt).format('MM/DD/YYYY'),
+              },
+              {
+                title: 'Goal_number',
+                value: `G-${goalId}`,
+              },
+              {
+                title: 'Goal_status',
+                value: goalStatus,
+              },
+              {
+                title: 'Root_cause',
+                value: rootCause && rootCause.length ? rootCause.join(', ') : '', // Convert array to string.
+              },
+            ],
+          };
+        });
+
+        // Add headers.
+        formattedRecipientPageData = {
+          headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
+          RecipientsWithOhsStandardFeiGoal: [...formattedRecipientPageData],
+        };
+
+        setRecipientsWithOhsStandardFeiGoal({
+          pageData: formattedRecipientPageData,
+          widgetData: widgetData[0].data[0],
+        });
         updateError('');
       } catch (e) {
         updateError('Unable to fetch QA data');

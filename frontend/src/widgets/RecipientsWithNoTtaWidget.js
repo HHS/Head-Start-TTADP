@@ -58,7 +58,7 @@ function RecipientsWithNoTtaWidget({
     } finally {
       setLocalLoading(false);
     }
-  }, [data]);
+  }, [pageData, widgetData]);
 
   const getSubtitleWithPct = () => {
     const totalRecipients = widgetData ? widgetData.total : 0;

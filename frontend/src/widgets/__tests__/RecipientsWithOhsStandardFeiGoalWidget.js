@@ -37,81 +37,89 @@ describe('Recipients with ohs standard fei goal widget', () => {
 
   it('renders correctly with data', async () => {
     const data = {
-      headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
-      RecipientsWithOhsStandardFeiGoal: [
-        {
-          heading: 'Test Recipient 1',
-          name: 'Test Recipient 1',
-          recipient: 'Test Recipient 1',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: moment('2021-09-01').format('MM/DD/YYYY'),
+      widgetData: {
+        total: 1550,
+        '% recipients with fei': 55.35,
+        'grants with fei': 1093,
+        'recipients with fei': 858,
+      },
+      pageData: {
+        headers: ['Goal created on', 'Goal number', 'Goal status', 'Root cause'],
+        RecipientsWithOhsStandardFeiGoal: [
+          {
+            heading: 'Recipient 1',
+            name: 'Test Recipient 1',
+            recipient: 'Test Recipient 1',
+            isUrl: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile',
+            data: [{
+              title: 'Goal_created_on',
+              value: moment('2021-09-01').format('MM/DD/YYYY'),
+            },
+            {
+              title: 'Goal_number',
+              value: 'G-20628',
+            },
+            {
+              title: 'Goal_status',
+              value: 'In progress',
+            },
+            {
+              title: 'Root_cause',
+              value: 'Community Partnership, Workforce',
+            },
+            ],
           },
           {
-            title: 'Goal_number',
-            value: 'G-20628',
+            heading: 'Test Recipient 2',
+            name: 'Test Recipient 2',
+            recipient: 'Test Recipient 2',
+            isUrl: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile',
+            data: [{
+              title: 'Goal_created_on',
+              value: moment('2021-09-02').format('MM/DD/YYYY'),
+            },
+            {
+              title: 'Goal_number',
+              value: 'G-359813',
+            },
+            {
+              title: 'Goal_status',
+              value: 'Not started',
+            },
+            {
+              title: 'Root_cause',
+              value: 'Testing',
+            }],
           },
           {
-            title: 'Goal_status',
-            value: 'In progress',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Community Partnership, Workforce',
-          },
-          ],
-        },
-        {
-          heading: 'Test Recipient 2',
-          name: 'Test Recipient 2',
-          recipient: 'Test Recipient 2',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: moment('2021-09-02').format('MM/DD/YYYY'),
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-359813',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Not started',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Testing',
+            heading: 'Test Recipient 3',
+            name: 'Test Recipient 3',
+            recipient: 'Test Recipient 3',
+            isUrl: true,
+            hideLinkIcon: true,
+            link: '/recipient-tta-records/376/region/1/profile',
+            data: [{
+              title: 'Goal_created_on',
+              value: moment('2021-09-03').format('MM/DD/YYYY'),
+            },
+            {
+              title: 'Goal_number',
+              value: 'G-457825',
+            },
+            {
+              title: 'Goal_status',
+              value: 'Unavailable',
+            },
+            {
+              title: 'Root_cause',
+              value: 'Facilities',
+            }],
           }],
-        },
-        {
-          heading: 'Test Recipient 3',
-          name: 'Test Recipient 3',
-          recipient: 'Test Recipient 3',
-          isUrl: true,
-          hideLinkIcon: true,
-          link: '/recipient-tta-records/376/region/1/profile',
-          data: [{
-            title: 'Goal_created_on',
-            value: moment('2021-09-03').format('MM/DD/YYYY'),
-          },
-          {
-            title: 'Goal_number',
-            value: 'G-457825',
-          },
-          {
-            title: 'Goal_status',
-            value: 'Unavailable',
-          },
-          {
-            title: 'Root_cause',
-            value: 'Facilities',
-          }],
-        }],
+      },
     };
     renderRecipientsWithOhsStandardFeiGoalWidget(data);
 
