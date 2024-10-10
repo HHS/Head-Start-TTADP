@@ -1,19 +1,90 @@
-/**
-* @name: Delivery report
-* @description: A time boxed report of services delivered by user and role
-* @defaultOutputName: delivery_report
-*
-* This query collects all the Monitoring goals used on approved reports within the defined time range.
-*
-* The query results are filterable by the SSDI flags. All SSDI flags are passed as an array of values
-* The following are the available flags within this script:
-* - ssdi.regionIds - integer[] - one or more values for 1 through 12
-* - ssdi.startDate - date[] - two dates defining a range for the startDate to be within
-*
-* zero or more SSDI flags can be set within the same transaction as the query is executed.
-* The following is an example of how to set a SSDI flag:
-* SELECT SET_CONFIG('ssdi.regionIds','[11]',TRUE);
-* SELECT SET_CONFIG('ssdi.startDate','["2024-04-01","2024-04-30"]',TRUE);
+/*
+JSON: {
+  "name": "Delivery Report",
+  "description": {
+    "standard": "A time-boxed report of services delivered by user and role.",
+    "technical": "This query collects all monitoring goals used on approved reports within a defined time range, filtered by region and date range flags. Results are aggregated by user role and include details on the number of reports, total duration, and delivery method breakdown."
+  },
+  "output": {
+    "defaultName": "delivery_report",
+    "schema": [
+      {
+        "columnName": "User Role",
+        "type": "string",
+        "nullable": false,
+        "description": "Role of the user associated with the activity report."
+      },
+      {
+        "columnName": "User",
+        "type": "string",
+        "nullable": true,
+        "description": "Name of the user associated with the activity report."
+      },
+      {
+        "columnName": "Reports",
+        "type": "integer",
+        "nullable": false,
+        "description": "Count of distinct activity reports linked to the user."
+      },
+      {
+        "columnName": "Total Duration",
+        "type": "integer",
+        "nullable": true,
+        "description": "Total duration of services delivered in minutes."
+      },
+      {
+        "columnName": "Total Duration - in-person",
+        "type": "integer",
+        "nullable": true,
+        "description": "Total duration of in-person services delivered in minutes."
+      },
+      {
+        "columnName": "Total Duration - virtual",
+        "type": "integer",
+        "nullable": true,
+        "description": "Total duration of virtual services delivered in minutes."
+      },
+      {
+        "columnName": "Total Duration - hybrid",
+        "type": "integer",
+        "nullable": true,
+        "description": "Total duration of hybrid services delivered in minutes."
+      },
+      {
+        "columnName": "Grants",
+        "type": "integer",
+        "nullable": true,
+        "description": "Count of distinct grants linked to the user."
+      },
+      {
+        "columnName": "Percentage of Grants",
+        "type": "decimal",
+        "nullable": true,
+        "description": "Percentage of grants linked to the user out of the total active grants in the region."
+      },
+      {
+        "columnName": "Percentage of Recipients",
+        "type": "decimal",
+        "nullable": true,
+        "description": "Percentage of recipients linked to the user out of the total active recipients in the region."
+      }
+    ]
+  },
+  "filters": [
+    {
+      "name": "region",
+      "type": "integer[]",
+      "display": "Region IDs",
+      "description": "One or more values for 1 through 12 representing different regions."
+    },
+    {
+      "name": "startDate",
+      "type": "date[]",
+      "display": "Start Date Range",
+      "description": "Two dates defining a range for the 'startDate' to be within."
+    }
+  ]
+}
 */
 WITH
   reports AS (
@@ -26,11 +97,11 @@ WITH
       a."startDate"
     FROM "ActivityReports" a
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if ssdi.regionIds is defined
-    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     -- Filter for startDate dates between two values if ssdi.startDate is defined
     AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
@@ -51,11 +122,11 @@ WITH
     JOIN "ActivityReportCollaborators" arc
     ON a.id = arc."activityReportId"
     WHERE a."calculatedStatus" = 'approved'
-    -- Filter for regionIds if ssdi.regionIds is defined
-    AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    -- Filter for region if ssdi.region is defined
+    AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR a."regionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     -- Filter for startDate dates between two values if ssdi.startDate is defined
     AND (NULLIF(current_setting('ssdi.startDate', true), '') IS NULL
@@ -73,10 +144,10 @@ WITH
     LEFT JOIN "Permissions" p ON u.id = p."userId"
     LEFT JOIN "Scopes" s ON p."scopeId" = s.id
     LEFT JOIN "reports" a ON a."userId" = u.id
-    WHERE (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+    WHERE (NULLIF(current_setting('ssdi.region', true), '') IS NULL
         OR u."homeRegionId" in (
         SELECT value::integer AS my_array
-          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+          FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
         ))
     GROUP BY 1,2,3
     HAVING COUNT(DISTINCT a.id) > 0 OR 'SITE_ACCESS' = ANY(ARRAY_AGG(s.name))
@@ -176,11 +247,11 @@ WITH
       COUNT(DISTINCT gr."recipientId") AS recipient_count
     FROM "Grants" gr
     WHERE gr.status = 'Active'
-      -- Filter for regionIds if ssdi.regionIds is defined
-      AND (NULLIF(current_setting('ssdi.regionIds', true), '') IS NULL
+      -- Filter for region if ssdi.region is defined
+      AND (NULLIF(current_setting('ssdi.region', true), '') IS NULL
           OR gr."regionId" in (
           SELECT value::integer AS my_array
-            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.regionIds', true), ''),'[]')::json) AS value
+            FROM json_array_elements_text(COALESCE(NULLIF(current_setting('ssdi.region', true), ''),'[]')::json) AS value
           ))
   ),
   recipient_data AS (

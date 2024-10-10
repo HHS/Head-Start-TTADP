@@ -6,6 +6,7 @@ import FilterGroups from './FilterGroups';
 import { useDisplayGroups, fixQueryWhetherStringOrArray } from './utils';
 import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 
 export const groupsFilter = {
   id: 'group',
@@ -71,6 +72,24 @@ export const recipientsWithoutTTA = {
       updateSingleDate={onApplyQuery}
       onApplyDateRange={onApplyQuery}
       customDateOptions={RECIPIENT_WITHOUT_TTA_DATE_OPTIONS}
+    />
+  ),
+};
+
+export const grantStatusFilter = {
+  id: 'grantStatus',
+  display: 'Grant status',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'active',
+    'is not': 'active',
+  },
+  displayQuery: displayGrantsStatus,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <GrantStatus
+      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
