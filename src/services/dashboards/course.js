@@ -1,6 +1,6 @@
-/* eslint-disable import/prefer-default-export */
 /* eslint-disable max-len */
 import { Op, QueryTypes } from 'sequelize';
+import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
 import {
   ActivityReport,
@@ -58,7 +58,10 @@ export async function rollUpCourseUrlData(data) {
   headers.sort((h1, h2) => h1.date - h2.date);
 
   // Return the headers and rolled up data.
-  const sortedHeaders = headers.map((h) => h.rollUpDate);
+  const sortedHeaders = headers.map((h) => ({
+    name: moment(h.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
+    displayName: h.rollUpDate,
+  }));
 
   return { headers: sortedHeaders, courses: rolledUpCourseData };
 }

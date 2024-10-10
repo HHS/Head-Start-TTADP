@@ -4,8 +4,23 @@ import { render, screen, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ResourceUse from '../ResourceUse';
 
+const headers = [
+  {
+    name: 'January 2022',
+    displayName: 'Jan-22',
+  },
+  {
+    name: 'February 2022',
+    displayName: 'Feb-22',
+  },
+  {
+    name: 'March 2022',
+    displayName: 'Mar-22',
+  },
+];
+
 const testData = {
-  headers: ['Jan-22', 'Feb-22', 'Mar-22'],
+  headers,
   resources: [
     {
       heading: 'https://eclkc.ohs.acf.hhs.gov/school-readiness/effective-practice-guides/effective-practice-guides',
@@ -87,7 +102,7 @@ const renderResourceUse = (data) => {
 
 describe('Resource Use Widget', () => {
   it('renders correctly without data', async () => {
-    const data = { headers: ['Jan-22', 'Feb-22', 'Mar-22'], resources: [] };
+    const data = { headers, resources: [] };
     renderResourceUse(data);
 
     const button = await screen.findByRole('button', { name: /Display Resource use as table/i });
