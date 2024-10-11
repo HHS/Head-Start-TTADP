@@ -47,6 +47,24 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
+#### Import Current Production Data
+
+Make sure you have access to all the necessary spaces on Cloud.gov
+
+On a Mac
+1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
+2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
+3. Unzip downloaded file.
+4. Ensure you have `psql` (if not `brew install libpq`).
+5. Ensure ttahub docker container is running.
+6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
+7. Migrate data: `yarn docker:db:migrate`
+8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
+9. Restart docker 
+
+On Windows
+TBD
+
 #### Apple Silicon & Chromium
 On a Mac with Apple Silicon, puppeteer install fails with the message:
 ```"The chromium binary is not available for arm64"```
@@ -61,6 +79,10 @@ To ~/.zshrc (or your particular shell config), you'll need to add:
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
+
+On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`).  To resolve:
+
+`brew install docker-compose` 
 
 #### Local build
 
