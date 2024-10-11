@@ -129,6 +129,18 @@ JSON: {
             "type": "date",
             "nullable": true,
             "description": "Date when the monitoring report was delivered."
+          },
+          {
+            "columnName": "creator",
+            "type": "string",
+            "nullable": true,
+            "description": "User who created the goal"
+          },
+          {
+            "columnName": "colaborators",
+            "type": "string[]",
+            "nullable": true,
+            "description": "Users who collaborated on the goal"
           }
         ]
       },
@@ -729,17 +741,19 @@ WITH
   ),
   with_class_page AS (
     SELECT
-      r.id "recipientId",
-      r.name "recipientName",
-      gr.number "grantNumber",
-      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
-      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
-      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
-      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
-      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
-      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
-      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
-      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
+        r.id "recipientId",
+        r.name "recipientName",
+        gr.number "grantNumber",
+        (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
+        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
+        (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
+        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
+        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
+        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
+        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
+        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator'))[1] "creator",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator')) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
     ON wc.id = r.id
@@ -752,6 +766,23 @@ WITH
     ON gr.id = g."grantId"
     AND has_class
     AND g."goalTemplateId" = 18172
+    LEFT JOIN "GoalCollaborators" gc
+    ON g.id = gc."goalId"
+    LEFT JOIN "CollaboratorTypes" ct
+    ON gc."collaboratorTypeId" = ct.id
+    AND ct.name IN ('Creator', 'Collaborator')
+    JOIN "ValidFor" vf
+    ON ct."validForId" = vf.id
+    AND vf.name = 'Goals'
+    JOIN "Users" u
+    ON gc."userId" = u.id
+    LEFT JOIN LATERAL (
+        SELECT ur."userId", STRING_AGG(r.name, ', ') AS agg_roles
+        FROM "UserRoles" ur
+        JOIN "Roles" r ON ur."roleId" = r.id
+        WHERE ur."userId" = u.id
+        GROUP BY ur."userId"
+    ) ur ON u.id = ur."userId"
     LEFT JOIN "ActivityReportGoals" arg
     ON g.id = arg."goalId"
     LEFT JOIN "ActivityReports" a
@@ -770,8 +801,8 @@ WITH
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
-    GROUP BY 1,2,3
-    ORDER BY 1,3
+    GROUP BY 1, 2, 3
+    ORDER BY 1, 3
   ),
   
   -- CTE for fetching active filters using NULLIF() to handle empty strings
@@ -820,7 +851,9 @@ WITH
         'emotionalSupport', "emotionalSupport",
         'classroomOrganization', "classroomOrganization",
         'instructionalSupport', "instructionalSupport",
-        'reportDeliveryDate', "reportDeliveryDate"
+        'reportDeliveryDate', "reportDeliveryDate",
+        'creator', "creator",
+        'collaborators', "collaborators"
       )) AS data,
       af.active_filters  -- Use precomputed active_filters
     FROM with_class_page
