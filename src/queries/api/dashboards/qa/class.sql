@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -711,7 +717,8 @@ WITH
     SELECT
       r.id,
       COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
-      COUNT(DISTINCT mcs.id) > 0 has_scores
+      COUNT(DISTINCT mcs.id) > 0 has_scores,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -736,7 +743,8 @@ WITH
       (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
       COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
       COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
-      COUNT(DISTINCT wc.id) total
+      COUNT(DISTINCT wc.id) total,
+      SUM(grant_count) "grants with class"
     FROM with_class wc
   ),
   with_class_page AS (
@@ -828,7 +836,8 @@ WITH
         JSONB_AGG(JSONB_BUILD_OBJECT(
         '% recipients with class', "% recipients with class",
         'recipients with class', "recipients with class",
-        'total', total
+        'total', total,
+        'grants with class', "grants with class"
         )) AS data,
         af.active_filters  -- Use precomputed active_filters
     FROM with_class_widget
