@@ -1025,10 +1025,17 @@ export const processTraningReports = async (where = '') => {
 */
 const processData = async (mockReport) => sequelize.transaction(async () => {
   // If a mockReport is provided, extract the activity report ID and relevant data
-  const activityReportId = mockReport ? mockReport.id : null;
-  const where = activityReportId ? `AND id = ${activityReportId}` : '';
-  const userIds = mockReport ? [3000, 3001, 3002, 3003] : null;
-  const recipientsGrants = mockReport ? mockReport.imported.granteeName : null;
+  let activityReportId = null;
+  let where = '';
+  let userIds = null;
+  let recipientsGrants = null;
+
+  if (mockReport) {
+    activityReportId = mockReport.id;
+    where = `AND id = ${activityReportId}`;
+    userIds = [3000, 3001, 3002, 3003];
+    recipientsGrants = mockReport.imported.granteeName;
+  }
 
   // Create the necessary database functions for data processing
   await processHtmlCreate();
