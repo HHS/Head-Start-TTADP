@@ -54,13 +54,20 @@ Make sure you have access to all the necessary spaces on Cloud.gov
 On a Mac
 1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
 2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
-3. Unzip downloaded file.
-4. Ensure you have `psql` (if not `brew install libpq`).
-5. Ensure ttahub docker container is running.
+3. Ensure you have `psql` (if not `brew install libpq`).
+4. Ensure ttahub docker container is running.
+5. Create bounce.sql in repo directory (see below)
 6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
 7. Migrate data: `yarn docker:db:migrate`
 8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
 9. Restart docker 
+
+bounce.sql
+```sh
+select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
+drop database ttasmarthub;
+create database ttasmarthub;
+```
 
 On Windows
 TBD
