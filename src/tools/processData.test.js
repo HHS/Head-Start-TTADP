@@ -366,7 +366,7 @@ describe('processData', () => {
 
   describe('hideUsers', () => {
     it('transforms user names and emails in the Users table', async () => {
-      await hideUsers(mockUser.id.toString());
+      await hideUsers([mockUser.id]);
       const transformedMockUser = await User.findOne({ where: { id: mockUser.id } });
       expect(transformedMockUser.email).not.toBe(mockUser.email);
       expect(transformedMockUser.hsesUsername).not.toBe(mockUser.hsesUsername);
