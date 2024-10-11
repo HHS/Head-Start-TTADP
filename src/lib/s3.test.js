@@ -220,20 +220,20 @@ describe('S3', () => {
     });
     it('downloads a file successfully', async () => {
       const { bucketName } = generateS3Config();
-      const key = 'test-file.txt'; 
+      const key = 'test-file.txt';
       // Mock the promise to resolve with some file content
       mockS3.promise.mockResolvedValue({ Body: 'file-content' });
       mockS3.getObject.mockImplementation(() => mockS3);
-  
+
       // Call the function
       const result = await downloadFile(key, mockS3);
-  
+
       // Verify getObject was called with the right parameters
       expect(mockS3.getObject).toHaveBeenCalledWith({
         Bucket: bucketName,
         Key: key,
       });
-  
+
       // Verify the result
       expect(result).toEqual({ Body: 'file-content' });
     });
