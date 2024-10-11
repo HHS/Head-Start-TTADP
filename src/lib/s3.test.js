@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { S3 } from 'aws-sdk';
 import {
   s3,
+  downloadFile,
   verifyVersioning,
   uploadFile,
   getPresignedURL,
@@ -17,6 +18,8 @@ jest.mock('aws-sdk', () => {
     upload: jest.fn(),
     getSignedUrl: jest.fn(),
     deleteObject: jest.fn(),
+    getObject: jest.fn().mockReturnThis(),
+    promise: jest.fn(),
   };
   return { S3: jest.fn(() => mS3) };
 });
@@ -74,7 +77,7 @@ describe('S3', () => {
     });
 
     it('returns proper config with process.env.VCAP_SERVICES not set', () => {
-      process.env.S3_BUCKET = 'test-bucket';
+      process.env.S3_BUCKET = 'ttadp-test';
       process.env.AWS_ACCESS_KEY_ID = 'superSecretAccessKeyId';
       process.env.AWS_SECRET_ACCESS_KEY = 'superSecretAccessKey';
       process.env.S3_ENDPOINT = 'localhost';
@@ -208,8 +211,36 @@ describe('S3', () => {
     });
   });
 
+  describe('downloadFile', () => {
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+    it('returns an error if S3 is not configured', () => {
+      expect(() => downloadFile(null, null)).toThrow('S3 is not configured.');
+    });
+    it('downloads a file successfully', async () => {
+      const { bucketName } = generateS3Config();
+      const key = 'test-file.txt'; 
+      // Mock the promise to resolve with some file content
+      mockS3.promise.mockResolvedValue({ Body: 'file-content' });
+      mockS3.getObject.mockImplementation(() => mockS3);
+  
+      // Call the function
+      const result = await downloadFile(key, mockS3);
+  
+      // Verify getObject was called with the right parameters
+      expect(mockS3.getObject).toHaveBeenCalledWith({
+        Bucket: bucketName,
+        Key: key,
+      });
+  
+      // Verify the result
+      expect(result).toEqual({ Body: 'file-content' });
+    });
+  });
+
   describe('getPresignedURL', () => {
-    const Bucket = 'fakeBucket';
+    const Bucket = 'ttadp-test';
     const Key = 'fakeKey';
     const fakeError = new Error('fake error');
     let mockGetURL;
@@ -241,7 +272,7 @@ describe('S3', () => {
   });
 
   describe('s3Uploader.deleteFileFromS3', () => {
-    const Bucket = 'fakeBucket';
+    const Bucket = 'ttadp-test';
     const Key = 'fakeKey';
     const anotherFakeError = Error('fake');
     let mockDeleteObject;
@@ -276,7 +307,7 @@ describe('S3', () => {
   });
 
   describe('s3Uploader.deleteFileFromS3Job', () => {
-    const Bucket = 'fakeBucket';
+    const Bucket = 'ttadp-test';
     const Key = 'fakeKey';
     const anotherFakeError = Error({ statusCode: 500 });
 
@@ -289,12 +320,12 @@ describe('S3', () => {
 
     it('returns a 500 status with error data if S3 is not configured', async () => {
       const expectedOutput = {
-        data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' },
+        data: { bucket: 'ttadp-test', fileId: 1, fileKey: 'fakeKey' },
         res: undefined,
         status: 500,
       };
 
-      const job = { data: { fileId: 1, fileKey: 'fakeKey', bucket: 'fakeBucket' } };
+      const job = { data: { fileId: 1, fileKey: 'fakeKey', bucket: 'ttadp-test' } };
       // Pass null for s3Client to simulate S3 not being configured
       const got = await deleteFileFromS3Job(job, null);
 
@@ -317,7 +348,7 @@ describe('S3', () => {
       );
 
       const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
-      await expect(got).resolves.toStrictEqual({ data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
+      await expect(got).resolves.toStrictEqual({ data: { bucket: 'ttadp-test', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
       expect(s3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
   });
