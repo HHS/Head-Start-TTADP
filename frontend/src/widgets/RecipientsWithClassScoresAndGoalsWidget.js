@@ -24,6 +24,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   data,
   parentLoading,
 }) {
+  const { widgetData, pageData } = data;
   const titleDrawerRef = useRef(null);
   const subtitleRef = useRef(null);
   const [loading, setLoading] = useState(false);
@@ -51,7 +52,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
     'recipientsWithClassScoresAndGoals',
     defaultSort,
     RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE,
-    allRecipientsData,
+    allRecipientsData, // data to use.
     setAllRecipientsData,
     resetPagination,
     setResetPagination,
@@ -81,10 +82,12 @@ function RecipientsWithClassScoresAndGoalsWidget({
     // Handle sort by, not sure how we will handle this yet.
   };
 
-  const numberOfGrants = 70;
   const getSubtitleWithPct = () => {
-    const totalRecipients = 159;
-    return `${allRecipientsData.length} of ${totalRecipients} (${((allRecipientsData.length / totalRecipients) * 100).toFixed(2)}%) recipients (${numberOfGrants} grants)`;
+    const totalRecipients = widgetData ? widgetData.total : 0;
+    const grants = widgetData ? widgetData['grants with class'] : 0;
+    const pct = widgetData ? widgetData['% recipients with class'] : 0;
+    const recipoientsWithClass = widgetData ? widgetData['recipients with class'] : 0;
+    return `${recipoientsWithClass} of ${totalRecipients} (${pct}%) recipients (${grants} grants)`;
   };
 
   const makeRecipientCheckboxes = (goalsArr, checked) => (
@@ -119,12 +122,11 @@ function RecipientsWithClassScoresAndGoalsWidget({
     try {
       // Set local data.
       setLoading(true);
-      const recipientToUse = data.RecipientsWithOhsStandardFeiGoal || [];
-      setAllRecipientsData(recipientToUse);
+      setAllRecipientsData(pageData || []);
     } finally {
       setLoading(false);
     }
-  }, [data.RecipientsWithOhsStandardFeiGoal]);
+  }, [pageData]);
 
   useEffect(() => {
     const recipientIds = allRecipientsData.map((g) => g.id);
@@ -314,8 +316,13 @@ function RecipientsWithClassScoresAndGoalsWidget({
 
 RecipientsWithClassScoresAndGoalsWidget.propTypes = {
   data: PropTypes.shape({
-    headers: PropTypes.arrayOf(PropTypes.string),
-    RecipientsWithOhsStandardFeiGoal: PropTypes.oneOfType([
+    widgetData: PropTypes.shape({
+      total: PropTypes.number,
+      '% recipients with class': PropTypes.number,
+      'recipients with class': PropTypes.number,
+      'grants with class': PropTypes.number,
+    }),
+    pageData: PropTypes.oneOfType([
       PropTypes.shape({
         id: PropTypes.number,
         name: PropTypes.string,

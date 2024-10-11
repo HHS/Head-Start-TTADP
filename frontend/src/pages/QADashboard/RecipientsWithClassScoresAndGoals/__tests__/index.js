@@ -9,53 +9,73 @@ import { createMemoryHistory } from 'history';
 import RecipientsWithClassScoresAndGoals from '../index';
 import UserContext from '../../../../UserContext';
 
-const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph';
+const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page';
 
-const recipients = [{
-  id: 1,
-  name: 'Abernathy, Mraz and Bogan',
-  lastArStartDate: '01/02/2021',
-  emotionalSupport: 6.0430,
-  classroomOrganization: 5.0430,
-  instructionalSupport: 4.0430,
-  reportReceivedDate: '03/01/2022',
-  goals: [
-    {
-      goalNumber: 'G-45641',
-      status: 'In progress',
-      creator: 'John Doe',
-      collaborator: 'Jane Doe',
-    },
-    {
-      goalNumber: 'G-25858',
-      status: 'Suspended',
-      creator: 'Bill Smith',
-      collaborator: 'Bob Jones',
-    },
-  ],
-},
-{
-  id: 2,
-  name: 'Recipient 2',
-  lastArStartDate: '04/02/2021',
-  emotionalSupport: 5.254,
-  classroomOrganization: 8.458,
-  instructionalSupport: 1.214,
-  reportReceivedDate: '05/01/2022',
-  goals: [
-    {
-      goalNumber: 'G-68745',
-      status: 'Complete',
-      creator: 'Bill Parks',
-      collaborator: 'Jack Jones',
-    },
-  ],
-}];
-
-const recipientsWithClassScoresAndGoalsData = {
-  headers: ['Emotional Support', 'Classroom Organization', 'Instructional Support', 'Report Received Date', 'Goals'],
-  RecipientsWithOhsStandardFeiGoal: recipients,
-};
+const recipientsWithClassScoresAndGoalsData = [
+  {
+    data_set: 'with_class_widget',
+    records: 1,
+    data: [
+      {
+        total: 2,
+        'recipients with class': 1,
+        '% recipients with class': 50,
+        'grants with class': 3,
+      },
+    ],
+  },
+  {
+    data_set: 'with_class_page',
+    records: 2,
+    data: [
+      {
+        classroomOrganization: 5.0430,
+        emotionalSupport: 6.0430,
+        grantNumber: '90CI010073',
+        instructionalSupport: 4.0430,
+        lastARStartDate: '2021-01-02',
+        recipientId: 1,
+        recipientName: 'Abernathy, Mraz and Bogan',
+        reportDeliveryDate: '2022-03-01T04:00:00+00:00',
+        collaborators: 'Jane Doe',
+        creator: 'John Doe',
+        goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
+        goalId: 45641,
+        goalStatus: 'In progress',
+      },
+      {
+        classroomOrganization: 5.0430,
+        emotionalSupport: 6.0430,
+        grantNumber: '90CI010073',
+        instructionalSupport: 4.0430,
+        lastARStartDate: '2021-01-02',
+        recipientId: 1,
+        recipientName: 'Abernathy, Mraz and Bogan',
+        reportDeliveryDate: '2022-03-01T04:00:00+00:00',
+        collaborators: 'Bob Jones',
+        creator: 'Bill Smith',
+        goalCreatedAt: '2021-01-02T18:41:32.028+00:00',
+        goalId: 25858,
+        goalStatus: 'Suspended',
+      },
+      {
+        classroomOrganization: 8.458,
+        emotionalSupport: 5.254,
+        grantNumber: '90CI010073',
+        instructionalSupport: 1.214,
+        lastARStartDate: '2021-04-02',
+        recipientId: 2,
+        recipientName: 'Recipient 2',
+        reportDeliveryDate: '2022-05-01T04:00:00+00:00',
+        collaborators: 'Jack Jones',
+        creator: 'Bill Parks',
+        goalCreatedAt: '2021-04-02T18:41:32.028+00:00',
+        goalId: 68745,
+        goalStatus: 'Complete',
+      },
+    ],
+  },
+];
 
 const renderRecipientsWithClassScoresAndGoals = () => {
   const history = createMemoryHistory();

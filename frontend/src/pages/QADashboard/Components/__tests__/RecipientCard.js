@@ -7,11 +7,11 @@ import RecipientCard from '../RecipientCard';
 
 const recipientData = {
   name: 'Sample Recipient 1',
-  lastArStartDate: moment('2021-09-01'),
+  lastARStartDate: moment('2021-09-01'),
   emotionalSupport: 1.2,
   classroomOrganization: 2.3,
   instructionalSupport: 3.4,
-  reportReceivedDate: moment('2021-09-15'),
+  reportDeliveryDate: '2021-09-15T04:00:00+00:00',
   goals: [
     {
       goalNumber: 'G-54826',

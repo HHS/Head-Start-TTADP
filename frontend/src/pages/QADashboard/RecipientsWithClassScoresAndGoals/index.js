@@ -68,9 +68,75 @@ export default function RecipientsWithClassScoresAndGoals() {
         const data = await getSelfServiceData(
           'recipients-with-class-scores-and-goals',
           filters,
-          ['delivery_method_graph', 'role_graph'],
+          ['with_class_widget', 'with_class_page'],
         );
-        setRecipientsWithClassScoresAndGoalsData(data);
+
+        // Get summary and row data.
+        const pageData = data.filter((d) => d.data_set === 'with_class_page');
+        const widgetData = data.filter((d) => d.data_set === 'with_class_widget');
+
+        // Convert data to the format the widget expects.
+        const reducedRecipientData = pageData[0].data.reduce((acc, item) => {
+          const {
+            recipientId,
+            recipientName,
+            classroomOrganization,
+            emotionalSupport,
+            goalCreatedAt,
+            goalId,
+            goalStatus,
+            grantNumber,
+            instructionalSupport,
+            lastARStartDate,
+            reportDeliveryDate,
+            collaborators,
+            creator,
+          } = item;
+
+          // Check if recipientId is already in the accumulator.
+          const existingRecipient = acc.find((recipient) => recipient.id === recipientId);
+          if (existingRecipient) {
+            // Add goal info.
+            existingRecipient.goals.push({
+              id: goalId,
+              goalNumber: `G-${goalId}`,
+              status: goalStatus,
+              creator,
+              collaborator: collaborators,
+              goalCreatedAt,
+            });
+            return acc;
+          }
+
+          // Else add a new recipient.
+          const newRecipient = {
+            id: recipientId,
+            name: recipientName,
+            emotionalSupport,
+            classroomOrganization,
+            instructionalSupport,
+            grantNumber,
+            goals: [
+              {
+                id: goalId,
+                goalNumber: `G-${goalId}`,
+                status: goalStatus,
+                creator,
+                collaborator: collaborators,
+                goalCreatedAt,
+              },
+            ],
+            lastARStartDate,
+            reportDeliveryDate,
+          };
+
+          return [...acc, newRecipient];
+        }, []);
+
+        setRecipientsWithClassScoresAndGoalsData({
+          widgetData: widgetData[0].data[0],
+          pageData: reducedRecipientData,
+        });
         updateError('');
       } catch (e) {
         updateError('Unable to fetch QA data');
