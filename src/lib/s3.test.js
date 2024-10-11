@@ -24,7 +24,7 @@ jest.mock('aws-sdk', () => {
   return { S3: jest.fn(() => mS3) };
 });
 
-const mockS3 = s3 || S3();
+const mockS3 = /*s3 ||*/ S3();
 
 const oldEnv = { ...process.env };
 const VCAP_SERVICES = {
