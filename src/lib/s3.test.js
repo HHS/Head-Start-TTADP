@@ -94,6 +94,12 @@ describe('S3', () => {
     });
 
     it('returns null config when no S3 environment variables or VCAP_SERVICES are set', () => {
+      const oldVCAP = process.env.VCAP_SERVICES;
+      const oldBucket = process.env.S3_BUCKET;
+      const oldAccessKey = process.env.AWS_ACCESS_KEY_ID;
+      const oldSecretKey = process.env.AWS_SECRET_ACCESS_KEY;
+      const oldEndpoint = process.env.S3_ENDPOINT;
+
       delete process.env.VCAP_SERVICES;
       delete process.env.S3_BUCKET;
       delete process.env.AWS_ACCESS_KEY_ID;
@@ -106,6 +112,12 @@ describe('S3', () => {
       };
       const got = generateS3Config();
       expect(got).toMatchObject(want);
+
+      process.env.VCAP_SERVICES = oldVCAP;
+      process.env.S3_BUCKET = oldBucket;
+      process.env.AWS_ACCESS_KEY_ID = oldAccessKey;
+      process.env.AWS_SECRET_ACCESS_KEY = oldSecretKey;
+      process.env.S3_ENDPOINT = oldEndpoint;
     });
   });
 
@@ -171,13 +183,12 @@ describe('S3', () => {
     const promise = {
       promise: () => new Promise((resolve) => { resolve(response); }),
     };
-    let mockUpload;
     let mockGet;
 
     beforeEach(() => {
       mockS3.upload = jest.fn();
       mockS3.getBucketVersioning = jest.fn();
-      mockUpload = mockS3.upload.mockImplementation(() => promise);
+      mockS3.upload.mockImplementation(() => promise);
       mockGet = mockS3.getBucketVersioning.mockImplementation(async () => mockVersioningData);
     });
 
@@ -193,7 +204,7 @@ describe('S3', () => {
       process.env.NODE_ENV = 'production';
       const got = await uploadFile(buf, name, goodType, mockS3);
       expect(mockGet.mock.calls.length).toBe(1);
-      await expect(got).toBe(response);
+      expect(got).toBe(response);
     });
   });
 
@@ -235,9 +246,13 @@ describe('S3', () => {
     const anotherFakeError = Error('fake');
     let mockDeleteObject;
 
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
+
     beforeEach(() => {
       mockS3.deleteObject = jest.fn();
-      mockDeleteObject = mockS3.deleteObject.mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
+      mockS3.deleteObject.mockImplementation(() => ({ promise: () => Promise.resolve('good') }));
     });
 
     it('throws an error if S3 is not configured', async () => {
@@ -247,16 +262,16 @@ describe('S3', () => {
     it('calls deleteFileFromS3() with correct parameters', async () => {
       const got = deleteFileFromS3(Key, Bucket, mockS3);
       await expect(got).resolves.toBe('good');
-      expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
 
     it('throws an error if promise rejects', async () => {
-      mockDeleteObject.mockImplementationOnce(
+      mockS3.deleteObject.mockImplementation(
         () => ({ promise: () => Promise.reject(anotherFakeError) }),
       );
       const got = deleteFileFromS3(Key, undefined, mockS3);
       await expect(got).rejects.toBe(anotherFakeError);
-      expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
   });
 
@@ -264,11 +279,10 @@ describe('S3', () => {
     const Bucket = 'fakeBucket';
     const Key = 'fakeKey';
     const anotherFakeError = Error({ statusCode: 500 });
-    let mockDeleteObject;
 
     beforeEach(() => {
       s3.deleteObject = jest.fn();
-      mockDeleteObject = s3.deleteObject.mockImplementation(() => ({
+      s3.deleteObject.mockImplementation(() => ({
         promise: () => Promise.resolve({ status: 200, data: {} }),
       }));
     });
@@ -292,16 +306,19 @@ describe('S3', () => {
       await expect(got).resolves.toStrictEqual({
         status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
       });
-      expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(s3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
 
     it('throws an error if promise rejects', async () => {
-      mockDeleteObject.mockImplementationOnce(
-        () => ({ promise: () => Promise.reject(anotherFakeError) }),
+      s3.deleteObject.mockImplementationOnce(
+        () => ({
+          promise: () => Promise.reject(anotherFakeError),
+        }),
       );
+
       const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
       await expect(got).resolves.toStrictEqual({ data: { bucket: 'fakeBucket', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
-      expect(mockDeleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(s3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
   });
 });
