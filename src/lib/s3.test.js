@@ -155,7 +155,8 @@ describe('S3', () => {
     });
 
     it('Doesn\'t change things if versioning is enabled', async () => {
-      const got = await verifyVersioning(undefined, mockS3);
+      const { bucketName } = generateS3Config();
+      const got = await verifyVersioning(bucketName, mockS3);
       expect(mockGet.mock.calls.length).toBe(1);
       expect(mockPut.mock.calls.length).toBe(0);
       expect(got).toBe(mockVersioningData);
