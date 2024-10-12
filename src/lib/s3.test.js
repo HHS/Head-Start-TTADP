@@ -298,12 +298,13 @@ describe('S3', () => {
     });
 
     it('throws an error if promise rejects', async () => {
+      const { bucketName } = generateS3Config();
       mockS3.deleteObject.mockImplementation(
         () => ({ promise: () => Promise.reject(anotherFakeError) }),
       );
-      const got = deleteFileFromS3(Key, undefined, mockS3);
+      const got = deleteFileFromS3(Key, bucketName, mockS3);
       await expect(got).rejects.toBe(anotherFakeError);
-      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: bucketName, Key });
     });
   });
 
@@ -313,8 +314,8 @@ describe('S3', () => {
     const anotherFakeError = Error({ statusCode: 500 });
 
     beforeEach(() => {
-      s3.deleteObject = jest.fn();
-      s3.deleteObject.mockImplementation(() => ({
+      mockS3.deleteObject = jest.fn();
+      mockS3.deleteObject.mockImplementation(() => ({
         promise: () => Promise.resolve({ status: 200, data: {} }),
       }));
     });
@@ -338,11 +339,11 @@ describe('S3', () => {
       await expect(got).resolves.toStrictEqual({
         status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
       });
-      expect(s3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
 
     it('throws an error if promise rejects', async () => {
-      s3.deleteObject.mockImplementationOnce(
+      mockS3.deleteObject.mockImplementationOnce(
         () => ({
           promise: () => Promise.reject(anotherFakeError),
         }),
@@ -350,7 +351,7 @@ describe('S3', () => {
 
       const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
       await expect(got).resolves.toStrictEqual({ data: { bucket: 'ttadp-test', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
-      expect(s3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
     });
   });
 });
