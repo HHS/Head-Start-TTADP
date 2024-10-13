@@ -2,16 +2,15 @@ import React from 'react';
 import { Router } from 'react-router';
 import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
-import moment from 'moment';
 import RecipientCard from '../RecipientCard';
 
 const recipientData = {
   name: 'Sample Recipient 1',
-  lastARStartDate: moment('2021-09-01'),
+  lastARStartDate: '09/01/2021',
   emotionalSupport: 1.2,
   classroomOrganization: 2.3,
   instructionalSupport: 3.4,
-  reportDeliveryDate: '2021-09-15T04:00:00+00:00',
+  reportDeliveryDate: '09/15/2021',
   goals: [
     {
       goalNumber: 'G-54826',
