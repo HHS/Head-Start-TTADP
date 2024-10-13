@@ -3,6 +3,7 @@ import React, {
   useRef,
   useContext,
 } from 'react';
+import moment from 'moment';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
@@ -112,10 +113,12 @@ export default function RecipientsWithClassScoresAndGoals() {
           const newRecipient = {
             id: recipientId,
             name: recipientName,
-            emotionalSupport,
-            classroomOrganization,
-            instructionalSupport,
+            emotionalSupport: !emotionalSupport ? 0 : emotionalSupport,
+            classroomOrganization: !classroomOrganization ? 0 : classroomOrganization,
+            instructionalSupport: !instructionalSupport ? 0 : instructionalSupport,
             grantNumber,
+            lastARStartDate: lastARStartDate === null ? '01/01/2000' : moment(lastARStartDate).format('MM/DD/YYYY'),
+            reportDeliveryDate: reportDeliveryDate === null ? '01/01/2000' : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
             goals: [
               {
                 id: goalId,
@@ -126,16 +129,19 @@ export default function RecipientsWithClassScoresAndGoals() {
                 goalCreatedAt,
               },
             ],
-            lastARStartDate,
-            reportDeliveryDate,
           };
 
           return [...acc, newRecipient];
         }, []);
 
+        // Sort by name for initial display.
+        const sortedReducedRecipients = reducedRecipientData.sort(
+          (a, b) => a.name.localeCompare(b.name),
+        );
+
         setRecipientsWithClassScoresAndGoalsData({
           widgetData: widgetData[0].data[0],
-          pageData: reducedRecipientData,
+          pageData: sortedReducedRecipients,
         });
         updateError('');
       } catch (e) {

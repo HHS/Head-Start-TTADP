@@ -21,7 +21,7 @@ const recipientData = {
       emotionalSupport: 6.0430,
       classroomOrganization: 5.0430,
       instructionalSupport: 4.0430,
-      reportDeliveryDate: '2022-03-01T04:00:00+00:00',
+      reportDeliveryDate: '03/01/2022',
       goals: [
         {
           goalNumber: 'G-45641',

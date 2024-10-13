@@ -33,17 +33,17 @@ function RecipientsWithClassScoresAndGoalsWidget({
   const [selectedRecipientCheckBoxes, setSelectedRecipientCheckBoxes] = useState({});
   const [allRecipientsChecked, setAllRecipientsChecked] = useState(false);
   const [resetPagination, setResetPagination] = useState(false);
-  const [perPage, setPerPage] = useState(RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE);
+  const [perPage, setPerPage] = useState([RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE]);
 
   const defaultSort = {
-    sortBy: 'Recipient',
+    sortBy: 'name',
     direction: 'asc',
     activePage: 1,
   };
 
-  // Probably we WONT use the useWidgetPaging hook here.
   const {
     handlePageChange,
+    requestSort,
     exportRows,
     sortConfig,
     setSortConfig,
@@ -60,8 +60,8 @@ function RecipientsWithClassScoresAndGoalsWidget({
     selectedRecipientCheckBoxes,
     'recipientsWithClassScoresAndGoals',
     setRecipientsDataToDisplay,
-    [],
-    [],
+    ['name'],
+    ['lastARStartDate', 'reportDeliveryDate'],
     'recipientsWithClassScoresAndGoals.csv',
   );
 
@@ -78,8 +78,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
     setPerPage(perPageValue);
   };
 
-  const setSortBy = () => {
-    // Handle sort by, not sure how we will handle this yet.
+  const setSortBy = (e) => {
+    const [sortBy, direction] = e.target.value.split('-');
+    requestSort(sortBy, direction);
   };
 
   const getSubtitleWithPct = () => {
@@ -233,10 +234,10 @@ function RecipientsWithClassScoresAndGoalsWidget({
             >
               <option value="name-asc">Recipient name (A-Z) </option>
               <option value="name-desc">Recipient name (Z-A) </option>
-              <option value="reportReceived-asc">Report received (newest to oldest) </option>
-              <option value="reportReceived-desc">Report received (oldest to newest) </option>
-              <option value="LastArStartDate-asc">Last AR start date (newest to oldest) </option>
-              <option value="LastArStartDate-desc">Last AR start date (oldest to newest) </option>
+              <option value="reportDeliveryDate-desc">Report received (newest to oldest) </option>
+              <option value="reportDeliveryDate-asc">Report received (oldest to newest) </option>
+              <option value="lastARStartDate-desc">Last AR start date (newest to oldest) </option>
+              <option value="lastARStartDate-asc">Last AR start date (oldest to newest) </option>
             </Dropdown>
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">

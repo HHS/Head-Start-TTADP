@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-import moment from 'moment';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import ExpanderButton from '../../../components/ExpanderButton';
@@ -51,7 +50,7 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-last-ar-start-date padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Last AR start date</p>
             <p className="usa-prose margin-y-0">
-              {moment(recipient.lastARStartDate).format('MM/DD/YYYY')}
+              {recipient.lastARStartDate}
             </p>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
@@ -77,7 +76,7 @@ function RecipientCard({
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__date padding-right-3">
             <p className="usa-prose text-bold  margin-y-0">Report received date</p>
-            <p className="usa-prose margin-y-0">{moment(recipient.reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY')}</p>
+            <p className="usa-prose margin-y-0">{recipient.reportDeliveryDate}</p>
           </div>
           <div className="ttahub-recipient-card__row margin-top-3">
             <ExpanderButton
