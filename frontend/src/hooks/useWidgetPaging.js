@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
 import useWidgetSorting from './useWidgetSorting';
 import useWidgetExport from './useWidgetExport';
+import { set } from 'lodash';
 
 export const parseValue = (value) => {
   const noCommasValue = value.replaceAll(',', '');
@@ -98,5 +99,6 @@ export default function useWidgetPaging(
     requestSort: sort,
     exportRows,
     sortConfig,
+    setSortConfig,
   };
 }
