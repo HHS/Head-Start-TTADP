@@ -101,7 +101,7 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   return data;
 };
 
-const downloadFile = (key, s3Client = s3, Bucket = bucketName, ) => {
+const downloadFile = (key, s3Client = s3, Bucket = bucketName) => {
   if (!s3Client || !Bucket) {
     throw new Error('S3 is not configured.');
   }
