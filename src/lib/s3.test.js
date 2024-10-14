@@ -205,8 +205,9 @@ describe('S3', () => {
     });
 
     it('Correctly Uploads the file and checks versioning', async () => {
+      const { bucketName } = generateS3Config();
       process.env.NODE_ENV = 'production';
-      const got = await uploadFile(buf, name, goodType, mockS3);
+      const got = await uploadFile(buf, name, goodType, mockS3, bucketName);
       expect(mockGet.mock.calls.length).toBe(1);
       expect(got).toBe(response);
     });
@@ -227,7 +228,7 @@ describe('S3', () => {
       mockS3.getObject.mockImplementation(() => mockS3);
 
       // Call the function
-      const result = await downloadFile(key, mockS3);
+      const result = await downloadFile(key, mockS3, bucketName);
 
       // Verify getObject was called with the right parameters
       expect(mockS3.getObject).toHaveBeenCalledWith({
