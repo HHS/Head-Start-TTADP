@@ -101,12 +101,12 @@ const verifyVersioning = async (bucket = bucketName, s3Client = s3) => {
   return data;
 };
 
-const downloadFile = (key, s3Client = s3) => {
-  if (!s3Client || !bucketName) {
+const downloadFile = (key, s3Client = s3, Bucket = bucketName, ) => {
+  if (!s3Client || !Bucket) {
     throw new Error('S3 is not configured.');
   }
   const params = {
-    Bucket: bucketName,
+    Bucket,
     Key: key,
   };
   return s3Client.getObject(params).promise();
@@ -131,13 +131,13 @@ const getPresignedURL = (Key, Bucket = bucketName, s3Client = s3, Expires = 360)
   return url;
 };
 
-const uploadFile = async (buffer, name, type, s3Client = s3) => {
-  if (!s3Client || !bucketName) {
+const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName) => {
+  if (!s3Client || !Bucket) {
     throw new Error('S3 is not configured.');
   }
   const params = {
     Body: buffer,
-    Bucket: bucketName,
+    Bucket,
     ContentType: type.mime,
     Key: name,
   };
