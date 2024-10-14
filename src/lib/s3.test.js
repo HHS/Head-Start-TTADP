@@ -336,11 +336,12 @@ describe('S3', () => {
     });
 
     it('calls deleteFileFromS3Job() with correct parameters', async () => {
-      const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
+      const { bucketName } = generateS3Config();
+      const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: bucketName } }, mockS3);
       await expect(got).resolves.toStrictEqual({
         status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
       });
-      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: bucketName, Key });
     });
 
     it('throws an error if promise rejects', async () => {
