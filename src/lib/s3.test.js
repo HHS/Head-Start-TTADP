@@ -337,7 +337,10 @@ describe('S3', () => {
 
     it('calls deleteFileFromS3Job() with correct parameters', async () => {
       const { bucketName } = generateS3Config();
-      const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: bucketName } }, mockS3);
+      const got = deleteFileFromS3Job(
+        { data: { fileId: 1, fileKey: Key, bucket: bucketName } },
+        mockS3,
+      );
       await expect(got).resolves.toStrictEqual({
         status: 200, data: { fileId: 1, fileKey: Key, res: { data: {}, status: 200 } },
       });
