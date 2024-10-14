@@ -348,15 +348,23 @@ describe('S3', () => {
     });
 
     it('throws an error if promise rejects', async () => {
+      const { bucketName } = generateS3Config();
       mockS3.deleteObject.mockImplementationOnce(
         () => ({
           promise: () => Promise.reject(anotherFakeError),
         }),
       );
 
-      const got = deleteFileFromS3Job({ data: { fileId: 1, fileKey: Key, bucket: Bucket } });
-      await expect(got).resolves.toStrictEqual({ data: { bucket: 'ttadp-test', fileId: 1, fileKey: 'fakeKey' }, res: undefined, status: 500 });
-      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket, Key });
+      const got = deleteFileFromS3Job(
+        { data: { fileId: 1, fileKey: Key, bucket: bucketName } },
+        mockS3,
+      );
+      await expect(got).resolves.toStrictEqual({
+        data: { bucket: bucketName, fileId: 1, fileKey: 'fakeKey' },
+        res: undefined,
+        status: 500,
+      });
+      expect(mockS3.deleteObject).toHaveBeenCalledWith({ Bucket: bucketName, Key });
     });
   });
 });
