@@ -199,7 +199,7 @@ describe('S3', () => {
     afterAll(() => {
       process.env = oldEnv;
     });
-    
+
     afterEach(() => {
       jest.resetAllMocks();
     });
