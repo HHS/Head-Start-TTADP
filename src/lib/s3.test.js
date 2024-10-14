@@ -199,6 +199,10 @@ describe('S3', () => {
     afterAll(() => {
       process.env = oldEnv;
     });
+    
+    afterEach(() => {
+      jest.resetAllMocks();
+    });
 
     it('throws an error if S3 is not configured', async () => {
       await expect(uploadFile(buf, name, goodType, null)).rejects.toThrow('S3 is not configured.');
