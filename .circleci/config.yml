@@ -1405,6 +1405,7 @@ workflows:
         - equal: [false, << pipeline.parameters.manual-restore >>]
         - equal: [false, << pipeline.parameters.manual-process >>]
         - equal: [false, << pipeline.parameters.manual-backup >>]
+        - equal: [false, << pipeline.parameters.manual-full-process >>]
     jobs:
       - build_and_lint
       - build_and_lint_similarity_api
@@ -1536,3 +1537,17 @@ workflows:
       equal: [true, << pipeline.parameters.manual-backup >>]
     jobs:
       - process_backup
+  manual_production_to_processed:
+    when:
+      equal: [true, << pipeline.parameters.manual-full-process >>]
+    jobs:
+      - backup_upload_production
+      - restore_production_for_processing:
+          requires:
+            - backup_upload_production
+      - process_production:
+          requires:
+            - restore_production_for_processing
+      - process_backup:
+          requires:
+            - process_production
