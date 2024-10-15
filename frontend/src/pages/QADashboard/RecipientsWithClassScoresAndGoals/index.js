@@ -122,7 +122,7 @@ export default function RecipientsWithClassScoresAndGoals() {
             lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
             reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
             regionId,
-            data: [
+            dataForExport: [
               {
                 title: 'Last AR Start Date',
                 value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),

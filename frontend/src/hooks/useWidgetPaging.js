@@ -28,6 +28,7 @@ export default function useWidgetPaging(
   stringColumns = [],
   dateColumns = [],
   exportName,
+  exportDataName = null,
 ) {
   const {
     sortConfig,
@@ -50,6 +51,7 @@ export default function useWidgetPaging(
     checkBoxes,
     exportHeading,
     exportName,
+    exportDataName,
   );
 
   const { activePage } = sortConfig;

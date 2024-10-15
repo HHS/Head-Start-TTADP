@@ -7,6 +7,7 @@ export default function useWidgetExport(
   checkboxes,
   exportHeading,
   exportName,
+  exportDataName = null, // Specify the data to export.
 ) {
   const exportRows = useCallback((exportType) => {
     let url = null;
@@ -33,7 +34,8 @@ export default function useWidgetExport(
 
       // create a csv file of all the rows.
       const csvRows = dataToExport.map((row) => {
-        const rowValues = row.data.map((d) => d.value);
+        const dataToUse = !row.data && exportDataName ? row[exportDataName] : row.data;
+        const rowValues = dataToUse.map((d) => d.value);
         // If the heading has a comma, wrap it in quotes.
         const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
         return `${rowHeadingToUse},${rowValues.join(',')}`;
@@ -59,7 +61,7 @@ export default function useWidgetExport(
     } finally {
       window.URL.revokeObjectURL(url);
     }
-  }, [checkboxes, data, exportHeading, exportName, headers]);
+  }, [checkboxes, data, exportHeading, exportName, headers, exportDataName]);
 
   return {
     exportRows,
