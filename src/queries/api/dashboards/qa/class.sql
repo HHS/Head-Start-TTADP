@@ -742,6 +742,8 @@ WITH
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
     WHERE gr.status = 'Active'
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_class_widget AS (
@@ -816,6 +818,8 @@ WITH
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1, 2, 3, 4
     ORDER BY 1, 3
   ),
