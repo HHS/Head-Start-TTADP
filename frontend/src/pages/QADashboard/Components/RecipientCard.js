@@ -42,7 +42,7 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <p className="usa-prose margin-y-0">
-              <Link to="../../recipient-tta-records/376/region/1/profile">
+              <Link to={`../../recipient-tta-records/${recipient.id}}/region/${recipient.regionId}/profile`}>
                 {recipient.name}
               </Link>
             </p>
@@ -97,6 +97,8 @@ function RecipientCard({
             goal={goal}
             zIndex={zIndex - 1}
             expanded={goalsExpanded}
+            recipientId={recipient.id}
+            regionId={recipient.regionId}
           />
         ))}
       </article>
@@ -108,6 +110,7 @@ function RecipientCard({
 RecipientCard.propTypes = {
   recipient: PropTypes.shape({
     id: PropTypes.number.isRequired,
+    regionId: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     lastARStartDate: PropTypes.string.isRequired,
     emotionalSupport: PropTypes.number.isRequired,

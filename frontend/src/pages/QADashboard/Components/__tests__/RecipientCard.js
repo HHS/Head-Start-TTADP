@@ -11,6 +11,8 @@ const recipientData = {
   classroomOrganization: 2.3,
   instructionalSupport: 3.4,
   reportDeliveryDate: '09/15/2021',
+  id: 1,
+  regionId: 2,
   goals: [
     {
       goalNumber: 'G-54826',
