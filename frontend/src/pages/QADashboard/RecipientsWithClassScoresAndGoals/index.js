@@ -91,10 +91,10 @@ export default function RecipientsWithClassScoresAndGoals() {
             lastARStartDate,
             reportDeliveryDate,
             collaborators,
-            regionId,
             creator,
           } = item;
 
+          const regionId = item['region id'];
           // Check if recipientId is already in the accumulator.
           const existingRecipient = acc.find((recipient) => recipient.id === recipientId);
           if (existingRecipient) {

@@ -70,17 +70,17 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         // Get summary and row data.
         const pageData = data.filter((d) => d.data_set === 'with_fei_page');
         const widgetData = data.filter((d) => d.data_set === 'with_fei_widget');
-
         // Convert data to format that widget expects.
         let formattedRecipientPageData = pageData[0].data.map((item) => {
           const { recipientId } = item;
-          const { regionId } = item;
+          const regionId = item['region id'];
           const { recipientName } = item;
           const { goalId } = item;
           const { goalStatus } = item;
           // const { grantNumber } = item;
           const { createdAt } = item;
           const { rootCause } = item;
+
           return {
             id: recipientId,
             heading: recipientName,

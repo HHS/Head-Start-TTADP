@@ -17,7 +17,7 @@ function GoalCard({
         <DataRow
           label="Goal number"
           value={(
-            <Link to={`recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}>
+            <Link to={`../../recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}>
               {goal.goalNumber}
             </Link>
           )}
