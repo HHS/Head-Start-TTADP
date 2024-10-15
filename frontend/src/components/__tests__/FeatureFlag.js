@@ -3,33 +3,24 @@ import React from 'react';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   render, screen,
+  waitFor,
 } from '@testing-library/react';
 import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
 import FeatureFlag from '../FeatureFlag';
 import UserContext from '../../UserContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const { ADMIN } = SCOPE_IDS;
 
 describe('feature flag', () => {
+  const history = createMemoryHistory();
   const renderFeatureFlag = (flag, user, renderNotFound = false) => {
-    const history = createMemoryHistory();
-
     render(
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrongContext.Provider value={{
-            errorResponseCode: null,
-            setErrorResponseCode: jest.fn(),
-            setShowingNotFound: jest.fn(),
-            showingNotFoundL: false,
-          }}
-          >
-            <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
-              <h1>This is a test</h1>
-            </FeatureFlag>
-          </SomethingWentWrongContext.Provider>
+          <FeatureFlag flag={flag} renderNotFound={renderNotFound}>
+            <h1>This is a test</h1>
+          </FeatureFlag>
         </UserContext.Provider>
       </Router>,
     );
@@ -72,7 +63,7 @@ describe('feature flag', () => {
     expect(screen.getByText('This is a test')).toBeVisible();
   });
 
-  it('renders not found where appropriate', () => {
+  it('renders not found where appropriate', async () => {
     const flag = 'tell_your_children';
     const user = {
       flags: [],
@@ -80,7 +71,8 @@ describe('feature flag', () => {
     };
     const renderNotFound = true;
     renderFeatureFlag(flag, user, renderNotFound);
-    expect(screen.getByRole('heading', { name: /404 error/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /page not found/i })).toBeVisible();
+    await waitFor(() => {
+      expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
+    });
   });
 });
