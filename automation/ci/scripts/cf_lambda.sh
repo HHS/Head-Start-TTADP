@@ -433,6 +433,7 @@ function start_app {
     log "INFO" "Starting application '$app_name'..."
     if ! cf start "$app_name"; then
         log "ERROR" "Failed to start application '$app_name'."
+        stop_app
         exit 1
     else
         log "INFO" "Application '$app_name' started successfully."
@@ -646,7 +647,7 @@ main() {
       log "INFO" "Task execution succeeded."
   else
       log "ERROR" "Task execution failed."
-      stop_app "tta-automation"
+      stop_app
       exit 1
   fi
 
