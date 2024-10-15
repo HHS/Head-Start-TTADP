@@ -82,8 +82,8 @@ export default function useWidgetPaging(
     }
   }, [loading, perPageNumber, setSortConfig, sortConfig]);
 
-  const sort = useCallback((sortBy) => {
-    requestSort(sortBy);
+  const sort = useCallback((sortBy, direction) => {
+    requestSort(sortBy, direction);
     setOffset(0);
   }, [requestSort]);
 
