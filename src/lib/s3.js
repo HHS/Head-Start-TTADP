@@ -143,7 +143,7 @@ const uploadFile = async (buffer, name, type, s3Client = s3, Bucket = bucketName
   };
   // Only check for versioning if not using Minio
   if (process.env.NODE_ENV === 'production') {
-    await verifyVersioning();
+    await verifyVersioning(Bucket, s3Client);
   }
 
   return s3Client.upload(params).promise();
