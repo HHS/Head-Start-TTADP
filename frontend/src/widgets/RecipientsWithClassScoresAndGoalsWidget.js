@@ -63,6 +63,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
     ['name'],
     ['lastARStartDate', 'reportDeliveryDate'],
     'recipientsWithClassScoresAndGoals.csv',
+    'dataForExport',
   );
 
   const perPageChange = (e) => {
