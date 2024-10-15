@@ -678,6 +678,9 @@ parameters:
   manual-backup:
     type: boolean
     default: false
+  manual-full-process:
+    type: boolean
+    default: false
 jobs:
   build_and_lint:
     executor: docker-executor
