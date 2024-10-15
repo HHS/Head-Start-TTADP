@@ -1,6 +1,6 @@
 instances: 1
-memory: 512 MB
-disk_quota: 1GB
+memory: 512M
+disk_quota: 1G
 
 buildpack: "https://github.com/cloudfoundry/nodejs-buildpack"
 command: "./automation/cf/scripts/idol.sh"
