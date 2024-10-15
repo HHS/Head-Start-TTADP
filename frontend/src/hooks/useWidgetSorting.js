@@ -22,10 +22,13 @@ export default function useWidgetSorting(
 ) {
   const [sortConfig, setSortConfig] = useSessionSort(defaultSortConfig, localStorageKey);
 
-  const requestSort = useCallback((sortBy) => {
+  const requestSort = useCallback((sortBy, passedDirection = null) => {
     // Get sort direction.
     let direction = 'asc';
-    if (
+    if (passedDirection) {
+      // If the direction is passed, use it.
+      direction = passedDirection;
+    } else if (
       sortConfig
       && sortConfig.sortBy === sortBy
       && sortConfig.direction === 'asc'
