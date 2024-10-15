@@ -114,13 +114,36 @@ export default function RecipientsWithClassScoresAndGoals() {
           const newRecipient = {
             id: recipientId,
             name: recipientName,
+            heading: recipientName,
             emotionalSupport: !emotionalSupport ? 0 : emotionalSupport,
             classroomOrganization: !classroomOrganization ? 0 : classroomOrganization,
             instructionalSupport: !instructionalSupport ? 0 : instructionalSupport,
             grantNumber,
-            lastARStartDate: lastARStartDate === null ? '01/01/2000' : moment(lastARStartDate).format('MM/DD/YYYY'),
-            reportDeliveryDate: reportDeliveryDate === null ? '01/01/2000' : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            lastARStartDate: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+            reportDeliveryDate: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
             regionId,
+            data: [
+              {
+                title: 'Last AR Start Date',
+                value: lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+              },
+              {
+                title: 'Emotional Support',
+                value: emotionalSupport,
+              },
+              {
+                title: 'Classroom Organization',
+                value: classroomOrganization,
+              },
+              {
+                title: 'Instructional Support',
+                value: instructionalSupport,
+              },
+              {
+                title: 'Report Delivery Date',
+                value: reportDeliveryDate === null ? null : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+              },
+            ],
             goals: [
               {
                 id: goalId,
