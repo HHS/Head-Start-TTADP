@@ -21,7 +21,7 @@ import Drawer from '../../components/Drawer';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
 import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
-import { getSelfServiceData } from '../../fetchers/ssdi';
+import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
@@ -65,6 +65,7 @@ export default function QADashboard() {
           filters,
           ['no_tta_widget'],
         );
+        const noTTAContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters);
         const noTTAData = recipientsWithNoTtaData.find((item) => item.data_set === 'no_tta_widget');
 
         // FEI data.
@@ -73,6 +74,7 @@ export default function QADashboard() {
           filters,
           ['with_fei_widget', 'with_fei_graph'],
         );
+        const feiContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-ohs-standard-fei-goal', filters);
         const feiOverviewData = feiData.find((item) => item.data_set === 'with_fei_widget');
         const feiGraphData = feiData.find((item) => item.data_set === 'with_fei_graph');
 
@@ -88,17 +90,21 @@ export default function QADashboard() {
           filters,
           ['with_class_widget'],
         );
+        const classContainsFiltersThatAreNotAllowed = containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters);
         const classOverviewData = classData.find((item) => item.data_set === 'with_class_widget');
 
         // Build overview data.
         const overviewData = {
           recipientsWithNoTTA: {
+            filterApplicable: !noTTAContainsFiltersThatAreNotAllowed,
             pct: noTTAData.data[0]['% recipients without tta'] || '0%',
           },
           recipientsWithOhsStandardFeiGoals: {
+            filterApplicable: !feiContainsFiltersThatAreNotAllowed,
             pct: feiOverviewData.data[0]['% recipients with fei'] || '0%',
           },
           recipientsWithOhsStandardClass: {
+            filterApplicable: !classContainsFiltersThatAreNotAllowed,
             pct: classOverviewData.data[0]['% recipients with class'] || '0%',
           },
         };

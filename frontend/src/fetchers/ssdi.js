@@ -50,6 +50,15 @@ const allowedTopicsForQuery = {
   ],
 };
 
+export const containsFiltersThatAreNotApplicable = (filterName, filters) => {
+  if (!allowedTopicsForQuery[filterName]) {
+    throw new Error('Invalid filter name');
+  }
+
+  const config = allowedTopicsForQuery[filterName];
+  return filters.some((filter) => !config.includes(filter.topic));
+};
+
 export const getSelfServiceDataQueryString = (filterName, filters) => {
   if (!allowedTopicsForQuery[filterName]) {
     throw new Error('Invalid filter name');

@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { getSelfServiceData } from '../ssdi';
+import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../ssdi';
 
 const ssdiUrl = join('/', 'api', 'ssdi', 'api', 'dashboards', 'qa');
 
@@ -81,5 +81,41 @@ describe('SSDI fetcher', () => {
         query: 'spicy',
       },
     ])).rejects.toThrow('Invalid filter name');
+  });
+
+  it('containsFiltersThatAreNotApplicable returns false if all filters are allowed', () => {
+    const filters = [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
+        topic: 'pickles',
+        condition: 'are',
+        query: 'spicy',
+      },
+    ];
+    expect(containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters)).toBe(true);
+  });
+
+  it('containsFiltersThatAreNotApplicable returns true if any filter is not allowed', () => {
+    const filters = [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
+        topic: 'stateCode',
+        condition: 'is',
+        query: 'ct',
+      },
+    ];
+    expect(containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters)).toBe(false);
   });
 });
