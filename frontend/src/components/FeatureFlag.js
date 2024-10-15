@@ -1,8 +1,8 @@
 import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import { Redirect } from 'react-router-dom';
 import UserContext from '../UserContext';
 import isAdmin from '../permissions';
-import SomethingWentWrong from './SomethingWentWrong';
 
 export default function FeatureFlag({
   flag, renderNotFound, children,
@@ -12,7 +12,7 @@ export default function FeatureFlag({
 
   if (!admin && user.flags && !user.flags.includes(flag)) {
     if (renderNotFound) {
-      return <SomethingWentWrong />;
+      return <Redirect to="/something-went-wrong/404" />;
     }
     return <></>;
   }
