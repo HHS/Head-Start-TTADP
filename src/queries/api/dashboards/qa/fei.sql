@@ -578,6 +578,8 @@ WITH
     LEFT JOIN filtered_goals fg
     ON g.id = fg.id
     WHERE gr.status = 'Active'
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_fei_widget AS (
@@ -630,6 +632,9 @@ WITH
     ON g.id = fg.id
     LEFT JOIN "GoalFieldResponses" gfr
     ON g.id = gfr."goalId"
+    WHERE 1 = 1
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
   ),
   with_fei_graph AS (
     SELECT
