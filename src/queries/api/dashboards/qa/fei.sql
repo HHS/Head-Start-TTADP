@@ -89,6 +89,12 @@ JSON: {
             "description": "Grant number associated with the recipient."
           },
           {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
+          },
+          {
             "columnName": "goalId",
             "type": "number",
             "nullable": true,
@@ -604,6 +610,7 @@ WITH
       r.id "recipientId",
       r.name "recipientName",
       gr.number "grantNumber",
+      gr."regionId",
       g.id "goalId",
       g."createdAt",
       g.status "goalStatus",
@@ -657,6 +664,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'createdAt', "createdAt",
         'goalStatus', "goalStatus",

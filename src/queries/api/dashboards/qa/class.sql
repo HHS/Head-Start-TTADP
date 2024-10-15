@@ -89,6 +89,12 @@ JSON: {
             "description": "Grant number associated with the recipient."
           },
           {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
+          },
+          {
             "columnName": "goalId",
             "type": "number",
             "nullable": true,
@@ -752,6 +758,7 @@ WITH
         r.id "recipientId",
         r.name "recipientName",
         gr.number "grantNumber",
+        gr."regionId",
         (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
         (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
         (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
@@ -809,7 +816,7 @@ WITH
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
-    GROUP BY 1, 2, 3
+    GROUP BY 1, 2, 3, 4
     ORDER BY 1, 3
   ),
   
@@ -853,6 +860,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'goalCreatedAt', "goalCreatedAt",
         'goalStatus', "goalStatus",
