@@ -42,7 +42,7 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <p className="usa-prose margin-y-0">
-              <Link to={`../../recipient-tta-records/${recipient.id}}/region/${recipient.regionId}/profile`}>
+              <Link to={`../../recipient-tta-records/${recipient.id}/region/${recipient.regionId}/profile`}>
                 {recipient.name}
               </Link>
             </p>
