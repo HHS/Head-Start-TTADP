@@ -91,6 +91,7 @@ export default function RecipientsWithClassScoresAndGoals() {
             lastARStartDate,
             reportDeliveryDate,
             collaborators,
+            regionId,
             creator,
           } = item;
 
@@ -119,6 +120,7 @@ export default function RecipientsWithClassScoresAndGoals() {
             grantNumber,
             lastARStartDate: lastARStartDate === null ? '01/01/2000' : moment(lastARStartDate).format('MM/DD/YYYY'),
             reportDeliveryDate: reportDeliveryDate === null ? '01/01/2000' : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            regionId,
             goals: [
               {
                 id: goalId,

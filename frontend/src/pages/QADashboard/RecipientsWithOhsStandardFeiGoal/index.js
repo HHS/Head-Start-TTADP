@@ -74,6 +74,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
         // Convert data to format that widget expects.
         let formattedRecipientPageData = pageData[0].data.map((item) => {
           const { recipientId } = item;
+          const { regionId } = item;
           const { recipientName } = item;
           const { goalId } = item;
           const { goalStatus } = item;
@@ -84,9 +85,9 @@ export default function RecipientsWithOhsStandardFeiGoal() {
             id: recipientId,
             heading: recipientName,
             name: recipientName,
-            isURL: true,
+            isUrl: true,
             hideLinkIcon: true,
-            link: '/recipient-tta-records/376/region/1/profile', // TODO: Set to correct link.
+            link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
             data: [
               {
                 title: 'Goal_created_on',

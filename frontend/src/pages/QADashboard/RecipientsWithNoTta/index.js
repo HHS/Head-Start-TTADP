@@ -71,6 +71,7 @@ export default function RecipientsWithNoTta() {
         // Format the recipient data for the generic widget.
         let formattedRecipientPageData = pageData[0].data.map((item) => {
           const recipientId = item['recipient id'];
+          const regionId = item['region id'];
           const recipientName = item['recipient name'];
           const dateOfLastTta = item['last tta'];
           const daysSinceLastTta = item['days since last tta'];
@@ -78,9 +79,9 @@ export default function RecipientsWithNoTta() {
             id: recipientId,
             heading: recipientName,
             name: recipientName,
-            isURL: true,
+            isUrl: true,
             hideLinkIcon: true,
-            link: '/recipient-tta-records/376/region/1/profile', // TODO: Set to correct link.
+            link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
             data: [
               {
                 title: 'Date_of_Last_TTA',
