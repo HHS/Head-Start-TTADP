@@ -36,7 +36,6 @@ import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import VanillaModal from '../VanillaModal';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
@@ -113,7 +112,6 @@ export default function GoalForm({
 
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const canView = useMemo(() => user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
@@ -142,7 +140,7 @@ export default function GoalForm({
             ids, recipient.id.toString(),
           );
         } catch (err) {
-          setErrorResponseCode(err.status);
+          history.push(`/something-went-wrong/${err.status}`);
         }
 
         const selectedGoalGrants = goal.grants ? goal.grants : [goal.grant];
@@ -207,7 +205,7 @@ export default function GoalForm({
     ids,
     setAppLoadingText,
     setIsAppLoading,
-    setErrorResponseCode,
+    history,
   ]);
 
   const setObjectiveError = (objectiveIndex, errorText) => {
