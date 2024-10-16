@@ -26,7 +26,6 @@ import Navigator from '../../components/Navigator';
 import BackLink from '../../components/BackLink';
 import pages from './pages';
 import AppLoadingContext from '../../AppLoadingContext';
-import SomethingWentWrongContext from '../../SomethingWentWrongContext';
 import isAdmin from '../../permissions';
 import sessionSummary from './pages/sessionSummary';
 import Modal from '../../components/VanillaModal';
@@ -136,7 +135,6 @@ export default function SessionForm({ match }) {
 
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
-  const { setErrorResponseCode } = useContext(SomethingWentWrongContext);
 
   const {
     socket,
@@ -253,14 +251,14 @@ export default function SessionForm({ match }) {
         resetFormData(hookForm.reset, session, isPocFromSession, isAdminUser);
         reportId.current = session.id;
       } catch (e) {
-        setErrorResponseCode(e.status);
+        history.push(`/something-went-wrong/${e.status}`);
       } finally {
         setReportFetched(true);
         setDatePickerKey(`f${Date.now().toString()}`);
       }
     }
     fetchSession();
-  }, [currentPage, hookForm.reset, reportFetched, sessionId, setErrorResponseCode]);
+  }, [currentPage, hookForm.reset, reportFetched, sessionId, history]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
