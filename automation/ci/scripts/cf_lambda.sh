@@ -422,6 +422,21 @@ function push_app {
         log "INFO" "Application pushed successfully."
     fi
 
+    # Wait until the instance is running
+    while true; do
+        # Get the current status of the app instance
+        INSTANCE_STATUS=$(cf app tta-automation | grep "state" | awk '{print $2}')
+
+        # Check if the instance is in the "running" state
+        if [ "$INSTANCE_STATUS" = "running" ]; then
+            log "INFO" "App instance is running. App is ready."
+            break
+        else
+            log "INFO" "Current status: $INSTANCE_STATUS. Waiting for the app instance to be running..."
+            sleep 5
+        fi
+    done
+
     # Restore original directory
     cd "$original_dir"
 }
