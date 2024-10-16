@@ -83,3 +83,6 @@ services:
 volumes:
   dbdata: {}
   minio-data: {}
+  yarn-cache: {}
+  node_modules-backend: {}
+  node_modules-frontend: {}
