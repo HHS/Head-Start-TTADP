@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import React from 'react';
+import { Router } from 'react-router';
 import { SCOPE_IDS } from '@ttahub/common';
 import {
   fireEvent,
@@ -10,11 +11,13 @@ import {
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import SomethingWentWrongContext from '../../../SomethingWentWrongContext';
 
+import { createMemoryHistory } from 'history';
 import ApprovedActivityReport from '../index';
 
 describe('Activity report print and share view', () => {
+  const history = createMemoryHistory();
+
   const report = {
     version: 1,
     regionId: 45,
@@ -105,7 +108,7 @@ describe('Activity report print and share view', () => {
     ],
   };
 
-  function renderApprovedActivityReport(id, passedUser = user, setErrorResponseCode = jest.fn()) {
+  function renderApprovedActivityReport(id, passedUser = user) {
     const match = {
       path: '',
       url: '',
@@ -115,9 +118,9 @@ describe('Activity report print and share view', () => {
     };
 
     render(
-      <SomethingWentWrongContext.Provider value={{ setErrorResponseCode }}>
+      <Router history={history}>
         <ApprovedActivityReport user={passedUser} match={match} />
-      </SomethingWentWrongContext.Provider>,
+      </Router>,
     );
   }
   afterEach(() => fetchMock.restore());
@@ -229,23 +232,26 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles authorization errors', async () => {
-    const setErrorResponseCode = jest.fn();
-    act(() => renderApprovedActivityReport(5007, user, setErrorResponseCode));
+    const spy = jest.spyOn(history, 'push');
+    act(() => renderApprovedActivityReport(5007, user));
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/5007')).toBeTruthy();
-      expect(setErrorResponseCode).toHaveBeenCalledWith(401);
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/401');
   });
 
   it('handles data errors', async () => {
-    const setErrorResponseCode = jest.fn();
-    act(() => renderApprovedActivityReport(5002, user, setErrorResponseCode));
+    const spy = jest.spyOn(history, 'push');
+
+    act(() => renderApprovedActivityReport(5002, user));
 
     await waitFor(() => {
       expect(fetchMock.called('/api/activity-reports/5002')).toBeTruthy();
-      expect(setErrorResponseCode).toHaveBeenCalledWith(500);
     });
+
+    expect(spy).toHaveBeenCalledWith('/something-went-wrong/500');
   });
 
   it('copies a url to clipboard', async () => {
@@ -316,12 +322,14 @@ describe('Activity report print and share view', () => {
   });
 
   it('handles a malformed url', async () => {
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
+    fetchMock.get('/api/activity-reports/butter-lover', {});
     act(async () => {
-      renderApprovedActivityReport('butter-lover', user, setErrorResponseCode);
-      await waitFor(() => {
-        expect(setErrorResponseCode).toHaveBeenCalledWith(404);
-      });
+      renderApprovedActivityReport('butter-lover', user);
+    });
+
+    await waitFor(() => {
+      expect(spy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
   });
 

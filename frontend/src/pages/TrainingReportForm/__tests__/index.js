@@ -10,7 +10,6 @@ import TrainingReportForm from '../index';
 import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
-import SomethingWentWrong from '../../../SomethingWentWrongContext';
 
 const completedForm = {
   regionId: '1',
@@ -48,18 +47,15 @@ describe('TrainingReportForm', () => {
 
   const renderTrainingReportForm = (
     trainingReportId,
-    setErrorResponseCode = jest.fn,
     user = { id: 1, permissions: [], name: 'Ted User' },
   ) => render(
     <Router history={history}>
       <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
         <UserContext.Provider value={{ user }}>
-          <SomethingWentWrong.Provider value={{ setErrorResponseCode }}>
-            <TrainingReportForm match={{
-              params: { trainingReportId },
-            }}
-            />
-          </SomethingWentWrong.Provider>
+          <TrainingReportForm match={{
+            params: { trainingReportId },
+          }}
+          />
         </UserContext.Provider>
       </AppLoadingContext.Provider>
     </Router>,
@@ -99,13 +95,13 @@ describe('TrainingReportForm', () => {
     expect(screen.getByText(/Training report - Event/i)).toBeInTheDocument();
   });
 
-  it('calls setErrorResponseCode when an error occurs', async () => {
+  it('redirects when an error occurs', async () => {
     fetchMock.get('/api/events/id/1', 500);
-    const setErrorResponseCode = jest.fn();
+    const spy = jest.spyOn(history, 'push');
     act(() => {
-      renderTrainingReportForm('1', setErrorResponseCode);
+      renderTrainingReportForm('1');
     });
-    await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+    await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/500'));
   });
 
   it('redirects to event summary', async () => {
