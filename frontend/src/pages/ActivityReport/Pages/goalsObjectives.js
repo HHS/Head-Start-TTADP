@@ -112,6 +112,7 @@ const GoalsObjectives = ({
 
   const [fetchError, setFetchError] = useState(false);
   const [availableGoals, updateAvailableGoals] = useState([]);
+  const [goalTemplates, setGoalTemplates] = useState([]);
   const hasGrants = grantIds.length > 0;
 
   const {
@@ -130,11 +131,37 @@ const GoalsObjectives = ({
   });
 
   useDeepCompareEffect(() => {
+    const fetchGoalTemplates = async () => {
+      if (isRecipientReport && hasGrants) {
+        try {
+          const fetchedGoalTemplates = await getGoalTemplates(grantIds);
+
+          // format goalTemplates
+          const formattedGoalTemplates = fetchedGoalTemplates.map((gt) => ({
+            ...gt,
+            isCurated: true,
+            goalIds: gt.goals.map((g) => g.id),
+            goalTemplateId: gt.id,
+            isNew: gt.goals.length === 0,
+            objectives: [],
+          }));
+
+          setGoalTemplates(formattedGoalTemplates);
+        } catch (err) {
+        // eslint-disable-next-line no-console
+          console.error(err);
+        }
+      }
+    };
+
+    fetchGoalTemplates();
+  }, [grantIds]);
+
+  useDeepCompareEffect(() => {
     const fetch = async () => {
       try {
         if (isRecipientReport && hasGrants) {
           const fetchedGoals = await getGoals(grantIds);
-          const fetchedGoalTemplates = await getGoalTemplates(grantIds);
           const formattedGoals = fetchedGoals.map((g) => {
             // if the goal is on an "old" grant, we should
             // treat it like a new goal for now
@@ -147,12 +174,7 @@ const GoalsObjectives = ({
             return { ...g, isNew, grantIds };
           });
 
-          const goalNames = formattedGoals.map((g) => g.name);
-
-          updateAvailableGoals([
-            ...fetchedGoalTemplates.filter((g) => !goalNames.includes(g.name)),
-            ...formattedGoals,
-          ]);
+          updateAvailableGoals(formattedGoals);
         }
 
         setFetchError(false);
@@ -362,6 +384,7 @@ const GoalsObjectives = ({
                 grantIds={grantIds}
                 availableGoals={availableGoals}
                 reportId={reportId}
+                goalTemplates={goalTemplates}
               />
             </Fieldset>
           </>
