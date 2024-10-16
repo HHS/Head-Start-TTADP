@@ -1,0 +1,24 @@
+@startuml
+
+title "TTA Hub"
+
+actor User as TTAProvider
+participant "HSES\n Login" as HSESLogin
+participant "TTA Hub\n frontend" as TTAHUBF
+
+group Access: Accessing TTA Hub pages
+    autonumber
+    TTAProvider -> HSESLogin : Enter credentials
+    TTAProvider <- HSESLogin : Provide access token
+    else
+    TTAProvider <-- HSESLogin : Invalid credentials
+end
+
+group Logout: Logging out of TTA Hub pages
+    autonumber
+    TTAProvider -> TTAHUBF: Click profile icon
+    TTAProvider -> TTAHUBF: Click Logout
+    TTAProvider <- HSESLogin: Login Screen displayed
+end
+
+@enduml
