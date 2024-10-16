@@ -65,7 +65,6 @@ export function activeWithinDates(dates) {
         },
         [Op.or]: [
           { inactivationDate: { [Op.gte]: new Date(sd) } },
-          { inactivationDate: null },
           { inactivationDate: { [Op.gte]: new Date(sd) } },
           { inactivationDate: null },
         ],
