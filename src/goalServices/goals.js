@@ -693,9 +693,6 @@ export async function goalsForGrants(grantIds) {
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
       },
-      '$goalTemplate.creationMethod$': {
-        [Op.not]: CREATION_METHOD.CURATED,
-      },
     },
     include: [
       {

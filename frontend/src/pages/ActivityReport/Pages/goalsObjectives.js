@@ -1,7 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 // disabling prop spreading to use the "register" function from react hook form the same
 // way they did in their examples
-import React, { useState, useContext } from 'react';
+import React, {
+  useState, useContext, useMemo,
+} from 'react';
 import PropTypes from 'prop-types';
 import { Helmet } from 'react-helmet';
 import { Alert, Fieldset, Button } from '@trussworks/react-uswds';
@@ -99,15 +101,26 @@ const GoalsObjectives = ({
   const activityRecipients = watch('activityRecipients');
   const objectivesWithoutGoals = watch('objectivesWithoutGoals');
   const pageState = getValues('pageState');
-  const isRecipientReport = activityRecipientType === 'recipient';
-  const isOtherEntityReport = activityRecipientType === 'other-entity';
-  const grantIds = isRecipientReport ? activityRecipients.map((r) => {
-    if (r.grant) {
-      return r.grant.id;
-    }
 
-    return r.activityRecipientId;
-  }) : [];
+  const {
+    isRecipientReport,
+    grantIds,
+  } = useMemo(() => {
+    const isRecipient = activityRecipientType === 'recipient';
+    const grants = isRecipient ? activityRecipients.map((r) => {
+      if (r.grant) {
+        return r.grant.id;
+      }
+      return r.activityRecipientId;
+    }) : [];
+
+    return {
+      isRecipientReport: isRecipient,
+      grantIds: grants,
+    };
+  }, [activityRecipientType, activityRecipients]);
+
+  const isOtherEntityReport = activityRecipientType === 'other-entity';
   const activityRecipientIds = activityRecipients.map((r) => r.activityRecipientId);
 
   const [fetchError, setFetchError] = useState(false);
@@ -155,7 +168,7 @@ const GoalsObjectives = ({
     };
 
     fetchGoalTemplates();
-  }, [grantIds]);
+  }, [grantIds, hasGrants, isRecipientReport]);
 
   useDeepCompareEffect(() => {
     const fetch = async () => {
@@ -183,7 +196,7 @@ const GoalsObjectives = ({
       }
     };
     fetch();
-  }, [grantIds]);
+  }, [grantIds, hasGrants, isRecipientReport]);
 
   const showGoals = isRecipientReport && hasGrants;
 
