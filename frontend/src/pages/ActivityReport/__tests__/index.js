@@ -38,7 +38,10 @@ describe('ActivityReport', () => {
     removeItem,
   });
 
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    jest.clearAllMocks();
+  });
 
   beforeEach(() => {
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
@@ -138,10 +141,10 @@ describe('ActivityReport', () => {
 
   describe('something went wrong context', () => {
     it('ensure we call set the response code on error', async () => {
+      const spy = jest.spyOn(history, 'push');
       fetchMock.get('/api/activity-reports/1', 500);
-      const setErrorResponseCode = jest.fn();
-      renderActivityReport('1', 'activity-summary', null, 1, setErrorResponseCode);
-      await waitFor(() => expect(setErrorResponseCode).toHaveBeenCalledWith(500));
+      renderActivityReport('1', 'activity-summary', null, 1);
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/something-went-wrong/500'));
     });
   });
 
@@ -388,11 +391,13 @@ describe('ActivityReport', () => {
 
   describe('updatePage', () => {
     it('navigates to the correct page', async () => {
+      const spy = jest.spyOn(history, 'push');
       fetchMock.post('/api/activity-reports', { id: 1 });
       renderActivityReport('new');
       const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
       userEvent.click(button);
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/1/supporting-attachments'));
+
+      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/1/supporting-attachments', { showLastUpdatedTime: true }));
     });
   });
 
