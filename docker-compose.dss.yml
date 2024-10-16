@@ -22,7 +22,6 @@ services:
       - BYPASS_SOCKETS="true"
     volumes:
       - ".:/app:rw"
-      - "yarn-cache:/home/node/.cache/yarn:rw"
   db:
     image: postgres:15.6
     container_name: postgres_docker
