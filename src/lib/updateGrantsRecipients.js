@@ -450,11 +450,26 @@ export async function processFiles(hashSumHex) {
         attributes: ['id', 'grantId', 'groupId'],
       });
 
+      const createdGrants = new Set();
+
       for (const g of affectedGroupGrants) {
         if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
           await GroupGrant.destroy({ where: { id: g.id } });
+
+          // Use a Set to avoid duplicates
+          const uniqueReplacingGrantIds = new Set();
+
           for (const replacement of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
-            await GroupGrant.create({ groupId: g.groupId, grantId: replacement.replacingGrantId });
+            uniqueReplacingGrantIds.add(replacement.replacingGrantId);
+          }
+
+          // Now create each unique replacing grant only if it hasn't been created before
+          for (const uniqueGrantId of uniqueReplacingGrantIds) {
+            const key = `${g.groupId}-${uniqueGrantId}`;
+            if (!createdGrants.has(key)) {
+              await GroupGrant.create({ groupId: g.groupId, grantId: uniqueGrantId });
+              createdGrants.add(key); // Track created groupId + grantId pairs
+            }
           }
         }
       }
