@@ -6,21 +6,21 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-    /*
-    Dropping old referances:
-        ZALNoTruncateFActivityReportObjectiveRoles
-        ZALNoTruncateFGrantGoals
-        ZALNoTruncateFObjectiveRoles
-        ZALNoTruncateFTopicGoals
-        ZALNoDeleteFActivityReportObjectiveRoles
-        ZALNoDeleteFGrantGoals
-        ZALNoDeleteFObjectiveRoles
-        ZALNoDeleteFTopicGoals
-        ZALNoUpdateFActivityReportObjectiveRoles
-        ZALNoUpdateFGrantGoals
-        ZALNoUpdateFObjectiveRoles
-        ZALNoUpdateFTopicGoals
-    */
+      /*
+      Dropping old referances:
+          ZALNoTruncateFActivityReportObjectiveRoles
+          ZALNoTruncateFGrantGoals
+          ZALNoTruncateFObjectiveRoles
+          ZALNoTruncateFTopicGoals
+          ZALNoDeleteFActivityReportObjectiveRoles
+          ZALNoDeleteFGrantGoals
+          ZALNoDeleteFObjectiveRoles
+          ZALNoDeleteFTopicGoals
+          ZALNoUpdateFActivityReportObjectiveRoles
+          ZALNoUpdateFGrantGoals
+          ZALNoUpdateFObjectiveRoles
+          ZALNoUpdateFTopicGoals
+      */
       return queryInterface.sequelize.query(`
         DO
         $$
