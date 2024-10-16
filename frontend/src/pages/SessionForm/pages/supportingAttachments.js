@@ -3,6 +3,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import {
   ErrorMessage,
   Fieldset,
@@ -15,18 +16,17 @@ import { Helmet } from 'react-helmet';
 import { Controller, useFormContext } from 'react-hook-form';
 import ReportFileUploader from '../../../components/FileUploader/ReportFileUploader';
 import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
-import { pageComplete } from '../constants';
+import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 
 const path = 'supporting-attachments';
 const position = 3;
-const visitedField = `pageVisited-${path}`;
-const fields = [visitedField];
+const fields = [supportingAttachmentsVisitedField];
 
 const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
   const { watch, register, setValue } = useFormContext();
   const visitedRef = useRef(false);
-  const pageVisited = watch(visitedField);
+  const pageVisited = watch(supportingAttachmentsVisitedField);
 
   useEffect(() => {
     /*
@@ -35,7 +35,7 @@ const SupportingAttachments = ({ reportId }) => {
     */
     if (!pageVisited && !visitedRef.current) {
       visitedRef.current = true;
-      setValue(visitedField, true);
+      setValue(supportingAttachmentsVisitedField, true);
     }
   }, [pageVisited, setValue]);
 
@@ -44,7 +44,7 @@ const SupportingAttachments = ({ reportId }) => {
       <Helmet>
         <title>Supporting Attachments</title>
       </Helmet>
-      <input type="hidden" ref={register()} name={visitedField} />
+      <input type="hidden" ref={register()} name={supportingAttachmentsVisitedField} />
       <Fieldset className="smart-hub--report-legend margin-top-4">
         <FormGroup error={fileError}>
           <div id="attachments" />
@@ -94,12 +94,12 @@ export default {
   reviewSection: () => <ReviewSection />,
   review: false,
   render: (
-    _additionalData,
+    additionalData,
     _formData,
     reportId,
     isAppLoading,
     onContinue,
-    _onSaveDraft,
+    onSaveDraft,
     onUpdatePage,
     _weAreAutoSaving,
     _datePickerKey,
@@ -110,7 +110,15 @@ export default {
       <SupportingAttachments reportId={reportId} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
+        {
+          // if status is 'Completed' then don't show the save draft button.
+          additionalData
+          && additionalData.status
+          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
+          )
+        }
         <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
       </div>
     </div>

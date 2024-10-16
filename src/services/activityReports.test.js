@@ -366,7 +366,7 @@ describe('Activity report service', () => {
         ], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
-        Region.create({ name: 'office 19', id: 19 }),
+        Region.findOrCreate({ where: { name: 'office 19', id: 19 } }),
       ]);
 
       const grantsSpecialist = await Role.findOne({ where: { fullName: 'Grants Specialist' } });
@@ -742,7 +742,8 @@ describe('Activity report service', () => {
         }
 
         // Then we see that it was saved correctly
-        expect(report.recipientNextSteps.length).toBe(0);
+        expect(report.recipientNextSteps.length).toBe(1);
+        expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
         expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
@@ -767,7 +768,8 @@ describe('Activity report service', () => {
         }
 
         // Then we see that it was saved correctly
-        expect(report.specialistNextSteps.length).toBe(0);
+        expect(report.specialistNextSteps.length).toBe(1);
+        expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.recipientNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
         expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
@@ -833,8 +835,10 @@ describe('Activity report service', () => {
 
         // Then we see the report was updated correctly
         expect(updatedReport.id).toBe(report.id);
-        expect(updatedReport.recipientNextSteps.length).toBe(0);
-        expect(updatedReport.specialistNextSteps.length).toBe(0);
+        expect(updatedReport.recipientNextSteps.length).toBe(1);
+        expect(updatedReport.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
+        expect(updatedReport.specialistNextSteps.length).toBe(1);
+        expect(updatedReport.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
       });
 
       it('handles notes being the same', async () => {

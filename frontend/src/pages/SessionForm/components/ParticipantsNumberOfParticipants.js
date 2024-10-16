@@ -3,7 +3,15 @@ import PropTypes from 'prop-types';
 import { TextInput } from '@trussworks/react-uswds';
 import FormItem from '../../../components/FormItem';
 
-export default function ParticipantsNumberOfParticipants({ register, isHybrid }) {
+export default function ParticipantsNumberOfParticipants({
+  register,
+  isHybrid,
+  isDeliveryMethodSelected,
+}) {
+  if (!isDeliveryMethodSelected) {
+    return null;
+  }
+
   return (
     <div>
       {isHybrid ? (
@@ -98,4 +106,5 @@ export default function ParticipantsNumberOfParticipants({ register, isHybrid })
 ParticipantsNumberOfParticipants.propTypes = {
   register: PropTypes.func.isRequired,
   isHybrid: PropTypes.bool.isRequired,
+  isDeliveryMethodSelected: PropTypes.bool.isRequired,
 };

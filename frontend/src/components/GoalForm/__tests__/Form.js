@@ -110,42 +110,6 @@ describe('Goal Form > Form component', () => {
     expect(document.querySelector('.ttahub-create-goals-form')).not.toBeNull();
   });
 
-  it('disables goal source if createdVia tr', () => {
-    renderGoalForm(
-      {
-        ...DEFAULT_GOAL,
-        createdVia: 'tr',
-        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
-        source: { 'GRANT_NUMBER EHS': 'training event source' },
-      },
-      [],
-      '',
-      { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
-    );
-    expect(screen.getByText(/goal source/i)).toBeVisible();
-    expect(screen.getByText(/training event source/i)).toBeVisible();
-    expect(screen.queryAllByRole('combobox', { name: /goal source/i }).length).toBe(0);
-  });
-
-  it('does not disable goal source if createdVia tr', () => {
-    renderGoalForm(
-      {
-        ...DEFAULT_GOAL,
-        createdVia: 'activityReport',
-        selectedGrants: [{ id: 1, numberWithProgramTypes: 'GRANT_NUMBER EHS' }],
-        source: { 'GRANT_NUMBER EHS': 'Not Training event' },
-      },
-      [],
-      '',
-      { ...DEFAULT_USER, permissions: [{ scopeId: SCOPE_IDS.ADMIN }] },
-    );
-    // Expect the goal source not to be disabled
-    const sourceSelects = screen.getAllByRole('combobox', { name: /goal source/i });
-    sourceSelects.forEach((sourceSelect) => {
-      expect(sourceSelect).toBeEnabled();
-    });
-  });
-
   it('disables the goal source if userCanEdit is false', () => {
     renderGoalForm(
       {

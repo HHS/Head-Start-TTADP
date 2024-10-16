@@ -306,7 +306,7 @@ const enqueueDBMaintenanceJob = async (
 // The MAINTENANCE_CATEGORY.DB is used to identify the category of maintenance task.
 // The dbMaintenance function is passed as the callback function to be executed when
 // a task in this category is processed.
-addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance);
+addQueueProcessor(MAINTENANCE_CATEGORY.DB, dbMaintenance, false);
 
 // Adds a cron job with the specified maintenance category, type, and function to execute
 addCronJob(

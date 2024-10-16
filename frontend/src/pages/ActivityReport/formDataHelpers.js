@@ -129,6 +129,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         courses: objective.courses,
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
       })),
     })),
   ];
@@ -155,6 +156,7 @@ export const packageGoals = (goals, goal, grantIds, prompts) => {
         courses: objective.courses,
         closeSuspendReason: objective.closeSuspendReason,
         closeSuspendContext: objective.closeSuspendContext,
+        createdHere: objective.createdHere,
       })),
       grantIds,
       prompts: grantIds.length < 2 ? prompts : [],

@@ -12,6 +12,7 @@ import fetchMock from 'fetch-mock';
 import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import participants, { isPageComplete } from '../participants';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
@@ -91,7 +92,7 @@ describe('participants', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderParticipants = ({ formValues = defaultFormValues }) => {
+    const RenderParticipants = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
@@ -106,7 +107,7 @@ describe('participants', () => {
             <FormProvider {...hookForm}>
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
-                  null,
+                  additionalData,
                   formValues,
                   1,
                   false,
@@ -194,41 +195,6 @@ describe('participants', () => {
       await selectEvent.select(screen.getByLabelText(/Regional Office\/TTA/i), 'TTAC');
     });
 
-    it('shows read only mode', async () => {
-      const readOnlyFormValues = {
-        ...defaultFormValues,
-        pocComplete: true,
-        pocCompleteId: userId,
-        pocCompleteDate: todaysDate,
-        event: {
-          pocIds: [userId],
-        },
-        recipients: [
-          {
-            id: 1,
-            label: 'R1 R1 G1',
-          },
-        ],
-        deliveryMethod: 'in-person',
-        numberOfParticipants: 1,
-        participants: ['Home Visitor'],
-        language: ['English'],
-      };
-
-      act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
-      });
-      await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
-      // confirm in-person is capitalized
-      const inPerson = await screen.findByText('In-person');
-      expect(inPerson).toBeVisible();
-    });
-
     it('shows read only mode correctly for hybrid', async () => {
       const readOnlyFormValues = {
         ...defaultFormValues,
@@ -258,10 +224,6 @@ describe('participants', () => {
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
 
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
       // confirm hybrid is capitalized
       const inPerson = await screen.findByText('Hybrid');
       expect(inPerson).toBeVisible();
@@ -273,7 +235,7 @@ describe('participants', () => {
       expect(virtuallyLabel).toBeVisible();
     });
 
-    it('shows read only mode correctly for ist visit selection', async () => {
+    it('only shows the continue button when the session status is complete', async () => {
       const readOnlyFormValues = {
         ...defaultFormValues,
         pocComplete: true,
@@ -294,21 +256,18 @@ describe('participants', () => {
         numberOfParticipantsVirtually: 1,
         participants: ['Home Visitor'],
         language: ['English'],
-        isIstVisit: 'yes',
-        regionalOfficeTta: ['AA', 'TTAC'],
+        isIstVisit: 'no',
       };
 
       act(() => {
-        render(<RenderParticipants formValues={readOnlyFormValues} />);
+        render(<RenderParticipants
+          formValues={readOnlyFormValues}
+          additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
+        />);
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
-
-      // confirm alert
-      const alert = await screen.findByText(/sent an email to the event creator and collaborator/i);
-      expect(alert).toBeVisible();
-
-      const regionalOfficeTta = await screen.findByText(/aa, ttac/i);
-      expect(regionalOfficeTta).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Continue' })).toBeInTheDocument();
     });
 
     describe('groups', () => {

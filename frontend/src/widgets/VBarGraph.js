@@ -11,6 +11,7 @@ import MediaCaptureButton from '../components/MediaCaptureButton';
 import WidgetH2 from '../components/WidgetH2';
 import useSize from '../hooks/useSize';
 import './VBarGraph.css';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 
 const Plot = createPlotlyComponent(Plotly);
 
@@ -26,10 +27,6 @@ function VBarGraph({
   const [plot, updatePlot] = useState({});
   const bars = useRef(null);
   const [showAccessibleData, updateShowAccessibleData] = useState(false);
-  // toggle the data table
-  function toggleAccessibleData() {
-    updateShowAccessibleData((current) => !current);
-  }
 
   const size = useSize(bars);
 
@@ -134,14 +131,11 @@ function VBarGraph({
               />
             )
             : null}
-          <button
-            type="button"
-            className="usa-button usa-button--unstyled"
-            onClick={toggleAccessibleData}
-            aria-label={showAccessibleData ? `Display ${title} as graph` : `Display ${title} as table`}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={title}
+            displayTable={showAccessibleData}
+            setDisplayTable={updateShowAccessibleData}
+          />
         </div>
 
       </Grid>

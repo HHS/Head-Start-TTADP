@@ -2,7 +2,7 @@ import { auditLogger } from '../logger';
 import db from '../models';
 
 const {
-  NationalCenter, User, Permission, NationalCenterUser,
+  NationalCenter, User, NationalCenterUser,
 } = db;
 
 interface NationalCenterType {
@@ -12,11 +12,6 @@ interface NationalCenterType {
     id: number;
     name: string;
   }],
-}
-
-interface NationalCenterUserType {
-  name: string;
-  id: number;
 }
 
 interface NCModel extends NationalCenterType {

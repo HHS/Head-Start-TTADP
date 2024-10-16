@@ -55,6 +55,7 @@ const Navigator = ({
   formDataStatusProp,
   shouldAutoSave,
   preFlightForNavigation,
+  hideSideNav,
 }) => {
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
@@ -157,7 +158,8 @@ const Navigator = ({
   const newLocal = 'smart-hub-sidenav-wrapper no-print';
   return (
     <Grid row gap>
-      <Grid className={newLocal} col={12} desktop={{ col: 4 }}>
+      { !hideSideNav && (
+      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
         <SideNav
           skipTo="navigator-form"
           skipToMessage="Skip to report content"
@@ -167,6 +169,7 @@ const Navigator = ({
           savedToStorageTime={savedToStorageTime}
         />
       </Grid>
+      )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
         <SocketAlert store={socketMessageStore} />
 
@@ -272,6 +275,7 @@ Navigator.propTypes = {
   formDataStatusProp: PropTypes.string,
   shouldAutoSave: PropTypes.bool,
   preFlightForNavigation: PropTypes.func,
+  hideSideNav: PropTypes.bool,
 };
 
 Navigator.defaultProps = {
@@ -291,6 +295,7 @@ Navigator.defaultProps = {
   formDataStatusProp: 'calculatedStatus',
   shouldAutoSave: true,
   preFlightForNavigation: () => Promise.resolve(true),
+  hideSideNav: false,
 };
 
 export default Navigator;

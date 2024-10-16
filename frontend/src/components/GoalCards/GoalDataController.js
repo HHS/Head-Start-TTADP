@@ -72,6 +72,7 @@ function GoalDataController({
   const [logs, setLogs] = useState([]);
   const [logsLoaded, setLogsLoaded] = useState(false);
   const { setIsAppLoading, isAppLoading } = useContext(AppLoadingContext);
+  const [currentFilters, setCurrentFilters] = useState(filtersToQueryString(filters));
 
   useEffect(() => {
     let isLoaded = false;
@@ -145,6 +146,17 @@ function GoalDataController({
       }
     }
     const filterQuery = filtersToQueryString(filters);
+
+    // If filters is different from currentFilters, then reset the activePage and Offset.
+    if (filterQuery !== currentFilters) {
+      setSortConfig({
+        ...sortConfig,
+        activePage: 1,
+        offset: 0,
+      });
+      setCurrentFilters(filterQuery);
+    }
+
     fetchGoals(filterQuery);
   }, [
     sortConfig,

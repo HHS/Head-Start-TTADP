@@ -6,6 +6,7 @@ import {
   getUserStatistics,
   getActiveUsers,
   setFeatureFlag,
+  getFeatureFlags,
   getTrainingReportUsers,
   getNamesByIds,
 } from './handlers';
@@ -22,6 +23,7 @@ import db, { Grant } from '../../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from '../../services/token';
 import { currentUserId } from '../../services/currentUser';
 import SCOPES from '../../middleware/scopeConstants';
+import { FEATURE_FLAGS } from '../../constants';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -45,6 +47,8 @@ jest.mock('../../services/token', () => ({
   validateVerificationToken: jest.fn(),
 }));
 
+const originalIsAdmin = User.prototype.isAdmin;
+
 const mockResponse = {
   json: jest.fn(),
   writeHead: jest.fn(),
@@ -66,8 +70,16 @@ const mockRequest = {
   },
 };
 
+const originalIgnoreCache = process.env.IGNORE_CACHE;
+
 describe('User handlers', () => {
-  afterAll(() => db.sequelize.close());
+  beforeAll(() => {
+    process.env.IGNORE_CACHE = true;
+  });
+  afterAll(() => {
+    process.env.IGNORE_CACHE = originalIgnoreCache;
+    db.sequelize.close();
+  });
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -379,6 +391,62 @@ describe('User handlers', () => {
       User.prototype.isAdmin = jest.fn().mockReturnValue(false);
       userById.mockResolvedValue(null);
       await setFeatureFlag(request, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+    });
+  });
+
+  describe('isAdmin', () => {
+    it('works predictably (no prototype override)', async () => {
+      User.prototype.isAdmin = originalIsAdmin;
+      const user = {
+        id: 1,
+        flags: ['feature1'],
+        permissions: [{ scopeId: SCOPES.ADMIN }],
+      };
+      const policy = new User(user);
+      expect(policy.isAdmin()).toBe(true);
+    });
+  });
+
+  describe('getFeatureFlags', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('returns all feature flags for admin users', async () => {
+      const user = {
+        id: 1,
+        flags: ['feature1'],
+        permissions: [{ scopeId: SCOPES.ADMIN }],
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(true);
+      userById.mockResolvedValue(user);
+      currentUserId.mockResolvedValue(1);
+
+      await getFeatureFlags(mockRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(FEATURE_FLAGS);
+    });
+
+    it('returns user-specific feature flags for non-admin users', async () => {
+      const user = {
+        id: 1,
+        flags: ['feature1'],
+        permissions: [],
+      };
+      User.prototype.isAdmin = jest.fn().mockReturnValue(false);
+      userById.mockResolvedValue(user);
+      currentUserId.mockResolvedValue(1);
+
+      await getFeatureFlags(mockRequest, mockResponse);
+      expect(mockResponse.json).toHaveBeenCalledWith(user.flags);
+    });
+
+    it('handles errors', async () => {
+      const error = new Error('An error occurred');
+      userById.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(1);
+
+      await getFeatureFlags(mockRequest, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });

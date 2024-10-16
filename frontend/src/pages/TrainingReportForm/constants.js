@@ -19,14 +19,13 @@ export const eventSummaryFields = {
   targetPopulations: [],
 };
 
-export const visionGoalFields = {
+export const visionFields = {
   vision: '',
-  goal: '',
 };
 
 export const defaultFormValues = {
   ...eventSummaryFields,
-  ...visionGoalFields,
+  ...visionFields,
 };
 
 export const defaultValues = {

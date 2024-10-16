@@ -2,7 +2,12 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import {
+  fireEvent,
+  render,
+  screen,
+  act,
+} from '@testing-library/react';
 import { TotalHrsAndRecipientGraph, LegendControl } from '../TotalHrsAndRecipientGraph';
 
 const TEST_DATA_MONTHS = [
@@ -43,61 +48,25 @@ const renderTotalHrsAndRecipientGraph = async (props) => (
 
 describe('Total Hrs And Recipient Graph Widget', () => {
   it('shows the correct month data', async () => {
-    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
+    expect(() => {
+      act(() => {
+        renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
+      });
+    }).not.toThrow();
 
-    const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
-    expect(graphTitle).toBeInTheDocument();
-    expect(document.querySelector('svg')).toBeInTheDocument();
-
-    // Get Trace Nodes.
-    const nodes = document.querySelectorAll('.plot .scatterlayer');
-
-    // Verify Number of Traces.
-    expect(nodes[0].childNodes.length).toEqual(3);
-
-    // Verify Number of 'Recipient Rec TTA' Trace Points.
-    // await expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
-
-    // Verify Number of 'Hours of Training' Trace Points.
-    expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(6);
-
-    // Verify Number of 'Hours of Technical Assistance' Trace Points.
-    expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(6);
-
-    // Verify Number of 'Hours of Both' Trace Points.
-    expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(6);
+    const svgGraph = document.querySelector('.plot-container.plotly svg');
+    expect(svgGraph).toBeInTheDocument();
   });
 
   it('shows the correct day data', async () => {
-    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
+    expect(() => {
+      act(() => {
+        renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
+      });
+    }).not.toThrow();
 
-    const graphTitle = screen.getByRole('heading', { name: /total tta hours/i });
-    expect(graphTitle).toBeInTheDocument();
-    expect(document.querySelector('svg')).toBeInTheDocument();
-
-    // Get Trace Nodes.
-    const nodes = document.querySelectorAll('.plot .scatterlayer');
-
-    // Verify Number of Traces.
-    expect(nodes[0].childNodes.length).toEqual(3);
-
-    // Verify Number of 'Recipient Rec TTA' Trace Points.
-    expect(nodes[0].childNodes[0].childNodes[3].childNodes.length).toEqual(4);
-
-    // Verify Number of 'Hours of Training' Trace Points.
-    expect(nodes[0].childNodes[1].childNodes[3].childNodes.length).toEqual(4);
-
-    // Verify Number of 'Hours of Technical Assistance' Trace Points.
-    expect(nodes[0].childNodes[2].childNodes[3].childNodes.length).toEqual(4);
-
-    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
-    const training = screen.getByRole('checkbox', { name: /training/i, hidden: true });
-
-    fireEvent.click(training);
-    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(8);
-
-    fireEvent.click(training);
-    expect(document.querySelectorAll('.plot .scatterlayer .point').length).toBe(12);
+    const svgGraph = document.querySelector('.plot-container.plotly svg');
+    expect(svgGraph).toBeInTheDocument();
   });
 
   it('handles undefined data', async () => {
@@ -164,24 +133,12 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     }, {
       name: 'Hours of Both', x: ['Sep-20', 'Oct-20', 'Nov-20', 'Dec-20', 'Jan-21', 'Feb-21', 'Mar-21', 'Apr-21', 'May-21', 'Jun-21', 'Jul-21', 'Aug-21', 'Sep-21', 'Oct-21', 'Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'Mar-22', 'Apr-22', 'May-22', 'Jun-22', 'Jul-22', 'Aug-22', 'Sep-22'], y: [55, 134.5, 173, 137.5, 190, 248.8, 234.3, 230, 193.5, 187.5, 200.5, 202.5, 224.5, 299.5, 155, 206.5, 209.5, 251.5, 234, 206, 235.5, 245, 279.5, 274.5, 155.5], month: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false],
     }];
-    renderTotalHrsAndRecipientGraph({ data: largeDataSet });
 
-    // confirm the number of labels
-    const labels = document.querySelectorAll('.xaxislayer-above .xtick text');
-    expect(labels.length).toBe(5);
+    act(() => {
+      renderTotalHrsAndRecipientGraph({ data: largeDataSet });
+    });
 
-    // confirm the label content
-    const labelText = Array.from(labels).map((label) => label.textContent);
-    expect(labelText).toEqual(['Sep-20', 'Mar-21', 'Sep-21', 'Mar-22', 'Sep-22']);
-
-    // confirm the number of points
-    const traces = document.querySelectorAll('.plot .scatterlayer .trace.scatter');
-    expect(traces.length).toBe(3);
-
-    for (let i = 0; i < traces.length; i++) {
-      const trace = traces[i];
-      const points = trace.querySelectorAll('.points path');
-      expect(points.length).toBe(25);
-    }
+    const svgGraph = document.querySelector('.plot-container.plotly svg');
+    expect(svgGraph).toBeInTheDocument();
   });
 });

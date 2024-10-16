@@ -61,7 +61,7 @@ services:
     image: softwaresecurityproject/zap-stable:latest
     platform: linux/arm64
     user: zap
-    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report.html
+    command: zap-full-scan.py -t http://backend:8080 -c zap.conf  -i -r owasp_report_.html
     volumes:
       - ./zap.conf:/zap/wrk/zap.conf:ro
       - ./reports:/zap/wrk:rw

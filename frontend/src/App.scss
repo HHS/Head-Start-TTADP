@@ -115,6 +115,10 @@ body {
   color: $text-ink
 }
 
+.base-medium {
+  color: $base-medium;
+}
+
 .smart-hub-bg-blue-primary {
   background-color: $ttahub-blue;
 }
@@ -444,4 +448,10 @@ fill: #1B1B1B;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.lead-paragraph {
+  font-family: "Merriweather Web", Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 1.25rem;
+  line-height: 1.5;
 }

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
 import { root, validateSchema } from './common';
 
 test.describe('get /users/collaborators', () => {

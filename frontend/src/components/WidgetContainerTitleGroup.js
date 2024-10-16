@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import ContextMenu from './ContextMenu';
+import DisplayTableToggle from './DisplayTableToggleButton';
 
 const WidgetContainerTitleGroup = ({
   children,
@@ -11,6 +12,8 @@ const WidgetContainerTitleGroup = ({
   pagination,
   enableCheckboxes,
   exportRows,
+  displayTable,
+  setDisplayTable,
 }) => {
   if (!title) {
     return null;
@@ -32,7 +35,7 @@ const WidgetContainerTitleGroup = ({
   ] : [];
 
   return (
-    <div className={`${showHeaderBorder ? 'smart-hub-widget-container-header-border' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
+    <div className={`${showHeaderBorder ? 'border-bottom smart-hub-border-base-lighter' : ''} ${className} desktop:display-flex flex-justify flex-align-center flex-gap-2`}>
       <div className="desktop:display-flex flex-align-center flex-gap-2">
         <div>
           <h2 className="smart-hub--table-widget-heading margin-0 margin-y-2 font-sans-lg">{title}</h2>
@@ -41,6 +44,13 @@ const WidgetContainerTitleGroup = ({
         {children}
       </div>
       <div>
+        {setDisplayTable && (
+        <DisplayTableToggle
+          title={title}
+          displayTable={displayTable}
+          setDisplayTable={setDisplayTable}
+        />
+        )}
         {
         (menuItems.length > 0 && (
         <ContextMenu
@@ -64,6 +74,8 @@ WidgetContainerTitleGroup.propTypes = {
   pagination: PropTypes.node,
   enableCheckboxes: PropTypes.bool,
   exportRows: PropTypes.func,
+  displayTable: PropTypes.bool,
+  setDisplayTable: PropTypes.func,
 };
 
 WidgetContainerTitleGroup.defaultProps = {
@@ -75,6 +87,8 @@ WidgetContainerTitleGroup.defaultProps = {
   className: 'padding-3 ',
   enableCheckboxes: false,
   exportRows: null,
+  displayTable: false,
+  setDisplayTable: null,
 };
 
 export default WidgetContainerTitleGroup;

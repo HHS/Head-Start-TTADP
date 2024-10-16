@@ -1,5 +1,4 @@
-import { Readable } from 'stream';
-import SftpClient, { FileInfo as SFTPFileInfo, SFTPSettings, FileListing } from '../stream/sftp';
+import SftpClient, { SFTPSettings, FileListing } from '../stream/sftp';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
 import db from '../../models';
@@ -12,7 +11,6 @@ import {
 } from './record';
 import { updateStatusByKey } from '../../services/files';
 import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
-import addToScanQueue from '../../services/scanQueue';
 import { auditLogger } from '../../logger';
 
 const {

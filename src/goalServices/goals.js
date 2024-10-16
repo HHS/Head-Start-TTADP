@@ -58,6 +58,12 @@ import { reduceGoals } from './reduceGoals';
 import extractObjectiveAssociationsFromActivityReportObjectives from './extractObjectiveAssociationsFromActivityReportObjectives';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 
+// the page state location of the goals and objective page
+// on the frontend/ActivityReportForm
+const GOALS_AND_OBJECTIVES_PAGE = '2';
+const NOT_STARTED_SENTENCE_CASE = 'Not started';
+const IN_PROGRESS_SENTENCE_CASE = 'In progress';
+
 const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
@@ -578,7 +584,7 @@ export async function createOrUpdateGoals(goals) {
           if (!objective) {
             objective = await Objective.create({
               status: objectiveStatus,
-              title,
+              title: title.trim(),
               goalId: newGoal.id,
               createdVia: 'rtr',
             });
@@ -688,19 +694,6 @@ export async function goalsForGrants(grantIds) {
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
       },
-      [Op.or]: [
-        {
-          createdVia: {
-            [Op.not]: 'tr',
-          },
-        },
-        {
-          createdVia: 'tr',
-          status: {
-            [Op.not]: 'Draft',
-          },
-        },
-      ],
     },
     include: [
       {
@@ -766,9 +759,6 @@ async function removeActivityReportGoalsFromReport(reportId, currentGoalIds) {
 }
 
 export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, reportId, pageState) {
-  const GOALS_AND_OBJECTIVES_PAGE = '2';
-  const IN_PROGRESS = 'In progress';
-
   try {
     // because of the way express works, goalIdsAsString is a string or an array of strings
     // so we flatmap it here to handle both cases
@@ -790,7 +780,7 @@ export async function setActivityReportGoalAsActivelyEdited(goalIdsAsString, rep
     await ActivityReport.update({
       pageState: {
         ...pageState,
-        [GOALS_AND_OBJECTIVES_PAGE]: IN_PROGRESS,
+        [GOALS_AND_OBJECTIVES_PAGE]: IN_PROGRESS_SENTENCE_CASE,
       },
     }, {
       where: {
@@ -1063,7 +1053,7 @@ export async function removeUnusedGoalsObjectivesFromReport(reportId, currentObj
   await removeObjectives(objectiveIdsToRemove, reportId);
 }
 
-async function createObjectivesForGoal(goal, objectives) {
+export async function createObjectivesForGoal(goal, objectives) {
   /*
      Note: Objective Status
      We only want to set Objective status from here on initial Objective creation.
@@ -1076,10 +1066,10 @@ async function createObjectivesForGoal(goal, objectives) {
 
   return Promise.all(objectives.filter((o) => o.title
     || o.ttaProvided
-    || o.topics.length
-    || o.resources.length
-    || o.courses.length
-    || o.files.length).map(async (objective, index) => {
+    || o.topics?.length
+    || o.resources?.length
+    || o.courses?.length
+    || o.files?.length).map(async (objective, index) => {
     const {
       id,
       isNew,
@@ -1411,18 +1401,33 @@ export async function updateGoalStatusById(
 }
 export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
-  const report = await ActivityReport.findByPk(activityReportId);
+  const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
   await saveGoalsForReport(goals, report);
+
   // updating the goals is updating the report, sorry everyone
-  await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id = ${activityReportId}`);
-  // note that for some reason (probably sequelize automagic)
-  // both model.update() and model.set() + model.save() do NOT update the updatedAt field
-  // even if you explicitly set it in the update or save to the current new Date()
-  // hence the raw query above
-  //
-  // note also that if we are able to spend some time refactoring
-  // the usage of react-hook-form on the frontend AR report, we'd likely
-  // not have to worry about this, it's just a little bit disjointed right now
+  // let us consult the page state by taking a shallow copy
+  const pageState = { ...report.pageState };
+
+  if (pageState[GOALS_AND_OBJECTIVES_PAGE] === NOT_STARTED_SENTENCE_CASE) {
+    // we also need to update the activity report page state
+    await ActivityReport.update({
+      pageState: {
+        ...pageState,
+        [GOALS_AND_OBJECTIVES_PAGE]: IN_PROGRESS_SENTENCE_CASE,
+      },
+    }, {
+      where: {
+        id: reportId,
+      },
+    });
+  } else {
+    // note that for some reason (probably sequelize automagic)
+    // both model.update() and model.set() + model.save() do NOT update the updatedAt field
+    // even if you explicitly set it in the update or save to the current new Date()
+    // hence the following raw query:
+    await sequelize.query(`UPDATE "ActivityReports" SET "updatedAt" = '${new Date().toISOString()}' WHERE id = ${activityReportId}`);
+  }
+
   return getGoalsForReport(activityReportId);
 }
 

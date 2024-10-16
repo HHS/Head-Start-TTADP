@@ -11,8 +11,28 @@ const {
   dbMaintenance,
 } = require('./db');
 const { sequelize, MaintenanceLog } = require('../../models');
+const { auditLogger } = require('../../logger');
 
 describe('maintenance', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+    // Mock the Queue from 'bull'
+    jest.mock('bull');
+    try {
+      await sequelize.authenticate();
+    } catch (error) {
+      auditLogger.error('Unable to connect to the database:', error);
+      throw error;
+    }
+  });
+  beforeEach(async () => {
+    jest.clearAllMocks();
+  });
+  afterAll(async () => {
+    await sequelize.close();
+    jest.resetModules();
+    jest.resetAllMocks();
+  });
   describe('maintenanceCommand', () => {
     it('should create a maintenance log entry and execute the command', async () => {
       const category = MAINTENANCE_CATEGORY.DB;
@@ -24,6 +44,7 @@ describe('maintenance', () => {
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
 
+      auditLogger.error(`tableMaintenanceCommand: ${JSON.stringify(log)}`);
       expect(log.type).toBe(type);
       expect(log.isSuccessful).toBe(true);
       expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);
@@ -58,7 +79,7 @@ describe('maintenance', () => {
       await tableMaintenanceCommand(command, category, type, model);
 
       const log = await MaintenanceLog.findOne({ order: [['id', 'DESC']], raw: true });
-
+      auditLogger.error(`tableMaintenanceCommand: ${JSON.stringify(log)}`);
       expect(log.type).toBe(type);
       expect(log.isSuccessful).toBe(true);
       expect(log.data?.messages.length > 0 && log.data.messages[0]).toContain(command);

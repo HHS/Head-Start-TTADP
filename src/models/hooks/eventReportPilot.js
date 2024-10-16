@@ -1,10 +1,7 @@
 /* eslint-disable global-require */
 /* eslint-disable import/prefer-default-export */
 const { Op } = require('sequelize');
-const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
-const { createGoalsForSessionRecipientsIfNecessary } = require('./sessionReportPilot');
-const safeParse = require('../helpers/safeParse');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
 const fieldsToEscape = ['eventName'];
@@ -39,150 +36,15 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
   }
 };
 
-const notifyNewPoc = async (_sequelize, instance) => {
+const notifyNewOwner = async (_sequelize, instance) => {
   try {
-    const changed = instance.changed();
-    if (changed.includes('pocIds')) {
-      const { pocIds } = instance;
-      const oldPocIds = instance.previous('pocIds');
+    // imported inside function to prevent circular ref
+    const { trOwnerAdded } = require('../../lib/mailer');
 
-      const newPocIds = pocIds.filter((id) => (
-        !oldPocIds.includes(id)));
-
-      if (newPocIds.length === 0) {
-        return;
-      }
-
-      // imported inside function to prevent circular ref
-      const { trPocAdded } = require('../../lib/mailer');
-
-      await Promise.all(
-        newPocIds.map((id) => trPocAdded(instance, id)),
-      );
-    }
+    await trOwnerAdded(instance, instance.ownerId);
   } catch (err) {
-    auditLogger.error(`Error in notifyNewPoc: ${err}`);
+    auditLogger.error(`Error in notifyNewOwner: ${err}`);
   }
-};
-
-const notifyPocEventComplete = async (_sequelize, instance) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed().includes('data')) {
-      const previous = instance.previous('data');
-      const current = safeParse(instance);
-
-      if (
-        current.status === TRAINING_REPORT_STATUSES.COMPLETE
-        && previous.status !== TRAINING_REPORT_STATUSES.COMPLETE) {
-        // imported inside function to prevent circular ref
-        const { trPocEventComplete } = require('../../lib/mailer');
-        await trPocEventComplete(instance.dataValues);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyPocEventComplete: ${err}`);
-  }
-};
-
-const notifyVisionAndGoalComplete = async (_sequelize, instance) => {
-  try {
-    // first we need to see if the session is newly complete
-    if (instance.changed().includes('data')) {
-      const previous = instance.previous('data');
-      const current = safeParse(instance);
-
-      if (
-        current.pocComplete && !previous.pocComplete) {
-        // imported inside function to prevent circular ref
-        const { trVisionAndGoalComplete } = require('../../lib/mailer');
-        await trVisionAndGoalComplete(instance.dataValues);
-      }
-    }
-  } catch (err) {
-    auditLogger.error(`Error in notifyVisionAndGoalComplete: ${err}`);
-  }
-};
-
-/**
- * This hook updates `Goal.name` for all goals that are associated with this training report.
- */
-const updateGoalText = async (sequelize, instance, options) => {
-  const { transaction } = options;
-
-  // Compare the previous and current goal text field.
-  const previous = instance.previous().data || null;
-  let current;
-  if (instance.data?.val) {
-    current = JSON.parse(instance.data.val) || null;
-  } else {
-    current = instance.data || null;
-  }
-
-  if (!current || !previous) {
-    return;
-  }
-
-  // Get all SessionReportPilot instances for this event.
-  const sessions = await sequelize.models.SessionReportPilot.findAll({
-    where: {
-      eventId: instance.id,
-    },
-    transaction,
-  });
-
-  await Promise.all(sessions.map((session) => createGoalsForSessionRecipientsIfNecessary(
-    sequelize,
-    session,
-    options,
-    instance,
-  )));
-
-  if (current.goal === previous.goal) {
-    return;
-  }
-
-  // Disallow goal name propagation if any session on this event has been completed,
-  // effectively locking down this goal text.
-  // The UI also prevents this.
-  const hasCompleteSession = await sequelize.models.SessionReportPilot.findOne({
-    where: {
-      eventId: instance.id,
-      'data.status': TRAINING_REPORT_STATUSES.COMPLETE,
-    },
-    transaction,
-  });
-
-  if (hasCompleteSession) {
-    current.goal = previous.goal;
-    instance.set('data', previous);
-    return;
-  }
-
-  // Propagate the goal name to all goals associated with this event
-  const name = current.goal;
-  if (!name) return;
-
-  await sequelize.models.Goal.update(
-    { name },
-    {
-      where: {
-        [Op.and]: [
-          { name: { [Op.ne]: name } },
-          {
-            id: {
-              [Op.in]: sequelize.literal(`(
-                SELECT "goalId"
-                FROM "EventReportPilotGoals"
-                WHERE "eventId" = ${instance.id}
-              )`),
-            },
-          },
-        ],
-      },
-      transaction,
-    },
-  );
 };
 
 const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, options) => {
@@ -264,8 +126,7 @@ const createOrUpdateNationalCenterUserCacheTable = async (sequelize, instance, o
   }
 };
 
-const beforeUpdate = async (sequelize, instance, options) => {
-  await updateGoalText(sequelize, instance, options);
+const beforeUpdate = async (_sequelize, instance) => {
   purifyDataFields(instance, fieldsToEscape);
 };
 
@@ -275,14 +136,12 @@ const beforeCreate = async (_sequelize, instance) => {
 
 const afterUpdate = async (sequelize, instance, options) => {
   await notifyNewCollaborators(sequelize, instance, options);
-  await notifyPocEventComplete(sequelize, instance, options);
-  await notifyVisionAndGoalComplete(sequelize, instance, options);
-  await notifyNewPoc(sequelize, instance, options);
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
   await createOrUpdateNationalCenterUserCacheTable(sequelize, instance, options);
+  await notifyNewOwner(sequelize, instance);
 };
 
 export {

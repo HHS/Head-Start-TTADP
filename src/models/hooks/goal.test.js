@@ -3,6 +3,7 @@ const {
   processForEmbeddedResources,
   findOrCreateGoalTemplate,
   preventCloseIfObjectivesOpen,
+  beforeCreate,
 } = require('./goal');
 const { GOAL_STATUS, OBJECTIVE_STATUS } = require('../../constants');
 const { createRecipient, createGrant, createGoal } = require('../../testUtils');
@@ -18,6 +19,54 @@ const {
 jest.mock('../../services/resource');
 
 describe('goal hooks', () => {
+  describe('beforeCreate', () => {
+    it('does nothing if instance already has goalTemplateId', async () => {
+      const instanceSet = jest.fn();
+      const instance = {
+        goalTemplateId: 1,
+        set: instanceSet,
+      };
+      await expect(beforeCreate({}, instance)).resolves.not.toThrow();
+      expect(instanceSet).not.toHaveBeenCalled();
+    });
+
+    it('does nothing if sequelize cannot find a curated template', async () => {
+      const instanceSet = jest.fn();
+      const instance = {
+        goalTemplateId: null,
+        set: instanceSet,
+      };
+      const sequelize = {
+        fn: jest.fn(),
+        models: {
+          GoalTemplate: {
+            findOne: jest.fn().mockResolvedValue(null),
+          },
+        },
+      };
+      await expect(beforeCreate(sequelize, instance)).resolves.not.toThrow();
+      expect(instanceSet).not.toHaveBeenCalled();
+    });
+
+    it('sets goalTemplateId if a curated template is found', async () => {
+      const instanceSet = jest.fn();
+      const instance = {
+        goalTemplateId: null,
+        set: instanceSet,
+      };
+      const sequelize = {
+        fn: jest.fn(),
+        models: {
+          GoalTemplate: {
+            findOne: jest.fn().mockResolvedValue({ id: 1 }),
+          },
+        },
+      };
+      await expect(beforeCreate(sequelize, instance)).resolves.not.toThrow();
+      expect(instanceSet).toHaveBeenCalledWith('goalTemplateId', 1);
+    });
+  });
+
   describe('preventCloseIfObjectivesOpen', () => {
     it('does nothing if instance.changed is not an array', async () => {
       const instance = {

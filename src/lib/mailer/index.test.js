@@ -18,13 +18,8 @@ import {
   notificationQueue as notificationDigestQueueMock,
   notifyRecipientReportApproved,
   sendTrainingReportNotification,
-  trVisionAndGoalComplete,
-  trPocSessionComplete,
   trSessionCreated,
-  trSessionCompleted,
   trCollaboratorAdded,
-  trPocAdded,
-  trPocEventComplete,
   filterAndDeduplicateEmails,
 } from '.';
 import {
@@ -132,7 +127,6 @@ const submittedReport = {
   ...reportObject,
   activityRecipients: [{ grantId: 1 }],
   submissionStatus: REPORT_STATUSES.SUBMITTED,
-  // calculatedStatus: REPORT_STATUSES.SUBMITTED,
   numberOfParticipants: 1,
   deliveryMethod: 'method',
   duration: 0,
@@ -169,10 +163,12 @@ describe('mailer tests', () => {
   afterAll(async () => {
     process.env = oldEnv;
     await db.sequelize.close();
+    jest.clearAllMocks();
   });
+
   describe('Changes requested by manager', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyChangesRequested({
         data: {
           report: mockReport,
@@ -189,12 +185,12 @@ describe('mailer tests', () => {
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Changes requested`);
-      expect(message.text).toContain(`${mockManager.name} requested changed to report ${mockReport.displayId}.`);
+      expect(message.text).toContain(`${mockManager.name} requested changes to report ${mockReport.displayId}.`);
       expect(message.text).toContain(mockApprover.note);
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyChangesRequested({
         data: {
           report: mockReport,
@@ -206,19 +202,20 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyChangesRequested({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyChangesRequested({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Report Approved', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyReportApproved({
         data: {
           report: mockReport,
-          approver: mockApprover,
           authorWithSetting: mockReport.author,
           collabsWithSettings: [mockCollaborator1, mockCollaborator2],
         },
@@ -235,11 +232,10 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyReportApproved({
         data: {
           report: mockReport,
-          approver: mockApprover,
           authorWithSetting: null,
           collabsWithSettings: [],
         },
@@ -247,15 +243,17 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyReportApproved({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyReportApproved({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Program Specialists: Recipient Report Approved', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
@@ -272,7 +270,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that an email is not sent if no program specialists/recipients', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
@@ -283,19 +281,21 @@ describe('mailer tests', () => {
       expect(email).toBe(null);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyRecipientReportApproved({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyRecipientReportApproved({
         data: {
           report: mockReport,
           programSpecialists: [mockProgramSpecialist],
           recipients: [mockRecipient],
         },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Manager Approval Requested', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyApproverAssigned({
         data: { report: mockReport, newApprover: mockApprover },
       }, jsonTransport);
@@ -309,15 +309,17 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      expect(notifyApproverAssigned({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyApproverAssigned({
         data: { report: mockReport },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
+
   describe('Add Collaborators', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockNewCollaborator },
       }, jsonTransport);
@@ -331,20 +333,21 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      expect(notifyCollaboratorAssigned({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCollaboratorAssigned({
         data: { report: mockReport, newCollaborator: mockCollaborator1 },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('sendTrainingReportNotification', () => {
     it('Tests that an email is sent', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       process.env.CI = '';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -359,18 +362,18 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`A session has been completed for Training Report ${data.displayId}`);
+      expect(message.subject).toBe(`Action needed: Submit session details for Training Report ${data.displayId}`);
       expect(message.text).toContain(
-        `A session has been completed for Training Report ${data.displayId}`,
+        'Select the link below to review and submit the session details in the TTA Hub:',
       );
       expect(message.text).toContain('/asdf/');
     });
     it('Honors no send', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       process.env.CI = '';
       const data = {
         emailTo: [`no-send_${mockNewCollaborator.email}`],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -385,10 +388,10 @@ describe('mailer tests', () => {
       expect(email).toBeNull();
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
+      process.env.SEND_NOTIFICATIONS = 'false';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -397,17 +400,18 @@ describe('mailer tests', () => {
           displayId: 'mockReport-1',
         },
       };
-      await expect(sendTrainingReportNotification({
+      const email = await sendTrainingReportNotification({
         data,
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
 
     it('Tests that emails are not sent on CI', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
-      process.env.CI = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
+      process.env.CI = 'true';
       const data = {
         emailTo: [mockNewCollaborator.email],
-        templatePath: 'tr_session_completed',
+        templatePath: 'tr_session_created',
         debugMessage: 'Congrats dude',
         displayId: 'TR-04-1235',
         reportPath: '/asdf/',
@@ -416,15 +420,16 @@ describe('mailer tests', () => {
           displayId: 'mockReport-1',
         },
       };
-      await expect(sendTrainingReportNotification({
+      const email = await sendTrainingReportNotification({
         data,
-      }, jsonTransport)).resolves.toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('Collaborators digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -451,7 +456,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -476,7 +481,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -501,7 +506,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no new collaborator notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -523,21 +528,22 @@ describe('mailer tests', () => {
     });
 
     it('tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
-      process.env.SEND_NOTIFICATIONS = false;
-      await expect(notifyDigest({
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
           reports: [],
           type: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
           freq: EMAIL_DIGEST_FREQ.DAILY,
         },
-      }, jsonTransport)).toBeNull();
+      }, jsonTransport);
+      expect(email).toBeNull();
     });
   });
 
   describe('Changes requested digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -564,7 +570,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -589,7 +595,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -614,7 +620,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no changes requested notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -638,7 +644,7 @@ describe('mailer tests', () => {
 
   describe('Submitted digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -665,7 +671,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -690,7 +696,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -715,7 +721,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no submitted notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -739,7 +745,7 @@ describe('mailer tests', () => {
 
   describe('Approved digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -766,7 +772,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -791,7 +797,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -816,7 +822,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no approved reports notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           user: mockNewCollaborator,
@@ -840,7 +846,7 @@ describe('mailer tests', () => {
 
   describe('Program Specialist: Report approved digest', () => {
     it('tests that an email is sent for a daily setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -865,7 +871,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a weekly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -890,7 +896,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent for a monthly setting', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [mockReport],
@@ -915,7 +921,7 @@ describe('mailer tests', () => {
       expect(message.text).toContain(reportPath);
     });
     it('tests that an email is sent if there are no approved reports notifications', async () => {
-      process.env.SEND_NOTIFICATIONS = true;
+      process.env.SEND_NOTIFICATIONS = 'true';
       const email = await notifyDigest({
         data: {
           reports: [],
@@ -1173,61 +1179,9 @@ describe('mailer tests', () => {
         eventId: 'tr-1234',
       },
     };
-    it('trVisionAndGoalComplete success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trVisionAndGoalComplete({
-        id: 1,
-        ownerId: 1,
-        collaboratorIds: [2, 3],
-        pocIds: [4, 5],
-        data: { val: JSON.stringify(mockEvent.data) },
-      });
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(3);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_POC_VISION_GOAL_COMPLETE,
-          expect.any(Object),
-        );
-    });
-    it('trVisionAndGoalComplete error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trVisionAndGoalComplete();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
-    it('trVisionAndGoal on CI', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trVisionAndGoalComplete(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
-    it('trPocSessionComplete success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocSessionComplete(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(3);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_POC_SESSION_COMPLETE,
-          expect.any(Object),
-        );
-    });
-    it('trPocSessionComplete on CI', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocSessionComplete(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
-    it('trPocSessionComplete error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocSessionComplete();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
     it('trSessionCreated success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trSessionCreated(mockEvent);
+      await trSessionCreated(mockEvent, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
       expect(notificationQueueMock.add)
         .toHaveBeenCalledWith(
@@ -1248,33 +1202,10 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(0);
     });
-    it('trSessionCompleted success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trSessionCompleted(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_SESSION_COMPLETED,
-          expect.any(Object),
-        );
-    });
-    it('trSessionCompleted error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trSessionCompleted();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
-    it('trSessionCompleted early return on CI', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trSessionCompleted(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
     it('trCollaboratorAdded success', async () => {
       userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
       await trCollaboratorAdded({
-        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
+        id: 1, data: { val: JSON.stringify(mockEvent.data) },
       }, 1);
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
       expect(notificationQueueMock.add)
@@ -1296,59 +1227,8 @@ describe('mailer tests', () => {
       expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
       expect(logger.error).toHaveBeenCalledTimes(0);
     });
-    it('trPocAdded success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocAdded({
-        id: 1, dataValues: { data: { val: JSON.stringify(mockEvent.data) } },
-      }, 1);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(1);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_POC_ADDED,
-          expect.any(Object),
-        );
-    });
-    it('trPocAdded error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocAdded();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
-    it('trPocAdded early return', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocAdded(mockEvent);
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
-    it('trPocEventComplete success', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete({
-        id: 1, data: { val: JSON.stringify(mockEvent.data) }, pocIds: [4, 5],
-      });
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
-      expect(notificationQueueMock.add)
-        .toHaveBeenCalledWith(
-          EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
-          expect.any(Object),
-        );
-    });
-    it('trPocEventComplete error', async () => {
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete();
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(1);
-    });
-    it('trPocEventComplete early return on CI', async () => {
-      process.env.CI = 'true';
-      userById.mockImplementation(() => Promise.resolve({ email: 'user@user.com' }));
-      await trPocEventComplete({
-        id: 1, data: { val: JSON.stringify(mockEvent) }, pocIds: [4, 5],
-      });
-      expect(notificationQueueMock.add).toHaveBeenCalledTimes(0);
-      expect(logger.error).toHaveBeenCalledTimes(0);
-    });
   });
+
   describe('filterAndDeduplicateEmails', () => {
     it('should return an array with unique emails when given an array with duplicate emails', () => {
       const emails = ['test@example.com', 'test@example.com', 'another@example.com'];

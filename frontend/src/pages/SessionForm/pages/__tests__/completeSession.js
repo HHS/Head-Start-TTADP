@@ -25,7 +25,7 @@ describe('completeSession', () => {
       event: {
         ownerId: 1,
         data: {
-          goal: 'This is a goal',
+          vision: 'This is a vision',
         },
       },
     };

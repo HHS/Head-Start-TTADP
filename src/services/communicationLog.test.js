@@ -1,5 +1,5 @@
 import stringify from 'csv-stringify/lib/sync';
-import { expect } from '@playwright/test';
+// import { expect } from '@playwright/test';
 import db, { User, Recipient, CommunicationLog } from '../models';
 import {
   logById,
@@ -9,6 +9,7 @@ import {
   updateLog,
   createLog,
   orderLogsBy,
+  formatCommunicationDateWithJsonData,
 } from './communicationLog';
 import { createRecipient, createUser } from '../testUtils';
 
@@ -142,6 +143,32 @@ describe('communicationLog services', () => {
       const result = orderLogsBy(undefined, sortDir);
 
       expect(result).toEqual([['data.communicationDate', 'asc']]);
+    });
+  });
+
+  describe('formatCommunicationDateWithJsonData', () => {
+    const badDatesLong = [
+      '08/16/24',
+      '8/16/24',
+      '8/16/2024',
+      '08/16//24',
+      '8-16-24',
+      '08/16/20240.75',
+    ];
+
+    const badDatesShort = [
+      '08/4/2024',
+      '8/4/24',
+      '8/4/2024',
+      '08/4/24',
+    ];
+
+    it.each(badDatesLong)('should return 08/16/2024 when the date is %s', (date) => {
+      expect(formatCommunicationDateWithJsonData({ communicationDate: date })).toEqual({ communicationDate: '08/16/2024' });
+    });
+
+    it.each(badDatesShort)('should return 08/04/2024 when the date is %s', (date) => {
+      expect(formatCommunicationDateWithJsonData({ communicationDate: date })).toEqual({ communicationDate: '08/04/2024' });
     });
   });
 });

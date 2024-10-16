@@ -1,6 +1,8 @@
 import newQueue, { increaseListeners } from '../lib/queue';
 import { logger, auditLogger } from '../logger';
 import processFile from '../workers/files';
+import transactionQueueWrapper from '../workers/transactionWrapper';
+import referenceData from '../workers/referenceData';
 
 const scanQueue = newQueue('scan');
 const addToScanQueue = (fileKey) => {
@@ -12,7 +14,10 @@ const addToScanQueue = (fileKey) => {
   };
 
   return scanQueue.add(
-    fileKey,
+    {
+      ...fileKey,
+      ...(referenceData()),
+    },
     {
       attempts: retries,
       backoff: backOffOpts,
@@ -35,7 +40,8 @@ const processScanQueue = () => {
   scanQueue.on('failed', onFailedScanQueue);
   scanQueue.on('completed', onCompletedScanQueue);
   increaseListeners(scanQueue);
-  scanQueue.process((job) => processFile(job.data.key));
+  const processFileFromJob = async (job) => processFile(job.data.key);
+  scanQueue.process(transactionQueueWrapper(processFileFromJob));
 };
 
 export {

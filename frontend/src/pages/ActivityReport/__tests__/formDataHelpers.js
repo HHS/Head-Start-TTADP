@@ -160,6 +160,115 @@ describe('FormDataHelpers', () => {
         },
       ]);
     });
+
+    it('correctly pacakges all objective fields', () => {
+      const grantIds = [1];
+      const packagedGoals = packageGoals(
+        [
+          {
+            ...baseGoal,
+            name: 'goal name',
+            endDate: '09/01/2020',
+            prompts: [{ fieldName: 'prompt' }],
+            objectives: [
+              {
+                id: 1,
+                isNew: false,
+                ttaProvided: 'Not Created Here TTA',
+                title: 'Not Created Here Title',
+                status: 'status',
+                resources: 'resources',
+                topics: 'topics',
+                files: 'files',
+                supportType: 'supportType',
+                courses: 'courses',
+                closeSuspendReason: 'closeSuspendReason',
+                closeSuspendContext: 'closeSuspendContext',
+                createdHere: false,
+              },
+            ],
+          },
+        ],
+        {
+          ...baseGoal,
+          name: 'recipient',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          objectives: [
+            {
+              id: 2,
+              isNew: false,
+              ttaProvided: 'Created Here TTA',
+              title: 'Created Here Title',
+              status: 'status',
+              resources: 'resources',
+              topics: 'topics',
+              files: 'files',
+              supportType: 'supportType',
+              courses: 'courses',
+              closeSuspendReason: 'closeSuspendReason',
+              closeSuspendContext: 'closeSuspendContext',
+              createdHere: true,
+            },
+          ],
+        },
+        grantIds,
+        [{ fieldName: 'prompt2' }],
+      );
+
+      expect(packagedGoals).toEqual([
+        {
+          ...baseGoal,
+          name: 'goal name',
+          endDate: '09/01/2020',
+          prompts: [{ fieldName: 'prompt' }],
+          grantIds,
+          isActivelyBeingEditing: false,
+          objectives: [
+            {
+              id: 1,
+              isNew: false,
+              ttaProvided: 'Not Created Here TTA',
+              title: 'Not Created Here Title',
+              status: 'status',
+              resources: 'resources',
+              topics: 'topics',
+              files: 'files',
+              supportType: 'supportType',
+              courses: 'courses',
+              closeSuspendReason: 'closeSuspendReason',
+              closeSuspendContext: 'closeSuspendContext',
+              createdHere: false,
+            },
+          ],
+        },
+        {
+          ...baseGoal,
+          name: 'recipient',
+          endDate: '09/01/2020',
+          isActivelyBeingEditing: true,
+          grantIds,
+          prompts: [{ fieldName: 'prompt2' }],
+          objectives: [
+            {
+              id: 2,
+              isNew: false,
+              ttaProvided: 'Created Here TTA',
+              title: 'Created Here Title',
+              status: 'status',
+              resources: 'resources',
+              topics: 'topics',
+              files: 'files',
+              supportType: 'supportType',
+              courses: 'courses',
+              closeSuspendReason: 'closeSuspendReason',
+              closeSuspendContext: 'closeSuspendContext',
+              createdHere: true,
+            },
+          ],
+        },
+      ]);
+    });
   });
 
   describe('convertGoalsToFormData', () => {

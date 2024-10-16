@@ -1,0 +1,11 @@
+style
+  include ../email.css
+p Hello,
+p This is a reminder that you have been assigned as an Event Creator on Training Report #{displayId}.
+p Select the link below to access the report in the TTA Hub:
+ul
+  li 
+    a(href=reportPath)= displayId
+p Best Regards,
+  br
+  | Your TTA Hub team

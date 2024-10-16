@@ -422,9 +422,9 @@ export function reduceGoals(
   const objectivesReducer = forReport ? reduceObjectivesForActivityReport : reduceObjectives;
 
   const where = (g: IReducedGoal, currentValue: IGoalModelInstance) => (forReport
-    ? g.name === currentValue.dataValues.name
-    : g.name === currentValue.dataValues.name
-        && g.status === currentValue.dataValues.status);
+    ? (g.name || '').trim() === (currentValue.dataValues.name || '').trim()
+    : (g.name || '').trim() === (currentValue.dataValues.name || '').trim()
+   && g.status === currentValue.dataValues.status);
 
   function getGoalCollaboratorDetails(
     collabType: string,

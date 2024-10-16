@@ -277,7 +277,7 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       // eslint-disable-next-line no-await-in-loop
       let activityReportObjective = await ActivityReportObjective.findOne({
         where: {
-          id: parsedObjectiveIds[i],
+          objectiveId: parsedObjectiveIds[i],
           activityReportId: parsedReportId,
         },
       });

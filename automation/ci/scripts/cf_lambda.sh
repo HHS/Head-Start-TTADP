@@ -6,6 +6,9 @@ set -o pipefail
 set -o noglob
 set -o noclobber
 
+# Source the environment file to get the URLs
+source /etc/environment
+
 # -----------------------------------------------------------------------------
 # Generic helper functions
 # -----------------------------------------------------------------------------
@@ -423,7 +426,7 @@ function run_task {
 function monitor_task {
     local app_name=$1
     local task_name=$2
-    local timeout=${3:-200}  # Default timeout in seconds
+    local timeout=${3:-300}  # Default timeout in seconds
     validate_parameters "$app_name"
     validate_parameters "$task_name"
     local start_time

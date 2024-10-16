@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
 const cls = require('cls-hooked');
+const httpContext = require('express-http-context'); // eslint-disable-line import/no-import-module-exports
 
 const namespace = cls.createNamespace('transaction');
 const basename = path.basename(__filename);
@@ -23,6 +24,55 @@ if (config.use_env_variable) {
 }
 
 audit.attachHooksForAuditing(sequelize);
+
+function isConnectionOpen() {
+  const { pool } = sequelize.connectionManager;
+
+  if (!pool) {
+    return false;
+  }
+
+  // Check if there are any active connections in the pool
+  // eslint-disable-next-line no-underscore-dangle
+  const isOpen = pool._availableObjects.length > 0 || pool._inUseObjects.length > 0;
+  return isOpen;
+}
+
+const descriptiveDetails = () => {
+  const loggedUser = httpContext.get('loggedUser') ? httpContext.get('loggedUser') : null;
+  const transactionId = httpContext.get('transactionId') ? httpContext.get('transactionId') : null;
+  const sessionSig = httpContext.get('sessionSig') ? httpContext.get('sessionSig') : null;
+  const impersonationId = httpContext.get('impersonationUserId') ? httpContext.get('impersonationUserId') : null;
+  const descriptor = httpContext.get('auditDescriptor') ? httpContext.get('auditDescriptor') : null;
+
+  return {
+    ...(descriptor && { descriptor }),
+    ...(loggedUser && { loggedUser }),
+    ...(impersonationId && { impersonationId }),
+    ...(sessionSig && { sessionSig }),
+    ...(transactionId && { transactionId }),
+  };
+};
+
+sequelize.addHook('beforeConnect', () => {
+  if (process.env.CI) return;
+  auditLogger.info(`Attempting to connect to the database: ${JSON.stringify(descriptiveDetails())}`);
+});
+
+sequelize.addHook('afterConnect', () => {
+  if (process.env.CI) return;
+  auditLogger.info(`Database connection established: ${JSON.stringify(descriptiveDetails())}`);
+});
+
+sequelize.addHook('beforeDisconnect', () => {
+  if (process.env.CI) return;
+  auditLogger.info(`Attempting to disconnect from the database: ${JSON.stringify(descriptiveDetails())}`);
+});
+
+sequelize.addHook('afterDisconnect', () => {
+  if (process.env.CI) return;
+  auditLogger.info(`Database connection closed: ${JSON.stringify(descriptiveDetails())}`);
+});
 
 fs
   .readdirSync(__dirname)
@@ -76,6 +126,8 @@ Object.keys(db).forEach((modelName) => {
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
+db.isConnectionOpen = isConnectionOpen;
+db.descriptiveDetails = descriptiveDetails;
 
 module.exports = db;
 

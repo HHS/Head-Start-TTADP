@@ -20,6 +20,7 @@ export default function ContentFromFeedByTag({
   tagName,
   contentSelector,
   className,
+  openLinksInNewTab,
 }) {
   const [content, setContent] = useState('');
 
@@ -62,7 +63,7 @@ export default function ContentFromFeedByTag({
 
   return (
     <div className={classNames}>
-      <FeedArticle title="" content={content} unread={false} key={content} partial />
+      <FeedArticle title="" content={content} unread={false} key={content} openLinksInNewTab={openLinksInNewTab} partial />
     </div>
   );
 }
@@ -71,9 +72,11 @@ ContentFromFeedByTag.propTypes = {
   tagName: PropTypes.string.isRequired,
   contentSelector: PropTypes.string,
   className: PropTypes.string,
+  openLinksInNewTab: PropTypes.bool,
 };
 
 ContentFromFeedByTag.defaultProps = {
   contentSelector: '',
   className: '',
+  openLinksInNewTab: false,
 };

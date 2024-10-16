@@ -513,7 +513,7 @@ const ActivitySummary = ({
         </div>
         <div className="margin-top-2">
           <FormItem
-            label="How was the activity conducted?"
+            label="Delivery method"
             name="deliveryMethod"
             fieldSetWrapper
           >

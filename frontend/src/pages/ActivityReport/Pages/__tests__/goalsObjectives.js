@@ -49,7 +49,6 @@ const RenderGoalsObjectives = ({
             value: 1, label: 'Turtle 1', programs: [], id: 1,
           },
         ],
-        sessionObjectives: [],
         objectives: [{
           id: 1,
           title: 'title',
@@ -373,7 +372,6 @@ describe('goals objectives', () => {
 
       it('is false if goalForEditing is true', () => {
         const goals = [{
-          sessionObjectives: [],
           name: 'Is goal',
           endDate: '2021-01-01',
           isRttapa: 'No',

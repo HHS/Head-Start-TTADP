@@ -11,7 +11,7 @@ import ApproverSelect from './components/ApproverSelect';
 import FormItem from '../../../../../components/FormItem';
 import ApproverStatusList from '../../components/ApproverStatusList';
 import DisplayApproverNotes from '../../components/DisplayApproverNotes';
-import IncompletePages from '../IncompletePages';
+import IncompletePages from '../../../../../components/IncompletePages';
 import UserContext from '../../../../../UserContext';
 import IndicatesRequiredField from '../../../../../components/IndicatesRequiredField';
 

@@ -15,7 +15,6 @@ import {
   Objective,
   Topic,
   EventReportPilot,
-  EventReportPilotGoal,
   SessionReportPilot,
   ActivityReportObjectiveTopic,
 } from '../models';
@@ -461,18 +460,6 @@ describe('Goals by Recipient Test', () => {
           onApprovedAR: false,
           goalTemplateId: curatedGoalTemplate.id,
         }),
-
-        // 14, goal from template
-        Goal.create({
-          name: 'This is a goal created on a TR',
-          status: 'In Progress',
-          timeframe: '1 month',
-          isFromSmartsheetTtaPlan: true,
-          grantId: 300,
-          createdAt: '2021-03-10T19:16:15.842Z',
-          onApprovedAR: false,
-          createdVia: 'tr',
-        }),
       ],
     );
 
@@ -654,8 +641,6 @@ describe('Goals by Recipient Test', () => {
       ],
     );
 
-    const trGoal = goals.find((g) => g.createdVia === 'tr');
-
     event = await EventReportPilot.create({
       ownerId: 1,
       regionId: 1,
@@ -664,46 +649,6 @@ describe('Goals by Recipient Test', () => {
       imported: {},
       pocIds: [],
     });
-
-    const session = await SessionReportPilot.create({
-      eventId: event.id,
-      data: {
-        objectiveTopics: ['Buttering', 'Breading'],
-        objective: 'This is a session objective',
-        grantNumbers: [grant1.number],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        eventDisplayId: '12345',
-        status: 'Complete',
-      },
-    });
-
-    const session2 = await SessionReportPilot.create({
-      eventId: event.id,
-      data: {
-        objectiveTopics: ['Buttering', 'Breading'],
-        objective: 'This is a session objective',
-        grantNumbers: [grant1.number],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        eventDisplayId: '12345',
-        status: 'Complete',
-      },
-    });
-
-    await EventReportPilotGoal.create({
-      eventId: event.id,
-      goalId: trGoal.id,
-      grantId: trGoal.grantId,
-      sessionId: session.id,
-    });
-
-    await EventReportPilotGoal.create({
-      eventId: event.id,
-      goalId: trGoal.id,
-      grantId: trGoal.grantId,
-      sessionId: session2.id,
-    });
   });
 
   afterAll(async () => {
@@ -711,7 +656,6 @@ describe('Goals by Recipient Test', () => {
     const reportsToDelete = await ActivityReport.findAll({ where: { userId: mockGoalUser.id } });
     const reportIdsToDelete = reportsToDelete.map((report) => report.id);
 
-    await EventReportPilotGoal.destroy({ where: { goalId: goalIds } });
     await SessionReportPilot.destroy({ where: { eventId: event.id } });
     await EventReportPilot.destroy({ where: { ownerId: 1 } });
 
@@ -799,8 +743,8 @@ describe('Goals by Recipient Test', () => {
       const countx = count;
       const goalRowsx = goalRows;
 
-      expect(countx).toBe(7);
-      expect(goalRowsx.length).toBe(7);
+      expect(countx).toBe(6);
+      expect(goalRowsx.length).toBe(6);
 
       // Goal 4.
       expect(moment(goalRowsx[0].createdOn).format('YYYY-MM-DD')).toBe('2021-04-02');
@@ -811,89 +755,55 @@ describe('Goals by Recipient Test', () => {
       expect(goalRowsx[0].goalTopics).toEqual(['Child Screening and Assessment', 'Communication']);
       expect(goalRowsx[0].objectives.length).toBe(1);
 
-      // TR goal
-      expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-10');
-      expect(goalRowsx[1].goalText).toBe('This is a goal created on a TR');
-      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
-      expect(goalRowsx[1].objectiveCount).toBe(2);
-      expect(goalRowsx[1].reasons).toEqual([]);
-      expect(goalRowsx[1].goalTopics).toEqual([]);
-      expect(goalRowsx[1].objectives.length).toBe(0);
-      expect(goalRowsx[1].sessionObjectives.length).toBe(2);
-
-      const trObjective = goalRowsx[1].sessionObjectives[0];
-      trObjective.topics.sort();
       const expectedTopics = ['Buttering', 'Breading'];
       expectedTopics.sort();
 
-      expect(trObjective).toEqual({
-        type: 'session',
-        title: 'This is a session objective',
-        topics: expectedTopics,
-        grantNumbers: [goalRowsx[1].grantNumbers[0]],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        trainingReportId: '12345',
-      });
-
-      const trObjective2 = goalRowsx[1].sessionObjectives[1];
-      trObjective2.topics.sort();
       const expectedTopics2 = ['Buttering', 'Breading'];
       expectedTopics2.sort();
 
-      expect(trObjective2).toEqual({
-        type: 'session',
-        title: 'This is a session objective',
-        topics: expectedTopics2,
-        grantNumbers: [goalRowsx[1].grantNumbers[0]],
-        endDate: '2020-09-01',
-        sessionName: 'This is a session name',
-        trainingReportId: '12345',
-      });
-
       // Goal 3.
-      expect(goalRowsx[2].goalText).toBe('Goal 3');
-      expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
-      expect(goalRowsx[2].goalText).toBe('Goal 3');
-      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
-      expect(goalRowsx[2].objectiveCount).toBe(2);
-      expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRowsx[2].grantNumbers.length).toBe(1);
-      expect(goalRowsx[2].grantNumbers[0]).toBe('12345');
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
+      expect(moment(goalRowsx[1].createdOn).format('YYYY-MM-DD')).toBe('2021-03-03');
+      expect(goalRowsx[1].goalText).toBe('Goal 3');
+      expect(goalRowsx[1].goalNumbers).toStrictEqual([`G-${goalRowsx[1].id}`]);
+      expect(goalRowsx[1].objectiveCount).toBe(2);
+      expect(goalRowsx[1].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[1].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[1].grantNumbers.length).toBe(1);
+      expect(goalRowsx[1].grantNumbers[0]).toBe('12345');
 
       // Get objective 4.
-      expect(goalRowsx[2].objectives.length).toBe(2);
-      const objective4 = goalRowsx[2].objectives.find((o) => o.title === 'objective 4');
+      expect(goalRowsx[1].objectives.length).toBe(2);
+      const objective4 = goalRowsx[1].objectives.find((o) => o.title === 'objective 4');
       expect(objective4.title).toBe('objective 4');
       expect(objective4.endDate).toBe('09/01/2020');
       expect(objective4.reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(objective4.status).toEqual(OBJECTIVE_STATUS.COMPLETE);
 
       // Get objective 3.
-      const objective3 = goalRowsx[2].objectives.find((o) => o.title === 'objective 3');
+      const objective3 = goalRowsx[1].objectives.find((o) => o.title === 'objective 3');
       expect(objective3.title).toBe('objective 3');
       expect(objective3.endDate).toBe('09/01/2020');
       expect(objective3.reasons).toEqual(['COVID-19 response', 'Complaint']);
       expect(objective3.status).toEqual(OBJECTIVE_STATUS.NOT_STARTED);
 
       // Goal 2.
-      expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
-      expect(goalRowsx[3].goalText).toBe('Goal 2');
+      expect(moment(goalRowsx[2].createdOn).format('YYYY-MM-DD')).toBe('2021-02-15');
+      expect(goalRowsx[2].goalText).toBe('Goal 2');
+      expect(goalRowsx[2].goalNumbers).toStrictEqual([`G-${goalRowsx[2].id}`]);
+      expect(goalRowsx[2].objectiveCount).toBe(1);
+      expect(goalRowsx[2].reasons).toEqual(['COVID-19 response', 'Complaint']);
+      expect(goalRowsx[2].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[2].objectives.length).toBe(1);
+
+      // Goal 1.
+      expect(moment(goalRowsx[3].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
+      expect(goalRowsx[3].goalText).toBe('Goal 1');
       expect(goalRowsx[3].goalNumbers).toStrictEqual([`G-${goalRowsx[3].id}`]);
       expect(goalRowsx[3].objectiveCount).toBe(1);
       expect(goalRowsx[3].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[3].goalTopics).toEqual(['Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
+      expect(goalRowsx[3].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
       expect(goalRowsx[3].objectives.length).toBe(1);
-
-      // Goal 1.
-      expect(moment(goalRowsx[4].createdOn).format('YYYY-MM-DD')).toBe('2021-01-10');
-      expect(goalRowsx[4].goalText).toBe('Goal 1');
-      expect(goalRowsx[4].goalNumbers).toStrictEqual([`G-${goalRowsx[4].id}`]);
-      expect(goalRowsx[4].objectiveCount).toBe(1);
-      expect(goalRowsx[4].reasons).toEqual(['COVID-19 response', 'Complaint']);
-      expect(goalRowsx[4].goalTopics).toEqual(['Arcane Mastery', 'Learning Environments', 'Nutrition', 'Physical Health and Screenings']);
-      expect(goalRowsx[4].objectives.length).toBe(1);
 
       goalRowsx.forEach((g) => {
         expect(g.onAR).toBeDefined();
