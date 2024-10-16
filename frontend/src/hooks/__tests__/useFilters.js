@@ -1,5 +1,6 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
+import { SCOPE_IDS } from '@ttahub/common/src/constants';
 import useFilters from '../useFilters';
 import AriaLiveContext from '../../AriaLiveContext';
 
@@ -14,8 +15,19 @@ describe('useFilters', () => {
     </AriaLiveContext.Provider>
   );
 
-  it('should initialize with default values', () => {
+  it('handles general use', () => {
     const { result } = renderHook(() => useFilters(user, filterKey, manageRegions), { wrapper });
+
+    expect(result.current.regions).toEqual([]);
+    expect(result.current.defaultRegion).toEqual(1);
+    expect(result.current.hasMultipleRegions).toEqual(false);
+    expect(result.current.allRegionsFilters).toEqual([]);
+    expect(result.current.defaultFilters).toEqual([]);
+    expect(result.current.filters).toEqual([]);
+  });
+
+  it('should initialize with default values', () => {
+    const { result } = renderHook(() => useFilters(user, filterKey), { wrapper });
 
     expect(result.current.regions).toEqual([]);
     expect(result.current.defaultRegion).toEqual(1);
@@ -44,5 +56,55 @@ describe('useFilters', () => {
     });
 
     expect(result.current.filters).toEqual([...result.current.allRegionsFilters]);
+  });
+
+  it('handles removing a filter that is not present', () => {
+    const { result } = renderHook(() => useFilters(user, filterKey, manageRegions), { wrapper });
+    const filterIdToRemove = 999;
+    act(() => {
+      result.current.onRemoveFilter(filterIdToRemove, true);
+    });
+
+    expect(result.current.filters).toEqual([...result.current.allRegionsFilters]);
+  });
+
+  it('should filter out region filter from filter config when a user has only one region', () => {
+    const u = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+    const { result } = renderHook(() => useFilters(
+      u,
+      filterKey,
+      manageRegions,
+      [],
+      [{ id: 'region' }],
+    ), { wrapper });
+
+    expect(result.current.filterConfig).toEqual([]);
+  });
+  it('does not filter out region filter from filter config when a user has more than one region', () => {
+    const u = {
+      homeRegionId: 1,
+      permissions: [{
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }, {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      }],
+    };
+    const { result } = renderHook(() => useFilters(
+      u,
+      filterKey,
+      manageRegions,
+      [],
+      [{ id: 'region' }],
+    ), { wrapper });
+
+    expect(result.current.filterConfig).toEqual([{ id: 'region' }]);
   });
 });
