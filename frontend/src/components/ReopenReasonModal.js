@@ -8,7 +8,10 @@ import {
 import Modal from './Modal';
 
 const ReopenReasonModal = ({
-  modalRef, goalId, onSubmit, resetValues,
+  modalRef,
+  goalId,
+  onSubmit,
+  resetValues,
 }) => {
   const [reopenReason, setReopenReason] = useState('');
   const [reopenContext, setReopenContext] = useState('');

@@ -2,7 +2,9 @@
 const config = {
   testDir: '.',
   outputDir: './test-results',
-  reporter: [['html', { outputFolder: './report', open: 'never' }]],
+  reporter: [
+    ['html', { outputFolder: './html-report', open: 'never' }],
+  ],
   workers: 1,
 };
 

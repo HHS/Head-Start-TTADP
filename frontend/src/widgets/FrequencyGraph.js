@@ -6,6 +6,7 @@ import withWidgetData from './withWidgetData';
 import Container from '../components/Container';
 import AccessibleWidgetData from './AccessibleWidgetData';
 import BarGraph from './BarGraph';
+import DisplayTableToggle from '../components/DisplayTableToggleButton';
 import './FrequencyGraph.css';
 
 function sortData(data, isTabular = false) {
@@ -37,11 +38,6 @@ export function FreqGraph({ data, loading }) {
   const columnHeadings = HEADINGS[selectedGraph];
   const toggleGraphLabel = selectedGraph === TOPIC_STR ? REASON_STR : TOPIC_STR;
 
-  // toggle the data table
-  function toggleAccessibleData() {
-    updateShowAccessibleData((current) => !current);
-  }
-
   function toggleSelectedGraph() {
     updateSelectedGraph((current) => (current === TOPIC_STR ? REASON_STR : TOPIC_STR));
   }
@@ -67,14 +63,10 @@ export function FreqGraph({ data, loading }) {
           </button>
         </Grid>
         <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button flex-align-self-center">
-          <button
-            type="button"
-            className="usa-button--unstyled"
-            aria-label={showAccessibleData ? `display number of activity reports by ${selectedGraph} data as graph` : `display number of activity reports by ${selectedGraph} data as table`}
-            onClick={toggleAccessibleData}
-          >
-            {showAccessibleData ? 'Display graph' : 'Display table'}
-          </button>
+          <DisplayTableToggle
+            title={`number of activity reports by ${selectedGraph}`}
+            setDisplayTable={updateShowAccessibleData}
+          />
         </Grid>
       </Grid>
       { showAccessibleData

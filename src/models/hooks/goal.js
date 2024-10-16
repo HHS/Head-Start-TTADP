@@ -1,10 +1,14 @@
 const { Op } = require('sequelize');
-const { GOAL_STATUS, GOAL_COLLABORATORS, OBJECTIVE_STATUS } = require('../../constants');
+const {
+  GOAL_STATUS,
+  GOAL_COLLABORATORS,
+  OBJECTIVE_STATUS,
+  CREATION_METHOD,
+} = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
 } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
-const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (_sequelize, instance) => {
   // eslint-disable-next-line global-require
@@ -29,7 +33,25 @@ const findOrCreateGoalTemplate = async (sequelize, transaction, regionId, name, 
     },
     transaction,
   });
-  return { id: goalTemplate[0].id, name };
+  return { id: goalTemplate[0].id, name, creationMethod: goalTemplate[0].creationMethod };
+};
+
+const checkForCuratedGoal = async (sequelize, instance) => {
+  // we don't want to be setting goalTemplateId if it's already set
+  if (instance.goalTemplateId) return;
+
+  const curatedTemplate = await sequelize.models.GoalTemplate.findOne({
+    where: {
+      hash: sequelize.fn('md5', sequelize.fn('NULLIF', sequelize.fn('TRIM', instance.name), '')),
+      creationMethod: CREATION_METHOD.CURATED,
+      regionId: null,
+    },
+    attributes: ['id'],
+  });
+
+  if (curatedTemplate) {
+    instance.set('goalTemplateId', curatedTemplate.id);
+  }
 };
 
 const autoPopulateOnAR = (_sequelize, instance, options) => {
@@ -298,13 +320,15 @@ const beforeValidate = async (sequelize, instance, options) => {
   autoPopulateOnAR(sequelize, instance, options);
   autoPopulateOnApprovedAR(sequelize, instance, options);
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
+};
+
+const beforeCreate = async (sequelize, instance, options) => {
+  await checkForCuratedGoal(sequelize, instance, options);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   preventNameChangeWhenOnApprovedAR(sequelize, instance, options);
   await preventCloseIfObjectivesOpen(sequelize, instance, options);
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -332,10 +356,12 @@ export {
   autoPopulateOnApprovedAR,
   preventNameChangeWhenOnApprovedAR,
   preventCloseIfObjectivesOpen,
+  checkForCuratedGoal,
   propagateName,
   beforeValidate,
   beforeUpdate,
   afterCreate,
   afterUpdate,
+  beforeCreate,
   afterDestroy,
 };

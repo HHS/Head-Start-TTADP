@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import Queue from 'bull';
 import { auditLogger } from '../logger';
 
@@ -87,56 +88,56 @@ function removeQueueEventHandlers(
   exceptionListener,
   rejectionListener,
 ) {
-  queue.removeListener('error', errorListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGINT', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('SIGTERM', shutdownListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('uncaughtException', exceptionListener).catch((err) => auditLogger.error(err.message));
-  process.removeListener('unhandledRejection', rejectionListener).catch((err) => auditLogger.error(err.message));
+  queue.removeListener('error', errorListener);
+  process.removeListener('SIGINT', shutdownListener);
+  process.removeListener('SIGTERM', shutdownListener);
+  process.removeListener('uncaughtException', exceptionListener);
+  process.removeListener('unhandledRejection', rejectionListener);
 }
 
 // Define the handlers so they can be added and removed
 function handleShutdown(queue) {
   return () => {
-    auditLogger.error('Shutting down, closing queue...');
-    queue.close().then(() => {
-      auditLogger.error('Queue closed successfully.');
-      removeQueueEventHandlers(queue);
-      process.exit(0);
-    }).catch((err) => {
-      auditLogger.error('Failed to close the queue:', err);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    auditLogger.error('Shutting down, but queue closing is disabled for now...');
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed successfully.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(0);
+    // }).catch((err) => {
+    //   auditLogger.error('Failed to close the queue:', err);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
 function handleException(queue) {
   return (err) => {
     auditLogger.error('Uncaught exception:', err);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after uncaught exception.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed after uncaught exception.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // }).catch((closeErr) => {
+    //   auditLogger.error('Failed to close the queue after uncaught exception:', closeErr);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
 function handleRejection(queue) {
   return (reason, promise) => {
     auditLogger.error('Unhandled rejection at:', promise, 'reason:', reason);
-    queue.close().then(() => {
-      auditLogger.error('Queue closed after unhandled rejection.');
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    }).catch((closeErr) => {
-      auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
-      removeQueueEventHandlers(queue);
-      process.exit(1);
-    });
+    // queue.close().then(() => {
+    //   auditLogger.error('Queue closed after unhandled rejection.');
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // }).catch((closeErr) => {
+    //   auditLogger.error('Failed to close the queue after unhandled rejection:', closeErr);
+    //   removeQueueEventHandlers(queue);
+    //   process.exit(1);
+    // });
   };
 }
 
@@ -176,7 +177,7 @@ function setupQueueEventHandlers(queue) {
   process.on('unhandledRejection', rejectionListener);
 }
 
-function setRedisConnectionName(queue, connectionName) {
+export function setRedisConnectionName(queue, connectionName) {
   const { client } = queue;
   if (client && client.call) {
     client.call('client', 'setname', connectionName).catch((err) => {
@@ -186,8 +187,17 @@ function setRedisConnectionName(queue, connectionName) {
 }
 
 export default function newQueue(queName) {
-  const queue = new Queue(queName, `redis://${host}:${port}`, redisOpts);
+  const queue = new Queue(queName, `redis://${host}:${port}`, {
+    ...redisOpts,
+    maxRetriesPerRequest: 15, // Adjust this value as needed
+    retryStrategy(times) {
+      const delay = Math.min(times * 50, 2000);
+      auditLogger.warn(`Redis retry attempt #${times}, retrying in ${delay}ms`);
+      return delay;
+    },
+  });
+
   setRedisConnectionName(queue, `${process.argv[1]?.split('/')?.slice(-1)[0]?.split('.')?.[0]}-${queName}-${process.pid}`);
-  // setupQueueEventHandlers(queue); // TODO - currently causing mor errors then fixing
+  setupQueueEventHandlers(queue);
   return queue;
 }

@@ -1,10 +1,10 @@
+const { Op } = require('sequelize');
 const { REPORT_STATUSES } = require('@ttahub/common');
 const { GOAL_COLLABORATORS } = require('../../constants');
 const {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } = require('../helpers/genericCollaborator');
-const { onlyAllowTrGoalSourceForGoalsCreatedViaTr } = require('../helpers/goalSource');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
@@ -153,6 +153,46 @@ const destroyLinkedSimilarityGroups = async (sequelize, instance, options) => {
   });
 };
 
+const updateOnARAndOnApprovedARForMergedGoals = async (sequelize, instance) => {
+  const changed = instance.changed();
+
+  // Check if both originalGoalId and goalId have been changed and originalGoalId is not null
+  if (Array.isArray(changed)
+    && changed.includes('originalGoalId')
+    && changed.includes('goalId')
+    && instance.originalGoalId !== null) {
+    const { goalId } = instance;
+
+    // Check if the ActivityReport linked to this ActivityReportGoal has a
+    // calculatedStatus of 'approved'
+    const approvedActivityReports = await sequelize.models.ActivityReport.count({
+      where: {
+        calculatedStatus: 'approved',
+        id: instance.activityReportId, // Use the activityReportId from the instance
+      },
+    });
+
+    const onApprovedAR = approvedActivityReports > 0;
+
+    // Update only if the current values differ
+    await sequelize.models.Goal.update(
+      { onAR: true, onApprovedAR },
+      {
+        where: {
+          id: goalId,
+          [Op.or]: [
+            // Update if onAR is not already true
+            { onAR: { [Op.ne]: true } },
+            // Update if onApprovedAR differs
+            { onApprovedAR: { [Op.ne]: onApprovedAR } },
+          ],
+        },
+        individualHooks: true, // Ensure individual hooks are triggered
+      },
+    );
+  }
+};
+
 const afterCreate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await autoPopulateLinker(sequelize, instance, options);
@@ -163,11 +203,6 @@ const beforeValidate = async (sequelize, instance, options) => {
   if (!Array.isArray(options.fields)) {
     options.fields = []; //eslint-disable-line
   }
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
-};
-
-const beforeUpdate = async (sequelize, instance, options) => {
-  onlyAllowTrGoalSourceForGoalsCreatedViaTr(sequelize, instance, options);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
@@ -183,15 +218,16 @@ const afterDestroy = async (sequelize, instance, options) => {
 const afterUpdate = async (sequelize, instance, options) => {
   await processForEmbeddedResources(sequelize, instance, options);
   await destroyLinkedSimilarityGroups(sequelize, instance, options);
+  await updateOnARAndOnApprovedARForMergedGoals(sequelize, instance);
 };
 
 export {
   beforeValidate,
-  beforeUpdate,
   processForEmbeddedResources,
   recalculateOnAR,
   propagateDestroyToMetadata,
   destroyLinkedSimilarityGroups,
+  updateOnARAndOnApprovedARForMergedGoals,
   afterCreate,
   beforeDestroy,
   afterDestroy,

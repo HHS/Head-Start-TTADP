@@ -58,7 +58,6 @@ export default function Form({
   source,
   setSource,
   validateGoalSource,
-  createdVia,
   collaborators,
   recipient,
   regionId,
@@ -188,7 +187,6 @@ export default function Form({
         permissions={[
           !isCurated,
           status !== 'Closed',
-          createdVia !== 'tr',
           userCanEdit,
           !isOnApprovedReport,
         ]}
@@ -330,7 +328,6 @@ Form.propTypes = {
   }).isRequired,
   setSource: PropTypes.func.isRequired,
   validateGoalSource: PropTypes.func.isRequired,
-  createdVia: PropTypes.string.isRequired,
   collaborators: PropTypes.arrayOf(PropTypes.shape({
     goalNumber: PropTypes.string,
     goalCreator: PropTypes.shape({}),

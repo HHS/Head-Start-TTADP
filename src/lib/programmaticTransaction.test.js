@@ -1,21 +1,42 @@
+import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import * as transactionModule from './programmaticTransaction';
-import {
+import db, {
   Grant,
+  Goal,
+  Recipient,
   Topic,
   ActivityReport,
   ActivityReportApprover,
   User,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   sequelize,
 } from '../models';
 import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
 import { auditLogger } from '../logger';
 
+// Mock the Queue from 'bull'
+jest.mock('bull');
+
 describe('Programmatic Transaction', () => {
+  beforeAll(async () => {
+    jest.resetAllMocks();
+    try {
+      await sequelize.authenticate();
+    } catch (error) {
+      auditLogger.error('Unable to connect to the database:', error);
+      throw error;
+    }
+  });
+
   afterAll(async () => {
     await sequelize.close();
+    jest.resetModules();
+    jest.resetAllMocks();
   });
+
   it('Insert', async () => {
     const snapshot = await transactionModule.captureSnapshot();
     await Topic.create({
@@ -27,6 +48,7 @@ describe('Programmatic Transaction', () => {
     topic = await Topic.findOne({ where: { name: 'Test Topic' } });
     expect(topic).toBeNull();
   });
+
   it('Update', async () => {
     const snapshot = await transactionModule.captureSnapshot();
     const grant = await Grant.findOne({
@@ -41,6 +63,7 @@ describe('Programmatic Transaction', () => {
     await grant.reload();
     expect(grant.status).toBe('Active');
   });
+
   it('Delete', async () => {
     await Topic.create({
       name: 'Test Topic',
@@ -50,10 +73,11 @@ describe('Programmatic Transaction', () => {
     let topic = await Topic.findOne({ where: { name: 'Test Topic' } });
     expect(topic).toBeNull();
     await transactionModule.rollbackToSnapshot(snapshot);
-    topic = Topic.findOne({ where: { name: 'Test Topic' } });
+    topic = await Topic.findOne({ where: { name: 'Test Topic' } });
     expect(topic).not.toBeNull();
     await Topic.destroy({ where: { name: 'Test Topic' }, force: true });
   });
+
   it('should sort changes by timestamp in descending order', async () => {
     const snapshot = await transactionModule.captureSnapshot();
     // Simulate multiple changes with different timestamps
@@ -67,6 +91,7 @@ describe('Programmatic Transaction', () => {
     expect(changes[1].new_row_data.name).toBe('Topic A');
     await transactionModule.rollbackToSnapshot(snapshot);
   });
+
   it('should throw error for unknown dml_type', async () => {
     const fakeChange = {
       source_table: 'Topic',
@@ -86,8 +111,9 @@ describe('Programmatic Transaction', () => {
       .toThrow('Unknown dml_type(INVALID_TYPE) for table: Topic');
 
     // Restore the original function
-    spy.mockRestore(); // This restores the original implementation
+    spy.mockRestore();
   });
+
   it('should log and rethrow the error during reversion of changes', async () => {
     jest.spyOn(auditLogger, 'error'); // Spy on auditLogger.error if not already done
 
@@ -112,6 +138,7 @@ describe('Programmatic Transaction', () => {
     querySpy.mockRestore();
     auditLogger.error.mockRestore();
   });
+
   it('should prevent reversion in production environment', async () => {
     // Mock the environment variable
     const currentEnv = process.env.NODE_ENV;
@@ -135,6 +162,7 @@ describe('Programmatic Transaction', () => {
     // Restore the spy
     logSpy.mockRestore();
   });
+
   it('complex test - activityReportApprovers services - upsertApprover and ActivityReportApprover hooks - for submitted reports - calculatedStatus is "needs action" if any approver "needs_action"', async () => {
     const snapshot = await transactionModule.captureSnapshot();
     const mockUser = {
@@ -217,7 +245,7 @@ describe('Programmatic Transaction', () => {
     expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
     expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
 
-    await transactionModule.rollbackToSnapshot(snapshot);
+    await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
     const report = await ActivityReport.findOne({ where: { id: report1.id } });
     expect(report).toBeNull();
     const users = await User.findAll({
@@ -231,5 +259,128 @@ describe('Programmatic Transaction', () => {
       },
     });
     expect(users).toEqual([]);
+  });
+
+  it('should correctly handle JSON strings and arrays during reversion', async () => {
+    const snapshot = await transactionModule.captureSnapshot();
+    const jsonArray = ['elem3', 'elem4'];
+
+    const goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+      where: { title: 'FEI root cause' },
+      raw: true,
+    });
+
+    // Ensure the prompt is found before proceeding
+    if (!goalTemplateFieldPrompt) {
+      throw new Error('GoalTemplateFieldPrompt not found');
+    }
+
+    let grant = {
+      id: faker.datatype.number({ min: 97000, max: 98000 }),
+      number: faker.random.alphaNumeric(10),
+      cdi: false,
+      regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
+    };
+    const recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
+    grant = await Grant.create({ ...grant, recipientId: recipient.id });
+    const goal = await Goal.create({
+      name: 'This is some serious goal text',
+      status: 'Draft',
+      grantId: grant.id,
+      goalTemplateId: goalTemplateFieldPrompt.goalTemplateId,
+    });
+    const gfResponse = await GoalFieldResponse.create({
+      goalId: goal.id,
+      goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+      response: jsonArray,
+    });
+    expect(gfResponse).not.toBeNull();
+
+    let goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
+    expect(goalFieldResponse).not.toBeNull();
+    expect(goalFieldResponse.response).toEqual(jsonArray);
+
+    await expect(transactionModule.rollbackToSnapshot(snapshot)).resolves.not.toThrow();
+    goalFieldResponse = await GoalFieldResponse.findOne({ where: { response: jsonArray } });
+    expect(goalFieldResponse).toBeNull();
+  });
+
+  it('should log and rethrow error if JSON parsing fails during reversion', async () => {
+    jest.spyOn(auditLogger, 'error'); // Spy on auditLogger.error if not already done
+
+    const snapshot = await transactionModule.captureSnapshot();
+    const malformedJsonString = "{ key: 'value' }"; // Incorrectly formatted JSON
+
+    const goalTemplateFieldPrompt = await GoalTemplateFieldPrompt.findOne({
+      where: { title: 'FEI root cause' },
+    });
+
+    await expect(
+      GoalFieldResponse.create({
+        goalId: faker.datatype.number(),
+        goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
+        response: malformedJsonString,
+      }),
+    ).rejects.toThrow(TypeError);
+
+    const querySpy = jest.spyOn(sequelize, 'query').mockImplementationOnce(() => {
+      throw new Error('Database error');
+    });
+
+    await expect(transactionModule.revertAllChanges(snapshot))
+      .rejects
+      .toThrow('Database error');
+
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error during reversion:',
+      expect.any(Error),
+    );
+
+    querySpy.mockRestore();
+    auditLogger.error.mockRestore();
+  });
+
+  describe('hasModifiedData', () => {
+    afterEach(() => {
+      jest.clearAllMocks();
+    });
+
+    it('returns true when changes are detected', async () => {
+      const snapshot = await transactionModule.captureSnapshot(true);
+      await db.ZALActivityRecipient.create({
+        data_id: 1,
+        dml_type: 'UPDATE',
+        old_row_data: null,
+        new_row_data: null,
+        dml_timestamp: new Date(),
+        dml_by: -1,
+        dml_as: -1,
+        dml_txid: 'cb26d433-173d-4cea-8ab0-a7af8ed37c81',
+      });
+      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      expect(result).toBe(true);
+    });
+
+    it('returns false when no changes are detected', async () => {
+      const snapshot = await transactionModule.captureSnapshot(true);
+      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      expect(result).toBe(false);
+    });
+
+    it('throws error when transaction ID is missing', async () => {
+      await expect(transactionModule.hasModifiedData([], null)).rejects.toThrow('Transaction ID not found');
+    });
+
+    it('throws error if snapshot entry is not found for a ZAL table', async () => {
+      await expect(transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
+    });
+    it('returns false when a ZAL table is not present', async () => {
+      const original = db.ZALActivityRecipients;
+      db.ZALActivityRecipients = undefined; // Temporarily remove the ZALExample table for this test
+      await expect(transactionModule.hasModifiedData([{ table_name: 'ZALActivityRecipients', max_id: '100' }], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Table name not found for model: ZALActivityRecipients');
+      db.ZALActivityRecipients = original; // Restore the mock
+    });
   });
 });

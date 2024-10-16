@@ -26,6 +26,7 @@ import FilterStateSelect from './FilterStateSelect';
 import FilterOtherEntitiesSelect from './FilterOtherEntitiesSelect';
 import FilterParticipantsSelect from './FilterParticipantsSelect';
 import FilterTTAType, { displayTtaTypeQuery } from './FilterTTAType';
+import GrantStatus, { displayGrantsStatus } from './GrantStatus';
 import MyReportsSelect from './MyReportsSelect';
 import FilterGroups from './FilterGroups';
 import FilterDeliveryMethod from './FilterDeliveryMethod';
@@ -341,6 +342,24 @@ export const ttaTypeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterTTAType
       inputId={`ttaType-${condition.replace(/ /g, '-')}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const grantStatusFilter = {
+  id: 'grantStatus',
+  display: 'Grant status',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: {
+    is: 'active',
+    'is not': 'active',
+  },
+  displayQuery: displayGrantsStatus,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <GrantStatus
+      inputId={`grantStatus-${condition.replace(/ /g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

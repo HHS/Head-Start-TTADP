@@ -11,38 +11,39 @@ import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 import { draftObject } from './testHelpers';
 
+// Mock addDeleteFileToQueue from src/services/s3Queue.js
+jest.mock('../../services/s3Queue', () => ({
+  addDeleteFileToQueue: jest.fn(),
+}));
+
 describe('propagateDestroyToFile', () => {
   afterAll(async () => {
     await sequelize.close();
   });
 
   it('should delete the file if it is not associated with any other models', async () => {
+    // eslint-disable-next-line global-require
+    const { addDeleteFileToQueue } = require('../../services/s3Queue');
+    const transaction = await sequelize.transaction();
     const file = await File.create({
       originalFileName: 'test.pdf',
       key: 'test.pdf',
       status: FILE_STATUSES.UPLOADED,
       fileSize: 123445,
-    });
+    }, { transaction });
 
-    const mockInstance = {
-      fileId: file.id,
-    };
-
-    const transaction = await sequelize.transaction();
-
-    const mockOptions = {
-      transaction,
-    };
+    const mockInstance = { fileId: file.id };
+    const mockOptions = { transaction };
 
     await propagateDestroyToFile(sequelize, mockInstance, mockOptions);
 
+    expect(addDeleteFileToQueue).toHaveBeenCalledWith(file.id, file.key);
     const foundFile = await File.findOne({
       where: { id: file.id },
       transaction,
     });
 
     expect(foundFile).toBeNull();
-
     await transaction.commit();
   });
 

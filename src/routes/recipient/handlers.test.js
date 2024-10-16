@@ -16,6 +16,7 @@ import {
   getMergeGoalPermissions,
   markRecipientGoalGroupInvalid,
   getGoalsFromRecipientGoalSimilarityGroup,
+  markSimilarGoalsByIdForRecipient,
 } from './handlers';
 import {
   getGoalsByActivityRecipient,
@@ -32,7 +33,9 @@ import { userById } from '../../services/users';
 import {
   setSimilarityGroupAsUserInvalidated,
   getSimilarityGroupById,
+  createSimilarityGroup,
 } from '../../services/goalSimilarityGroup';
+import Users from '../../policies/user';
 
 jest.mock('../../services/goalSimilarityGroup');
 
@@ -911,5 +914,167 @@ describe('getGoalsFromRecipientGoalSimilarityGroup', () => {
     getSimilarityGroupById.mockRejectedValue(error);
     await getGoalsFromRecipientGoalSimilarityGroup(req, mockResponse);
     expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+});
+
+describe('markSimilarGoalsByIdForRecipient', () => {
+  afterAll(() => db.sequelize.close());
+
+  const mockResponse = {
+    json: jest.fn(),
+    sendStatus: jest.fn(),
+    status: jest.fn(() => ({
+      end: jest.fn(),
+    })),
+  };
+
+  afterEach(() => jest.clearAllMocks());
+
+  it('marks goals as similar successfully', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      body: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+      flags: ['manual_mark_goals_similar'],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(createSimilarityGroup).toHaveBeenCalledWith(
+      1,
+      [{ ids: [1] }, { ids: [2] }, { ids: [3] }],
+      true,
+    );
+    expect(mockResponse.json).toHaveBeenCalledWith({ message: 'Goal group created.' });
+  });
+
+  it('returns 401 if user is not authorized to mark goals as similar', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      body: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    const hasManualMarkGoalsSimilar = false;
+
+    jest.spyOn(Users.prototype, 'canSeeBehindFeatureFlag').mockReturnValueOnce(hasManualMarkGoalsSimilar);
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(mockResponse.sendStatus).toHaveBeenCalledWith(UNAUTHORIZED);
+  });
+
+  it('handles errors', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      body: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    createSimilarityGroup.mockImplementationOnce(() => {
+      throw new Error('test error');
+    });
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse);
+
+    expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+  });
+
+  it('does not execute if headers are already sent', async () => {
+    const req = {
+      params: {
+        recipientId: 1,
+      },
+      body: {
+        goalIds: [1, 2, 3],
+      },
+      session: {
+        userId: 1000,
+      },
+    };
+
+    const user = {
+      id: 1000,
+      roles: [
+        {
+          name: 'User',
+        },
+      ],
+      permissions: [],
+    };
+
+    currentUserId.mockResolvedValue(1000);
+    userById.mockResolvedValue(user);
+
+    const mockResponse2 = {
+      headersSent: true,
+      sendStatus: jest.fn(),
+      json: jest.fn(),
+      status: jest.fn(() => ({
+        end: jest.fn(),
+      })),
+    };
+
+    await markSimilarGoalsByIdForRecipient(req, mockResponse2);
+
+    expect(createSimilarityGroup).not.toHaveBeenCalled();
+    expect(mockResponse2.json).not.toHaveBeenCalled();
   });
 });
