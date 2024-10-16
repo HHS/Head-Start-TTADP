@@ -683,7 +683,6 @@ export async function goalsForGrants(grantIds) {
       'endDate',
       'source',
       'createdVia',
-      [sequelize.fn('BOOL_OR', sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`)), 'isCurated'],
     ],
     group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
     where: {
@@ -693,6 +692,9 @@ export async function goalsForGrants(grantIds) {
       '$grant.id$': ids,
       status: {
         [Op.notIn]: ['Closed', 'Suspended'],
+      },
+      '$goalTemplate.creationMethod$': {
+        [Op.not]: CREATION_METHOD.CURATED,
       },
     },
     include: [
@@ -708,13 +710,7 @@ export async function goalsForGrants(grantIds) {
         required: false,
       },
     ],
-    order: [[sequelize.fn(
-      'MAX',
-      sequelize.fn(
-        'DISTINCT',
-        sequelize.col('"Goal"."createdAt"'),
-      ),
-    ), 'desc']],
+    order: [['name', 'asc']],
   });
 }
 
@@ -1191,6 +1187,7 @@ export async function saveGoalsForReport(goals, report) {
         prompts,
         source,
         grant,
+        goalTemplateId,
         grantId: discardedGrantId,
         id, // we can't be trying to set this
         endDate: discardedEndDate, // get this outta here
@@ -1201,6 +1198,33 @@ export async function saveGoalsForReport(goals, report) {
       newOrUpdatedGoal = existingGoals.find((extantGoal) => (
         (goalIds || []).includes(extantGoal.id) && extantGoal.grantId === grantId
       ));
+
+      // let's check for goal by template ID first
+      if (!newOrUpdatedGoal && goalTemplateId) {
+        newOrUpdatedGoal = await Goal.findOne({
+          where: {
+            goalTemplateId,
+            grantId,
+            status: { [Op.not]: GOAL_STATUS.CLOSED },
+          },
+        });
+
+        // if we don't find one, we check to see if that template is curated
+        if (!newOrUpdatedGoal) {
+          const goalTemplate = await GoalTemplate.findByPk(goalTemplateId);
+          // if the template is curated, we do not want to go to the next step,
+          // where we look up a goal with a matching name, as this can have inconsistent results
+          // instead: we create a new goal
+          if (goalTemplate && goalTemplate.creationMethod === CREATION_METHOD.CURATED) {
+            newOrUpdatedGoal = await Goal.create({
+              goalTemplateId,
+              name: goal.name ? goal.name.trim() : '',
+              grantId,
+              status,
+            }, { individualHooks: true });
+          }
+        }
+      }
 
       // if not, does it exist for this name and grantId combination
       if (!newOrUpdatedGoal) {

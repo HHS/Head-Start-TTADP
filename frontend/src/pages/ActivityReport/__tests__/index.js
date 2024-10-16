@@ -657,6 +657,7 @@ describe('ActivityReport', () => {
     it('loads goals in edit mode', async () => {
       const data = formData();
       fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/goal-templates?grantIds=12539', []);
       fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
       fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
       fetchMock.get('/api/activity-reports/1', {
@@ -689,6 +690,7 @@ describe('ActivityReport', () => {
     it('loads goals in read-only mode', async () => {
       const data = formData();
       fetchMock.get('/api/topic', []);
+      fetchMock.get('/api/goal-templates?grantIds=12539', []);
       fetchMock.get('/api/activity-reports/goals?grantIds=12539', []);
       // fetchMock.get('/api/goals?reportId=1&goalIds=37499', mockGoalsAndObjectives(true));
       fetchMock.get('/api/activity-reports/1', {
