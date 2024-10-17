@@ -1731,18 +1731,6 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     ],
   });
 
-  // const grantLookup = {};
-  // grants.forEach((grant) => {
-  //   if (grant.status === 'Active') {
-  //     grantLookup[grant.id] = grant.id;
-  //   } else {
-  //     grant.grantRelationships.forEach((relationship) => {
-  //       if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
-  //         grantLookup[grant.id] = relationship.activeGrantId;
-  //       }
-  //     });
-  //   }
-  // });
   const grantsWithReplacementsDictionary = mapGrantsWithReplacements(grants);
 
   const filteredGoalGroups = goalGroups
