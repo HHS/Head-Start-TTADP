@@ -63,7 +63,7 @@ describe('GoalNudge', () => {
     expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
   });
 
-  it('shows the use ohs initiative checkbox when there are goal templates', async () => {
+  it('shows the use ohs standard checkbox when there are goal templates', async () => {
     fetchMock.get('/api/goal-templates?grantIds=1', [
       {
         id: 1,
@@ -82,7 +82,7 @@ describe('GoalNudge', () => {
     });
 
     expect(fetchMock.called('/api/goal-templates?grantIds=1')).toBe(true);
-    expect(await screen.findByText('Use OHS initiative goal')).toBeInTheDocument();
+    expect(await screen.findByText('Use OHS standard goal')).toBeInTheDocument();
   });
 
   it('asks for similar goals when the qualifications are met', async () => {

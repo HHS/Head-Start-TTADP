@@ -54,7 +54,10 @@ const resourcesDefault = {
     },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test1.gov',
@@ -73,7 +76,20 @@ const resourcesDefault = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official1.gov',
       isUrl: true,
@@ -124,7 +140,10 @@ const resourcesRegion1 = {
     },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test2.gov',
@@ -143,7 +162,20 @@ const resourcesRegion1 = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official2.gov',
       isUrl: true,
@@ -194,7 +226,10 @@ const resourcesRegion2 = {
     },
   },
   resourcesUse: {
-    headers: ['Jan-22'],
+    headers: [{
+      displayName: 'Jan-22',
+      name: 'January 2022',
+    }],
     resources: [
       {
         heading: 'https://test3.gov',
@@ -213,7 +248,20 @@ const resourcesRegion2 = {
     ],
   },
   topicUse: {
-    headers: ['Oct-22', 'Nov-22', 'Dec-22'],
+    headers: [
+      {
+        displayName: 'Oct-22',
+        name: 'October 2022',
+      },
+      {
+        displayName: 'Nov-22',
+        name: 'November 2022',
+      },
+      {
+        displayName: 'Dec-22',
+        name: 'December 2022',
+      },
+    ],
     topics: [{
       heading: 'https://official3.gov',
       isUrl: true,
