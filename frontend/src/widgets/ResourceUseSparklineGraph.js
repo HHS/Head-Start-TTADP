@@ -45,7 +45,7 @@ LegendIndicator.propTypes = {
 };
 
 export default function ResourceUseSparklineGraph({ data }) {
-  const headings = data.headers.map((header) => <span key={uniqueId('resource-use-sparkline-headings-')} className="ttahub-resource-use-sparkline__heading usa-prose display-flex flex-justify-center flex-align-center">{header}</span>);
+  const headings = data.headers.map((header) => <span key={uniqueId('resource-use-sparkline-headings-')} className="ttahub-resource-use-sparkline__heading usa-prose display-flex flex-justify-center flex-align-center" aria-label={header.name}><span aria-hidden="true">{header.displayName}</span></span>);
 
   return (
     <>
@@ -97,7 +97,10 @@ export default function ResourceUseSparklineGraph({ data }) {
 
 ResourceUseSparklineGraph.propTypes = {
   data: PropTypes.shape({
-    headers: PropTypes.arrayOf(PropTypes.string),
+    headers: PropTypes.arrayOf(PropTypes.shape({
+      displayName: PropTypes.string,
+      name: PropTypes.string,
+    })),
     resources: PropTypes.arrayOf(PropTypes.shape({
       data: PropTypes.arrayOf(PropTypes.shape({
         title: PropTypes.string,
