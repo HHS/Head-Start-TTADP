@@ -88,7 +88,7 @@ export default function PercentageActivityReportByRole({ data }) {
     const tableData = [];
     const traceData = [];
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       traceData.push({
         name: dataset.role_name,
         count: dataset.percentage,

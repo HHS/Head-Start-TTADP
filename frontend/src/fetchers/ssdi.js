@@ -46,6 +46,7 @@ const allowedTopicsForQuery = {
   ],
   'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
     'region',
+    'reportId',
   ],
 };
 

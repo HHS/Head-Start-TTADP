@@ -125,7 +125,7 @@ export default function DeliveryMethodGraph({ data }) {
       x: [], y: [], name: 'Hybrid', traceOrder: 3,
     });
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       tableData.push({
         heading: moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'),
         sortKey: index + 1,
@@ -177,11 +177,11 @@ export default function DeliveryMethodGraph({ data }) {
     setTraces(Array.from(traceMap.values()));
     setTabularData(tableData);
     setTotals({
-      totalInPerson: totalInPerson.toLocaleString('en-us'),
+      totalInPerson: totalInPerson ? totalInPerson.toLocaleString('en-us') : 0,
       averageInPersonPercentage: `${averageInPersonPercentage}%`,
-      totalVirtualCount: totalVirtualCount.toLocaleString('en-us'),
+      totalVirtualCount: totalVirtualCount ? totalVirtualCount.toLocaleString('en-us') : 0,
       averageVirtualPercentage: `${averageVirtualPercentage}%`,
-      totalHybridCount: totalHybridCount.toLocaleString('en-us'),
+      totalHybridCount: totalHybridCount ? totalHybridCount.toLocaleString('en-us') : 0,
       averageHybridPercentage: `${averageHybridPercentage}%`,
     });
   }, [data]);
