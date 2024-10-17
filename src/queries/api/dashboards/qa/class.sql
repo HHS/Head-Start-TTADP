@@ -748,8 +748,8 @@ WITH
   ),
   with_class_widget AS (
     SELECT
-      (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
-      COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
+      (COALESCE(COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
+      NULLIF(COUNT(DISTINCT wc.id), 0), 0)*100)::decimal(5,2) "% recipients with class",
       COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
       COUNT(DISTINCT wc.id) total,
       SUM(grant_count) "grants with class"

@@ -460,7 +460,7 @@ no_tta AS (
 ),
 no_tta_widget AS (
     SELECT
-      (((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/COUNT(*))*100)::decimal(5,2) "% recipients without tta",
+      (COALESCE((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/NULLIF(COUNT(*),0),0)*100)::decimal(5,2) "% recipients without tta",
       COUNT(*) FILTER (WHERE not has_tta ) "recipients without tta",
       COUNT(*) total
     FROM no_tta
