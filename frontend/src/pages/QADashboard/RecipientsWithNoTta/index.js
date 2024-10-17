@@ -54,7 +54,7 @@ export default function RecipientsWithNoTta() {
   );
 
   useDeepCompareEffect(() => {
-    async function fetchQaDat() {
+    async function fetchQaData() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
@@ -113,7 +113,7 @@ export default function RecipientsWithNoTta() {
       }
     }
     // Call resources fetch.
-    fetchQaDat();
+    fetchQaData();
   }, [filters]);
 
   return (

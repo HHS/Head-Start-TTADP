@@ -46,7 +46,6 @@ const allowedTopicsForQuery = {
   ],
   'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
     'region',
-    'regionIds',
   ],
 };
 
@@ -76,9 +75,9 @@ const getSelfServiceUrl = (filterName, filters) => {
   return `${baseUrl}?${queryString}`;
 };
 
-export const getSelfServiceData = async (filterName, filters, dataSetSelection) => {
+export const getSelfServiceData = async (filterName, filters, dataSetSelection = []) => {
   const url = getSelfServiceUrl(filterName, filters);
-  const urlToUse = url + (dataSetSelection && dataSetSelection.length ? dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('') : '');
+  const urlToUse = url + dataSetSelection.map((s) => `&dataSetSelection[]=${s}`).join('');
   const response = await get(urlToUse);
   if (!response.ok) {
     throw new Error('Error fetching self service data');
