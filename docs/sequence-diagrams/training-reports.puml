@@ -1,0 +1,80 @@
+@startuml
+
+title "TTA Hub Training Reports"
+
+actor CREATOR as CR
+actor COLLABORATOR as CL
+actor REGIONALPOC as RPOC
+participant "TTA Hub\n frontend" as FRONTEND
+participant "TTA Hub\n backend" as BACKEND
+
+group VIEW: Training Reports
+    autonumber 1
+    CR -> FRONTEND: View landing page
+    CR -> FRONTEND: Navigate to Training Reports
+    FRONTEND <- BACKEND : Display Training Reports
+    CR -> FRONTEND : Change Default Filters
+    FRONTEND <- BACKEND : Display Filtered Training Reports
+    CR -> FRONTEND : Navigate Event Categories (Not Started, In Progress, Suspended, Complete)
+    FRONTEND <- BACKEND : Display Categorized Training Reports
+end
+
+note right of CR
+    All actors (CREATOR, COLLABORATOR, REGIONALPOC)
+    may perform these actions.
+end note
+
+group VIEW: Individual Report
+    autonumber 1
+    CR -> FRONTEND : View landing page
+    CR -> FRONTEND : Navigate to Training Reports
+    CR --> FRONTEND : Perform Filtering or Category selection as necessary
+    FRONTEND <- BACKEND : Display Training Reports
+    CR -> FRONTEND : Select Event ID
+    FRONTEND <- BACKEND : Display Event Content
+end
+
+group EDIT: Individual Report
+    autonumber 1
+    CR -> FRONTEND : View landing page
+    CR -> FRONTEND : Navigate to Training Reports
+    FRONTEND <- BACKEND : Display Training Reports
+    CR -> FRONTEND: Select Edit Event From ... Menu on Event ID
+    FRONTEND <- BACKEND: Display Event in Editable View
+    CR -> FRONTEND: Make changes to Event By Section
+    CR --> FRONTEND: Save As Draft
+    CR --> FRONTEND: Save And Continue
+    CR --> FRONTEND: Submit Event
+    FRONTEND <-- BACKEND: Return to Event List
+end
+
+group CREATE: Create Session
+    autonumber 1
+    CR -> FRONTEND : View landing page
+    CR -> FRONTEND : Navigate to Training Reports
+    CR --> FRONTEND : Apply Filtering
+    CR --> FRONTEND : Choose Event State
+    FRONTEND <- BACKEND : Display Training Reports
+    CR -> FRONTEND : Choose Create session under the ellipsis of an event
+    FRONTEND <- BACKEND : Display Training Report - Session page
+    CR -> FRONTEND: Make changes to Session By Section
+    CR --> FRONTEND: Save As Draft
+    CR --> FRONTEND: Save And Continue
+    CR -> FRONTEND: Submit Event
+    FRONTEND <- BACKEND: Return to Event List
+end
+
+group COMPLETE: Complete Event
+    autonumber 1
+    CR -> FRONTEND : View landing page
+    CR -> FRONTEND : Navigate to Training Reports
+    CR --> FRONTEND : Apply Filtering
+    CR --> FRONTEND : Choose Event State
+    FRONTEND <- BACKEND : Display Training Reports
+    CR -> FRONTEND: Submit Event
+    FRONTEND <- BACKEND: Return to Event List
+    CR -> FRONTEND : Select Event ID
+    FRONTEND <- BACKEND : Display Event Content
+end
+
+@enduml
