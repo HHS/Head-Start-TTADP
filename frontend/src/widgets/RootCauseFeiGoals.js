@@ -90,7 +90,7 @@ export default function RootCauseFeiGoals({ data }) {
     const tableData = [];
     const traceData = [];
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       traceData.push({
         category: dataset.rootCause,
         count: dataset.percentage,
