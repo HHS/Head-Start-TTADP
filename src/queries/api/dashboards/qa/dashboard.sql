@@ -220,6 +220,28 @@ JSON: {
       "display": "Activity Report Goal Response",
       "description": "Filter based on goal field responses in activity reports.",
       "supportsExclusion": true
+    },
+    {
+      "name": "startDate",
+      "type": "date[]",
+      "display": "Start Date",
+      "description": "Filter based on the start date of the activity reports.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "endDate",
+      "type": "date[]",
+      "display": "End Date",
+      "description": "Filter based on the end date of the activity reports.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reportId",
+      "type": "string[]",
+      "display": "Report Ids",
+      "description": "Filter based on the report ids.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
     }
   ]
 }
@@ -237,6 +259,7 @@ DECLARE
     goal_name_filter TEXT := NULLIF(current_setting('ssdi.goalName', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
+    report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
     reason_filter TEXT := NULLIF(current_setting('ssdi.reason', true), '');
@@ -258,6 +281,7 @@ DECLARE
     goal_name_not_filter BOOLEAN := COALESCE(current_setting('ssdi.goalName.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
+    report_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reportId.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
     reason_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reason.not', true), 'false') = 'true';
@@ -612,6 +636,7 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.2: If activity reports filters (set 1), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
     IF
+        report_id_filter IS NOT NULL OR
         start_date_filter IS NOT NULL OR
         end_date_filter IS NOT NULL OR
         reason_filter IS NOT NULL OR
@@ -626,6 +651,18 @@ BEGIN
         JOIN "ActivityReports" a
         ON fa.id = a.id
         WHERE a."calculatedStatus" = 'approved'
+        -- Filter for reportId if ssdi.reportId is defined
+        AND (
+          report_id_filter IS NULL
+          OR (
+            EXISTS (
+              SELECT 1
+              FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json) AS value
+              WHERE CONCAT('R', LPAD(a."regionId"::text, 2, '0'), '-AR-', a.id) ~* value::text
+              OR COALESCE(a."legacyId",'') ~* value::text
+            ) != report_text_not_filter
+          )
+        )
         -- Filter for startDate dates between two values if ssdi.startDate is defined
         AND (
           start_date_filter IS NULL
@@ -658,7 +695,7 @@ BEGIN
         AND (
           reason_filter IS NULL
           OR (
-          (a."reason"::string[] && ARRAY(
+          (a."reason"::TEXT[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(reason_filter, '[]')::json)
           )) != reason_not_filter
@@ -668,7 +705,7 @@ BEGIN
         AND (
           target_populations_filter IS NULL
           OR (
-          (a."targetPopulations"::string[] && ARRAY(
+          (a."targetPopulations"::TEXT[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(target_populations_filter, '[]')::json)
           )) != target_populations_not_filter
@@ -679,11 +716,11 @@ BEGIN
           tta_type_filter IS NULL
           OR (
           (
-            a."ttaType"::string[] @> ARRAY(
+            a."ttaType"::TEXT[] @> ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
-            AND a."ttaType"::string[] <@ ARRAY(
+            AND a."ttaType"::TEXT[] <@ ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
@@ -1122,7 +1159,7 @@ WITH
     SELECT
       COALESCE(r.name, a."creatorRole"::text) AS role_name,
       COUNT(*) AS role_count,
-      (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*),0)) OVER (),0))::decimal(5,2) AS percentage
+      (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*)) OVER (), 0), 0))::decimal(5,2) AS percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
