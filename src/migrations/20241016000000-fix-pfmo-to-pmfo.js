@@ -27,34 +27,30 @@ module.exports = {
         DROP TABLE IF EXISTS corrected_srp;
         CREATE TEMP TABLE corrected_srp
         AS
-        WITH srp_objective_trainers AS (
-        SELECT
-          id srpid,
-          jsonb_array_elements(data->'objectiveTrainers')->>0 ot
-        FROM "SessionReportPilots"
-        WHERE data->>'objectiveTrainers' LIKE '%PFMO%'
-        ),
-        regrouped_objective_trainers AS (
-        SELECT
-          srpid,
-          jsonb_agg(to_jsonb(
-            CASE ot WHEN 'PFMO' THEN 'PMFO' ELSE ot END
-          )) regroup
-        FROM srp_objective_trainers
-        GROUP BY 1
-        ),
-        updater AS (
+        WITH updater AS (
         UPDATE "SessionReportPilots"
-        SET data = jsonb_set (
-            data,
-            '{objectiveTrainers}',
-            regroup
-          )
-        FROM regrouped_objective_trainers
-        WHERE srpid = id
+        SET data = regexp_replace(data::text,'PFMO','PMFO')::jsonb
         RETURNING id
         )
         SELECT * FROM UPDATER
+        ;
+
+        DROP TABLE IF EXISTS corrected_erp;
+        CREATE TEMP TABLE corrected_erp
+        AS
+        WITH updater AS (
+        UPDATE "EventReportPilots"
+        SET data = regexp_replace(data::text,'PFMO','PMFO')::jsonb
+        RETURNING id
+        )
+        SELECT * FROM UPDATER
+        ;
+
+        SELECT 'fixed EventReportPilotNationalCenterUsers' operation, COUNT(*) cnt FROM corrected_erpncu
+        UNION
+        SELECT 'fixed SessionReportPilots', COUNT(*) FROM corrected_srp
+        UNION
+        SELECT 'fixed EventReportPilots', COUNT(*) FROM corrected_erp
         ;
 
       `);
