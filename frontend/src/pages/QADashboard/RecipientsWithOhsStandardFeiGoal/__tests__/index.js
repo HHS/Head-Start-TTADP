@@ -167,4 +167,17 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
   });
+
+  it('handles error on fetch', async () => {
+    fetchMock.get('/api/ssdi/api/dashboards/qa/fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_page', 500);
+    renderRecipientsWithOhsStandardFeiGoal();
+
+    expect(screen.queryAllByRole('heading', { name: /recipients with ohs standard fei goal/i }).length).toBe(1);
+    expect(screen.getByText(/root causes were identified through self-reported data\./i)).toBeInTheDocument();
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
+      });
+    });
+  });
 });

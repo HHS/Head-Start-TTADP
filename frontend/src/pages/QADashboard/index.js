@@ -22,6 +22,7 @@ import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
 import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
+import Loader from '../../components/Loader';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
@@ -165,6 +166,7 @@ export default function QADashboard() {
           {error}
         </Alert>
         )}
+        <Loader loading={isLoading} loadingLabel="Loading" />
         <FilterPanelContainer>
           <FilterPanel
             applyButtonAria="apply filters for QA dashboard"
@@ -186,23 +188,21 @@ export default function QADashboard() {
         </div>
         <QAOverview
           data={qaData.overviewData}
-          loading={isLoading}
+          loading={false}
         />
         <div>
           <Grid row>
             <DeliveryMethod
               data={qaData.deliveryMethod}
-              loading={isLoading}
             />
           </Grid>
           <Grid row gap={2}>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
-              <PercentageActivityReportByRole data={qaData.roleGraph} loading={isLoading} />
+              <PercentageActivityReportByRole data={qaData.roleGraph} />
             </Grid>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
               <RootCauseFeiGoals
                 data={qaData.rootCauseFeiGoalsGraph}
-                loading={isLoading}
               />
             </Grid>
           </Grid>

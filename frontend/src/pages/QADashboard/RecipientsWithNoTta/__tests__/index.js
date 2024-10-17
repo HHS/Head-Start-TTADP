@@ -148,4 +148,17 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
   });
+
+  it('correctly handles an error on fetch', async () => {
+    fetchMock.get('/api/ssdi/api/dashboards/qa/no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget&dataSetSelection[]=no_tta_page', 500);
+    renderRecipientsWithNoTta();
+    expect(screen.queryAllByText(/recipients with no tta/i).length).toBe(2);
+    expect(screen.getByText(/Recipients without Activity Reports or Training Reports for more than 90 days./i)).toBeInTheDocument();
+
+    await act(async () => {
+      await waitFor(async () => {
+        expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
+      });
+    });
+  });
 });
