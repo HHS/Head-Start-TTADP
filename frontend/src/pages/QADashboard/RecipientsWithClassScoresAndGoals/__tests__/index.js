@@ -174,4 +174,15 @@ describe('Recipients With Class and Scores and Goals', () => {
     pillRemoveButton.click();
     expect(screen.queryAllByText(/2 selected/i).length).toBe(0);
   });
+
+  it('handles error on fetch', async () => {
+    fetchMock.get(dashboardApi, 500);
+    renderRecipientsWithClassScoresAndGoals();
+
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText(/Unable to fetch QA data/i)).toBeInTheDocument();
+      });
+    });
+  });
 });

@@ -34,7 +34,7 @@ const DEFAULT_SORT_CONFIG = {
 
 const KEY_COLUMNS = ['Months'];
 
-export default function DeliveryMethodGraph({ data, loading }) {
+export default function DeliveryMethodGraph({ data }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'Total TTA hours');
   const [showTabularData, setShowTabularData] = useState(false);
@@ -236,7 +236,7 @@ export default function DeliveryMethodGraph({ data, loading }) {
 
   return (
     <WidgetContainer
-      loading={loading}
+      loading={false}
       title="Delivery method"
       subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
       subtitle2="11,510 Activity reports"
@@ -285,10 +285,8 @@ DeliveryMethodGraph.propTypes = {
       }),
     ),
   }),
-  loading: PropTypes.bool,
 };
 
 DeliveryMethodGraph.defaultProps = {
   data: null,
-  loading: false,
 };
