@@ -409,23 +409,27 @@ export async function processFiles(hashSumHex) {
           });
         }
 
-        const [grantReplacement, created] = await GrantReplacements.findOrCreate({
+        const grantReplacement = await GrantReplacements.findOne({
           where: {
             replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
             replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
             grantReplacementTypeId: grantReplacementType.id,
           },
-          defaults: {
-            replacementDate: new Date(g.replacement_date),
-          },
         });
 
-        if (!created) {
+        if (grantReplacement) {
           await grantReplacement.update({
             replacementDate: new Date(g.replacement_date),
             grantReplacementTypeId: grantReplacementType.id,
           }, {
             individualHooks: true,
+          });
+        } else {
+          await GrantReplacements.create({
+            replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
+            replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
+            grantReplacementTypeId: grantReplacementType.id,
+            replacementDate: new Date(g.replacement_date),
           });
         }
       });
