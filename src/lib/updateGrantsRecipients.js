@@ -1,3 +1,6 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import AdmZip from 'adm-zip';
 import xml2js from 'xml2js';
 import axios from 'axios';
@@ -12,6 +15,7 @@ import db, {
   GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
+  GroupGrant,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -435,6 +439,45 @@ export async function processFiles(hashSumHex) {
       });
 
       await Promise.all(grantReplacementPromises);
+
+      // ---
+      // Update GroupGrants
+      const HOUR_AGO = new Date(new Date() - 60 * 60 * 1000);
+
+      const replacements = await GrantReplacements.findAll({
+        where: { updatedAt: { [Op.gte]: HOUR_AGO } },
+        attributes: ['replacedGrantId', 'replacingGrantId'],
+      });
+
+      const affectedGroupGrants = await GroupGrant.findAll({
+        where: { grantId: uniq(replacements.map((g) => g.replacedGrantId)) },
+        attributes: ['id', 'grantId', 'groupId'],
+      });
+
+      const createdGrants = new Set();
+
+      for (const g of affectedGroupGrants) {
+        if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
+          await GroupGrant.destroy({ where: { id: g.id } });
+
+          // Use a Set to avoid duplicates
+          const uniqueReplacingGrantIds = new Set();
+
+          for (const replacement of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
+            uniqueReplacingGrantIds.add(replacement.replacingGrantId);
+          }
+
+          // Now create each unique replacing grant only if it hasn't been created before
+          for (const uniqueGrantId of uniqueReplacingGrantIds) {
+            const key = `${g.groupId}-${uniqueGrantId}`;
+            if (!createdGrants.has(key)) {
+              await GroupGrant.create({ groupId: g.groupId, grantId: uniqueGrantId });
+              createdGrants.add(key); // Track created groupId + grantId pairs
+            }
+          }
+        }
+      }
+      // ---
 
       await GrantRelationshipToActive.refresh();
 
