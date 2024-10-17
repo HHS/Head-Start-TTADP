@@ -5,6 +5,8 @@ import {
   ActivityReportGoal,
   Grant,
   GrantNumberLink,
+  GrantReplacements,
+  GrantRelationshipToActive,
   Recipient,
   Goal,
   GoalTemplate,
@@ -80,8 +82,16 @@ describe('getGoalIdsBySimilarity', () => {
     replacementGrant = await createGrant({
       recipientId: recipient.id,
       status: 'Active',
-      oldGrantId: inactiveGrantWithReplacement.id,
     });
+
+    await GrantReplacements.create({
+      replacedGrantId: inactiveGrantWithReplacement.id,
+      replacingGrantId: replacementGrant.id,
+      replacementDate: new Date(),
+    });
+
+    // Refresh the materialized view.
+    await GrantRelationshipToActive.refresh();
 
     //  goals that will be ineligible for similarity
     // because they are on reports that have ineligible statuses

@@ -17,6 +17,7 @@ import {
   ActivityRecipient,
   File,
   Grant,
+  GrantReplacements,
   Recipient,
   OtherEntity,
   Goal,
@@ -638,9 +639,38 @@ export async function activityReports(
       [sequelize.col('grant.recipient.name'), sortDir],
       [sequelize.col('otherEntity.name'), sortDir],
     ],
-    include: [{
-      model: Grant, as: 'grant', required: false,
-    }],
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
+        required: false,
+        attributes: [
+          'id',
+          'number',
+          'cdi',
+          'status',
+          'granteeName',
+          'recipientId',
+          'name',
+          'inactivationDate',
+          'inactivationReason',
+        ],
+        include: [
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
+            required: false,
+            attributes: ['replacedGrantId', 'replacingGrantId', 'replacementDate'],
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacingGrantReplacements',
+            required: false,
+            attributes: ['replacedGrantId', 'replacingGrantId', 'replacementDate'],
+          },
+        ],
+      },
+    ],
   });
 
   const arots = await ActivityReportObjectiveTopic.findAll({
@@ -1085,6 +1115,12 @@ export async function possibleRecipients(regionId, activityReportId = null) {
           {
             model: ActivityRecipient,
             as: 'activityRecipients',
+            attributes: [],
+            required: false,
+          },
+          {
+            model: GrantReplacements,
+            as: 'replacedGrantReplacements',
             attributes: [],
             required: false,
           },

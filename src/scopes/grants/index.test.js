@@ -440,7 +440,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'startDate.bef': '2022/07/31' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
@@ -451,7 +451,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'startDate.aft': '2022/07/31' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id))
@@ -462,7 +462,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'startDate.aft': '2022/07/12' };
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(5);
       expect(found.map((f) => f.id))
@@ -475,8 +475,9 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: possibleIds }],
+          [Op.and]: [scope.grant.where, { id: possibleIds }],
         },
+        include: scope.grant.include,
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -488,8 +489,9 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters, { grant: { subset: true } });
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: possibleIds }],
+          [Op.and]: [scope.grant.where, { id: possibleIds }],
         },
+        include: scope.grant.include,
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -503,7 +505,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grants.map((g) => g.id) }],
+          [Op.and]: [scope.grant.where, { id: grants.map((g) => g.id) }],
         },
       });
       expect(found.length).toBe(2);
@@ -517,7 +519,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'region.in': [3] };
       const scope = await filtersToScopes(filters, 'grant');
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
@@ -533,7 +535,7 @@ describe('grant filtersToScopes', () => {
           {
             model: Grant,
             as: 'grants',
-            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+            where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
           },
         ],
       });
@@ -548,7 +550,7 @@ describe('grant filtersToScopes', () => {
           {
             model: Grant,
             as: 'grants',
-            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+            where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
           },
         ],
       });
@@ -565,7 +567,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'programSpecialist.ctn': 'Darcy' };
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id)).toContain(recipients[2].id, recipients[5].id);
@@ -574,7 +576,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'programSpecialist.nctn': 'Darcy' };
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(4);
       const recips = found.map((f) => f.id);
@@ -593,7 +595,7 @@ describe('grant filtersToScopes', () => {
           {
             model: Grant,
             as: 'grants',
-            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+            where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
           },
         ],
       });
@@ -608,7 +610,7 @@ describe('grant filtersToScopes', () => {
           {
             model: Grant,
             as: 'grants',
-            where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+            where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
           },
         ],
       });
@@ -624,7 +626,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'grantNumber.ctn': specialGrantNumber };
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id)).toContain(recipients[0].id);
@@ -633,7 +635,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'grantNumber.nctn': specialGrantNumber };
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(5);
       const recips = found.map((f) => f.id);
@@ -650,7 +652,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         attributes: ['id', 'stateCode'],
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
       expect(found.map((f) => f.id)).toContain(recipients[0].id);
@@ -663,7 +665,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.in': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
 
       expect(found.length).toBe(2);
@@ -676,7 +678,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.in': [String(publicGroup.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
 
       expect(found.length).toBe(2);
@@ -689,7 +691,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.nin': [String(group.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
 
       expect(found.length).toBe(4);
@@ -704,7 +706,7 @@ describe('grant filtersToScopes', () => {
       const filters = { 'group.nin': [String(publicGroup.id)] };
       const scope = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Grant.findAll({
-        where: { [Op.and]: [scope.grant, { id: possibleIds }] },
+        where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
       });
 
       expect(found.length).toBe(4);

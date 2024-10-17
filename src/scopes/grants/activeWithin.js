@@ -11,7 +11,10 @@ export function activeBefore(dates) {
   ], []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
+    include: [],
   };
 }
 
@@ -22,18 +25,21 @@ export function activeAfter(dates) {
       endDate: {
         [Op.gte]: new Date(date),
       },
-      [Op.or]: [{
-        inactivationDate: {
-          [Op.gte]: new Date(date),
+      [Op.or]: [
+        {
+          inactivationDate: { [Op.gte]: new Date(date) },
         },
-      }, {
-        inactivationDate: null,
-      }],
+        {
+          inactivationDate: null,
+        },
+      ],
     },
   ], []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
   };
 }
 
@@ -57,18 +63,17 @@ export function activeWithinDates(dates) {
         endDate: {
           [Op.gte]: new Date(sd),
         },
-        [Op.or]: [{
-          inactivationDate: {
-            [Op.gte]: new Date(sd),
-          },
-        }, {
-          inactivationDate: null,
-        }],
+        [Op.or]: [
+          { inactivationDate: { [Op.gte]: new Date(sd) } },
+          { inactivationDate: null },
+        ],
       },
     ];
   }, []);
 
   return {
-    [Op.or]: scopes,
+    where: {
+      [Op.or]: scopes,
+    },
   };
 }
