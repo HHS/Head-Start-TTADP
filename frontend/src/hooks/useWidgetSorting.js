@@ -25,6 +25,7 @@ export default function useWidgetSorting(
   const requestSort = useCallback((sortBy, passedDirection = null) => {
     // Get sort direction.
     let direction = 'asc';
+    // If we have a passed direction this means that we are sorting via a dropdown and not arrow.
     if (passedDirection) {
       // If the direction is passed, use it.
       direction = passedDirection;

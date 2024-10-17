@@ -57,7 +57,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
   );
 
   useDeepCompareEffect(() => {
-    async function fetchQaDat() {
+    async function fetchQaData() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
@@ -127,7 +127,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
       }
     }
     // Call resources fetch.
-    fetchQaDat();
+    fetchQaData();
   }, [filters]);
 
   return (
