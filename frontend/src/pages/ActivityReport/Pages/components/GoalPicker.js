@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
-import { Label, Button } from '@trussworks/react-uswds';
+import { Label, Button, Checkbox } from '@trussworks/react-uswds';
 import { useFormContext, useWatch, useController } from 'react-hook-form';
 import Select from 'react-select';
 import { getTopics } from '../../../../fetchers/topics';
@@ -41,7 +41,10 @@ const components = {
 };
 
 const GoalPicker = ({
-  availableGoals, grantIds, reportId,
+  availableGoals,
+  grantIds,
+  reportId,
+  goalTemplates,
 }) => {
   const {
     control, setValue, watch,
@@ -51,6 +54,7 @@ const GoalPicker = ({
   // to re-render appropriately
   const [datePickerKey, setDatePickerKey] = useState('DPKEY-00');
   const [templatePrompts, setTemplatePrompts] = useState(false);
+  const [useOhsStandardGoal, setOhsStandardGoal] = useState(false);
   const activityRecipientType = watch('activityRecipientType');
 
   const selectedGoals = useWatch({ name: 'goals' });
@@ -178,6 +182,9 @@ const GoalPicker = ({
     onChangeGoal(goal);
   };
 
+  const pickerLabel = useOhsStandardGoal ? 'Select OHS standard goal' : 'Select recipient\'s goal';
+  const pickerOptions = useOhsStandardGoal ? goalTemplates : options;
+
   return (
     <>
       <Modal
@@ -197,8 +204,7 @@ const GoalPicker = ({
       </Modal>
       <div className="margin-top-3 position-relative">
         <Label>
-          Select recipient&apos;s goal&nbsp;
-          {'   '}
+          {pickerLabel}
           <Req />
           <Select
             name="goalForEditing"
@@ -209,7 +215,7 @@ const GoalPicker = ({
               validate: validateGoals,
             }}
             className="usa-select"
-            options={options}
+            options={pickerOptions}
             styles={{
               ...selectOptionsReset,
               option: (provided) => ({
@@ -222,6 +228,14 @@ const GoalPicker = ({
             required
           />
         </Label>
+        <Checkbox
+          label="Use OHS standard goal"
+          id="useOhsStandardGoal"
+          name="useOhsStandardGoal"
+          className="margin-top-2 smart-hub--report-checkbox"
+          checked={useOhsStandardGoal}
+          onChange={() => setOhsStandardGoal(!useOhsStandardGoal)}
+        />
         {goalForEditing ? (
           <div>
             <GoalForm
@@ -241,6 +255,18 @@ const GoalPicker = ({
 };
 
 GoalPicker.propTypes = {
+  goalTemplates: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number,
+    name: PropTypes.string,
+    goalIds: PropTypes.arrayOf(PropTypes.number),
+    goalTemplateId: PropTypes.number,
+    objectives: PropTypes.arrayOf(PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      description: PropTypes.string,
+      goalId: PropTypes.number,
+    })),
+  })).isRequired,
   grantIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   availableGoals: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string,
