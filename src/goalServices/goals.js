@@ -71,6 +71,46 @@ const logContext = {
 };
 
 /**
+ * Maps grants to their active replacements.
+ *
+ * This function iterates through a list of grants and constructs a dictionary
+ * where each grant ID is associated with an array of active grant IDs. If the
+ * grant itself is active, it maps to its own ID. If the grant is not active,
+ * but has relationships with active grants, it maps to those active grants instead.
+ *
+ * @param {Array} grants - An array of grant objects. Each grant object should have
+ *   properties `id`, `status`, and an optional array of `grantRelationships`. Each
+ *   relationship should contain an `activeGrant` object with `id` and `status`.
+ * @returns {Object} A dictionary where the keys are grant IDs and the values are
+ *   arrays of active grant IDs related to each key grant.
+ */
+function mapGrantsWithReplacements(grants) {
+  const grantsWithReplacementsDictionary = {};
+
+  grants.forEach((grant) => {
+    if (grant.status === 'Active') {
+      if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+        grantsWithReplacementsDictionary[grant.id].push(grant.id);
+      } else {
+        grantsWithReplacementsDictionary[grant.id] = [grant.id];
+      }
+    } else {
+      grant.grantRelationships.forEach((relationship) => {
+        if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
+          if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+            grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
+          } else {
+            grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
+          }
+        }
+      });
+    }
+  });
+
+  return grantsWithReplacementsDictionary;
+}
+
+/**
  *
  * @param {number} id
  * @returns {Promise{Object}}
@@ -1691,18 +1731,19 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
     ],
   });
 
-  const grantLookup = {};
-  grants.forEach((grant) => {
-    if (grant.status === 'Active') {
-      grantLookup[grant.id] = grant.id;
-    } else {
-      grant.grantRelationships.forEach((relationship) => {
-        if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
-          grantLookup[grant.id] = relationship.activeGrantId;
-        }
-      });
-    }
-  });
+  // const grantLookup = {};
+  // grants.forEach((grant) => {
+  //   if (grant.status === 'Active') {
+  //     grantLookup[grant.id] = grant.id;
+  //   } else {
+  //     grant.grantRelationships.forEach((relationship) => {
+  //       if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
+  //         grantLookup[grant.id] = relationship.activeGrantId;
+  //       }
+  //     });
+  //   }
+  // });
+  const grantsWithReplacementsDictionary = mapGrantsWithReplacements(grants);
 
   const filteredGoalGroups = goalGroups
     .filter((group) => {
@@ -1723,7 +1764,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
-      if (!grantLookup[current.grantId]) {
+      if (!grantsWithReplacementsDictionary[current.grantId]) {
         return previous;
       }
 
@@ -1760,7 +1801,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
           excludedIfNotAdmin,
-          grantId: grantLookup[current.grantId],
+          grantId: grantsWithReplacementsDictionary[current.grantId],
         },
       ];
     }, []));
@@ -1985,27 +2026,7 @@ export async function mergeGoals(
     throw new Error('No active grants found to merge goals into');
   }
 
-  const grantsWithReplacementsDictionary = {};
-
-  grantsWithReplacements.forEach((grant) => {
-    if (grant.status === 'Active') {
-      if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
-        grantsWithReplacementsDictionary[grant.id].push(grant.id);
-      } else {
-        grantsWithReplacementsDictionary[grant.id] = [grant.id];
-      }
-    } else {
-      grant.grantRelationships.forEach((relationship) => {
-        if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
-          if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
-            grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
-          } else {
-            grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
-          }
-        }
-      });
-    }
-  });
+  const grantsWithReplacementsDictionary = mapGrantsWithReplacements(grantsWithReplacements);
 
   // unique list of grant IDs
   const grantIds = uniq(Object.values(grantsWithReplacementsDictionary).flat());
