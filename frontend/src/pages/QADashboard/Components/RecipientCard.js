@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-// import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
-import { checkForDate } from '../../../utils';
 import ExpanderButton from '../../../components/ExpanderButton';
 import GoalCard, { goalPropTypes } from './GoalCard';
 import { getScoreBadge } from '../../../components/ClassScoreBadge';
@@ -44,7 +42,7 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <p className="usa-prose margin-y-0">
-              <Link to="../../recipient-tta-records/376/region/1/profile">
+              <Link to={`../../recipient-tta-records/${recipient.id}/region/${recipient.regionId}/profile`}>
                 {recipient.name}
               </Link>
             </p>
@@ -52,33 +50,33 @@ function RecipientCard({
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-last-ar-start-date padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Last AR start date</p>
             <p className="usa-prose margin-y-0">
-              {checkForDate(recipient.lastArStartDate)}
+              {recipient.lastARStartDate}
             </p>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Emotional support</p>
             <p className="usa-prose margin-y-0">{recipient.emotionalSupport}</p>
             <div className="margin-top-1">
-              {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
+              {getScoreBadge('ES', recipient.emotionalSupport, recipient.reportDeliveryDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-classroom-organization padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Classroom organization</p>
             <p className="usa-prose margin-y-0">{recipient.classroomOrganization}</p>
             <div className="margin-top-1">
-              {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
+              {getScoreBadge('CO', recipient.classroomOrganization, recipient.reportDeliveryDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Instructional support</p>
             <p className="usa-prose margin-y-0">{recipient.instructionalSupport}</p>
             <div className="margin-top-1">
-              {getScoreBadge('IS', recipient.instructionalSupport, recipient.reportReceivedDate, 'ttahub-recipient-card__recipient-column__badge')}
+              {getScoreBadge('IS', recipient.instructionalSupport, recipient.reportDeliveryDate, 'ttahub-recipient-card__recipient-column__badge')}
             </div>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__date padding-right-3">
             <p className="usa-prose text-bold  margin-y-0">Report received date</p>
-            <p className="usa-prose margin-y-0">{checkForDate(recipient.reportReceivedDate)}</p>
+            <p className="usa-prose margin-y-0">{recipient.reportDeliveryDate}</p>
           </div>
           <div className="ttahub-recipient-card__row margin-top-3">
             <ExpanderButton
@@ -99,6 +97,8 @@ function RecipientCard({
             goal={goal}
             zIndex={zIndex - 1}
             expanded={goalsExpanded}
+            recipientId={recipient.id}
+            regionId={recipient.regionId}
           />
         ))}
       </article>
@@ -110,12 +110,13 @@ function RecipientCard({
 RecipientCard.propTypes = {
   recipient: PropTypes.shape({
     id: PropTypes.number.isRequired,
+    regionId: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
-    lastArStartDate: PropTypes.string.isRequired,
+    lastARStartDate: PropTypes.string.isRequired,
     emotionalSupport: PropTypes.number.isRequired,
     classroomOrganization: PropTypes.number.isRequired,
     instructionalSupport: PropTypes.number.isRequired,
-    reportReceivedDate: PropTypes.string.isRequired,
+    reportDeliveryDate: PropTypes.string.isRequired,
     goals: PropTypes.arrayOf(goalPropTypes).isRequired,
   }).isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,

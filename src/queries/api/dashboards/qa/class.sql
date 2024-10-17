@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -81,6 +87,12 @@ JSON: {
             "type": "string",
             "nullable": true,
             "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
           },
           {
             "columnName": "goalId",
@@ -129,6 +141,18 @@ JSON: {
             "type": "date",
             "nullable": true,
             "description": "Date when the monitoring report was delivered."
+          },
+          {
+            "columnName": "creator",
+            "type": "string",
+            "nullable": true,
+            "description": "User who created the goal"
+          },
+          {
+            "columnName": "colaborators",
+            "type": "string[]",
+            "nullable": true,
+            "description": "Users who collaborated on the goal"
           }
         ]
       },
@@ -699,7 +723,8 @@ WITH
     SELECT
       r.id,
       COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
-      COUNT(DISTINCT mcs.id) > 0 has_scores
+      COUNT(DISTINCT mcs.id) > 0 has_scores,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -717,29 +742,35 @@ WITH
     LEFT JOIN "MonitoringClassSummaries" mcs
     ON mr."reviewId" = mcs."reviewId"
     WHERE gr.status = 'Active'
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_class_widget AS (
     SELECT
-      (((COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
-      COUNT(DISTINCT wc.id)))*100)::decimal(5,2) "% recipients with class",
+      (COALESCE(COUNT(DISTINCT wc.id) FILTER (WHERE has_class)::decimal/
+      NULLIF(COUNT(DISTINCT wc.id), 0), 0)*100)::decimal(5,2) "% recipients with class",
       COUNT(DISTINCT wc.id) FILTER (WHERE wc.has_class) "recipients with class",
-      COUNT(DISTINCT wc.id) total
+      COUNT(DISTINCT wc.id) total,
+      SUM(grant_count) "grants with class"
     FROM with_class wc
   ),
   with_class_page AS (
     SELECT
-      r.id "recipientId",
-      r.name "recipientName",
-      gr.number "grantNumber",
-      (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
-      (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
-      (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
-      (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
-      (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
-      (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
-      (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
-      (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate"
+        r.id "recipientId",
+        r.name "recipientName",
+        gr.number "grantNumber",
+        gr."regionId",
+        (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
+        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
+        (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
+        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
+        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
+        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
+        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
+        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator'))[1] "creator",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator')) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
     ON wc.id = r.id
@@ -752,6 +783,23 @@ WITH
     ON gr.id = g."grantId"
     AND has_class
     AND g."goalTemplateId" = 18172
+    LEFT JOIN "GoalCollaborators" gc
+    ON g.id = gc."goalId"
+    LEFT JOIN "CollaboratorTypes" ct
+    ON gc."collaboratorTypeId" = ct.id
+    AND ct.name IN ('Creator', 'Collaborator')
+    JOIN "ValidFor" vf
+    ON ct."validForId" = vf.id
+    AND vf.name = 'Goals'
+    JOIN "Users" u
+    ON gc."userId" = u.id
+    LEFT JOIN LATERAL (
+        SELECT ur."userId", STRING_AGG(r.name, ', ') AS agg_roles
+        FROM "UserRoles" ur
+        JOIN "Roles" r ON ur."roleId" = r.id
+        WHERE ur."userId" = u.id
+        GROUP BY ur."userId"
+    ) ur ON u.id = ur."userId"
     LEFT JOIN "ActivityReportGoals" arg
     ON g.id = arg."goalId"
     LEFT JOIN "ActivityReports" a
@@ -770,8 +818,10 @@ WITH
     AND (has_class OR has_scores)
     AND (g.id IS NOT NULL OR mcs.id IS NOT NULL)
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
-    GROUP BY 1,2,3
-    ORDER BY 1,3
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
+    GROUP BY 1, 2, 3, 4
+    ORDER BY 1, 3
   ),
   
   -- CTE for fetching active filters using NULLIF() to handle empty strings
@@ -797,7 +847,8 @@ WITH
         JSONB_AGG(JSONB_BUILD_OBJECT(
         '% recipients with class', "% recipients with class",
         'recipients with class', "recipients with class",
-        'total', total
+        'total', total,
+        'grants with class', "grants with class"
         )) AS data,
         af.active_filters  -- Use precomputed active_filters
     FROM with_class_widget
@@ -813,6 +864,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'goalCreatedAt', "goalCreatedAt",
         'goalStatus', "goalStatus",
@@ -820,7 +872,9 @@ WITH
         'emotionalSupport', "emotionalSupport",
         'classroomOrganization', "classroomOrganization",
         'instructionalSupport', "instructionalSupport",
-        'reportDeliveryDate', "reportDeliveryDate"
+        'reportDeliveryDate', "reportDeliveryDate",
+        'creator', "creator",
+        'collaborators', "collaborators"
       )) AS data,
       af.active_filters  -- Use precomputed active_filters
     FROM with_class_page

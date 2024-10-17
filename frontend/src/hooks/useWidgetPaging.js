@@ -28,6 +28,7 @@ export default function useWidgetPaging(
   stringColumns = [],
   dateColumns = [],
   exportName,
+  exportDataName = null,
 ) {
   const {
     sortConfig,
@@ -50,6 +51,7 @@ export default function useWidgetPaging(
     checkBoxes,
     exportHeading,
     exportName,
+    exportDataName,
   );
 
   const { activePage } = sortConfig;
@@ -82,8 +84,8 @@ export default function useWidgetPaging(
     }
   }, [loading, perPageNumber, setSortConfig, sortConfig]);
 
-  const sort = useCallback((sortBy) => {
-    requestSort(sortBy);
+  const sort = useCallback((sortBy, direction) => {
+    requestSort(sortBy, direction);
     setOffset(0);
   }, [requestSort]);
 
@@ -98,5 +100,6 @@ export default function useWidgetPaging(
     requestSort: sort,
     exportRows,
     sortConfig,
+    setSortConfig,
   };
 }

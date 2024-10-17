@@ -5,6 +5,7 @@ import React, {
   useMemo,
 } from 'react';
 import PropTypes from 'prop-types';
+import moment from 'moment';
 import LineGraph from './LineGraph';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
@@ -77,20 +78,39 @@ export default function DeliveryMethodGraph({ data }) {
   // records is an array of objects
   // and the other fields need to be converted to camelCase
   useEffect(() => {
+    if (!data) {
+      setTabularData([]);
+      setTraces([]);
+      setTotals({
+        totalInPerson: 0,
+        averageInPersonPercentage: 0,
+        totalVirtualCount: 0,
+        averageVirtualPercentage: 0,
+        totalHybridCount: 0,
+        averageHybridPercentage: 0,
+      });
+
+      return;
+    }
+
     // take the API data
     // and transform it into the format
     // that the LineGraph component expects
     // (an object for each trace)
     // and the table (an array of objects in the format defined by proptypes)
+
+    const { records: unfilteredRecords } = data;
+    const total = [...unfilteredRecords].pop();
+    const records = unfilteredRecords.filter((record) => record.month !== 'Total');
+
     const {
-      records,
-      total_in_person_count: totalInPerson,
-      average_in_person_percentage: averageInPersonPercentage,
-      total_virtual_count: totalVirtualCount,
-      average_virtual_percentage: averageVirtualPercentage,
-      total_hybrid_count: totalHybridCount,
-      average_hybrid_percentage: averageHybridPercentage,
-    } = data;
+      in_person_count: totalInPerson,
+      in_person_percentage: averageInPersonPercentage,
+      virtual_count: totalVirtualCount,
+      virtual_percentage: averageVirtualPercentage,
+      hybrid_count: totalHybridCount,
+      hybrid_percentage: averageHybridPercentage,
+    } = total;
 
     const tableData = [];
     // use a map for quick lookup
@@ -105,9 +125,9 @@ export default function DeliveryMethodGraph({ data }) {
       x: [], y: [], name: 'Hybrid', traceOrder: 3,
     });
 
-    records.forEach((dataset, index) => {
+    (records || []).forEach((dataset, index) => {
       tableData.push({
-        heading: dataset.month,
+        heading: moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'),
         sortKey: index + 1,
         id: index + 1,
         data: [
@@ -144,25 +164,25 @@ export default function DeliveryMethodGraph({ data }) {
         ],
       });
 
-      traceMap.get('In person').x.push(dataset.month);
+      traceMap.get('In person').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('In person').y.push(dataset.in_person_percentage);
 
-      traceMap.get('Virtual').x.push(dataset.month);
+      traceMap.get('Virtual').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('Virtual').y.push(dataset.virtual_percentage);
 
-      traceMap.get('Hybrid').x.push(dataset.month);
+      traceMap.get('Hybrid').x.push(moment(dataset.month, 'YYYY-MM-DD').format('MMM YYYY'));
       traceMap.get('Hybrid').y.push(dataset.hybrid_percentage);
     });
 
     setTraces(Array.from(traceMap.values()));
     setTabularData(tableData);
     setTotals({
-      totalInPerson,
-      averageInPersonPercentage,
-      totalVirtualCount,
-      averageVirtualPercentage,
-      totalHybridCount,
-      averageHybridPercentage,
+      totalInPerson: totalInPerson ? totalInPerson.toLocaleString('en-us') : 0,
+      averageInPersonPercentage: `${averageInPersonPercentage}%`,
+      totalVirtualCount: totalVirtualCount ? totalVirtualCount.toLocaleString('en-us') : 0,
+      averageVirtualPercentage: `${averageVirtualPercentage}%`,
+      totalHybridCount: totalHybridCount ? totalHybridCount.toLocaleString('en-us') : 0,
+      averageHybridPercentage: `${averageHybridPercentage}%`,
     });
   }, [data]);
   // end use effect
