@@ -584,11 +584,11 @@ WITH
   ),
   with_fei_widget AS (
     SELECT
-      (((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
-      COUNT(DISTINCT wf.id)))*100)::decimal(5,2) "% recipients with fei",
+      (COALESCE((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
+      NULLIF(COUNT(DISTINCT wf.id),0)),0)*100)::decimal(5,2) "% recipients with fei",
       COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
       COUNT(DISTINCT wf.id) total,
-      SUM(grant_count) "grants with fei"
+      COALESCE(SUM(grant_count),0) "grants with fei"
     FROM with_fei wf
   ),
   
@@ -640,7 +640,7 @@ WITH
     SELECT
         wfpr.response,
         COUNT(*) AS response_count,
-        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 0)::decimal(5,2) AS percentage
+        ROUND(COALESCE(COUNT(*) * 100.0 / NULLIF(SUM(COUNT(*)) OVER (),0),0), 0)::decimal(5,2) AS percentage
     FROM with_fei_page wfp
     CROSS JOIN UNNEST(wfp."rootCause") wfpr(response)
     GROUP BY 1

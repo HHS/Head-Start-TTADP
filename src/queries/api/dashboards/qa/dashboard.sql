@@ -1089,9 +1089,9 @@ WITH
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) AS in_person_count,
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) AS virtual_count,
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) AS hybrid_count,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS in_person_percentage,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS virtual_percentage,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS hybrid_percentage
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS in_person_percentage,
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS virtual_percentage,
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS hybrid_percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
@@ -1106,9 +1106,9 @@ WITH
       SUM(in_person_count) in_person_count,
       SUM(virtual_count) virtual_count,
       SUM(hybrid_count) hybrid_count,
-      ((SUM(in_person_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS in_person_percentage,
-      ((SUM(virtual_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS virtual_percentage,
-      ((SUM(hybrid_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS hybrid_percentage
+      (COALESCE((SUM(in_person_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS in_person_percentage,
+      (COALESCE((SUM(virtual_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS virtual_percentage,
+      (COALESCE((SUM(hybrid_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS hybrid_percentage
     FROM delivery_method_graph_values
   ),
   delivery_method_graph AS (
@@ -1122,7 +1122,7 @@ WITH
     SELECT
       COALESCE(r.name, a."creatorRole"::text) AS role_name,
       COUNT(*) AS role_count,
-      ((COUNT(*) * 100.0) / SUM(COUNT(*)) OVER ())::decimal(5,2) AS percentage
+      (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*),0)) OVER (),0))::decimal(5,2) AS percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
