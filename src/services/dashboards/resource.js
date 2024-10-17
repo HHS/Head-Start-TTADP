@@ -2,6 +2,7 @@
 import { Sequelize, Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 import {
   ActivityReport,
   ActivityReportGoal,
@@ -2161,7 +2162,11 @@ export async function resourceDashboardFlat(scopes) {
   const rolledUpTopicUse = await rollUpTopicUse(data);
 
   // Date headers.
-  const dateHeadersArray = data.dateHeaders.map((date) => date.rollUpDate);
+  const dateHeadersArray = data.dateHeaders.map((date) => ({
+    name: moment(date.rollUpDate, 'MMM-YY').format('MMMM YYYY'),
+    displayName: date.rollUpDate,
+  }));
+
   return {
     resourcesDashboardOverview: dashboardOverview,
     resourcesUse: { headers: dateHeadersArray, resources: rolledUpResourceUse },
