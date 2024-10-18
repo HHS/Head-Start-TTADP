@@ -115,7 +115,6 @@ interface IGrant {
   status: string;
   startDate: string;
   endDate: string;
-  oldGrantId: number;
   recipientId: number;
   numberWithProgramTypes: string;
   number: string;
