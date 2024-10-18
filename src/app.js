@@ -59,18 +59,28 @@ app.use((req, res, next) => {
         'style-src',
         'font-src',
       ),
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`],
+      styleSrc: ["'self'"],
       fontSrc: ["'self'"],
       'form-action': ["'self'"],
       scriptSrc: ["'self'", '*.googletagmanager.com'],
-      scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
+      // scriptSrcElem: ["'self'", 'https://*.googletagmanager.com', `'nonce-${res.locals.nonce}'`],
+      scriptSrcElem: ["'self'", 'https://*.googletagmanager.com'],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
       connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
       defaultSrc: ["'self'", 'wss://tta-smarthub-sandbox.app.cloud.gov', 'wss://tta-smarthub-dev.app.cloud.gov'],
+      // reportOnly: true,
+      reportUri: '/csp-violation-report-endpoint',
     },
   });
   cspMiddleware(req, res, next);
 });
+
+// app.post('/csp-violation-report-endpoint', express.json(), (req, res) => {
+//   console.log('CSP Violation:', req.body);
+//   res.status(204).end();
+// });
+
 
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   app.use('/index.html', serveIndex);
