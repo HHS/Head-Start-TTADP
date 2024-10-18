@@ -72,7 +72,8 @@ describe('goalName', () => {
           model: Grant.unscoped(),
           as: 'grants',
           required: true,
-          where: { [Op.and]: [scope.grant, { id: goalNameFilterPossibleIds }] },
+          where: { [Op.and]: [scope.grant.where, { id: goalNameFilterPossibleIds }] },
+          include: scope.grant.include,
         },
       ],
     });
@@ -81,6 +82,7 @@ describe('goalName', () => {
     expect(found.grants.length).toBe(1);
     expect(found.grants.map((f) => f.id)).toContain(grantForGoalIncluded.id);
   });
+
   it('filters out', async () => {
     const filters = { 'goalName.nctn': '_pig' };
     const scope = await filtersToScopes(filters);
@@ -91,7 +93,8 @@ describe('goalName', () => {
           model: Grant.unscoped(),
           as: 'grants',
           required: true,
-          where: { [Op.and]: [scope.grant, { id: goalNameFilterPossibleIds }] },
+          where: { [Op.and]: [scope.grant.where, { id: goalNameFilterPossibleIds }] },
+          include: scope.grant.include,
         },
       ],
     });
