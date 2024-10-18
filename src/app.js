@@ -81,7 +81,6 @@ app.use((req, res, next) => {
 //   res.status(204).end();
 // });
 
-
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'dss') {
   app.use('/index.html', serveIndex);
   app.use(express.static(path.join(__dirname, '../client'), { index: false }));
