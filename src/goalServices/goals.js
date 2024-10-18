@@ -287,7 +287,7 @@ export async function goalsByIdsAndActivityReport(id, activityReportId) {
       })),
   }));
 
-  const reducedGoals = reduceGoals(reformattedGoals);
+  const reducedGoals = reduceGoals(reformattedGoals) || [];
 
   // sort reduced goals by rtr order
   reducedGoals.sort((a, b) => {
@@ -391,7 +391,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
 }
 
 export async function goalByIdWithActivityReportsAndRegions(goalId) {
-  const goal = Goal.findOne({
+  const goal = await Goal.findOne({
     attributes: [
       'name',
       'id',
@@ -1614,7 +1614,7 @@ export const hasMultipleGoalsOnSameActivityReport = (countObject) => Object.valu
 */
 export async function getGoalIdsBySimilarity(recipientId, regionId, user = null) {
   /**
-   * if a user has the ability to merged closed curated goals, we will show them in the UI
+   * if a user has the ability to merge closed curated goals, we will show them in the UI
    */
   const hasClosedMergeGoalOverride = !!(user && new Users(user).canSeeBehindFeatureFlag('closed_goal_merge_override'));
 
@@ -2266,7 +2266,9 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
   }
 
   if (goalsForNameCheck.length) {
-    message = `A goal with that name already exists for grants ${goalsForNameCheck.map((g) => g.grant.number).join(', ')}`;
+    message = `A goal with that name already exists for grants ${goalsForNameCheck
+      .map((g) => (g.grant ? g.grant.number : 'Unknown'))
+      .join(', ')}`;
   }
 
   if (goalsForNameCheck.length && !data.createMissingGoals) {
