@@ -258,4 +258,141 @@ describe('Resource Dashboard page', () => {
     const option = select.querySelector('option[value="region"]');
     expect(option).toBeNull();
   });
+
+  it('renders the graphs correctly if the records are null', async () => {
+    fetchMock.restore();
+    // Mock Recipients with no TTA data.
+    fetchMock.get(noTtaApi, [
+      {
+        data_set: 'no_tta_widget',
+        records: '1',
+        data: [
+          {
+            total: 1460,
+            'recipients without tta': 941,
+            '% recipients without tta': 64.45,
+          },
+        ],
+      },
+    ]);
+
+    // Mock Recipients with OHS standard FEI goal data.
+    fetchMock.get(feiApi, [
+      {
+        data_set: 'with_fei_graph',
+        records: '6',
+        data: [
+          {
+            rootCause: 'Facilities',
+            percentage: 9,
+            response_count: 335,
+          },
+          {
+            rootCause: 'Workforce',
+            percentage: 46,
+            response_count: 1656,
+          },
+          {
+            rootCause: 'Community Partnerships',
+            percentage: 8,
+            response_count: 275,
+          },
+          {
+            rootCause: 'Family Circumstances',
+            percentage: 11,
+            response_count: 393,
+          },
+          {
+            rootCause: 'Other ECE Care Options',
+            percentage: 18,
+            response_count: 639,
+          },
+          {
+            rootCause: 'Unavailable',
+            percentage: 8,
+            response_count: 295,
+          },
+        ],
+        active_filters: [
+          'currentUserId',
+        ],
+      },
+      {
+        data_set: 'with_fei_widget',
+        records: '1',
+        data: [
+          {
+            total: 1550,
+            'grants with fei': 1042,
+            'recipients with fei': 858,
+            '% recipients with fei': 55.35,
+          },
+        ],
+        active_filters: [
+          'currentUserId',
+        ],
+      },
+    ]);
+
+    // Mock Recipients with OHS standard CLASS data.
+    fetchMock.get(classApi, [
+      {
+        data_set: 'with_class_widget',
+        records: '1',
+        data: [
+          {
+            total: 1550,
+            'grants with class': 327,
+            'recipients with class': 267,
+            '% recipients with class': 17.23,
+          },
+        ],
+        active_filters: [
+          'currentUserId',
+        ],
+      },
+    ]);
+
+    // Mock Dashboard data.
+    fetchMock.get(dashboardApi, [
+      {
+        data_set: 'role_graph',
+        records: '0',
+        data: null,
+      },
+      {
+        data_set: 'delivery_method_graph',
+        records: '1',
+        data: [
+          {
+            month: 'Total',
+            hybrid_count: null,
+            virtual_count: null,
+            in_person_count: null,
+            hybrid_percentage: 0,
+            virtual_percentage: 0,
+            in_person_percentage: 0,
+          },
+        ],
+      },
+    ]);
+    renderQADashboard();
+
+    // Header
+    expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
+
+    // Overview
+    expect(await screen.findByText('Recipients with no TTA')).toBeVisible();
+    expect(await screen.findByText('Recipients with OHS standard FEI goal')).toBeVisible();
+    expect(await screen.findByText('Recipients with OHS standard CLASS goal')).toBeVisible();
+
+    // Assert test data.
+    await act(async () => {
+      await waitFor(() => {
+        expect(screen.getByText('Delivery method')).toBeVisible();
+        expect(screen.getByText('Percentage of activity reports by role')).toBeVisible();
+        expect(screen.getByText('Root cause on FEI goals')).toBeVisible();
+      });
+    });
+  });
 });
