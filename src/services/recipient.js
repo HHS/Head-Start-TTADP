@@ -804,14 +804,16 @@ export async function getGoalsByActivityRecipient(
     return goal;
   });
 
+  // reduce
   const r = sorted.reduce((previous, current) => {
-    const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
+    //const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
     allGoalIds.push(current.id);
 
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
+    /*
     if (existingGoal) {
       existingGoal.ids = [...existingGoal.ids, current.id];
       existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
@@ -836,6 +838,7 @@ export async function getGoalsByActivityRecipient(
         goalRows: previous.goalRows,
       };
     }
+    */
 
     const goalToAdd = {
       id: current.id,
