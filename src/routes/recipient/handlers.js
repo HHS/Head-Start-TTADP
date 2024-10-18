@@ -115,6 +115,7 @@ export async function searchRecipients(req, res) {
 
 export async function getGoalsByRecipient(req, res) {
   try {
+    console.log('\n\n\n-----getGoalsByRecipient');
     const proceedQuestionMark = await checkAccessAndExistence(req, res);
 
     if (!proceedQuestionMark) {
