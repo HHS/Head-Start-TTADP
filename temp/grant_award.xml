@@ -6,11 +6,13 @@
   <grant_number>02CH01105</grant_number>
   <grantee_state>CO</grantee_state>
   <grant_start_date>2014-03-01</grant_start_date>
-  <grant_end_date>2025-02-28</grant_end_date>
+  <grant_end_date>2024-02-28</grant_end_date>
   <annual_funding_month>February</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
   <grant_status>Inactive</grant_status>
+  <inactivation_date>2022-07-31</inactivation_date>
+  <inactivation_reason>Replaced</inactivation_reason>
 </grant_award>
 <grant_award>
   <grant_award_id>8110</grant_award_id>
@@ -23,7 +25,7 @@
   <annual_funding_month>March</annual_funding_month>
   <program_acronym>CH</program_acronym>
   <grantee_name>Agency 1, Inc.</grantee_name>
-  <grant_status>Inactive</grant_status> 
+  <grant_status>Inactive</grant_status>
   <inactivation_date xsi:nil="true"/>
   <inactivation_reason xsi:nil="true"/>
 </grant_award>
