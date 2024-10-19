@@ -115,7 +115,6 @@ export async function searchRecipients(req, res) {
 
 export async function getGoalsByRecipient(req, res) {
   try {
-    console.log('\n\n\n-----getGoalsByRecipient');
     const proceedQuestionMark = await checkAccessAndExistence(req, res);
 
     if (!proceedQuestionMark) {
@@ -125,7 +124,12 @@ export async function getGoalsByRecipient(req, res) {
     const { recipientId, regionId } = req.params;
 
     // Get goals for recipient.
-    const recipientGoals = await getGoalsByActivityRecipient(recipientId, regionId, req.query);
+    const recipientGoals = await getGoalsByActivityRecipient(
+      recipientId,
+      regionId,
+      req.query,
+      false,
+    );
     res.json(recipientGoals);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
