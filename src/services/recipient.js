@@ -542,6 +542,7 @@ export async function getGoalsByActivityRecipient(
     goalIds = [],
     ...filters
   },
+  deDuplicateGoals = true,
 ) {
   // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
   const feiCacheKey = 'feiRootCauseFieldPrompt';
@@ -806,39 +807,40 @@ export async function getGoalsByActivityRecipient(
 
   // reduce
   const r = sorted.reduce((previous, current) => {
-    //const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
-
     allGoalIds.push(current.id);
 
     const isCurated = current.goalTemplate
       && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
-    /*
-    if (existingGoal) {
-      existingGoal.ids = [...existingGoal.ids, current.id];
-      existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
-      existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
-      existingGoal.objectives = reduceObjectivesForRecipientRecord(
-        current,
-        existingGoal,
-        existingGoal.grantNumbers,
-      );
-      existingGoal.objectiveCount = existingGoal.objectives.length;
-      existingGoal.isCurated = isCurated || existingGoal.isCurated;
-      existingGoal.collaborators = existingGoal.collaborators || [];
-      existingGoal.collaborators = uniqBy([
-        ...existingGoal.collaborators,
-        ...createCollaborators(current),
-      ], 'goalCreatorName');
+    if (deDuplicateGoals) {
+      const existingGoal = findOrFailExistingGoal(current, previous.goalRows);
 
-      existingGoal.onAR = existingGoal.onAR || current.onAR;
-      existingGoal.isReopenedGoal = existingGoal.isReopenedGoal || wasGoalPreviouslyClosed(current);
+      if (existingGoal) {
+        existingGoal.ids = [...existingGoal.ids, current.id];
+        existingGoal.goalNumbers = [...existingGoal.goalNumbers, current.goalNumber];
+        existingGoal.grantNumbers = uniq([...existingGoal.grantNumbers, current.grant.number]);
+        existingGoal.objectives = reduceObjectivesForRecipientRecord(
+          current,
+          existingGoal,
+          existingGoal.grantNumbers,
+        );
+        existingGoal.objectiveCount = existingGoal.objectives.length;
+        existingGoal.isCurated = isCurated || existingGoal.isCurated;
+        existingGoal.collaborators = existingGoal.collaborators || [];
+        existingGoal.collaborators = uniqBy([
+          ...existingGoal.collaborators,
+          ...createCollaborators(current),
+        ], 'goalCreatorName');
 
-      return {
-        goalRows: previous.goalRows,
-      };
+        existingGoal.onAR = existingGoal.onAR || current.onAR;
+        existingGoal.isReopenedGoal = existingGoal.isReopenedGoal
+          || wasGoalPreviouslyClosed(current);
+
+        return {
+          goalRows: previous.goalRows,
+        };
+      }
     }
-    */
 
     const goalToAdd = {
       id: current.id,
