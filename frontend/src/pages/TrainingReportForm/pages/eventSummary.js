@@ -89,7 +89,6 @@ const EventSummary = ({
     eventName,
     owner,
     status,
-    ownerId,
   } = data;
 
   const { user } = useContext(UserContext);
