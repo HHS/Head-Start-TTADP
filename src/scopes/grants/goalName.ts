@@ -22,17 +22,21 @@ export function withGoalName(searchText: string[]) {
   const search = [`${searchText.map((st) => st.toLowerCase())}`];
 
   return {
-    [Op.or]: [
-      filterAssociation(goalNameIncludeExclude(true), search, false, 'LIKE'),
-    ],
+    where: {
+      [Op.or]: [
+        filterAssociation(goalNameIncludeExclude(true), search, false, 'LIKE'),
+      ],
+    },
   };
 }
 
 export function withoutGoalName(searchText: string[]) {
   const search = [`${searchText.map((st) => st.toLowerCase())}`];
   return {
-    [Op.and]: [
-      filterAssociation(goalNameIncludeExclude(false), search, false, 'NOT LIKE'),
-    ],
+    where: {
+      [Op.and]: [
+        filterAssociation(goalNameIncludeExclude(false), search, false, 'NOT LIKE'),
+      ],
+    },
   };
 }

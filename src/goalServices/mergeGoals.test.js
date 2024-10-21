@@ -2,6 +2,8 @@ import faker from '@faker-js/faker';
 import db, {
   Recipient,
   Grant,
+  GrantReplacements,
+  GrantRelationshipToActive,
   Goal,
   GoalCollaborator,
   GoalTemplate,
@@ -106,8 +108,16 @@ describe('mergeGoals', () => {
       startDate: new Date(),
       endDate: new Date(),
       status: 'Active',
-      oldGrantId: grantTwo.id,
     });
+
+    await GrantReplacements.create({
+      replacedGrantId: grantTwo.id,
+      replacingGrantId: grantThree.id,
+      replacementDate: new Date(),
+    });
+
+    // Refresh the materialized view.
+    await GrantRelationshipToActive.refresh();
 
     template = await createGoalTemplate();
 
@@ -479,6 +489,7 @@ describe('mergeGoals', () => {
     expect(goalsWithData.length).toBe(2);
     const grantIds = goalsWithData.map((goal) => goal.grantId);
     expect(grantIds).toContain(grantOne.id);
+    expect(grantIds).not.toContain(grantTwo.id);
     expect(grantIds).toContain(grantThree.id);
 
     const goalForGrantOne = goalsWithData.find((g) => g.grantId === grantOne.id);

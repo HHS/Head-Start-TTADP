@@ -35,8 +35,8 @@ export default function HorizontalTableWidget(
     itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
   );
 
-  const renderSortableColumnHeader = (displayName, name, classValues) => {
-    const sortClassName = getClassNamesFor(name);
+  const renderSortableColumnHeader = (displayName, key, name, classValues) => {
+    const sortClassName = getClassNamesFor(key);
     let fullAriaSort;
     switch (sortClassName) {
       case 'asc':
@@ -51,15 +51,15 @@ export default function HorizontalTableWidget(
     }
 
     return (
-      <th key={displayName.replace(' ', '_')} className={classValues || 'bg-white text-left data-header'} scope="col" aria-sort={fullAriaSort}>
+      <th key={key} className={classValues || 'bg-white text-left data-header'} scope="col" aria-sort={fullAriaSort}>
         <button
           type="button"
           tabIndex={0}
           onClick={() => {
-            requestSort(name);
+            requestSort(key);
           }}
           className={`usa-button usa-button--unstyled sortable ${sortClassName}`}
-          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
+          aria-label={`${name}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
           }`}
         >
           {displayName}
@@ -116,6 +116,43 @@ export default function HorizontalTableWidget(
     }
   };
 
+  const Header = ({ header, sortingEnabled }) => {
+    let displayName = header;
+    let name = header;
+
+    if (header.displayName) {
+      displayName = header.displayName;
+    }
+
+    if (header.name) {
+      name = header.name;
+    }
+
+    const key = displayName.replaceAll(' ', '_');
+
+    if (sortingEnabled) {
+      return renderSortableColumnHeader(displayName, key, name);
+    }
+
+    return (
+      <th key={key} scope="col" className="text-left data-header">
+        <span className="usa-sr-only">{name}</span>
+        <span aria-hidden="true">{displayName}</span>
+      </th>
+    );
+  };
+
+  Header.propTypes = {
+    sortingEnabled: PropTypes.bool.isRequired,
+    header: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        displayName: PropTypes.string,
+        name: PropTypes.string,
+      }),
+    ]).isRequired,
+  };
+
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
@@ -138,7 +175,7 @@ export default function HorizontalTableWidget(
             }
             {
               enableSorting
-                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), `smarthub-horizontal-table-first-column ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
+                ? renderSortableColumnHeader(firstHeading, firstHeading.replaceAll(' ', '_'), firstHeading, `smarthub-horizontal-table-first-column ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`)
                 : (
                   <th className={`smarthub-horizontal-table-first-column data-header ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
                     {firstHeading}
@@ -146,9 +183,7 @@ export default function HorizontalTableWidget(
                 )
             }
             {
-            headers.map((h) => (enableSorting
-              ? renderSortableColumnHeader(h, h.replaceAll(' ', '_'))
-              : <th key={h.replace(' ', '_')} scope="col" className="text-left data-header">{h}</th>))
+            headers.map((h) => (<Header header={h} sortingEnabled={enableSorting} />))
             }
             {
             showTotalColumn && (
@@ -170,7 +205,7 @@ export default function HorizontalTableWidget(
                 {
                   enableCheckboxes && (
                     <td className="width-8 checkbox-column" data-label="Select report">
-                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.id}`} />
+                      <Checkbox id={r.id} label="" value={r.id} checked={checkboxes[r.id] || false} onChange={handleReportSelect} aria-label={`Select ${r.title}`} />
                     </td>
                   )
                 }
@@ -179,7 +214,7 @@ export default function HorizontalTableWidget(
                     r.isUrl
                       ? handleUrl(r)
                       : r.heading
-                      }
+                  }
                 </td>
                 {(r.data || []).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
@@ -211,6 +246,7 @@ HorizontalTableWidget.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
+        label: PropTypes.string,
       }),
     ), PropTypes.shape({}),
   ]),

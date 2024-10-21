@@ -47,6 +47,31 @@ The frontend [proxies requests](https://create-react-app.dev/docs/proxying-api-r
 
 Api documentation uses [Redoc](https://github.com/Redocly/redoc) to serve documentation files. These files can be found in the `docs/openapi` folder. Api documentation should be split into separate files when appropriate to prevent huge hard to grasp yaml files.
 
+#### Import Current Production Data
+
+Make sure you have access to all the necessary spaces on Cloud.gov
+
+On a Mac
+1. Login to cloud.gov: `cf login -a api.fr.cloud.gov  --sso`.
+2. Download latest data: `bash ./bin/latest_backup.sh -d` (file will be placed in current directory).
+3. Ensure you have `psql` (if not `brew install libpq`).
+4. Ensure ttahub docker container is running.
+5. Create bounce.sql in repo directory (see below)
+6. Load data: `psql postgresql://username:password@127.0.0.1:5432/postgres < ./bounce.sql && psql postgresql://username:password@127.0.0.1:5432/ttasmarthub < db.sql` (Where username:password are replaced with credentials from .env and db.sql is the file you downloaded and unzipped).
+7. Migrate data: `yarn docker:db:migrate`
+8. Edit .env and change CURRENT_USER_ID= from 1 to the ID of a production user
+9. Restart docker 
+
+bounce.sql
+```sh
+select pg_terminate_backend(pid) from pg_stat_activity where datname='ttasmarthub';
+drop database ttasmarthub;
+create database ttasmarthub;
+```
+
+On Windows
+TBD
+
 #### Apple Silicon & Chromium
 On a Mac with Apple Silicon, puppeteer install fails with the message:
 ```"The chromium binary is not available for arm64"```
@@ -61,6 +86,10 @@ To ~/.zshrc (or your particular shell config), you'll need to add:
 export PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 export PUPPETEER_EXECUTABLE_PATH=`which chromium`
 ```
+
+On a Mac with Brew installed Docker, yarn commands may fail due to the absence of `docker-compose` (vs `docker compose`).  To resolve:
+
+`brew install docker-compose` 
 
 #### Local build
 
@@ -90,7 +119,7 @@ If you are already using git hooks, add the .githooks/pre-commit contents to you
 It's important that our tests fully clean up after themselves if they interact with the database. This way, tests do not conflict when run on the CI and remain as deterministic as possible.The best way to do this is to run them locally in an isolated environment and confirm that they are sanitary.
 
 With that in mind, there a few "gotchas" to remember to help write sanitary tests.
-- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete.
+- ```Grant.destroy``` needs to run with ```individualHooks: true``` or the related GrantNumberLink model prevents delete. Additionally, the hooks on destroy also update the materialized view (GrantRelationshipToActive).
 - When you call ```Model.destroy``` you should be adding  ```individualHooks: true``` to the Sequelize options. Often this is required for proper cleanup. There may be times when this is undesirable; this should be indicated with a comment.
 - Be aware of paranoid models.  For those models: force: true gets around the soft delete. If they are already soft-deleted though, you need to remove the default scopes paranoid: true does it, as well as Model.unscoped()
 - There are excellent helpers for creating and destroying common Model mocks in ```testUtils.js```. Be aware that they take a scorched earth approach to cleanup. For example, when debugging a flaky test, it was discovered that ```destroyReport``` was removing a commonly used region.

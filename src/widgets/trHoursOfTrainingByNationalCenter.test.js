@@ -250,6 +250,7 @@ describe('TR hours of training by national center', () => {
       where: {
         id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id],
       },
+      individualHooks: true,
     });
 
     // delete recipients
