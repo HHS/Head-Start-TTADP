@@ -77,6 +77,12 @@ JSON: {
             "description": "Name of the recipient."
           },
           {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
+          },
+          {
             "columnName": "last tta",
             "type": "date",
             "nullable": true,
@@ -454,14 +460,17 @@ no_tta AS (
 ),
 no_tta_widget AS (
     SELECT
-      (((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/COUNT(*))*100)::decimal(5,2) "% recipients without tta",
+      (COALESCE((COUNT(*) FILTER (WHERE NOT has_tta))::decimal/NULLIF(COUNT(*),0),0)*100)::decimal(5,2) "% recipients without tta",
       COUNT(*) FILTER (WHERE not has_tta ) "recipients without tta",
       COUNT(*) total
     FROM no_tta
 ),
 no_tta_page AS (
-    SELECT r.id, r.name,
-      (array_agg(a."endDate" ORDER BY a."endDate" DESC))[1] last_tta,
+    SELECT
+      r.id,
+      r.name,
+      gr."regionId",
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
       now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id
@@ -471,7 +480,7 @@ no_tta_page AS (
     LEFT JOIN "ActivityReports" a ON ar."activityReportId" = a.id
     AND a."calculatedStatus" = 'approved'
     WHERE gr.status = 'Active'
-    GROUP BY 1,2
+    GROUP BY 1,2,3
 ),
 datasets AS (
     SELECT 'no_tta_widget' data_set, COUNT(*) records,
@@ -486,6 +495,7 @@ datasets AS (
     JSONB_AGG(JSONB_BUILD_OBJECT(
         'recipient id', id,
         'recipient name', name,
+        'region id', "regionId",
         'last tta', last_tta,
         'days since last tta', days_since_last_tta
     )) data

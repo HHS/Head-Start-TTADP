@@ -56,6 +56,12 @@ JSON: {
             "type": "number",
             "nullable": false,
             "description": "Total number of recipients."
+          },
+          {
+            "columnName": "grants with fei",
+            "type": "number",
+            "nullable": false,
+            "description": "Number of grants with a FEI goal."
           }
         ]
       },
@@ -81,6 +87,12 @@ JSON: {
             "type": "string",
             "nullable": true,
             "description": "Grant number associated with the recipient."
+          },
+          {
+            "columnName": "region id",
+            "type": "number",
+            "nullable": true,
+            "description": "Region number associated with the recipient's grant."
           },
           {
             "columnName": "goalId",
@@ -554,7 +566,8 @@ WITH
   with_fei AS (
     SELECT
       r.id,
-      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei
+      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017) > 0 has_fei,
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 19017 AND fg.id IS NOT NULL) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -565,14 +578,17 @@ WITH
     LEFT JOIN filtered_goals fg
     ON g.id = fg.id
     WHERE gr.status = 'Active'
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
     GROUP BY 1
   ),
   with_fei_widget AS (
     SELECT
-      (((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
-      COUNT(DISTINCT wf.id)))*100)::decimal(5,2) "% recipients with fei",
+      (COALESCE((COUNT(DISTINCT wf.id) FILTER (WHERE has_fei)::decimal/
+      NULLIF(COUNT(DISTINCT wf.id),0)),0)*100)::decimal(5,2) "% recipients with fei",
       COUNT(DISTINCT wf.id) FILTER (WHERE wf.has_fei) "recipients with fei",
-      COUNT(DISTINCT wf.id) total
+      COUNT(DISTINCT wf.id) total,
+      COALESCE(SUM(grant_count),0) "grants with fei"
     FROM with_fei wf
   ),
   
@@ -596,6 +612,7 @@ WITH
       r.id "recipientId",
       r.name "recipientName",
       gr.number "grantNumber",
+      gr."regionId",
       g.id "goalId",
       g."createdAt",
       g.status "goalStatus",
@@ -615,12 +632,15 @@ WITH
     ON g.id = fg.id
     LEFT JOIN "GoalFieldResponses" gfr
     ON g.id = gfr."goalId"
+    WHERE 1 = 1
+    AND g."deletedAt" IS NULL
+    AND g."mapsToParentGoalId" IS NULL
   ),
   with_fei_graph AS (
     SELECT
         wfpr.response,
         COUNT(*) AS response_count,
-        ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 0)::decimal(5,2) AS percentage
+        ROUND(COALESCE(COUNT(*) * 100.0 / NULLIF(SUM(COUNT(*)) OVER (),0),0), 0)::decimal(5,2) AS percentage
     FROM with_fei_page wfp
     CROSS JOIN UNNEST(wfp."rootCause") wfpr(response)
     GROUP BY 1
@@ -632,7 +652,8 @@ WITH
     JSONB_AGG(JSONB_BUILD_OBJECT(
       '% recipients with fei', "% recipients with fei",
       'recipients with fei', "recipients with fei",
-      'total', total
+      'total', total,
+      'grants with fei', "grants with fei"
     )) AS data,
     af.active_filters
     FROM with_fei_widget
@@ -648,6 +669,7 @@ WITH
         'recipientId', "recipientId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
+        'region id', "regionId",
         'goalId', "goalId",
         'createdAt', "createdAt",
         'goalStatus', "goalStatus",

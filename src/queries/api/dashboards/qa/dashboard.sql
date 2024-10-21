@@ -109,6 +109,19 @@ JSON: {
         ]
       },
       {
+        "name": "activity_widget",
+        "defaultName": "Activity Widgeth",
+        "description": "Number of activity reports matching filters",
+        "schema": [
+          {
+            "columnName": "fitered_reports",
+            "type": "number",
+            "nullable": false,
+            "description": "The number of reports that match the filters."
+          }
+        ]
+      },
+      {
         "name": "process_log",
         "defaultName": "Process Log",
         "description": "Log of actions and record counts from query processing.",
@@ -220,6 +233,79 @@ JSON: {
       "display": "Activity Report Goal Response",
       "description": "Filter based on goal field responses in activity reports.",
       "supportsExclusion": true
+    },
+    {
+      "name": "startDate",
+      "type": "date[]",
+      "display": "Start Date",
+      "description": "Filter based on the start date of the activity reports.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "endDate",
+      "type": "date[]",
+      "display": "End Date",
+      "description": "Filter based on the end date of the activity reports.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reportId",
+      "type": "string[]",
+      "display": "Report Ids",
+      "description": "Filter based on the report ids.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "targetPopulations",
+      "type": "string[]",
+      "display": "Target populations",
+      "description": "Filter based on the selected target populations.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "topic",
+      "type": "string[]",
+      "display": "Topics",
+      "description": "Filter based on the selected topics.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "ttaType",
+      "type": "string[]",
+      "display": "TTA type",
+      "description": "Filter based on the selected TTA type.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reportText",
+      "type": "string[]",
+      "display": "Report text",
+      "description": "Filter based on any of the free-form text fields on a report.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "roles",
+      "type": "string[]",
+      "display": "Specialist roles",
+      "description": "Filter based on the selected Specialist roles.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reason",
+      "type": "string[]",
+      "display": "Reasons",
+      "description": "Filter based on the selected reasons.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "goalName",
+      "type": "string[]",
+      "display": "Goal Text",
+      "description": "Filter based on the text of the goal.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
     }
   ]
 }
@@ -237,6 +323,7 @@ DECLARE
     goal_name_filter TEXT := NULLIF(current_setting('ssdi.goalName', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
+    report_id_filter TEXT := NULLIF(current_setting('ssdi.reportId', true), '');
     start_date_filter TEXT := NULLIF(current_setting('ssdi.startDate', true), '');
     end_date_filter TEXT := NULLIF(current_setting('ssdi.endDate', true), '');
     reason_filter TEXT := NULLIF(current_setting('ssdi.reason', true), '');
@@ -258,6 +345,7 @@ DECLARE
     goal_name_not_filter BOOLEAN := COALESCE(current_setting('ssdi.goalName.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
+    report_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reportId.not', true), 'false') = 'true';
     start_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.startDate.not', true), 'false') = 'true';
     end_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.endDate.not', true), 'false') = 'true';
     reason_not_filter BOOLEAN := COALESCE(current_setting('ssdi.reason.not', true), 'false') = 'true';
@@ -612,6 +700,7 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 3.2: If activity reports filters (set 1), delete from filtered_activity_reports for any activity reports filtered, delete from filtered_goals using filterd_activity_reports, delete from filtered_grants using filtered_goals
     IF
+        report_id_filter IS NOT NULL OR
         start_date_filter IS NOT NULL OR
         end_date_filter IS NOT NULL OR
         reason_filter IS NOT NULL OR
@@ -626,6 +715,18 @@ BEGIN
         JOIN "ActivityReports" a
         ON fa.id = a.id
         WHERE a."calculatedStatus" = 'approved'
+        -- Filter for reportId if ssdi.reportId is defined
+        AND (
+          report_id_filter IS NULL
+          OR (
+            EXISTS (
+              SELECT 1
+              FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json) AS value
+              WHERE CONCAT('R', LPAD(a."regionId"::text, 2, '0'), '-AR-', a.id) ~* value::text
+              OR COALESCE(a."legacyId",'') ~* value::text
+            ) != report_text_not_filter
+          )
+        )
         -- Filter for startDate dates between two values if ssdi.startDate is defined
         AND (
           start_date_filter IS NULL
@@ -658,7 +759,7 @@ BEGIN
         AND (
           reason_filter IS NULL
           OR (
-          (a."reason"::string[] && ARRAY(
+          (a."reason"::TEXT[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(reason_filter, '[]')::json)
           )) != reason_not_filter
@@ -668,7 +769,7 @@ BEGIN
         AND (
           target_populations_filter IS NULL
           OR (
-          (a."targetPopulations"::string[] && ARRAY(
+          (a."targetPopulations"::TEXT[] && ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(target_populations_filter, '[]')::json)
           )) != target_populations_not_filter
@@ -679,11 +780,11 @@ BEGIN
           tta_type_filter IS NULL
           OR (
           (
-            a."ttaType"::string[] @> ARRAY(
+            a."ttaType"::TEXT[] @> ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
-            AND a."ttaType"::string[] <@ ARRAY(
+            AND a."ttaType"::TEXT[] <@ ARRAY(
             SELECT value::text
             FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
             )
@@ -1083,15 +1184,23 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  activity_widget AS (
+    SELECT
+      COUNT(DISTINCT a.id) fitered_reports
+    FROM "ActivityReports" a
+    JOIN filtered_activity_reports far
+    ON a.id = far.id
+    WHERE a."calculatedStatus" = 'approved'
+  ),
   delivery_method_graph_values AS (
     SELECT
       DATE_TRUNC('month', "startDate")::DATE::TEXT AS month,
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) AS in_person_count,
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) AS virtual_count,
       COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) AS hybrid_count,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS in_person_percentage,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS virtual_percentage,
-      ((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / COUNT(DISTINCT a.id))::decimal(5,2) AS hybrid_percentage
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('In person', 'in-person', 'In-person')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS in_person_percentage,
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Virtual', 'virtual')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS virtual_percentage,
+      (COALESCE((COUNT(DISTINCT a.id) FILTER (WHERE a."deliveryMethod" IN ('Hybrid', 'hybrid')) * 100.0) / NULLIF(COUNT(DISTINCT a.id),0),0))::decimal(5,2) AS hybrid_percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
@@ -1106,9 +1215,9 @@ WITH
       SUM(in_person_count) in_person_count,
       SUM(virtual_count) virtual_count,
       SUM(hybrid_count) hybrid_count,
-      ((SUM(in_person_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS in_person_percentage,
-      ((SUM(virtual_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS virtual_percentage,
-      ((SUM(hybrid_count) * 100.0) / SUM(in_person_count + virtual_count + hybrid_count))::decimal(5,2) AS hybrid_percentage
+      (COALESCE((SUM(in_person_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS in_person_percentage,
+      (COALESCE((SUM(virtual_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS virtual_percentage,
+      (COALESCE((SUM(hybrid_count) * 100.0) / NULLIF(SUM(in_person_count + virtual_count + hybrid_count),0),0))::decimal(5,2) AS hybrid_percentage
     FROM delivery_method_graph_values
   ),
   delivery_method_graph AS (
@@ -1122,7 +1231,7 @@ WITH
     SELECT
       COALESCE(r.name, a."creatorRole"::text) AS role_name,
       COUNT(*) AS role_count,
-      ((COUNT(*) * 100.0) / SUM(COUNT(*)) OVER ())::decimal(5,2) AS percentage
+      (COALESCE((COUNT(*) * 100.0) / NULLIF(SUM(COUNT(*)) OVER (), 0), 0))::decimal(5,2) AS percentage
     FROM "ActivityReports" a
     JOIN filtered_activity_reports far
     ON a.id = far.id
@@ -1134,6 +1243,14 @@ WITH
     ORDER BY 1 DESC
   ),
   datasets AS (
+    SELECT
+    'activity_widget' data_set,
+    COUNT(*) records,
+    JSONB_AGG(JSONB_BUILD_OBJECT(
+      'fitered_reports', fitered_reports
+    )) data
+    FROM activity_widget
+    UNION
     SELECT
     'delivery_method_graph' data_set,
     COUNT(*) records,
