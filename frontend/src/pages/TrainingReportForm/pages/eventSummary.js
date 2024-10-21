@@ -181,17 +181,40 @@ const EventSummary = ({
                 Event creator
                 <Req />
               </Label>
-              <Dropdown required id="ownerId" name="ownerId" inputRef={register({ required: 'Select an event creator' })}>
-                {(creators || []).map((creator) => (
-                  <option
-                    key={creator.id}
-                    value={creator.id}
-                    selected={String(creator.id) === ownerId}
-                  >
-                    {creator.nameWithNationalCenters}
-                  </option>
-                ))}
-              </Dropdown>
+              <Controller
+                render={({ onChange: controllerOnChange, value: id, onBlur }) => (
+                  <Select
+                    value={(creators || []).find((option) => option.id === id)}
+                    inputId="ownerId"
+                    name="ownerId"
+                    className="usa-select"
+                    styles={selectOptionsReset}
+                    components={{
+                      DropdownIndicator: null,
+                    }}
+                    onChange={(s) => {
+                      controllerOnChange(s.id);
+                    }}
+                    inputRef={register({ required: 'Select an event creator' })}
+                    options={creators || []}
+                    getOptionLabel={(option) => option.nameWithNationalCenters}
+                    getOptionValue={(option) => option.id}
+                    onBlur={onBlur}
+                    required
+                  />
+                )}
+                control={control}
+                rules={{
+                  validate: (value) => {
+                    if (!value || value.length === 0) {
+                      return 'Select an event organizer';
+                    }
+                    return true;
+                  },
+                }}
+                name="ownerId"
+                defaultValue=""
+              />
             </div>
 
             <div className="margin-top-2">
@@ -239,7 +262,7 @@ const EventSummary = ({
             required
           >
             <Controller
-              render={({ onChange: controllerOnChange, value }) => (
+              render={({ onChange: controllerOnChange, value, onBlur }) => (
                 <Select
                   isMulti
                   value={collaborators.filter((collaborator) => (
@@ -255,6 +278,7 @@ const EventSummary = ({
                   onChange={(s) => {
                     controllerOnChange(s.map((option) => option.id));
                   }}
+                  onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
                   getOptionLabel={(option) => option.nameWithNationalCenters}
                   getOptionValue={(option) => option.id}
@@ -285,7 +309,7 @@ const EventSummary = ({
                 <Req />
               </Label>
               <Controller
-                render={({ onChange: controllerOnChange, value }) => (
+                render={({ onChange: controllerOnChange, value, onBlur }) => (
                   <Select
                     value={pointOfContact.filter((option) => (
                       value.includes(option.id)
@@ -304,6 +328,7 @@ const EventSummary = ({
                     getOptionLabel={(option) => option.fullName}
                     getOptionValue={(option) => option.id}
                     options={pointOfContact}
+                    onBlur={onBlur}
                     required
                     isMulti
                   />

@@ -137,9 +137,9 @@ export default function GoalNudge({
       <div className={`desktop:display-flex ${buttonGroupFlex} margin-top-1 smart-hub-maxw-form-field`}>
         { (showOhsInitiativeGoalCheckbox) && (
         <Checkbox
-          id="use-ohs-initiative-goal"
-          name="use-ohs-initiative-goal"
-          label="Use OHS initiative goal"
+          id="use-ohs-standard-goal"
+          name="use-ohs-standard-goal"
+          label="Use OHS standard goal"
           className={`position-relative ${checkboxZed}`}
           onChange={() => setUseOhsInitiativeGoal(!useOhsInitiativeGoal)}
           checked={useOhsInitiativeGoal}

@@ -126,6 +126,12 @@ describe('eventSummary', () => {
       userEvent.type(startDate, '01/03/2021');
 
       await selectEvent.select(screen.getByLabelText(/Event region point of contact/i), 'Ted User');
+      await selectEvent.select(screen.getByLabelText(/Event collaborators/i), []);
+      userEvent.tab();
+
+      // confirm the blur event fires and the validation message is present
+      expect(await screen.findByText('Select at least one collaborator')).toBeInTheDocument();
+
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
       await selectEvent.select(screen.getByLabelText(/target populations/i), ['Pregnant Women / Pregnant Persons']);
       await selectEvent.select(screen.getByLabelText(/reasons/i), ['Complaint']);
