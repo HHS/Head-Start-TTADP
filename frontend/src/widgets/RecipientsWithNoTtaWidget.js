@@ -54,7 +54,7 @@ function RecipientsWithNoTtaWidget({
       // Set local data.
       setLocalLoading(true);
       setAllRecipientData(pageData ? pageData.RecipientsWithNoTta : []); // TODO: Put this back.
-      setRecipientCount(widgetData ? widgetData['recipients without tta'] : 0);
+      setRecipientCount(pageData ? pageData.RecipientsWithNoTta.length : 0);
     } finally {
       setLocalLoading(false);
     }
