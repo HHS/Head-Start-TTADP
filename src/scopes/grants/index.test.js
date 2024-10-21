@@ -792,7 +792,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -804,7 +804,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -816,7 +816,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -828,7 +828,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -840,7 +840,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(1);
@@ -852,7 +852,7 @@ describe('grant filtersToScopes', () => {
       const scope = await filtersToScopes(filters);
       const found = await Grant.findAll({
         where: {
-          [Op.and]: [scope.grant, { id: grantIds }],
+          [Op.and]: [scope.grant.where, { id: grantIds }],
         },
       });
       expect(found.length).toBe(2);
