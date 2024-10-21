@@ -9,6 +9,8 @@ import {
   Grid,
   Alert,
 } from '@trussworks/react-uswds';
+import moment from 'moment';
+import { v4 as uuidv4 } from 'uuid';
 import QAOverview from '../../widgets/QualityAssuranceDashboardOverview';
 import DeliveryMethod from '../../widgets/DeliveryMethodGraph';
 import useFilters from '../../hooks/useFilters';
@@ -23,14 +25,23 @@ import PercentageActivityReportByRole from '../../widgets/PercentageActivityRepo
 import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
 import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
 import Loader from '../../components/Loader';
+import { formatDateRange } from '../../utils';
 
 const DISALLOWED_FILTERS = [
   'domainClassroomOrganization',
   'domainEmotionalSupport',
   'domainInstructionalSupport',
 ];
+
 const ALLOWED_SUBFILTERS = QA_DASHBOARD_FILTER_CONFIG.map(({ id }) => id)
   .filter((id) => !DISALLOWED_FILTERS.includes(id));
+
+const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
+const defaultDate = formatDateRange({
+  forDateTime: true,
+  string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
+  withSpaces: false,
+});
 
 export default function QADashboard() {
   const { user } = useContext(UserContext);
@@ -38,6 +49,22 @@ export default function QADashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, updateError] = useState();
   const [qaData, setQaData] = useState({});
+
+  const additionalDefaultFilters = [
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    },
+    {
+      id: uuidv4(),
+      topic: 'createDate',
+      condition: 'is within',
+      query: defaultDate,
+    },
+  ];
+
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -51,7 +78,7 @@ export default function QADashboard() {
     user,
     QA_DASHBOARD_FILTER_KEY,
     true,
-    [],
+    additionalDefaultFilters,
     QA_DASHBOARD_FILTER_CONFIG,
   );
 

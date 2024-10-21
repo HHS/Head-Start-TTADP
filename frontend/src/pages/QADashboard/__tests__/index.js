@@ -30,11 +30,17 @@ const defaultUser = {
   }],
 };
 
+// get a string with todays date in the format '2024%2F10%2F21'
+const today = new Date().toISOString().split('T')[0].replace(/-/g, '%2F');
+
+// get a string with today minus 12 months in the format '2023%2F10%2%2F21'
+const todayMinus12Months = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0].replace(/-/g, '%2F');
+
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
-const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget`;
-const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
+const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=no_tta_widget`;
+const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
 const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
-const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_class_widget`;
+const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=with_class_widget`;
 
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
@@ -255,13 +261,18 @@ describe('Resource Dashboard page', () => {
     // Header
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
-    const filters = await screen.findByRole('button', { name: 'open filters for this page' });
+    const filters = await screen.findByRole('button', { name: /open filters for this page , 2 currently applied/i });
 
     act(() => {
       userEvent.click(filters);
     });
 
-    const select = await screen.findByLabelText(/select a filter/i);
+    // click the button 'Add new filter'.
+    const addFilter = await screen.findByRole('button', { name: /add new filter/i });
+    act(() => {
+      userEvent.click(addFilter);
+    });
+    const select = screen.queryAllByLabelText(/select a filter/i)[2];
 
     // expect select not to have "region" as an option
     const option = select.querySelector('option[value="region"]');
