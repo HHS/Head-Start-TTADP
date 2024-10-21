@@ -48,6 +48,7 @@ export default (sequelize, DataTypes) => {
     timestamps: false, // Disable timestamps since this is a materialized view
     freezeTableName: true, // Ensures Sequelize uses the exact table name provided
     modelName: 'GrantRelationshipToActive',
+    isView: true,
   });
 
   // Override to prevent modifications

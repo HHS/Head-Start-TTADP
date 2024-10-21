@@ -87,7 +87,7 @@ fs
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
-        if (model.name !== 'RequestErrors') {
+        if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }

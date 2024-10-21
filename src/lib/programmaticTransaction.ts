@@ -202,7 +202,9 @@ const hasModifiedData = async (snapShot, transactionId) => {
   }
 
   const zalTables = Object.keys(db)
-  // Filter the keys of the `db` object for tables that start with 'ZAL'
+    // Filter out any views
+    .filter((key) => !db[key]?.isView)
+    // Filter the keys of the `db` object for tables that start with 'ZAL'
     .filter((key) => key.startsWith('ZAL'))
     // Endpoints Descriptor Are allowed to be added to the audit log
     .filter((key) => key !== 'ZALZADescriptor')
