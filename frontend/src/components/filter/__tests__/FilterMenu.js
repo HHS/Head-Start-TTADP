@@ -25,6 +25,9 @@ import {
   reportTextFilter,
   endDateFilter,
   activityReportGoalResponseFilter,
+  domainClassroomOrganizationFilter,
+  domainEmotionalSupportFilter,
+  domainInstructionalSupportFilter,
 } from '../activityReportFilters';
 import {
   createDateFilter,
@@ -620,7 +623,6 @@ describe('Filter Menu', () => {
 
     // it renders an option for each config passed in (plus a dummy option)
     expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
-    expect(true).toBe(true);
   });
 
   it('display correct filter count', () => {
@@ -632,5 +634,38 @@ describe('Filter Menu', () => {
     ];
     renderFilterMenu(filters);
     expect(screen.getByText(/filters \(4\)/i)).toBeVisible();
+  });
+
+  it('renders domain result filters', async () => {
+    const config = [
+      domainEmotionalSupportFilter,
+      domainClassroomOrganizationFilter,
+      domainInstructionalSupportFilter,
+    ];
+
+    const filters = [];
+    const onApply = jest.fn();
+    renderFilterMenu(filters, onApply, config);
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
+    userEvent.selectOptions(topics, 'Domain: Emotional support');
+    let [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Domain: Classroom organization');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    userEvent.selectOptions(topics, 'Domain: Instructional support');
+    [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
+    userEvent.selectOptions(conditions, 'is');
+
+    // it renders an option for each config passed in (plus a dummy option)
+    expect(topics.querySelectorAll('option:not([disabled])').length).toBe(config.length);
   });
 });

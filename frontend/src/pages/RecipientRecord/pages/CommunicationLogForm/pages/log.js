@@ -18,6 +18,7 @@ import {
 } from '../constants';
 import ReadOnlyField from '../../../../../components/ReadOnlyField';
 import UserContext from '../../../../../UserContext';
+import { mustBeQuarterHalfOrWhole } from '../../../../../Constants';
 
 const fields = Object.keys(defaultLogValues);
 
@@ -82,12 +83,7 @@ const Log = ({ datePickerKey }) => {
                   required: 'Enter duration',
                   valueAsNumber: true,
                   validate: {
-                    mustBeQuarterHalfOrWhole: (value) => {
-                      if (value % 0.25 !== 0) {
-                        return 'Duration must be rounded to the nearest quarter hour';
-                      }
-                      return true;
-                    },
+                    mustBeQuarterHalfOrWhole,
                   },
                   min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
                   max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
@@ -172,14 +168,12 @@ Log.propTypes = {
 const path = 'log';
 const position = 1;
 
-const ReviewSection = () => <><h2>Event summary</h2></>;
 export const isPageComplete = (hookForm) => pageComplete(hookForm, fields);
 
 export default {
   position,
   label: 'Communication log',
   path,
-  reviewSection: () => <ReviewSection />,
   review: false,
   fields,
   render: (
