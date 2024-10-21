@@ -109,6 +109,19 @@ JSON: {
         ]
       },
       {
+        "name": "activity_widget",
+        "defaultName": "Activity Widgeth",
+        "description": "Number of activity reports matching filters",
+        "schema": [
+          {
+            "columnName": "fitered_reports",
+            "type": "number",
+            "nullable": false,
+            "description": "The number of reports that match the filters."
+          }
+        ]
+      },
+      {
         "name": "process_log",
         "defaultName": "Process Log",
         "description": "Log of actions and record counts from query processing.",
@@ -240,6 +253,57 @@ JSON: {
       "type": "string[]",
       "display": "Report Ids",
       "description": "Filter based on the report ids.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "targetPopulations",
+      "type": "string[]",
+      "display": "Target populations",
+      "description": "Filter based on the selected target populations.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "topic",
+      "type": "string[]",
+      "display": "Topics",
+      "description": "Filter based on the selected topics.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "ttaType",
+      "type": "string[]",
+      "display": "TTA type",
+      "description": "Filter based on the selected TTA type.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reportText",
+      "type": "string[]",
+      "display": "Report text",
+      "description": "Filter based on any of the free-form text fields on a report.",
+      "supportsExclusion": true,
+      "supportsFuzzyMatch": true
+    },
+    {
+      "name": "roles",
+      "type": "string[]",
+      "display": "Specialist roles",
+      "description": "Filter based on the selected Specialist roles.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "reason",
+      "type": "string[]",
+      "display": "Reasons",
+      "description": "Filter based on the selected reasons.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "goalName",
+      "type": "string[]",
+      "display": "Goal Text",
+      "description": "Filter based on the text of the goal.",
       "supportsExclusion": true,
       "supportsFuzzyMatch": true
     }
@@ -1120,6 +1184,14 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  activity_widget AS (
+    SELECT
+      COUNT(DISTINCT a.id) fitered_reports
+    FROM "ActivityReports" a
+    JOIN filtered_activity_reports far
+    ON a.id = far.id
+    WHERE a."calculatedStatus" = 'approved'
+  ),
   delivery_method_graph_values AS (
     SELECT
       DATE_TRUNC('month', "startDate")::DATE::TEXT AS month,
@@ -1171,6 +1243,14 @@ WITH
     ORDER BY 1 DESC
   ),
   datasets AS (
+    SELECT
+    'activity_widget' data_set,
+    COUNT(*) records,
+    JSONB_AGG(JSONB_BUILD_OBJECT(
+      'fitered_reports', fitered_reports
+    )) data
+    FROM activity_widget
+    UNION
     SELECT
     'delivery_method_graph' data_set,
     COUNT(*) records,

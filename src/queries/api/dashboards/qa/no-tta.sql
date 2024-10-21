@@ -470,7 +470,7 @@ no_tta_page AS (
       r.id,
       r.name,
       gr."regionId",
-      (array_agg(a."endDate" ORDER BY a."endDate" DESC))[1] last_tta,
+      ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::timestamp last_tta,
       now()::date - ((array_agg(a."endDate" ORDER BY a."endDate" DESC))[1])::date days_since_last_tta
     FROM no_tta nt
     JOIN "Recipients" r ON nt.id = r.id

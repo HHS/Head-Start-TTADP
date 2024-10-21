@@ -722,9 +722,9 @@ WITH
   with_class AS (
     SELECT
       r.id,
-      COUNT(DISTINCT g.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
+      COUNT(DISTINCT fg.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) > 0 has_class,
       COUNT(DISTINCT mcs.id) > 0 has_scores,
-      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172) grant_count
+      COUNT(DISTINCT gr.id) FILTER (WHERE COALESCE(g."goalTemplateId",0) = 18172 AND fg.id IS NOT NULL) grant_count
     FROM "Recipients" r
     JOIN "Grants" gr
     ON r.id = gr."recipientId"
@@ -732,6 +732,8 @@ WITH
     ON gr.id = fgr.id
     LEFT JOIN "Goals" g
     ON gr.id = g."grantId"
+    LEFT JOIN filtered_goals fg
+    ON g.id = fg.id
     LEFT JOIN "MonitoringReviewGrantees" mrg
     ON gr.number = mrg."grantNumber"
     LEFT JOIN "MonitoringReviews" mr
@@ -761,16 +763,16 @@ WITH
         r.name "recipientName",
         gr.number "grantNumber",
         gr."regionId",
-        (ARRAY_AGG(g.id ORDER BY g.id DESC))[1] "goalId",
-        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC))[1] "goalCreatedAt",
-        (ARRAY_AGG(g.status ORDER BY g.id DESC))[1] "goalStatus",
-        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC))[1] "lastARStartDate",
-        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "emotionalSupport",
-        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "classroomOrganization",
-        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "instructionalSupport",
-        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL))[1] "reportDeliveryDate",
-        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator'))[1] "creator",
-        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator')) "collaborators"
+        (ARRAY_AGG(g.id ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalId",
+        (ARRAY_AGG(g."createdAt" ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalCreatedAt",
+        (ARRAY_AGG(g.status ORDER BY g.id DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "goalStatus",
+        (ARRAY_AGG(a."startDate" ORDER BY a."startDate" DESC) FILTER (WHERE fg.id IS NOT NULL))[1] "lastARStartDate",
+        (ARRAY_AGG(mcs."emotionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "emotionalSupport",
+        (ARRAY_AGG(mcs."classroomOrganization" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "classroomOrganization",
+        (ARRAY_AGG(mcs."instructionalSupport" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "instructionalSupport",
+        (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "reportDeliveryDate",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator' AND fg.id IS NOT NULL))[1] "creator",
+        (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
     FROM with_class wc
     JOIN "Recipients" r
     ON wc.id = r.id
@@ -783,6 +785,8 @@ WITH
     ON gr.id = g."grantId"
     AND has_class
     AND g."goalTemplateId" = 18172
+    LEFT JOIN filtered_goals fg
+    ON g.id = fg.id
     LEFT JOIN "GoalCollaborators" gc
     ON g.id = gc."goalId"
     LEFT JOIN "CollaboratorTypes" ct
