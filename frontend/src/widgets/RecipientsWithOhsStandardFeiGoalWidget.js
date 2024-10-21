@@ -61,7 +61,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
       setLocalLoading(true);
       const recipientToUse = pageData ? pageData.RecipientsWithOhsStandardFeiGoal : [];
       setRecipientDataToUse(recipientToUse);
-      setRecipientCount(widgetData ? widgetData['recipients with fei'] : 0);
+      setRecipientCount(recipientToUse.length);
     } finally {
       setLocalLoading(false);
     }
