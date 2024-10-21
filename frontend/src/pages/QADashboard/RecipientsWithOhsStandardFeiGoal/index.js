@@ -82,7 +82,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
           const { rootCause } = item;
 
           return {
-            id: recipientId,
+            id: `${recipientId}-${goalId}`,
             heading: recipientName,
             name: recipientName,
             isUrl: true,
