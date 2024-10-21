@@ -29,6 +29,7 @@ export default function PercentageActivityReportByRole({ data }) {
   const capture = useMediaCapture(widgetRef, 'Percentage of activity reports by role');
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
+  const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
 
   // we have to store this is in state, despite
   // it being a prop, because of other dependencies
@@ -83,6 +84,7 @@ export default function PercentageActivityReportByRole({ data }) {
       records,
       totalNumberOfReports,
       totalPercentage,
+      filteredReports,
     } = data;
 
     const tableData = [];
@@ -112,6 +114,7 @@ export default function PercentageActivityReportByRole({ data }) {
       });
     });
 
+    setDisplayFilteredReports(filteredReports);
     setTrace(traceData);
     setTabularData(tableData);
     setTotals({
@@ -136,7 +139,7 @@ export default function PercentageActivityReportByRole({ data }) {
         loading={false}
         title="Percentage of activity reports by role"
         subtitle="Activity report by specialist role"
-        subtitle2="11,510 Activity reports"
+        subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
         menuItems={menuItems}
       >
         {showTabularData ? (
@@ -178,6 +181,7 @@ PercentageActivityReportByRole.propTypes = {
   data: PropTypes.shape({
     totalNumberOfReports: PropTypes.number,
     totalPercentage: PropTypes.number,
+    filteredReports: PropTypes.number,
     records: PropTypes.arrayOf(PropTypes.shape({
       role_name: PropTypes.string,
       role_count: PropTypes.number,

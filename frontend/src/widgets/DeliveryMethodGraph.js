@@ -39,6 +39,7 @@ export default function DeliveryMethodGraph({ data }) {
   const capture = useMediaCapture(widgetRef, 'Total TTA hours');
   const [showTabularData, setShowTabularData] = useState(false);
   const [checkboxes, setCheckboxes] = useState({});
+  const [displayFilteredReports, setDisplayFilteredReports] = useState(0);
 
   // we have to store this is in state, despite
   // it being a prop, because of other dependencies
@@ -99,7 +100,7 @@ export default function DeliveryMethodGraph({ data }) {
     // (an object for each trace)
     // and the table (an array of objects in the format defined by proptypes)
 
-    const { records: unfilteredRecords } = data;
+    const { records: unfilteredRecords, filteredReports } = data;
     const total = [...unfilteredRecords].pop();
     const records = unfilteredRecords.filter((record) => record.month !== 'Total');
 
@@ -175,6 +176,7 @@ export default function DeliveryMethodGraph({ data }) {
     });
 
     setTraces(Array.from(traceMap.values()));
+    setDisplayFilteredReports(filteredReports);
     setTabularData(tableData);
     setTotals({
       totalInPerson: totalInPerson ? totalInPerson.toLocaleString('en-us') : 0,
@@ -239,7 +241,7 @@ export default function DeliveryMethodGraph({ data }) {
       loading={false}
       title="Delivery method"
       subtitle="How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity Reports"
-      subtitle2="11,510 Activity reports"
+      subtitle2={`${displayFilteredReports.toLocaleString('en-us')} Activity reports`}
       menuItems={menuItems}
     >
       <LineGraph
@@ -273,6 +275,7 @@ DeliveryMethodGraph.propTypes = {
     average_virtual_percentage: PropTypes.number,
     total_hybrid_count: PropTypes.number,
     average_hybrid_percentage: PropTypes.number,
+    filteredReports: PropTypes.number,
     records: PropTypes.arrayOf(
       PropTypes.shape({
         month: PropTypes.string,

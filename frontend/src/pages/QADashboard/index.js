@@ -114,13 +114,16 @@ export default function QADashboard() {
         const dashboardData = await getSelfServiceData(
           'qa-dashboard',
           filters,
-          ['delivery_method_graph', 'role_graph'],
+          ['delivery_method_graph', 'role_graph', 'activity_widget'],
         );
 
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
         const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
+        const activityWidgetData = dashboardData.find((item) => item.data_set === 'activity_widget');
+        const filteredReports = activityWidgetData.data[0].fitered_reports;
 
         const deliveryMethod = {
+          filteredReports,
           records: deliveryMethodData.data,
           totalInPerson: 0,
           averageInPersonPercentage: 0,
@@ -131,6 +134,7 @@ export default function QADashboard() {
         };
 
         const roleGraph = {
+          filteredReports,
           records: roleGraphData.data,
         };
 

@@ -33,7 +33,7 @@ const defaultUser = {
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
 const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=no_tta_widget`;
 const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
-const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph`;
+const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
 const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=with_class_widget`;
 
 const RECIPIENTS_WITH_NO_TTA_DATA = [
@@ -120,6 +120,15 @@ const DASHBOARD_DATA = [
         hybrid_percentage: 2.2,
         virtual_percentage: 61.84,
         in_person_percentage: 35.96,
+      },
+    ],
+  },
+  {
+    data_set: 'activity_widget',
+    records: '1',
+    data: [
+      {
+        fitered_reports: 38462,
       },
     ],
   },

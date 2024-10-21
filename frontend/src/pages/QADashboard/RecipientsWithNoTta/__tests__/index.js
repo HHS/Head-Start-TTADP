@@ -115,8 +115,8 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         expect(screen.getByText(/date of last tta/i)).toBeInTheDocument();
         expect(screen.getByText(/days since last tta/i)).toBeInTheDocument();
 
-        expect(screen.getByText(/2021-09-01/i)).toBeInTheDocument();
-        expect(screen.getByText(/2021-09-02/i)).toBeInTheDocument();
+        expect(screen.getByText('09/01/2021')).toBeInTheDocument();
+        expect(screen.getByText('09/02/2021')).toBeInTheDocument();
 
         expect(screen.getByRole('cell', { name: /90/i })).toBeInTheDocument();
         expect(screen.getByRole('cell', { name: /91/i })).toBeInTheDocument();
