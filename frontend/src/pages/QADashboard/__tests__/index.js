@@ -290,7 +290,7 @@ describe('Resource Dashboard page', () => {
           {
             total: 1460,
             'recipients without tta': 941,
-            '% recipients without tta': 64.45,
+            '% recipients without tta': null,
           },
         ],
       },
@@ -345,7 +345,7 @@ describe('Resource Dashboard page', () => {
             total: 1550,
             'grants with fei': 1042,
             'recipients with fei': 858,
-            '% recipients with fei': 55.35,
+            '% recipients with fei': null,
           },
         ],
         active_filters: [
@@ -364,7 +364,7 @@ describe('Resource Dashboard page', () => {
             total: 1550,
             'grants with class': 327,
             'recipients with class': 267,
-            '% recipients with class': 17.23,
+            '% recipients with class': null,
           },
         ],
         active_filters: [
