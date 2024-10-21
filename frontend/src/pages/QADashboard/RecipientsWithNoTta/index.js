@@ -4,6 +4,7 @@ import React, {
   useRef,
 } from 'react';
 import { Link } from 'react-router-dom';
+import moment from 'moment';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
@@ -85,7 +86,7 @@ export default function RecipientsWithNoTta() {
             data: [
               {
                 title: 'Date_of_Last_TTA',
-                value: dateOfLastTta,
+                value: dateOfLastTta ? moment(dateOfLastTta).format('MM/DD/YYYY') : null,
               },
               {
                 title: 'Days_Since_Last_TTA',
