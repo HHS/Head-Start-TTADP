@@ -87,6 +87,8 @@ fs
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
+        // GrantRelationshipToActive is exluded here because it is a materialized view,
+        // so we don't want a ZAL created for it.
         if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
