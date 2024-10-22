@@ -31,6 +31,22 @@ const ALLOWED_SUBFILTERS = [
   'recipient',
   'stateCode',
 ];
+
+const mapGoalStatusKey = (status) => {
+  switch (status) {
+    case 'Not Started':
+      return 4;
+    case 'In Progress':
+      return 3;
+    case 'Suspended':
+      return 2;
+    case 'Closed':
+      return 1;
+    default:
+      return 0;
+  }
+};
+
 export default function RecipientsWithOhsStandardFeiGoal() {
   const pageDrawerRef = useRef(null);
   const [error, updateError] = useState();
@@ -87,6 +103,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
             name: recipientName,
             isUrl: true,
             hideLinkIcon: true,
+            sortKey: mapGoalStatusKey(goalStatus),
             link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
             data: [
               {
@@ -108,6 +125,11 @@ export default function RecipientsWithOhsStandardFeiGoal() {
             ],
           };
         });
+
+        // Sort formattedRecipientPageData SortKey desc.
+        formattedRecipientPageData = formattedRecipientPageData.sort(
+          (a, b) => b.sortKey - a.sortKey,
+        );
 
         // Add headers.
         formattedRecipientPageData = {
