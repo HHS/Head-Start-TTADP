@@ -3,6 +3,7 @@ import fetchMock from 'fetch-mock';
 import {
   render, screen, act,
 } from '@testing-library/react';
+import { useForm, FormProvider } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import GoalNudgeText from '../GoalNudgeText';
 
@@ -11,28 +12,44 @@ describe('GoalNudgeText', () => {
     fetchMock.restore();
   });
 
-  const renderTest = (props) => {
-    const defaultProps = {
-      error: <></>,
-      inputName: 'test',
-      isLoading: false,
-      goalName: '',
-      onChange: jest.fn(),
-      onSelectNudgedGoal: jest.fn(),
-      setDismissSimilar: jest.fn(),
-      similar: [],
-      useOhsInitiativeGoal: false,
-      validateGoalName: jest.fn(),
-    };
+  const defaultProps = {
+    setDismissSimilar: jest.fn(),
+    similar: [],
+    useOhsInitiativeGoal: false,
+  };
 
-    render(
-      <>
+  const Test = (props) => {
+    const hookForm = useForm({
+      mode: 'onBlur',
+      defaultValues: {
+        similarGoals: null, // the IDS of a goal from the similarity API
+        goalIds: [], // the goal ids that the user has selected
+        selectedGrants: [], // the grants that the user has selected
+        goalName: '', // the goal name in the textbox
+        goalStatus: '', // the status of the goal, only tracked to display in alerts
+        goalSource: '', // only used for curated templates
+        goalStatusReason: '',
+        useOhsInitiativeGoal: false, // the checkbox to toggle the controls
+        isGoalNameEditable: true,
+      },
+      shouldUnregister: false,
+    });
+    return (
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <FormProvider {...hookForm}>
         <GoalNudgeText
-                // eslint-disable-next-line react/jsx-props-no-spreading
+          // eslint-disable-next-line react/jsx-props-no-spreading
           {...{ ...defaultProps, ...props }}
         />
         <input type="text" id="tab-stop" />
-      </>,
+      </FormProvider>
+    );
+  };
+
+  const renderTest = (props) => {
+    render(
+      // eslint-disable-next-line react/jsx-props-no-spreading
+      <Test {...props} />,
     );
   };
 
@@ -46,31 +63,9 @@ describe('GoalNudgeText', () => {
     expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
   });
 
-  it('calls the passed in handlers on change', async () => {
-    const onChange = jest.fn();
-    renderTest({
-      onChange,
-    });
-    expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
-
-    const input = screen.getByLabelText(/Recipient's goal/);
-    await act(async () => {
-      userEvent.type(input, 'test');
-    });
-    expect(onChange).toHaveBeenCalled();
-  });
-
-  /**
-   *   name: PropTypes.string,
-  status: PropTypes.string,
-  ids: PropTypes.arrayOf(PropTypes.number),
-   */
-
   it('calls the passed in handlers on blur', async () => {
-    const validateGoalName = jest.fn();
     const setDismissSimilar = jest.fn();
     renderTest({
-      validateGoalName,
       setDismissSimilar,
       similar: [
         {
@@ -87,15 +82,12 @@ describe('GoalNudgeText', () => {
       userEvent.type(input, 'test');
       userEvent.tab();
     });
-    expect(validateGoalName).toHaveBeenCalled();
     expect(setDismissSimilar).toHaveBeenCalled();
   });
 
   it('does not dismiss suggestions if there are not any', async () => {
-    const validateGoalName = jest.fn();
     const setDismissSimilar = jest.fn();
     renderTest({
-      validateGoalName,
       setDismissSimilar,
     });
     expect(await screen.findByText(/Recipient's goal/)).toBeInTheDocument();
@@ -105,7 +97,6 @@ describe('GoalNudgeText', () => {
       userEvent.type(input, 'test');
       userEvent.tab();
     });
-    expect(validateGoalName).toHaveBeenCalled();
     expect(setDismissSimilar).not.toHaveBeenCalled();
   });
 });

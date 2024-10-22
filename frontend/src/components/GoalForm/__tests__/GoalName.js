@@ -6,7 +6,6 @@ import GoalName from '../GoalName';
 const defaultProps = {
   userCanEdit: true,
   isCurated: false,
-  isNew: true,
   status: 'In Progress',
   isOnReport: false,
 };
@@ -16,7 +15,6 @@ describe('GoalName', () => {
     const {
       userCanEdit,
       isCurated,
-      isNew,
       status,
       isOnReport,
     } = {
@@ -37,26 +35,13 @@ describe('GoalName', () => {
         onSelectNudgedGoal={jest.fn()}
         status={status}
         isOnReport={isOnReport}
-        isNew={isNew}
         userCanEdit={userCanEdit}
         isCurated={isCurated}
       />
     ));
   };
 
-  it('shows the contents with nudge', async () => {
-    renderTest();
-    const nudge = document.querySelector('.ttahub-goal-nudge--container');
-    expect(nudge).toBeTruthy();
-
-    const noNudgeText = document.querySelector('.ttahub-automatic-resizing-textarea');
-    expect(noNudgeText).toBeFalsy();
-
-    const readOnlyLabel = document.querySelector('.usa-prose.text-bold');
-    expect(readOnlyLabel).toBeFalsy();
-  });
-
-  it('shows the contents without nudge', async () => {
+  it('renders the contents', async () => {
     renderTest({ isNew: false });
     const nudge = document.querySelector('.ttahub-goal-nudge--container');
     expect(nudge).toBeFalsy();

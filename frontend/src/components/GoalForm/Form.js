@@ -21,12 +21,11 @@ import RTRGoalSource from './RTRGoalSource';
 import FormFieldThatIsSometimesReadOnly from './FormFieldThatIsSometimesReadOnly';
 import RTRGoalPrompts from './RTRGoalPrompts';
 import ReadOnlyGoalCollaborators from '../ReadOnlyGoalCollaborators';
-import GoalFormTitle from './GoalFormTitle';
+import GoalFormTitleGroup from '../SharedGoalComponents/GoalFormTitleGroup';
 
 export const BEFORE_OBJECTIVES_CREATE_GOAL = 'Enter a goal before adding an objective';
 export const BEFORE_OBJECTIVES_SELECT_RECIPIENTS = 'Select a grant number before adding an objective';
 export default function Form({
-  onSelectNudgedGoal,
   possibleGrants,
   validatePrompts,
   selectedGrants,
@@ -48,7 +47,6 @@ export default function Form({
   isOnApprovedReport,
   isOnReport,
   isCurated,
-  isNew,
   status,
   datePickerKey,
   fetchError,
@@ -59,8 +57,6 @@ export default function Form({
   setSource,
   validateGoalSource,
   collaborators,
-  recipient,
-  regionId,
   goalTemplateId,
   isReopenedGoal,
 }) {
@@ -104,21 +100,11 @@ export default function Form({
   return (
     <div className="ttahub-create-goals-form">
       { fetchError ? <Alert type="error" role="alert">{ fetchError }</Alert> : null}
-      <div className="display-flex flex-align-center margin-top-2 margin-bottom-1">
-        <GoalFormTitle
-          goalNumbers={goalNumbers}
-          isReopenedGoal={isReopenedGoal}
-        />
-        { status.toLowerCase() === 'draft'
-        && (
-          <span className="usa-tag smart-hub--table-tag-status smart-hub--status-draft padding-x-105 padding-y-1 margin-left-2">Draft</span>
-        )}
-      </div>
-      <div>
-        <span className="smart-hub--form-required font-family-sans font-ui-xs">*</span>
-        {' '}
-        indicates required field
-      </div>
+      <GoalFormTitleGroup
+        goalNumbers={goalNumbers}
+        status={status}
+        isReopenedGoal={isReopenedGoal}
+      />
 
       {
         showAlert ? (
@@ -128,8 +114,6 @@ export default function Form({
         )
           : null
       }
-
-      <h3 className="margin-top-4 margin-bottom-3">Goal summary</h3>
 
       <ReadOnlyGoalCollaborators
         collaborators={collaborators}
@@ -161,13 +145,8 @@ export default function Form({
         setGoalName={setGoalName}
         validateGoalName={validateGoalName}
         isAppLoading={isAppLoading}
-        recipient={recipient}
-        regionId={regionId}
-        selectedGrants={selectedGrants || []}
-        onSelectNudgedGoal={onSelectNudgedGoal}
         status={status}
         isOnReport={isOnReport}
-        isNew={isNew}
         userCanEdit={userCanEdit}
         isCurated={isCurated}
       />
@@ -246,11 +225,6 @@ export default function Form({
 }
 
 Form.propTypes = {
-  onSelectNudgedGoal: PropTypes.func.isRequired,
-  regionId: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]).isRequired,
   isOnReport: PropTypes.bool.isRequired,
   isOnApprovedReport: PropTypes.bool.isRequired,
   isCurated: PropTypes.bool,
@@ -334,7 +308,6 @@ Form.propTypes = {
     goalCreatorName: PropTypes.string,
     goalCreatorRoles: PropTypes.string,
   })).isRequired,
-  isNew: PropTypes.bool.isRequired,
   goalTemplateId: PropTypes.number,
   isReopenedGoal: PropTypes.bool.isRequired,
 };

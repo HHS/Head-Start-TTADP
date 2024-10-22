@@ -1,10 +1,14 @@
-import { Op } from 'sequelize';
 import { uniq } from 'lodash';
 import { GOAL_STATUS } from '../constants';
 import db from '../models';
 import { similarGoalsForRecipient } from '../services/similarity';
 
-const { sequelize, Goal, Grant } = db;
+const {
+  sequelize,
+  Goal,
+  GoalStatusChange,
+  Grant,
+} = db;
 
 interface ISimilarGoal {
   ids: number[];
@@ -14,6 +18,7 @@ interface ISimilarGoal {
   endDate: string;
   source: string;
   isCuratedTemplate?: boolean;
+  reason: string;
 }
 
 interface ISimilarResult {
@@ -80,14 +85,13 @@ export default async function nudge(
       'name',
       'status',
       'goalTemplateId',
+      'source',
       [sequelize.fn('ARRAY_AGG', sequelize.col('Goal.id')), 'ids'],
       [sequelize.literal('FALSE'), 'isCuratedTemplate'],
+      [sequelize.literal('\'\''), 'reason'],
     ],
     where: {
       id: Array.from(goalIds),
-      status: {
-        [Op.not]: GOAL_STATUS.CLOSED, // we are leaving out closed goals for now
-      },
     },
     include: [
       {
@@ -100,6 +104,7 @@ export default async function nudge(
       },
     ],
     group: [
+      '"Goal"."source"',
       '"Goal"."name"',
       '"Goal"."status"',
       '"Goal"."goalTemplateId"',
@@ -108,6 +113,28 @@ export default async function nudge(
     limit: 5 - goalTemplates.length, // limit to 5 goals
     having: sequelize.where(sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('grant.number'))), grantNumbers.length),
   })).map((g: ISimilarGoal & { toJSON: () => ISimilarGoal }) => g.toJSON()) as ISimilarGoal[];
+
+  // const goalsWithReasons = await Promise.all(goals.map(async (goal) => {
+  //   if ([GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED].includes(goal.status)) {
+  //     // get the most recent status change for each goal
+  //     const statusChange = await GoalStatusChange.findOne({
+  //       where: {
+  //         goalId: goal.ids,
+  //         newStatus: goal.status,
+  //       },
+  //       attributes: ['reason', 'goalId'],
+  //       order: [['createdAt', 'DESC']],
+  //       limit: 1,
+  //     });
+
+  //     return {
+  //       ...goal,
+  //       reason: statusChange ? statusChange.reason : '',
+  //     };
+  //   }
+
+  //   return goal;
+  // }));
 
   const templateIds = goals.map((goal) => goal.goalTemplateId);
 
@@ -123,6 +150,7 @@ export default async function nudge(
         isCuratedTemplate: true,
         endDate: '',
         source: template.source,
+        reason: '',
       });
     }
   });
