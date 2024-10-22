@@ -69,11 +69,12 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     }
   }, [pageData, widgetData]);
 
-  const numberOfGrants = widgetData ? widgetData['grants with fei'] : 0;
   const getSubtitleWithPct = () => {
     const totalRecipients = widgetData ? widgetData.total : 0;
     const pct = widgetData ? widgetData['% recipients with fei'] : 0;
-    return `${recipientCount} of ${totalRecipients} (${pct}%) recipients (${numberOfGrants} grants)`;
+    const recipientsWithFei = widgetData ? widgetData['recipients with fei'] : 0;
+    const numberOfGrants = widgetData ? widgetData['grants with fei'] : 0;
+    return `${recipientsWithFei} of ${totalRecipients} (${pct}%) recipients (${numberOfGrants} grants)`;
   };
 
   const menuItems = [

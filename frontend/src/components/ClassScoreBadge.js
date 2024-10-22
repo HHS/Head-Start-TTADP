@@ -21,6 +21,7 @@ const BadgeBelowCompetitive = (fontSize) => (
 );
 
 export function getScoreBadge(key, score, received, size) {
+  if (!score) return null;
   const fontSize = size || 'font-sans-2xs';
   if (key === 'ES' || key === 'CO') {
     if (score >= 6) return BadgeAbove(fontSize);
