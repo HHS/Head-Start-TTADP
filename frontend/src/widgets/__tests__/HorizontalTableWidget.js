@@ -1,10 +1,14 @@
 import '@testing-library/jest-dom';
+import { Router } from 'react-router';
 import React from 'react';
 import userEvent from '@testing-library/user-event';
 import {
   render, screen, waitFor,
 } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import HorizontalTableWidget from '../HorizontalTableWidget';
+
+const history = createMemoryHistory();
 
 const renderHorizontalTableWidget = (
   headers = [],
@@ -17,17 +21,19 @@ const renderHorizontalTableWidget = (
   enableCheckboxes = false,
   showTotalColumn = true,
 ) => render(
-  <HorizontalTableWidget
-    headers={headers}
-    data={data}
-    firstHeading={firstHeading}
-    enableSorting={enableSorting}
-    lastHeading={lastHeading}
-    sortConfig={sortConfig}
-    requestSort={requestSort}
-    enableCheckboxes={enableCheckboxes}
-    showTotalColumn={showTotalColumn}
-  />,
+  <Router history={history}>
+    <HorizontalTableWidget
+      headers={headers}
+      data={data}
+      firstHeading={firstHeading}
+      enableSorting={enableSorting}
+      lastHeading={lastHeading}
+      sortConfig={sortConfig}
+      requestSort={requestSort}
+      enableCheckboxes={enableCheckboxes}
+      showTotalColumn={showTotalColumn}
+    />
+  </Router>,
 );
 
 describe('Horizontal Table Widget', () => {
@@ -102,6 +108,37 @@ describe('Horizontal Table Widget', () => {
     expect(url).toHaveAttribute('href', 'Row 1 Data');
 
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeInTheDocument();
+  });
+
+  it('correctly renders link when isInternalLink is true', async () => {
+    const headers = ['col1', 'col2', 'col3'];
+    const data = [
+      {
+        heading: 'Row 1 Data',
+        link: 'internal link 1',
+        isUrl: true,
+        isInternalLink: true,
+        data: [
+          {
+            title: 'col1',
+            value: '17',
+          },
+          {
+            title: 'col2',
+            value: '18',
+          },
+          {
+            title: 'col3',
+            value: '19',
+          },
+        ],
+      },
+    ];
+
+    renderHorizontalTableWidget(headers, data);
+    // find element a with href of href="/internal link 1".
+    const url = screen.getByText(/Row 1 Data/i);
+    expect(url).toHaveAttribute('href', '/internal link 1');
   });
 
   it('renders with sorting', async () => {

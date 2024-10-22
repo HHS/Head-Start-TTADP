@@ -102,6 +102,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
             heading: recipientName,
             name: recipientName,
             isUrl: true,
+            isInternalLink: true,
             hideLinkIcon: true,
             sortKey: mapGoalStatusKey(goalStatus),
             link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,

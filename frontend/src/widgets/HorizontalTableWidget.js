@@ -1,6 +1,7 @@
 /* eslint-disable react/no-array-index-key */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import { Table, Checkbox } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +25,7 @@ export default function HorizontalTableWidget(
     hideFirstColumnBorder,
     caption,
     footerData,
+    selectAllIdPrefix,
   },
 ) {
   // State for select all check box.
@@ -68,13 +70,21 @@ export default function HorizontalTableWidget(
     );
   };
 
-  const handleUrl = (url) => (
-    <>
-      <a href={url.link} target="_blank" rel="noreferrer" className="text-overflow-ellipsis">
-        {url.heading}
-      </a>
-      {' '}
-      {
+  const handleUrl = (url) => {
+    if (url.isInternalLink) {
+      return (
+        <Link to={url.link} className="text-overflow-ellipsis">
+          {url.heading}
+        </Link>
+      );
+    }
+    return (
+      <>
+        <a href={url.link} target="_blank" rel="noreferrer" className="text-overflow-ellipsis">
+          {url.heading}
+        </a>
+        {' '}
+        {
         !url.hideLinkIcon && (
         <FontAwesomeIcon
           color={colors.ttahubBlue}
@@ -83,8 +93,9 @@ export default function HorizontalTableWidget(
         />
         )
     }
-    </>
-  );
+      </>
+    );
+  };
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
@@ -126,7 +137,7 @@ export default function HorizontalTableWidget(
             enableCheckboxes && (
               <th className="width-8 checkbox-column">
                 <Checkbox
-                  id="check-all-checkboxes"
+                  id={`${selectAllIdPrefix}check-all-checkboxes`}
                   name="check-all-checkboxes"
                   label=""
                   onChange={toggleSelectAll}
@@ -215,6 +226,7 @@ HorizontalTableWidget.propTypes = {
     ), PropTypes.shape({}),
   ]),
   firstHeading: PropTypes.string.isRequired,
+  selectAllIdPrefix: PropTypes.string,
   lastHeading: PropTypes.string,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,
@@ -254,4 +266,5 @@ HorizontalTableWidget.defaultProps = {
   showTotalColumn: true,
   hideFirstColumnBorder: false,
   caption: '',
+  selectAllIdPrefix: null,
 };
