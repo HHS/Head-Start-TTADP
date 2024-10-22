@@ -19,8 +19,8 @@ const TABLE_HEADINGS = [
 ];
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: '1',
-  direction: 'desc',
+  sortBy: 'Specialist_role',
+  direction: 'asc',
   activePage: 1,
 };
 
@@ -49,7 +49,7 @@ export default function PercentageActivityReportByRole({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    [FIRST_COLUMN], // stringColumns
+    ['Specialist_role'], // stringColumns
     EMPTY_ARRAY, // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
@@ -99,7 +99,7 @@ export default function PercentageActivityReportByRole({ data }) {
 
       tableData.push({
         heading: dataset.role_name,
-        id: index + 1 + dataset.role_name,
+        id: `${dataset.role_name}-${index + 1}`,
         data: [
           {
             value: dataset.role_count,

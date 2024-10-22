@@ -22,8 +22,8 @@ const TABLE_HEADINGS = [
 ];
 
 const DEFAULT_SORT_CONFIG = {
-  sortBy: '1',
-  direction: 'desc',
+  sortBy: 'Root_cause',
+  direction: 'asc',
   activePage: 1,
 };
 
@@ -51,7 +51,7 @@ export default function RootCauseFeiGoals({ data }) {
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
-    [FIRST_COLUMN], // stringColumns
+    ['Root_cause'], // stringColumns
     EMPTY_ARRAY, // dateColumns
     EMPTY_ARRAY, // keyColumns
   );
@@ -98,7 +98,7 @@ export default function RootCauseFeiGoals({ data }) {
 
       tableData.push({
         heading: dataset.rootCause,
-        id: index + 1 + dataset.rootCause,
+        id: `${dataset.rootCause} - ${index + 1}`,
         data: [
           {
             value: dataset.response_count,
@@ -114,6 +114,8 @@ export default function RootCauseFeiGoals({ data }) {
       });
     });
 
+    // Sort traceData by rootCause in descending order
+    traceData.sort((a, b) => b.category.localeCompare(a.category));
     setTrace(traceData);
     setTabularData(tableData);
     setTotals({

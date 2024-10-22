@@ -17,7 +17,11 @@ export default function useWidgetExport(
         // Get all the ids of the rowsToExport that have a value of true.
         const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
         // Loop all selected rows and parseInt to an array of integers.
-        const selectedRowsIds = selectedRowsStrings.map((s) => parseInt(s, DECIMAL_BASE));
+        // If the ID isn't a number, keep it as a string.
+        const selectedRowsIds = selectedRowsStrings.map((s) => {
+          const parsedInt = parseInt(s, DECIMAL_BASE);
+          return Number.isNaN(parsedInt) ? s : parsedInt;
+        });
         // Filter the recipients to export to only include the selected rows.
         dataToExport = data.filter((row) => selectedRowsIds.includes(row.id));
       }
