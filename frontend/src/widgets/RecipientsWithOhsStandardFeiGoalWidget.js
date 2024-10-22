@@ -16,7 +16,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
 }) {
   const { pageData, widgetData } = data;
   const defaultSortConfig = {
-    sortBy: '1',
+    sortBy: 'Goal_status',
     direction: 'desc',
     activePage: 1,
   };
@@ -50,9 +50,11 @@ function RecipientsWithOhsStandardFeiGoalWidget({
     checkBoxes,
     'RecipientsWithOhsStandardFeiGoal',
     setRecipientsPerPage,
-    ['Recipient', 'Goal number', 'Goal status', 'Root cause'],
-    ['Goal created on'],
+    ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
+    ['Goal_created_on'],
     'recipientsWithOhsStandardFeiGoal.csv',
+    null,
+    ['Goal_status'],
   );
 
   useEffect(() => {
