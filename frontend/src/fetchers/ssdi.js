@@ -21,7 +21,6 @@ const allowedTopicsForQuery = {
     'region',
     'startDate',
     'endDate',
-    'dataSetSelection',
   ],
   'recipients-with-ohs-standard-fei-goal': [
     'recipient',
@@ -31,7 +30,7 @@ const allowedTopicsForQuery = {
     'region',
     'group',
     'createDate',
-    'reason',
+    'activityReportGoalResponse',
   ],
   'recipients-with-class-scores-and-goals': [
     'recipient',
@@ -47,6 +46,8 @@ const allowedTopicsForQuery = {
   'qa-dashboard': [...QA_DASHBOARD_FILTER_CONFIG.map((filter) => filter),
     'region',
     'reportId',
+    'activityReportGoalResponse',
+    'role',
   ],
 };
 
