@@ -7,15 +7,13 @@ import React, {
 } from 'react';
 import moment from 'moment';
 import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { Link, useHistory } from 'react-router-dom';
 import { Alert, Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { isEqual, uniqueId } from 'lodash';
+import { isEqual } from 'lodash';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import Container from '../Container';
-import { createOrUpdateGoals, deleteGoal, updateGoalStatus } from '../../fetchers/goals';
+import { createOrUpdateGoals, deleteGoal } from '../../fetchers/goals';
 import { goalsByIdAndRecipient } from '../../fetchers/recipient';
 import Form from './Form';
 import {
@@ -30,20 +28,20 @@ import {
   grantsToGoals,
 } from './constants';
 import ReadOnly from './ReadOnly';
-import PlusButton from './PlusButton';
-import colors from '../../colors';
 import AppLoadingContext from '../../AppLoadingContext';
 import useUrlParamState from '../../hooks/useUrlParamState';
 import UserContext from '../../UserContext';
 import VanillaModal from '../VanillaModal';
+import GoalFormHeading from '../SharedGoalComponents/GoalFormHeading';
+import GoalFormNavigationLink from '../SharedGoalComponents/GoalFormNavigationLink';
+import GoalFormButton from '../SharedGoalComponents/GoalFormButton';
+import { GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../SharedGoalComponents/constants';
 
 const [objectiveTextError] = OBJECTIVE_ERROR_MESSAGES;
 
 export default function GoalForm({
   recipient,
   regionId,
-  showRTRnavigation,
-  isNew,
 }) {
   const unsuspendModalRef = useRef(null);
   const openExistingGoalModalRef = useRef(null);
@@ -85,7 +83,6 @@ export default function GoalForm({
   const [selectedGrants, setSelectedGrants] = useState(goalDefaults.grants);
   const [goalOnApprovedAR, setGoalOnApprovedReport] = useState(goalDefaults.onApprovedAR);
   const [goalOnAR, setGoalonAR] = useState(goalDefaults.onAR);
-  const [nudgedGoalSelection, setNudgedGoalSelection] = useState({});
   const [isReopenedGoal, setIsReopenedGoal] = useState(goalDefaults.isReopenedGoal);
   // we need to set this key to get the component to re-render (uncontrolled input)
   const [datePickerKey, setDatePickerKey] = useState('DPK-00');
@@ -191,7 +188,7 @@ export default function GoalForm({
       }
     }
 
-    if (!fetchAttempted && !isNew && !isAppLoading) {
+    if (!fetchAttempted && !isAppLoading) {
       setAppLoadingText('Loading goal');
       setIsAppLoading(true);
       fetchGoal();
@@ -200,7 +197,6 @@ export default function GoalForm({
     errors,
     fetchAttempted,
     recipient.id,
-    isNew,
     isAppLoading,
     ids,
     setAppLoadingText,
@@ -685,85 +681,6 @@ export default function GoalForm({
     }
   };
 
-  const forwardToGoalWithIds = (goalIds) => {
-    const urlFragment = `id[]=${goalIds.join(',')}`;
-    const url = `/recipient-tta-records/${recipient.id}/region/${parseInt(regionId, DECIMAL_BASE)}/goals?${urlFragment}`;
-    history.push(url);
-  };
-
-  const onSelectNudgedGoal = async (goal) => {
-    const onSelectInitiativeGoal = async () => {
-      setIsAppLoading(true);
-      const goals = selectedGrants.map((g) => ({
-        grantId: g.id,
-        name: goal.name,
-        status: goal.status,
-        prompts: [],
-        isCurated: true,
-        endDate: '',
-        regionId: parseInt(regionId, DECIMAL_BASE),
-        recipientId: recipient.id,
-        objectives: [],
-        source: goal.source,
-        goalTemplateId: goal.id,
-      }));
-      const created = await createOrUpdateGoals(goals);
-      setAppLoadingText('loading');
-      forwardToGoalWithIds(created.map((g) => g.goalIds).flat());
-    };
-
-    try {
-      setAppLoadingText('loading existing goal');
-      setNudgedGoalSelection(goal);
-
-      if (goal.status === 'Suspended') {
-        unsuspendModalRef.current.toggleModal();
-        return;
-      }
-
-      if (goal.isCurated) {
-      // we need to do a little magic here to get the goal
-        setAppLoadingText('creating new ohs initiative goal');
-        await onSelectInitiativeGoal();
-        return;
-      }
-
-      openExistingGoalModalRef.current.toggleModal();
-    } catch (err) {
-      setAlert({
-        message: 'There was an error selecting your goal',
-        type: 'error',
-      });
-    } finally {
-      setIsAppLoading(false);
-      setAppLoadingText('Loading');
-    }
-  };
-
-  const unsuspender = async () => {
-    try {
-      setAppLoadingText('Reactivating goal');
-      setIsAppLoading(true);
-      const updatedGoals = await updateGoalStatus(
-        nudgedGoalSelection.ids,
-        'In Progress',
-        'Suspended',
-        null,
-        null,
-      );
-
-      forwardToGoalWithIds(updatedGoals.map((g) => g.id));
-    } catch (err) {
-      setAlert({
-        message: 'There was an error unsuspending your goal',
-        type: 'error',
-      });
-    } finally {
-      setIsAppLoading(false);
-      setAppLoadingText('Loading');
-    }
-  };
-
   if (!canView) {
     return (
       <Alert role="alert" className="margin-y-2" type="error">
@@ -788,40 +705,15 @@ export default function GoalForm({
 
   return (
     <>
-      { showRTRnavigation ? (
-        <Link
-          className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-          to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
-        >
-          <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-          <span>Back to RTTAPA</span>
-        </Link>
-      ) : null }
-      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
-        TTA Goals for
-        {' '}
-        {recipient.name}
-        {' '}
-        - Region
-        {' '}
-        {regionId}
-      </h1>
-
+      <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
+      <GoalFormHeading recipient={recipient} regionId={regionId} />
       <Container className="margin-y-3 margin-left-2 width-tablet" paddingX={4} paddingY={5}>
         { createdGoalsForReadOnly.length ? (
-          <>
-            <ReadOnly
-              createdGoals={createdGoalsForReadOnly}
-              onRemove={onRemove}
-              onEdit={onEdit}
-            />
-            <div className="margin-bottom-4">
-              {!showForm && isNew
-                ? (
-                  <PlusButton onClick={() => setShowForm(true)} text="Add another goal" />
-                ) : null }
-            </div>
-          </>
+          <ReadOnly
+            createdGoals={createdGoalsForReadOnly}
+            onRemove={onRemove}
+            onEdit={onEdit}
+          />
         ) : null }
         <VanillaModal
           forceAction
@@ -831,15 +723,15 @@ export default function GoalForm({
         >
           <p className="usa-prose">The reason for suspending the goal was:</p>
           <ul className="usa-list">
-            {(nudgedGoalSelection.closeSuspendReasons || []).map((reason) => (
+            {/* {(nudgedGoalSelection.closeSuspendReasons || []).map((reason) => (
               <li key={uniqueId('nudged-goalclose-suspend-reason-')}>{reason}</li>
-            ))}
+            ))} */}
           </ul>
           <p className="usa-prose">Would you like to reopen this goal and change the status to In progress?</p>
           <Button
             type="button"
             onClick={async () => {
-              await unsuspender();
+              // await unsuspender();
               unsuspendModalRef.current.toggleModal();
             }}
           >
@@ -858,7 +750,7 @@ export default function GoalForm({
           <Button
             type="button"
             onClick={async () => {
-              forwardToGoalWithIds(nudgedGoalSelection.ids);
+              // forwardToGoalWithIds(nudgedGoalSelection.ids);
               openExistingGoalModalRef.current.toggleModal();
             }}
           >
@@ -869,8 +761,6 @@ export default function GoalForm({
         <form onSubmit={onSubmit}>
           { showForm && (
             <Form
-              isNew={isNew}
-              onSelectNudgedGoal={onSelectNudgedGoal}
               fetchError={fetchError}
               onSaveDraft={onSaveDraft}
               possibleGrants={possibleGrants}
@@ -880,8 +770,6 @@ export default function GoalForm({
               prompts={prompts}
               setPrompts={setPrompts}
               setGoalName={setGoalName}
-              recipient={recipient}
-              regionId={regionId}
               endDate={endDate}
               setEndDate={setEndDate}
               datePickerKey={datePickerKey}
@@ -911,7 +799,7 @@ export default function GoalForm({
             />
           )}
 
-          { canEdit && (isNew || status === 'Draft') && status !== 'Closed' && (
+          { canEdit && status === 'Draft' && status !== 'Closed' && (
           <div className="margin-top-4">
             { !showForm ? <Button type="submit">Submit goal</Button> : null }
             { showForm ? <Button type="button" onClick={() => onSaveAndContinue(false)}>Save and continue</Button> : null }
@@ -930,23 +818,22 @@ export default function GoalForm({
           </div>
           )}
 
-          { canEdit && (!isNew && status !== 'Draft') && status !== 'Closed' && (
+          { canEdit && status !== 'Draft' && status !== 'Closed' && (
             <div className="margin-top-4">
-              <Button
-                type="submit"
+              <GoalFormButton
+                type={GOAL_FORM_BUTTON_TYPES.SUBMIT}
+                label="Save"
                 onClick={async (e) => {
                   e.preventDefault();
                   await onSaveAndContinue(true);
                 }}
-              >
-                Save
-              </Button>
-              <Link
-                className="usa-button usa-button--outline"
+              />
+              <GoalFormButton
+                type={GOAL_FORM_BUTTON_TYPES.LINK}
                 to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
-              >
-                Cancel
-              </Link>
+                variant={GOAL_FORM_BUTTON_VARIANTS.OUTLINE}
+                label="Cancel"
+              />
             </div>
           ) }
 
@@ -969,11 +856,4 @@ GoalForm.propTypes = {
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
-  showRTRnavigation: PropTypes.bool,
-  isNew: PropTypes.bool,
-};
-
-GoalForm.defaultProps = {
-  showRTRnavigation: false,
-  isNew: false,
 };

@@ -10,6 +10,7 @@ import {
   mergeGoals,
   getGoalIdsBySimilarity,
 } from '../../goalServices/goals';
+import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import nudge from '../../goalServices/nudge';
@@ -65,6 +66,28 @@ export async function getMissingDataForActivityReport(req, res) {
     res.json(missingData);
   } catch (error) {
     await handleErrors(req, res, error, `${logContext}:CREATE_GOALS_FOR_REPORT`);
+  }
+}
+
+export async function createGoalsFromTemplate(req, res) {
+  try {
+    const { regionId } = req.body;
+    const { goalTemplateId } = req.params;
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+
+    const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
+
+    if (!canCreate) {
+      res.sendStatus(401);
+    }
+
+    const newGoals = await goalsFromTemplate(goalTemplateId, userId, req.body);
+
+    res.json(newGoals);
+  } catch (error) {
+    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
   }
 }
 

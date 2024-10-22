@@ -103,7 +103,7 @@ describe('create goal', () => {
     }],
   }];
 
-  function renderForm(recipient = defaultRecipient, goalId = 'new') {
+  function renderForm(recipient = defaultRecipient) {
     render((
       <Router history={history}>
         <UserContext.Provider value={{
@@ -123,7 +123,6 @@ describe('create goal', () => {
             <CreateGoal
               recipient={recipient}
               regionId="1"
-              isNew={goalId === 'new'}
             />
           </AppLoadingContext.Provider>
         </UserContext.Provider>
@@ -306,14 +305,41 @@ describe('create goal', () => {
         },
       ],
     };
-    renderForm(recipient);
+
+    fetchMock.get('/api/recipient/2/goals?goalIds=', [{
+      id: 1,
+      name: 'This is a goal name',
+      status: 'Not Started',
+      endDate: '10/08/2021',
+      prompts: [],
+      goalNumbers: ['G-12389'],
+      onApprovedAR: false,
+      onAR: false,
+      isCurated: false,
+      goalTemplateId: 1,
+      source: [],
+      collaborators: [],
+      isReopenedGoal: false,
+      objectives: [],
+      grants: [
+        {
+          id: 2,
+          numberWithProgramTypes: 'Turtle 2',
+          status: 'Active',
+        },
+      ],
+    }]);
+
+    act(() => {
+      renderForm(recipient);
+    });
 
     fetchMock.restore();
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <title>Whats New</title>
-    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-    <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+      <title>Whats New</title>
+      <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
+      <subtitle>Confluence Syndication Feed</subtitle>
+      <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
     fetchMock.post('/api/goals', 500);
     fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
 
@@ -323,11 +349,9 @@ describe('create goal', () => {
     const ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
     userEvent.type(ed, '08/15/2023');
 
-    const save = await screen.findByRole('button', { name: /save and continue/i });
+    const save = await screen.findByRole('button', { name: /save/i });
     userEvent.click(save);
 
-    const draft = await screen.findByRole('button', { name: /save draft/i });
-    userEvent.click(draft);
     let alert = await screen.findByRole('alert');
     expect(alert.textContent).toBe('There was an error saving your goal');
 
@@ -429,98 +453,6 @@ describe('create goal', () => {
     userEvent.click(deleteButton);
     await screen.findByRole('textbox', { name: /Recipient's goal/i });
     expect(fetchMock.called()).toBeTruthy();
-  });
-
-  it('create more than one goal', async () => {
-    fetchMock.post('/api/goals', postResponse);
-
-    const recipient = {
-      id: 2,
-      grants: [
-        {
-          id: 2,
-          numberWithProgramTypes: 'Turtle 2',
-          status: 'Active',
-        },
-      ],
-    };
-    renderForm(recipient);
-
-    await screen.findByRole('heading', { name: 'Goal summary' });
-    fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-    <title>Whats New</title>
-    <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-    <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
-    fetchMock.post('/api/goals', postResponse);
-    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
-    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
-
-    let goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
-    userEvent.type(goalText, 'This is goal text');
-
-    let ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
-    userEvent.type(ed, '08/15/2023');
-
-    let newObjective = await screen.findByRole('button', { name: 'Add new objective' });
-    userEvent.click(newObjective);
-
-    let objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
-    userEvent.type(objectiveText, 'test');
-
-    const cancel = await screen.findByRole('link', { name: 'Cancel' });
-    let save = await screen.findByRole('button', { name: /save and continue/i });
-    userEvent.click(save);
-
-    expect(fetchMock.called('/api/goals', { method: 'POST' })).toBeTruthy();
-    expect(fetchMock.lastCall('/api/goals')[1].body).toContain('ids');
-
-    // restore our fetch mock
-    fetchMock.restore();
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
-  <title>Whats New</title>
-  <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
-  <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
-    fetchMock.post('/api/goals', postResponse);
-    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20goal%20text&grantNumbers=undefined', []);
-    fetchMock.get('/api/goals/recipient/2/region/1/nudge?name=This%20is%20more%20goal%20text&grantNumbers=undefined', []);
-    expect(fetchMock.called('/api/goals')).toBe(false);
-
-    await screen.findByText(`Your goal was last saved at ${moment().format('MM/DD/YYYY [at] h:mm a')}`);
-    expect(cancel).not.toBeVisible();
-
-    const another = await screen.findByRole('button', { name: 'Add another goal' });
-    userEvent.click(another);
-
-    await screen.findByTestId('create-goal-form-cancel');
-
-    goalText = await screen.findByRole('textbox', { name: /Recipient's goal/i });
-    userEvent.type(goalText, 'This is more goal text');
-
-    ed = await screen.findByRole('textbox', { name: /anticipated close date \(mm\/dd\/yyyy\)/i });
-    userEvent.type(ed, '08/15/2023');
-
-    newObjective = await screen.findByRole('button', { name: 'Add new objective' });
-    userEvent.click(newObjective);
-
-    objectiveText = await screen.findByRole('textbox', { name: /TTA objective \*/i });
-    userEvent.type(objectiveText, 'test');
-
-    userEvent.click((await screen.findByRole('button', { name: /save draft/i })));
-
-    save = await screen.findByRole('button', { name: /save and continue/i });
-    userEvent.click(save);
-
-    fetchMock.delete('/api/goals?goalIds=64175', JSON.stringify(1));
-
-    const goalActions = await screen.findByRole('button', { name: /actions for goal/i });
-    userEvent.click(goalActions);
-
-    const deleteButton = within(await screen.findByTestId('menu')).getByRole('button', { name: /remove/i });
-    userEvent.click(deleteButton);
-    await screen.findByRole('textbox', { name: /Recipient's goal/i });
   });
 
   it('allows editing of goals', async () => {
