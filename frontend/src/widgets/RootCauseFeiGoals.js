@@ -98,7 +98,7 @@ export default function RootCauseFeiGoals({ data }) {
 
       tableData.push({
         heading: dataset.rootCause,
-        id: index + 1,
+        id: index + 1 + dataset.rootCause,
         data: [
           {
             value: dataset.response_count,
@@ -156,6 +156,7 @@ export default function RootCauseFeiGoals({ data }) {
             showTotalColumn={false}
             footerData={false}
             hideFirstColumnBorder
+            selectAllIdPrefix="qa-dashboard-root-cause-on-fei-goals"
           />
         ) : (
           <BarGraph

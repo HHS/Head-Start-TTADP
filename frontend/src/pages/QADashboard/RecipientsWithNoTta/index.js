@@ -81,6 +81,7 @@ export default function RecipientsWithNoTta() {
             heading: recipientName,
             name: recipientName,
             isUrl: true,
+            isInternalLink: true,
             hideLinkIcon: true,
             link: `/recipient-tta-records/${recipientId}/region/${regionId}/profile`,
             data: [

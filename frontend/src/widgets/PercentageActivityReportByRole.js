@@ -82,10 +82,11 @@ export default function PercentageActivityReportByRole({ data }) {
     // and the table (an array of objects in the format defined by proptypes)
     const {
       records,
-      totalNumberOfReports,
-      totalPercentage,
       filteredReports,
     } = data;
+
+    const totalPercentage = records.reduce((acc, record) => acc + record.percentage, 0);
+    const totalNumberOfReports = records.reduce((acc, record) => acc + record.role_count, 0);
 
     const tableData = [];
     const traceData = [];
@@ -98,7 +99,7 @@ export default function PercentageActivityReportByRole({ data }) {
 
       tableData.push({
         heading: dataset.role_name,
-        id: index + 1,
+        id: index + 1 + dataset.role_name,
         data: [
           {
             value: dataset.role_count,
@@ -162,6 +163,7 @@ export default function PercentageActivityReportByRole({ data }) {
               String(totals.totalPercentage),
             ]}
             hideFirstColumnBorder
+            selectAllIdPrefix="qa-dash-percentage-ars-by-role"
           />
         ) : (
           <VBarGraph
