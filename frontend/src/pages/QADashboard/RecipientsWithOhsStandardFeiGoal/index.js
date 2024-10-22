@@ -32,7 +32,7 @@ const ALLOWED_SUBFILTERS = [
   'stateCode',
 ];
 
-const mapGoalStatusKey = (status) => {
+export const mapGoalStatusKey = (status) => {
   switch (status) {
     case 'Not Started':
       return 4;
