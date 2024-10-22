@@ -6,7 +6,7 @@ import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
 
 const defaultSortConfig = {
-  sortBy: '1',
+  sortBy: 'Days_Since_Last_TTA',
   direction: 'desc',
   activePage: 1,
 };

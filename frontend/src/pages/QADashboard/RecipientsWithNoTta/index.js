@@ -96,6 +96,9 @@ export default function RecipientsWithNoTta() {
           };
         });
 
+        // Sort formattedRecipientPageData by Days Since Last TTA desc.
+        formattedRecipientPageData.sort((a, b) => b.data[1].value - a.data[1].value);
+
         // Add headers.
         formattedRecipientPageData = {
           headers: ['Date of Last TTA', 'Days Since Last TTA'],
