@@ -686,7 +686,7 @@ BEGIN
           OR (
             g.status IN (
               SELECT value
-              FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
+              FROM json_array_elements_text(COALESCE(goal_status_filter, '[]')::json) AS value
             ) != goal_status_not_filter
           )
         )
