@@ -29,6 +29,7 @@ export default function useWidgetPaging(
   dateColumns = [],
   exportName,
   exportDataName = null,
+  keyColumns = [],
 ) {
   const {
     sortConfig,
@@ -41,6 +42,7 @@ export default function useWidgetPaging(
     setDataToUse,
     stringColumns,
     dateColumns,
+    keyColumns,
   );
 
   const {
