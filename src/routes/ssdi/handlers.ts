@@ -181,7 +181,7 @@ const runQuery = async (req: Request, res: Response) => {
       filterValues,
     );
     console.log(scriptPath, errors);
-    if (/*errors?.invalidFilters?.length ||*/ errors?.invalidTypes?.length) {
+    if (errors?.invalidFilters?.length || errors?.invalidTypes?.length) {
       res.status(400).json({ errors });
       return;
     }
