@@ -281,6 +281,20 @@ JSON: {
       "display": "Goal Status",
       "description": "Filter based on goal status",
       "supportsExclusion": true
+    },
+    {
+      "name": "group",
+      "type": "integer[]",
+      "display": "Group",
+      "description": "Filter based on group membership.",
+      "supportsExclusion": true
+    },
+    {
+      "name": "currentUserId",
+      "type": "integer[]",
+      "display": "Current User",
+      "description": "Filter based on the current user ID.",
+      "supportsExclusion": true
     }
   ]
 }
@@ -453,7 +467,7 @@ BEGIN
         AND (
           group_filter IS NULL
           OR (
-            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.name) != group_not_filter
+            COALESCE(group_filter, '[]')::jsonb @> to_jsonb(g.id) != group_not_filter
           )
         )
         LEFT JOIN "GroupCollaborators" gc

@@ -600,6 +600,10 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
         && filters[newKey]?.type === FilterType.DateArray
         && !Array.isArray(newValue)) {
         newValue = newValue.split('-');
+      } else if ((suffix === '.in' || suffix === '.nin')
+        && !Array.isArray(newValue)
+        && newValue.includes(',')) {
+        newValue = newValue.split(',');
       }
     }
 
