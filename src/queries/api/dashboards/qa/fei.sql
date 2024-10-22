@@ -245,6 +245,13 @@ JSON: {
       "display": "Activity Report Goal Response",
       "description": "Filter based on goal field responses in activity reports",
       "supportsExclusion": true
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on goal status",
+      "supportsExclusion": true
     }
   ]
 }
@@ -261,6 +268,7 @@ DECLARE
     current_user_id_filter TEXT := NULLIF(current_setting('ssdi.currentUserId', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
     activity_report_goal_response_filter TEXT := NULLIF(current_setting('ssdi.activityReportGoalResponse', true), '');
+    goal_status_filter TEXT := NULLIF(current_setting('ssdi.status', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -272,6 +280,7 @@ DECLARE
     current_user_id_not_filter BOOLEAN := COALESCE(current_setting('ssdi.currentUserId.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
     activity_report_goal_response_not_filter BOOLEAN := COALESCE(current_setting('ssdi.activityReportGoalResponse.not', true), 'false') = 'true';
+    goal_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.status.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
@@ -477,6 +486,7 @@ BEGIN
 -- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
     IF
         create_date_filter IS NOT NULL OR
+        goal_status_filter IS NOT NULL OR
         activity_report_goal_response_filter IS NOT NULL
     THEN
     WITH
@@ -498,6 +508,16 @@ BEGIN
             )::daterange AS my_array
             FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
           ) != create_date_not_filter
+          )
+        )
+        -- Filter for status if ssdi.status is defined
+        AND (
+          goal_status_filter IS NULL
+          OR (
+            g.status IN (
+              SELECT value
+              FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
+            ) != goal_status_not_filter
           )
         )
         LEFT JOIN "GoalFieldResponses" gfr

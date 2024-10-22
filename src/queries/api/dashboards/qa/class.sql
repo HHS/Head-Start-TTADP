@@ -274,6 +274,13 @@ JSON: {
       "display": "Creation Date",
       "description": "Filter based on the date range of creation",
       "supportsExclusion": true
+    },
+    {
+      "name": "status",
+      "type": "string[]",
+      "display": "Goal Status",
+      "description": "Filter based on goal status",
+      "supportsExclusion": true
     }
   ]
 }
@@ -292,6 +299,7 @@ DECLARE
     domain_classroom_organization_filter TEXT := NULLIF(current_setting('ssdi.domainClassroomOrganization', true), '');
     domain_instructional_support_filter TEXT := NULLIF(current_setting('ssdi.domainInstructionalSupport', true), '');
     create_date_filter TEXT := NULLIF(current_setting('ssdi.createDate', true), '');
+    goal_status_filter TEXT := NULLIF(current_setting('ssdi.status', true), '');
 
     -- Declare `.not` variables
     recipient_not_filter BOOLEAN := COALESCE(current_setting('ssdi.recipient.not', true), 'false') = 'true';
@@ -305,6 +313,7 @@ DECLARE
     domain_classroom_organization_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainClassroomOrganization.not', true), 'false') = 'true';
     domain_instructional_support_not_filter BOOLEAN := COALESCE(current_setting('ssdi.domainInstructionalSupport.not', true), 'false') = 'true';
     create_date_not_filter BOOLEAN := COALESCE(current_setting('ssdi.createDate.not', true), 'false') = 'true';
+    goal_status_not_filter BOOLEAN := COALESCE(current_setting('ssdi.status.not', true), 'false') = 'true';
 
 BEGIN
 ---------------------------------------------------------------------------------------------------
@@ -642,7 +651,8 @@ BEGIN
 -- Step 2.2 If grant filters active, delete from filtered_goals for any goals filtered, delete from filtered_grants using filtered_goals
 
     IF
-        create_date_filter IS NOT NULL
+        create_date_filter IS NOT NULL OR
+        goal_status_filter IS NOT NULL
     THEN
     WITH
       applied_filtered_goals AS (
@@ -668,6 +678,16 @@ BEGIN
             COALESCE(create_date_filter, '[]')::json
             ) AS value
           ) != create_date_not_filter
+          )
+        )
+        -- Filter for status if ssdi.status is defined
+        AND (
+          goal_status_filter IS NULL
+          OR (
+            g.status IN (
+              SELECT value
+              FROM json_array_elements_text(COALESCE(create_date_filter, '[]')::json) AS value
+            ) != goal_status_not_filter
           )
         )
       ),
