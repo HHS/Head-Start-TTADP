@@ -8,7 +8,7 @@ import {
   render, screen, act, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import RecipientsWithOhsStandardFeiGoal from '../index';
+import RecipientsWithOhsStandardFeiGoal, { mapGoalStatusKey } from '../index';
 import UserContext from '../../../../UserContext';
 
 const history = createMemoryHistory();
@@ -179,5 +179,13 @@ describe('Recipients With Ohs Standard Fei Goal', () => {
         expect(screen.getByText(/unable to fetch qa data/i)).toBeInTheDocument();
       });
     });
+  });
+
+  it('returns correct sort order from mapGoalStatusKey', () => {
+    expect(mapGoalStatusKey('Not Started')).toBe(4);
+    expect(mapGoalStatusKey('In Progress')).toBe(3);
+    expect(mapGoalStatusKey('Suspended')).toBe(2);
+    expect(mapGoalStatusKey('Closed')).toBe(1);
+    expect(mapGoalStatusKey('')).toBe(0);
   });
 });
