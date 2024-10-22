@@ -306,6 +306,12 @@ JSON: {
       "description": "Filter based on the text of the goal.",
       "supportsExclusion": true,
       "supportsFuzzyMatch": true
+    },
+    {
+      "name": "singleOrMultiRecipients",
+      "type": "string[]",
+      "display": "Single or multiple recipients",
+      "description": "Filter based on the number of recipients."
     }
   ]
 }
