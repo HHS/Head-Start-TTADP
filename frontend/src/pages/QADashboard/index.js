@@ -107,7 +107,7 @@ export default function QADashboard() {
         const feiGraphData = feiData.find((item) => item.data_set === 'with_fei_graph');
 
         const rootCauseFeiGoalsGraph = {
-          records: feiGraphData.data,
+          records: feiGraphData.data.sort((a, b) => a.rootCause.localeCompare(b.rootCause)),
           totalNumberOfGoals: feiOverviewData.data[0].total,
           totalNumberOfRootCauses: feiOverviewData.data[0]['recipients with fei'],
         };
@@ -162,7 +162,7 @@ export default function QADashboard() {
 
         const roleGraph = {
           filteredReports,
-          records: roleGraphData.data,
+          records: roleGraphData.data.sort((a, b) => a.role_name.localeCompare(b.role_name)),
         };
 
         // Set data.
