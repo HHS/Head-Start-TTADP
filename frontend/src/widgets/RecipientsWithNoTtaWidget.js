@@ -62,8 +62,9 @@ function RecipientsWithNoTtaWidget({
 
   const getSubtitleWithPct = () => {
     const totalRecipients = widgetData ? widgetData.total : 0;
+    const recipientsWithoutTTA = widgetData ? widgetData['recipients without tta'] : 0;
     const pct = widgetData ? widgetData['% recipients without tta'] : 0;
-    return `${recipientCount} of ${totalRecipients} (${pct}%) recipients`;
+    return `${recipientsWithoutTTA} of ${totalRecipients} (${pct}%) recipients`;
   };
 
   const menuItems = [
