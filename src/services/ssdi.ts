@@ -565,7 +565,7 @@ const readFiltersFromFile = async (
 const validateType = (expectedType: FilterType, value: any): boolean => {
   switch (expectedType) {
     case FilterType.IntegerArray:
-      return Array.isArray(value) && value.every((v) => Number.isInteger(v));
+      return Array.isArray(value) && value.every((v) => Number.isInteger(v) || !isNaN(Number(v)));
     case FilterType.DateArray:
       return Array.isArray(value) && value.every((v) => !Number.isNaN(Date.parse(v)));
     case FilterType.StringArray:
@@ -596,14 +596,29 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       const mappedSuffix = suffixMapping[suffix];
       newKey = key.replace(suffix, mappedSuffix ?? '');
 
-      if ((suffix === '.win' || suffix === '.in')
-        && filters[newKey]?.type === FilterType.DateArray
-        && !Array.isArray(newValue)) {
-        newValue = newValue.split('-');
-      } else if ((suffix === '.in' || suffix === '.nin')
-        && !Array.isArray(newValue)
-        && newValue.includes(',')) {
-        newValue = newValue.split(',');
+      console.log(key, input[key]);
+
+      const isDateArrayFilter = (suffix, filterType) => 
+        (suffix === '.win' || suffix === '.in') && filterType === FilterType.DateArray;
+      
+      const isArrayWithSeparator = (arr, separator) => 
+        Array.isArray(arr) && arr.some(item => typeof item === 'string' && item.includes(separator));
+      
+      const splitValue = (value, separator) => 
+        Array.isArray(value) ? value.flatMap(item => item.split(separator)) : value.split(separator);
+      
+      if (isDateArrayFilter(suffix, filters[newKey]?.type)) {
+        if (!Array.isArray(newValue)) {
+          newValue = splitValue(newValue, '-');
+        } else if (isArrayWithSeparator(newValue, '-')) {
+          newValue = splitValue(newValue, '-');
+        }
+      } else if (suffix === '.in' || suffix === '.nin') {
+        if (!Array.isArray(newValue) && newValue.includes(',')) {
+          newValue = splitValue(newValue, ',');
+        } else if (isArrayWithSeparator(newValue, ',')) {
+          newValue = splitValue(newValue, ',');
+        }
       }
     }
 
@@ -616,7 +631,7 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
     } else {
       const expectedType = filters[newKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
-        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType}`);
+        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} recieved ${newValue}`);
       }
     }
 
