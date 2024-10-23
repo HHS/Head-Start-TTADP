@@ -303,7 +303,6 @@ function Landing() {
               filters={filters}
               onApplyFilters={onApply}
               onRemoveFilter={onRemoveFilter}
-              // filterConfig={getFilters()}
               filterConfig={filtersToUse}
               allUserRegions={regions}
             />

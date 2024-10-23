@@ -5,6 +5,7 @@ import { Table, Checkbox } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
+import { parseCheckboxEvent } from '../Constants';
 import './HorizontalTableWidget.scss';
 
 export default function HorizontalTableWidget(
@@ -19,6 +20,10 @@ export default function HorizontalTableWidget(
     enableCheckboxes,
     checkboxes,
     setCheckboxes,
+    showTotalColumn,
+    hideFirstColumnBorder,
+    caption,
+    footerData,
   },
 ) {
   // State for select all check box.
@@ -69,11 +74,15 @@ export default function HorizontalTableWidget(
         {url.heading}
       </a>
       {' '}
-      <FontAwesomeIcon
-        color={colors.ttahubBlue}
-        icon={faArrowUpRightFromSquare}
-        size="xs"
-      />
+      {
+        !url.hideLinkIcon && (
+        <FontAwesomeIcon
+          color={colors.ttahubBlue}
+          icon={faArrowUpRightFromSquare}
+          size="xs"
+        />
+        )
+    }
     </>
   );
 
@@ -84,7 +93,7 @@ export default function HorizontalTableWidget(
   }, [data, setCheckboxes]);
 
   const toggleSelectAll = (event) => {
-    const { target: { checked = null } = {} } = event;
+    const { checked } = parseCheckboxEvent(event);
 
     if (checked === true) {
       setCheckboxes(makeCheckboxes(data, true));
@@ -96,7 +105,7 @@ export default function HorizontalTableWidget(
   };
 
   const handleReportSelect = (event) => {
-    const { target: { checked = null, value = null } = {} } = event;
+    const { checked, value } = parseCheckboxEvent(event);
     if (checked === true) {
       setCheckboxes({ ...checkboxes, [value]: true });
     } else {
@@ -147,6 +156,7 @@ export default function HorizontalTableWidget(
   return (
     <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
       <Table stackedStyle="default" fullWidth striped bordered={false}>
+        <caption className="usa-sr-only">{caption}</caption>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
             {
@@ -176,14 +186,16 @@ export default function HorizontalTableWidget(
             headers.map((h) => (<Header header={h} sortingEnabled={enableSorting} />))
             }
             {
-            enableSorting
-              ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
-              : (
-                <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
-                  {lastHeading}
-                </th>
-              )
-}
+            showTotalColumn && (
+              enableSorting
+                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+                : (
+                  <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
+                    {lastHeading}
+                  </th>
+                )
+            )
+            }
           </tr>
         </thead>
         <tbody>
@@ -197,14 +209,14 @@ export default function HorizontalTableWidget(
                     </td>
                   )
                 }
-                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'}`}>
+                <td data-label={firstHeading} key={`horizontal_table_cell_label${index}`} className={`smarthub-horizontal-table-first-column text-overflow-ellipsis data-description ${enableCheckboxes ? 'left-with-checkbox' : 'left-0'} ${!hideFirstColumnBorder ? 'smarthub-horizontal-table-first-column-border' : ''}`}>
                   {
                     r.isUrl
                       ? handleUrl(r)
                       : r.heading
                   }
                 </td>
-                {r.data.map((d, cellIndex) => (
+                {(r.data || []).map((d, cellIndex) => (
                   <td data-label={d.title} key={`horizontal_table_cell_${cellIndex}`} className={d.title.toLowerCase() === 'total' ? 'smarthub-horizontal-table-last-column' : null}>
                     {d.value}
                   </td>
@@ -213,6 +225,15 @@ export default function HorizontalTableWidget(
             ))
             }
         </tbody>
+        {footerData && (
+          <tfoot>
+            <tr>
+              {footerData.map((f, index) => (
+                <td key={`horizontal_table_footer_${index}`}>{f}</td>
+              ))}
+            </tr>
+          </tfoot>
+        )}
       </Table>
     </div>
   );
@@ -242,9 +263,17 @@ HorizontalTableWidget.propTypes = {
   enableCheckboxes: PropTypes.bool,
   checkboxes: PropTypes.shape({}),
   setCheckboxes: PropTypes.func,
+  showTotalColumn: PropTypes.bool,
+  hideFirstColumnBorder: PropTypes.bool,
+  caption: PropTypes.string,
+  footerData: PropTypes.oneOfType([
+    PropTypes.bool,
+    PropTypes.arrayOf(PropTypes.string),
+  ]),
 };
 
 HorizontalTableWidget.defaultProps = {
+  footerData: false,
   data: [],
   lastHeading: 'Total',
   sortConfig: {
@@ -258,4 +287,7 @@ HorizontalTableWidget.defaultProps = {
   enableCheckboxes: false,
   checkboxes: {},
   setCheckboxes: () => {},
+  showTotalColumn: true,
+  hideFirstColumnBorder: false,
+  caption: '',
 };

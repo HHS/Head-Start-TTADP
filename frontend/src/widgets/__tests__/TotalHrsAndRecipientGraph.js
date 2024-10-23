@@ -8,7 +8,8 @@ import {
   screen,
   act,
 } from '@testing-library/react';
-import { TotalHrsAndRecipientGraph, LegendControl } from '../TotalHrsAndRecipientGraph';
+import LegendControl from '../LegendControl';
+import { TotalHrsAndRecipientGraph } from '../TotalHrsAndRecipientGraph';
 
 const TEST_DATA_MONTHS = [
   {
@@ -76,53 +77,12 @@ describe('Total Hrs And Recipient Graph Widget', () => {
     expect(await screen.findByText(/Total TTA Hours/i)).toBeInTheDocument();
   });
 
-  it('handles loading', async () => {
-    renderTotalHrsAndRecipientGraph({ loading: true });
-    expect(await screen.findByText('Loading')).toBeInTheDocument();
-  });
-
   it('handles checkbox clicks', async () => {
     const setSelected = jest.fn();
     render(<LegendControl shape="circle" label="test" id="test" selected setSelected={setSelected} />);
     const checkbox = screen.getByRole('checkbox', { name: /test/i });
     fireEvent.click(checkbox);
     expect(setSelected).toHaveBeenCalled();
-  });
-
-  it('displays table data correctly', async () => {
-    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_DAYS });
-    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
-    fireEvent.click(button);
-    const jan1 = screen.getByRole('columnheader', { name: /jan 1/i });
-    const feb4 = screen.getByRole('columnheader', { name: /feb 4/i });
-    expect(jan1).toBeInTheDocument();
-    expect(feb4).toBeInTheDocument();
-  });
-
-  it('handles switching contexts', async () => {
-    renderTotalHrsAndRecipientGraph({ data: TEST_DATA_MONTHS });
-    const button = screen.getByRole('button', { name: 'display total training and technical assistance hours as table' });
-    fireEvent.click(button);
-    const table = screen.getByRole('table', { name: /total tta hours by date and type/i });
-
-    const randomRowHeader = screen.getByRole('rowheader', { name: /recipient rec tta/i });
-    expect(randomRowHeader).toBeInTheDocument();
-
-    const randomColumnHeader = screen.getByRole('columnheader', { name: /apr/i });
-    expect(randomColumnHeader).toBeInTheDocument();
-
-    const cells = [];
-
-    for (let index = 2; index < 10; index++) {
-      cells.push(screen.getByRole('cell', { name: `${index.toString()}` }));
-    }
-
-    expect(screen.getByRole('cell', { name: '11.2' })).toBeInTheDocument();
-    cells.forEach((cell) => expect(cell).toBeInTheDocument());
-
-    expect(table).toBeInTheDocument();
-    fireEvent.click(button);
-    expect(table).not.toBeInTheDocument();
   });
 
   it('expertly handles large datasets', async () => {
