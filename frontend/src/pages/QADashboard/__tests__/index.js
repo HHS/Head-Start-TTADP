@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
 import React from 'react';
+import moment from 'moment';
 import { SCOPE_IDS } from '@ttahub/common';
 import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
@@ -30,17 +31,17 @@ const defaultUser = {
   }],
 };
 
-// get a string with todays date in the format '2024%2F10%2F21'
-const today = new Date().toISOString().split('T')[0].replace(/-/g, '%2F');
+const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
+const today = moment().format('YYYY/MM/DD');
 
-// get a string with today minus 12 months in the format '2023%2F10%2%2F21'
-const todayMinus12Months = new Date(new Date().setFullYear(new Date().getFullYear() - 1)).toISOString().split('T')[0].replace(/-/g, '%2F');
+// Convert todayMinus12Months to the format used in the API.
+const combinedDates = `${encodeURIComponent(todayMinus12Months)}-${encodeURIComponent(today)}`;
 
 const baseSsdiApi = '/api/ssdi/api/dashboards/qa/';
-const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=no_tta_widget`;
-const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
+const noTtaApi = `${baseSsdiApi}no-tta.sql?region.in[]=1&region.in[]=2&startDate.win=${combinedDates}&dataSetSelection[]=no_tta_widget`;
+const feiApi = `${baseSsdiApi}fei.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_fei_widget&dataSetSelection[]=with_fei_graph`;
 const dashboardApi = `${baseSsdiApi}dashboard.sql?region.in[]=1&region.in[]=2&dataSetSelection[]=delivery_method_graph&dataSetSelection[]=role_graph&dataSetSelection[]=activity_widget`;
-const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${todayMinus12Months}-${today}&dataSetSelection[]=with_class_widget`;
+const classApi = `${baseSsdiApi}class.sql?region.in[]=1&region.in[]=2&createDate.win=${combinedDates}&dataSetSelection[]=with_class_widget`;
 
 const RECIPIENTS_WITH_NO_TTA_DATA = [
   {
