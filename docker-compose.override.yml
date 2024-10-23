@@ -29,6 +29,8 @@ services:
       - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
   frontend:
     build:
       context: .
@@ -43,6 +45,8 @@ services:
       - "./frontend:/app:rw"
       - "./scripts:/app/scripts"
       - "./packages:/packages:ro"
+      - "node_modules-frontend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
     environment:
       - BACKEND_PROXY=http://backend:8080
       - REACT_APP_WEBSOCKET_URL
@@ -62,6 +66,8 @@ services:
       - SMTP_HOST=mailcatcher
     volumes:
       - ".:/app:rw"
+      - "node_modules-backend:/app/node_modules:rw"
+      - "yarn-cache:/home/node/.cache/yarn:rw"
   owasp_zap_backend:
     image: softwaresecurityproject/zap-stable:latest
     profiles:
