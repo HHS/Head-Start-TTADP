@@ -12,6 +12,7 @@ import {
   GoalResource,
   GoalStatusChange,
   Grant,
+  GrantRelationshipToActive,
   Objective,
   ActivityReportObjective,
   sequelize,
@@ -68,6 +69,46 @@ const namespace = 'SERVICE:GOALS';
 const logContext = {
   namespace,
 };
+
+/**
+ * Maps grants to their active replacements.
+ *
+ * This function iterates through a list of grants and constructs a dictionary
+ * where each grant ID is associated with an array of active grant IDs. If the
+ * grant itself is active, it maps to its own ID. If the grant is not active,
+ * but has relationships with active grants, it maps to those active grants instead.
+ *
+ * @param {Array} grants - An array of grant objects. Each grant object should have
+ *   properties `id`, `status`, and an optional array of `grantRelationships`. Each
+ *   relationship should contain an `activeGrant` object with `id` and `status`.
+ * @returns {Object} A dictionary where the keys are grant IDs and the values are
+ *   arrays of active grant IDs related to each key grant.
+ */
+function mapGrantsWithReplacements(grants) {
+  const grantsWithReplacementsDictionary = {};
+
+  grants.forEach((grant) => {
+    if (grant.status === 'Active') {
+      if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+        grantsWithReplacementsDictionary[grant.id].push(grant.id);
+      } else {
+        grantsWithReplacementsDictionary[grant.id] = [grant.id];
+      }
+    } else {
+      grant.grantRelationships.forEach((relationship) => {
+        if (relationship.activeGrant && relationship.activeGrant.status === 'Active') {
+          if (Array.isArray(grantsWithReplacementsDictionary[grant.id])) {
+            grantsWithReplacementsDictionary[grant.id].push(relationship.activeGrantId);
+          } else {
+            grantsWithReplacementsDictionary[grant.id] = [relationship.activeGrantId];
+          }
+        }
+      });
+    }
+  });
+
+  return grantsWithReplacementsDictionary;
+}
 
 /**
  *
@@ -621,20 +662,36 @@ export async function goalsForGrants(grantIds) {
   /**
    * get all the matching grants
    */
-  const grants = await Grant.findAll({
-    attributes: ['id', 'oldGrantId'],
+  const grants = await Grant.unscoped().findAll({
+    attributes: [
+      'id',
+      [sequelize.fn(
+        'ARRAY_AGG',
+        sequelize.fn(
+          'DISTINCT',
+          sequelize.col('grantRelationships.grantId'),
+        ),
+      ), 'oldGrantIds'],
+    ],
     where: {
       id: grantIds,
     },
+    include: [{
+      model: GrantRelationshipToActive,
+      as: 'grantRelationships',
+      required: false,
+      attributes: [],
+    }],
+    group: ['"Grant".id'],
   });
 
   /**
    * we need one big array that includes the old recipient id as well,
    * removing all the nulls along the way
    */
-  const ids = grants
+  const ids = Array.from(new Set(grants
     .reduce((previous, current) => [...previous, current.id, current.oldGrantId], [])
-    .filter((g) => g);
+    .filter((g) => g)));
 
   /*
   * finally, return all matching goals
@@ -660,7 +717,7 @@ export async function goalsForGrants(grantIds) {
         'ARRAY_AGG',
         sequelize.fn(
           'DISTINCT',
-          sequelize.col('grant.oldGrantId'),
+          sequelize.col('grant.grantRelationships.grantId'),
         ),
       ), 'oldGrantIds'],
       [sequelize.fn(
@@ -684,7 +741,7 @@ export async function goalsForGrants(grantIds) {
       'source',
       'createdVia',
     ],
-    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"'],
+    group: ['"Goal"."name"', '"Goal"."status"', '"Goal"."endDate"', '"Goal"."onApprovedAR"', '"Goal"."source"', '"Goal"."createdVia"', '"Goal".id'],
     where: {
       name: {
         [Op.ne]: '', // exclude "blank" goals
@@ -699,6 +756,11 @@ export async function goalsForGrants(grantIds) {
         model: Grant.unscoped(),
         as: 'grant',
         attributes: [],
+        include: [{
+          model: GrantRelationshipToActive,
+          as: 'grantRelationships',
+          attributes: [],
+        }],
       },
       {
         model: GoalTemplate,
@@ -1666,23 +1728,31 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
   const uniqueGrantIds = uniq(goalGroups.map((group) => group.map((goal) => goal.grantId)).flat());
 
   const grants = await Grant.findAll({
+    attributes: ['id', 'status'],
     where: {
       [Op.or]: [
         { id: uniqueGrantIds },
-        { oldGrantId: uniqueGrantIds },
+        { '$grantRelationships.grantId$': uniqueGrantIds },
       ],
-      status: 'Active',
     },
-    attributes: ['id', 'oldGrantId', 'status'],
+    include: [
+      {
+        model: GrantRelationshipToActive,
+        as: 'grantRelationships',
+        attributes: ['activeGrantId', 'grantId'],
+        required: false,
+        include: [
+          {
+            model: Grant,
+            as: 'activeGrant',
+            attributes: ['id', 'status'],
+          },
+        ],
+      },
+    ],
   });
 
-  const grantLookup = {};
-  grants.forEach((grant) => {
-    grantLookup[grant.id] = grant.id;
-    if (grant.oldGrantId) {
-      grantLookup[grant.oldGrantId] = grant.id;
-    }
-  });
+  const grantsWithReplacementsDictionary = mapGrantsWithReplacements(grants);
 
   const filteredGoalGroups = goalGroups
     .filter((group) => {
@@ -1703,7 +1773,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
 
   const goalGroupsDeduplicated = filteredGoalGroups.map((group) => group
     .reduce((previous, current) => {
-      if (!grantLookup[current.grantId]) {
+      if (!grantsWithReplacementsDictionary[current.grantId]) {
         return previous;
       }
 
@@ -1740,7 +1810,7 @@ export async function getGoalIdsBySimilarity(recipientId, regionId, user = null)
           responsesForComparison: responsesForComparison(current),
           ids: [current.id],
           excludedIfNotAdmin,
-          grantId: grantLookup[current.grantId],
+          grantId: grantsWithReplacementsDictionary[current.grantId],
         },
       ];
     }, []));
@@ -1930,39 +2000,45 @@ export async function mergeGoals(
   const finalGoalValues = determineFinalGoalValues(selectedGoals, finalGoal);
 
   /**
-   * we will need to create a "new" final goal for each grant involved
-   * in this sordid business
-   */
+  * we will need to create a "new" final goal for each grant involved
+  * in this sordid business
+  */
 
   const uniqueGrantIds = uniq(selectedGoals.map((goal) => goal.grantId));
 
   const grantsWithReplacements = await Grant.findAll({
-    attributes: ['id', 'status', 'oldGrantId'],
+    attributes: ['id', 'status'],
     where: {
       [Op.or]: [
         { id: uniqueGrantIds },
-        { oldGrantId: uniqueGrantIds },
+        { '$grantRelationships.grantId$': uniqueGrantIds },
       ],
-      status: 'Active',
     },
+    include: [
+      {
+        model: GrantRelationshipToActive,
+        as: 'grantRelationships',
+        attributes: ['activeGrantId', 'grantId'],
+        required: false,
+        include: [
+          {
+            model: Grant,
+            as: 'activeGrant',
+            attributes: ['id', 'status'],
+          },
+        ],
+      },
+    ],
   });
 
   if (!grantsWithReplacements.length) {
     throw new Error('No active grants found to merge goals into');
   }
 
-  const grantsWithReplacementsDictionary = {};
-
-  grantsWithReplacements.forEach((grant) => {
-    if (grant.oldGrantId) {
-      grantsWithReplacementsDictionary[grant.oldGrantId] = grant.id;
-    }
-
-    grantsWithReplacementsDictionary[grant.id] = grant.id;
-  });
+  const grantsWithReplacementsDictionary = mapGrantsWithReplacements(grantsWithReplacements);
 
   // unique list of grant IDs
-  const grantIds = uniq(grantsWithReplacements.map((grant) => grant.id));
+  const grantIds = uniq(Object.values(grantsWithReplacementsDictionary).flat());
 
   const goalsToBulkCreate = grantIds.map((grantId) => ({
     ...finalGoalValues,
@@ -2029,7 +2105,8 @@ export async function mergeGoals(
     // will use the most up-to-date grant ID as well
     mergeObjectivesFromGoal(g, grantToGoalDictionary[
       grantsWithReplacementsDictionary[g.grantId]
-    ]))));
+    ])
+  )));
 
   const updatesToRelatedModels = [];
 

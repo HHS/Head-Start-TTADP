@@ -1,7 +1,10 @@
+/* eslint-disable no-restricted-syntax */
+/* eslint-disable no-loop-func */
+/* eslint-disable no-await-in-loop */
 import AdmZip from 'adm-zip';
 import xml2js from 'xml2js';
 import axios from 'axios';
-import { keyBy, mapValues } from 'lodash';
+import { keyBy, mapValues, uniq } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Op } from 'sequelize';
@@ -9,6 +12,10 @@ import { fileHash } from './fileUtils';
 import db, {
   Recipient,
   Grant,
+  GrantRelationshipToActive,
+  GrantReplacements,
+  GrantReplacementTypes,
+  GroupGrant,
   Program,
   sequelize,
   ProgramPersonnel,
@@ -175,20 +182,23 @@ async function getProgramPersonnel(grantId, programId, program) {
 
 export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
-    const updatePromises = grantsToUpdate.map(async (grant) => {
-      if (grant.oldGrantId) {
-        const oldGrant = await Grant.findByPk(grant.oldGrantId);
-        if (oldGrant) {
-          return grant.update({
-            recipientId: oldGrant.recipientId,
-            regionId: oldGrant.regionId,
-          });
-        }
+    const updates = grantsToUpdate.map(async (grant) => {
+      // eslint-disable-next-line max-len
+      const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+      // eslint-disable-next-line max-len
+      const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
+
+      const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
+      const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
+
+      if (!regionId || !recipientId || validOldGrants.length !== replacedGrants.length) {
+        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
       }
-      return null;
+
+      return grant.update({ recipientId, regionId });
     });
 
-    await Promise.all(updatePromises);
+    await Promise.all(updates);
   } catch (error) {
     logger.error('updateGrantsRecipients: Error updating grants:', error);
   }
@@ -259,7 +269,9 @@ export async function processFiles(hashSumHex) {
             name: grantAward ? grantAward.grantee_name : r.name,
             recipientType: r.recipientType,
           });
-        } return r;
+        }
+
+        return r;
       });
 
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
@@ -387,25 +399,92 @@ export async function processFiles(hashSumHex) {
           && grantIds.includes(parseInt(g.replacement_grant_award_id, 10)),
       );
 
-      const grantUpdatePromises = grantsToUpdate.map((g) => (
-        Grant.unscoped().update(
-          { oldGrantId: parseInt(g.replaced_grant_award_id, 10) },
-          {
-            where: { id: parseInt(g.replacement_grant_award_id, 10) },
-            fields: ['oldGrantId'],
-            sideEffects: false,
-            transaction,
-            individualHooks: true,
+      const grantReplacementPromises = grantsToUpdate.map(async (g) => {
+        let grantReplacementType = await GrantReplacementTypes.findOne({
+          where: {
+            name: g.grant_replacement_type,
           },
-        )
-      ));
+        });
 
-      await Promise.all(grantUpdatePromises);
+        if (!grantReplacementType) {
+          // Create the new type
+          grantReplacementType = await GrantReplacementTypes.create({
+            name: g.grant_replacement_type,
+          });
+        }
+
+        const grantReplacement = await GrantReplacements.findOne({
+          where: {
+            replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
+            replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
+            grantReplacementTypeId: grantReplacementType.id,
+          },
+        });
+
+        if (grantReplacement) {
+          await grantReplacement.update({
+            replacementDate: new Date(g.replacement_date),
+            grantReplacementTypeId: grantReplacementType.id,
+          }, {
+            individualHooks: true,
+          });
+        } else {
+          await GrantReplacements.create({
+            replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
+            replacingGrantId: parseInt(g.replacement_grant_award_id, 10),
+            grantReplacementTypeId: grantReplacementType.id,
+            replacementDate: new Date(g.replacement_date),
+          });
+        }
+      });
+
+      await Promise.all(grantReplacementPromises);
+
+      // ---
+      // Update GroupGrants
+      const HOUR_AGO = new Date(new Date() - 60 * 60 * 1000);
+
+      const replacements = await GrantReplacements.findAll({
+        where: { updatedAt: { [Op.gte]: HOUR_AGO } },
+        attributes: ['replacedGrantId', 'replacingGrantId'],
+      });
+
+      const affectedGroupGrants = await GroupGrant.findAll({
+        where: { grantId: uniq(replacements.map((g) => g.replacedGrantId)) },
+        attributes: ['id', 'grantId', 'groupId'],
+      });
+
+      const createdGrants = new Set();
+
+      for (const g of affectedGroupGrants) {
+        if (replacements.some((r) => r.replacedGrantId === g.grantId)) {
+          await GroupGrant.destroy({ where: { id: g.id } });
+
+          // Use a Set to avoid duplicates
+          const uniqueReplacingGrantIds = new Set();
+
+          for (const replacement of replacements.filter((r) => r.replacedGrantId === g.grantId)) {
+            uniqueReplacingGrantIds.add(replacement.replacingGrantId);
+          }
+
+          // Now create each unique replacing grant only if it hasn't been created before
+          for (const uniqueGrantId of uniqueReplacingGrantIds) {
+            const key = `${g.groupId}-${uniqueGrantId}`;
+            if (!createdGrants.has(key)) {
+              await GroupGrant.create({ groupId: g.groupId, grantId: uniqueGrantId });
+              createdGrants.add(key); // Track created groupId + grantId pairs
+            }
+          }
+        }
+      }
+      // ---
+
+      await GrantRelationshipToActive.refresh();
 
       // Automate CDI linking to preceding recipients
       const cdiGrantsToLink = await Grant.unscoped().findAll({
         where: { regionId: 13, endDate: { [Op.gte]: '2021-03-17' } },
-        attributes: ['id', 'endDate', 'oldGrantId'],
+        attributes: ['id', 'endDate'],
       });
 
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);

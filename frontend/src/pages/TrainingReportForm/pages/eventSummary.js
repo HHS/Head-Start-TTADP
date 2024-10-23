@@ -181,7 +181,7 @@ const EventSummary = ({
                 <Req />
               </Label>
               <Controller
-                render={({ onChange: controllerOnChange, value: id }) => (
+                render={({ onChange: controllerOnChange, value: id, onBlur }) => (
                   <Select
                     value={(creators || []).find((option) => option.id === id)}
                     inputId="ownerId"
@@ -198,6 +198,7 @@ const EventSummary = ({
                     options={creators || []}
                     getOptionLabel={(option) => option.nameWithNationalCenters}
                     getOptionValue={(option) => option.id}
+                    onBlur={onBlur}
                     required
                   />
                 )}
@@ -274,7 +275,7 @@ const EventSummary = ({
             required
           >
             <Controller
-              render={({ onChange: controllerOnChange, value }) => (
+              render={({ onChange: controllerOnChange, value, onBlur }) => (
                 <Select
                   isMulti
                   value={collaborators.filter((collaborator) => (
@@ -290,6 +291,7 @@ const EventSummary = ({
                   onChange={(s) => {
                     controllerOnChange(s.map((option) => option.id));
                   }}
+                  onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
                   getOptionLabel={(option) => option.nameWithNationalCenters}
                   getOptionValue={(option) => option.id}
@@ -320,7 +322,7 @@ const EventSummary = ({
                 <Req />
               </Label>
               <Controller
-                render={({ onChange: controllerOnChange, value }) => (
+                render={({ onChange: controllerOnChange, value, onBlur }) => (
                   <Select
                     value={pointOfContact.filter((option) => (
                       value.includes(option.id)
@@ -339,6 +341,7 @@ const EventSummary = ({
                     getOptionLabel={(option) => option.fullName}
                     getOptionValue={(option) => option.id}
                     options={pointOfContact}
+                    onBlur={onBlur}
                     required
                     isMulti
                   />
