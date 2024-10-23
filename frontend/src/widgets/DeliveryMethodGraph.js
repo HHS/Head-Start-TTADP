@@ -138,7 +138,7 @@ export default function DeliveryMethodGraph({ data }) {
             sortKey: 'In_person_(AR\'s)',
           },
           {
-            value: dataset.in_person_percentage,
+            value: `${String(dataset.in_person_percentage)}%`,
             title: ' In person (Percentage)',
             sortKey: 'In_person_(Percentage)',
           },
@@ -148,7 +148,7 @@ export default function DeliveryMethodGraph({ data }) {
             sortKey: 'Virtual_(AR\'s)',
           },
           {
-            value: dataset.virtual_percentage,
+            value: `${String(dataset.virtual_percentage)}%`,
             title: 'Virtual (Percentage)',
             sortKey: 'Virtual_(Percentage)',
           },
@@ -158,7 +158,7 @@ export default function DeliveryMethodGraph({ data }) {
             sortKey: 'Hybrid_(AR\'s)',
           },
           {
-            value: dataset.hybrid_percentage,
+            value: `${String(dataset.hybrid_percentage)}%`,
             title: 'Hybrid (Percentage)',
             sortKey: 'Hybrid_(Percentage)',
           },
