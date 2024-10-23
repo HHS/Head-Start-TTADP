@@ -1,0 +1,270 @@
+import { renderHook, act } from '@testing-library/react-hooks';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
+import useNewGoalAction from '../useNewGoalAction';
+import {
+  GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS, NEW_GOAL_FORM_PAGES,
+} from '../../components/SharedGoalComponents/constants';
+
+describe('useNewGoalAction', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+  it('handles selecting a nudged goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+
+    const goalIds = [1];
+
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalIds,
+      goalStatus: GOAL_STATUS.IN_PROGRESS,
+      selectedGrants: [1],
+      goalTemplate: null,
+      goalName: 'Test Goal',
+    };
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([1]);
+  });
+
+  it('reopens a closed goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const toggleModal = jest.fn();
+
+    const goalIds = [1];
+
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalIds,
+      goalStatus: GOAL_STATUS.CLOSED,
+      selectedGrants: [1],
+      goalTemplate: null,
+      goalName: 'Test Goal',
+      reason: 'Test Reason',
+      context: 'Test Context',
+      modalRef: { current: { toggleModal } },
+    };
+
+    fetchMock.put('/api/goals/reopen', { id: 1 });
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(toggleModal).toHaveBeenCalledWith(false);
+
+    expect(response).toEqual([1]);
+  });
+  it('handles an error to reopen a closed goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const toggleModal = jest.fn();
+
+    const goalIds = [1];
+
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalIds,
+      goalStatus: GOAL_STATUS.CLOSED,
+      selectedGrants: [1],
+      goalTemplate: null,
+      goalName: 'Test Goal',
+      reason: 'Test Reason',
+      context: 'Test Context',
+      modalRef: { current: { toggleModal } },
+    };
+
+    fetchMock.put('/api/goals/reopen', 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(toggleModal).toHaveBeenCalledWith(false);
+
+    expect(response).toEqual([]);
+  });
+  it('unsuspends a suspended goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+
+    const goalIds = [1];
+
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalIds,
+      goalStatus: GOAL_STATUS.SUSPENDED,
+      selectedGrants: [1],
+      goalTemplate: null,
+      goalName: 'Test Goal',
+      reason: 'Test Reason',
+      context: 'Test Context',
+    };
+
+    fetchMock.put('/api/goals/changeStatus', [{ id: 1 }]);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([1]);
+  });
+  it('handles an error to unsuspend a suspended goal', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const goalIds = [1];
+
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalIds,
+      goalStatus: GOAL_STATUS.SUSPENDED,
+      selectedGrants: [1],
+      goalTemplate: null,
+      goalName: 'Test Goal',
+      reason: 'Test Reason',
+      context: 'Test Context',
+    };
+
+    fetchMock.put('/api/goals/changeStatus', 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([]);
+  });
+
+  it('creates a goal from template', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+
+    const data = {
+      useOhsInitiativeGoal: true,
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: { id: 1 },
+    };
+
+    fetchMock.post('/api/goals/template/1', [1]);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([1]);
+  });
+  it('handles an error to create a goal from template', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+
+    const data = {
+      useOhsInitiativeGoal: true,
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: { id: 1 },
+    };
+
+    fetchMock.post('/api/goals/template/1', 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([]);
+  });
+
+  it('does not attempt to create a goal from template if there is no goal template selected', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+
+    const data = {
+      useOhsInitiativeGoal: true,
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: null,
+    };
+
+    const templateUrl = '/api/goals/template/1';
+    fetchMock.post(templateUrl, 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(fetchMock.called(templateUrl)).toBe(false);
+
+    expect(response).toEqual([]);
+  });
+
+  it('creates a goal name from scratch', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const goalsUrl = '/api/goals';
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalName: 'This is a brand new goal',
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: null,
+    };
+
+    fetchMock.post(goalsUrl, [{ id: 1 }]);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([1]);
+  });
+
+  it('handles an error to create a goal name from scratch', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const goalsUrl = '/api/goals';
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalName: 'This is a brand new goal',
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: null,
+    };
+
+    fetchMock.post(goalsUrl, 500);
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([]);
+  });
+
+  it('returns an empty array if called with bad data', async () => {
+    const { result } = renderHook(() => useNewGoalAction());
+    const data = {
+      useOhsInitiativeGoal: false,
+      goalName: '',
+      goalIds: [],
+      goalStatus: null,
+      selectedGrants: [1],
+      goalTemplate: null,
+    };
+
+    let response;
+    await act(async () => {
+      response = await result.current(1, 1, data);
+    });
+
+    expect(response).toEqual([]);
+  });
+});
