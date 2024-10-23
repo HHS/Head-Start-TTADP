@@ -1,13 +1,15 @@
-import db from "../models";
-import nudge, { determineSimilarityAlpha } from "./nudge";
-import { GOAL_STATUS } from "../constants";
-import { similarGoalsForRecipient } from "../services/similarity";
-import { createGoal, createGrant, createRecipient } from "../testUtils";
-import changeGoalStatus from "./changeGoalStatus";
+import db from '../models';
+import nudge, { determineSimilarityAlpha } from './nudge';
+import { GOAL_STATUS } from '../constants';
+import { similarGoalsForRecipient } from '../services/similarity';
+import { createGoal, createGrant, createRecipient } from '../testUtils';
+import changeGoalStatus from './changeGoalStatus';
 
-const { Goal, Grant, Recipient, GoalStatusChange } = db;
+const {
+  Goal, Grant, Recipient, GoalStatusChange,
+} = db;
 
-jest.mock("../services/similarity", () => ({
+jest.mock('../services/similarity', () => ({
   similarGoalsForRecipient: jest.fn(),
 }));
 
@@ -15,7 +17,7 @@ jest.mock("../services/similarity", () => ({
  * writing this test with the expectation that the seed data is present
  *
  */
-describe("nudge", () => {
+describe('nudge', () => {
   let recipient;
   let grant;
   let goal;
@@ -41,16 +43,16 @@ describe("nudge", () => {
     await changeGoalStatus({
       goalId: suspendedGoal.id,
       newStatus: GOAL_STATUS.SUSPENDED,
-      reason: "test",
-      context: "test",
+      reason: 'test',
+      context: 'test',
       oldStatus: GOAL_STATUS.NOT_STARTED,
     });
 
     await changeGoalStatus({
       goalId: closedGoal.id,
       newStatus: GOAL_STATUS.CLOSED,
-      reason: "test",
-      context: "test",
+      reason: 'test',
+      context: 'test',
       oldStatus: GOAL_STATUS.NOT_STARTED,
     });
   });
@@ -69,7 +71,7 @@ describe("nudge", () => {
     await db.sequelize.close();
   });
 
-  it("should return a nudge", async () => {
+  it('should return a nudge', async () => {
     const goalName = goal.name;
     const goalId = goal.id;
     const { goalTemplateId } = goal;
@@ -78,8 +80,7 @@ describe("nudge", () => {
     const recipientId = recipient.id;
     const grantId = grant.id;
 
-    const curatedName =
-      "(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)";
+    const curatedName = '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)';
     const templateId = 1;
 
     similarGoalsForRecipient.mockReturnValueOnce({
@@ -98,8 +99,8 @@ describe("nudge", () => {
             id: templateId,
             name: curatedName,
             isTemplate: true,
-            source: "Regional office priority",
-            endDate: "",
+            source: 'Regional office priority',
+            endDate: '',
           },
           similarity: 0.7,
         },
@@ -108,8 +109,8 @@ describe("nudge", () => {
 
     const results = await nudge(
       recipientId,
-      "It does not matter what this is",
-      [grantNumber]
+      'It does not matter what this is',
+      [grantNumber],
     );
 
     // sort results by name
@@ -130,9 +131,9 @@ describe("nudge", () => {
         status: GOAL_STATUS.NOT_STARTED,
         goalTemplateId: templateId,
         isCuratedTemplate: true,
-        endDate: "",
-        source: "Regional office priority",
-        reason: "",
+        endDate: '',
+        source: 'Regional office priority',
+        reason: '',
       },
       {
         ids: [goalId],
@@ -140,13 +141,13 @@ describe("nudge", () => {
         status: GOAL_STATUS.NOT_STARTED,
         isCuratedTemplate: false,
         goalTemplateId,
-        reason: "",
+        reason: '',
         source: null,
       },
     ]);
   });
 
-  it("should return reasons for closed and suspended goals", async () => {
+  it('should return reasons for closed and suspended goals', async () => {
     const goalName = goal.name;
     const goalId = goal.id;
     const { goalTemplateId } = goal;
@@ -197,8 +198,8 @@ describe("nudge", () => {
 
     const results = await nudge(
       recipientId,
-      "It does not matter what this is",
-      [grantNumber]
+      'It does not matter what this is',
+      [grantNumber],
     );
 
     // sort results by name
@@ -219,7 +220,7 @@ describe("nudge", () => {
         status: GOAL_STATUS.NOT_STARTED,
         isCuratedTemplate: false,
         goalTemplateId,
-        reason: "",
+        reason: '',
         source: null,
       },
       {
@@ -239,7 +240,7 @@ describe("nudge", () => {
         goalTemplateId: suspendedGoalTemplateId,
         reason: 'test',
         source: null,
-      }
+      },
     ];
 
     expected.sort((a, b) => {
@@ -255,18 +256,18 @@ describe("nudge", () => {
     expect(results).toEqual(expected);
   });
 
-  describe("determineSimilarityAlpha", () => {
-    it("returns a minimum value of 0.5", () => {
+  describe('determineSimilarityAlpha', () => {
+    it('returns a minimum value of 0.5', () => {
       const alpha = determineSimilarityAlpha(1);
       expect(alpha).toBe(0.5);
     });
 
-    it("returns a maximum value of 0.9", () => {
+    it('returns a maximum value of 0.9', () => {
       const alpha = determineSimilarityAlpha(20);
       expect(alpha).toBe(0.9);
     });
 
-    it("otherwise, it returns a value of numberOfWords/10", () => {
+    it('otherwise, it returns a value of numberOfWords/10', () => {
       const alpha = determineSimilarityAlpha(6);
       expect(alpha).toBe(0.6);
     });
