@@ -1,15 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Grid, Tooltip as TrussWorksToolTip } from '@trussworks/react-uswds';
+import { Grid } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import FiltersNotApplicable from '../components/FiltersNotApplicable';
+
 import './OverviewWidgetField.scss';
 
 import Tooltip from '../components/Tooltip';
-import colors from '../colors';
 
 export function OverviewWidgetField({
   label1,
@@ -35,12 +33,7 @@ export function OverviewWidgetField({
         <div>
           <span className="text-bold font-sans-xs">{data}</span>
           { !filterApplicable && (
-            <>
-              <span className="font-sans-xs margin-right-1"> - Filters not applied</span>
-              <TrussWorksToolTip className="usa-button--unstyled smart-hub--overview-tool-tip" id="filter-not-applicable" label="One or more of the selected filters cannot be applied to this data.">
-                <FontAwesomeIcon icon={faQuestionCircle} color={colors.ttahubMediumBlue} />
-              </TrussWorksToolTip>
-            </>
+            <FiltersNotApplicable />
           )}
         </div>
 

@@ -110,6 +110,7 @@ export default function QADashboard() {
           records: feiGraphData.data.sort((a, b) => a.rootCause.localeCompare(b.rootCause)),
           totalNumberOfGoals: feiOverviewData.data[0].total,
           totalNumberOfRootCauses: feiOverviewData.data[0]['recipients with fei'],
+          showDashboardFiltersNotApplicable: feiContainsFiltersThatAreNotAllowed,
         };
 
         // CLASS data.
@@ -151,6 +152,8 @@ export default function QADashboard() {
           ['delivery_method_graph', 'role_graph', 'activity_widget'],
         );
 
+        const showDashboardFiltersNotApplicable = containsFiltersThatAreNotApplicable('qa-dashboard', filters);
+
         const deliveryMethodData = dashboardData.find((item) => item.data_set === 'delivery_method_graph');
         const roleGraphData = dashboardData.find((item) => item.data_set === 'role_graph');
         const activityWidgetData = dashboardData.find((item) => item.data_set === 'activity_widget');
@@ -165,9 +168,11 @@ export default function QADashboard() {
           averageVirtualPercentage: 0,
           totalHybridCount: 0,
           averageHybridPercentage: 0,
+          showDashboardFiltersNotApplicable,
         };
 
         const roleGraph = {
+          showDashboardFiltersNotApplicable,
           filteredReports,
           records: roleGraphData.data.sort((a, b) => a.role_name.localeCompare(b.role_name)),
         };
@@ -236,7 +241,9 @@ export default function QADashboard() {
           </Grid>
           <Grid row gap={2}>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
-              <PercentageActivityReportByRole data={qaData.roleGraph} />
+              <PercentageActivityReportByRole
+                data={qaData.roleGraph}
+              />
             </Grid>
             <Grid desktop={{ col: 6 }} mobile={{ col: 12 }}>
               <RootCauseFeiGoals

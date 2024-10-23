@@ -42,6 +42,7 @@ export default function RootCauseFeiGoals({ data }) {
     totalNumberOfGoals: 0,
     totalNumberOfRootCauses: 0,
   });
+  const [showFiltersNotApplicable, setShowFiltersNotApplicable] = useState(false);
 
   const {
     requestSort,
@@ -85,6 +86,7 @@ export default function RootCauseFeiGoals({ data }) {
       records,
       totalNumberOfGoals,
       totalNumberOfRootCauses,
+      showDashboardFiltersNotApplicable: showDashboardFiltersNotApplicableProp,
     } = data;
 
     const tableData = [];
@@ -116,6 +118,7 @@ export default function RootCauseFeiGoals({ data }) {
 
     // Sort traceData by rootCause in descending order
     traceData.sort((a, b) => b.category.localeCompare(a.category));
+    setShowFiltersNotApplicable(showDashboardFiltersNotApplicableProp);
     setTrace(traceData);
     setTabularData(tableData);
     setTotals({
@@ -142,6 +145,7 @@ export default function RootCauseFeiGoals({ data }) {
         subtitle="Each goal can have up to 2 root causes"
         subtitle2={`Total of ${totals.totalNumberOfGoals.toLocaleString('en-us')} goals and ${totals.totalNumberOfRootCauses.toLocaleString('en-us')} root causes`}
         menuItems={menuItems}
+        showFiltersNotApplicable={showFiltersNotApplicable}
       >
         {showTabularData ? (
           <HorizontalTableWidget
@@ -184,6 +188,7 @@ RootCauseFeiGoals.propTypes = {
   data: PropTypes.shape({
     totalNumberOfGoals: PropTypes.number,
     totalNumberOfRootCauses: PropTypes.number,
+    showDashboardFiltersNotApplicable: PropTypes.bool,
     records: PropTypes.arrayOf(PropTypes.shape({
       rootCause: PropTypes.string,
       response_count: PropTypes.number,
