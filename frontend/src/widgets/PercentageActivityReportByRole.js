@@ -107,7 +107,7 @@ export default function PercentageActivityReportByRole({ data }) {
             sortKey: 'Number_of_activity_reports',
           },
           {
-            value: dataset.percentage,
+            value: `${String(dataset.percentage)}%`,
             title: 'Percentage of activity reports',
             sortKey: 'Percentage_of_activity_reports',
           },
@@ -160,7 +160,7 @@ export default function PercentageActivityReportByRole({ data }) {
               '', // empty string for the first column, checkboxes
               'Total',
               String(totals.totalNumberOfReports),
-              String(totals.totalPercentage),
+              `${String(totals.totalPercentage.toFixed(2))}%`,
             ]}
             hideFirstColumnBorder
             selectAllIdPrefix="qa-dash-percentage-ars-by-role"

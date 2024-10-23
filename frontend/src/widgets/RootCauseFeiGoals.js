@@ -106,7 +106,7 @@ export default function RootCauseFeiGoals({ data }) {
             sortKey: 'Root_cause',
           },
           {
-            value: dataset.percentage,
+            value: `${String(dataset.percentage)}%`,
             title: 'Number',
             sortKey: 'Number',
           },
